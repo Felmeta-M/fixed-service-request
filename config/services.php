@@ -35,4 +35,33 @@ return [
         ],
     ],
 
+    'soap' => [
+        'url' => env('SOAP_URL'),
+        'version' => env('SOAP_VERSION', 1),
+        'language' => env('SOAP_LANGUAGE', '2002'),
+        'channel_id' => env('SOAP_CHANNEL_ID', '64'),
+        'technical_channel_id' => env('SOAP_TECHNICAL_CHANNEL_ID', '53'),
+        'tenant_id' => env('SOAP_TENANT_ID', '101'),
+        'access_user' => env('SOAP_ACCESS_USER'),
+        'access_password' => env('SOAP_ACCESS_PASSWORD'),
+    ],
+
+    'customer' =>  [
+        'access_user' => env('CUSTOMER_ACCESS_USER', 'kiosk'),
+        'access_password' => env('CUSTOMER_ACCESS_PWD'),
+        'channel_id' => env('CUSTOMER_CHANNEL_ID', '61'),
+        'technical_channel_id' => env('CUSTOMER_TECH_CHANNEL_ID', '51'),
+        'tenant_id' => env('CUSTOMER_TENANT_ID', '101'),
+        'create_endpoint' => env('CUSTOMER_CREATE_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'query_endpoint' => env('CUSTOMER_QUERY_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/SELFCARE/OrderQueryETCtz'),
+    ],
+
+    'survey' => [
+        'endpoint' => env('SURVEY_BSS_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'access_user' => env('SURVEY_BSS_ACCESS_USER'),
+        'access_password' => env('SURVEY_BSS_ACCESS_PASSWORD'),
+        'channel_id' => env('SURVEY_BSS_CHANNEL_ID'),
+        'technical_channel_id' => env('SURVEY_TECHNICAL_CHANNEL_ID'),
+    ],
+
 ];

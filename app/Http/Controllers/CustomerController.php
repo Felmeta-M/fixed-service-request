@@ -6,9 +6,13 @@ use App\Models\Customer;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Http\Requests\CustomerRequest;
+use App\Services\CustomerService;
+use Illuminate\Support\Facades\DB;
 
 class CustomerController extends Controller
 {
+    public function __construct(protected readonly CustomerService $customerService) {}
+
     public function index()
     {
         return Inertia::render('Customers/Index', [
@@ -23,7 +27,14 @@ class CustomerController extends Controller
 
     public function store(CustomerRequest $request)
     {
-        Customer::create($request->validated());
+        DB::transaction(function ($request) {
+            //TODO: handle by transaction
+            //third party api
+            $this->customerService->createCustomer($request->validated());
+
+            // local database
+            Customer::create($request->validated());
+        });
 
         return redirect()->route('customers.index')->with('success', 'Customer created successfully.');
     }

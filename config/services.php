@@ -64,4 +64,14 @@ return [
         'technical_channel_id' => env('SURVEY_TECHNICAL_CHANNEL_ID'),
     ],
 
+    'subscriber' => [
+        'endpoint' => env('SUBSCRIBER_BSS_ENDPOINT'),
+        'access_user' => env('SUBSCRIBER_BSS_USERNAME'),
+        'access_pwd' => env('SUBSCRIBER_BSS_PASSWORD'),
+        'operator_id' => env('SUBSCRIBER_BSS_OPERATOR_ID'),
+        'channel_id' => 59,
+        'technical_channel_id' => 35,
+        'tenant_id' => 101,
+    ]
+
 ];

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\SurveyRequestController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -15,8 +16,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 
     Route::resource('customers', CustomerController::class);
-
     Route::resource('survey-requests', SurveyRequestController::class);
+    Route::resource('subscribers', SubscriberController::class);
 });
 
 require __DIR__ . '/settings.php';

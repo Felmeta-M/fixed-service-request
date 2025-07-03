@@ -72,6 +72,14 @@ return [
         'channel_id' => 59,
         'technical_channel_id' => 35,
         'tenant_id' => 101,
+    ],
+
+    'check_resource' => [
+        'endpoint' => env('CHECK_RESOURCE_BSS_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'access_user' => env('CHECK_RESOURCE_BSS_ACCESS_USER'),
+        'access_password' => env('CHECK_RESOURCE_BSS_ACCESS_PASSWORD'),
+        'channel_id' => env('CHECK_RESOURCE_BSS_CHANNEL_ID'),
+        'technical_channel_id' => env('CHECK_RESOURCE_TECHNICAL_CHANNEL_ID'),
     ]
 
 ];

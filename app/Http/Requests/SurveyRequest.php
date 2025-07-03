@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SurveyRequestFormRequest extends FormRequest
+class SurveyRequestRequest extends FormRequest
 {
     public function authorize(): bool
     {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ResourceCheckController;
 use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\SurveyRequestController;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +19,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('customers', CustomerController::class);
     Route::resource('survey-requests', SurveyRequestController::class);
     Route::resource('subscribers', SubscriberController::class);
+    Route::resource('resource-checks', ResourceCheckController::class);
 });
 
 require __DIR__ . '/settings.php';

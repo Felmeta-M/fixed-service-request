@@ -56,6 +56,12 @@ return [
         'query_endpoint' => env('CUSTOMER_QUERY_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/SELFCARE/OrderQueryETCtz'),
     ],
 
+    'query_customer' => [
+        'url' => env('QUERY_CUSTOMER_URL'),
+        'user' => env('QUERY_CUSTOMER_USER'),
+        'password' => env('QUERY_CUSTOMER_PASS'),
+    ],
+
     'survey' => [
         'endpoint' => env('SURVEY_BSS_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
         'access_user' => env('SURVEY_BSS_ACCESS_USER'),
@@ -80,6 +86,32 @@ return [
         'access_password' => env('CHECK_RESOURCE_BSS_ACCESS_PASSWORD'),
         'channel_id' => env('CHECK_RESOURCE_BSS_CHANNEL_ID'),
         'technical_channel_id' => env('CHECK_RESOURCE_TECHNICAL_CHANNEL_ID'),
+    ],
+
+    'select_offer' => [
+        'endpoint' => env('SELECT_OFFER_SOAP_ENDPOINT'),
+        'user' => env('SELECT_OFFER_SOAP_USER'),
+        'password' => env('SELECT_OFFER_SOAP_PASSWORD'),
+        'channel_id' => env('SELECT_OFFER_SOAP_CHANNEL_ID'),
+        'tech_channel_id' => env('SELECT_OFFER_SOAP_TECH_CHANNEL_ID'),
+        'tenant_id' => env('SELECT_OFFER_SOAP_TENANT_ID'),
+    ],
+
+    'change_offer' => [
+        'endpoint' => env('CHANGE_OFFER_SOAP_ENDPOINT'),
+        'user' => env('CHANGE_OFFER_SOAP_USER'),
+        'password' => env('CHANGE_OFFER_SOAP_PASSWORD'),
+        'channel_id' => env('CHANGE_OFFER_SOAP_CHANNEL_ID'),
+        'tech_channel_id' => env('CHANGE_OFFER_SOAP_TECH_CHANNEL_ID'),
+        'tenant_id' => env('CHANGE_OFFER_SOAP_TENANT_ID'),
+    ],
+
+    'query_available_number' => [
+        'url' => env('QUERY_AVAILABLE_NUMBER_URL'),
+        'user' => env('QUERY_AVAILABLE_NUMBER_USER'),
+        'password' => env('QUERY_AVAILABLE_NUMBER_PASSWORD'),
+        'channel_id' => env('QUERY_AVAILABLE_NUMBER_CHANNEL_ID', 59),
+        'tech_channel_id' => env('QUERY_AVAILABLE_NUMBER_TECH_CHANNEL_ID', 59),
     ]
 
 ];

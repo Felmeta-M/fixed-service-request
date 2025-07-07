@@ -112,6 +112,15 @@ return [
         'password' => env('QUERY_AVAILABLE_NUMBER_PASSWORD'),
         'channel_id' => env('QUERY_AVAILABLE_NUMBER_CHANNEL_ID', 59),
         'tech_channel_id' => env('QUERY_AVAILABLE_NUMBER_TECH_CHANNEL_ID', 59),
-    ]
+    ],
+
+    'get_account_list' => [
+        'url' => env('GET_ACCOUNT_LIST_URL'),
+        'user' => env('GET_ACCOUNT_LIST_USER'),
+        'password' => env('GET_ACCOUNT_LIST_PASSWORD'),
+        'channel_id' => env('GET_ACCOUNT_LIST_CHANNEL_ID', 59),
+        'tech_channel_id' => env('GET_ACCOUNT_LIST_TECH_CHANNEL_ID', 51),
+        'tenant_id' => env('GET_ACCOUNT_LIST_TENANT_ID', 101),
+    ],
 
 ];

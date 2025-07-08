@@ -29,8 +29,8 @@ class SurveyRequestRequest extends FormRequest
             'sec_contact_person'   => 'required|string',
             'sec_contact_no'       => 'required|string',
             'sec_contact_email'    => 'required|email',
-            'status'               => 'required|string',
-            'completed_date'       => 'required|date',
+            'status'               => 'nullable|string',
+            'completed_date'       => 'nullable|date',
         ];
     }
 }

@@ -39,6 +39,8 @@ return new class extends Migration
             $table->json('contact_persons')->nullable();
 
             $table->timestamps();
+            
+            $table->SoftDeletes();
         });
     }
 

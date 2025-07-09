@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import type { Customer } from '@/types/customer';
 import {
     ContactTypes,
     CustomerFormValues,
@@ -15,10 +16,14 @@ import {
     OccupationTypes,
     ReligionTypes,
     TitleOptions,
+    regionOptions,
+    woredaOptionsMap,
+    zoneOptionsMap,
 } from '@/types/customer';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { Building, FileText, MapPin, Phone, User } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 // helper function to normalize any ISO timestamp into YYYY-MM-DD
 const normalizeDate = (iso?: string) => (iso ? new Date(iso).toISOString().split('T')[0] : '');
@@ -31,7 +36,7 @@ type FormInputProps = {
     placeholder?: string;
     error?: string;
     type?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 };
 function FormInput({ label, id, value, onChange, placeholder, error, type = 'text', ...props }: FormInputProps) {
     return (
@@ -70,7 +75,7 @@ function FormSelect({ label, id, value, onChange, options, placeholder, error }:
                     <SelectValue placeholder={placeholder} />
                 </SelectTrigger>
                 <SelectContent>
-                    {options.map((opt) => (
+                    {options?.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                             {opt.label}
                         </SelectItem>
@@ -89,9 +94,9 @@ const mapContactTypeOptions = () =>
     Object.values(ContactTypes).map((value) => ({ label: value.charAt(0).toUpperCase() + value.slice(1).replace('_', ' '), value }));
 
 export default function Edit() {
-    const { props } = usePage<any>();
+    const { props } = usePage<{ customer: Customer }>();
     const customer = props.customer;
-    const { data, setData, put, processing, errors } = useForm<CustomerFormValues>({
+    const { data, setData, put, processing } = useForm<CustomerFormValues>({
         first_name: customer.first_name || '',
         middle_name: customer.middle_name || '',
         last_name: customer.last_name || '',
@@ -116,7 +121,7 @@ export default function Edit() {
             kebele: customer.address?.kebele || '',
             house_no: customer.address?.house_no || '',
         },
-        contact: customer.contact || { phone: '', email: '', mobile: '' },
+        contact: customer.contact || { phone: '', email: '', secondary_phone: '' },
         contact_persons: customer.contact_persons || [],
     });
     const [contactPersons, setContactPersons] = useState(data.contact_persons || []);
@@ -135,7 +140,10 @@ export default function Edit() {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        put(route('customers.update', customer.id));
+        put(route('customers.update', customer.id), {
+            onSuccess: () => toast.success('Customer updated successfully!'),
+            onError: () => toast.error('Failed to update customer.'),
+        });
     };
 
     return (
@@ -295,8 +303,8 @@ export default function Edit() {
                                 <FormInput
                                     label="Mobile"
                                     id="mobile"
-                                    value={data.contact?.mobile}
-                                    onChange={(e) => setData('contact', { ...data.contact, mobile: e.target.value })}
+                                    value={data.contact?.secondary_phone}
+                                    onChange={(e) => setData('contact', { ...data.contact, secondary_phone: e.target.value })}
                                 />
                             </div>
                         </div>
@@ -322,30 +330,40 @@ export default function Edit() {
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div className="space-y-2">
-                                <FormInput
+                                <FormSelect
                                     label="Region"
                                     id="region"
                                     value={data.address?.region}
-                                    onChange={(e) => setData('address.region', e.target.value)}
-                                    placeholder="Enter region"
+                                    onChange={(v) => {
+                                        setData('address.region', v);
+                                        setData('address.zone', '');
+                                        setData('address.woreda', '');
+                                    }}
+                                    options={regionOptions}
+                                    placeholder="Select region"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <FormInput
+                                <FormSelect
                                     label="Zone"
                                     id="zone"
                                     value={data.address?.zone}
-                                    onChange={(e) => setData('address.zone', e.target.value)}
-                                    placeholder="Enter zone"
+                                    onChange={(v) => {
+                                        setData('address.zone', v);
+                                        setData('address.woreda', '');
+                                    }}
+                                    options={data.address?.region ? zoneOptionsMap[data.address.region] : []}
+                                    placeholder={data.address?.region ? 'Select zone' : 'First select region'}
                                 />
                             </div>
                             <div className="space-y-2">
-                                <FormInput
+                                <FormSelect
                                     label="Woreda"
                                     id="woreda"
                                     value={data.address?.woreda}
-                                    onChange={(e) => setData('address.woreda', e.target.value)}
-                                    placeholder="Enter woreda"
+                                    onChange={(v) => setData('address.woreda', v)}
+                                    options={data.address?.zone ? woredaOptionsMap[data.address.zone] : []}
+                                    placeholder={data.address?.zone ? 'Select woreda' : 'First select zone'}
                                 />
                             </div>
                             <div className="space-y-2">
@@ -495,11 +513,13 @@ export default function Edit() {
                 </Card>
                 {/* Actions */}
                 <div className="flex space-x-2">
-                    <Button type="submit" disabled={processing}>
+                    <Button className="cursor-pointer" type="submit" disabled={processing}>
                         Update
                     </Button>
                     <Link href={route('customers.index')}>
-                        <Button variant="secondary">Cancel</Button>
+                        <Button className="cursor-pointer" variant="secondary">
+                            Cancel
+                        </Button>
                     </Link>
                 </div>
             </form>

@@ -14,12 +14,16 @@ import {
     IdTypes,
     IncomeLevels,
     OccupationTypes,
+    regionOptions,
     ReligionTypes,
     TitleOptions,
+    woredaOptionsMap,
+    zoneOptionsMap,
 } from '@/types/customer';
 import { Head, useForm } from '@inertiajs/react';
 import { ArrowLeft, ArrowRight, Building, CheckCircle, FileText, MapPin, Phone, User } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 type FormInputProps = {
     label: string;
@@ -29,7 +33,7 @@ type FormInputProps = {
     placeholder?: string;
     error?: string;
     type?: string;
-    [key: string]: any;
+    [key: string]: unknown;
 };
 function FormInput({ label, id, value, onChange, placeholder, error, type = 'text', ...props }: FormInputProps) {
     return (
@@ -118,7 +122,7 @@ export default function Create() {
         contact: {
             phone: '',
             email: '',
-            mobile: '',
+            secondary_phone: '',
         },
         contact_persons: [],
     });
@@ -140,12 +144,13 @@ export default function Create() {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         setFormErrors({});
-        // console.log("data",    data);
         const result = customerSchema.safeParse(data);
-        // console.log("result", result);
         if (result.success) {
             setData(result.data);
-            post(route('customers.store'));
+            post(route('customers.store'), {
+                onSuccess: () => toast.success('Customer created successfully!'),
+                onError: () => toast.error('Failed to create customer.'),
+            });
         } else {
             // Flatten Zod errors for display
             const fieldErrors: Record<string, string> = {};
@@ -194,7 +199,7 @@ export default function Create() {
 
                 {/* 1: Personal Information */}
                 {step === 1 && (
-                    <Card>
+                    <Card className="border-none shadow-sm">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <User className="h-5 w-5" />
@@ -251,7 +256,7 @@ export default function Create() {
                                     error={formErrors.gender}
                                 />
                                 <FormInput
-                                    label="Date of Birth (YYYYMMDD)"
+                                    label="Date of Birth"
                                     id="date_of_birth"
                                     type="date"
                                     value={data.date_of_birth}
@@ -292,7 +297,7 @@ export default function Create() {
 
                 {/* 2: Identification */}
                 {step === 2 && (
-                    <Card>
+                    <Card className="border-none shadow-sm">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <FileText className="h-5 w-5" />
@@ -326,7 +331,7 @@ export default function Create() {
 
                 {/* 3: Contact Information */}
                 {step === 3 && (
-                    <Card>
+                    <Card className="border-none shadow-sm">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Phone className="h-5 w-5" />
@@ -347,8 +352,8 @@ export default function Create() {
                                 <FormInput
                                     label="Mobile Number"
                                     id="mobile"
-                                    value={data.contact?.mobile || ''}
-                                    onChange={(e) => setData('contact', { ...data.contact, mobile: e.target.value })}
+                                    value={data.contact?.secondary_phone || ''}
+                                    onChange={(e) => setData('contact', { ...data.contact, secondary_phone: e.target.value })}
                                     placeholder="Enter mobile number"
                                     error={formErrors['contact.mobile']}
                                 />
@@ -368,7 +373,7 @@ export default function Create() {
 
                 {/* 4: Address */}
                 {step === 4 && (
-                    <Card>
+                    <Card className="border-none shadow-sm">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <MapPin className="h-5 w-5" />
@@ -378,70 +383,77 @@ export default function Create() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <FormInput
+                                <FormSelect
                                     label="Region"
-                                    id="region"
-                                    value={data.address?.region || ''}
-                                    onChange={(e) => setData('address', { ...data.address, region: e.target.value })}
-                                    placeholder="Enter region"
+                                    id="address.region"
+                                    value={data.address?.region}
+                                    onChange={(val) => setData('address', { ...data.address, region: val, zone: '', woreda: '' })}
+                                    options={regionOptions}
+                                    placeholder="Select region"
                                     error={formErrors['address.region']}
                                 />
-                                <FormInput
+                                <FormSelect
                                     label="Zone"
-                                    id="zone"
-                                    value={data.address?.zone || ''}
-                                    onChange={(e) => setData('address', { ...data.address, zone: e.target.value })}
-                                    placeholder="Enter zone"
+                                    id="address.zone"
+                                    value={data.address?.zone}
+                                    onChange={(val) => setData('address', { ...data.address, zone: val, woreda: '' })}
+                                    options={data.address?.region ? zoneOptionsMap[data.address.region] : []}
+                                    placeholder={data.address?.region ? 'Select zone' : 'First select region'}
                                     error={formErrors['address.zone']}
                                 />
-                                <FormInput
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <FormSelect
                                     label="Woreda"
-                                    id="woreda"
-                                    value={data.address?.woreda || ''}
-                                    onChange={(e) => setData('address', { ...data.address, woreda: e.target.value })}
-                                    placeholder="Enter woreda"
+                                    id="address.woreda"
+                                    value={data.address?.woreda}
+                                    onChange={(val) => setData('address', { ...data.address, woreda: val })}
+                                    options={data.address?.zone ? woredaOptionsMap[data.address.zone] : []}
+                                    placeholder={data.address?.zone ? 'Select woreda' : 'First select zone'}
                                     error={formErrors['address.woreda']}
                                 />
                                 <FormInput
                                     label="City"
-                                    id="city"
-                                    value={data.address?.city || ''}
+                                    id="address.city"
+                                    value={data.address?.city}
                                     onChange={(e) => setData('address', { ...data.address, city: e.target.value })}
                                     placeholder="Enter city"
                                     error={formErrors['address.city']}
                                 />
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <FormInput
                                     label="Street Name"
-                                    id="street_name"
-                                    value={data.address?.street_name || ''}
+                                    id="address.street_name"
+                                    value={data.address?.street_name}
                                     onChange={(e) => setData('address', { ...data.address, street_name: e.target.value })}
                                     placeholder="Enter street name"
                                     error={formErrors['address.street_name']}
                                 />
                                 <FormInput
                                     label="Kebele"
-                                    id="kebele"
-                                    value={data.address?.kebele || ''}
+                                    id="address.kebele"
+                                    value={data.address?.kebele}
                                     onChange={(e) => setData('address', { ...data.address, kebele: e.target.value })}
                                     placeholder="Enter kebele"
                                     error={formErrors['address.kebele']}
                                 />
-                                <FormInput
-                                    label="House Number"
-                                    id="house_no"
-                                    value={data.address?.house_no || ''}
-                                    onChange={(e) => setData('address', { ...data.address, house_no: e.target.value })}
-                                    placeholder="Enter house number"
-                                    error={formErrors['address.house_no']}
-                                />
                             </div>
+                            <FormInput
+                                label="House Number"
+                                id="address.house_no"
+                                value={data.address?.house_no}
+                                onChange={(e) => setData('address', { ...data.address, house_no: e.target.value })}
+                                placeholder="Enter house number"
+                                error={formErrors['address.house_no']}
+                            />
                         </CardContent>
                     </Card>
                 )}
 
                 {/*5: Professional Information */}
                 {step === 5 && (
-                    <Card>
+                    <Card className="border-none shadow-sm">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Building className="h-5 w-5" />
@@ -500,7 +512,7 @@ export default function Create() {
 
                 {/*6: Contact Persons */}
                 {step === 6 && (
-                    <Card>
+                    <Card className="border-none shadow-sm">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">Contact Persons</CardTitle>
                             <CardDescription>Emergency or alternate contacts</CardDescription>

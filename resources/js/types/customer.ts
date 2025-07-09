@@ -11,6 +11,62 @@ export const AddressTypes = {
     HOUSE_NO: 'house_no',
 } as const;
 
+// Address dropdown data
+export const regionOptions = [
+    { label: 'Addis Ababa', value: 'addis_ababa' },
+    { label: 'Oromia', value: 'oromia' },
+];
+
+export const zoneOptionsMap: Record<string, { label: string; value: string }[]> = {
+    addis_ababa: [
+        { label: 'Bole', value: 'bole' },
+        { label: 'Lideta', value: 'lideta' },
+        { label: 'Yeka', value: 'yeka' },
+        { label: 'Addis Ketema', value: 'addis_ketema' },
+    ],
+    oromia: [
+        { label: 'East Shewa', value: 'east_shewa' },
+        { label: 'West Shewa', value: 'west_shewa' },
+        { label: 'Arsi', value: 'arsi' },
+        { label: 'Jimma', value: 'jimma' },
+    ],
+};
+
+export const woredaOptionsMap: Record<string, { label: string; value: string }[]> = {
+    bole: [
+        { label: 'Woreda 01', value: 'woreda_01' },
+        { label: 'Woreda 02', value: 'woreda_02' },
+    ],
+    lideta: [
+        { label: 'Woreda 03', value: 'woreda_03' },
+        { label: 'Woreda 04', value: 'woreda_04' },
+    ],
+    yeka: [
+        { label: 'Woreda 05', value: 'woreda_05' },
+        { label: 'Woreda 06', value: 'woreda_06' },
+    ],
+    addis_ketema: [
+        { label: 'Woreda 07', value: 'woreda_07' },
+        { label: 'Woreda 08', value: 'woreda_08' },
+    ],
+    east_shewa: [
+        { label: 'Woreda 09', value: 'woreda_09' },
+        { label: 'Woreda 10', value: 'woreda_10' },
+    ],
+    west_shewa: [
+        { label: 'Woreda 11', value: 'woreda_11' },
+        { label: 'Woreda 12', value: 'woreda_12' },
+    ],
+    arsi: [
+        { label: 'Woreda 13', value: 'woreda_13' },
+        { label: 'Woreda 14', value: 'woreda_14' },
+    ],
+    jimma: [
+        { label: 'Woreda 15', value: 'woreda_15' },
+        { label: 'Woreda 16', value: 'woreda_16' },
+    ],
+};
+
 // ID Types
 export const IdTypes = {
     PASSPORT: 'passport',
@@ -216,7 +272,7 @@ export const customerSchema = z.object({
         .object({
             phone: z.string().max(20).optional(),
             email: z.string().email().max(255).optional(),
-            mobile: z.string().max(20).optional(),
+            secondary_phone: z.string().max(20).optional(),
         })
         .optional(),
     contact_persons: z
@@ -273,15 +329,4 @@ export interface Customer {
     // customer_level?: keyof typeof CustomerLevels;
     // payment_type?: keyof typeof PaymentTypes;
     // account_status?: keyof typeof AccountStatuses;
-}
-
-export interface PaginationLink {
-    url: string | null;
-    label: string;
-    active: boolean;
-}
-
-export interface Pagination<T> {
-    data: T[];
-    links: PaginationLink[];
 }

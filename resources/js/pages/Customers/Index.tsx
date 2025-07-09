@@ -1,7 +1,7 @@
 import { CustomerTable } from '@/components/CustomerTable';
 import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem, type SharedData } from '@/types';
-import { Customer, Pagination, PaginationLink } from '@/types/customer';
+import { Pagination, PaginationLink, type BreadcrumbItem, type SharedData } from '@/types';
+import { Customer } from '@/types/customer';
 import { Head, Link, usePage } from '@inertiajs/react';
 
 export default function Index() {

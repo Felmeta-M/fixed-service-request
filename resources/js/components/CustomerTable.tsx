@@ -1,3 +1,14 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -6,6 +17,7 @@ import { Link, router } from '@inertiajs/react';
 import { ColumnDef, flexRender, getCoreRowModel, getFilteredRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import { MoreVertical, SquarePenIcon, Trash2Icon } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -51,44 +63,63 @@ export function CustomerTable({ data }: CustomerTableProps) {
                 cell: ({ row }) => {
                     const customer = row.original;
                     return (
-                        <div className="relative">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="flex h-8 w-8 p-0 data-[state=open]:bg-muted">
-                                        <MoreVertical className="h-4 w-4" />
-                                        <span className="sr-only">Open menu</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-[160px]">
-                                    <DropdownMenuItem
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            router.get(route('customers.edit', customer.id));
-                                        }}
-                                    >
-                                        Edit
-                                        <DropdownMenuShortcut>
-                                            <SquarePenIcon className="h-4 w-4" />
-                                        </DropdownMenuShortcut>
-                                    </DropdownMenuItem>
-                                    <>
-                                        <DropdownMenuSeparator />
+                        <div className="relative" onClick={(e) => e.stopPropagation()}>
+                            <AlertDialog>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="flex h-8 w-8 p-0 data-[state=open]:bg-muted">
+                                            <MoreVertical className="h-4 w-4" />
+                                            <span className="sr-only">Open menu</span>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-[160px]">
                                         <DropdownMenuItem
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                if (confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
-                                                    router.delete(`/customers/${customer.id}`);
-                                                }
+                                                router.get(route('customers.edit', customer.id));
                                             }}
+                                            className="cursor-pointer"
                                         >
-                                            Delete
+                                            Edit
                                             <DropdownMenuShortcut>
-                                                <Trash2Icon className="h-4 w-4 text-gray-900" />
+                                                <SquarePenIcon className="h-4 w-4" />
                                             </DropdownMenuShortcut>
                                         </DropdownMenuItem>
-                                    </>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                        <DropdownMenuSeparator />
+                                        <AlertDialogTrigger asChild>
+                                            <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
+                                                Delete
+                                                <DropdownMenuShortcut>
+                                                    <Trash2Icon className="h-4 w-4 text-red-600" />
+                                                </DropdownMenuShortcut>
+                                            </DropdownMenuItem>
+                                        </AlertDialogTrigger>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete the customer.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            className="cursor-pointer bg-red-600 hover:bg-red-500"
+                                            onClick={() => {
+                                                router.delete(`/customers/${customer.id}`, {
+                                                    onSuccess: () => toast.success('Customer deleted successfully!'),
+                                                    onError: () => toast.error('Failed to delete customer.'),
+                                                });
+                                            }}
+                                        >
+                                            Continue
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </div>
                     );
                 },

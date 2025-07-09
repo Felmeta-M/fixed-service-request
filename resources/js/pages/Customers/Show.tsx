@@ -57,7 +57,7 @@ export default function Show() {
 
     const mapContactTypeLabel = (type: string) => {
         const entry = Object.entries(ContactTypes).find(([, v]) => v === type);
-        return entry ? entry[0].replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : type;
+        return entry ? entry[0].replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : type;
     };
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -93,9 +93,9 @@ export default function Show() {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={handleDelete} className="text-red-600">
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Delete Customer
+                                    <DropdownMenuItem onClick={handleDelete} className="flex justify-between text-red-600">
+                                        Delete
+                                        <Trash2 className="mr-2 h-4 w-4 text-red-500" />
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -114,7 +114,7 @@ export default function Show() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
                                         <div>
                                             <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Full Name</label>
                                             <p className="text-lg font-semibold">{fullName}</p>
@@ -126,9 +126,10 @@ export default function Show() {
                                             </div>
                                         )}
                                     </div>
+                                    <hr />
 
                                     {customer.date_of_birth && (
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
                                             <div>
                                                 <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Date of Birth</label>
                                                 <p className="text-lg">{formatDate(customer.date_of_birth)}</p>
@@ -139,28 +140,29 @@ export default function Show() {
                                             </div>
                                         </div>
                                     )}
+                                    <hr />
 
-                                    {customer.place_of_birth && (
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Place of Birth</label>
-                                            <p className="text-lg">{customer.place_of_birth}</p>
-                                        </div>
-                                    )}
-
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
                                         {customer.nationality && (
                                             <div>
                                                 <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Nationality</label>
                                                 <p className="text-lg">{customer.nationality}</p>
                                             </div>
                                         )}
-                                        {customer.primary_language && (
+                                        {customer.place_of_birth && (
                                             <div>
-                                                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Primary Language</label>
-                                                <p className="text-lg">{customer.primary_language}</p>
+                                                <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Place of Birth</label>
+                                                <p className="text-lg">{customer.place_of_birth}</p>
                                             </div>
                                         )}
                                     </div>
+                                    <hr />
+                                    {customer.primary_language && (
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Primary Language</label>
+                                            <p className="text-lg">{customer.primary_language}</p>
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
 
@@ -172,7 +174,7 @@ export default function Show() {
                                         Contact Information
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="space-y-4">
+                                <CardContent className="grid grid-cols-2 space-y-4">
                                     {customer.contact?.phone && (
                                         <div className="flex items-center gap-3">
                                             <PhoneIcon className="h-5 w-5 text-gray-400" />
@@ -202,7 +204,6 @@ export default function Show() {
                                     )}
                                 </CardContent>
                             </Card>
-                            
 
                             {/* Address */}
                             {customer.address && Object.values(customer.address).some(Boolean) && (
@@ -213,13 +214,13 @@ export default function Show() {
                                             Address
                                         </CardTitle>
                                     </CardHeader>
-                                    
+
                                     <CardContent>
                                         <div className="flex items-start gap-3">
                                             <MapPinIcon className="mt-1 h-5 w-5 text-gray-400" />
                                             <div className="space-y-1">
                                                 {customer.address.city && <p className="text-lg">{customer.address.city}</p>}
-                                                
+
                                                 <p className="text-lg">
                                                     {[customer.address.city, customer.address.woreda, customer.address.zone]
                                                         .filter(Boolean)
@@ -242,7 +243,7 @@ export default function Show() {
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
                                             {customer.occupation && (
                                                 <div>
                                                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Occupation</label>
@@ -257,7 +258,7 @@ export default function Show() {
                                             )}
                                         </div>
 
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
                                             {customer.religion && (
                                                 <div>
                                                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Religion</label>
@@ -267,7 +268,9 @@ export default function Show() {
                                             {customer.income && (
                                                 <div>
                                                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Income Level</label>
-                                                    <Badge variant="secondary">{customer.income}</Badge>
+                                                    <p>
+                                                        <Badge variant="secondary">{customer.income}</Badge>
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>
@@ -285,7 +288,7 @@ export default function Show() {
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
                                             {customer.identification_type && (
                                                 <div>
                                                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">ID Type</label>
@@ -332,17 +335,23 @@ export default function Show() {
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         {customer.contact_persons.map((person, index) => (
-                                            <div key={index} className="rounded-lg border p-4 bg-gray-50 dark:bg-gray-900/30 flex flex-col gap-2">
+                                            <div key={index} className="flex flex-col gap-2 rounded-lg border bg-gray-50 p-4 dark:bg-gray-900/30">
                                                 <div className="flex items-center gap-2">
-                                                    <Badge variant="secondary" className="capitalize">{mapContactTypeLabel(person.type)}</Badge>
-                                                    <span className="font-semibold text-lg">{person.name}</span>
+                                                    <Badge variant="secondary" className="capitalize">
+                                                        {mapContactTypeLabel(person.type)}
+                                                    </Badge>
+                                                    <span className="text-lg font-semibold">{person.name}</span>
                                                 </div>
                                                 <div className="flex flex-wrap gap-4 text-sm text-gray-700 dark:text-gray-300">
                                                     {person.phone && (
-                                                        <span className="flex items-center gap-1"><Phone className="h-4 w-4" /> {person.phone}</span>
+                                                        <span className="flex items-center gap-1">
+                                                            <Phone className="h-4 w-4" /> {person.phone}
+                                                        </span>
                                                     )}
                                                     {person.relationship && (
-                                                        <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {person.relationship}</span>
+                                                        <span className="flex items-center gap-1">
+                                                            <Users className="h-4 w-4" /> {person.relationship}
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
@@ -357,17 +366,23 @@ export default function Show() {
                                     <CardTitle>System Information</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
-                                    <div>
+                                    <div className="flex justify-between">
                                         <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Customer ID</label>
                                         <p className="font-mono text-sm">{customer.id}</p>
                                     </div>
-                                    <div>
+                                    <hr />
+                                    <div className="flex justify-between">
                                         <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Created</label>
-                                        <p className="text-sm">{'created_at' in customer && customer.created_at ? formatDate(customer.created_at) : '-'}</p>
+                                        <p className="text-sm">
+                                            {'created_at' in customer && customer.created_at ? formatDate(customer.created_at) : '-'}
+                                        </p>
                                     </div>
-                                    <div>
+                                    <hr />
+                                    <div className="flex justify-between">
                                         <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</label>
-                                        <p className="text-sm">{'updated_at' in customer && customer.updated_at ? formatDate(customer.updated_at) : '-'}</p>
+                                        <p className="text-sm">
+                                            {'updated_at' in customer && customer.updated_at ? formatDate(customer.updated_at) : '-'}
+                                        </p>
                                     </div>
                                 </CardContent>
                             </Card>

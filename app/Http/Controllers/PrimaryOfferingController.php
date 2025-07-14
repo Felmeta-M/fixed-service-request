@@ -14,7 +14,7 @@ class PrimaryOfferingController extends Controller
 
     public function index()
     {
-        return Inertia::render('Huawei/PrimaryOffering/Index');
+        return Inertia::render('PrimaryOffering/Index');
     }
 
     public function store(Request $request)
@@ -29,7 +29,7 @@ class PrimaryOfferingController extends Controller
             return back()->with('error', 'No offering found or API failed.');
         }
 
-        return Inertia::render('Huawei/PrimaryOffering/Show', [
+        return Inertia::render('PrimaryOffering/Show', [
             'offering' => $offering,
         ]);
     }
@@ -42,7 +42,7 @@ class PrimaryOfferingController extends Controller
             return back()->with('error', 'No offering found or API failed.');
         }
 
-        return Inertia::render('Huawei/PrimaryOffering/Show', [
+        return Inertia::render('PrimaryOffering/Show', [
             'offering' => $offering,
         ]);
     }

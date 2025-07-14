@@ -21,7 +21,7 @@ class GetPrimaryOffering
             return null;
         }
 
-        return $this->parseAndStore($response->body());
+        return $this->parseResponse($response->body());
     }
 
     public static function xmlBuildQueryAvailablePrimaryOffering(string $objectId): string
@@ -53,7 +53,7 @@ class GetPrimaryOffering
 XML;
     }
 
-    private function parseResponse(string $xml): ?array
+    protected function parseResponse(string $xml): ?array
     {
         $xmlObj = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
         $xmlObj->registerXPathNamespace('soapenv', 'http://schemas.xmlsoap.org/soap/envelope/');

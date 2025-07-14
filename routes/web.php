@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\PrimaryOfferingController;
 use App\Http\Controllers\ResourceCheckController;
 use App\Http\Controllers\SubscriberController;
 use App\Http\Controllers\SurveyRequestController;
@@ -20,6 +21,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('survey-requests', SurveyRequestController::class);
     Route::resource('subscribers', SubscriberController::class);
     Route::resource('resource-checks', ResourceCheckController::class);
+
+    Route::prefix('primary-offerings')->group(function () {
+        Route::get('/', [PrimaryOfferingController::class, 'index'])->name('offerings.index');
+        Route::post('/', [PrimaryOfferingController::class, 'store'])->name('offerings.store');
+        Route::get('/{objectId}', [PrimaryOfferingController::class, 'show'])->name('offerings.show');
+    });
 });
 
 require __DIR__ . '/settings.php';

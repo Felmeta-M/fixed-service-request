@@ -30,10 +30,7 @@ class CustomerController extends Controller
         DB::transaction(function ($request) {
             //TODO: handle by transaction
             //third party api
-            $this->customerService->createCustomer($request->validated());
-
-            // local database
-            Customer::create($request->validated());
+            return $this->customerService->createCustomer($request->validated());
         });
 
         return redirect()->route('customers.index')->with('success', 'Customer created successfully.');

@@ -123,4 +123,11 @@ return [
         'tenant_id' => env('GET_ACCOUNT_LIST_TENANT_ID', 101),
     ],
 
+    'primary_offers' => [
+        'url' => env('PRIMARY_OFFERS_URL'),
+        'access_user' => env('PRIMARY_OFFERS_USER'),
+        'access_pwd' => env('PRIMARY_OFFERS_PASS'),
+        'channel_id' => env('PRIMARY_OFFERS_CHANNEL_ID'),
+    ],
+
 ];

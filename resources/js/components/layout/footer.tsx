@@ -3,7 +3,7 @@ import { Facebook, Linkedin, Mail, MapPin, Network, Phone, Twitter } from 'lucid
 
 export function Footer() {
     return (
-        <footer className="mt-8 bg-primary text-white sm:px-8">
+        <footer className="bg-primary text-white sm:px-8">
             <div className="container mx-auto px-4 py-12">
                 <div className="grid gap-8 md:grid-cols-4">
                     {/* Brand Section */}

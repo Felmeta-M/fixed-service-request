@@ -70,8 +70,8 @@ return [
         'technical_channel_id' => env('SURVEY_TECHNICAL_CHANNEL_ID'),
     ],
 
-    'subscriber' => [
-        'endpoint' => env('SUBSCRIBER_BSS_ENDPOINT'),
+    'subscriber' => [ 
+        'endpoint' => env('SUBSCRIBER_BSS_ENDPOINT',"REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF"),
         'access_user' => env('SUBSCRIBER_BSS_USERNAME'),
         'access_pwd' => env('SUBSCRIBER_BSS_PASSWORD'),
         'operator_id' => env('SUBSCRIBER_BSS_OPERATOR_ID'),

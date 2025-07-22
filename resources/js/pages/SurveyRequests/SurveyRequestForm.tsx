@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Customer } from '@/types/customer';
 import { SurveyRequest, SurveyRequestFormValues } from '@/types/survey';
-import { useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { useForm, usePage } from '@inertiajs/react';
+import { FormEventHandler, useEffect } from 'react';
 
 type SurveyRequestFormProps = {
     surveyRequest?: SurveyRequest;
@@ -15,6 +15,9 @@ type SurveyRequestFormProps = {
 };
 
 export default function SurveyRequestForm({ surveyRequest, customers }: SurveyRequestFormProps) {
+    const { props } = usePage();
+    const queryParams = new URLSearchParams(window.location.search);
+    const servicesFromQuery = queryParams.get('services')?.split(',') || [];
     const { data, setData, post, put, errors, processing } = useForm<SurveyRequestFormValues>('createSurvey', {
         customer_id: surveyRequest?.customer_id || undefined,
         customer_code: surveyRequest?.customer_code || '',
@@ -30,8 +33,21 @@ export default function SurveyRequestForm({ surveyRequest, customers }: SurveyRe
         sec_contact_no: surveyRequest?.sec_contact_no || '',
         sec_contact_email: surveyRequest?.sec_contact_email || '',
         status: surveyRequest?.status || 'Pending',
-        completed_date: surveyRequest?.completed_date || '',
+        completed_date: surveyRequest?.completed_date || new Date().toISOString(),
+        services: surveyRequest?.services || servicesFromQuery,
     });
+    // Set default survey type based on services
+    useEffect(() => {
+        if (servicesFromQuery.length > 0 && !surveyRequest) {
+            if (servicesFromQuery.includes('COMBO')) {
+                setData('survey_type', 'Combo Installation');
+            } else if (servicesFromQuery.includes('FL')) {
+                setData('survey_type', 'FL Installation');
+            } else if (servicesFromQuery.includes('FBB')) {
+                setData('survey_type', 'FBB Installation');
+            }
+        }
+    }, [servicesFromQuery, surveyRequest]);
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -44,7 +60,7 @@ export default function SurveyRequestForm({ surveyRequest, customers }: SurveyRe
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 {/*Main Details */}
                 <div className="lg:col-span-2">
                     <Card className="shadom-sm border-none">
@@ -182,11 +198,16 @@ export default function SurveyRequestForm({ surveyRequest, customers }: SurveyRe
                                 <InputError message={errors.sec_contact_email} className="mt-2" />
                             </div>
                         </CardContent>
+                        <CardFooter>
+                            <Button type="submit" disabled={processing} className="cursor-pointer">
+                                {surveyRequest ? 'Update Request' : 'Create Request'}
+                            </Button>
+                        </CardFooter>
                     </Card>
                 </div>
 
                 {/* Status and Actions */}
-                <div className="lg:col-span-1">
+                {/* <div className="lg:col-span-1">
                     <Card className="border-none shadow-sm">
                         <CardHeader>
                             <CardTitle>Status & Actions</CardTitle>
@@ -224,7 +245,7 @@ export default function SurveyRequestForm({ surveyRequest, customers }: SurveyRe
                             </Button>
                         </CardFooter>
                     </Card>
-                </div>
+                </div> */}
             </div>
         </form>
     );

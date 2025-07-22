@@ -1,38 +1,36 @@
-import { Badge } from '@/components/ui/badge';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import AppLayout from '@/layouts/app-layout';
+import CustomerLayout from '@/layouts/customer-layout';
 import { BreadcrumbItem } from '@/types';
-import { type Customer, ContactTypes } from '@/types/customer';
-import { Head, router, usePage } from '@inertiajs/react';
-import {
-    Building,
-    Edit,
-    FileText,
-    Mail as MailIcon,
-    MapPin,
-    MapPin as MapPinIcon,
-    MoreHorizontal,
-    Phone,
-    Phone as PhoneIcon,
-    Trash2,
-    User,
-    Users,
-} from 'lucide-react';
+import { type Customer } from '@/types/customer';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Edit, History, MoreHorizontal, Trash2, User } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Show() {
     const {
         props: { customer },
     } = usePage<{ customer: Customer }>();
 
-    const fullName = `${customer.first_name} ${customer.middle_name ? customer.middle_name + ' ' : ''}${customer.last_name}`;
+    const fullName = `${customer.first_name} ${customer.middle_name ? customer.middle_name + ' ' : ''}${customer.last_name} ${customer.contact}`;
 
-    const handleDelete = () => {
-        if (confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
-            router.delete(`/customers/${customer.id}`);
-        }
-    };
+    // const handleDelete = () => {
+    //     if (confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+    //         router.delete(`/customers/${customer.id}`);
+    //     }
+    // };
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -65,15 +63,16 @@ export default function Show() {
         { title: `${customer.first_name} ${customer.last_name}`, href: `/customers/${customer.id}` },
     ];
 
+    const surveyRequests: [] = customer || [];
+
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <CustomerLayout>
             <Head title={`${customer.first_name} ${customer.last_name}`} />
             <div className="space-y-6 p-6"></div>
             <div>
                 <Head title={`Customer - ${fullName}`} />
 
                 <div className="space-y-6">
-                    {/* Header */}
                     <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-4">
                             <div>
@@ -81,32 +80,98 @@ export default function Show() {
                                 {customer.title && <p className="text-gray-600 dark:text-gray-400">{customer.title}</p>}
                             </div>
                         </div>
+
                         <div className="flex items-center gap-2">
-                            <Button variant="outline" onClick={() => router.visit(`/customers/${customer.id}/edit`)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Customer
+                            <Button className="h-8 cursor-pointer" onClick={() => router.visit('/survey-requests/create')}>
+                                Add Service
                             </Button>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={handleDelete} className="flex justify-between text-red-600">
-                                        Delete
-                                        <Trash2 className="mr-2 h-4 w-4 text-red-500" />
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <AlertDialog>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" size="sm">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem
+                                            className="flex justify-between"
+                                            onClick={() => router.visit(`/customers/${customer.id}/edit`)}
+                                        >
+                                            Edit
+                                            <Edit className="ml-2 h-4 w-4" />
+                                        </DropdownMenuItem>
+                                        <AlertDialogTrigger asChild>
+                                            <DropdownMenuItem className="flex justify-between text-red-600 focus:text-red-600">
+                                                Delete
+                                                <Trash2 className="ml-2 h-4 w-4 text-red-500" />
+                                            </DropdownMenuItem>
+                                        </AlertDialogTrigger>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete the customer record.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            className="cursor-pointer bg-red-600 hover:bg-red-500"
+                                            onClick={() => {
+                                                router.delete(`/customers/${customer.id}`, {
+                                                    onSuccess: () => toast.success('Customer deleted successfully!'),
+                                                    onError: () => toast.error('Failed to delete customer.'),
+                                                });
+                                            }}
+                                        >
+                                            Continue
+                                        </AlertDialogAction>
+                                        {/* <AlertDialogAction className="bg-red-600 hover:bg-red-500" onClick={handleDelete}>
+                                            Continue
+                                        </AlertDialogAction> */}
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                         {/* Main Information */}
                         <div className="space-y-6 lg:col-span-2">
-                            {/* Personal Information */}
+                            {/* Previous Services Section */}
                             <Card className="border-none shadow-sm">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <History className="h-5 w-5" />
+                                        Your Services
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="mb-6">
+                                        {surveyRequests.length > 0 ? (
+                                            <ul className="mt-4 space-y-2">
+                                                {surveyRequests.map((service: any) => (
+                                                    <li key={service.id} className="flex items-center justify-between rounded border p-2">
+                                                        <span>
+                                                            {service.survey_request_number} - {service.survey_type} ({service.status})
+                                                        </span>
+                                                        <Link href={`/survey-requests/${service.id}`} className="text-sm text-blue-600 underline">
+                                                            View
+                                                        </Link>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <div className="mt-24 text-gray-500">You have no services.</div>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                            {/* Personal Information */}
+                            {/* <Card className="border-none shadow-sm">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         <User className="h-5 w-5" />
@@ -164,10 +229,10 @@ export default function Show() {
                                         </div>
                                     )}
                                 </CardContent>
-                            </Card>
+                            </Card> */}
 
                             {/* Contact Information */}
-                            <Card className="border-none shadow-sm">
+                            {/* <Card className="border-none shadow-sm">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
                                         <Phone className="h-5 w-5" />
@@ -203,10 +268,10 @@ export default function Show() {
                                         </div>
                                     )}
                                 </CardContent>
-                            </Card>
+                            </Card> */}
 
                             {/* Address */}
-                            {customer.address && Object.values(customer.address).some(Boolean) && (
+                            {/* {customer.address && Object.values(customer.address).some(Boolean) && (
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
                                         <CardTitle className="flex items-center gap-2">
@@ -231,10 +296,10 @@ export default function Show() {
                                         </div>
                                     </CardContent>
                                 </Card>
-                            )}
+                            )} */}
 
                             {/* Professional Information */}
-                            {(customer.occupation || customer.education || customer.religion || customer.income) && (
+                            {/* {(customer.occupation || customer.education || customer.religion || customer.income) && (
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
                                         <CardTitle className="flex items-center gap-2">
@@ -276,10 +341,10 @@ export default function Show() {
                                         </div>
                                     </CardContent>
                                 </Card>
-                            )}
+                            )} */}
 
                             {/* Identification */}
-                            {(customer.identification_type || customer.identification_number) && (
+                            {/* {(customer.identification_type || customer.identification_number) && (
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
                                         <CardTitle className="flex items-center gap-2">
@@ -304,7 +369,7 @@ export default function Show() {
                                         </div>
                                     </CardContent>
                                 </Card>
-                            )}
+                            )} */}
                         </div>
 
                         {/* Sidebar */}
@@ -324,7 +389,7 @@ export default function Show() {
                                 </CardContent>
                             </Card>
 
-                            {/* Contact Persons */}
+                            {/* Contact Persons
                             {customer.contact_persons && customer.contact_persons.length > 0 && (
                                 <Card className="border-none shadow-sm">
                                     <CardHeader>
@@ -358,9 +423,9 @@ export default function Show() {
                                         ))}
                                     </CardContent>
                                 </Card>
-                            )}
+                            )} */}
 
-                            {/* System Information */}
+                            {/* System Information
                             <Card className="border-none shadow-sm">
                                 <CardHeader>
                                     <CardTitle>System Information</CardTitle>
@@ -385,11 +450,11 @@ export default function Show() {
                                         </p>
                                     </div>
                                 </CardContent>
-                            </Card>
+                            </Card> */}
                         </div>
                     </div>
                 </div>
             </div>
-        </AppLayout>
+        </CustomerLayout>
     );
 }

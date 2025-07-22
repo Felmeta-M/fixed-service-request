@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, CheckSquare, Folder, LayoutGrid, Users } from 'lucide-react';
+import { BookOpen, BoxesIcon, CheckSquare, Folder, LayoutGrid, UserPlus, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -22,6 +22,16 @@ const mainNavItems: NavItem[] = [
         title: 'Survey Requests',
         href: '/survey-requests',
         icon: CheckSquare,
+    },
+    {
+        title: 'Subscribers',
+        href: '/subscribers',
+        icon: UserPlus,
+    },
+    {
+        title: 'Resource Checks',
+        href: '/resource-checks',
+        icon: BoxesIcon,
     },
 ];
 

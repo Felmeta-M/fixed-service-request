@@ -114,13 +114,18 @@ export const PriorityLevels = {
 } as const;
 
 // Contact Types
-export const ContactTypes = {
-    FATHER: 'father',
-    MOTHER: 'mother',
-    SPOUSE: 'spouse',
-    SECOND_CONTACT: 'second_contact',
-    ONESELF: 'oneself',
-    OTHER: 'other',
+// export const ContactTypes = {
+//     FATHER: 'father',
+//     MOTHER: 'mother',
+//     SPOUSE: 'spouse',
+//     SECOND_CONTACT: 'second_contact',
+//     ONESELF: 'oneself',
+//     OTHER: 'other',
+// } as const;
+
+export const NotificationModes = {
+    SMS: 'sms',
+    EMAIL: 'email',
 } as const;
 
 // Bill Medium Codes
@@ -270,18 +275,25 @@ export const customerSchema = z.object({
         .partial(),
     contact: z
         .object({
-            phone: z.string().max(20).optional(),
+            notification_mode: z.enum([NotificationModes.SMS, NotificationModes.EMAIL]).optional(),
+            mobile_no: z.string().max(20).optional(),
             email: z.string().email().max(255).optional(),
-            secondary_phone: z.string().max(20).optional(),
+            office_no: z.string().max(20).optional(),
+            home_no: z.string().max(20).optional(),
+            fax_no: z.string().max(20).optional(),
         })
         .optional(),
     contact_persons: z
         .array(
             z.object({
-                type: z.nativeEnum(ContactTypes),
-                name: z.string().max(255),
-                phone: z.string().max(20),
-                relationship: z.string().max(100).optional(),
+                first_name: z.string().max(255),
+                middle_name: z.string().max(255),
+                last_name: z.string().max(255),
+                title: z.enum([TitleOptions.MR, TitleOptions.MRS, TitleOptions.MS]).optional(),
+                home_no: z.string().max(128).optional(),
+                office_no: z.string().max(128).optional(),
+                mobile_no: z.string().max(20),
+                fax_no: z.string().max(20).optional(),
             }),
         )
         .optional(),
@@ -314,16 +326,23 @@ export interface Customer {
     address?: {
         [key in keyof typeof AddressTypes]?: string;
     };
-    contact?: {
-        phone?: string;
+    contact?: Array<{
+        mobile_no?: string;
         email?: string;
-        secondary_phone?: string;
-    };
+        office_no?: string;
+        home_no?: string;
+        fax_no?: string;
+        notification_mode?: keyof typeof NotificationModes;
+    }>;
     contact_persons?: Array<{
-        type: keyof typeof ContactTypes;
-        name: string;
-        phone: string;
-        relationship?: string;
+        title?: keyof typeof TitleOptions;
+        first_name: string;
+        middle_name?: string;
+        last_name: string;
+        mobile_no: string;
+        office_no?: string;
+        home_no?: string;
+        fax_no?: string;
     }>;
     // customer_type: keyof typeof CustomerTypes;
     // customer_level?: keyof typeof CustomerLevels;

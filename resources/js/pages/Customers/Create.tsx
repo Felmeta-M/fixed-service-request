@@ -3,10 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import AppLayout from '@/layouts/app-layout';
+import CustomerLayout from '@/layouts/customer-layout';
 import { type BreadcrumbItem } from '@/types';
 import {
-    ContactTypes,
     CustomerFormValues,
     customerSchema,
     EducationLevels,
@@ -88,8 +87,8 @@ function FormSelect({ label, id, value, onChange, options, placeholder, error }:
 const mapEnumToOptions = (enumObj: Record<string, string>) =>
     Object.values(enumObj).map((value) => ({ label: value.charAt(0).toUpperCase() + value.slice(1).replace('_', ' '), value }));
 
-const mapContactTypeOptions = () =>
-    Object.values(ContactTypes).map((value) => ({ label: value.charAt(0).toUpperCase() + value.slice(1).replace('_', ' '), value }));
+// const mapContactTypeOptions = () =>
+//     Object.values(ContactTypes).map((value) => ({ label: value.charAt(0).toUpperCase() + value.slice(1).replace('_', ' '), value }));
 
 export default function Create() {
     const [step, setStep] = useState(1);
@@ -119,32 +118,36 @@ export default function Create() {
             kebele: '',
             house_no: '',
         },
-        contact: {
-            phone: '',
-            email: '',
-            secondary_phone: '',
-        },
+        contact: [],
         contact_persons: [],
     });
 
+    const [contact, setContact] = useState(data.contact || []);
     const [contactPersons, setContactPersons] = useState(data.contact_persons || []);
     useEffect(() => {
         setData('contact_persons', contactPersons);
     }, [contactPersons, setData]);
-    const addContactPerson = () => setContactPersons((prev) => [...prev, { type: ContactTypes.OTHER, name: '', phone: '', relationship: '' }]);
+    const addContactPerson = () =>
+        setContactPersons((prev) => [
+            ...prev,
+            { first_name: '', middle_name: '', last_name: '', title: undefined, mobile_no: '', office_no: '', home_no: '', fax_no: '' },
+        ]);
     const removeContactPerson = (i: number) => setContactPersons((prev) => prev.filter((_, idx) => idx !== i));
     const updateContactPerson = (i: number, field: string, val: string) =>
         setContactPersons((prev) => prev.map((p, idx) => (idx === i ? { ...p, [field]: val } : p)));
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Customers', href: '/customers' },
-        { title: 'Create', href: '/customers/create' },
+        { title: 'Create', href: '/create/customers' },
     ];
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         setFormErrors({});
+        console.log('Submitting data:', data);
+        console.log('type of contact:', typeof data.contact);
         const result = customerSchema.safeParse(data);
+        console.log('Validation result:', result);
         if (result.success) {
             setData(result.data);
             post(route('customers.store'), {
@@ -162,7 +165,7 @@ export default function Create() {
     };
 
     const handleNext = () => {
-        if (step < 6) setStep(step + 1);
+        if (step < 4) setStep(step + 1);
     };
 
     const handleBack = () => {
@@ -170,8 +173,8 @@ export default function Create() {
     };
 
     const renderStepIndicator = () => (
-        <div className="mb-8 flex items-center justify-center space-x-4">
-            {[1, 2, 3, 4, 5, 6].map((stepNumber) => (
+        <div className="mb-6 flex items-center justify-center space-x-4">
+            {[1, 2, 3, 4].map((stepNumber) => (
                 <div key={stepNumber} className="flex items-center">
                     <div
                         className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
@@ -180,19 +183,19 @@ export default function Create() {
                     >
                         {step > stepNumber ? <CheckCircle className="h-4 w-4" /> : stepNumber}
                     </div>
-                    {stepNumber < 6 && <div className={`mx-2 h-0.5 sm:w-16 ${step > stepNumber ? 'bg-primary' : 'bg-gray-200'} `} />}
+                    {stepNumber < 4 && <div className={`mx-2 h-0.5 sm:w-24 ${step > stepNumber ? 'bg-primary' : 'bg-gray-200'} `} />}
                 </div>
             ))}
         </div>
     );
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <CustomerLayout>
             <Head title="Create Customer" />
-            <div className="mx-auto space-y-6">
+            <div className="mx-auto max-w-2xl space-y-4 pb-1">
                 <div className="p-1">
-                    <h1 className="text-3xl font-bold text-gray-900">Create New Customer</h1>
-                    <p className="mt-1 text-gray-600">Fill in the customer details step by step</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Create New Customer</h1>
+                    <p className="mt-1 text-gray-600">Fill in the details step by step</p>
                 </div>
 
                 {renderStepIndicator()}
@@ -297,82 +300,110 @@ export default function Create() {
 
                 {/* 2: Identification */}
                 {step === 2 && (
-                    <Card className="border-none shadow-sm">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <FileText className="h-5 w-5" />
-                                Identification
-                            </CardTitle>
-                            <CardDescription>Identification documents and numbers</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <FormSelect
-                                    label="Identification Type"
-                                    id="identification_type"
-                                    value={data.identification_type}
-                                    onChange={(value) => setData('identification_type', value as (typeof IdTypes)[keyof typeof IdTypes] | undefined)}
-                                    options={mapEnumToOptions(IdTypes)}
-                                    placeholder="Select ID type"
-                                    error={formErrors.identification_type}
-                                />
-                                <FormInput
-                                    label="Identification Number"
-                                    id="identification_number"
-                                    value={data.identification_number}
-                                    onChange={(e) => setData('identification_number', e.target.value)}
-                                    placeholder="Enter ID number"
-                                    error={formErrors.identification_number}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* 3: Contact Information */}
-                {step === 3 && (
-                    <Card className="border-none shadow-sm">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Phone className="h-5 w-5" />
-                                Contact Information
-                            </CardTitle>
-                            <CardDescription>Phone numbers and email addresses</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <FormInput
-                                    label="Phone Number"
-                                    id="phone"
-                                    value={data.contact?.phone || ''}
-                                    onChange={(e) => setData('contact', { ...data.contact, phone: e.target.value })}
-                                    placeholder="Enter phone number"
-                                    error={formErrors['contact.phone']}
-                                />
-                                <FormInput
-                                    label="Mobile Number"
-                                    id="mobile"
-                                    value={data.contact?.secondary_phone || ''}
-                                    onChange={(e) => setData('contact', { ...data.contact, secondary_phone: e.target.value })}
-                                    placeholder="Enter mobile number"
-                                    error={formErrors['contact.mobile']}
-                                />
-                            </div>
-                            <FormInput
-                                label="Email Address"
-                                id="email"
-                                type="email"
-                                value={data.contact?.email || ''}
-                                onChange={(e) => setData('contact', { ...data.contact, email: e.target.value })}
-                                placeholder="Enter email address"
-                                error={formErrors['contact.email']}
-                            />
-                        </CardContent>
-                    </Card>
+                    <>
+                        <Card className="border-none shadow-sm">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileText className="h-5 w-5" />
+                                    Identification
+                                </CardTitle>
+                                <CardDescription>Identification documents and numbers</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <FormSelect
+                                        label="Identification Type"
+                                        id="identification_type"
+                                        value={data.identification_type}
+                                        onChange={(value) =>
+                                            setData('identification_type', value as (typeof IdTypes)[keyof typeof IdTypes] | undefined)
+                                        }
+                                        options={mapEnumToOptions(IdTypes)}
+                                        placeholder="Select ID type"
+                                        error={formErrors.identification_type}
+                                    />
+                                    <FormInput
+                                        label="Identification Number"
+                                        id="identification_number"
+                                        value={data.identification_number}
+                                        onChange={(e) => setData('identification_number', e.target.value)}
+                                        placeholder="Enter ID number"
+                                        error={formErrors.identification_number}
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card className="border-none shadow-sm">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Phone className="h-5 w-5" />
+                                    Contact Information
+                                </CardTitle>
+                                <CardDescription>Phone numbers and email addresses</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <FormSelect
+                                        label="Notification Mode"
+                                        id="contact.notification_mode"
+                                        value={data.contact?.notification_mode}
+                                        onChange={(val) => setData('contact', { ...data.contact, notification_mode: val })}
+                                        options={mapEnumToOptions({
+                                            SMS: 'sms',
+                                            EMAIL: 'email',
+                                        })}
+                                        placeholder="Select notification mode"
+                                        error={formErrors['contact.notification_mode']}
+                                    />
+                                    <FormInput
+                                        label="Phone Number"
+                                        id="phone"
+                                        value={data.contact?.mobile_no || ''}
+                                        onChange={(e) => setData('contact', { ...data.contact, mobile_no: e.target.value })}
+                                        placeholder="Enter mobile number"
+                                        error={formErrors['contact.mobile_no']}
+                                    />
+                                    <FormInput
+                                        label="Office Number"
+                                        id="office"
+                                        value={data.contact?.office_no || ''}
+                                        onChange={(e) => setData('contact', { ...data.contact, office_no: e.target.value })}
+                                        placeholder="Enter office number"
+                                        error={formErrors['contact.office_no']}
+                                    />
+                                    <FormInput
+                                        label="Email Address"
+                                        id="email"
+                                        type="email"
+                                        value={data.contact?.email || ''}
+                                        onChange={(e) => setData('contact', { ...data.contact, email: e.target.value })}
+                                        placeholder="Enter email address"
+                                        error={formErrors['contact.email']}
+                                    />
+                                    <FormInput
+                                        label="Home Number"
+                                        id="home"
+                                        value={data.contact?.home_no || ''}
+                                        onChange={(e) => setData('contact', { ...data.contact, home_no: e.target.value })}
+                                        placeholder="Enter home number"
+                                        error={formErrors['contact.home_no']}
+                                    />
+                                    <FormInput
+                                        label="Fax Number"
+                                        id="fax_no"
+                                        value={data.contact?.fax_no || ''}
+                                        onChange={(e) => setData('contact', { ...data.contact, fax_no: e.target.value })}
+                                        placeholder="Enter fax number"
+                                        error={formErrors['contact.fax_no']}
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </>
                 )}
 
                 {/* 4: Address */}
-                {step === 4 && (
+                {step === 3 && (
                     <Card className="border-none shadow-sm">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
@@ -452,120 +483,151 @@ export default function Create() {
                 )}
 
                 {/*5: Professional Information */}
-                {step === 5 && (
-                    <Card className="border-none shadow-sm">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Building className="h-5 w-5" />
-                                Professional Information
-                            </CardTitle>
-                            <CardDescription>Work and educational background</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <FormSelect
-                                    label="Occupation"
-                                    id="occupation"
-                                    value={data.occupation}
-                                    onChange={(value) =>
-                                        setData('occupation', value as (typeof OccupationTypes)[keyof typeof OccupationTypes] | undefined)
-                                    }
-                                    options={mapEnumToOptions(OccupationTypes)}
-                                    placeholder="Select occupation"
-                                    error={formErrors.occupation}
-                                />
-                                <FormSelect
-                                    label="Education"
-                                    id="education"
-                                    value={data.education}
-                                    onChange={(value) =>
-                                        setData('education', value as (typeof EducationLevels)[keyof typeof EducationLevels] | undefined)
-                                    }
-                                    options={mapEnumToOptions(EducationLevels)}
-                                    placeholder="Select education level"
-                                    error={formErrors.education}
-                                />
-                            </div>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <FormSelect
-                                    label="Religion"
-                                    id="religion"
-                                    value={data.religion}
-                                    onChange={(value) => setData('religion', value as (typeof ReligionTypes)[keyof typeof ReligionTypes] | undefined)}
-                                    options={mapEnumToOptions(ReligionTypes)}
-                                    placeholder="Select religion"
-                                    error={formErrors.religion}
-                                />
-                                <FormSelect
-                                    label="Income Level"
-                                    id="income"
-                                    value={data.income}
-                                    onChange={(value) => setData('income', value as (typeof IncomeLevels)[keyof typeof IncomeLevels] | undefined)}
-                                    options={mapEnumToOptions(IncomeLevels)}
-                                    placeholder="Select income level"
-                                    error={formErrors.income}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/*6: Contact Persons */}
-                {step === 6 && (
-                    <Card className="border-none shadow-sm">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">Contact Persons</CardTitle>
-                            <CardDescription>Emergency or alternate contacts</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {contactPersons.map((person, i) => (
-                                <div key={i} className="space-y-4 rounded-lg border p-4">
-                                    <div className="flex items-center justify-between">
-                                        <h4 className="font-medium">Contact Person {i + 1}</h4>
-                                        <Button type="button" variant="outline" size="sm" onClick={() => removeContactPerson(i)}>
-                                            Remove
-                                        </Button>
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <FormSelect
-                                            label="Type"
-                                            id={`type_${i}`}
-                                            value={person.type}
-                                            onChange={(value) => updateContactPerson(i, 'type', value)}
-                                            options={mapContactTypeOptions()}
-                                            placeholder="Select type"
-                                        />
-                                        <FormInput
-                                            label="Name"
-                                            id={`name_${i}`}
-                                            value={person.name}
-                                            onChange={(e) => updateContactPerson(i, 'name', e.target.value)}
-                                            placeholder="Enter name"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <FormInput
-                                            label="Phone"
-                                            id={`phone_${i}`}
-                                            value={person.phone}
-                                            onChange={(e) => updateContactPerson(i, 'phone', e.target.value)}
-                                            placeholder="Enter phone number"
-                                        />
-                                        <FormInput
-                                            label="Relationship"
-                                            id={`relationship_${i}`}
-                                            value={person.relationship}
-                                            onChange={(e) => updateContactPerson(i, 'relationship', e.target.value)}
-                                            placeholder="Enter relationship"
-                                        />
-                                    </div>
+                {step === 4 && (
+                    <>
+                        <Card className="border-none shadow-sm">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Building className="h-5 w-5" />
+                                    Professional Information
+                                </CardTitle>
+                                <CardDescription>Work and educational background</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <FormSelect
+                                        label="Occupation"
+                                        id="occupation"
+                                        value={data.occupation}
+                                        onChange={(value) =>
+                                            setData('occupation', value as (typeof OccupationTypes)[keyof typeof OccupationTypes] | undefined)
+                                        }
+                                        options={mapEnumToOptions(OccupationTypes)}
+                                        placeholder="Select occupation"
+                                        error={formErrors.occupation}
+                                    />
+                                    <FormSelect
+                                        label="Education"
+                                        id="education"
+                                        value={data.education}
+                                        onChange={(value) =>
+                                            setData('education', value as (typeof EducationLevels)[keyof typeof EducationLevels] | undefined)
+                                        }
+                                        options={mapEnumToOptions(EducationLevels)}
+                                        placeholder="Select education level"
+                                        error={formErrors.education}
+                                    />
                                 </div>
-                            ))}
-                            <Button type="button" variant="outline" onClick={addContactPerson} className="w-full">
-                                Add Contact Person
-                            </Button>
-                        </CardContent>
-                    </Card>
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <FormSelect
+                                        label="Religion"
+                                        id="religion"
+                                        value={data.religion}
+                                        onChange={(value) =>
+                                            setData('religion', value as (typeof ReligionTypes)[keyof typeof ReligionTypes] | undefined)
+                                        }
+                                        options={mapEnumToOptions(ReligionTypes)}
+                                        placeholder="Select religion"
+                                        error={formErrors.religion}
+                                    />
+                                    <FormSelect
+                                        label="Income Level"
+                                        id="income"
+                                        value={data.income}
+                                        onChange={(value) => setData('income', value as (typeof IncomeLevels)[keyof typeof IncomeLevels] | undefined)}
+                                        options={mapEnumToOptions(IncomeLevels)}
+                                        placeholder="Select income level"
+                                        error={formErrors.income}
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card className="border-none shadow-sm">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">Contact Person</CardTitle>
+                                <CardDescription>Emergency or alternate contacts</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {contactPersons.map((person, i) => (
+                                    <div key={i} className="space-y-4 rounded-lg border p-4">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="font-medium">Contact Person {i + 1}</h4>
+                                            <Button type="button" variant="outline" size="sm" onClick={() => removeContactPerson(i)}>
+                                                Remove
+                                            </Button>
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                            <FormSelect
+                                                label="Title"
+                                                id="title1"
+                                                value={data.title}
+                                                onChange={(value) =>
+                                                    setData('title', value as (typeof TitleOptions)[keyof typeof TitleOptions] | undefined)
+                                                }
+                                                options={mapEnumToOptions(TitleOptions)}
+                                                placeholder="Select title"
+                                                error={formErrors.title}
+                                            />
+                                            <FormInput
+                                                label="First Name"
+                                                id={`first_name_${i}`}
+                                                value={person.first_name}
+                                                onChange={(e) => updateContactPerson(i, 'first_name', e.target.value)}
+                                                placeholder="Enter first name"
+                                            />
+                                            <FormInput
+                                                label="Middle Name"
+                                                id={`middle_name_${i}`}
+                                                value={person.middle_name}
+                                                onChange={(e) => updateContactPerson(i, 'middle_name', e.target.value)}
+                                                placeholder="Enter middle name"
+                                            />
+                                            <FormInput
+                                                label="Last Name"
+                                                id={`last_name_${i}`}
+                                                value={person.last_name}
+                                                onChange={(e) => updateContactPerson(i, 'last_name', e.target.value)}
+                                                placeholder="Enter last name"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                            <FormInput
+                                                label="Mobile No"
+                                                id={`mobile_no_${i}`}
+                                                value={person.mobile_no}
+                                                onChange={(e) => updateContactPerson(i, 'mobile_no', e.target.value)}
+                                                placeholder="Enter mobile number"
+                                            />
+                                            <FormInput
+                                                label="Home No"
+                                                id={`home_no_${i}`}
+                                                value={person.home_no}
+                                                onChange={(e) => updateContactPerson(i, 'home_no', e.target.value)}
+                                                placeholder="Enter home number"
+                                            />
+                                            <FormInput
+                                                label="Office No"
+                                                id={`office_no_${i}`}
+                                                value={person.office_no}
+                                                onChange={(e) => updateContactPerson(i, 'office_no', e.target.value)}
+                                                placeholder="Enter office number"
+                                            />
+                                            <FormInput
+                                                label="Fax No"
+                                                id={`fax_no_${i}`}
+                                                value={person.fax_no}
+                                                onChange={(e) => updateContactPerson(i, 'fax_no', e.target.value)}
+                                                placeholder="Enter fax number"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                                <Button type="button" variant="outline" onClick={addContactPerson} className="w-full">
+                                    Add Contact Person
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </>
                 )}
 
                 <div className="flex justify-between">
@@ -574,7 +636,7 @@ export default function Create() {
                         Back
                     </Button>
 
-                    {step < 6 ? (
+                    {step < 4 ? (
                         <Button
                             type="button"
                             onClick={handleNext}
@@ -592,6 +654,6 @@ export default function Create() {
                     )}
                 </div>
             </div>
-        </AppLayout>
+        </CustomerLayout>
     );
 }

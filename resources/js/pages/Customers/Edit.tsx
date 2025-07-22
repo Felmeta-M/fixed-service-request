@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import AppLayout from '@/layouts/app-layout';
+import CustomerLayout from '@/layouts/customer-layout';
 import { type BreadcrumbItem } from '@/types';
 import type { Customer } from '@/types/customer';
 import {
@@ -147,7 +147,7 @@ export default function Edit() {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <CustomerLayout>
             <Head title="Edit Customer" />
             <form onSubmit={submit} className="space-y-4 p-4">
                 <Card className="border-none shadow-sm">
@@ -523,6 +523,6 @@ export default function Edit() {
                     </Link>
                 </div>
             </form>
-        </AppLayout>
+        </CustomerLayout>
     );
 }

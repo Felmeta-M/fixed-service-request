@@ -57,9 +57,18 @@ return [
     ],
 
     'query_customer' => [
-        'url' => env('QUERY_CUSTOMER_URL'),
+        'url' => env('QUERY_CUSTOMER_URL', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
         'user' => env('QUERY_CUSTOMER_USER'),
         'password' => env('QUERY_CUSTOMER_PASS'),
+    ],
+
+    'query_customer_by_service_number' => [
+        'customer_query_endpoint'      => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_CUSTOMER_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'language'               => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_LANGUAGE'),
+        'channel_id'             => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_CHANNEL_ID'),
+        'technical_channel_id'   => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_TECH_CHANNEL_ID'),
+        'access_user'            => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_ACCESS_USER'),
+        'access_pwd'             => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_ACCESS_PWD'),
     ],
 
     'survey' => [
@@ -70,8 +79,8 @@ return [
         'technical_channel_id' => env('SURVEY_TECHNICAL_CHANNEL_ID'),
     ],
 
-    'subscriber' => [ 
-        'endpoint' => env('SUBSCRIBER_BSS_ENDPOINT',"REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF"),
+    'subscriber' => [
+        'endpoint' => env('SUBSCRIBER_BSS_ENDPOINT', "REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF"),
         'access_user' => env('SUBSCRIBER_BSS_USERNAME'),
         'access_pwd' => env('SUBSCRIBER_BSS_PASSWORD'),
         'operator_id' => env('SUBSCRIBER_BSS_OPERATOR_ID'),

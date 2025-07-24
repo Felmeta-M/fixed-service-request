@@ -68,8 +68,8 @@ class CustomerController extends Controller
 
     public function store(CustomerRequest $customerRequest)
     {
-        // return $this->customerService->createCustomer($customerRequest->validated());
+        return $this->customerService->createCustomer($customerRequest->validated());
 
-        return response()->json(['success', 'Customer created successfully.']);
+        // return response()->json(['success', 'Customer created successfully.']);
     }
 }

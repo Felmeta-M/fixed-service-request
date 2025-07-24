@@ -78,6 +78,7 @@ XML;
                 'ret_msg'   => $retMsg,
             ];
         }
+
         $result = [
             'ret_code' => $retCode,
             'ret_msg'  => $retMsg,

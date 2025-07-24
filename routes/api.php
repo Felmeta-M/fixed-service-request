@@ -16,5 +16,16 @@ Route::apiResource('survey-types', SurveyTypeController::class);
 Route::apiResource('bandwidth-options', BandwidthOptionController::class);
 Route::apiResource('occupations', OccupationController::class);
 
-Route::get('/query-customer-by-service-number/{service_number}', [CustomerController::class, 'getCustomerByServiceNumber']);
-Route::get('/query-customer-by-customer-code/{code}', [CustomerController::class, 'getCustomerByCode']);
+
+Route::prefix('customer')->group(function () {
+    Route::post('/create', [CustomerController::class, 'store']);
+    Route::get('/types', [CustomerController::class, 'types']);
+    Route::get('/categories', [CustomerController::class, 'categories']);
+    Route::get('/subcategories', [CustomerController::class, 'subcategories']);
+    Route::get('/query-by-service-number/{service_number}', [CustomerController::class, 'getCustomerByServiceNumber']);
+    Route::get('/query-by-customer-code/{code}', [CustomerController::class, 'getCustomerByCode']);
+});
+
+Route::prefix('survey')->group(function () {});
+Route::prefix('subscriber')->group(function () {});
+Route::prefix('payment')->group(function () {});

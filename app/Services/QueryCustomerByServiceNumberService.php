@@ -45,8 +45,8 @@ class QueryCustomerByServiceNumberService
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                  xmlns:ser="http://oss.huawei.com/webservice/bss/services"
-                  xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
+ xmlns:ser="http://oss.huawei.com/webservice/bss/services" 
+ xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
    <soapenv:Header/>
    <soapenv:Body>
       <ser:GetCustomerRequest>
@@ -79,33 +79,69 @@ XML;
 
         $header = $response->ResponseHeader->children($namespaces['com']);
         $body   = $response->GetCustomerBody->children($namespaces['com']);
-
         $retCode = (string) $header->RetCode;
         $retMsg  = (string) $header->RetMsg;
 
         if ($retCode !== '0') {
             return [
-                'success' => false,
-                'ret_code' => $retCode,
-                'ret_msg'  => $retMsg,
+                'success'   => false,
+                'ret_code'  => $retCode,
+                'ret_msg'   => $retMsg,
             ];
         }
-
+        \Log::info($response);
         $result = [
-            'ret_code' => $retCode,
-            'ret_msg'  => $retMsg,
-            'customer' => [
-                'id'          => (string) $body->CustomerId,
-                'code'        => (string) $body->CustomerCode,
-                'type'        => (string) $body->CustomerType,
-                'certificate' => (string) $body->CertificateNumber,
-                'status'      => (string) $body->Status,
+            'success'   => true,
+            'ret_code'  => $retCode,
+            'ret_msg'   => $retMsg,
+            'customer'  => [
+                'id'               => (string) $body->CustomerId,
+                'code'             => (string) $body->CustomerCode,
+                'first_name'       => (string) $body->FirstName,
+                'middle_name'      => (string) $body->MiddleName,
+                'last_name'        => (string) $body->LastName,
+                'dob'              => (string) $body->DateOfBirth,
+                'gender'           => (string) $body->Gender,
+                'status'           => (string) $body->Status,
+                'title'            => (string) $body->Title,
+                'nationality'      => (string) $body->Nationality,
+                'type'             => (string) $body->CustomerType,
+                'level'            => (string) $body->CustomerLevel,
+                'language'         => (string) $body->CustomerLanguage,
+                'certificate_type' => (string) $body->CertificateType,
+                'certificate_no'   => (string) $body->CertificateNumber,
+                'tenant_id'        => (string) $body->TenantId,
+                'occupation'       => (string) $body->Occupation,
+                'religion'         => (string) $body->Religion,
+                'education'        => (string) $body->Education,
             ],
+            'contacts'    => [],
+            'addresses'   => [],
             'subscribers' => [],
             'ext_params'  => [],
         ];
 
-        foreach ($body->SubscriberList->SubscriberAbstractInfo as $subscriber) {
+        foreach ($body->ContactList->ContactInfo ?? [] as $contact) {
+            $result['contacts'][] = [
+                'name1'  => (string) $contact->Relaname1,
+                'name2'  => (string) $contact->Relaname2,
+                'mobile' => (string) $contact->Relatel1,
+                'fax'    => (string) $contact->Relafax,
+            ];
+        }
+
+        foreach ($body->AddressList->AddressInfo ?? [] as $address) {
+            $result['addresses'][] = [
+                'address1' => (string) $address->Address1,
+                'address2' => (string) $address->Address2,
+                'address3' => (string) $address->Address3,
+                'address4' => (string) $address->Address4,
+                'address5' => (string) $address->Address5,
+                'address6' => (string) $address->Address6,
+            ];
+        }
+
+        foreach ($body->SubscriberList->SubscriberAbstractInfo ?? [] as $subscriber) {
             $result['subscribers'][] = [
                 'subscriber_id'     => (string) $subscriber->SubscriberId,
                 'service_number'    => (string) $subscriber->ServiceNumber,
@@ -115,7 +151,7 @@ XML;
             ];
         }
 
-        foreach ($body->ExtParamList->ParameterInfo as $param) {
+        foreach ($body->ExtParamList->ParameterInfo ?? [] as $param) {
             $result['ext_params'][(string) $param->ParamName] = (string) $param->ParamValue;
         }
 

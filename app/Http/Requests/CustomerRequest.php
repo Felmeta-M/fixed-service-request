@@ -14,6 +14,10 @@ class CustomerRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'customer_type'            => 'required|string|max:255',
+            'customer_category'            => 'required|string|max:255',
+            'customer_subcategory'            => 'required|string|max:255',
+            'customer_level'            => 'required|string|max:255',
             'first_name'            => 'required|string|max:255',
             'middle_name'           => 'required|string|max:255',
             'last_name'             => 'required|string|max:255',
@@ -31,7 +35,7 @@ class CustomerRequest extends FormRequest
             'primary_language'      => 'nullable|string|max:100',
             'address'               => 'nullable|array',
             'contact'               => 'nullable|array',
-            'contact_persons'       => 'nullable|array',
+            'contact_person'       => 'nullable|array',
         ];
     }
 }

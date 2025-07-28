@@ -54,7 +54,6 @@ class CustomerService
     {
         try {
             $xml = $this->buildXml($data);
-
             $response = Http::withHeaders([
                 'Content-Type' => 'text/xml; charset=utf-8',
             ])->send('POST', config('services.customer.create_endpoint'), [
@@ -151,33 +150,33 @@ XML;
         <com:PrimaryLanguage>{$data['primary_language']}</com:PrimaryLanguage>
     
         <com:CustomerAddressInfo>
-            <com:EthioZoneOrRegion>{$data['address']['region']}</com:EthioZoneOrRegion>
-            <com:AdministrativeRegionOrCity>{$data['address']['city']}</com:AdministrativeRegionOrCity>
-            <com:SubcityOrZone>{$data['address']['subcity']}</com:SubcityOrZone>
-            <com:WeredaOrTown>{$data['address']['wereda']}</com:WeredaOrTown>
-            <com:Kebele>{$data['address']['kebele']}</com:Kebele>
-            <com:HouseNo>{$data['address']['house_no']}</com:HouseNo>
+            <com:EthioZoneOrRegion>{$data['address'][0]['region']}</com:EthioZoneOrRegion>
+            <com:AdministrativeRegionOrCity>{$data['address'][0]['city']}</com:AdministrativeRegionOrCity>
+            <com:SubcityOrZone>{$data['address'][0]['zone']}</com:SubcityOrZone>
+            <com:WeredaOrTown>{$data['address'][0]['wereda']}</com:WeredaOrTown>
+            <com:Kebele>{$data['address'][0]['kebele']}</com:Kebele>
+            <com:HouseNo>{$data['address'][0]['house_no']}</com:HouseNo>
         </com:CustomerAddressInfo>
     
         <com:CustomerContactInfo>
-            <com:NotificationMode>{$data['contact']['notification_mode']}</com:NotificationMode>
-            <com:Email>{$data['contact']['email']}</com:Email>
-            <com:HomeNo>{$data['contact']['home_no']}</com:HomeNo>
-            <com:OfficeNo>{$data['contact']['office_no']}</com:OfficeNo>
-            <com:MobileNo>{$data['contact']['mobile_no']}</com:MobileNo>
-            <com:FaxNo>{$data['contact']['fax_no']}</com:FaxNo>
+            <com:NotificationMode>{$data['contact'][0]['notification_mode']}</com:NotificationMode>
+            <com:Email>{$data['contact'][0]['email']}</com:Email>
+            <com:HomeNo>{$data['contact'][0]['home_no']}</com:HomeNo>
+            <com:OfficeNo>{$data['contact'][0]['office_no']}</com:OfficeNo>
+            <com:MobileNo>{$data['contact'][0]['mobile_no']}</com:MobileNo>
+            <com:FaxNo>{$data['contact'][0]['fax_no']}</com:FaxNo>
         </com:CustomerContactInfo>
     
         <com:CustomerContactPersonInfoList>
             <com:ContactPersonInfo>
-                <com:FirstName>{$data['contact_person']['first_name']}</com:FirstName>
-                <com:MiddleName>{$data['contact_person']['middle_name']}</com:MiddleName>
-                <com:LastName>{$data['contact_person']['last_name']}</com:LastName>
-                <com:Title>{$data['contact_person']['title']}</com:Title>
-                <com:HomeNo>{$data['contact_person']['home_no']}</com:HomeNo>
-                <com:OfficeNo>{$data['contact_person']['office_no']}</com:OfficeNo>
-                <com:MobileNo>{$data['contact_person']['mobile_no']}</com:MobileNo>
-                <com:FaxNo>{$data['contact_person']['fax_no']}</com:FaxNo>
+                <com:FirstName>{$data['contact_person'][0]['first_name']}</com:FirstName>
+                <com:MiddleName>{$data['contact_person'][0]['middle_name']}</com:MiddleName>
+                <com:LastName>{$data['contact_person'][0]['last_name']}</com:LastName>
+                <com:Title>{$data['contact_person'][0]['title']}</com:Title>
+                <com:HomeNo>{$data['contact_person'][0]['home_no']}</com:HomeNo>
+                <com:OfficeNo>{$data['contact_person'][0]['office_no']}</com:OfficeNo>
+                <com:MobileNo>{$data['contact_person'][0]['mobile_no']}</com:MobileNo>
+                <com:FaxNo>{$data['contact_person'][0]['fax_no']}</com:FaxNo>
             </com:ContactPersonInfo>
         </com:CustomerContactPersonInfoList>
     </com:CustomerInfo>

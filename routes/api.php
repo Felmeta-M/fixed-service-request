@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\BandwidthOptionController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\OccupationController;
+use App\Http\Controllers\Api\SurveyController;
 use App\Http\Controllers\Api\SurveyTypeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -18,14 +19,19 @@ Route::apiResource('occupations', OccupationController::class);
 
 
 Route::prefix('customer')->group(function () {
+    // third party api
     Route::post('/create', [CustomerController::class, 'store']);
+    Route::get('/query-by-service-number/{service_number}', [CustomerController::class, 'getCustomerByServiceNumber']);
+    Route::get('/query-by-customer-code/{code}', [CustomerController::class, 'getCustomerByCode']);
+    // local api
     Route::get('/types', [CustomerController::class, 'types']);
     Route::get('/categories', [CustomerController::class, 'categories']);
     Route::get('/subcategories', [CustomerController::class, 'subcategories']);
-    Route::get('/query-by-service-number/{service_number}', [CustomerController::class, 'getCustomerByServiceNumber']);
-    Route::get('/query-by-customer-code/{code}', [CustomerController::class, 'getCustomerByCode']);
 });
 
-Route::prefix('survey')->group(function () {});
+Route::prefix('survey')->group(function () {
+    // third party api
+    Route::post('/create', [SurveyController::class, 'store']);
+});
 Route::prefix('subscriber')->group(function () {});
 Route::prefix('payment')->group(function () {});

@@ -19,10 +19,47 @@ class CustomerController extends Controller
         protected readonly QueryCustomerByServiceNumberService $queryCustomerByServiceNumberService,
         protected readonly QueryCustomerByCodeService $queryCustomerByCodeService,
     ) {}
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        //
+    }
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(CustomerRequest $customerRequest)
+    {
+        return $this->customerService->createCustomer($customerRequest->validated());
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        //
+    }
 
     public function getCustomerByServiceNumber(string $service_number)
     {
-
         if (!preg_match('/^\d+$/', $service_number)) {
             return response()->json(['error' => 'Invalid service number'], 422);
         }
@@ -64,11 +101,5 @@ class CustomerController extends Controller
             return response()->json(['error' => 'category_id is required'], 400);
         }
         return CustomerSubcategory::where('customer_category_id', $categoryId)->get(['id', 'name', 'api_value']);
-    }
-
-    public function store(CustomerRequest $customerRequest)
-    {
-        return $this->customerService->createCustomer($customerRequest->validated());
-        // return response()->json(['success', 'Customer created successfully.']);
     }
 }

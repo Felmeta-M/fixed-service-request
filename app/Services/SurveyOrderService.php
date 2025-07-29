@@ -3,20 +3,20 @@
 namespace App\Services;
 
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
 class SurveyOrderService
 {
-    public function createSurveyOrder(array $payload)
+    public function createSurveyOrder(array $data)
     {
         try {
-            $xml = $this->buildXml($payload);
-
+            $xml = $this->buildXml($data);
             $response = Http::withHeaders([
                 'Content-Type' => 'text/xml; charset=utf-8',
-            ])->send('POST', config('services.survey_order.endpoint'), [
+            ])->send('POST', config('services.survey.endpoint'), [
                 'body' => $xml
             ]);
 
@@ -53,9 +53,8 @@ class SurveyOrderService
 
     private function buildXml(array $data): string
     {
-        $credentials = config('services.survey_order');
+        $credentials = config('services.survey');
         $transactionId = uniqid();
-
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
    <soapenv:Header/>
@@ -70,19 +69,23 @@ class SurveyOrderService
             <com:AccessPwd>{$credentials['access_password']}</com:AccessPwd>
          </ser:RequestHeader>
          <ser:HandleSurveyOrderReqBody>
-            <com:CustomerCode>{$data['CustomerCode']}</com:CustomerCode>
-            <com:SurveyType>{$data['SurveyType']}</com:SurveyType>
-            <com:TelecomRegion>{$data['TelecomRegion']}</com:TelecomRegion>
-            <com:OperType>{$data['OperType']}</com:OperType>
-            <com:MainOfferId>{$data['MainOfferId']}</com:MainOfferId>
+            <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
+            <com:SurveyType>{$data['survey_type']}</com:SurveyType>
+            <com:TelecomRegion>{$data['telecom_region']}</com:TelecomRegion>
+            <com:OperType>{$data['oper_type']}</com:OperType>
+            <com:MainOfferId>{$data['main_offer_id']}</com:MainOfferId>
+            <com:SurveyAddressInfo>
+               <com:AdministrativeRegionOrCity>{$data['survey_address_info']['region_city']}</com:AdministrativeRegionOrCity>
+               <com:SubcityOrZone>{$data['survey_address_info']['subcity_zone']}</com:SubcityOrZone>
+               <com:WeredaOrTown>{$data['survey_address_info']['wereda_town']}</com:WeredaOrTown>
+               <com:Kebele>{$data['survey_address_info']['kebele']}</com:Kebele>
+            </com:SurveyAddressInfo>
             <com:bandwidth>{$data['bandwidth']}</com:bandwidth>
-            <com:ContactPerson>{$data['ContactPerson']}</com:ContactPerson>
-            <com:ContactNo>{$data['ContactNo']}</com:ContactNo>
-            <com:ContactEmail>{$data['ContactEmail']}</com:ContactEmail>
-            <com:CompletedDate>{$data['CompletedDate']}</com:CompletedDate>
-            <com:SecContactPerson>{$data['SecContactPerson']}</com:SecContactPerson>
-            <com:SecContactNo>{$data['SecContactNo']}</com:SecContactNo>
-            <com:SecContactEmail>{$data['SecContactEmail']}</com:SecContactEmail>
+            <com:ContactPerson>{$data['contact_person']}</com:ContactPerson>
+            <com:ContactNo>{$data['contact_no']}</com:ContactNo>
+            <com:ContactEmail>{$data['contact_email']}</com:ContactEmail>
+            <com:CompletedDate>{$data['completed_date']}</com:CompletedDate>
+            <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
          </ser:HandleSurveyOrderReqBody>
       </ser:HandleSurveyOrderReqMsg>
    </soapenv:Body>
@@ -93,15 +96,25 @@ XML;
     private function parseXmlResponse(string $xml): array
     {
         $parsed = simplexml_load_string($xml);
-        $body = $parsed->children('soapenv', true)->Body;
 
-        $responseMsg = $body->children('ser', true)->HandleSurveyOrderRspMsg;
-        $header = $responseMsg->ResponseHeader->children('com', true);
+        // Extract namespaces
+        $namespaces = $parsed->getNamespaces(true);
+
+        // Get the Body element using the soapenv namespace
+        $body = $parsed->children($namespaces['soapenv'])->Body;
+
+        // Get the response message using the ser namespace
+        $responseMsg = $body->children($namespaces['ser'])->HandleSurveyOrderRspMsg;
+
+        // Get the response header and body using the com namespace
+        $responseHeader = $responseMsg->ResponseHeader->children($namespaces['com']);
+        $responseBody = $responseMsg->HandleSurveyOrderRespBody->children($namespaces['com']);
 
         return [
-            'ret_code' => (string) $header->RetCode,
-            'ret_msg' => (string) $header->RetMsg,
-            'response_time' => (string) $header->ResponseTime,
+            'ret_code' => (string) $responseHeader->RetCode,
+            'ret_msg' => (string) $responseHeader->RetMsg,
+            'response_time' => (string) $responseHeader->ResponseTime,
+            'customer_survey_order_id' => (string) $responseBody->CustomerSurveyOrderId,
         ];
     }
 }

@@ -89,7 +89,7 @@ XML;
                 'ret_msg'   => $retMsg,
             ];
         }
-        \Log::info($response);
+
         $result = [
             'success'   => true,
             'ret_code'  => $retCode,

@@ -9,7 +9,7 @@ interface CustomerLayoutProps {
 
 export default function CustomerLayout({ children }: CustomerLayoutProps) {
     return (
-        <div className="flex min-h-screen flex-col items-center bg-background">
+        <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-blue-50 to-indigo-100">
             <Header />
             <div className="w-full px-4">{children}</div>
             <Footer />

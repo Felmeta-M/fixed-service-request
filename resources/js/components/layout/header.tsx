@@ -1,8 +1,9 @@
 'use client';
 
-import { Link } from '@inertiajs/react';
-import { Menu, Network, Phone, X } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { Menu, Network, X } from 'lucide-react';
 import { useState } from 'react';
+import { Button } from '../ui/button';
 
 export function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,19 +25,29 @@ export function Header() {
 
                     {/* Desktop Navigation */}
                     <nav className="hidden items-center space-x-8 md:flex">
-                        <Link href="/" className="text-gray-600 transition-colors hover:text-green-600">
+                        <Link href="/" className="text-gray-600 transition-colors hover:text-primary">
                             Home
                         </Link>
-                        <Link href="/portal" className="text-gray-600 transition-colors hover:text-green-600">
-                            Customer Portal
-                        </Link>
-                        <Link href="/admin" className="text-gray-600 transition-colors hover:text-green-600">
-                            Admin
-                        </Link>
-                        <div className="flex items-center space-x-2 text-gray-600">
-                            <Phone className="h-4 w-4" />
-                            <span className="text-sm">+251-11-123-4567</span>
-                        </div>
+                        {localStorage.getItem('auth') && (
+                            <Link href="/portal" className="text-gray-600 transition-colors hover:text-primary">
+                                Customer Portal
+                            </Link>
+                        )}
+                        {localStorage.getItem('auth') ? (
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    localStorage.removeItem('auth');
+                                    router.visit('/');
+                                }}
+                            >
+                                Logout
+                            </Button>
+                        ) : (
+                            <Link href="/login" className="text-gray-600 transition-colors hover:text-primary">
+                                Login
+                            </Link>
+                        )}
                     </nav>
 
                     {/* Mobile Menu Button */}
@@ -62,10 +73,10 @@ export function Header() {
                             <Link href="/admin" className="text-gray-600 transition-colors hover:text-green-600" onClick={() => setIsMenuOpen(false)}>
                                 Admin
                             </Link>
-                            <div className="flex items-center space-x-2 border-t pt-2 text-gray-600">
+                            {/* <div className="flex items-center space-x-2 border-t pt-2 text-gray-600">
                                 <Phone className="h-4 w-4" />
                                 <span className="text-sm">+251-11-123-4567</span>
-                            </div>
+                            </div> */}
                         </nav>
                     </div>
                 )}

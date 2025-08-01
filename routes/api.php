@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\BandwidthOptionController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\OccupationController;
 use App\Http\Controllers\Api\SurveyController;
 use App\Http\Controllers\Api\SurveyTypeController;
@@ -17,6 +18,11 @@ Route::apiResource('survey-types', SurveyTypeController::class);
 Route::apiResource('bandwidth-options', BandwidthOptionController::class);
 Route::apiResource('occupations', OccupationController::class);
 
+Route::prefix('locations')->group(function () {
+    Route::get('/regions', [LocationController::class, 'regions']);
+    Route::get('/zones/{regionId}', [LocationController::class, 'zones']);
+    Route::get('/weredas/{zoneId}', [LocationController::class, 'weredas']);
+});
 
 Route::prefix('customer')->group(function () {
     // third party api

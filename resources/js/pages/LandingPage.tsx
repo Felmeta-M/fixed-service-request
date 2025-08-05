@@ -10,7 +10,6 @@ const LandingPage = () => {
             <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
                 <Header />
 
-                {/* Hero Section */}
                 <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 md:py-24">
                     <div className="text-center">
                         <h1 className="mb-6 text-4xl font-bold text-gray-900 md:text-5xl">
@@ -31,7 +30,6 @@ const LandingPage = () => {
                     </div>
                 </div>
 
-                {/* Features Section */}
                 <div className="bg-white py-16">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div className="text-center">
@@ -63,7 +61,6 @@ const LandingPage = () => {
                     </div>
                 </div>
 
-                {/* How It Works Section */}
                 <div className="bg-gray-50 py-16">
                     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                         <div className="mb-12 text-center">

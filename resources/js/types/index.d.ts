@@ -52,3 +52,26 @@ export interface Pagination<T> {
     data: T[];
     links: PaginationLink[];
 }
+
+type FormInputProps = {
+    label: string;
+    id: string;
+    value: string | number | undefined;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    placeholder?: string;
+    error?: string;
+    type?: string;
+    [key: string]: unknown;
+};
+
+type FormSelectProps = {
+    label: string;
+    id: string;
+    value: string | undefined;
+    onChange: (value: string) => void;
+    options: Option[];
+    placeholder?: string;
+    error?: string;
+    disabled?: boolean;
+    loading?: boolean;
+};

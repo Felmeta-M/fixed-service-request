@@ -1,5 +1,3 @@
-'use client';
-
 import { Link, router } from '@inertiajs/react';
 import { Menu, Network, X } from 'lucide-react';
 import { useState } from 'react';
@@ -9,7 +7,7 @@ export function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     return (
-        <header className="sticky top-0 z-40 w-full border-b bg-white shadow-sm sm:px-8">
+        <header className="sticky top-0 z-40 w-full bg-white shadow-sm sm:px-8">
             <div className="container mx-auto px-4">
                 <div className="flex h-16 items-center justify-between">
                     {/* Logo and Brand */}

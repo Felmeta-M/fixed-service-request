@@ -235,7 +235,6 @@ XML;
         $customerData = $bodyData->children($namespaces['com']);
         $retCode = (string) $headerData->RetCode;
         $retMsg  = (string) $headerData->RetMsg;
-
         if ($retCode !== '0') {
             return [
                 'success'   => false,
@@ -243,7 +242,6 @@ XML;
                 'ret_msg'   => $retMsg,
             ];
         }
-
         return [
             'response_time' => (string) $headerData->ResponseTime ?? '',
             'ret_code'      => $retCode,

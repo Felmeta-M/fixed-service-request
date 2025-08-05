@@ -55,6 +55,7 @@ class SurveyOrderService
     {
         $credentials = config('services.survey');
         $transactionId = uniqid();
+        $contactNo = substr($data['contact_no'], -9);
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
    <soapenv:Header/>
@@ -82,7 +83,7 @@ class SurveyOrderService
             </com:SurveyAddressInfo>
             <com:bandwidth>{$data['bandwidth']}</com:bandwidth>
             <com:ContactPerson>{$data['contact_person']}</com:ContactPerson>
-            <com:ContactNo>{$data['contact_no']}</com:ContactNo>
+            <com:ContactNo>{$contactNo}</com:ContactNo>
             <com:ContactEmail>{$data['contact_email']}</com:ContactEmail>
             <com:CompletedDate>{$data['completed_date']}</com:CompletedDate>
             <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
@@ -109,10 +110,18 @@ XML;
         // Get the response header and body using the com namespace
         $responseHeader = $responseMsg->ResponseHeader->children($namespaces['com']);
         $responseBody = $responseMsg->HandleSurveyOrderRespBody->children($namespaces['com']);
-
+        $retCode = (string) $responseHeader->RetCode;
+        $retMsg  = (string) $responseHeader->RetMsg;
+        if ($retCode !== '0') {
+            return [
+                'success'   => false,
+                'ret_code'  => $retCode,
+                'ret_msg'   => $retMsg,
+            ];
+        }
         return [
-            'ret_code' => (string) $responseHeader->RetCode,
-            'ret_msg' => (string) $responseHeader->RetMsg,
+            'ret_code' => $retCode,
+            'ret_msg' => $retMsg,
             'response_time' => (string) $responseHeader->ResponseTime,
             'customer_survey_order_id' => (string) $responseBody->CustomerSurveyOrderId,
         ];

@@ -35,7 +35,21 @@ class CustomerRequest extends FormRequest
             'primary_language'      => 'required|string|max:100',
             'address'               => 'required|array',
             'contact'               => 'required|array',
-            'contact_person'       => 'required|array',
+            'contact.email' => 'nullable|string|email',
+            'contact.notification_mode' => 'nullable|integer',
+            'contact.home_no' => 'nullable|string|min:9|max:20',
+            'contact.office_no' => 'nullable|string|min:9|max:20',
+            'contact.mobile_no' => 'nullable|string|min:9|max:10',
+            'contact.fax_no' => 'nullable|string|min:9|max:20',
+            'contact_person'       => 'nullable|array',
+            'contact_person.*.first_name'       => 'nullable|string|max:255',
+            'contact_person.*.middle_name'       => 'nullable|string|max:255',
+            'contact_person.*.last_name'       => 'nullable|string|max:255',
+            'contact_person.*.title'       => 'nullable|string|max:255',
+            'contact_person.*.home_no' => 'nullable|string|min:9|max:20',
+            'contact_person.*.office_no' => 'nullable|string|min:9|max:20',
+            'contact_person.*.mobile_no' => 'nullable|string|min:9|max:10',
+            'contact_person.*.fax_no' => 'nullable|string|min:9|max:20',
         ];
     }
 }

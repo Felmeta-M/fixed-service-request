@@ -23,7 +23,6 @@ class DatabaseSeeder extends Seeder
         // $this->call(BandwidthOptionsSeeder::class);
         // $this->call(OccupationSeeder::class);
         // $this->call(CustomerTypeCategorySubcategorySeeder::class);
-
-        $this->call(RegionZoneWeredaSeeder::class);
+        // $this->call(RegionZoneWeredaSeeder::class);
     }
 }

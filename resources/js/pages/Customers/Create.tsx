@@ -55,7 +55,7 @@ export default function Create() {
         customer_type: undefined,
         customer_category: undefined,
         customer_subcategory: undefined,
-        customer_level: undefined,
+        customer_level: '2', // Default to Vcc
     });
     console.log('🚀 ~ Create ~ data:', data);
 
@@ -85,6 +85,99 @@ export default function Create() {
 
     console.log('data', data);
 
+    // const submit: FormEventHandler = async (e) => {
+    //     e.preventDefault();
+    //     setFormErrors({});
+    //     const result = customerSchema.safeParse(data);
+
+    //     if (!result.success) {
+    //         const fieldErrors: Record<string, string> = {};
+    //         for (const [key, val] of Object.entries(result.error.flatten().fieldErrors)) {
+    //             if (val && val.length > 0) fieldErrors[key] = val[0];
+    //         }
+    //         result.error.errors.forEach((err) => {
+    //             const path = err.path.join('.');
+    //             fieldErrors[path] = err.message;
+    //         });
+    //         setFormErrors(fieldErrors);
+    //         return;
+    //     }
+    //     // Preparing data for API
+    //     const apiData = {
+    //         ...result.data,
+    //         date_of_birth: result.data.date_of_birth ? result.data.date_of_birth.replace(/-/g, '') : null,
+    //     };
+    //     console.log('API Data', apiData);
+    //     try {
+    //         const response = await axios.post('http://localhost:8000/api/customer/create', apiData);
+
+    //         console.log('🚀 ~ submit ~ response:', response);
+
+    //         if (response.data.success) {
+    //             const customer = response.data.customer;
+    //             const phone = customer?.contact?.mobile_no || data?.contact?.mobile_no || customer?.mobile_no;
+    //             if (!phone) {
+    //                 toast.error('Customer created but phone number not found', {
+    //                     position: 'top-right',
+    //                     className: 'bg-yellow-50 text-yellow-800 border-yellow-100',
+    //                 });
+    //                 return;
+    //             }
+
+    //             if (phone) {
+    //                 localStorage.setItem(
+    //                     'auth',
+    //                     JSON.stringify({
+    //                         phone,
+    //                         authenticated: true,
+    //                     }),
+    //                 );
+    //                 router.get(
+    //                     route('customer.portal'),
+    //                     {
+    //                         phone: phone,
+    //                     },
+    //                     {
+    //                         preserveState: false,
+    //                     },
+    //                 );
+    //             }
+
+    //             toast.success(response.data.message, {
+    //                 position: 'top-right',
+    //                 className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
+    //             });
+    //         } else {
+    //             console.log('Error', response.data.message);
+    //             throw new Error(response.data.message);
+    //         }
+    //     } catch (error) {
+    //         toast.error('Failed to create customer.', {
+    //             position: 'top-right',
+    //             className: 'bg-red-50 text-red-800 border-red-100',
+    //         });
+    //         console.log('Error', error);
+
+    //         // Handle API validation errors
+    //         if (axios.isAxiosError(error) && error.response?.status === 422) {
+    //             // Format Laravel validation errors to match our field names
+    //             const errors = error.response.data.errors || {};
+    //             const formattedErrors: Record<string, string> = {};
+
+    //             Object.entries(errors).forEach(([key, value]) => {
+    //                 // Convert Laravel's array format to single message
+    //                 formattedErrors[key] = Array.isArray(value) ? value[0] : value;
+
+    //                 // Handle nested field names (like 'address.region')
+    //                 if (key.includes('.')) {
+    //                     formattedErrors[key] = Array.isArray(value) ? value[0] : value;
+    //                 }
+    //             });
+
+    //             setFormErrors(formattedErrors);
+    //         }
+    //     }
+    // };
     const submit: FormEventHandler = async (e) => {
         e.preventDefault();
         setFormErrors({});
@@ -102,18 +195,17 @@ export default function Create() {
             setFormErrors(fieldErrors);
             return;
         }
-        // Preparing data for API
+
         const apiData = {
             ...result.data,
             date_of_birth: result.data.date_of_birth ? result.data.date_of_birth.replace(/-/g, '') : null,
         };
-        console.log('API Data', apiData);
+
         try {
             const response = await axios.post('http://localhost:8000/api/customer/create', apiData);
 
-            console.log('🚀 ~ submit ~ response:', response);
-
             if (response.data.success) {
+                // Success handling remains the same
                 const customer = response.data.customer;
                 const phone = customer?.contact?.mobile_no || data?.contact?.mobile_no || customer?.mobile_no;
                 if (!phone) {
@@ -148,33 +240,55 @@ export default function Create() {
                     className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
                 });
             } else {
-                console.log('Error', response.data.message);
-                throw new Error(response.data.message);
+                // Handle backend validation errors
+                const { ret_code, ret_msg } = response.data;
+
+                // Extract the actual error message (removing the @code part if present)
+                const errorMessage = ret_msg.split('@')[0].trim();
+
+                // Check if this is a date of birth validation error
+                if (ret_code === '1251046016' && ret_msg.includes('Age')) {
+                    setFormErrors({
+                        date_of_birth: errorMessage,
+                    });
+                } else {
+                    // For other errors, show a toast
+                    toast.error(errorMessage, {
+                        position: 'top-right',
+                        className: 'bg-red-50 text-red-800 border-red-100',
+                    });
+                }
             }
         } catch (error) {
-            toast.error('Failed to create customer.', {
-                position: 'top-right',
-                className: 'bg-red-50 text-red-800 border-red-100',
-            });
-            console.log('Error', error);
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 422) {
+                    // Laravel validation errors
+                    const errors = error.response.data.errors || {};
+                    const formattedErrors: Record<string, string> = {};
 
-            // Handle API validation errors
-            if (axios.isAxiosError(error) && error.response?.status === 422) {
-                // Format Laravel validation errors to match our field names
-                const errors = error.response.data.errors || {};
-                const formattedErrors: Record<string, string> = {};
-
-                Object.entries(errors).forEach(([key, value]) => {
-                    // Convert Laravel's array format to single message
-                    formattedErrors[key] = Array.isArray(value) ? value[0] : value;
-
-                    // Handle nested field names (like 'address.region')
-                    if (key.includes('.')) {
+                    Object.entries(errors).forEach(([key, value]) => {
                         formattedErrors[key] = Array.isArray(value) ? value[0] : value;
-                    }
-                });
+                        if (key.includes('.')) {
+                            formattedErrors[key] = Array.isArray(value) ? value[0] : value;
+                        }
+                    });
 
-                setFormErrors(formattedErrors);
+                    setFormErrors(formattedErrors);
+                } else if (error.response?.data) {
+                    // Handle other API errors
+                    const { ret_msg } = error.response.data;
+                    const errorMessage = ret_msg?.split('@')[0].trim() || 'Failed to create customer.';
+                    toast.error(errorMessage, {
+                        position: 'top-right',
+                        className: 'bg-red-50 text-red-800 border-red-100',
+                    });
+                }
+            } else {
+                toast.error('An unexpected error occurred', {
+                    position: 'top-right',
+                    className: 'bg-red-50 text-red-800 border-red-100',
+                });
+                console.error('Error', error);
             }
         }
     };
@@ -350,7 +464,6 @@ export default function Create() {
                                         <p className="text-sm font-medium text-destructive">{formErrors.customer_type || typesError}</p>
                                     )}
                                 </div>
-
                                 {/* Customer Category and Subcategory */}
                                 <>
                                     <FormSelect
@@ -380,7 +493,7 @@ export default function Create() {
                                         error={formErrors.customer_subcategory || subcategoriesError}
                                         loading={subcategoriesLoading}
                                     />
-                                    <FormSelect
+                                    {/* <FormSelect
                                         label="Customer Level"
                                         id="customer_level"
                                         value={data.customer_level || ''}
@@ -396,7 +509,7 @@ export default function Create() {
                                         ]}
                                         placeholder="Select Customer Level"
                                         error={formErrors.customer_level}
-                                    />
+                                    /> */}
                                 </>
                                 <FormSelect
                                     label="Title"
@@ -467,20 +580,48 @@ export default function Create() {
                                     placeholder="Enter place of birth"
                                     error={formErrors.place_of_birth}
                                 />
-                                <FormInput
+                                {/* <FormInput
                                     label="Nationality"
                                     id="nationality"
                                     value={data.nationality}
                                     onChange={(e) => handleInputChange('nationality', e.target.value)}
                                     placeholder="Enter nationality"
                                     error={formErrors.nationality}
+                                /> */}
+                                {/* 1000,1231 */}
+                                <FormSelect
+                                    label="Nationality"
+                                    id="nationality"
+                                    value={data.nationality || ''}
+                                    onChange={(value) => handleSelectChange('nationality', value)}
+                                    options={[
+                                        { label: 'Ethiopian', value: '1231' },
+                                        { label: 'Other', value: '1000' },
+                                    ]}
+                                    placeholder="Select nationality"
+                                    error={formErrors.nationality}
                                 />
-                                <FormInput
+                                {/* <FormInput
                                     label="Primary Language"
                                     id="primary_language"
                                     value={data.primary_language}
                                     onChange={(e) => handleInputChange('primary_language', e.target.value)}
                                     placeholder="Enter primary language"
+                                    error={formErrors.primary_language}
+                                /> */}
+                                <FormSelect
+                                    label="Primary Language"
+                                    id="primary_language"
+                                    value={data.primary_language || ''}
+                                    onChange={(value) => handleSelectChange('primary_language', value)}
+                                    options={[
+                                        { label: 'English', value: '2002' },
+                                        { label: 'Amharic', value: '2060' },
+                                        { label: 'Oromigna', value: '2061' },
+                                        { label: 'Tigrigna', value: '2062' },
+                                        { label: 'Somali', value: '2063' },
+                                    ]}
+                                    placeholder="Select primary language"
                                     error={formErrors.primary_language}
                                 />
                             </div>
@@ -557,13 +698,13 @@ export default function Create() {
                                         options={[
                                             { label: 'SMS', value: '1' },
                                             { label: 'Email', value: '2' },
-                                            { label: 'Ivr', value: '3' },
+                                            // { label: 'Ivr', value: '3' },
                                         ]}
                                         placeholder="Select notification mode"
                                         error={formErrors['contact.notification_mode']}
                                     />
                                     <FormInput
-                                        label="Phone Number"
+                                        label="Phone Number (start with 09)"
                                         id="phone"
                                         value={data.contact?.mobile_no || ''}
                                         onChange={(e) => handleNestedInputChange('contact', 'mobile_no', e.target.value)}
@@ -571,7 +712,7 @@ export default function Create() {
                                         error={formErrors['contact.mobile_no']}
                                     />
                                     <FormInput
-                                        label="Office Number"
+                                        label="Office Number (length 9 to 20)"
                                         id="office"
                                         value={data.contact?.office_no || ''}
                                         onChange={(e) => handleNestedInputChange('contact', 'office_no', e.target.value)}
@@ -588,7 +729,7 @@ export default function Create() {
                                         error={formErrors['contact.email']}
                                     />
                                     <FormInput
-                                        label="Home Number"
+                                        label="Home Number (length 9 to 20)"
                                         id="home"
                                         value={data.contact?.home_no || ''}
                                         onChange={(e) => handleNestedInputChange('contact', 'home_no', e.target.value)}
@@ -596,7 +737,7 @@ export default function Create() {
                                         error={formErrors['contact.home_no']}
                                     />
                                     <FormInput
-                                        label="Fax Number"
+                                        label="Fax Number (length 9 to 20)"
                                         id="fax_no"
                                         value={data.contact?.fax_no || ''}
                                         onChange={(e) => handleNestedInputChange('contact', 'fax_no', e.target.value)}
@@ -662,15 +803,15 @@ export default function Create() {
                                     error={formErrors['address.woreda']}
                                 />
                                 <FormInput
-                                    label="City"
+                                    label="City (accepted value: 1-16)"
                                     id="address.city"
                                     value={data.address?.city}
                                     onChange={(e) => handleNestedInputChange('address', 'city', e.target.value)}
-                                    placeholder="Enter city"
+                                    placeholder="Enter city accepted value: 1-16"
                                     error={formErrors['address.city']}
                                 />
                                 <FormInput
-                                    label="Street Name"
+                                    label="Street Name (optional)"
                                     id="address.street_name"
                                     value={data.address?.street_name}
                                     onChange={(e) => handleNestedInputChange('address', 'street_name', e.target.value)}

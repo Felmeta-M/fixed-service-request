@@ -703,7 +703,16 @@ export default function Show() {
                                                         placeholder="Enter customer code"
                                                         // disabled
                                                     />
-                                                    <FormSelect
+                                                    <FormInput
+                                                        label="Survey Type"
+                                                        id="survey_type"
+                                                        value={data.survey_type}
+                                                        onChange={(e) => handleChange('survey_type', e.target.value)}
+                                                        error={errors.survey_type}
+                                                        placeholder="Enter survey type"
+                                                    />
+                                                    {/* Uncomment this if you want to use the select for survey types */}
+                                                    {/* <FormSelect
                                                         id="survey_type"
                                                         label="Survey Type"
                                                         value={data.survey_type}
@@ -712,7 +721,7 @@ export default function Show() {
                                                         error={errors.survey_type}
                                                         loading={loadingTypes}
                                                         placeholder="Select survey type"
-                                                    />
+                                                    /> */}
                                                     <FormInput
                                                         id="telecom_region"
                                                         label="Telecom Region"
@@ -742,7 +751,7 @@ export default function Show() {
                                                         error={errors.main_offer_id}
                                                     />
 
-                                                    {/* <FormSelect
+                                                    <FormSelect
                                                         id="bandwidth"
                                                         label="Bandwidth"
                                                         value={data.bandwidth}
@@ -751,8 +760,8 @@ export default function Show() {
                                                         error={errors.bandwidth}
                                                         loading={loadingBandwidths}
                                                         placeholder="Select bandwidth"
-                                                    /> */}
-                                                    <FormInput
+                                                    />
+                                                    {/* <FormInput
                                                         id="bandwidth"
                                                         label="Bandwidth (Mbps)"
                                                         type="number"
@@ -760,7 +769,7 @@ export default function Show() {
                                                         onChange={(e) => handleChange('bandwidth', e.target.value)}
                                                         error={errors.bandwidth}
                                                         placeholder="Enter bandwidth in Mbps"
-                                                    />
+                                                    /> */}
 
                                                     <FormInput
                                                         id="contact_person"

@@ -185,7 +185,7 @@ export const customerSchema = z.object({
             [AddressTypes.ZONE]: z.string().min(1, 'Zone is required').max(128),
             [AddressTypes.WOREDA]: z.string().min(1, 'Woreda is required').max(128),
             [AddressTypes.CITY]: z.string().min(1, 'City is required').max(128),
-            [AddressTypes.STREET_NAME]: z.string().min(1, 'Street name is required').max(128),
+            [AddressTypes.STREET_NAME]: z.string().optional(),
             [AddressTypes.KEBELE]: z.string().min(1, 'Kebele is required').max(128),
             [AddressTypes.HOUSE_NO]: z.string().min(1, 'House number is required').max(128),
         })
@@ -193,10 +193,10 @@ export const customerSchema = z.object({
     contact: z.object({
         notification_mode: z.string().min(1, 'Notification mode is required'),
         mobile_no: z.string().min(1, 'Mobile number is required'),
-        email: z.string().email().min(1, 'Email is required'),
-        office_no: z.string().min(1, 'Office number is required'),
-        home_no: z.string().min(1, 'Home number is required'),
-        fax_no: z.string().min(1, 'Fax number is required'),
+        email: z.string().email().optional(),
+        office_no: z.string().optional(),
+        home_no: z.string().optional(),
+        fax_no: z.string().optional(),
     }),
     contact_person: z.array(
         z.object({
@@ -204,10 +204,10 @@ export const customerSchema = z.object({
             middle_name: z.string().min(1, 'Middle name is required'),
             last_name: z.string().min(1, 'Last name is required'),
             title: z.string().min(1, 'Title is required'),
-            home_no: z.string().min(1, 'Home number is required').max(128),
-            office_no: z.string().min(1, 'Office number is required').max(128),
+            home_no: z.string().optional(),
+            office_no: z.string().optional(),
             mobile_no: z.string().min(1, 'Mobile number is required').max(20),
-            fax_no: z.string().min(1, 'Fax number is required').max(20),
+            fax_no: z.string().optional(),
         }),
     ),
     customer_type: z.string().min(1, 'Customer type is required'),

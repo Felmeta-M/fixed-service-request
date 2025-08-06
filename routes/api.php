@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\OccupationController;
 use App\Http\Controllers\Api\SurveyController;
 use App\Http\Controllers\Api\SurveyTypeController;
+use App\Http\Controllers\Api\v1\LoginController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,14 @@ use Illuminate\Support\Facades\Route;
 Route::apiResource('survey-types', SurveyTypeController::class);
 Route::apiResource('bandwidth-options', BandwidthOptionController::class);
 Route::apiResource('occupations', OccupationController::class);
+
+Route::middleware('api')->prefix('v1')->group(function () {
+    Route::post('/login', [LoginController::class, 'login']);
+});
+
+Route::middleware('auth:customer')->prefix('v1')->group(function () {
+    Route::get('/customer', [LoginController::class, 'customer']);
+});
 
 Route::prefix('locations')->group(function () {
     Route::get('/regions', [LocationController::class, 'regions']);

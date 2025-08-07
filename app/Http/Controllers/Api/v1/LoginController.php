@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\ServiceClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -11,10 +12,10 @@ class LoginController extends Controller
 {
     public function login(Request $request)
     {
-
         $credentials = $this->resolveCredentials($request);
-
-        $customer = Customer::firstOrCreate($credentials);
+        $customer = Customer::firstOrCreate([
+            'otp_phone' => $this->normalizePhone($credentials['otp_phone'])
+        ]);
 
         $token = Str::random(60);
         $customer->api_token = $token;
@@ -22,14 +23,14 @@ class LoginController extends Controller
 
         return response()->json([
             'token' => $token,
-            'customer' => $customer->code,
+            'otp_phone' => $customer->otp_phone,
         ]);
     }
 
     protected function resolveCredentials(Request $request): array
     {
         return $request->validate([
-            'code' => 'required|max:255',
+            'otp_phone' => 'required|max:255',
         ]);
     }
 
@@ -46,7 +47,7 @@ class LoginController extends Controller
             'token' => $token,
             'customer' => [
                 'id' => $customer->id,
-                'code' => $customer->name,
+                'otp_phone' => $customer->name,
             ],
         ]);
     }
@@ -64,7 +65,7 @@ class LoginController extends Controller
         $user =  $request->user();
 
         return [
-            'code' => $user->code,
+            'otp_phone' => $user->otp_phone,
         ];
     }
 }

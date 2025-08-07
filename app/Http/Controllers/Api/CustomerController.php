@@ -82,7 +82,7 @@ class CustomerController extends Controller
 
     public function types()
     {
-        return CustomerType::all(['id', 'name', 'api_value']);
+        return CustomerType::all(['id', 'code', 'name', 'api_value']);
     }
 
     public function categories(Request $request)

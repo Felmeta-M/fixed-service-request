@@ -41,10 +41,9 @@ return [
             'provider' => 'users',
         ],
 
-        'customer' => [
-            'driver' => 'token',
-            'provider' => 'customers',
-            'hash' => false,
+        'service_client' => [
+            'driver' => 'token', // symbolic
+            'provider' => 'service_client',
         ],
     ],
 
@@ -71,9 +70,9 @@ return [
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 
-        'customers' => [
+        'service_client' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\Customer::class),
+            'model' => env('SERVICE_CLIENT_MODEL', App\Models\ServiceClient::class),
         ],
 
         // 'users' => [

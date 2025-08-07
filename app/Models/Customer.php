@@ -15,7 +15,6 @@ class Customer extends Model
 
     protected $fillable = [
         'code',
-        'api_token',
         'first_name',
         'middle_name',
         'last_name',

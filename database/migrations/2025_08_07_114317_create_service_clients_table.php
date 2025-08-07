@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('customers', function (Blueprint $table) {
+        Schema::create('service_clients', function (Blueprint $table) {
+            $table->id();
             $table->string('code')->unique();
-            $table->string('api_token')->nullable()->unique();
+            $table->string('api_token')->nullable();
+            $table->timestamps();
         });
     }
 
@@ -22,9 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('customers', function (Blueprint $table) {
-            $table->dropColumn('code');
-            $table->dropColumn('api_code');
-        });
+        Schema::dropIfExists('service_clients');
     }
 };

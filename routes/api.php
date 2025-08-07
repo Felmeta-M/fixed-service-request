@@ -21,11 +21,8 @@ Route::apiResource('survey-types', SurveyTypeController::class);
 Route::apiResource('bandwidth-options', BandwidthOptionController::class);
 Route::apiResource('occupations', OccupationController::class);
 
-Route::prefix('v1')->group(function () {
+Route::middleware(['throttle:service-client'])->prefix('v1')->group(function () {
     Route::post('/issueToken', [ServiceClientController::class, 'issueToken']);
-});
-
-Route::prefix('v1')->group(function () {
     Route::get('/customer', function (Request $request) {
         $user = $request->user();
         return [

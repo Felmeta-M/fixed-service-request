@@ -12,10 +12,12 @@ class ServiceClientController extends Controller
 {
     public function issueToken(Request $request)
     {
-        $code = $request->input('code');
+        $validated =  $request->validate(['code' => 'required|string']);
 
         $client = ServiceClient::firstOrCreate([
-            'code' => preg_replace('/[^0-9]/', '', substr($code, -9))
+            'code' => preg_replace('/[^0-9]/', '', substr($validated['code'], -9))
+        ], [
+            'name' => 'fixed services provision'
         ]);
 
         if (!$client) {
@@ -23,13 +25,11 @@ class ServiceClientController extends Controller
         }
 
         $plainToken = Str::random(40);
-        $client->api_token = $plainToken;
-        $client->save();
-        // $client->tokens()->create([
-        //     'name' => 'fixed services request',
-        //     'token' => hash('sha256', $plainToken),
-        //     'abilities' => ['read', 'write'],
-        // ]);
+        $client->tokens()->create([
+            'name' => 'fixed services request',
+            'token' => hash('sha256', $plainToken),
+            'abilities' => ['read', 'write'],
+        ]);
 
         return response()->json([
             'access_token' => $plainToken,

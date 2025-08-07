@@ -40,11 +40,6 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
-
-        'service_client' => [
-            'driver' => 'token', // symbolic
-            'provider' => 'service_client',
-        ],
     ],
 
     /*
@@ -69,16 +64,6 @@ return [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
-
-        'service_client' => [
-            'driver' => 'eloquent',
-            'model' => env('SERVICE_CLIENT_MODEL', App\Models\ServiceClient::class),
-        ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
     ],
 
     /*

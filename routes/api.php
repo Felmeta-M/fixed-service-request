@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\SurveyController;
 use App\Http\Controllers\Api\SurveyTypeController;
 use App\Http\Controllers\Api\v1\LoginController;
 use App\Http\Controllers\Api\v1\ServiceClientController;
+use App\Http\Middleware\AuthenticateServiceClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,13 +25,13 @@ Route::prefix('v1')->group(function () {
     Route::post('/issueToken', [ServiceClientController::class, 'issueToken']);
 });
 
-Route::middleware('auth:service_client')->prefix('v1')->group(function () {
+Route::prefix('v1')->group(function () {
     Route::get('/customer', function (Request $request) {
         $user = $request->user();
         return [
             'code' => $user->code,
         ];
-    });
+    })->middleware(AuthenticateServiceClient::class);
 });
 
 Route::prefix('locations')->group(function () {

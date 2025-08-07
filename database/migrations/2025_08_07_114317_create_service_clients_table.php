@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('service_clients', function (Blueprint $table) {
             $table->id();
+            $table->string('name')->unique();
             $table->string('code')->unique();
-            $table->string('api_token')->nullable();
             $table->timestamps();
         });
     }

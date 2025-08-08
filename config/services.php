@@ -35,6 +35,8 @@ return [
         ],
     ],
 
+    'national_id_secret_key' => env('NATIONAL_ID_SECRET_KEY', 'REDACTED_SECRET_KEY'),
+
     'soap' => [
         'url' => env('SOAP_URL'),
         'version' => env('SOAP_VERSION', 1),
@@ -137,6 +139,22 @@ return [
         'access_user' => env('PRIMARY_OFFERS_USER'),
         'access_pwd' => env('PRIMARY_OFFERS_PASS'),
         'channel_id' => env('PRIMARY_OFFERS_CHANNEL_ID'),
+    ],
+
+    'nid' => [
+        'endpoint' => env('NID_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/NIDService/CRM_NID'),
+        'access_user' => env('NID_ACCESS_USER', 'ecaf'),
+        'access_password' => env('NID_ACCESS_PASSWORD', 'REDACTED_PASSWORD'),
+        'operator_id' => env('NID_OPERATOR_ID', '512'),
+        'tenant_id' => env('NID_TENANT_ID', '101'),
+        'channel' => env('NID_CHANNEL', '35'),
+        'language' => env('NID_LANGUAGE', '2002'),
+        'id' => env('ID', 'ethiotel'),
+        'clientSecret' => env('CLIENTSECRET', 'REDACTED_CLIENT_SECRET'),
+        'env' => env('ENV', 'prod'),
+        'domainUri' => env('DOMAINURI', 'fayda.et'),
+        'individualIdType' => env('INDIVIDUALIDTYPE', 'FCN'),
+        'otpChannel' => env('OPTCHANNEL', 'phone'),
     ],
 
 ];

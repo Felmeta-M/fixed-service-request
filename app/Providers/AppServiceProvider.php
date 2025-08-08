@@ -2,10 +2,10 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
-use RateLimiter;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,13 +22,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        RateLimiter::for('service-client', function (Request $request) {
-            Limit::perSecond(15, 60)->by(optional($request->user())->code ?: $request->ip())
+        RateLimiter::for('service_client', function (Request $request) {
+            return Limit::perSecond(5, 3)->by($request->ip()) // 3 requests for every 5 seconds
                 ->response(function () {
                     return response()->json([
-                        'message' => 'Rate limit exceeded. Please wait a second.',
+                        'message' => 'Rate limit exceeded. Please wait a second 5.',
                     ], 429);
-                });;
+                });
         });
     }
 }

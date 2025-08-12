@@ -3,12 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Model;
-use Laravel\Sanctum\HasApiTokens;
 
 class ServiceClient extends Authenticatable
 {
-    use HasApiTokens;
+    protected $fillable = [
+        'name',
+        'phone',
+        'otp_code',
+        'otp_expires_at',
+    ];
 
-    protected $fillable = ['name', 'code'];
+    protected $hidden = [
+        'otp_code',
+    ];
+
+    protected $casts = [
+        'otp_expires_at' => 'datetime',
+    ];
 }

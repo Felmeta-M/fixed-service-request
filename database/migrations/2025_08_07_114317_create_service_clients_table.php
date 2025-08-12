@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('service_clients', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();
-            $table->string('code')->unique();
+            $table->string('name')->nullable();
+            $table->string('phone', 12);
+            $table->string('otp_code', 64)->nullable()->unique();
+            $table->datetime('otp_expires_at')->nullable();
             $table->timestamps();
         });
     }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\ClientAuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ResourceCheckController;
 use App\Http\Controllers\SubscriberController;
@@ -73,6 +74,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('subscribers', SubscriberController::class);
     Route::resource('resource-checks', ResourceCheckController::class);
+});
+
+Route::prefix('client')->group(function () {
+    Route::post('/login', [ClientAuthController::class, 'login'])->name('client.session.login');
+    Route::post('/logout', [ClientAuthController::class, 'logout'])->name('client.session.logout');
 });
 
 require __DIR__ . '/settings.php';

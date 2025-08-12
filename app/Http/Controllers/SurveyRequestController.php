@@ -6,7 +6,6 @@ use App\Models\SurveyRequest;
 use Inertia\Inertia;
 use App\Models\Customer;
 use Illuminate\Http\Request;
-use App\Http\Requests\SurveyRequestFormRequest;
 
 class SurveyRequestController extends Controller
 {
@@ -24,7 +23,7 @@ class SurveyRequestController extends Controller
         ]);
     }
 
-    public function store(SurveyRequestFormRequest $request)
+    public function store(SurveyRequest $request)
     {
         $data = $request->validated();
         $data['survey_request_number'] = $this->generateUniqueRequestNumber();

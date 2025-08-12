@@ -141,7 +141,7 @@ return [
         'channel_id' => env('PRIMARY_OFFERS_CHANNEL_ID'),
     ],
 
-    'nid' => [
+    'otp' => [
         'endpoint' => env('NID_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/NIDService/CRM_NID'),
         'access_user' => env('NID_ACCESS_USER', 'ecaf'),
         'access_password' => env('NID_ACCESS_PASSWORD', 'REDACTED_PASSWORD'),
@@ -155,6 +155,19 @@ return [
         'domainUri' => env('DOMAINURI', 'fayda.et'),
         'individualIdType' => env('INDIVIDUALIDTYPE', 'FCN'),
         'otpChannel' => env('OPTCHANNEL', 'phone'),
+    ],
+
+    'kyc' => [
+        'endpoint' => env('NID_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/NIDService/CRM_NID'),
+        'access_user' => env('NID_ACCESS_USER', 'ecaf'),
+        'access_password' => env('NID_ACCESS_PASSWORD', 'REDACTED_PASSWORD'),
+        'operator_id' => env('NID_OPERATOR_ID', '512'),
+        'channel' => env('NID_CHANNEL', '35'),
+        'version' => env('NID_VERSION', '1'),
+        'env' => env('NID_ENV', 'prod'),
+        'domain_uri' => env('NID_DOMAIN_URI', 'fayda.et'),
+        'client_id' => env('NID_CLIENT_ID', 'ethiotel'),
+        'client_secret' => env('NID_CLIENT_SECRET', 'REDACTED_CLIENT_SECRET'),
     ],
 
 ];

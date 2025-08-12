@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 use SimpleXMLElement;
 use Exception;
 
-class NidService
+class NidOtpService
 {
     protected function formatResponse(bool $success,  $data = null,  $error = null)
     {
@@ -24,7 +24,7 @@ class NidService
             $xmlRequest = $this->buildXml($payload);
             $response = Http::withHeaders([
                 'Content-Type' => 'text/xml;charset=UTF-8',
-            ])->timeout(30)->post(config('services.nid.endpoint'), $xmlRequest);
+            ])->timeout(30)->post(config('services.opt.endpoint'), $xmlRequest);
 
             return $this->parseResponse($response->body());
         } catch (Exception $e) {
@@ -37,7 +37,7 @@ class NidService
     {
         $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
-        $credentials = config('services.nid');
+        $credentials = config('services.otp');
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
    <soapenv:Header xmlns:wsa="http://www.w3.org/2005/08/addressing">

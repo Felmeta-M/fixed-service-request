@@ -48,6 +48,7 @@ Route::prefix('v1')->group(function () {
     Route::prefix('subscriber')->group(function () {});
     Route::prefix('payment')->group(function () {});
     Route::prefix('nid')->group(function () {
-        Route::get('/otp-request', [NidController::class, 'getOtp']);
+        Route::post('otp', [NidController::class, 'getOtp']);
+        Route::post('kyc', [NidController::class, 'getKyc']);
     });
 });

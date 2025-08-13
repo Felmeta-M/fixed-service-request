@@ -77,8 +77,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::prefix('client')->group(function () {
-    Route::post('/send-otp', [ClientAuthController::class, 'sendOnetimePassword'])->name('sendOtp');
-    Route::post('/verify-otp', [ClientAuthController::class, 'verifyOnetimePassword'])->name('verifyOtp');
+    Route::post('/send-otp', [ClientAuthController::class, 'sendOneTimePassword'])->name('sendOtp');
+    Route::post('/verify-otp', [ClientAuthController::class, 'verifyOneTimePassword'])->name('verifyOtp');
     Route::post('/login', [ClientAuthController::class, 'login'])->name('client.session.login');
     Route::post('/logout', [ClientAuthController::class, 'logout'])->name('client.session.logout');
 });

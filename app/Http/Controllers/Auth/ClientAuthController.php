@@ -24,7 +24,7 @@ class ClientAuthController extends Controller
         return $this->sendOTP($phone);
     }
 
-    public function verifyOnetimePassword(Request $request)
+    public function verifyOneTimePassword(Request $request)
     {
         return $this->verifyOTP($request->otp);
     }

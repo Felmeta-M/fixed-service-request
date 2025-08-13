@@ -24,7 +24,7 @@ class NidOtpService
             $xmlRequest = $this->buildXml($payload);
             $response = Http::withHeaders([
                 'Content-Type' => 'text/xml;charset=UTF-8',
-            ])->timeout(30)->post(config('services.opt.endpoint'), $xmlRequest);
+            ])->post(config('services.otp.endpoint'), $xmlRequest);
 
             return $this->parseResponse($response->body());
         } catch (Exception $e) {
@@ -78,6 +78,7 @@ XML;
     }
     protected function parseResponse(?string $xml)
     {
+        \Log::info($xml);
         // If nothing came back from the server
         if (empty($xml)) {
             Log::warning("NID Service: Empty SOAP response received.");

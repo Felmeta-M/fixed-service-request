@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\ServiceClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,7 +12,10 @@ class ClientAuthController extends Controller
     public function login(Request $request)
     {
         $phone = preg_replace('/[^0-9]/', '', $request->phone);
-        $client = \App\Models\ServiceClient::firstOrCreate(substr($phone, -9));
+
+        $client = ServiceClient::firstOrCreate([
+            'phone' => substr($phone, -9)
+        ]);
 
         Auth::guard('client')->login($client);
 

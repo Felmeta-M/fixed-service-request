@@ -17,7 +17,7 @@ class NidController extends Controller
     public function getOtp(Request $request)
     {
         $data = $request->validate([
-            'individualId' => 'required|string|max:12'
+            'individualId' => 'required|string|max:16'
         ]);
 
         return $this->nidService->requestData($data);
@@ -26,7 +26,7 @@ class NidController extends Controller
     public function getKyc(Request $request)
     {
         $data = $request->validate([
-            'individualId' => 'required|string|max:12',
+            'individualId' => 'required|string|max:16',
             'otp_value' => 'required|string|max:24',
             'transaction_id' => 'required|string|max:64',
         ]);

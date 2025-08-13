@@ -10,8 +10,8 @@ class ClientAuthController extends Controller
 {
     public function login(Request $request)
     {
-        // Assuming we have already verified OTP before this step
-        $client = \App\Models\ServiceClient::firstOrCreate($request->phone);
+        $phone = preg_replace('/[^0-9]/', '', $request->phone);
+        $client = \App\Models\ServiceClient::firstOrCreate(substr($phone, -9));
 
         Auth::guard('client')->login($client);
 

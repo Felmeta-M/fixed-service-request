@@ -42,7 +42,7 @@ export function Header() {
                                 Logout
                             </Button>
                         ) : (
-                            <Link href="/login" className="text-gray-600 transition-colors hover:text-primary">
+                            <Link href="/welcome" className="text-gray-600 transition-colors hover:text-primary">
                                 Login
                             </Link>
                         )}

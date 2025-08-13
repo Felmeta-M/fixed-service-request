@@ -17,7 +17,7 @@ export function useBandwidthOptions() {
     useEffect(() => {
         const fetchBandwidthOptions = async () => {
             try {
-                const response = await axios.get('http://localhost:8000/api/bandwidth-options');
+                const response = await axios.get('http://localhost:8000/api/v1/bandwidth-options');
 
                 if (response.data.success) {
                     const data: BandwidthOptionResponse = response.data.data[0]; // only one object in array

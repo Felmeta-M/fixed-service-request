@@ -14,7 +14,7 @@ export function useOccupations() {
     useEffect(() => {
         const fetchOccupations = async () => {
             try {
-                const response = await axios.get('http://localhost:8000/api/occupations');
+                const response = await axios.get('http://localhost:8000/api/v1/occupations');
                 if (response.data.success) {
                     const formattedOccupations = response.data.data.map((occ: Occupation) => ({
                         label: occ.remark,

@@ -17,7 +17,7 @@ export function useCustomerTypes() {
         const fetchCustomerTypes = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:8000/api/customer/types');
+                const response = await axios.get('http://localhost:8000/api/v1/customer/types');
                 console.log('response', response.data);
                 const formattedCustomerTypes = response.data.map((type: CustomerType) => ({
                     label: type.name,
@@ -49,7 +49,7 @@ export function useCustomerCategories(typeValue?: string) {
             try {
                 if (typeValue) {
                     setLoading(true);
-                    const response = await axios.get('http://localhost:8000/api/customer/categories', { params: { type_id: typeValue } });
+                    const response = await axios.get('http://localhost:8000/api/v1/customer/categories', { params: { type_id: typeValue } });
                     const formattedCustomerCategories = response.data.map((category: CustomerType) => ({
                         label: category.name,
                         value: category.id.toString(),
@@ -80,7 +80,9 @@ export function useCustomerSubcategories(categoryValue?: string) {
             try {
                 if (categoryValue) {
                     setLoading(true);
-                    const response = await axios.get('http://localhost:8000/api/customer/subcategories', { params: { category_id: categoryValue } });
+                    const response = await axios.get('http://localhost:8000/api/v1/customer/subcategories', {
+                        params: { category_id: categoryValue },
+                    });
                     const formattedCustomerSubcategories = response.data.map((subcategory: CustomerType) => ({
                         label: subcategory.name,
                         value: subcategory.id.toString(),

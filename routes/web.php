@@ -23,7 +23,7 @@ Route::get('/', function () {
 })->name('landing');
 
 Route::get('/welcome', function () {
-    return Inertia::render('auth/otp-login');
+    return Inertia::render('client/login');
 })->name('home');
 
 // Service request routes

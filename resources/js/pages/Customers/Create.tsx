@@ -202,7 +202,7 @@ export default function Create() {
         };
 
         try {
-            const response = await axios.post('http://localhost:8000/api/customer/create', apiData);
+            const response = await axios.post('http://localhost:8000/api/v1/customer/create', apiData);
 
             if (response.data.success) {
                 // Success handling remains the same
@@ -244,7 +244,7 @@ export default function Create() {
                 const { ret_code, ret_msg } = response.data;
 
                 // Extract the actual error message (removing the @code part if present)
-                const errorMessage = ret_msg.split('@')[0].trim();
+                const errorMessage = ret_msg?.split('@')[0].trim();
 
                 // Check if this is a date of birth validation error
                 if (ret_code === '1251046016' && ret_msg.includes('Age')) {

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 trait InteractsWithSMSGateway
 {
-    public static function sendSmsOnly(string|int $phone,  $message = null): bool|string
+    public static function sendSmsOnly(string|int $phone, $message = null): bool|string
     {
         $encodedMessage = urlencode($message);
         $phone = substr($phone, -9);
@@ -38,7 +38,7 @@ trait InteractsWithSMSGateway
         return false;
     }
 
-    public static function sendOTP(string $phone,  $message = null): bool|string
+    public static function sendOTP(string $phone, $message = null): bool|string
     {
         $phone = substr($phone, -9);
         $otp = self::OTP();
@@ -51,6 +51,7 @@ trait InteractsWithSMSGateway
         self::setOTP($phone, $otp);
 
         $response = self::sendRequest($url);
+        \Log::info('OTP sent to phone: ' . $phone . ' with response: ' . $response);
 
         return $response;
     }
@@ -60,14 +61,14 @@ trait InteractsWithSMSGateway
         $characters = '123456789';
         $charactersLength = strlen($characters);
         $code = '';
-        for ($i = 0; $i < (int)$length; $i++) {
+        for ($i = 0; $i < (int) $length; $i++) {
             $code .= $characters[rand(0, $charactersLength - 1)];
         }
 
         return $code;
     }
 
-    public static function setOTP($phone = null,  $code = null): string
+    public static function setOTP($phone = null, $code = null): string
     {
         $otp = $code ?: self::OTP();
 

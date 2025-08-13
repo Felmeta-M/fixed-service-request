@@ -9,7 +9,7 @@ export function Footer() {
                     {/* Brand Section */}
                     <div className="space-y-4">
                         <div className="flex items-center space-x-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+                            <div className="bg-primarybg flex h-10 w-10 items-center justify-center rounded-lg">
                                 <Network className="h-6 w-6 text-primary" />
                             </div>
                             <div>

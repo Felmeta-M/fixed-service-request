@@ -20,6 +20,7 @@ class ClientAuthController extends Controller
 
     public function sendOneTimePassword(Request $request)
     {
+        \Log::info('Sending OTP to phone: ' . $request->phone);
         $phone = $this->NormalizePhone($request->phone);
         return $this->sendOTP($phone);
     }

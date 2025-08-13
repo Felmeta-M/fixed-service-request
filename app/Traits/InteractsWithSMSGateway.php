@@ -38,22 +38,32 @@ trait InteractsWithSMSGateway
         return false;
     }
 
-    public static function sendOTP(string $phone, $message = null): bool|string
+    public static function sendOTP(string $phone, $message = null)
     {
-        $phone = substr($phone, -9);
-        $otp = self::OTP();
-        $message = "Your verification code is {$otp}. It will expire in 5 minutes. Do not share this code with anyone.";
-        $encodedMessage = urlencode("{$message}");
-        $encodedPhoneNumber = urlencode("251{$phone}");
-        $smsEndPoint = config('ffd.sms_end_point');
-        $url = "{$smsEndPoint}{$encodedPhoneNumber}&message={$encodedMessage}";
+        DB::transaction(function () use ($phone) {
+            $phone = substr($phone, -9);
+            $otp = self::OTP();
+            $message = "Your verification code is {$otp}. It will expire in 5 minutes. Do not share this code with anyone.";
+            $encodedMessage = urlencode("{$message}");
+            $encodedPhoneNumber = urlencode("251{$phone}");
+            $smsEndPoint = config('ffd.sms_end_point');
+            $url = "{$smsEndPoint}{$encodedPhoneNumber}&message={$encodedMessage}";
 
-        self::setOTP($phone, $otp);
+            self::setOTP($phone, $otp);
 
-        $response = self::sendRequest($url);
-        \Log::info('OTP sent to phone: ' . $phone . ' with response: ' . $response);
+            $response = self::sendRequest($url);
+            \Log::info('OTP sent to phone: ' . $phone . ' with response: ' . $response);
 
-        return $response;
+            return response()->json([
+                'success' => true,
+                'message' => 'OTP successfully sent'
+            ]);
+        });
+
+        return response()->json([
+            'success' => false,
+            'message' => 'OTP could not be sent'
+        ], 500);
     }
 
     public static function OTP(string|int $length = 6): string
@@ -72,9 +82,9 @@ trait InteractsWithSMSGateway
     {
         $otp = $code ?: self::OTP();
 
-        DB::table('service_client')->where('otp_code', $phone)->delete();
+        DB::table('service_clients')->where('otp_code', $phone)->delete();
 
-        DB::table('service_client')->insert([
+        DB::table('service_clients')->insert([
             'phone' => $phone,
             'otp_code' => sha1($otp),
             'otp_expires_at' => Carbon::now()->addMinutes(5)
@@ -85,7 +95,7 @@ trait InteractsWithSMSGateway
 
     public static function findOTP(string $otp)
     {
-        return DB::table('service_client')
+        return DB::table('service_clients')
             ->where('otp_code', sha1($otp))
             ->first();
     }
@@ -101,7 +111,6 @@ trait InteractsWithSMSGateway
             ];
         }
 
-        // Assuming you have an `otp_expires_at` datetime column
         if (Carbon::parse($otpRecord->otp_expires_at)->isPast()) {
             return [
                 'success' => false,
@@ -118,7 +127,7 @@ trait InteractsWithSMSGateway
 
     public static function deleteOTP(string $otp): int
     {
-        return DB::table('service_client')->where('phone', sha1($otp))->delete();
+        return DB::table('service_clients')->where('phone', sha1($otp))->delete();
     }
 
     public static function ensurePhoneIsLocal(string|int $phone): bool|int

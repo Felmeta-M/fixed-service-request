@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\ServiceClient;
 use App\Traits\InteractsWithSMSGateway;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,9 +21,8 @@ class ClientAuthController extends Controller
 
     public function sendOneTimePassword(Request $request)
     {
-        \Log::info('Sending OTP to phone: ' . $request->phone);
         $phone = $this->NormalizePhone($request->phone);
-        return $this->sendOTP($phone);
+        return  $this->sendOTP($phone);
     }
 
     public function verifyOneTimePassword(Request $request)

@@ -22,9 +22,15 @@ Route::get('/', function () {
     return Inertia::render('LandingPage');
 })->name('landing');
 
-Route::get('/welcome', function () {
+Route::get('/verification', function () {
     return Inertia::render('client/login');
 })->name('home');
+
+
+Route::middleware(['auth:client'])->group(function () {
+    Route::get('/clients', fn() => Inertia::render('client/dashboard'))
+        ->name('client.dashboard');
+});
 
 // Service request routes
 // Route::middleware(['auth:customer'])->group(function () {

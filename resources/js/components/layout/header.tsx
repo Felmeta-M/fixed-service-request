@@ -1,11 +1,12 @@
-import { Link, router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { Menu, Network, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../ui/button';
 
 export function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+    const { auth } = usePage().props;
+    console.log(auth.user); // This is Auth::user()
     return (
         <header className="sticky top-0 z-40 w-full bg-white shadow-sm sm:px-8">
             <div className="container mx-auto px-4">

@@ -1,5 +1,6 @@
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
+import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowRight, ArrowUpDown, CircleFadingArrowUp, Network, Shield } from 'lucide-react';
 

@@ -25,10 +25,8 @@ trait InteractsWithSMSGateway
         try {
             $response = Http::get($url);
             if ($response->successful()) {
-                return $response->body();
+                return true;
             }
-            Log::error('SMS sending failed', ['response' => $response->body()]);
-
             return false;
         } catch (\Exception $e) {
             // Log the error in case of an exception
@@ -40,7 +38,7 @@ trait InteractsWithSMSGateway
 
     public static function sendOTP(string $phone, $message = null)
     {
-        DB::transaction(function () use ($phone) {
+        try {
             $phone = substr($phone, -9);
             $otp = self::OTP();
             $message = "Your verification code is {$otp}. It will expire in 5 minutes. Do not share this code with anyone.";
@@ -52,18 +50,24 @@ trait InteractsWithSMSGateway
             self::setOTP($phone, $otp);
 
             $response = self::sendRequest($url);
-            \Log::info('OTP sent to phone: ' . $phone . ' with response: ' . $response);
-
+            if ($response) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'OTP successfully sent'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'OTP could not be sent'
+                ], 500);
+            }
+        } catch (\Throwable $th) {
+            Log::info($th->getMessage());
             return response()->json([
-                'success' => true,
-                'message' => 'OTP successfully sent'
-            ]);
-        });
-
-        return response()->json([
-            'success' => false,
-            'message' => 'OTP could not be sent'
-        ], 500);
+                'success' => false,
+                'message' => 'OTP could not be sent'
+            ], 500);
+        }
     }
 
     public static function OTP(string|int $length = 6): string
@@ -82,7 +86,7 @@ trait InteractsWithSMSGateway
     {
         $otp = $code ?: self::OTP();
 
-        DB::table('service_clients')->where('otp_code', $phone)->delete();
+        DB::table('service_clients')->where('phone', $phone)->delete();
 
         DB::table('service_clients')->insert([
             'phone' => $phone,
@@ -121,13 +125,15 @@ trait InteractsWithSMSGateway
         return [
             'success' => true,
             'message' => 'Verification successful.',
-            'data' => $otpRecord
+            'data' => [
+                'otp_code' =>  $otpRecord->otp_code,
+            ]
         ];
     }
 
     public static function deleteOTP(string $otp): int
     {
-        return DB::table('service_clients')->where('phone', sha1($otp))->delete();
+        return DB::table('service_clients')->where('otp_code', sha1($otp))->delete();
     }
 
     public static function ensurePhoneIsLocal(string|int $phone): bool|int

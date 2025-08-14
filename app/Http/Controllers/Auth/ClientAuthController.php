@@ -27,7 +27,12 @@ class ClientAuthController extends Controller
 
     public function verifyOneTimePassword(Request $request)
     {
-        return $this->verifyOTP($request->otp);
+        $response =  $this->verifyOTP($request->otp);
+        if ($response['success'] == true) {
+            $this->login($request);
+        }
+
+        return $response;
     }
 
     public function login(Request $request)
@@ -39,7 +44,9 @@ class ClientAuthController extends Controller
 
         Auth::guard('client')->login($client);
 
-        return redirect()->route('client.dashboard');
+        $user = Auth::guard('client')->user();
+
+        return redirect()->intended(route('client.dashboard'));
     }
 
     public function logout(Request $request)

@@ -11,7 +11,7 @@ export default function Home() {
     return (
         <GuestLayout>
             <h1 className="text-2xl font-bold mb-4">Welcome to Our Service</h1>
-            <button onClick={goToLogin} className="bg-blue-500 text-white px-4 py-2 rounded">
+            <button onClick={goToLogin} className="bg-primary text-white px-4 py-2 rounded">
                 Client Login
             </button>
         </GuestLayout>

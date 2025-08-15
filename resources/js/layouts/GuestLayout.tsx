@@ -1,4 +1,5 @@
-import { Link } from '@inertiajs/react';
+import { Footer } from '@/components/layout/footer';
+import { Header } from '@/components/layout/header';
 import React from 'react';
 
 type Props = {
@@ -7,11 +8,10 @@ type Props = {
 
 export default function GuestLayout({ children }: Props) {
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
-            <div className="w-full max-w-md rounded bg-white p-6 shadow">{children}</div>
-            <footer className="mt-4">
-                <Link href="/">Home</Link>
-            </footer>
+        <div className="flex min-h-screen flex-col items-center justify-between">
+            <Header />
+            <div className="w-full rounded bg-white">{children}</div>
+            <Footer />
         </div>
     );
 }

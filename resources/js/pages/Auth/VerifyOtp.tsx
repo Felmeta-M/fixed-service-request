@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-// import GuestLayout from '@/Layouts/GuestLayout';
 import GuestLayout from '@/layouts/GuestLayout';
 import { router } from '@inertiajs/react';
+import React, { useState } from 'react';
 
 type Props = {
     phone: string;
@@ -9,6 +8,7 @@ type Props = {
 
 export default function VerifyOtp() {
     const [code, setCode] = useState('');
+    const [loading, setLoading] = useState(false);
 
     // console.log('phone', phone, 'code', code);
     function submit(e: React.FormEvent) {

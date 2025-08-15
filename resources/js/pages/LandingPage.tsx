@@ -1,15 +1,12 @@
-import { Footer } from '@/components/layout/footer';
-import { Header } from '@/components/layout/header';
+import GuestLayout from '@/layouts/GuestLayout';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowRight, ArrowUpDown, CircleFadingArrowUp, Network, Shield } from 'lucide-react';
 
 const LandingPage = () => {
     return (
-        <>
+        <GuestLayout>
             <Head title="Welcome to Ethio Telecom Fixed Services" />
             <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-                <Header />
-
                 <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 md:py-24">
                     <div className="text-center">
                         <h1 className="mb-6 text-4xl font-bold text-gray-900 md:text-5xl">
@@ -21,7 +18,7 @@ const LandingPage = () => {
                         </p>
                         <div className="mt-10">
                             <Link
-                                href={route('sendotp')}
+                                href={route('otp.phone')}
                                 className="inline-flex items-center rounded-md border border-transparent bg-primary px-4 py-2 font-semibold text-white transition hover:opacity-90"
                             >
                                 Get Started <ArrowRight className="ml-2 h-5 w-5" />
@@ -100,9 +97,8 @@ const LandingPage = () => {
                         </div>
                     </div>
                 </div>
-                <Footer />
             </div>
-        </>
+        </GuestLayout>
     );
 };
 

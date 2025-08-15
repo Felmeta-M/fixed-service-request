@@ -89,7 +89,8 @@ use App\Http\Controllers\SupportRequestController;
 use Inertia\Inertia;
 
 // Home page with login button
-Route::get('/', fn() => Inertia::render('Home'))->name('home');
+// Route::get('/landing', fn() => Inertia::render('LandingPage'))->name('landing');
+Route::get('/', fn() => Inertia::render('LandingPage'))->name('landing');
 
 // Public pages
 // Route::get('/', fn () => inertia('Welcome'))->name('home');

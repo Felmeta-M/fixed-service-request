@@ -76,60 +76,45 @@ class NidOtpService
 </soapenv:Envelope>
 XML;
     }
-    protected function parseResponse(?string $xml)
+
+    public function parse(string $xml): array
     {
-        \Log::info($xml);
-        // If nothing came back from the server
-        if (empty($xml)) {
-            Log::warning("NID Service: Empty SOAP response received.");
-            return $this->formatResponse(false, null, "No response from NID service.");
-        }
-
         try {
-            libxml_use_internal_errors(true); // prevent PHP from throwing XML warnings
-            $xmlObject = new SimpleXMLElement($xml);
+            $simpleXml = new SimpleXMLElement($xml);
+            $namespaces = $simpleXml->getNamespaces(true);
 
-            $ns = $xmlObject->getNamespaces(true);
-            if (!isset($ns['soapenv']) || !isset($ns['nid']) || !isset($ns['com'])) {
-                Log::warning("NID Service: Missing namespaces in SOAP response.");
-                return $this->formatResponse(false, null, "Invalid SOAP response format.");
-            }
-
-            $body = $xmlObject->children($ns['soapenv'])->Body ?? null;
+            $body = $simpleXml->children($namespaces['soapenv'])->Body;
             if (!$body) {
-                Log::warning("NID Service: SOAP body missing.");
-                return $this->formatResponse(false, null, "Invalid SOAP response: body missing.");
+                return $this->formatResponse(false, null, 'SOAP Body not found');
             }
 
-            $responseMsg = $body->children($ns['nid'])->RequestDataRspMsg ?? null;
-            if (!$responseMsg) {
-                Log::warning("NID Service: Missing RequestDataRspMsg in SOAP body.");
-                return $this->formatResponse(false, null, "Invalid SOAP response: message missing.");
+            $rspMsg = $body->children($namespaces['nid'])->RequestDataRspMsg;
+            if (!$rspMsg) {
+                return $this->formatResponse(false, null, 'Response message not found');
             }
 
-            $header = $responseMsg->children($ns['com'])->ResponseHeader ?? null;
-            if (!$header) {
-                Log::warning("NID Service: Missing ResponseHeader.");
-                return $this->formatResponse(false, null, "Invalid SOAP response: header missing.");
+            $header = $rspMsg->children($namespaces['com'])->ResponseHeader;
+            $bodyContent = $rspMsg->children($namespaces['nid'])->RequestDataRspBody;
+
+            if (!$header || !$bodyContent) {
+                return $this->formatResponse(false, null, 'Required XML nodes missing');
             }
 
-            $retCode = (string) $header->RetCode;
-            $retMsg  = (string) $header->RetMsg;
+            $data = [
+                'transaction_id' => (string) ($header->TransactionId ?? ''),
+                'ret_code'       => (string) ($header->RetCode ?? ''),
+                'ret_msg'        => (string) ($header->RetMsg ?? ''),
+                'id'             => (string) ($bodyContent->id ?? ''),
+                'version'        => (string) ($bodyContent->version ?? ''),
+                'response_time'  => (string) ($bodyContent->responseTime ?? ''),
+                'transactionID'  => (string) ($bodyContent->transactionID ?? ''),
+                'masked_mobile'  => (string) ($bodyContent->response->maskedMobile ?? ''),
+                'masked_email'   => (string) ($bodyContent->response->maskedEmail ?? ''),
+            ];
 
-            if ($retCode !== '0') {
-                Log::info("NID Service: Non-success return code: {$retCode} - {$retMsg}");
-                return $this->formatResponse(false, null, "NID Error: {$retMsg}");
-            }
-
-            $bodyData = $responseMsg->children($ns['nid'])->RequestDataRspBody->response ?? null;
-
-            return $this->formatResponse(true, [
-                'maskedMobile' => (string) ($bodyData->maskedMobile ?? ''),
-                'maskedEmail'  => (string) ($bodyData->maskedEmail ?? ''),
-            ]);
-        } catch (\Throwable $e) {
-            Log::error("NID Service parse error: " . $e->getMessage());
-            return $this->formatResponse(false, null, "Failed to parse NID response.");
+            return $this->formatResponse(true, $data);
+        } catch (Exception $e) {
+            return $this->formatResponse(false, null, $e->getMessage());
         }
     }
 }

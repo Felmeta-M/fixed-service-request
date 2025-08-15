@@ -22,30 +22,39 @@ class NidKycService
     public function requestData(array $payload)
     {
         try {
-            $xmlRequest = $this->buildXml($payload);
-            \Log::info($xmlRequest);
-            return;
+            $xml = $this->buildXml($payload);
             $response = Http::withHeaders([
-                'Content-Type' => 'text/xml;charset=UTF-8',
-            ])->post(config('services.kyc.endpoint'), $xmlRequest);
+                'Content-Type' => 'text/xml; charset=utf-8',
+            ])->send('POST', config('services.kyc.endpoint'), [
+                'body' => $xml,
+            ]);
 
-            $parsedData = $this->parseResponse($response->body());
+            if (!$response->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kyc request Failed'
+                ], 500);
+            }
 
-            return $this->formatResponse(true, $parsedData);
+            if ($response->successful()) {
+                return $this->parseResponse($response->body());
+            }
         } catch (Exception $e) {
-            Log::error("NID Service Request Error: " . $e->getMessage());
-
+            Log::error("NID OTP Request Error: " . $e->getMessage());
             return $this->formatResponse(false, null, $e->getMessage());
         }
     }
 
-    public function buildXml(array $data): string
+    public function buildXml(array $data)
     {
         $transactionId = Str::uuid();
         $processTime = now()->format('YmdHis');
         $requestTime = now()->format('YmdHis');
         $credentials = config('services.kyc');
+        $otp_value = $this->encryptText($data['otp_value']);
+
         return <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
    <soapenv:Header xmlns:wsa="http://www.w3.org/2005/08/addressing">
       <wsa:To>{$credentials['endpoint']}</wsa:To>
@@ -78,10 +87,10 @@ class NidKycService
             </nid:requestedAuth>
             <nid:consentObtained>true</nid:consentObtained>
             <nid:individualId>{$data['individual_id']}</nid:individualId>
-            <nid:individualIdType>'FCN'</nid:individualIdType>
+            <nid:individualIdType>{$credentials['individual_id_type']}</nid:individualIdType>
             <nid:request>
                <nid:timestamp>{$requestTime}</nid:timestamp>
-               <nid:otp>{$data['otp_value']}</nid:otp>
+               <nid:otp>{$otp_value}</nid:otp>
             </nid:request>
          </nid:GetDataKycReqBody>
       </nid:GetDataKycReqMsg>
@@ -126,5 +135,24 @@ XML;
                 'error' => 'Invalid XML format',
             ];
         }
+    }
+
+    function encryptText(string $plainText): string
+    {
+        $key = config('services.national_id_secret_key');
+
+        // Ensure key is exactly 16 bytes for AES-128
+        if (strlen($key) !== 16) {
+            throw new \Exception('Encryption key must be exactly 16 characters for AES-128.');
+        }
+
+        // Generate a random IV (AES-128-CBC uses 16 bytes IV)
+        $iv = random_bytes(openssl_cipher_iv_length('AES-128-CBC'));
+
+        // Encrypt
+        $encrypted = openssl_encrypt($plainText, 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv);
+
+        // Return Base64 of IV + encrypted data
+        return base64_encode($iv . $encrypted);
     }
 }

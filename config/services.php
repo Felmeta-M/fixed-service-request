@@ -150,11 +150,11 @@ return [
         'channel' => env('NID_CHANNEL', '35'),
         'language' => env('NID_LANGUAGE', '2002'),
         'id' => env('ID', 'ethiotel'),
-        'clientSecret' => env('CLIENTSECRET', 'REDACTED_CLIENT_SECRET'),
+        'client_secret' => env('CLIENT_SECRET', 'REDACTED_CLIENT_SECRET'),
         'env' => env('ENV', 'prod'),
-        'domainUri' => env('DOMAINURI', 'fayda.et'),
-        'individualIdType' => env('INDIVIDUALIDTYPE', 'FCN'),
-        'otpChannel' => env('OPTCHANNEL', 'phone'),
+        'domain_uri' => env('DOMAINURI', 'fayda.et'),
+        'individual_id_type' => env('INDIVIDUALIDTYPE', 'FCN'),
+        'otp_channel' => env('OPTCHANNEL', 'phone'),
     ],
 
     'kyc' => [
@@ -168,6 +168,7 @@ return [
         'domain_uri' => env('NID_DOMAIN_URI', 'fayda.et'),
         'client_id' => env('NID_CLIENT_ID', 'ethiotel'),
         'client_secret' => env('NID_CLIENT_SECRET', 'REDACTED_CLIENT_SECRET'),
+        'individual_id_type' => env('INDIVIDUALIDTYPE', 'api/v1/nid/kyc'),
     ],
 
 ];

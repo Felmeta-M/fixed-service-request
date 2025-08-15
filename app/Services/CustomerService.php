@@ -60,7 +60,6 @@ class CustomerService
                 'body' => $xml,
             ]);
 
-
             if (!$response->successful()) {
                 return response()->json([
                     'success' => false,

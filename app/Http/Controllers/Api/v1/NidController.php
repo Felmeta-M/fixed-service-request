@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\NidKycService;
 use App\Services\NidOtpService;
 use Illuminate\Http\Request;
+use Validator;
 
 class NidController extends Controller
 {
@@ -16,21 +17,61 @@ class NidController extends Controller
 
     public function getOtp(Request $request)
     {
-        $data = $request->validate([
-            'individualId' => 'required|string|max:16'
-        ]);
+        $rules = [
+            'individual_id' => 'required|string|max:16'
+        ];
 
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success'  => false,
+                'message'  => $validator->errors()->first('individual_id'),
+            ], 422);
+        }
+
+        $data = $validator->validated();
         return $this->nidService->requestData($data);
     }
 
     public function getKyc(Request $request)
     {
-        $data = $request->validate([
-            'individualId' => 'required|string|max:16',
-            'otp_value' => 'required|string|max:24',
-            'transaction_id' => 'required|string|max:64',
-        ]);
+        // Validation rules
+        $rules = [
+            'individual_id'   => 'required|string|max:16',
+            'otp_value'       => 'required|string|max:6',
+            'transaction_id'  => 'required|string|max:64',
+        ];
 
-        return $this->nidKycService->requestData($data);
+        // Run validation
+        $validator = Validator::make($request->all(), $rules);
+
+        // Handle validation failure
+        if ($validator->fails()) {
+            return response()->json([
+                'success'  => false,
+                'message'  => $validator->errors()->first(), // first error message
+            ], 422);
+        }
+
+        $data = $validator->validated();
+
+        try {
+            $response = $this->nidKycService->requestData($data);
+
+            return response()->json([
+                'success'  => true,
+                'ret_code' => '0',
+                'message'  => 'Request successful.',
+                'data'     => $response, // service response
+            ]);
+        } catch (\Exception $e) {
+            // Handle service errors gracefully
+            return response()->json([
+                'success'  => false,
+                'ret_code' => '2',
+                'message'  => $e->getMessage(),
+            ], 500);
+        }
     }
 }

@@ -1,6 +1,5 @@
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
-import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowRight, ArrowUpDown, CircleFadingArrowUp, Network, Shield } from 'lucide-react';
 
@@ -22,7 +21,7 @@ const LandingPage = () => {
                         </p>
                         <div className="mt-10">
                             <Link
-                                href={route('home')}
+                                href={route('sendotp')}
                                 className="inline-flex items-center rounded-md border border-transparent bg-primary px-4 py-2 font-semibold text-white transition hover:opacity-90"
                             >
                                 Get Started <ArrowRight className="ml-2 h-5 w-5" />

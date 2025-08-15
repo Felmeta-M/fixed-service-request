@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Support\Facades\Auth;
+
+class EnsureOtpAuthenticated
+{
+    public function handle($request, Closure $next)
+    {
+        $user = Auth::guard('otp')->user();
+
+        \Log::info("user" . $user);
+
+        if (!$user) {
+            return redirect()->route('otp.phone');
+        }
+
+        return $next($request);
+    }
+}

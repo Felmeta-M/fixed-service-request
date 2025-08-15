@@ -55,7 +55,7 @@ export default function Create() {
         customer_type: undefined,
         customer_category: undefined,
         customer_subcategory: undefined,
-        customer_level: '2', // Default to Vcc
+        customer_level: '2',
     });
     console.log('🚀 ~ Create ~ data:', data);
 
@@ -83,101 +83,6 @@ export default function Create() {
     const updateContactPerson = (i: number, field: string, val: string) =>
         setContactPersons((prev) => prev.map((p, idx) => (idx === i ? { ...p, [field]: val } : p)));
 
-    console.log('data', data);
-
-    // const submit: FormEventHandler = async (e) => {
-    //     e.preventDefault();
-    //     setFormErrors({});
-    //     const result = customerSchema.safeParse(data);
-
-    //     if (!result.success) {
-    //         const fieldErrors: Record<string, string> = {};
-    //         for (const [key, val] of Object.entries(result.error.flatten().fieldErrors)) {
-    //             if (val && val.length > 0) fieldErrors[key] = val[0];
-    //         }
-    //         result.error.errors.forEach((err) => {
-    //             const path = err.path.join('.');
-    //             fieldErrors[path] = err.message;
-    //         });
-    //         setFormErrors(fieldErrors);
-    //         return;
-    //     }
-    //     // Preparing data for API
-    //     const apiData = {
-    //         ...result.data,
-    //         date_of_birth: result.data.date_of_birth ? result.data.date_of_birth.replace(/-/g, '') : null,
-    //     };
-    //     console.log('API Data', apiData);
-    //     try {
-    //         const response = await axios.post('http://localhost:8000/api/customer/create', apiData);
-
-    //         console.log('🚀 ~ submit ~ response:', response);
-
-    //         if (response.data.success) {
-    //             const customer = response.data.customer;
-    //             const phone = customer?.contact?.mobile_no || data?.contact?.mobile_no || customer?.mobile_no;
-    //             if (!phone) {
-    //                 toast.error('Customer created but phone number not found', {
-    //                     position: 'top-right',
-    //                     className: 'bg-yellow-50 text-yellow-800 border-yellow-100',
-    //                 });
-    //                 return;
-    //             }
-
-    //             if (phone) {
-    //                 localStorage.setItem(
-    //                     'auth',
-    //                     JSON.stringify({
-    //                         phone,
-    //                         authenticated: true,
-    //                     }),
-    //                 );
-    //                 router.get(
-    //                     route('customer.portal'),
-    //                     {
-    //                         phone: phone,
-    //                     },
-    //                     {
-    //                         preserveState: false,
-    //                     },
-    //                 );
-    //             }
-
-    //             toast.success(response.data.message, {
-    //                 position: 'top-right',
-    //                 className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
-    //             });
-    //         } else {
-    //             console.log('Error', response.data.message);
-    //             throw new Error(response.data.message);
-    //         }
-    //     } catch (error) {
-    //         toast.error('Failed to create customer.', {
-    //             position: 'top-right',
-    //             className: 'bg-red-50 text-red-800 border-red-100',
-    //         });
-    //         console.log('Error', error);
-
-    //         // Handle API validation errors
-    //         if (axios.isAxiosError(error) && error.response?.status === 422) {
-    //             // Format Laravel validation errors to match our field names
-    //             const errors = error.response.data.errors || {};
-    //             const formattedErrors: Record<string, string> = {};
-
-    //             Object.entries(errors).forEach(([key, value]) => {
-    //                 // Convert Laravel's array format to single message
-    //                 formattedErrors[key] = Array.isArray(value) ? value[0] : value;
-
-    //                 // Handle nested field names (like 'address.region')
-    //                 if (key.includes('.')) {
-    //                     formattedErrors[key] = Array.isArray(value) ? value[0] : value;
-    //                 }
-    //             });
-
-    //             setFormErrors(formattedErrors);
-    //         }
-    //     }
-    // };
     const submit: FormEventHandler = async (e) => {
         e.preventDefault();
         setFormErrors({});
@@ -205,7 +110,6 @@ export default function Create() {
             const response = await axios.post('http://localhost:8000/api/v1/customer/create', apiData);
 
             if (response.data.success) {
-                // Success handling remains the same
                 const customer = response.data.customer;
                 const phone = customer?.contact?.mobile_no || data?.contact?.mobile_no || customer?.mobile_no;
                 if (!phone) {
@@ -240,19 +144,15 @@ export default function Create() {
                     className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
                 });
             } else {
-                // Handle backend validation errors
                 const { ret_code, ret_msg } = response.data;
 
-                // Extract the actual error message (removing the @code part if present)
                 const errorMessage = ret_msg?.split('@')[0].trim();
 
-                // Check if this is a date of birth validation error
                 if (ret_code === '1251046016' && ret_msg.includes('Age')) {
                     setFormErrors({
                         date_of_birth: errorMessage,
                     });
                 } else {
-                    // For other errors, show a toast
                     toast.error(errorMessage, {
                         position: 'top-right',
                         className: 'bg-red-50 text-red-800 border-red-100',
@@ -262,7 +162,6 @@ export default function Create() {
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 if (error.response?.status === 422) {
-                    // Laravel validation errors
                     const errors = error.response.data.errors || {};
                     const formattedErrors: Record<string, string> = {};
 
@@ -275,7 +174,6 @@ export default function Create() {
 
                     setFormErrors(formattedErrors);
                 } else if (error.response?.data) {
-                    // Handle other API errors
                     const { ret_msg } = error.response.data;
                     const errorMessage = ret_msg?.split('@')[0].trim() || 'Failed to create customer.';
                     toast.error(errorMessage, {
@@ -293,10 +191,8 @@ export default function Create() {
         }
     };
 
-    // Create a generic input change handler that clears errors
     const handleInputChange = (field: string, value: string) => {
         setData(field, value);
-        // Clear the error for this field if it exists
         setFormErrors((prev) => {
             const newErrors = { ...prev };
             delete newErrors[field];
@@ -309,7 +205,6 @@ export default function Create() {
             [field]: value,
         });
 
-        // Clear the nested field error
         const errorKey = `${parent}.${field}`;
         setFormErrors((prev) => {
             const newErrors = { ...prev };
@@ -325,7 +220,6 @@ export default function Create() {
             return newErrors;
         });
     };
-    // Generic error clearer
     const clearFieldError = (fieldPath: string) => {
         setFormErrors((prev) => {
             const newErrors = { ...prev };
@@ -580,15 +474,6 @@ export default function Create() {
                                     placeholder="Enter place of birth"
                                     error={formErrors.place_of_birth}
                                 />
-                                {/* <FormInput
-                                    label="Nationality"
-                                    id="nationality"
-                                    value={data.nationality}
-                                    onChange={(e) => handleInputChange('nationality', e.target.value)}
-                                    placeholder="Enter nationality"
-                                    error={formErrors.nationality}
-                                /> */}
-                                {/* 1000,1231 */}
                                 <FormSelect
                                     label="Nationality"
                                     id="nationality"
@@ -601,14 +486,6 @@ export default function Create() {
                                     placeholder="Select nationality"
                                     error={formErrors.nationality}
                                 />
-                                {/* <FormInput
-                                    label="Primary Language"
-                                    id="primary_language"
-                                    value={data.primary_language}
-                                    onChange={(e) => handleInputChange('primary_language', e.target.value)}
-                                    placeholder="Enter primary language"
-                                    error={formErrors.primary_language}
-                                /> */}
                                 <FormSelect
                                     label="Primary Language"
                                     id="primary_language"

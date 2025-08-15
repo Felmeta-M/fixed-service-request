@@ -17,6 +17,7 @@ trait InteractsWithSMSGateway
 
         $smsEndPoint = config('ffd.sms_end_point');
         $url = "{$smsEndPoint}{$encodedPhoneNumber}&message={$encodedMessage}";
+        \Log::info("Sending SMS to {$phone}: {$message}", ['url' => $url]);
         return self::sendRequest($url);
     }
 
@@ -126,7 +127,7 @@ trait InteractsWithSMSGateway
             'success' => true,
             'message' => 'Verification successful.',
             'data' => [
-                'otp_code' =>  $otpRecord->otp_code,
+                'otp_code' => $otpRecord->otp_code,
             ]
         ];
     }

@@ -4,8 +4,6 @@ import { Head } from '@inertiajs/react';
 import SurveyRequestForm from './SurveyRequestForm';
 
 export default function Create({ customers }: { customers: Customer[] }) {
-    // Removed unused breadcrumbs for customer layout
-
     return (
         <CustomerLayout>
             <Head title="Create Survey Request" />

@@ -11,7 +11,6 @@ const handler = NextAuth({
             },
             async authorize(credentials) {
                 try {
-                    // Verify OTP with backend
                     const response = await fetch(`http://localhost:8000/client/verify-otp`, {
                         method: 'POST',
                         headers: {

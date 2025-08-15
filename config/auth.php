@@ -41,11 +41,12 @@ return [
             'provider' => 'users',
         ],
 
-        'client' => [
+        'otp' => [
             'driver' => 'session',
-            'provider' => 'clients',
+            'provider' => 'otps',
         ],
     ],
+
 
     /*
     |--------------------------------------------------------------------------
@@ -65,16 +66,16 @@ return [
     */
 
     'providers' => [
-        'users' => [
-            'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
-        ],
-
-        'clients' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\ServiceClient::class,
-        ],
+    'users' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\User::class,
     ],
+
+    'otps' => [
+        'driver' => 'eloquent',
+        'model' => App\Models\Otp::class,
+    ],
+],
 
     /*
     |--------------------------------------------------------------------------

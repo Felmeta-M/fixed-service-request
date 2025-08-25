@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\AesHelper;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -10,6 +11,8 @@ use Exception;
 
 class NidKycService
 {
+    public function __construct(protected readonly AesHelper $aesHelper) {}
+
     protected function formatResponse(bool $success, $data = null, $error = null)
     {
         return [
@@ -51,7 +54,8 @@ class NidKycService
         $processTime = now()->format('YmdHis');
         $requestTime = now()->format('YmdHis');
         $credentials = config('services.kyc');
-        $otp_value = $this->encryptText($data['otp_value']);
+
+        $otp_value = $this->aesHelper->encrypt($data['otp_value'], config('services.national_id_secret_key'));
 
         return <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
@@ -135,24 +139,5 @@ XML;
                 'error' => 'Invalid XML format',
             ];
         }
-    }
-
-    function encryptText(string $plainText): string
-    {
-        $key = config('services.national_id_secret_key');
-
-        // Ensure key is exactly 16 bytes for AES-128
-        if (strlen($key) !== 16) {
-            throw new \Exception('Encryption key must be exactly 16 characters for AES-128.');
-        }
-
-        // Generate a random IV (AES-128-CBC uses 16 bytes IV)
-        $iv = random_bytes(openssl_cipher_iv_length('AES-128-CBC'));
-
-        // Encrypt
-        $encrypted = openssl_encrypt($plainText, 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv);
-
-        // Return Base64 of IV + encrypted data
-        return base64_encode($iv . $encrypted);
     }
 }

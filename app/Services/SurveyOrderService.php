@@ -3,9 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
 class SurveyOrderService

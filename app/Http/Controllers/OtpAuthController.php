@@ -18,17 +18,42 @@ class OtpAuthController extends Controller
 
     public function sendOneTimePassword(Request $request)
     {
-        $request->validate(['phone' => 'required']);
+        // Validate request
+        $request->validate([
+            'phone' => 'required|string|min:10|max:15',
+        ]);
 
-        $otpCode = rand(100000, 999999);
-        Otp::updateOrCreate(
-            ['phone' => $request->phone],
-            ['code' => $otpCode, 'expires_at' => Carbon::now()->addMinutes(5)]
-        );
-        // send SMS logic here...
-        $this->sendSmsOnly($request->phone, $otpCode);
+        try {
+            $otpCode = rand(100000, 999999);
 
-        return redirect()->route('otp.verify.form')->with('phone', $request->phone);
+            // Save or update OTP
+            Otp::updateOrCreate(
+                ['phone' => $request->phone],
+                [
+                    'code' => $otpCode,
+                    'expires_at' => now()->addMinutes(5),
+                ]
+            );
+
+            // Try sending SMS
+            $this->sendSmsOnly($request->phone, $otpCode);
+
+            // Success → redirect to OTP verify form
+            return redirect()
+                ->route('otp.verify.form')
+                ->with('phone', $request->phone);
+        } catch (\Throwable $e) {
+            // Log error for debugging
+            \Log::error("OTP send failed: " . $e->getMessage(), [
+                'phone' => $request->phone ?? null,
+            ]);
+
+            // Redirect back with error message
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['otp' => 'Failed to send OTP. Please try again.']);
+        }
     }
 
     public function showVerifyForm()

@@ -93,7 +93,7 @@ class NidKycService
             <nid:individualId>{$data['individual_id']}</nid:individualId>
             <nid:individualIdType>{$credentials['individual_id_type']}</nid:individualIdType>
             <nid:request>
-               <nid:timestamp>{$requestTime}</nid:timestamp>
+               <nid:timestamp>{$data['timestamp']}</nid:timestamp>
                <nid:otp>{$otp_value}</nid:otp>
             </nid:request>
          </nid:GetDataKycReqBody>
@@ -103,41 +103,114 @@ class NidKycService
 XML;
     }
 
-    public function parseResponse(string $xmlResponse)
+
+    public function parseResponse(string $xml): array
     {
         try {
-            $xml = new SimpleXMLElement($xmlResponse);
-            $namespaces = $xml->getNamespaces(true);
+            $xmlObject = simplexml_load_string($xml);
 
-            // Navigate to RetCode & RetMsg
-            $retCode = (string) $xml->children($namespaces['soapenv'])
-                ->Body
-                ->children($namespaces['nid'])
-                ->GetDataKycRspMsg
-                ->children($namespaces['com'])
-                ->ResponseHeader
-                ->RetCode;
+            if ($xmlObject === false) {
+                return $this->formatResponse(false, null, "Invalid XML response");
+            }
 
-            $retMsg = (string) $xml->children($namespaces['soapenv'])
-                ->Body
-                ->children($namespaces['nid'])
-                ->GetDataKycRspMsg
-                ->children($namespaces['com'])
-                ->ResponseHeader
-                ->RetMsg;
+            // Root namespaces (soapenv is here)
+            $rootNamespaces = $xmlObject->getNamespaces(true);
+            if (!isset($rootNamespaces['soapenv'])) {
+                return $this->formatResponse(false, null, "Missing SOAP namespace");
+            }
 
-            return [
-                'success' => $retCode === '0',
-                'code' => $retCode,
-                'message' => $retMsg,
-                'raw' => $xmlResponse,
-            ];
-        } catch (Exception $e) {
-            Log::error("XML Parsing Error: {$e->getMessage()}");
-            return [
-                'success' => false,
-                'error' => 'Invalid XML format',
-            ];
+            // Navigate into <soapenv:Body>
+            $body = $xmlObject->children($rootNamespaces['soapenv'])->Body ?? null;
+            if (!$body) {
+                return $this->formatResponse(false, null, "SOAP Body not found");
+            }
+
+            // Body namespaces (nid + com are here)
+            $bodyNamespaces = $body->getNamespaces(true);
+
+            // Get the response wrapper <nid:GetDataKycRspMsg>
+            $responseMsg = $body->children($bodyNamespaces['nid'])->GetDataKycRspMsg ?? null;
+            if (!$responseMsg) {
+                return $this->formatResponse(false, null, "GetDataKycRspMsg not found");
+            }
+
+            // --- Header ---
+            $header = $responseMsg->children($bodyNamespaces['com'])->ResponseHeader ?? null;
+            if (!$header) {
+                return $this->formatResponse(false, null, "ResponseHeader not found");
+            }
+
+            // --- Body ---
+            $rspBody = $responseMsg->children($bodyNamespaces['nid'])->GetDataKycRspBody ?? null;
+            if (!$rspBody) {
+                return $this->formatResponse(false, null, "GetDataKycRspBody not found");
+            }
+
+            $response = $rspBody->response ?? null;
+            if (!$response) {
+                return $this->formatResponse(false, null, "Response section not found");
+            }
+
+            $photo = $response->identity->photo ?? '';
+            // $this->handlePhoto($photo);
+            // ✅ Successful parse
+            return $this->formatResponse(true, [
+                'transaction_id' => (string) ($header->TransactionId ?? ''),
+                'provider'       => (string) ($rspBody->id ?? ''),
+                'response_time'  => (string) ($rspBody->responseTime ?? ''),
+                'transactionID'  => (string) ($rspBody->transactionID ?? ''),
+                'kyc_status'     => filter_var((string) ($response->kycStatus ?? ''), FILTER_VALIDATE_BOOLEAN),
+                'auth_token'     => (string) ($response->authResponseToken ?? ''),
+                'identity' => [
+                    'name' => [
+                        'eng' => (string) ($response->identity->name[0]->value ?? ''),
+                        'amh' => (string) ($response->identity->name[1]->value ?? ''),
+                    ],
+                    'dob' => (string) ($response->identity->dob ?? ''),
+                    'gender' => [
+                        'eng' => (string) ($response->identity->gender[0]->value ?? ''),
+                        'amh' => (string) ($response->identity->gender[1]->value ?? ''),
+                    ],
+                    'phone' => (string) ($response->identity->phoneNumber ?? ''),
+                    'email' => (string) ($response->identity->emailId ?? ''),
+                    'address' => [
+                        'eng' => (string) ($response->identity->fullAddress[0]->value ?? ''),
+                        'amh' => (string) ($response->identity->fullAddress[1]->value ?? ''),
+                    ],
+                    'nationality' => [
+                        'eng' => (string) ($response->identity->nationality[0]->value ?? ''),
+                        'amh' => (string) ($response->identity->nationality[1]->value ?? ''),
+                    ],
+                    'photo_base64' => (string) $photo,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            return $this->formatResponse(false, null, "Parse error: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Handle photo base64 and optional saving.
+     */
+    protected function handlePhoto($photoNode): array
+    {
+        $photoBase64 = (string) $photoNode;
+        $photoUrl = null;
+
+        if (!empty($photoBase64)) {
+            try {
+                $photoData = base64_decode($photoBase64);
+                $fileName = 'kyc_photos/' . uniqid('photo_') . '.jpg';
+                \Storage::disk('public')->put($fileName, $photoData);
+                $photoUrl = \Storage::disk('public')->url($fileName);
+            } catch (\Throwable $e) {
+                $photoUrl = null;
+            }
+        }
+
+        return [
+            'base64' => $photoBase64,
+            'url'    => $photoUrl,
+        ];
     }
 }

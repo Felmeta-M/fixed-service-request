@@ -41,6 +41,7 @@ class NidController extends Controller
             'individual_id'   => 'required|string|max:16',
             'otp_value'       => 'required|string|max:6',
             'transaction_id'  => 'required|string|max:64',
+            'timestamp'  => 'required|string|max:64',
         ];
 
         // Run validation

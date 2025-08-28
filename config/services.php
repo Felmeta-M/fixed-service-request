@@ -153,7 +153,7 @@ return [
         'client_secret' => env('CLIENT_SECRET', 'REDACTED_CLIENT_SECRET'),
         'env' => env('ENV', 'prod'),
         'domain_uri' => env('DOMAINURI', 'fayda.et'),
-        'individual_id_type' => env('INDIVIDUALIDTYPE', 'FCN'),
+        'individual_id_type' => env('INDIVIDUAL_ID_TYPE', 'FCN'),
         'otp_channel' => env('OPTCHANNEL', 'phone'),
     ],
 
@@ -168,7 +168,7 @@ return [
         'domain_uri' => env('NID_DOMAIN_URI', 'fayda.et'),
         'client_id' => env('NID_CLIENT_ID', 'ethiotel'),
         'client_secret' => env('NID_CLIENT_SECRET', 'REDACTED_CLIENT_SECRET'),
-        'individual_id_type' => env('INDIVIDUALIDTYPE', 'api/v1/nid/kyc'),
+        'individual_id_type' => env('INDIVIDUAL_ID_TYPE', 'FCN'),
     ],
 
 ];

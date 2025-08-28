@@ -171,4 +171,12 @@ return [
         'individual_id_type' => env('INDIVIDUAL_ID_TYPE', 'FCN'),
     ],
 
+    'ecaf' => [
+        'endpoint' => env('ECAF_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/webservices/ecaf4kiosk'),
+        'username' => env('ECAF_API_USERNAME', 'HW_LOADER'),
+        'password' => env('ECAF_API_PASSWORD', 'REDACTED_PASSWORD'),
+        'agent_username' => env('ECAF_AGENT_USERNAME', 'RIDE_9XXYYYYYY'),
+        'channel_id' => env('ECAF_CHANNEL_ID', '57'),
+    ],
+
 ];

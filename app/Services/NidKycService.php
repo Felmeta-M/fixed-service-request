@@ -158,7 +158,6 @@ XML;
                 'transaction_id' => (string) ($header->TransactionId ?? ''),
                 'provider'       => (string) ($rspBody->id ?? ''),
                 'response_time'  => (string) ($rspBody->responseTime ?? ''),
-                'transactionID'  => (string) ($rspBody->transactionID ?? ''),
                 'kyc_status'     => filter_var((string) ($response->kycStatus ?? ''), FILTER_VALIDATE_BOOLEAN),
                 'auth_token'     => (string) ($response->authResponseToken ?? ''),
                 'identity' => [

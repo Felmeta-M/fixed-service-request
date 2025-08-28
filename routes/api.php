@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\v1\BandwidthOptionController;
 use App\Http\Controllers\Api\v1\CustomerController;
+use App\Http\Controllers\Api\v1\EcafController;
 use App\Http\Controllers\Api\v1\LocationController;
 use App\Http\Controllers\Api\v1\NidController;
 use App\Http\Controllers\Api\v1\OccupationController;
@@ -35,6 +36,7 @@ Route::prefix('v1')->group(function () {
 
     Route::prefix('customer')->group(function () {
         Route::post('/create', [CustomerController::class, 'store']);
+        Route::post('/ecaf', [EcafController::class, 'upload']);
         Route::get('/query-by-service-number/{service_number}', [CustomerController::class, 'getCustomerByServiceNumber']);
         Route::get('/query-by-customer-code/{code}', [CustomerController::class, 'getCustomerByCode']);
         Route::get('/types', [CustomerController::class, 'types']);

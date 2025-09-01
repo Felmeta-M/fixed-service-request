@@ -58,24 +58,24 @@ class CustomerController extends Controller
         //
     }
 
-    public function getCustomerByServiceNumber(string $service_number)
+    public function getCustomerByServiceNumber(Request $request)
     {
-        if (!preg_match('/^\d+$/', $service_number)) {
+        if (!preg_match('/^\d+$/', $request->service_number)) {
             return response()->json(['error' => 'Invalid service number'], 422);
         }
 
-        $response = $this->queryCustomerByServiceNumberService->getCustomer($service_number);
+        $response = $this->queryCustomerByServiceNumberService->getCustomer($request->service_number);
 
         return response()->json($response);
     }
 
-    public function getCustomerByCode(string $code)
+    public function getCustomerByCode(Request $request)
     {
-        if (!preg_match('/^\d+$/', $code)) {
+        if (!preg_match('/^\d+$/', $request->code)) {
             return response()->json(['error' => 'Invalid customer code'], 422);
         }
 
-        $response = $this->queryCustomerByCodeService->getCustomer($code);
+        $response = $this->queryCustomerByCodeService->getCustomer($request->code);
 
         return response()->json($response);
     }

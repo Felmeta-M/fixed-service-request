@@ -37,8 +37,8 @@ Route::prefix('v1')->group(function () {
     Route::prefix('customer')->group(function () {
         Route::post('/create', [CustomerController::class, 'store']);
         Route::post('/ecaf', [EcafController::class, 'upload']);
-        Route::get('/query-by-service-number/{service_number}', [CustomerController::class, 'getCustomerByServiceNumber']);
-        Route::get('/query-by-customer-code/{code}', [CustomerController::class, 'getCustomerByCode']);
+        Route::post('/query-by-service-number', [CustomerController::class, 'getCustomerByServiceNumber']);
+        Route::post('/query-by-customer-code', [CustomerController::class, 'getCustomerByCode']);
         Route::get('/types', [CustomerController::class, 'types']);
         Route::get('/categories', [CustomerController::class, 'categories']);
         Route::get('/subcategories', [CustomerController::class, 'subcategories']);

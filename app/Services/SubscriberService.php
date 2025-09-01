@@ -7,25 +7,25 @@ use Illuminate\Support\Str;
 
 class SubscriberService
 {
-    public function createNewSubscriber(array $data): array
-    {
-        $transactionId = Str::uuid()->toString();
-        $processTime = now()->format('YmdHis');
+   public function createNewSubscriber(array $data): array
+   {
+      $transactionId = Str::uuid()->toString();
+      $processTime = now()->format('YmdHis');
 
-        $xml = $this->buildRequestXml($transactionId, $processTime, $data);
+      $xml = $this->buildRequestXml($transactionId, $processTime, $data);
 
-        $response = Http::withHeaders([
-            'Content-Type' => 'text/xml;charset=utf-8',
-        ])->post(config('services.subscriber.endpoint'), $xml);
+      $response = Http::withHeaders([
+         'Content-Type' => 'text/xml;charset=utf-8',
+      ])->post(config('services.subscriber.endpoint'), $xml);
 
-        return $this->parseResponse($response->body());
-    }
+      return $this->parseResponse($response->body());
+   }
 
-    private function buildRequestXml(string $transactionId, string $processTime, array $data): string
-    {
-        $config = config('services.subscriber');
-
-        return <<<XML
+   private function buildRequestXml(string $transactionId, string $processTime, array $data): string
+   {
+      $config = config('services.subscriber');
+      $installmentDate = now()->format('YmdHis');
+      return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/" xmlns:ser="http://oss.huawei.com/webservice/bss/services">
    <soapenv:Header/>
    <soapenv:Body>
@@ -50,7 +50,7 @@ class SubscriberService
                   <com:PaymentType>1</com:PaymentType>
                   <com:BillCycle>01</com:BillCycle>
                   <com:ethioZoneOrRegion>{$data['region']}</com:ethioZoneOrRegion>
-                  <com:CollectionCenter>{$data['collection_center']}</com:CollectionCenter>
+                  <com:CollectionCenter>994</com:CollectionCenter>
                   <com:Language>2002</com:Language>
                   <com:FirstName>{$data['first_name']}</com:FirstName>
                   <com:MiddleOrFatherName>{$data['middle_name']}</com:MiddleOrFatherName>
@@ -77,7 +77,7 @@ class SubscriberService
             <com:SubBusiOrderlist>
                <com:BusinessCode>CO015</com:BusinessCode>
                <com:SubscriberInfo>
-                  <com:ExternalSequnce>{$data['external_sequence']}</com:ExternalSequnce>
+                  <com:ExternalSequnce>798863b45b6b4273b8a2321ebb46f6cd</com:ExternalSequnce>
                   <com:NetworkType>3</com:NetworkType>
                   <com:SubType>1</com:SubType>
                   <com:SubLanguage>2002</com:SubLanguage>
@@ -94,35 +94,35 @@ class SubscriberService
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>
             <com:ExternalOperid>512</com:ExternalOperid>
-            <com:InstallmentCompletedDate>{$data['installment_date']}</com:InstallmentCompletedDate>
+            <com:InstallmentCompletedDate>{$installmentDate}</com:InstallmentCompletedDate>
          </ser:CreateNewSubscriberReqBody>
       </ser:CreateNewSubscriberReqMsg>
    </soapenv:Body>
 </soapenv:Envelope>
 XML;
-    }
+   }
 
-    private function parseResponse(string $xml): array
-    {
-        $xmlObj = simplexml_load_string($xml, "SimpleXMLElement", 0, "soapenv", true);
-        $xmlObj->registerXPathNamespace('soapenv', 'http://schemas.xmlsoap.org/soap/envelope/');
-        $xmlObj->registerXPathNamespace('ser', 'http://oss.huawei.com/webservice/bss/services');
-        $xmlObj->registerXPathNamespace('com', 'http://www.huawei.com/bss/soaif/interface/common/');
+   private function parseResponse(string $xml): array
+   {
+      $xmlObj = simplexml_load_string($xml, "SimpleXMLElement", 0, "soapenv", true);
+      $xmlObj->registerXPathNamespace('soapenv', 'http://schemas.xmlsoap.org/soap/envelope/');
+      $xmlObj->registerXPathNamespace('ser', 'http://oss.huawei.com/webservice/bss/services');
+      $xmlObj->registerXPathNamespace('com', 'http://www.huawei.com/bss/soaif/interface/common/');
 
-        $body = $xmlObj->xpath('//soapenv:Body')[0];
+      $body = $xmlObj->xpath('//soapenv:Body')[0];
 
-        $rsp = $body->children('ser', true)->CreateNewSubscriberRspMsg;
+      $rsp = $body->children('ser', true)->CreateNewSubscriberRspMsg;
 
-        return [
-            'code' => (string) $rsp->ResponseHeader->children('com', true)->RetCode,
-            'message' => (string) $rsp->ResponseHeader->children('com', true)->RetMsg,
-            'customer_busi_order_id' => (string) $rsp->CustomerBusiOrderId,
-            'ext_params' => array_map(function ($param) {
-                return [
-                    'name' => (string) $param->ParamName,
-                    'value' => (string) $param->ParamValue,
-                ];
-            }, iterator_to_array($rsp->ExtParamList->children('com', true)->ParameterInfo ?? [])),
-        ];
-    }
+      return [
+         'code' => (string) $rsp->ResponseHeader->children('com', true)->RetCode,
+         'message' => (string) $rsp->ResponseHeader->children('com', true)->RetMsg,
+         'customer_busi_order_id' => (string) $rsp->CustomerBusiOrderId,
+         'ext_params' => array_map(function ($param) {
+            return [
+               'name' => (string) $param->ParamName,
+               'value' => (string) $param->ParamValue,
+            ];
+         }, iterator_to_array($rsp->ExtParamList->children('com', true)->ParameterInfo ?? [])),
+      ];
+   }
 }

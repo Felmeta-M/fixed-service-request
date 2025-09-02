@@ -6,9 +6,12 @@ use App\Http\Controllers\Api\v1\EcafController;
 use App\Http\Controllers\Api\v1\LocationController;
 use App\Http\Controllers\Api\v1\NidController;
 use App\Http\Controllers\Api\v1\OccupationController;
+use App\Http\Controllers\Api\v1\QuerySurveyOrderController;
+use App\Http\Controllers\Api\v1\QuerySurveyOrderSummaryController;
 use App\Http\Controllers\Api\v1\SurveyController;
 use App\Http\Controllers\Api\v1\SurveyTypeController;
 use App\Http\Controllers\Api\v1\ServiceClientController;
+use App\Http\Controllers\Api\v1\SubsriptionController;
 use App\Http\Middleware\AuthenticateServiceClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -46,8 +49,12 @@ Route::prefix('v1')->group(function () {
 
     Route::prefix('survey')->group(function () {
         Route::post('/create', [SurveyController::class, 'store']);
+        Route::post('/order', [QuerySurveyOrderController::class, 'querySurveyOrder']);
+        Route::post('/order-summary', [QuerySurveyOrderSummaryController::class, 'querySurveyOrderSummary']);
     });
-    Route::prefix('subscriber')->group(function () {});
+    Route::prefix('services')->group(function () {
+        Route::post('/subscription', [SubsriptionController::class, 'store']);
+    });
     Route::prefix('payment')->group(function () {});
     Route::prefix('nid')->group(function () {
         Route::post('otp', [NidController::class, 'getOtp']);

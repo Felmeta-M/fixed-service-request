@@ -81,6 +81,22 @@ return [
         'technical_channel_id' => env('SURVEY_TECHNICAL_CHANNEL_ID'),
     ],
 
+    'query_survey' => [
+        'endpoint' => env('QUERY_SURVEY_SOAP_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'channel_id' => env('QUERY_SURVEY_CHANNEL_ID', '61'),
+        'technical_channel_id' => env('QUERY_SURVEY_TECHNICAL_CHANNEL_ID', '51'),
+        'access_user' => env('QUERY_SURVEY_ACCESS_USER', 'kiosk'),
+        'access_pwd' => env('QUERY_SURVEY_ACCESS_PWD', 'REDACTED_PASSWORD'),
+    ],
+
+    'query_survey_summery' => [
+        'endpoint' => env('QUERY_SURVEY_SUMMERY_SOAP_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'channel_id' => env('QUERY_SURVEY_SUMMERY_CHANNEL_ID', '61'),
+        'technical_channel_id' => env('QUERY_SURVEY_SUMMERY_TECHNICAL_CHANNEL_ID', '51'),
+        'access_user' => env('QUERY_SURVEY_SUMMERY_ACCESS_USER', 'kiosk'),
+        'access_pwd' => env('QUERY_SURVEY_SUMMERY_ACCESS_PWD', 'REDACTED_PASSWORD'),
+    ],
+
     'subscriber' => [
         'endpoint' => env('SUBSCRIBER_BSS_ENDPOINT', "REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF"),
         'access_user' => env('SUBSCRIBER_BSS_USERNAME'),

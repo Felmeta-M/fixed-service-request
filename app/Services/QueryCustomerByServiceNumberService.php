@@ -19,29 +19,30 @@ class QueryCustomerByServiceNumberService
         $this->data = config('services.query_customer_by_service_number');
     }
 
-    public function getCustomer(string $serviceNumber): array
+    public function querySurveyOrderSummary(string $serviceNumber)
     {
-        $xmlRequest = $this->buildRequestXml($serviceNumber);
+        $xml = $this->buildRequestXml($serviceNumber);
         $response = Http::withHeaders([
             'Content-Type' => 'text/xml; charset=utf-8',
-        ])->withBody($xmlRequest, 'text/xml')->post($this->data['customer_query_endpoint']);
+        ])->send('POST', config('services.query_survey_summery.endpoint'), [
+            'body' => $xml
+        ]);
+
 
         if (!$response->successful()) {
             return ['error' => 'Request failed', 'status' => $response->status()];
         }
 
-        return $this->parseResponseXml($response->body());
+        if ($response->successful()) {
+            return $this->parseResponseXml($response->body());
+        }
     }
 
     protected function buildRequestXml(string $serviceNumber): string
     {
-        $transactionId = now()->format('YmdHis') . rand(1000, 9999);
+        $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
-        $language = $this->data['language'];
-        $channelId = $this->data['channel_id'];
-        $techChannelId = $this->data['technical_channel_id'];
-        $user = $this->data['access_user'];
-        $pwd = $this->data['access_pwd'];
+        $config = config('services.query_survey');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -54,11 +55,11 @@ class QueryCustomerByServiceNumberService
             <com:Version>1</com:Version>
             <com:TransactionId>{$transactionId}</com:TransactionId>
             <com:ProcessTime>{$processTime}</com:ProcessTime>
-            <com:Language>{$language}</com:Language>
-            <com:ChannelId>{$channelId}</com:ChannelId>
-            <com:TechnicalChannelId>{$techChannelId}</com:TechnicalChannelId>
-            <com:AccessUser>{$user}</com:AccessUser>
-            <com:AccessPwd>{$pwd}</com:AccessPwd>
+            <com:Language>{$config['language']}</com:Language>
+            <com:ChannelId>{$config['channel_id']}</com:ChannelId>
+            <com:TechnicalChannelId>{$config['technical_channel_id']}</com:TechnicalChannelId>
+            <com:AccessUser>{$config['access_user']}</com:AccessUser>
+            <com:AccessPwd>{$config['access_pwd']}</com:AccessPwd>
          </ser:RequestHeader>
          <ser:GetCustomerBody>
             <com:ServiceNumber>{$serviceNumber}</com:ServiceNumber>

@@ -2,29 +2,50 @@
 
 namespace App\Services;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Throwable;
 
-class SubscriberService
+class SubscriptionService
 {
-   public function createNewSubscriber(array $data): array
+   public function createNewSubscriber(array $data)
    {
-      $transactionId = Str::uuid()->toString();
-      $processTime = now()->format('YmdHis');
+      try {
+         $xml = $this->buildRequestXml($data);
+         $response = Http::withHeaders([
+            'Content-Type' => 'text/xml;charset=utf-8',
+         ])->send('POST', config('services.subscriber.endpoint'), [
+            'body' => $xml
+         ]);
 
-      $xml = $this->buildRequestXml($transactionId, $processTime, $data);
+         if (! $response->successful()) {
+            return response()->json([
+               'status'  => 'error',
+               'message' => 'Failed to connect to subscriber service',
+               'code'    => $response->status(),
+               'body'    => $response->body(),
+            ], $response->status());
+         }
 
-      $response = Http::withHeaders([
-         'Content-Type' => 'text/xml;charset=utf-8',
-      ])->post(config('services.subscriber.endpoint'), $xml);
-
-      return $this->parseResponse($response->body());
+         if ($response->successful()) {
+            return $this->parseResponse($response->body());
+         }
+      } catch (Throwable $e) {
+         report($e);
+         return response()->json([
+            'status'  => 'error',
+            'message' => 'Something went wrong while processing your request. Please try again later.',
+         ], 500);
+      }
    }
 
-   private function buildRequestXml(string $transactionId, string $processTime, array $data): string
+   private function buildRequestXml(array $data): string
    {
+      $transactionId = uniqid();
+      $processTime   = now()->format('YmdHis');
       $config = config('services.subscriber');
-      $installmentDate = now()->format('YmdHis');
+
       return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/" xmlns:ser="http://oss.huawei.com/webservice/bss/services">
    <soapenv:Header/>
@@ -50,7 +71,7 @@ class SubscriberService
                   <com:PaymentType>1</com:PaymentType>
                   <com:BillCycle>01</com:BillCycle>
                   <com:ethioZoneOrRegion>{$data['region']}</com:ethioZoneOrRegion>
-                  <com:CollectionCenter>994</com:CollectionCenter>
+                  <com:CollectionCenter>10163</com:CollectionCenter>
                   <com:Language>2002</com:Language>
                   <com:FirstName>{$data['first_name']}</com:FirstName>
                   <com:MiddleOrFatherName>{$data['middle_name']}</com:MiddleOrFatherName>
@@ -93,8 +114,8 @@ class SubscriberService
                   <com:CallCenterAccess>994</com:CallCenterAccess>
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>
-            <com:ExternalOperid>512</com:ExternalOperid>
-            <com:InstallmentCompletedDate>{$installmentDate}</com:InstallmentCompletedDate>
+            <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
+            <com:InstallmentCompletedDate>{$data['completed_date']}</com:InstallmentCompletedDate>
          </ser:CreateNewSubscriberReqBody>
       </ser:CreateNewSubscriberReqMsg>
    </soapenv:Body>

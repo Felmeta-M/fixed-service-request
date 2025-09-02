@@ -29,7 +29,7 @@ class SurveyRequest extends FormRequest
             // 'sec_contact_no'       => 'required|string',
             // 'sec_contact_email'    => 'required|email',
             // 'status'               => 'required|string',
-            'completed_date'       => 'required|date',
+            'completed_date'       => 'nullable|date',
             'external_operid'       => 'nullable|string',
         ];
     }

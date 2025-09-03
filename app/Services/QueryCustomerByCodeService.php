@@ -2,29 +2,27 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-
-class QueryCustomerByCodeService
+class QueryCustomerByCodeService extends BaseApiService
 {
+    protected int $timeout = 20;
+    protected int $rateLimit = 15;
+
+    protected function endpoint(): string
+    {
+        return config('services.query_customer.endpoint');
+    }
+
     public function getCustomer(string $customerCode)
     {
-        $xml = $this->buildXml($customerCode);
-
-        $response = Http::withHeaders([
-            'Content-Type' => 'text/xml; charset=utf-8',
-        ])->withBody($xml, 'text/xml')->post(config('services.query_customer.url'));
-
-
-        if ($response->failed()) {
-            return [
-                'success' => false,
-                'message' => 'Failed to retrieve customer data using query customer by code.',
-            ];
-        }
-
-        if ($response->successful()) {
-            return $this->parseResponse($response->body());
+        try {
+            $xmlPayload = $this->buildXml($customerCode);
+            $xmlResponse = $this->executeRequest($xmlPayload);
+            $parsedXml = $this->parseResponse($xmlResponse);
+            return ApiResponse::success($parsedXml);
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), 500);
+        } catch (\Throwable $e) {
+            return ApiResponse::exception($e, 'Query customer by cutomer code failed.');
         }
     }
 

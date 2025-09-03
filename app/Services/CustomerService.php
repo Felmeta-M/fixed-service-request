@@ -2,90 +2,28 @@
 
 namespace App\Services;
 
-use Exception;
-use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
-class CustomerService
+class CustomerService extends BaseApiService
 {
+    protected int $timeout = 20;
+    protected int $rateLimit = 15;
 
-    public function queryCustomer(string $serviceNumber)
+    protected function endpoint(): string
     {
-        try {
-            $xml = $this->buildQueryRequestXml($serviceNumber);
-            $response = Http::withHeaders([
-                'Content-Type' => 'text/xml; charset=utf-8',
-            ])->send('POST', config('services.customer.query_endpoint'), [
-                'body' => $xml,
-            ]);
-
-            if (!$response->successful()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Query customer request Failed'
-                ], 500);
-            }
-            if ($response->successful()) {
-                return $this->parseResponse($response->body());
-            }
-        } catch (RequestException $e) {
-            Log::error('RequestException', [
-                'message' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to communicate with third-party service'
-            ], 500);
-        } catch (\Exception $e) {
-            Log::error('Unexpected Exception', [
-                'message' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'An unExcepted error occurred'
-            ]);
-        }
+        return config('services.customer.create_endpoint');
     }
 
     public function createCustomer(array $data)
     {
         try {
-            $xml = $this->buildXml($data);
-            $response = Http::withHeaders([
-                'Content-Type' => 'text/xml; charset=utf-8',
-            ])->withBody($xml, 'text/xml')->post(config('services.customer.create_endpoint'));
-
-            if ($response->failed()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Create customer request Failed'
-                ], 500);
-            }
-
-            if ($response->successful()) {
-                return $this->parseResponse($response->body());
-            }
-        } catch (RequestException $e) {
-            Log::error('RequestException', [
-                'message' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to communicate with third-party service'
-            ], 500);
-        } catch (\Exception $e) {
-            Log::error('Unexpected Exception', [
-                'message' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'An unExcepted error occurred'
-            ]);
+            $xmlPayload = $this->buildXml($data);
+            $xmlResponse = $this->executeRequest($xmlPayload);
+            $parsedXml = $this->parseResponse($xmlResponse);
+            return ApiResponse::success($parsedXml);
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), 500);
+        } catch (\Throwable $e) {
+            return ApiResponse::exception($e, 'Customer create failed.');
         }
     }
 
@@ -180,43 +118,10 @@ XML;
     XML;
     }
 
-    private function buildQueryRequestXml(string $serviceNumber): string
-    {
-        $credentials = config('services.customer');
-        $transactionId = uniqid();
-        $processTime = now()->format('YmdHis');
-
-        return <<<XML
-<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:quer="http://crm.huawei.com/query/" xmlns:bas="http://crm.huawei.com/basetype/">
-   <soapenv:Header/>
-   <soapenv:Body>
-      <quer:GetCombiningRequest>
-         <quer:RequestHeader>
-            <bas:Version>1</bas:Version>
-            <bas:TransactionId>{$transactionId}</bas:TransactionId>
-            <bas:ProcessTime>{$processTime}</bas:ProcessTime>
-            <com:Language>2022</com:Language>
-            <com:ChannelId>{$credentials['channel_id']}</com:ChannelId>
-            <com:TechnicalChannelId>{$credentials['technical_channel_id']}</com:TechnicalChannelId>
-            <com:TenantId>{$credentials['tenant_id']}</com:TenantId>
-            <com:AccessUser>{$credentials['access_user']}</com:AccessUser>
-            <com:AccessPwd>{$credentials['access_password']}</com:AccessPwd>
-         </quer:RequestHeader>
-         <quer:GetCombiningBody>
-            <quer:ServiceNumber>{$serviceNumber}</quer:ServiceNumber>
-         </quer:GetCombiningBody>
-      </quer:GetCombiningRequest>
-   </soapenv:Body>
-</soapenv:Envelope>
-XML;
-    }
-
     public function parseResponse(string $xml): array
     {
         $xmlObject = simplexml_load_string($xml);
 
-        // Register namespaces from the root
         $namespaces = $xmlObject->getNamespaces(true);
 
         // Navigate to the Body

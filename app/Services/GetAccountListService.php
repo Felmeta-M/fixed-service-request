@@ -3,43 +3,33 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
-class GetAccountListService
+class GetAccountListService extends BaseApiService
 {
-    /**
-     * Send a GetAccountListRequest SOAP call.
-     */
+    protected int $timeout = 20;
+    protected int $rateLimit = 15;
+
+    protected function endpoint(): string
+    {
+        return config('services.get_account_list.endpoint');
+    }
+
     public function getAccountList(string $serviceNumber)
     {
-        $xml = $this->buildXmlGetAccountList($serviceNumber);
-
-        $response = Http::withHeaders([
-            'Content-Type' => 'text/xml; charset=utf-8',
-        ])->withBody($xml, 'text/xml')->post(config('services.get_account_list.endpoint'));
-
-        if ($response->failed()) {
-            Log::error('Get Account List SOAP request failed', [
-                'xml' => $xml,
-                'response' => $response->body(),
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Get account SOAP request failed'
-            ], 500);
-        }
-
-        if ($response->successful()) {
-            return $this->parseAccountListResponse($response->body());
+        try {
+            $xmlPayload = $this->buildXml($serviceNumber);
+            $xmlResponse = $this->executeRequest($xmlPayload);
+            $parsedXml = $this->parseResponse($xmlResponse);
+            return ApiResponse::success($parsedXml);
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), 500);
+        } catch (\Throwable $e) {
+            return ApiResponse::exception($e, 'Account query failed.');
         }
     }
 
-    /**
-     * Build SOAP XML for GetAccountListRequest.
-     */
-    protected function buildXmlGetAccountList(string $serviceNumber): string
+
+    protected function buildXml(string $serviceNumber): string
     {
         $transactionId = now()->format('YmdHis') . rand(1000, 9999);
         $processTime = now()->format('YmdHis');
@@ -76,7 +66,7 @@ XML;
     /**
      * Parse SOAP XML response into a usable PHP array.
      */
-    protected function parseAccountListResponse(string $xml): array
+    protected function parseResponse(string $xml): array
     {
         $soap = simplexml_load_string($xml);
         $body = $soap->children('http://schemas.xmlsoap.org/soap/envelope/')->Body;

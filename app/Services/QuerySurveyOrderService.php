@@ -2,49 +2,28 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
-class QuerySurveyOrderService
+class QuerySurveyOrderService extends BaseApiService
 {
+    protected int $timeout = 20;
+    protected int $rateLimit = 15;
+
+    protected function endpoint(): string
+    {
+        return config('services.query_survey.endpoint');
+    }
 
     public function querySurveyOrderDetail(string $surveyOrderId)
     {
         try {
-            $xml = $this->buildRequestXml($surveyOrderId);
-            $response = Http::withHeaders([
-                'Content-Type' => 'text/xml; charset=utf-8',
-            ])->withBody($xml, 'text/xml')->post(config('services.query_survey.endpoint'));
-
-            if ($response->failed()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Survey order create request Failed'
-                ], 500);
-            }
-
-            if ($response->successful()) {
-                return $this->parseXmlResponse($response->body());
-            }
-        } catch (RequestException $e) {
-            Log::error('RequestException', [
-                'message' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to communicate with third-party service'
-            ], 500);
-        } catch (\Exception $e) {
-            Log::error('Unexpected Exception', [
-                'message' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'An unexcepted error occurred'
-            ]);
+            $xmlPayload = $this->buildRequestXml($surveyOrderId);
+            $xmlResponse = $this->executeRequest($xmlPayload);
+            $parsedXml = $this->parseResponseXml($xmlResponse);
+            return ApiResponse::success($parsedXml);
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), 500);
+        } catch (\Throwable $e) {
+            return ApiResponse::exception($e, 'Query survey order failed.');
         }
     }
 
@@ -78,7 +57,7 @@ XML;
     }
 
 
-    private function parseXmlResponse(string $xml): array
+    private function parseResponseXml(string $xml): array
     {
         $parsed = simplexml_load_string($xml);
 

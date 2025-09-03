@@ -2,37 +2,27 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-
-namespace App\Services;
-
-use Illuminate\Support\Facades\Http;
-
-class QueryCustomerByServiceNumberService
+class QueryCustomerByServiceNumberService extends BaseApiService
 {
+    protected int $timeout = 20;
+    protected int $rateLimit = 15;
 
-    protected array $data;
-
-    public function __construct()
+    protected function endpoint(): string
     {
-        $this->data = config('services.query_customer_by_service_number');
+        return config('services.query_customer_by_service_number.endpoint');
     }
 
     public function querySurveyOrderSummary(string $serviceNumber)
     {
-        $xml = $this->buildRequestXml($serviceNumber);
-        $response = Http::withHeaders([
-            'Content-Type' => 'text/xml; charset=utf-8',
-        ])->withBody($xml, 'text/xml')->post(config('services.query_survey_summery.endpoint'));
-
-
-        if ($response->failed()) {
-            return ['error' => 'Request failed', 'status' => $response->status()];
-        }
-
-        if ($response->successful()) {
-            return $this->parseResponseXml($response->body());
+        try {
+            $xmlPayload = $this->buildRequestXml($serviceNumber);
+            $xmlResponse = $this->executeRequest($xmlPayload);
+            $parsedXml = $this->parseResponseXml($xmlResponse);
+            return ApiResponse::success($parsedXml);
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), 500);
+        } catch (\Throwable $e) {
+            return ApiResponse::exception($e, 'Query customer by service number failed.');
         }
     }
 
@@ -40,7 +30,7 @@ class QueryCustomerByServiceNumberService
     {
         $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
-        $config = config('services.query_survey');
+        $config = config('services.query_customer_by_service_number');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"

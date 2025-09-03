@@ -2,13 +2,16 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use SimpleXMLElement;
-use Exception;
-
-class NidOtpService
+class NidOtpService extends BaseApiService
 {
+    protected int $timeout = 20;
+    protected int $rateLimit = 15;
+
+    protected function endpoint(): string
+    {
+        return config('services.otp.endpoint');
+    }
+
     protected function formatResponse(bool $success,  $data = null,  $error = null)
     {
         return [
@@ -21,24 +24,14 @@ class NidOtpService
     public function requestData(array $payload)
     {
         try {
-            $xml = $this->buildXml($payload);
-            $response = Http::withHeaders([
-                'Content-Type' => 'text/xml; charset=utf-8',
-            ])->withBody($xml, 'text/xml')->post(config('services.otp.endpoint'));
-
-            if ($response->failed()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Send OTP request Failed'
-                ], 500);
-            }
-
-            if ($response->successful()) {
-                return $this->parseResponse($response->body());
-            }
-        } catch (Exception $e) {
-            Log::error("NID OTP Request Error: " . $e->getMessage());
-            return $this->formatResponse(false, null, $e->getMessage());
+            $xmlPayload = $this->buildXml($payload);
+            $xmlResponse = $this->executeRequest($xmlPayload);
+            $parsedXml = $this->parseResponse($xmlResponse);
+            return ApiResponse::success($parsedXml);
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), 500);
+        } catch (\Throwable $e) {
+            return ApiResponse::exception($e, 'Send OTP to customer failed.');
         }
     }
 

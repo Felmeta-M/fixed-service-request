@@ -3,46 +3,31 @@
 namespace App\Services;
 
 use App\Helpers\AesHelper;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
-use SimpleXMLElement;
-use Exception;
 
-class NidKycService
+class NidKycService extends BaseApiService
 {
-    public function __construct(protected readonly AesHelper $aesHelper) {}
+    protected int $timeout = 20;
+    protected int $rateLimit = 15;
 
-    protected function formatResponse(bool $success, $data = null, $error = null)
+    protected function endpoint(): string
     {
-        return [
-            'success' => $success,
-            'data'    => $data,
-            'error'   => $error,
-        ];
+        return config('services.kyc.endpoint');
     }
+
+    public function __construct(protected readonly AesHelper $aesHelper) {}
 
     public function requestData(array $payload)
     {
         try {
-            $xml = $this->buildXml($payload);
-            $response = Http::withHeaders([
-                'Content-Type' => 'text/xml; charset=utf-8',
-            ])->withBody($xml, 'text/xml')->post(config('services.kyc.endpoint'));
-
-            if ($response->failed()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Kyc request SOAP Failed'
-                ], 500);
-            }
-
-            if ($response->successful()) {
-                return $this->parseResponse($response->body());
-            }
-        } catch (Exception $e) {
-            Log::error("NID OTP Request Error: " . $e->getMessage());
-            return $this->formatResponse(false, null, $e->getMessage());
+            $xmlPayload = $this->buildXml($payload);
+            $xmlResponse = $this->executeRequest($xmlPayload);
+            return $this->parseResponse($xmlResponse);
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), 500);
+        } catch (\Throwable $e) {
+            return ApiResponse::exception($e, 'Kyc query failed.');
         }
     }
 
@@ -52,7 +37,6 @@ class NidKycService
         $processTime = now()->format('YmdHis');
         $requestTime = now()->format('YmdHis');
         $credentials = config('services.kyc');
-
         $otp_value = $this->aesHelper->encrypt($data['otp_value'], config('services.national_id_secret_key'));
 
         return <<<XML
@@ -102,25 +86,25 @@ XML;
     }
 
 
-    public function parseResponse(string $xml): array
+    public function parseResponse(string $xml): JsonResponse
     {
         try {
             $xmlObject = simplexml_load_string($xml);
 
             if ($xmlObject === false) {
-                return $this->formatResponse(false, null, "Invalid XML response");
+                return ApiResponse::error("Invalid XML response");
             }
 
             // Root namespaces (soapenv is here)
             $rootNamespaces = $xmlObject->getNamespaces(true);
             if (!isset($rootNamespaces['soapenv'])) {
-                return $this->formatResponse(false, null, "Missing SOAP namespace");
+                return ApiResponse::error("Missing SOAP namespace");
             }
 
             // Navigate into <soapenv:Body>
             $body = $xmlObject->children($rootNamespaces['soapenv'])->Body ?? null;
             if (!$body) {
-                return $this->formatResponse(false, null, "SOAP Body not found");
+                return ApiResponse::error("SOAP Body not found");
             }
 
             // Body namespaces (nid + com are here)
@@ -129,30 +113,30 @@ XML;
             // Get the response wrapper <nid:GetDataKycRspMsg>
             $responseMsg = $body->children($bodyNamespaces['nid'])->GetDataKycRspMsg ?? null;
             if (!$responseMsg) {
-                return $this->formatResponse(false, null, "GetDataKycRspMsg not found");
+                return ApiResponse::error("GetDataKycRspMsg not found");
             }
 
             // --- Header ---
             $header = $responseMsg->children($bodyNamespaces['com'])->ResponseHeader ?? null;
             if (!$header) {
-                return $this->formatResponse(false, null, "ResponseHeader not found");
+                return ApiResponse::error("ResponseHeader not found");
             }
 
             // --- Body ---
             $rspBody = $responseMsg->children($bodyNamespaces['nid'])->GetDataKycRspBody ?? null;
             if (!$rspBody) {
-                return $this->formatResponse(false, null, "GetDataKycRspBody not found");
+                return ApiResponse::error("GetDataKycRspBody not found");
             }
 
             $response = $rspBody->response ?? null;
             if (!$response) {
-                return $this->formatResponse(false, null, "Response section not found");
+                return ApiResponse::error("Response section not found");
             }
 
             $photo = $response->identity->photo ?? '';
             // $this->handlePhoto($photo);
             // ✅ Successful parse
-            return $this->formatResponse(true, [
+            return ApiResponse::success([
                 'transaction_id' => (string) ($header->TransactionId ?? ''),
                 'provider'       => (string) ($rspBody->id ?? ''),
                 'response_time'  => (string) ($rspBody->responseTime ?? ''),
@@ -182,7 +166,7 @@ XML;
                 ],
             ]);
         } catch (\Throwable $e) {
-            return $this->formatResponse(false, null, "Parse error: " . $e->getMessage());
+            return ApiResponse::exception($e);
         }
     }
 

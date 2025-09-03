@@ -35,10 +35,17 @@ return [
         ],
     ],
 
+    'api_sec' => [
+        'timeout'       => 15,
+        'max_retries'   => 3,
+        'rate_limit'    => 5,   // requests per second
+        'decay_seconds' => 60,
+    ],
+
     'national_id_secret_key' => env('NATIONAL_ID_SECRET_KEY', 'REDACTED_SECRET_KEY'),
 
     'soap' => [
-        'url' => env('SOAP_URL'),
+        'endpoint' => env('SOAP_URL'),
         'version' => env('SOAP_VERSION', 1),
         'language' => env('SOAP_LANGUAGE', '2002'),
         'channel_id' => env('SOAP_CHANNEL_ID', '64'),
@@ -59,13 +66,13 @@ return [
     ],
 
     'query_customer' => [
-        'url' => env('QUERY_CUSTOMER_URL', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'endpoint' => env('QUERY_CUSTOMER_URL', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
         'user' => env('QUERY_CUSTOMER_USER'),
         'password' => env('QUERY_CUSTOMER_PASS'),
     ],
 
     'query_customer_by_service_number' => [
-        'customer_query_endpoint'      => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_CUSTOMER_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'endpoint'      => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_CUSTOMER_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
         'language'               => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_LANGUAGE'),
         'channel_id'             => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_CHANNEL_ID'),
         'technical_channel_id'   => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_TECH_CHANNEL_ID'),
@@ -134,7 +141,7 @@ return [
     ],
 
     'query_available_number' => [
-        'url' => env('QUERY_AVAILABLE_NUMBER_URL'),
+        'endpoint' => env('QUERY_AVAILABLE_NUMBER_URL'),
         'user' => env('QUERY_AVAILABLE_NUMBER_USER'),
         'password' => env('QUERY_AVAILABLE_NUMBER_PASSWORD'),
         'channel_id' => env('QUERY_AVAILABLE_NUMBER_CHANNEL_ID', 59),
@@ -151,7 +158,7 @@ return [
     ],
 
     'primary_offers' => [
-        'url' => env('PRIMARY_OFFERS_URL'),
+        'endpoint' => env('PRIMARY_OFFERS_URL'),
         'access_user' => env('PRIMARY_OFFERS_USER'),
         'access_pwd' => env('PRIMARY_OFFERS_PASS'),
         'channel_id' => env('PRIMARY_OFFERS_CHANNEL_ID'),

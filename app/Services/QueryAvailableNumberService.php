@@ -2,43 +2,36 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class QueryAvailableNumberService
+class QueryAvailableNumberService extends BaseApiService
 {
-    /**
-     * Sends a SOAP request to query available numbers.
-     */
+    protected int $timeout = 20;
+    protected int $rateLimit = 15;
+
+    protected function endpoint(): string
+    {
+        return config('services.query_available_number.endpoint');
+    }
+
     public function queryAvailableNumbers(int $payMode = 1, int $teleType = 21, bool $needQueryByDept = false)
     {
-        $xml = $this->buildXmlQueryAvailableNumbers($payMode, $teleType, $needQueryByDept);
-
-        $response = Http::withHeaders([
-            'Content-Type' => 'text/xml; charset=utf-8',
-        ])->withBody($xml, 'text/xml')->post(config('services.query_available_number.url'));
-
-        if ($response->failed()) {
-            Log::error('Query Available Number SOAP request failed', [
-                'xml' => $xml,
-                'response' => $response->body(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Query available number SOAP Request Failed'
-            ], 500);
-        }
-        if ($response->successful()) {
-            return $this->parseAvailableNumberResponse($response->body());
+        try {
+            $xmlPayload = $this->buildXml($payMode, $teleType, $needQueryByDept);
+            $xmlResponse = $this->executeRequest($xmlPayload);
+            $parsedXml = $this->parseResponse($xmlResponse);
+            return ApiResponse::success($parsedXml);
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), 500);
+        } catch (\Throwable $e) {
+            return ApiResponse::exception($e, 'Query avaiable number failed.');
         }
     }
 
     /**
      * Build SOAP XML for querying available numbers.
      */
-    protected function buildXmlQueryAvailableNumbers(int $payMode, int $teleType, bool $needQueryByDept): string
+    protected function buildXml(int $payMode, int $teleType, bool $needQueryByDept): string
     {
         $transactionId = (string) Str::uuid();
         $accessUser = config('services.query_available_number.user');
@@ -69,7 +62,7 @@ XML;
     /**
      * Parses the SOAP XML response and returns the available numbers as an array.
      */
-    protected function parseAvailableNumberResponse(string $xml): array
+    protected function parseResponse(string $xml): array
     {
         $soap = simplexml_load_string($xml);
         $body = $soap->children('http://schemas.xmlsoap.org/soap/envelope/')->Body;

@@ -1,26 +1,32 @@
 <?php
 
-// app/Services/ResourceCheckService.php
-
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
-
-class ResourceCheckService
+class ResourceCheckService extends BaseApiService
 {
-    public function send(array $data): array
+    protected int $timeout = 20;
+    protected int $rateLimit = 15;
+
+    protected function endpoint(): string
     {
-        $xmlReqquest = $this->buildXml($data);
-
-        $response = Http::withHeaders([
-            'Content-Type' => 'text/xml; charset=utf-8',
-        ])->withBody($xmlReqquest, 'text/xml')->post(config('services.check_resource.endpoint'));
-
-        return $this->parseXmlResponse($response->body());
+        return config('services.check_resource.endpoint');
     }
 
-    protected function buildXml(array $data): string
+    public function send(array $data)
+    {
+        try {
+            $xmlPayload = $this->buildRequestXml($data);
+            $xmlResponse = $this->executeRequest($xmlPayload);
+            $parsedXml = $this->parseResponseXml($xmlResponse);
+            return ApiResponse::success($parsedXml);
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), 500);
+        } catch (\Throwable $e) {
+            return ApiResponse::exception($e, 'Resource check failed.');
+        }
+    }
+
+    protected function buildRequestXml(array $data): string
     {
         $transactionId = now()->format('YmdHis') . rand(10000, 99999);
         $credentials = config('services.check_resource');
@@ -54,7 +60,7 @@ class ResourceCheckService
 XML;
     }
 
-    protected function parseXmlResponse(string $xml): array
+    protected function parseResponseXml(string $xml): array
     {
         $body = simplexml_load_string($xml, null, 0, "http://schemas.xmlsoap.org/soap/envelope/");
         $body->registerXPathNamespace('ns1', 'http://oss.zsmart.ztesoft.com/om/webservice/types/');

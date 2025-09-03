@@ -2,39 +2,27 @@
 
 namespace App\Services;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
-use Throwable;
-
-class SubscriptionService
+class SubscriptionService extends BaseApiService
 {
+   protected int $timeout = 20;
+   protected int $rateLimit = 15;
+
+   protected function endpoint(): string
+   {
+      return config('services.subscriber.endpoint');
+   }
+
    public function createNewSubscriber(array $data)
    {
       try {
-         $xml = $this->buildRequestXml($data);
-         $response = Http::withHeaders([
-            'Content-Type' => 'text/xml;charset=utf-8',
-         ])->withBody($xml, 'text/xml')->post(config('services.subscriber.endpoint'));
-
-         if ($response->failed()) {
-            return response()->json([
-               'status'  => 'error',
-               'message' => 'Failed to connect to subscriber service',
-               'code'    => $response->status(),
-               'body'    => $response->body(),
-            ], $response->status());
-         }
-
-         if ($response->successful()) {
-            return $this->parseResponse($response->body());
-         }
-      } catch (Throwable $e) {
-         report($e);
-         return response()->json([
-            'status'  => 'error',
-            'message' => 'Something went wrong while processing your request. Please try again later.',
-         ], 500);
+         $xmlPayload = $this->buildRequestXml($data);
+         $xmlResponse = $this->executeRequest($xmlPayload);
+         $parsedXml = $this->parseResponseXml($xmlResponse);
+         return ApiResponse::success($parsedXml);
+      } catch (\RuntimeException $e) {
+         return ApiResponse::error($e->getMessage(), 500);
+      } catch (\Throwable $e) {
+         return ApiResponse::exception($e, 'Resource check failed.');
       }
    }
 
@@ -121,7 +109,7 @@ class SubscriptionService
 XML;
    }
 
-   private function parseResponse(string $xml): array
+   private function parseResponseXml(string $xml): array
    {
       $xmlObj = simplexml_load_string($xml, "SimpleXMLElement", 0, "soapenv", true);
       $xmlObj->registerXPathNamespace('soapenv', 'http://schemas.xmlsoap.org/soap/envelope/');

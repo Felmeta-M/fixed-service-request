@@ -3,38 +3,32 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Http;
 
-class EcafService
+class EcafService extends BaseApiService
 {
-    protected string $endpoint;
+    protected int $timeout = 20;
+    protected int $rateLimit = 15;
 
-    public function __construct()
+    protected function endpoint(): string
     {
-        $this->endpoint = config('services.ecaf.endpoint');
+        return config('services.ecaf.endpoint');
     }
 
     public function uploadFile(array $data, array $images)
     {
-        $data = array_merge(config('services.ecaf'), $data);
-
-        $xml = $this->buildSoapRequest($data, $images);
-        $response = Http::withHeaders([
-            'Content-Type' => 'text/xml; charset=utf-8',
-        ])->withBody($xml, 'text/xml')->post($this->endpoint);
-
-        if ($response->failed()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'ecaf upload failed'
-            ], 500);
-        }
-        if ($response->successful()) {
-            return $this->parseResponse($response->body());
+        try {
+            $xmlPayload = $this->buildXml($data, $images);
+            $xmlResponse = $this->executeRequest($xmlPayload);
+            $parsedXml = $this->parseResponse($xmlResponse);
+            return ApiResponse::success($parsedXml);
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), 500);
+        } catch (\Throwable $e) {
+            return ApiResponse::exception($e, 'Ecaf upload failed.');
         }
     }
 
-    private function buildSoapRequest(array $data, array $images): string
+    private function buildXml(array $data, array $images): string
     {
         $imagesXml = '';
         foreach ($images as $image) {

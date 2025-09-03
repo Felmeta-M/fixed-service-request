@@ -2,34 +2,31 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use App\Models\PrimaryOffering;
-
-class GetPrimaryOffering
+class GetPrimaryOffering extends BaseApiService
 {
-    public function queryAvailablePrimaryOffering(string $objectId)
+    protected int $timeout = 20;
+    protected int $rateLimit = 15;
+
+    protected function endpoint(): string
     {
-        $xmlRequest = $this->xmlBuildQueryAvailablePrimaryOffering($objectId);
-        $url = config('services.primary_offers.url');
+        return config('services.primary_offers.endpoint');
+    }
 
-        $response = Http::withHeaders([
-            'Content-Type' => 'text/xml; charset=utf-8',
-        ])->withBody($xmlRequest, 'text/xml')->post($url);
-
-        if ($response->failed()) {
-            logger()->error("query avaiable primary number API failed", ['status' => $response->status()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'query avaiable primary number  SOAP request failed'
-            ], 500);
-        }
-
-        if ($response->successful()) {
-            return $this->parseResponse($response->body());
+    public function queryAvailablePrimaryOffering(string $serviceNumber)
+    {
+        try {
+            $xmlPayload = $this->buildXml($serviceNumber);
+            $xmlResponse = $this->executeRequest($xmlPayload);
+            $parsedXml = $this->parseResponse($xmlResponse);
+            return ApiResponse::success($parsedXml);
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), 500);
+        } catch (\Throwable $e) {
+            return ApiResponse::exception($e, 'Primary number query failed.');
         }
     }
 
-    public static function xmlBuildQueryAvailablePrimaryOffering(string $objectId): string
+    public static function buildXml(string $objectId): string
     {
         $transactionId = str()->uuid()->toString();
         $channelId = config('services.primary_offers.channel_id');

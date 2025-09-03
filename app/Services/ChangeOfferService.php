@@ -2,27 +2,30 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
+use Illuminate\Http\JsonResponse;
 
-class ChangeOfferService
+class ChangeOfferService extends BaseApiService
 {
-   public function getAccountList(string $serviceNumber)
+   protected int $timeout = 20;
+   protected int $rateLimit = 15;
+
+   protected function endpoint(): string
    {
-      $xml = $this->buildXml($serviceNumber);
+      return config('services.change_offer.endpoint');
+   }
 
-      $response = Http::withHeaders([
-         'Content-Type' => 'text/xml; charset=utf-8',
-      ])->withBody($xml, 'text/xml')->post(config('services.change_offer.endpoint'));
+   public function getAccountList(string $serviceNumber): JsonResponse
+   {
+      try {
+         $xmlPayload = $this->buildXml($serviceNumber);
+         $xmlResponse = $this->executeRequest($xmlPayload);
+         $parsedXml = $this->parseXmlResponse($xmlResponse);
 
-      if ($response->failed()) {
-         return response()->json([
-            'success' => false,
-            'message' => 'Change offer service failed.'
-         ], 500);
-      }
-
-      if ($response->successful()) {
-         return $response->body();
+         return ApiResponse::success($parsedXml);
+      } catch (\RuntimeException $e) {
+         return ApiResponse::error($e->getMessage(), 500);
+      } catch (\Throwable $e) {
+         return ApiResponse::exception($e, 'Account list failed.');
       }
    }
 

@@ -2,33 +2,31 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Client\RequestException;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-
-class QuerySurveyOrderSummery
+class QuerySurveyOrderSummery extends BaseApiService
 {
+    protected int $timeout = 20;
+    protected int $rateLimit = 15;
+
+    protected function endpoint(): string
+    {
+        return config('services.query_survey_summery.endpoint');
+    }
 
     public function querySurveyOrderSummary(array $data)
     {
-        $xmlRequest = $this->buildRequest($data);
-
-        $response = Http::withHeaders([
-            'Content-Type' => 'text/xml; charset=utf-8',
-            'SOAPAction' => '',
-        ])->withBody($xmlRequest, 'text/xml')
-            ->post(config('services.query_survey_summery.endpoint'));
-
-        if ($response->failed()) {
-            return ['error' => 'Survey query summery SOAP request failed', 'status' => $response->status()];
-        }
-
-        if ($response->successful()) {
-            return $this->parseResponseXml($response->body());
+        try {
+            $xmlPayload = $this->buildRequestXml($data);
+            $xmlResponse = $this->executeRequest($xmlPayload);
+            $parsedXml = $this->parseResponseXml($xmlResponse);
+            return ApiResponse::success($parsedXml, 'Query survey by order summery successfully.');
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), 500);
+        } catch (\Throwable $e) {
+            return ApiResponse::exception($e, 'Query survey order summery failed.');
         }
     }
 
-    protected function buildRequest($data): string
+    protected function buildRequestXml($data): string
     {
         $transactionId = uniqid();
         $config = config('services.query_survey_summery');

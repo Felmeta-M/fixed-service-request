@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 class QueryCustomerByCodeService
 {
-    public function getCustomer(string $customerCode): array
+    public function getCustomer(string $customerCode)
     {
         $xml = $this->buildXml($customerCode);
 
@@ -23,7 +23,9 @@ class QueryCustomerByCodeService
             ];
         }
 
-        return $this->parseResponse($response->body());
+        if ($response->successful()) {
+            return $this->parseResponse($response->body());
+        }
     }
 
     protected function buildXml(string $customerCode): string

@@ -7,7 +7,7 @@ use App\Models\PrimaryOffering;
 
 class GetPrimaryOffering
 {
-    public function queryAvailablePrimaryOffering(string $objectId): ?PrimaryOffering
+    public function queryAvailablePrimaryOffering(string $objectId)
     {
         $xmlRequest = $this->xmlBuildQueryAvailablePrimaryOffering($objectId);
         $url = config('services.primary_offers.url');
@@ -16,12 +16,17 @@ class GetPrimaryOffering
             'Content-Type' => 'text/xml; charset=utf-8',
         ])->withBody($xmlRequest, 'text/xml')->post($url);
 
-        if (!$response->successful()) {
-            logger()->error("Huawei API failed", ['status' => $response->status()]);
-            return null;
+        if ($response->failed()) {
+            logger()->error("query avaiable primary number API failed", ['status' => $response->status()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'query avaiable primary number  SOAP request failed'
+            ], 500);
         }
 
-        return $this->parseResponse($response->body());
+        if ($response->successful()) {
+            return $this->parseResponse($response->body());
+        }
     }
 
     public static function xmlBuildQueryAvailablePrimaryOffering(string $objectId): string

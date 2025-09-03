@@ -15,11 +15,9 @@ class SubscriptionService
          $xml = $this->buildRequestXml($data);
          $response = Http::withHeaders([
             'Content-Type' => 'text/xml;charset=utf-8',
-         ])->send('POST', config('services.subscriber.endpoint'), [
-            'body' => $xml
-         ]);
+         ])->withBody($xml, 'text/xml')->post(config('services.subscriber.endpoint'));
 
-         if (! $response->successful()) {
+         if ($response->failed()) {
             return response()->json([
                'status'  => 'error',
                'message' => 'Failed to connect to subscriber service',

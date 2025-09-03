@@ -12,23 +12,28 @@ class GetAccountListService
     /**
      * Send a GetAccountListRequest SOAP call.
      */
-    public function getAccountList(string $serviceNumber): array
+    public function getAccountList(string $serviceNumber)
     {
         $xml = $this->buildXmlGetAccountList($serviceNumber);
 
         $response = Http::withHeaders([
             'Content-Type' => 'text/xml; charset=utf-8',
-        ])->withBody($xml, 'text/xml')->post(config('services.get_account_list.url'));
+        ])->withBody($xml, 'text/xml')->post(config('services.get_account_list.endpoint'));
 
         if ($response->failed()) {
             Log::error('Get Account List SOAP request failed', [
                 'xml' => $xml,
                 'response' => $response->body(),
             ]);
-            throw new \Exception('SOAP Request Failed');
+            return response()->json([
+                'success' => false,
+                'message' => 'Get account SOAP request failed'
+            ], 500);
         }
 
-        return $this->parseAccountListResponse($response->body());
+        if ($response->successful()) {
+            return $this->parseAccountListResponse($response->body());
+        }
     }
 
     /**

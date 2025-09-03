@@ -28,14 +28,12 @@ class NidKycService
             $xml = $this->buildXml($payload);
             $response = Http::withHeaders([
                 'Content-Type' => 'text/xml; charset=utf-8',
-            ])->send('POST', config('services.kyc.endpoint'), [
-                'body' => $xml,
-            ]);
+            ])->withBody($xml, 'text/xml')->post(config('services.kyc.endpoint'));
 
-            if (!$response->successful()) {
+            if ($response->failed()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Kyc request Failed'
+                    'message' => 'Kyc request SOAP Failed'
                 ], 500);
             }
 

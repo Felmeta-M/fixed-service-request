@@ -142,7 +142,7 @@ return [
     ],
 
     'get_account_list' => [
-        'url' => env('GET_ACCOUNT_LIST_URL'),
+        'endpoint' => env('GET_ACCOUNT_LIST_URL'),
         'user' => env('GET_ACCOUNT_LIST_USER'),
         'password' => env('GET_ACCOUNT_LIST_PASSWORD'),
         'channel_id' => env('GET_ACCOUNT_LIST_CHANNEL_ID', 59),

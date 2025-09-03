@@ -24,11 +24,9 @@ class NidOtpService
             $xml = $this->buildXml($payload);
             $response = Http::withHeaders([
                 'Content-Type' => 'text/xml; charset=utf-8',
-            ])->send('POST', config('services.otp.endpoint'), [
-                'body' => $xml,
-            ]);
+            ])->withBody($xml, 'text/xml')->post(config('services.otp.endpoint'));
 
-            if (!$response->successful()) {
+            if ($response->failed()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Send OTP request Failed'

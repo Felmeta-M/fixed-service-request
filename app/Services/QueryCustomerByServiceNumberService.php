@@ -24,12 +24,10 @@ class QueryCustomerByServiceNumberService
         $xml = $this->buildRequestXml($serviceNumber);
         $response = Http::withHeaders([
             'Content-Type' => 'text/xml; charset=utf-8',
-        ])->send('POST', config('services.query_survey_summery.endpoint'), [
-            'body' => $xml
-        ]);
+        ])->withBody($xml, 'text/xml')->post(config('services.query_survey_summery.endpoint'));
 
 
-        if (!$response->successful()) {
+        if ($response->failed()) {
             return ['error' => 'Request failed', 'status' => $response->status()];
         }
 

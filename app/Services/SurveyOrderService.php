@@ -14,11 +14,9 @@ class SurveyOrderService
             $xml = $this->buildXml($data);
             $response = Http::withHeaders([
                 'Content-Type' => 'text/xml; charset=utf-8',
-            ])->send('POST', config('services.survey.endpoint'), [
-                'body' => $xml
-            ]);
+            ])->withBody($xml, 'text/xml')->post(config('services.survey.endpoint'));
 
-            if (!$response->successful()) {
+            if ($response->failed()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Survey order create request Failed'

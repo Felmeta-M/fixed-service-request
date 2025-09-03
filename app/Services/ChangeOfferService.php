@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Http;
 
 class ChangeOfferService
 {
-   public function getAccountList(string $serviceNumber): string
+   public function getAccountList(string $serviceNumber)
    {
       $xml = $this->buildXml($serviceNumber);
 
@@ -14,7 +14,16 @@ class ChangeOfferService
          'Content-Type' => 'text/xml; charset=utf-8',
       ])->withBody($xml, 'text/xml')->post(config('services.change_offer.endpoint'));
 
-      return $response->body();
+      if ($response->failed()) {
+         return response()->json([
+            'success' => false,
+            'message' => 'Change offer service failed.'
+         ], 500);
+      }
+
+      if ($response->successful()) {
+         return $response->body();
+      }
    }
 
    protected function buildXml(string $serviceNumber): string

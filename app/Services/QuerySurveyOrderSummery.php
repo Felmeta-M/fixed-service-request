@@ -19,7 +19,7 @@ class QuerySurveyOrderSummery
         ])->withBody($xmlRequest, 'text/xml')
             ->post(config('services.query_survey_summery.endpoint'));
 
-        if (!$response->successful()) {
+        if ($response->failed()) {
             return ['error' => 'Survey query summery SOAP request failed', 'status' => $response->status()];
         }
 

@@ -11,11 +11,11 @@ class ResourceCheckService
 {
     public function send(array $data): array
     {
-        $soapBody = $this->buildXml($data);
+        $xmlReqquest = $this->buildXml($data);
 
         $response = Http::withHeaders([
             'Content-Type' => 'text/xml; charset=utf-8',
-        ])->post(config('services.check_resource.endpoint'), $soapBody);
+        ])->withBody($xmlReqquest, 'text/xml')->post(config('services.check_resource.endpoint'));
 
         return $this->parseXmlResponse($response->body());
     }

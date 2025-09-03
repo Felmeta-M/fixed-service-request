@@ -11,7 +11,7 @@ class QueryAvailableNumberService
     /**
      * Sends a SOAP request to query available numbers.
      */
-    public function queryAvailableNumbers(int $payMode = 1, int $teleType = 21, bool $needQueryByDept = false): array
+    public function queryAvailableNumbers(int $payMode = 1, int $teleType = 21, bool $needQueryByDept = false)
     {
         $xml = $this->buildXmlQueryAvailableNumbers($payMode, $teleType, $needQueryByDept);
 
@@ -20,15 +20,19 @@ class QueryAvailableNumberService
         ])->withBody($xml, 'text/xml')->post(config('services.query_available_number.url'));
 
         if ($response->failed()) {
-            Log::error('Huawei BSS QueryAvailableNumber SOAP request failed', [
+            Log::error('Query Available Number SOAP request failed', [
                 'xml' => $xml,
                 'response' => $response->body(),
             ]);
 
-            throw new \Exception('SOAP Request Failed');
+            return response()->json([
+                'success' => false,
+                'message' => 'Query available number SOAP Request Failed'
+            ], 500);
         }
-
-        return $this->parseAvailableNumberResponse($response->body());
+        if ($response->successful()) {
+            return $this->parseAvailableNumberResponse($response->body());
+        }
     }
 
     /**

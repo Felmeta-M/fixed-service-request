@@ -56,11 +56,9 @@ class CustomerService
             $xml = $this->buildXml($data);
             $response = Http::withHeaders([
                 'Content-Type' => 'text/xml; charset=utf-8',
-            ])->send('POST', config('services.customer.create_endpoint'), [
-                'body' => $xml,
-            ]);
+            ])->withBody($xml, 'text/xml')->post(config('services.customer.create_endpoint'));
 
-            if (!$response->successful()) {
+            if ($response->failed()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Create customer request Failed'

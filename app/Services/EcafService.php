@@ -18,16 +18,20 @@ class EcafService
     {
         $data = array_merge(config('services.ecaf'), $data);
 
-        $soapEnvelope = $this->buildSoapRequest($data, $images);
-
+        $xml = $this->buildSoapRequest($data, $images);
         $response = Http::withHeaders([
             'Content-Type' => 'text/xml; charset=utf-8',
-            'SOAPAction'   => '',
-        ])->send('POST', $this->endpoint, [
-            'body' => $soapEnvelope,
-        ]);
+        ])->withBody($xml, 'text/xml')->post($this->endpoint);
 
-        return $this->parseResponse($response->body());
+        if ($response->failed()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ecaf upload failed'
+            ], 500);
+        }
+        if ($response->successful()) {
+            return $this->parseResponse($response->body());
+        }
     }
 
     private function buildSoapRequest(array $data, array $images): string

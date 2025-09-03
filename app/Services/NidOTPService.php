@@ -12,15 +12,6 @@ class NidOtpService extends BaseApiService
         return config('services.otp.endpoint');
     }
 
-    protected function formatResponse(bool $success,  $data = null,  $error = null)
-    {
-        return [
-            'success' => $success,
-            'data' => $data,
-            'error' => $error
-        ];
-    }
-
     public function requestData(array $payload)
     {
         try {

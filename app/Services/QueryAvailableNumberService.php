@@ -60,7 +60,7 @@ XML;
     /**
      * Parses the SOAP XML response and returns the available numbers as an array.
      */
-    protected function parseResponse(string $xml): array
+    protected function parseResponse(string $xml)
     {
         $soap = simplexml_load_string($xml);
         $body = $soap->children('http://schemas.xmlsoap.org/soap/envelope/')->Body;
@@ -71,7 +71,7 @@ XML;
         $retCode = (string) $header->children('http://www.huawei.com/bss/soaif/interface/common/')->RetCode;
 
         if ($retCode !== '0') {
-            throw new \Exception('Huawei API returned error code: ' . $retCode);
+            return ApiResponse::error("Invalid XML response for query available number");
         }
 
         $numberList = [];
@@ -86,9 +86,6 @@ XML;
             ];
         }
 
-        return [
-            'count' => count($numberList),
-            'numbers' => $numberList,
-        ];
+        return ApiResponse::success($numberList);
     }
 }

@@ -60,12 +60,12 @@ class ResourceCheckService extends BaseApiService
 XML;
     }
 
-    protected function parseResponseXml(string $xml): array
+    protected function parseResponseXml(string $xml)
     {
         $body = simplexml_load_string($xml, null, 0, "http://schemas.xmlsoap.org/soap/envelope/");
         $body->registerXPathNamespace('ns1', 'http://oss.zsmart.ztesoft.com/om/webservice/types/');
-        $resources = [];
 
+        $resources = [];
         foreach ($body->xpath('//ns1:RESOURCE_LIST/ns1:RESOURCE') as $res) {
             $resources[] = [
                 'distance' => (string)$res->DISTANCE,
@@ -80,6 +80,6 @@ XML;
             ];
         }
 
-        return $resources;
+        return ApiResponse::success($resources);
     }
 }

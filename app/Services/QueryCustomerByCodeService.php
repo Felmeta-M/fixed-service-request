@@ -57,7 +57,7 @@ class QueryCustomerByCodeService extends BaseApiService
 XML;
     }
 
-    protected function parseResponse(string $xml): array
+    protected function parseResponse(string $xml)
     {
         $xmlObject  = simplexml_load_string($xml);
         $namespaces = $xmlObject->getNamespaces(true);
@@ -72,11 +72,7 @@ XML;
 
         // Handle failure case
         if ($retCode !== '0') {
-            return [
-                'success'   => false,
-                'ret_code'  => $retCode,
-                'ret_msg'   => $retMsg,
-            ];
+            return ApiResponse::error($retMsg);
         }
 
         $result = [

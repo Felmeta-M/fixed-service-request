@@ -57,7 +57,7 @@ XML;
     }
 
 
-    private function parseResponseXml(string $xml): array
+    private function parseResponseXml(string $xml)
     {
         $parsed = simplexml_load_string($xml);
 
@@ -76,11 +76,7 @@ XML;
         $retMsg  = (string) $responseHeader->RetMsg;
 
         if ($retCode !== '0') {
-            return [
-                'success'   => false,
-                'ret_code'  => $retCode,
-                'ret_msg'   => $retMsg,
-            ];
+            return ApiResponse::error($retMsg);
         }
 
         // Extract CustomerSurveyOrderId

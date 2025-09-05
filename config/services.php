@@ -96,6 +96,14 @@ return [
         'access_pwd' => env('QUERY_SURVEY_ACCESS_PWD', 'REDACTED_PASSWORD'),
     ],
 
+    'cancel_survey' => [
+        'endpoint'         => env('CANCEL_SURVEY_ENDPOINT', "REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF"),
+        'channel_id'       => env('CANCEL_SURVEY_CHANNEL_ID', '59'),
+        'tech_channel_id'  => env('CANCEL_SURVEY_TECH_CHANNEL_ID', '35'),
+        'user'             => env('CANCEL_SURVEY_USER', 'ecaf'),
+        'password'         => env('CANCEL_SURVEY_PASSWORD'),
+    ],
+
     'query_survey_summery' => [
         'endpoint' => env('QUERY_SURVEY_SUMMERY_SOAP_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
         'channel_id' => env('QUERY_SURVEY_SUMMERY_CHANNEL_ID', '61'),

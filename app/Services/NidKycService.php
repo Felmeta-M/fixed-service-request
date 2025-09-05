@@ -33,7 +33,7 @@ class NidKycService extends BaseApiService
 
     public function buildXml(array $data)
     {
-        $transactionId = Str::uuid();
+        $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
         $requestTime = now()->format('YmdHis');
         $credentials = config('services.kyc');

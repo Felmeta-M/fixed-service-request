@@ -31,7 +31,7 @@ class ChangeOfferService extends BaseApiService
 
    protected function buildXml(string $serviceNumber): string
    {
-      $transactionId = now()->format('YmdHis');
+      $transactionId = uniqid();
       $processTime = now()->format('YmdHis');
 
       return <<<XML

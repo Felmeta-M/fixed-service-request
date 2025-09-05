@@ -28,7 +28,7 @@ class ResourceCheckService extends BaseApiService
 
     protected function buildRequestXml(array $data): string
     {
-        $transactionId = now()->format('YmdHis') . rand(10000, 99999);
+        $transactionId = uniqid();
         $credentials = config('services.check_resource');
         return <<<XML
 <?xml version="1.0" encoding="UTF-8"?>

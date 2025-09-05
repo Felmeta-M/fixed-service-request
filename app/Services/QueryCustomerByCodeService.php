@@ -28,7 +28,7 @@ class QueryCustomerByCodeService extends BaseApiService
 
     protected function buildXml(string $customerCode): string
     {
-        $transactionId = now()->format('YmdHis') . rand(1000, 9999);
+        $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
         $accessUser = config('services.query_customer.user');
         $accessPwd = config('services.query_customer.password');

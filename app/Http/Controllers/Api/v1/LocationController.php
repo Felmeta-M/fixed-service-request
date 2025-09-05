@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Region;
 use App\Models\Wereda;
 use App\Models\Zone;
-use Illuminate\Http\Request;
 
 class LocationController extends Controller
 {

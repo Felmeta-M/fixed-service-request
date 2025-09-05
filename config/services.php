@@ -141,7 +141,7 @@ return [
     ],
 
     'query_available_number' => [
-        'endpoint' => env('QUERY_AVAILABLE_NUMBER_URL'),
+        'endpoint' => env('QUERY_AVAILABLE_NUMBER_URL', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
         'user' => env('QUERY_AVAILABLE_NUMBER_USER'),
         'password' => env('QUERY_AVAILABLE_NUMBER_PASSWORD'),
         'channel_id' => env('QUERY_AVAILABLE_NUMBER_CHANNEL_ID', 59),
@@ -149,7 +149,7 @@ return [
     ],
 
     'get_account_list' => [
-        'endpoint' => env('GET_ACCOUNT_LIST_URL'),
+        'endpoint' => env('GET_ACCOUNT_LIST_URL', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
         'user' => env('GET_ACCOUNT_LIST_USER'),
         'password' => env('GET_ACCOUNT_LIST_PASSWORD'),
         'channel_id' => env('GET_ACCOUNT_LIST_CHANNEL_ID', 59),
@@ -158,10 +158,11 @@ return [
     ],
 
     'primary_offers' => [
-        'endpoint' => env('PRIMARY_OFFERS_URL'),
+        'endpoint' => env('PRIMARY_OFFERS_URL', "REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF"),
         'access_user' => env('PRIMARY_OFFERS_USER'),
         'access_pwd' => env('PRIMARY_OFFERS_PASS'),
         'channel_id' => env('PRIMARY_OFFERS_CHANNEL_ID'),
+        'technical_channel_id' => env('PRIMARY_OFFERS_TECH_CHANNEL_ID'),
     ],
 
     'otp' => [

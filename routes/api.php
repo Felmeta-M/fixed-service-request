@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\Api\v1\AccountController;
+use App\Http\Controllers\Api\v1\AvailableNumberController;
 use App\Http\Controllers\Api\v1\BandwidthOptionController;
 use App\Http\Controllers\Api\v1\CustomerController;
 use App\Http\Controllers\Api\v1\EcafController;
 use App\Http\Controllers\Api\v1\LocationController;
 use App\Http\Controllers\Api\v1\NidController;
 use App\Http\Controllers\Api\v1\OccupationController;
+use App\Http\Controllers\Api\v1\PrimaryOfferingController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderSummaryController;
 use App\Http\Controllers\Api\v1\SurveyController;
@@ -60,4 +63,7 @@ Route::prefix('v1')->group(function () {
         Route::post('otp', [NidController::class, 'getOtp']);
         Route::post('kyc', [NidController::class, 'getKyc']);
     });
+    Route::post('account-list', [AccountController::class, 'getAccount']);
+    Route::post('primary-offers', [PrimaryOfferingController::class, 'getPrimaryOffer']);
+    Route::post('avaiable-number', [AvailableNumberController::class, 'getAvaiableNumber']);
 });

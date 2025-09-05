@@ -4,7 +4,7 @@
 namespace App\Services;
 
 
-class GetAccountListService extends BaseApiService
+class AccountListService extends BaseApiService
 {
     protected int $timeout = 20;
     protected int $rateLimit = 15;
@@ -31,7 +31,7 @@ class GetAccountListService extends BaseApiService
 
     protected function buildXml(string $serviceNumber): string
     {
-        $transactionId = now()->format('YmdHis') . rand(1000, 9999);
+        $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
         $accessUser = config('services.get_account_list.user');
         $accessPwd = config('services.get_account_list.password');
@@ -66,40 +66,56 @@ XML;
     /**
      * Parse SOAP XML response into a usable PHP array.
      */
-    protected function parseResponse(string $xml): array
-    {
-        $soap = simplexml_load_string($xml);
-        $body = $soap->children('http://schemas.xmlsoap.org/soap/envelope/')->Body;
+    protected function parseResponse(string $xml)
+    {  // Load XML
+        $xmlObject = simplexml_load_string($xml);
 
-        $response = $body->children('http://oss.huawei.com/webservice/bss/services')->GetAccountListResponse;
-        $responseHeader = $response->ResponseHeader->children('http://www.huawei.com/bss/soaif/interface/common/');
-        $retCode = (string) $responseHeader->RetCode;
-
-        if ($retCode !== '0') {
-            throw new \Exception('Huawei API returned error code: ' . $retCode);
+        if ($xmlObject === false) {
+            return ApiResponse::error("Invalid XML response for get account list");
         }
 
-        $accounts = [];
-        foreach ($response->GetAccountBody->GetAccountListInfo ?? [] as $account) {
-            $accountId = (string) $account->AccountId;
-            $accountCode = (string) $account->AccountCode;
+        // Register namespaces
+        $namespaces = $xmlObject->getNamespaces(true);
 
-            // Extract ExtParams
-            $params = [];
-            foreach ($account->ExtParamList->ParameterInfo ?? [] as $param) {
-                $params[(string) $param->ParamName] = (string) $param->ParamValue;
-            }
+        // Navigate to GetAccountListResponse
+        $response = $xmlObject->children($namespaces['soapenv'])
+            ->Body
+            ->children($namespaces['ser'])
+            ->GetAccountListResponse;
+
+        // --- Parse ResponseHeader ---
+        $responseHeader = $response->ResponseHeader->children($namespaces['com']);
+
+        $retCode = (string) $responseHeader->RetCode;
+        $retMsg  = (string) $responseHeader->RetMsg;
+        $responseTime = (string) $responseHeader->ResponseTime;
+
+        if ($retCode !== '0') {
+            return ApiResponse::error("Get account number API returned error: {$retMsg}");
+        }
+
+        // --- Parse Account List ---
+        $body = $response->GetAccountBody;
+        $accounts = [];
+
+        foreach ($body->children($namespaces['com'])->GetAccountListInfo as $account) {
+            $accountChildren = $account->children($namespaces['com']);
 
             $accounts[] = [
-                'AccountId' => $accountId,
-                'AccountCode' => $accountCode,
-                'ExtParams' => $params,
+                'account_id'   => (string) $accountChildren->AccountId,
+                'account_code' => (string) $accountChildren->AccountCode,
+                'payment_type' => (string) $accountChildren
+                    ->ExtParamList
+                    ->ParameterInfo
+                    ->ParamValue,
             ];
         }
 
-        return [
-            'count' => count($accounts),
-            'accounts' => $accounts,
-        ];
+        return ApiResponse::success([
+            'ret_code'  => $retCode,
+            'ret_msg'   => $retMsg,
+            'timestamp' => $responseTime,
+            'accounts'  => $accounts,
+        ]);
     }
 }

@@ -31,6 +31,7 @@ class NidController extends Controller
         }
 
         $data = $validator->validated();
+
         return $this->nidService->requestData($data);
     }
 

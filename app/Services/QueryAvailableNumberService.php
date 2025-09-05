@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Str;
-
 class QueryAvailableNumberService extends BaseApiService
 {
     protected int $timeout = 20;
@@ -14,10 +12,10 @@ class QueryAvailableNumberService extends BaseApiService
         return config('services.query_available_number.endpoint');
     }
 
-    public function queryAvailableNumbers(int $payMode = 1, int $teleType = 21, bool $needQueryByDept = false)
+    public function queryAvailableNumbers(array $data)
     {
         try {
-            $xmlPayload = $this->buildXml($payMode, $teleType, $needQueryByDept);
+            $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedXml = $this->parseResponse($xmlResponse);
             return ApiResponse::success($parsedXml);
@@ -31,12 +29,12 @@ class QueryAvailableNumberService extends BaseApiService
     /**
      * Build SOAP XML for querying available numbers.
      */
-    protected function buildXml(int $payMode, int $teleType, bool $needQueryByDept): string
+    protected function buildXml(array $data): string
     {
-        $transactionId = (string) Str::uuid();
+        $transactionId = uniqid();
         $accessUser = config('services.query_available_number.user');
         $accessPwd = config('services.query_available_number.password');
-        $needQueryByDeptStr = $needQueryByDept ? 'true' : 'false';
+        $needQueryByDeptStr = $data['need_query_by_dept'] ? 'true' : 'false';
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
@@ -50,8 +48,8 @@ class QueryAvailableNumberService extends BaseApiService
             <com:AccessUser>{$accessUser}</com:AccessUser>
             <com:AccessPwd>{$accessPwd}</com:AccessPwd>
          </ser:RequestHeader>
-         <ser:PayMode>{$payMode}</ser:PayMode>
-         <ser:TeleType>{$teleType}</ser:TeleType>
+         <ser:PayMode>{$data['pay_mode']}</ser:PayMode>
+         <ser:TeleType>{$data['tele_type']}</ser:TeleType>
          <ser:NeedQueryByDept>{$needQueryByDeptStr}</ser:NeedQueryByDept>
       </ser:QueryAvailableNumberReqMsg>
    </soapenv:Body>

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-class ResourceCheckService extends BaseApiService
+class ResourceService extends BaseApiService
 {
     protected int $timeout = 20;
     protected int $rateLimit = 15;
@@ -12,7 +12,7 @@ class ResourceCheckService extends BaseApiService
         return config('services.check_resource.endpoint');
     }
 
-    public function send(array $data)
+    public function check(array $data)
     {
         try {
             $xmlPayload = $this->buildRequestXml($data);
@@ -30,6 +30,7 @@ class ResourceCheckService extends BaseApiService
     {
         $transactionId = uniqid();
         $credentials = config('services.check_resource');
+
         return <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">

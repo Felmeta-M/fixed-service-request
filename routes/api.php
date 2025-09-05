@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\v1\OccupationController;
 use App\Http\Controllers\Api\v1\PrimaryOfferingController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderSummaryController;
+use App\Http\Controllers\Api\v1\ResourceCheckController;
 use App\Http\Controllers\Api\v1\SurveyController;
 use App\Http\Controllers\Api\v1\SurveyTypeController;
 use App\Http\Controllers\Api\v1\ServiceClientController;
@@ -56,16 +57,21 @@ Route::prefix('v1')->group(function () {
         Route::post('/order', [QuerySurveyOrderController::class, 'querySurveyOrder']);
         Route::post('/order-summary', [QuerySurveyOrderSummaryController::class, 'querySurveyOrderSummary']);
     });
+
     Route::prefix('services')->group(function () {
         Route::post('/subscription', [SubsriptionController::class, 'store']);
     });
+
     Route::prefix('payment')->group(function () {});
+
     Route::prefix('nid')->group(function () {
         Route::post('otp', [NidController::class, 'getOtp']);
         Route::post('kyc', [NidController::class, 'getKyc']);
     });
+
     Route::post('account-list', [AccountController::class, 'getAccount']);
     Route::post('primary-offers', [PrimaryOfferingController::class, 'getPrimaryOffer']);
     Route::post('avaiable-number', [AvailableNumberController::class, 'getAvaiableNumber']);
     Route::post('cancel-survey-order', [CancelSurveyOrderController::class, 'cancel']);
+    Route::post('resource-check', [ResourceCheckController::class, 'check']);
 });

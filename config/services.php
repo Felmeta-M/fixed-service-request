@@ -100,8 +100,8 @@ return [
         'endpoint'         => env('CANCEL_SURVEY_ENDPOINT', "REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF"),
         'channel_id'       => env('CANCEL_SURVEY_CHANNEL_ID', '59'),
         'tech_channel_id'  => env('CANCEL_SURVEY_TECH_CHANNEL_ID', '35'),
-        'user'             => env('CANCEL_SURVEY_USER', 'ecaf'),
-        'password'         => env('CANCEL_SURVEY_PASSWORD'),
+        'access_user'             => env('CANCEL_SURVEY_USER', 'ecaf'),
+        'access_pwd'         => env('CANCEL_SURVEY_PASSWORD'),
     ],
 
     'query_survey_summery' => [
@@ -125,7 +125,7 @@ return [
     'check_resource' => [
         'endpoint' => env('CHECK_RESOURCE_BSS_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
         'access_user' => env('CHECK_RESOURCE_BSS_ACCESS_USER'),
-        'access_password' => env('CHECK_RESOURCE_BSS_ACCESS_PASSWORD'),
+        'access_pwd' => env('CHECK_RESOURCE_BSS_ACCESS_PASSWORD'),
         'channel_id' => env('CHECK_RESOURCE_BSS_CHANNEL_ID'),
         'technical_channel_id' => env('CHECK_RESOURCE_TECHNICAL_CHANNEL_ID'),
     ],

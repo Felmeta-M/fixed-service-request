@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 type SubscriberFormProps = {
     subscriber?: Subscriber;
     customers: Pick<Customer, 'id' | 'first_name' | 'last_name'>[];
-    surveyRequests: Pick<SurveyRequest, 'id' | 'survey_request_number'>[];
+    surveyRequests: Pick<SurveyRequest, 'id' | 'customer_survey_order_id'>[];
 };
 
 export default function SubscriberForm({ subscriber, customers, surveyRequests }: SubscriberFormProps) {
@@ -147,7 +147,7 @@ export default function SubscriberForm({ subscriber, customers, surveyRequests }
                             <SelectContent>
                                 {surveyRequests?.map((sr) => (
                                     <SelectItem key={sr.id} value={String(sr.id)}>
-                                        {sr.survey_request_number}
+                                        {sr.customer_survey_order_id}
                                     </SelectItem>
                                 ))}
                             </SelectContent>

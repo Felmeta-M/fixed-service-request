@@ -22,13 +22,13 @@ export default function Show({ surveyRequest }: { surveyRequest: SurveyRequest }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Survey Request #${surveyRequest.survey_request_number}`} />
+            <Head title={`Survey Request #${surveyRequest.customer_survey_order_id}`} />
 
             <div className="p-4 sm:p-6 lg:p-8">
                 <div className="mb-6 flex justify-between sm:flex sm:items-center sm:justify-between">
                     <div>
                         <h1 className="text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">Survey Request Details</h1>
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{surveyRequest.survey_request_number}</p>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{surveyRequest.customer_survey_order_id}</p>
                     </div>
                     <div className="mt-4 flex space-x-2 sm:mt-0">
                         <Link href={route('survey-requests.edit', surveyRequest.id)}>

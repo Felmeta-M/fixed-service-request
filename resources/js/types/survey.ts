@@ -18,7 +18,7 @@ export const ServiceType = {
 export const surveyRequestSchema = z.object({
     customer_id: z.number().int().optional(),
     customer_code: z.string().max(50),
-    survey_request_number: z.string().max(50).optional(),
+    customer_survey_order_id: z.string().max(50).optional(),
     survey_type: z.enum([SurveyType.NEW, SurveyType.CHANGE]),
     service_type: z.enum(Object.values(ServiceType) as [string, ...string[]]),
     telecom_region: z.string().max(100),
@@ -41,7 +41,7 @@ export type SurveyRequest = {
     id: number;
     customer_id: number;
     customer_code: string;
-    survey_request_number: string;
+    customer_survey_order_id: string;
     survey_type: keyof typeof SurveyType;
     service_type: keyof typeof ServiceType;
     telecom_region: string;
@@ -66,7 +66,7 @@ export type ServiceType = 'fl' | 'fbb' | 'combo' | 'home' | 'business';
 
 // export interface SurveyRequest {
 //     id: number;
-//     survey_request_number: string;
+//     customer_survey_order_id: string;
 //     customer_id: number;
 //     service_type: ServiceType;
 //     survey_type: string;

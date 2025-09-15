@@ -97,14 +97,14 @@ export default function SurveyRequestForm({ surveyRequest, customers }: SurveyRe
                             </div>
 
                             {/* <div>
-                                <Label htmlFor="survey_request_number">Survey Request Number</Label>
+                                <Label htmlFor="customer_survey_order_id">Survey Request Number</Label>
                                 <Input
-                                    id="survey_request_number"
-                                    value={data.survey_request_number}
-                                    onChange={(e) => setData('survey_request_number', e.target.value)}
+                                    id="customer_survey_order_id"
+                                    value={data.customer_survey_order_id}
+                                    onChange={(e) => setData('customer_survey_order_id', e.target.value)}
                                     disabled={!!surveyRequest}
                                 />
-                                <InputError message={errors.survey_request_number} className="mt-2" />
+                                <InputError message={errors.customer_survey_order_id} className="mt-2" />
                             </div> */}
                             <div>
                                 <Label htmlFor="survey_type">Survey Type</Label>

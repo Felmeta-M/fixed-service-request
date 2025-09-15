@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SurveyRequest extends FormRequest
+class SurveyFormRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -25,10 +25,10 @@ class SurveyRequest extends FormRequest
             'contact_no'           => 'required|string',
             'contact_email'        => 'required|email',
             'survey_address_info'  => 'nullable|array',
-            // 'sec_contact_person'   => 'required|string',
-            // 'sec_contact_no'       => 'required|string',
-            // 'sec_contact_email'    => 'required|email',
-            // 'status'               => 'required|string',
+            'sec_contact_person'   => 'nullable|string',
+            'sec_contact_no'       => 'nullable|string',
+            'sec_contact_email'    => 'nullable|email',
+            'status'               => 'nullable|string',
             'completed_date'       => 'nullable|date',
             'external_operid'       => 'nullable|string',
         ];

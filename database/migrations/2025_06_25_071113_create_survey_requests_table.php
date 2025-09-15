@@ -15,10 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('customer_id')->nullable()->constrained('customers')->cascadeOnDelete()->cascadeOnUpdate();
             $table->string('customer_code');
-            $table->string('survey_request_number')->unique();
+            $table->string('customer_survey_order_id')->unique();
             $table->string('survey_type'); //new or change
             $table->string('telecom_region');
-            $table->string('operation_type');
+            $table->string('oper_type');
             $table->string('main_offer_id');
             $table->string('bandwidth');
             $table->string('contact_person');
@@ -28,7 +28,8 @@ return new class extends Migration
             $table->string('sec_contact_no');
             $table->string('sec_contact_email');
             $table->string('status');
-            $table->dateTime('completed_date');
+            $table->text('cancel_reason');
+            $table->bigInteger('completed_date');
             $table->timestamps();
             $table->softDeletes();
         });

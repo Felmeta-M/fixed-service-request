@@ -13,7 +13,7 @@ export default function Edit({
 }: {
     subscriber: Subscriber;
     customers: Customer[];
-    surveyRequests: Pick<SurveyRequest, 'id' | 'survey_request_number'>[];
+    surveyRequests: Pick<SurveyRequest, 'id' | 'customer_survey_order_id'>[];
 }) {
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Subscribers', href: '/subscribers' },

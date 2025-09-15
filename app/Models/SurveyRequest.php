@@ -14,10 +14,10 @@ class SurveyRequest extends Model
     protected $fillable = [
         'customer_id',
         'customer_code',
-        'survey_request_number',
+        'customer_survey_order_id',
         'survey_type',
         'telecom_region',
-        'operation_type',
+        'oper_type',
         'main_offer_id',
         'bandwidth',
         'contact_person',
@@ -26,6 +26,7 @@ class SurveyRequest extends Model
         'sec_contact_person',
         'sec_contact_no',
         'sec_contact_email',
+        'cancel_reason',
         'status',
         'completed_date',
     ];
@@ -36,7 +37,7 @@ class SurveyRequest extends Model
     protected static function booted()
     {
         static::creating(function ($surveyRequest) {
-            $surveyRequest->survey_request_number = self::generateUniqueRequestNumber();
+            // $surveyRequest->customer_survey_order_id = self::generateUniqueRequestNumber();
         });
     }
 
@@ -44,9 +45,14 @@ class SurveyRequest extends Model
     {
         do {
             $number = 'SURV-' . rand(100000, 999999);
-        } while (self::where('survey_request_number', $number)->exists());
+        } while (self::where('customer_survey_order_id', $number)->exists());
 
         return $number;
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'customer_survey_order_id';
     }
 
     public function customer()

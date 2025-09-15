@@ -26,7 +26,7 @@ class SurveyRequestController extends Controller
     public function store(SurveyRequest $request)
     {
         $data = $request->validated();
-        $data['survey_request_number'] = $this->generateUniqueRequestNumber();
+        $data['customer_survey_order_id'] = $this->generateUniqueRequestNumber();
 
         SurveyRequest::create($data);
 
@@ -66,7 +66,7 @@ class SurveyRequestController extends Controller
     {
         do {
             $number = 'SURV-' . rand(100000, 999999);
-        } while (SurveyRequest::where('survey_request_number', $number)->exists());
+        } while (SurveyRequest::where('customer_survey_order_id', $number)->exists());
 
         return $number;
     }

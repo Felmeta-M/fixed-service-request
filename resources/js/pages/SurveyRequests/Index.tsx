@@ -65,7 +65,7 @@ export default function Index({ surveyRequests }: { surveyRequests: Pagination<S
                                     className="cursor-pointer"
                                     onClick={() => router.visit(route('survey-requests.show', request.id))}
                                 >
-                                    <TableCell className="font-medium">{request.survey_request_number}</TableCell>
+                                    <TableCell className="font-medium">{request.customer_survey_order_id}</TableCell>
                                     <TableCell>
                                         {request.customer?.first_name} {request.customer?.last_name}
                                     </TableCell>

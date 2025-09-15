@@ -13,7 +13,7 @@ export default function Edit({ surveyRequest, customers }: { surveyRequest: Surv
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Edit Survey Request #${surveyRequest.survey_request_number}`} />
+            <Head title={`Edit Survey Request #${surveyRequest.customer_survey_order_id}`} />
 
             <div className="p-4 sm:p-6 lg:p-8">
                 <div className="mb-6">

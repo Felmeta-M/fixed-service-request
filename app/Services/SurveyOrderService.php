@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\SurveyRequest;
+
 class SurveyOrderService extends BaseApiService
 {
     protected int $timeout = 20;
@@ -17,7 +19,7 @@ class SurveyOrderService extends BaseApiService
         try {
             $xmlPayload = $this->buildRequestXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            $parsedXml = $this->parseResponseXml($xmlResponse);
+            $parsedXml = $this->parseResponseXml($data, $xmlResponse);
             return ApiResponse::success($parsedXml);
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
@@ -70,7 +72,7 @@ class SurveyOrderService extends BaseApiService
 XML;
     }
 
-    private function parseResponseXml(string $xml): array
+    private function parseResponseXml($data, string $xml): array
     {
         $parsed = simplexml_load_string($xml);
 
@@ -84,6 +86,7 @@ XML;
         $responseBody = $responseMsg->HandleSurveyOrderRespBody->children($namespaces['com']);
         $retCode = (string) $responseHeader->RetCode;
         $retMsg  = (string) $responseHeader->RetMsg;
+
         if ($retCode !== '0') {
             return [
                 'success'   => false,
@@ -91,11 +94,19 @@ XML;
                 'ret_msg'   => $retMsg,
             ];
         }
+
+        $customerSurveyOrderId = (string) $responseBody->CustomerSurveyOrderId;
+
+        SurveyRequest::create([
+            ...$data,
+            'customer_survey_order_id' => $customerSurveyOrderId,
+        ]);
+
         return [
             'ret_code' => $retCode,
             'ret_msg' => $retMsg,
             'response_time' => (string) $responseHeader->ResponseTime,
-            'customer_survey_order_id' => (string) $responseBody->CustomerSurveyOrderId,
+            'customer_survey_order_id' =>  $customerSurveyOrderId,
         ];
     }
 }

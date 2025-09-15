@@ -58,6 +58,13 @@ Route::prefix('v1')->group(function () {
         Route::post('/order-summary', [QuerySurveyOrderSummaryController::class, 'querySurveyOrderSummary']);
     });
 
+
+    Route::get('survey-requests', [SurveyController::class, 'index']);
+    Route::get('survey-requests/show', [SurveyController::class, 'show']);
+    Route::patch('survey-requests/update', [SurveyController::class, 'update']);
+    Route::delete('survey-requests/delete', [SurveyController::class, 'destroy']);
+
+
     Route::prefix('services')->group(function () {
         Route::post('/subscription', [SubsriptionController::class, 'store']);
     });

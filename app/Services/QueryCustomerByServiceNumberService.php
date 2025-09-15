@@ -12,7 +12,7 @@ class QueryCustomerByServiceNumberService extends BaseApiService
         return config('services.query_customer_by_service_number.endpoint');
     }
 
-    public function querySurveyOrderSummary(string $serviceNumber)
+    public function getCustomer(string $serviceNumber)
     {
         try {
             $xmlPayload = $this->buildRequestXml($serviceNumber);

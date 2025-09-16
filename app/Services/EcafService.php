@@ -30,6 +30,7 @@ class EcafService extends BaseApiService
 
     private function buildXml(array $data, array $images): string
     {
+        $transactionId = uniqid();
         $imagesXml = '';
         foreach ($images as $image) {
             $imagesXml .= "
@@ -48,7 +49,7 @@ class EcafService extends BaseApiService
             <API_USERNAME>{$data['api_username']}</API_USERNAME>
             <API_PASSWORD>{$data['api_password']}</API_PASSWORD>
             <AGENT_USERNAME>{$data['agent_username']}</AGENT_USERNAME>
-            <TRANSACTION_ID>{$data['transaction_id']}</TRANSACTION_ID>
+            <TRANSACTION_ID>{$transactionId}</TRANSACTION_ID>
             <CHANNEL_ID>{$data['channel_id']}</CHANNEL_ID>
             <CUST_TYPE>{$data['cust_type']}</CUST_TYPE>
             <CUST_CODE>{$data['cust_code']}</CUST_CODE>
@@ -98,12 +99,13 @@ XML;
             throw new \Exception("Invalid file input or file not found.");
         }
 
+        $type = pathinfo($path, PATHINFO_EXTENSION);
         $content = file_get_contents($path);
 
         if ($content === false) {
             throw new \Exception("Unable to read file: {$path}");
         }
 
-        return base64_encode($content);
+        return 'data:image/png;base64,' . base64_encode($content);
     }
 }

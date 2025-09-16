@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\SurveyRequest;
 use Illuminate\Http\JsonResponse;
 
 class CancelSurveyOrderService extends BaseApiService
@@ -24,7 +25,7 @@ class CancelSurveyOrderService extends BaseApiService
             $xmlResponse = $this->executeRequest($xmlPayload);
 
             // Parse XML response
-            return $this->parseResponse($xmlResponse);
+            return $this->parseResponse($customerSurveyOrderId, $xmlResponse);
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
         } catch (\Throwable $e) {
@@ -63,7 +64,7 @@ class CancelSurveyOrderService extends BaseApiService
 XML;
     }
 
-    protected function parseResponse(string $xml): JsonResponse
+    protected function parseResponse(string $customerSurveyOrderId, string $xml): JsonResponse
     {
         $xmlObject  = simplexml_load_string($xml);
 
@@ -88,6 +89,9 @@ XML;
         if ($retCode !== '0') {
             return ApiResponse::error($retMsg);
         }
+
+        SurveyRequest::where('customer_survey_order_id', $customerSurveyOrderId)
+            ->first()?->update(['status' => 'Canceled']);
 
         // Optionally extract body details
         $bodyData = $response->CancelSurveyOrderRequestBody ?? null;

@@ -69,7 +69,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/subscription', [SubsriptionController::class, 'store']);
     });
 
-    Route::prefix('payment')->group(function () {});
+    Route::post('ecaf-upload', [EcafController::class, 'upload']);
 
     Route::prefix('nid')->group(function () {
         Route::post('otp', [NidController::class, 'getOtp']);

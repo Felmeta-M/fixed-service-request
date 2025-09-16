@@ -81,7 +81,7 @@ class SurveyController extends Controller
         $request->validate([
             'customer_code' => 'required|string',
             'customer_survey_order_id' => 'required|string',
-            'status' => 'required|string|in:completed,cancel,reject,pending', // allowed statuses
+            'status' => 'required|string|in:Completed,Canceled,Waiting', // allowed statuses
         ]);
 
         $customerCode = $request->input('customer_code');

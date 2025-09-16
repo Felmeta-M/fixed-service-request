@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 
 class EcafService extends BaseApiService
@@ -14,10 +15,10 @@ class EcafService extends BaseApiService
         return config('services.ecaf.endpoint');
     }
 
-    public function uploadFile(array $data, array $images)
+    public function uploadFile(array $data)
     {
         try {
-            $xmlPayload = $this->buildXml($data, $images);
+            $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedXml = $this->parseResponse($xmlResponse);
             return ApiResponse::success($parsedXml);
@@ -28,17 +29,10 @@ class EcafService extends BaseApiService
         }
     }
 
-    private function buildXml(array $data, array $images): string
+    private function buildXml(array $data): string
     {
         $transactionId = uniqid();
-        $imagesXml = '';
-        foreach ($images as $image) {
-            $imagesXml .= "
-                <Image>
-                    <ImageType>{$image['type']}</ImageType>
-                    <Content>{$image['content']}</Content>
-                </Image>";
-        }
+        $credentials = config('services.ecaf');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ecaf="http://ecaf4kiosk.ecaf.inpsur.com/">
@@ -46,24 +40,28 @@ class EcafService extends BaseApiService
    <soapenv:Body>
       <ecaf:UploadFile>
          <captureDetails>
-            <API_USERNAME>{$data['api_username']}</API_USERNAME>
-            <API_PASSWORD>{$data['api_password']}</API_PASSWORD>
-            <AGENT_USERNAME>{$data['agent_username']}</AGENT_USERNAME>
+            <API_USERNAME>{$credentials['api_username']}</API_USERNAME>
+            <API_PASSWORD>{$credentials['api_password']}</API_PASSWORD>
+            <AGENT_USERNAME>{$credentials['agent_username']}</AGENT_USERNAME>
             <TRANSACTION_ID>{$transactionId}</TRANSACTION_ID>
-            <CHANNEL_ID>{$data['channel_id']}</CHANNEL_ID>
-            <CUST_TYPE>{$data['cust_type']}</CUST_TYPE>
+            <CHANNEL_ID>{$credentials['channel_id']}</CHANNEL_ID>
+            <CUST_TYPE>{$credentials['cust_type']}</CUST_TYPE>
             <CUST_CODE>{$data['cust_code']}</CUST_CODE>
             <CUST_FIRST_NAME>{$data['first_name']}</CUST_FIRST_NAME>
             <CUST_OTHER_NAME>{$data['other_name']}</CUST_OTHER_NAME>
             <CUST_LAST_NAME>{$data['last_name']}</CUST_LAST_NAME>
-            <CALENDAR_TYPE>{$data['calendar_type']}</CALENDAR_TYPE>
-            <ID_EXPIRY_DATE>{$data['id_expiry_date']}</ID_EXPIRY_DATE>
-            <DOOR_TO_DOOR>{$data['door_to_door']}</DOOR_TO_DOOR>
-            <DELEGATE>{$data['delegate']}</DELEGATE>
-            <FUNCTION>{$data['function']}</FUNCTION>
-            <CORRECTION>{$data['correction']}</CORRECTION>
+            <CALENDAR_TYPE>{$credentials['calendar_type']}</CALENDAR_TYPE>
+            <ID_EXPIRY_DATE>{$credentials['id_expiry_date']}</ID_EXPIRY_DATE>
+            <DOOR_TO_DOOR>false</DOOR_TO_DOOR>
+            <DELEGATE>{$credentials['delegate']}</DELEGATE>
+            <FUNCTION>{$credentials['function']}</FUNCTION>
+            <CORRECTION/>
             <ImageData>
-                {$imagesXml}
+                <Image>
+                    <ImageType>0</ImageType>
+                    <Content>{$data['photo']}</Content>
+                    <ImageName>{$transactionId}</ImageName>
+                </Image>
             </ImageData>
          </captureDetails>
       </ecaf:UploadFile>
@@ -72,20 +70,49 @@ class EcafService extends BaseApiService
 XML;
     }
 
-    private function parseResponse(string $xml): array
+    private function parseResponse(string $xml)
     {
-        $cleanXml = str_ireplace(['SOAP-ENV:', 'SOAP:'], '', $xml);
-
         try {
-            $response = simplexml_load_string($cleanXml);
-            $json     = json_encode($response);
-            return json_decode($json, true);
+            // Load XML
+            $xmlObject = simplexml_load_string($xml);
+
+            if ($xmlObject === false) {
+                return ApiResponse::error("Invalid XML response");
+            }
+
+            // Get namespaces
+            $namespaces = $xmlObject->getNamespaces(true);
+
+            // Navigate to SOAP Body
+            $body = $xmlObject->children($namespaces['soap'])->Body;
+
+            // Access UploadFileResponse (ns2 namespace)
+            $response = $body->children($namespaces['ns2'])->UploadFileResponse;
+
+            // Get <return> node
+            $return = $response->return;
+
+            // Extract values
+            $errorCode = (string) $return->errorCode;
+            $errorMessage = (string) $return->errorMessage;
+            $rejectedCount = (int) $return->rejectedCount;
+
+            // Check for errors
+            // if ($errorCode !== '0') {
+            //     return ApiResponse::error($errorMessage, 500, [
+            //         'errorCode' => $errorCode,
+            //         'rejectedCount' => $rejectedCount,
+            //     ]);
+            // }
+
+            // Success response
+            return ApiResponse::success([
+                'errorCode' => $errorCode,
+                'errorMessage' => $errorMessage,
+                'rejectedCount' => $rejectedCount,
+            ]);
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error'   => 'Invalid SOAP response',
-                'raw'     => $xml,
-            ];
+            return ApiResponse::error('Failed to parse SOAP response: ' . $e->getMessage());
         }
     }
 

@@ -50,6 +50,7 @@ class QueryAvailableNumberService extends BaseApiService
          </ser:RequestHeader>
          <ser:PayMode>{$data['pay_mode']}</ser:PayMode>
          <ser:TeleType>{$data['tele_type']}</ser:TeleType>
+         <ser:ResCnt>{$data['res_cnt']}</ser:ResCnt>
          <ser:NeedQueryByDept>{$needQueryByDeptStr}</ser:NeedQueryByDept>
       </ser:QueryAvailableNumberReqMsg>
    </soapenv:Body>

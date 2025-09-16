@@ -205,10 +205,16 @@ return [
 
     'ecaf' => [
         'endpoint' => env('ECAF_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/webservices/ecaf4kiosk'),
-        'username' => env('ECAF_API_USERNAME', 'HW_LOADER'),
-        'password' => env('ECAF_API_PASSWORD', 'REDACTED_PASSWORD'),
-        'agent_username' => env('ECAF_AGENT_USERNAME', 'RIDE_9XXYYYYYY'),
-        'channel_id' => env('ECAF_CHANNEL_ID', '57'),
+        'api_username' => 'HW_LOADER',
+        'api_password' => 'REDACTED_PASSWORD',
+        'agent_username' => 'RIDE_9XXYYYYYY',
+        'channel_id' => 57,
+        'cust_type' => 1,
+        'calendar_type' => 0,
+        'id_expiry_date' => now()->addYears(5)->format('Y-m-d\TH:i:s.vP'),
+        'door_to_door' => false,
+        'delegate' => true,
+        'function' => 1,
     ],
 
 ];

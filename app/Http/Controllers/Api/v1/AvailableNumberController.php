@@ -17,6 +17,7 @@ class AvailableNumberController extends Controller
             'pay_mode'           => 'required',
             'tele_type'          => 'required|integer',
             'need_query_by_dept' => 'required|boolean',
+            'res_cnt' => 'required',
         ]);
 
         if ($validator->fails()) {

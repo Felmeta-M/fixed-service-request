@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\SurveyFormRequest;
+use App\Http\Requests\SurveyOrderFormRequest;
 use App\Http\Resources\SurveyRequestResource;
 use App\Models\SurveyRequest;
 use App\Services\SurveyOrderService;
@@ -37,7 +37,7 @@ class SurveyController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(SurveyFormRequest $surveyRequest)
+    public function store(SurveyOrderFormRequest $surveyRequest)
     {
         return $this->surveyOrderService->createSurveyOrder($surveyRequest->validated());
     }

@@ -217,4 +217,15 @@ return [
         'function' => 1,
     ],
 
+    'one_off_fee' => [
+        'endpoint' => env('ONE_OFF_FEE_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'tenant_id' => env('ONE_OFF_FEE_TENANT_ID', '101'),
+        'channel_id' => env('ONE_OFF_FEE_CHANNEL_ID', '61'),
+        'technical_channel_id' => env('ONE_OFF_FEE_TECHNICAL_CHANNEL_ID', 'KIOSK'),
+        'access_user' => env('ONE_OFF_FEE_ACCESS_USER', 'kiosk'),
+        'access_pwd' => env('ONE_OFF_FEE_ACCESS_PWD', 'REDACTED_PASSWORD'),
+        'language' => env('ONE_OFF_FEE_LANGUAGE', '2002'),
+        'version' => env('ONE_OFF_FEE_VERSION', '1'),
+    ],
+
 ];

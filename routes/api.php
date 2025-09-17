@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\v1\EcafController;
 use App\Http\Controllers\Api\v1\LocationController;
 use App\Http\Controllers\Api\v1\NidController;
 use App\Http\Controllers\Api\v1\OccupationController;
+use App\Http\Controllers\Api\v1\OneOffFeeController;
 use App\Http\Controllers\Api\v1\PrimaryOfferingController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderSummaryController;
@@ -81,4 +82,6 @@ Route::prefix('v1')->group(function () {
     Route::post('avaiable-number', [AvailableNumberController::class, 'getAvaiableNumber']);
     Route::post('cancel-survey-order', [CancelSurveyOrderController::class, 'cancel']);
     Route::post('resource-check', [ResourceCheckController::class, 'check']);
+
+    Route::post('calc-one-off-fee', [OneOffFeeController::class, 'calculateOneOffFee']);
 });

@@ -4,15 +4,16 @@ namespace App\Enums;
 
 enum FFDServiceProvisionStatus: string
 {
-    case Waiting   = 'waiting';
-    case Completed = 'completed';
-    case Canceled  = 'canceled';
+    case Waiting   = 'Waiting';
+    case Completed = 'Completed';
+    case Canceled  = 'Canceled';
     case Pending   = 'pending';
     case Paid      = 'paid';
     case Rejected  = 'rejected';
 
     /**
      * Human-readable label
+     * Completed,Canceled,Waiting
      */
     public function label(): string
     {

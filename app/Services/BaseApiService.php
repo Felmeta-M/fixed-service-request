@@ -52,13 +52,12 @@ abstract class BaseApiService
         }
 
         RateLimiter::hit($key, $this->decaySeconds);
-        \Log::info($this->endpoint());
+
         $response = Http::withHeaders($this->headers())
             ->timeout($this->timeout)
             ->retry($this->maxRetries, 200, throw: false)
             ->withBody($xmlPayload, 'text/xml')
             ->post($this->endpoint());
-
         if ($response->failed()) {
             $this->logError($response);
             throw new RuntimeException("API request to {$this->endpoint()} failed.");

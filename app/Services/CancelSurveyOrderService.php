@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\FFDServiceProvisionStatus;
 use App\Models\SurveyRequest;
 use Illuminate\Http\JsonResponse;
 
@@ -91,7 +92,7 @@ XML;
         }
 
         SurveyRequest::where('customer_survey_order_id', $customerSurveyOrderId)
-            ->first()?->update(['status' => 'Canceled']);
+            ->first()?->update(['status' => FFDServiceProvisionStatus::Canceled->value]);
 
         // Optionally extract body details
         $bodyData = $response->CancelSurveyOrderRequestBody ?? null;

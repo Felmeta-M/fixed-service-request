@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('survey_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id')->nullable()->constrained('customers')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->string('customer_code');
+            $table->string('customer_code')->index();
             $table->string('customer_survey_order_id')->unique();
             $table->string('survey_type'); //new or change
             $table->string('telecom_region');

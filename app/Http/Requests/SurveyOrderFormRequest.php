@@ -20,7 +20,7 @@ class SurveyOrderFormRequest extends FormRequest
             'telecom_region'       => 'required|string',
             'oper_type'            => 'required|string|in:A,M', // A => new nad M => modify
             'main_offer_id'        => 'required|string',
-            'bandwidth'            => 'required|string',
+            'bandwidth'            => 'nullable|string',
             'contact_person'       => 'required|string',
             'contact_no'           => 'required|string',
             'contact_email'        => 'required|email',

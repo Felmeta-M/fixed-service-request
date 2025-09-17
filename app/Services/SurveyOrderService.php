@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\FFDServiceProvisionStatus;
 use App\Models\SurveyRequest;
 
 class SurveyOrderService extends BaseApiService
@@ -100,7 +101,7 @@ XML;
         SurveyRequest::create([
             ...$data,
             'customer_survey_order_id' => $customerSurveyOrderId,
-            'status' => 'Waiting'
+            'status' => FFDServiceProvisionStatus::Waiting->value
         ]);
 
         return [

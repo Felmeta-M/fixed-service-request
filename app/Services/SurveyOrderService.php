@@ -100,6 +100,7 @@ XML;
         SurveyRequest::create([
             ...$data,
             'customer_survey_order_id' => $customerSurveyOrderId,
+            'status' => 'Waiting'
         ]);
 
         return [

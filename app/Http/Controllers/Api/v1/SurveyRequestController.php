@@ -1,7 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api\v1;
 
+use App\Http\Controllers\Controller;
+use App\Http\Requests\SurveyOrderFormRequest;
 use App\Models\SurveyRequest;
 use Inertia\Inertia;
 use App\Models\Customer;
@@ -48,7 +50,7 @@ class SurveyRequestController extends Controller
         ]);
     }
 
-    public function update(SurveyRequestFormRequest $request, SurveyRequest $surveyRequest)
+    public function update(SurveyOrderFormRequest $request, SurveyRequest $surveyRequest)
     {
         $surveyRequest->update($request->validated());
 

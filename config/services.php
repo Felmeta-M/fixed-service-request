@@ -123,10 +123,10 @@ return [
     ],
 
     'check_resource' => [
-        'endpoint' => env('CHECK_RESOURCE_BSS_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
-        'access_user' => env('CHECK_RESOURCE_BSS_ACCESS_USER'),
-        'access_pwd' => env('CHECK_RESOURCE_BSS_ACCESS_PASSWORD'),
-        'channel_id' => env('CHECK_RESOURCE_BSS_CHANNEL_ID'),
+        'endpoint' => env('CHECK_RESOURCE_ENDPOINT', 'https://REDACTED_INTERNAL_IP:8000/axis2/services/OrderService'),
+        'access_user' => env('CHECK_RESOURCE_ACCESS_USER'),
+        'access_pwd' => env('CHECK_RESOURCE_ACCESS_PASSWORD'),
+        'channel_id' => env('CHECK_RESOURCE_CHANNEL_ID'),
         'technical_channel_id' => env('CHECK_RESOURCE_TECHNICAL_CHANNEL_ID'),
     ],
 

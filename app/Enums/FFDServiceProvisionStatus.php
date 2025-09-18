@@ -4,41 +4,37 @@ namespace App\Enums;
 
 enum FFDServiceProvisionStatus: string
 {
-    case Waiting   = 'Waiting';
-    case Completed = 'Completed';
-    case Canceled  = 'Canceled';
-    case Pending   = 'pending';
-    case Paid      = 'paid';
-    case Rejected  = 'rejected';
+    case Waiting    = 'waiting';
+    case Completed  = 'completed';
+    case Subscribed = 'subscribed';
+    case Reserved   = 'reserved';
+    case Released   = 'released';
+    case Canceled   = 'canceled';
+    case Pending    = 'pending';
+    case Paid       = 'paid';
+    case Rejected   = 'rejected';
 
-    /**
-     * Human-readable label
-     * Completed,Canceled,Waiting
-     */
     public function label(): string
     {
         return match ($this) {
-            self::Waiting   => 'Waiting',
-            self::Completed => 'Completed',
-            self::Canceled  => 'Canceled',
-            self::Pending   => 'Pending',
-            self::Paid      => 'Paid',
-            self::Rejected  => 'Rejected',
+            self::Waiting    => 'Survey waiting',
+            self::Completed  => 'Survey completed',
+            self::Canceled   => 'Survey canceled',
+            self::Subscribed => 'Service subscribed',
+            self::Reserved   => 'Service number reserved',
+            self::Released   => 'Service number released',
+            self::Pending    => 'Payment pending',
+            self::Paid       => 'Payment completed',
+            self::Rejected   => 'Payment rejected',
         };
     }
 
-    /**
-     * Options for dropdowns: [value => label]
-     */
     public static function options(): array
     {
-        return [
-            self::Waiting->value   => self::Waiting->label(),
-            self::Completed->value => self::Completed->label(),
-            self::Canceled->value  => self::Canceled->label(),
-            self::Pending->value   => self::Pending->label(),
-            self::Paid->value      => self::Paid->label(),
-            self::Rejected->value  => self::Rejected->label(),
-        ];
+        return array_column(
+            array_map(fn($status) => [$status->value, $status->label()], self::cases()),
+            1,
+            0
+        );
     }
 }

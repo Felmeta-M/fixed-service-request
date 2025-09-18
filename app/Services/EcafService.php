@@ -31,7 +31,7 @@ class EcafService extends BaseApiService
 
     private function buildXml(array $data): string
     {
-        $transactionId = uniqid();
+        // $transactionId = uniqid();
         $credentials = config('services.ecaf');
 
         return <<<XML
@@ -43,7 +43,7 @@ class EcafService extends BaseApiService
             <API_USERNAME>{$credentials['api_username']}</API_USERNAME>
             <API_PASSWORD>{$credentials['api_password']}</API_PASSWORD>
             <AGENT_USERNAME>{$credentials['agent_username']}</AGENT_USERNAME>
-            <TRANSACTION_ID>{$transactionId}</TRANSACTION_ID>
+            <TRANSACTION_ID>{$data['transaction_id']}</TRANSACTION_ID>
             <CHANNEL_ID>{$credentials['channel_id']}</CHANNEL_ID>
             <CUST_TYPE>{$credentials['cust_type']}</CUST_TYPE>
             <CUST_CODE>{$data['cust_code']}</CUST_CODE>

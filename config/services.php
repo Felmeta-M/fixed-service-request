@@ -228,4 +228,15 @@ return [
         'version' => env('ONE_OFF_FEE_VERSION', '1'),
     ],
 
+    'number_service_reserve' => [
+        'endpoint' => env('NUMBER_SERVICE_RESERVE_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'version' => env('NUMBER_SERVICE_RESERVE_VERSION', '1'),
+        'language' => env('NUMBER_SERVICE_RESERVE_LANGUAGE', '2022'),
+        'channel_id' => env('NUMBER_SERVICE_RESERVE_CHANNEL_ID', '61'),
+        'technical_channel_id' => env('NUMBER_SERVICE_RESERVE_TECHNICAL_CHANNEL_ID', '55'),
+        'tenant_id' => env('NUMBER_SERVICE_RESERVE_TENANT_ID', '101'),
+        'access_user' => env('NUMBER_SERVICE_RESERVE_ACCESS_USER', 'kiosk'),
+        'access_pwd' => env('NUMBER_SERVICE_RESERVE_ACCESS_PWD', 'secret=='),
+    ],
+
 ];

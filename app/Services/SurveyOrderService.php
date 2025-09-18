@@ -25,7 +25,7 @@ class SurveyOrderService extends BaseApiService
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
         } catch (\Throwable $e) {
-            return ApiResponse::exception($e, 'Resource check failed.');
+            return ApiResponse::exception($e, 'Create survey order failed.');
         }
     }
 

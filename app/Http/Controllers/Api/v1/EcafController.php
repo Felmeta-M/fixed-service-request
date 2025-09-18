@@ -21,6 +21,7 @@ class EcafController extends Controller
                 'first_name'     => 'required|string',
                 'last_name'     => 'required|string',
                 'other_name'    => 'required|string',
+                'transaction_id'    => 'required|string',
                 'photo'      => 'required|string',
                 // 'images'         => 'required|array',
                 // 'images.*.type'  => 'required|integer',

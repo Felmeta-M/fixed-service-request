@@ -16,10 +16,11 @@ return new class extends Migration
             $table->foreignId('customer_id')->nullable()->constrained('customers')->cascadeOnDelete()->cascadeOnUpdate();
             $table->string('customer_code')->index();
             $table->string('customer_survey_order_id')->unique();
+            $table->string('main_offer_id')->unique();
+            $table->string('service_number')->unique();
             $table->string('survey_type'); //new or change
             $table->string('telecom_region');
             $table->string('oper_type');
-            $table->string('main_offer_id');
             $table->string('bandwidth');
             $table->string('contact_person');
             $table->string('contact_no');

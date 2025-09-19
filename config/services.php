@@ -89,7 +89,7 @@ return [
     ],
 
     'query_survey' => [
-        'endpoint' => env('QUERY_SURVEY_SOAP_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'endpoint' => env('QUERY_SURVEY_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
         'channel_id' => env('QUERY_SURVEY_CHANNEL_ID', '61'),
         'technical_channel_id' => env('QUERY_SURVEY_TECHNICAL_CHANNEL_ID', '51'),
         'access_user' => env('QUERY_SURVEY_ACCESS_USER', 'kiosk'),

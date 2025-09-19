@@ -16,7 +16,8 @@ class SurveyOrderFormRequest extends FormRequest
     {
         return [
             'customer_code'        => 'required|string|max:255',
-            'survey_type'          => 'required',
+            'customer_type'        => 'required|string',
+            'survey_type'          => 'required|string',
             'telecom_region'       => 'required|string',
             'oper_type'            => 'required|string|in:A,M', // A => new nad M => modify
             'main_offer_id'        => 'required|string',

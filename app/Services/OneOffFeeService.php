@@ -29,6 +29,7 @@ class OneOffFeeService extends BaseApiService
             return ApiResponse::exception($e, 'One off fee xml request failed.');
         }
     }
+
     /**
      * Build the SOAP XML request.
      */

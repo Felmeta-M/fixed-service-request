@@ -178,7 +178,9 @@ XML;
       SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])
          ->first()?->update([
             'service_number' => $numberService,
-            'status' => FFDServiceProvisionStatus::Subscribed->value
+            'status' => FFDServiceProvisionStatus::Subscribed->value,
+            'subscribed_at' => now(),
+            //TODO: 'completed_date' => ??? it has to be updated based on they survey result
          ]);
 
       $responseMsg['number_service'] = $numberService;

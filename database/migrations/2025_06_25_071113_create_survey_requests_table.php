@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('survey_type'); //new or change
             $table->string('telecom_region');
             $table->string('oper_type');
+            $table->string('customer_type');
             $table->string('bandwidth');
             $table->string('contact_person');
             $table->string('contact_no');
@@ -31,6 +32,7 @@ return new class extends Migration
             $table->string('status');
             $table->text('cancel_reason');
             $table->bigInteger('completed_date');
+            $table->dateTime('subscribed_at');
             $table->timestamps();
             $table->softDeletes();
         });

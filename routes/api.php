@@ -14,7 +14,7 @@ use App\Http\Controllers\Api\v1\PrimaryOfferingController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderSummaryController;
 use App\Http\Controllers\Api\v1\ResourceCheckController;
-use App\Http\Controllers\Api\v1\SurveyController;
+use App\Http\Controllers\Api\v1\SurveyOrderController;
 use App\Http\Controllers\Api\v1\SurveyTypeController;
 use App\Http\Controllers\Api\v1\ServiceClientController;
 use App\Http\Controllers\Api\v1\SubsriptionController;
@@ -54,16 +54,16 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::prefix('survey')->group(function () {
-        Route::post('/create', [SurveyController::class, 'store']);
+        Route::post('/create', [SurveyOrderController::class, 'store']);
         Route::post('/order', [QuerySurveyOrderController::class, 'querySurveyOrder']);
         Route::post('/order-summary', [QuerySurveyOrderSummaryController::class, 'querySurveyOrderSummary']);
     });
 
 
-    Route::get('survey-requests', [SurveyController::class, 'index']);
-    Route::get('survey-requests/show', [SurveyController::class, 'show']);
-    Route::patch('survey-requests/update', [SurveyController::class, 'update']);
-    Route::delete('survey-requests/delete', [SurveyController::class, 'destroy']);
+    Route::get('survey-requests', [SurveyOrderController::class, 'index']);
+    Route::get('survey-requests/show', [SurveyOrderController::class, 'show']);
+    Route::patch('survey-requests/update', [SurveyOrderController::class, 'update']);
+    Route::delete('survey-requests/delete', [SurveyOrderController::class, 'destroy']);
 
 
     Route::prefix('services')->group(function () {

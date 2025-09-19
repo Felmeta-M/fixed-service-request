@@ -9,7 +9,7 @@ use App\Models\SurveyRequest;
 use App\Services\SurveyOrderService;
 use Illuminate\Http\Request;
 
-class SurveyController extends Controller
+class SurveyOrderController extends Controller
 {
     public function __construct(protected readonly SurveyOrderService $surveyOrderService) {}
 

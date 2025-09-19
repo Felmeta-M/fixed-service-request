@@ -25,9 +25,9 @@ class SurveyRequestResource extends JsonResource
             'sec_contact_no'       => $this->sec_contact_no,
             'sec_contact_email'    => $this->sec_contact_email,
             'status'               => $this->status,
-            'completed_date'       => Carbon::parse($this->completed_date)->diffForHumans(),
-            'created_at'           => Carbon::parse($this->created_at)->diffForHumans(), // 2 days ago
-            'subscribed_at'        => Carbon::parse($this->subscribed_at)->diffForHumans(),
+            'completed_date'       => $this->completed_date ? Carbon::parse($this->completed_date)->diffForHumans() : $this->completed_date,
+            'created_at'           => Carbon::parse($this->created_at)->diffForHumans(),
+            'subscribed_at'        => $this->subscribed_at ? Carbon::parse($this->subscribed_at)->diffForHumans() : $this->subscribed_at,
         ];
     }
 }

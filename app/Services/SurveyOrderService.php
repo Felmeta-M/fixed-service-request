@@ -7,7 +7,7 @@ use App\Models\SurveyRequest;
 
 class SurveyOrderService extends BaseApiService
 {
-    protected int $timeout = 20;
+    protected int $timeout = 10;
     protected int $rateLimit = 15;
 
     protected function endpoint(): string
@@ -34,6 +34,7 @@ class SurveyOrderService extends BaseApiService
         $credentials = config('services.survey');
         $transactionId = uniqid();
         $contactNo = substr($data['contact_no'], -9);
+        $bandwidth = $this->parseBandwidth($data['bandwidth']);
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
@@ -60,7 +61,7 @@ class SurveyOrderService extends BaseApiService
                <com:WeredaOrTown>{$data['survey_address_info']['wereda_town']}</com:WeredaOrTown>
                <com:Kebele>{$data['survey_address_info']['kebele']}</com:Kebele>
             </com:SurveyAddressInfo>
-            <com:bandwidth>{$data['bandwidth']}</com:bandwidth>
+            <com:bandwidth>{$bandwidth}</com:bandwidth>
             <com:ContactPerson>{$data['contact_person']}</com:ContactPerson>
             <com:ContactNo>{$contactNo}</com:ContactNo>
             <com:ContactEmail>{$data['contact_email']}</com:ContactEmail>
@@ -110,5 +111,22 @@ XML;
             'response_time' => (string) $responseHeader->ResponseTime,
             'customer_survey_order_id' =>  $customerSurveyOrderId,
         ];
+    }
+
+    protected function parseBandwidth(string $value): int
+    {
+        $value = strtolower(trim($value));
+        if (!preg_match('/^\d+[mg]$/', $value)) {
+            return 0;
+        }
+
+        $unit = substr($value, -1);
+        $number = (int) substr($value, 0, -1);
+
+        return match ($unit) {
+            'm' => $number,
+            'g' => $number * 1024,
+            default => 0,
+        };
     }
 }

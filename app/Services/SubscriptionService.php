@@ -8,7 +8,7 @@ use App\Models\SurveyRequest;
 class SubscriptionService extends BaseApiService
 {
 
-   protected int $timeout = 20;
+   protected int $timeout = 10;
    protected int $rateLimit = 15;
 
    public function __construct(
@@ -175,18 +175,19 @@ XML;
          ];
       }
 
-      // Success case (if RetCode == 0)
       SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])
          ->first()?->update([
             'service_number' => $numberService,
             'status' => FFDServiceProvisionStatus::Subscribed->value
          ]);
 
+      $responseMsg['number_service'] = $numberService;
+
       return [
          'success'   => true,
          'ret_code'  => $retCode,
          'ret_msg'   => $retMsg,
-         'body'      => $responseMsg, // or parse more fields if needed
+         'body'      => $responseMsg,
       ];
    }
 
@@ -209,24 +210,24 @@ XML;
          return false;
       }
 
-      $serviceNumbers = array_column($filtered, 'ServiceNumber');
+      $numberServices = array_column($filtered, 'ServiceNumber');
 
-      foreach ($serviceNumbers as $serviceNumber) {
-         $status = $this->reserveServiceNumber($serviceNumber);
+      foreach ($numberServices as $numberService) {
+         $status = $this->reserveNumberService($numberService);
          if ($status === true) {
-            return $serviceNumber;
+            return $numberService;
          }
       }
 
       return false;
    }
 
-   protected function reserveServiceNumber(string $serviceNumber): bool
+   protected function reserveNumberService(string $numberService): bool
    {
       $data = [
          'res_type_id' => 10,
          'oper_type' => 1029,
-         'res_code' => $serviceNumber,
+         'res_code' => $numberService,
       ];
 
       $status =  $this->reserveNumberService->pick($data);
@@ -234,12 +235,12 @@ XML;
       return $status;
    }
 
-   protected function releaseServiceNumber(string $serviceNumber): bool
+   protected function releaseNumberService(string $numberService): bool
    {
       $data = [
          'res_type_id' => 10,
          'oper_type' => 1030,
-         'res_code' => $serviceNumber,
+         'res_code' => $numberService,
       ];
 
       $status =  $this->reserveNumberService->unpick($data);

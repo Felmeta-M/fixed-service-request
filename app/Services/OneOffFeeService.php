@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class OneOffFeeService extends BaseApiService
 {
-    protected int $timeout = 20;
+    protected int $timeout = 10;
     protected int $rateLimit = 15;
 
     protected function endpoint(): string
@@ -99,12 +99,12 @@ XML;
     /**
      * Parse SOAP XML response into array.
      */
-    protected function parseResponseXml(string $xml)
+    protected function parseResponseXml(string $xml): array
     {
         $xmlObject = simplexml_load_string($xml);
 
         if ($xmlObject === false) {
-            return ApiResponse::error("Invalid XML response for Primary Offering");
+            return [];
         }
 
         // Register namespaces
@@ -120,11 +120,11 @@ XML;
         $header = $response->children($namespaces['ser'])->ResponseHeader->children($namespaces['com']);
 
         $parsed = [
-            'response_header' => [
-                'response_time' => (string) $header->ResponseTime,
-                'ret_code'      => (string) $header->RetCode,
-                'ret_msg'       => (string) $header->RetMsg,
-            ],
+            // 'response_header' => [
+            //     'response_time' => (string) $header->ResponseTime,
+            //     'ret_code'      => (string) $header->RetCode,
+            //     'ret_msg'       => (string) $header->RetMsg,
+            // ],
             'fees' => [],
         ];
 
@@ -132,7 +132,7 @@ XML;
         $respBody = $response->children($namespaces['ser'])->CalcOneOffFeeRespBody;
         $subBusiList = $respBody->children($namespaces['com'])->SubBusifeelist;
 
-        $parsed['external_sequence'] = (string) $subBusiList->ExternalSequnce;
+        // $parsed['external_sequence'] = (string) $subBusiList->ExternalSequnce;
 
         // Loop SubBusifee list
         foreach ($subBusiList->SubBusifee as $fee) {
@@ -156,19 +156,19 @@ XML;
             }
 
             $parsed['fees'][] = [
-                'item_code'      => (string) $feeChildren->FeeItemCode,
+                // 'item_code'      => (string) $feeChildren->FeeItemCode,
                 'item_name'      => (string) $feeChildren->FeeItemName,
-                'fee_type'       => (string) $feeChildren->FeeType,
-                'currency_id'    => (string) $feeChildren->CurrencyID,
+                // 'fee_type'       => (string) $feeChildren->FeeType,
+                // 'currency_id'    => (string) $feeChildren->CurrencyID,
                 'calculated_fee' => (string) $feeChildren->CaculatedFee,
                 'original_fee'   => (string) $feeChildren->OriginalFee,
                 'discount_fee'   => (string) $feeChildren->DiscountFee,
-                'pay_type'       => (string) $feeChildren->PayType,
+                // 'pay_type'       => (string) $feeChildren->PayType,
                 'taxes'          => $taxes,
-                'ext_params'     => $extParams,
+                // 'ext_params'     => $extParams,
             ];
         }
 
-        return ApiResponse::success($parsed);
+        return $parsed;
     }
 }

@@ -16,6 +16,7 @@ class ReserveNumberService extends BaseApiService
     {
         $xmlPayload = $this->buildRequestXml($data);
         $xmlResponse = $this->executeRequest($xmlPayload);
+
         return $this->parseResponseXml($xmlResponse);
     }
 
@@ -23,6 +24,7 @@ class ReserveNumberService extends BaseApiService
     {
         $xmlPayload = $this->buildRequestXml($data);
         $xmlResponse = $this->executeRequest($xmlPayload);
+
         return $this->parseResponseXml($xmlResponse);
     }
 

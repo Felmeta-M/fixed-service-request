@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\v1\OneOffFeeController;
 use App\Http\Controllers\Api\v1\PrimaryOfferingController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderSummaryController;
+use App\Http\Controllers\Api\v1\ReserveNumberServiceController;
 use App\Http\Controllers\Api\v1\ResourceCheckController;
 use App\Http\Controllers\Api\v1\SurveyOrderController;
 use App\Http\Controllers\Api\v1\SurveyTypeController;
@@ -82,6 +83,7 @@ Route::prefix('v1')->group(function () {
     Route::post('avaiable-number', [AvailableNumberController::class, 'getAvaiableNumber']);
     Route::post('cancel-survey-order', [CancelSurveyOrderController::class, 'cancel']);
     Route::post('resource-check', [ResourceCheckController::class, 'check']);
+    Route::post('release-number-service', [ReserveNumberServiceController::class, 'release']);
 
     Route::post('calc-one-off-fee', [OneOffFeeController::class, 'calculateOneOffFee']);
 });

@@ -9,7 +9,7 @@ use Illuminate\Http\JsonResponse;
 class CancelSurveyOrderService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 5;
 
     protected function endpoint(): string
     {
@@ -73,20 +73,15 @@ XML;
             return ApiResponse::error("Invalid XML response for cancel survey order");
         }
 
-        // Get namespaces
         $namespaces = $xmlObject->getNamespaces(true);
-
-        // Navigate to Body -> CancelSurveyOrderRspMsg
         $body = $xmlObject->children($namespaces['soapenv'])->Body;
         $response = $body->children($namespaces['ser'])->CancelSurveyOrderRspMsg;
 
-        // Extract header values
         $header = $response->ResponseHeader->children($namespaces['com']);
         $retCode = (string) $header->RetCode;
         $retMsg  = (string) $header->RetMsg;
         $responseTime = (string) $header->ResponseTime;
 
-        // Handle failure
         if ($retCode !== '0') {
             return ApiResponse::error($retMsg);
         }
@@ -94,7 +89,6 @@ XML;
         SurveyRequest::where('customer_survey_order_id', $customerSurveyOrderId)
             ->first()?->update(['status' => FFDServiceProvisionStatus::Canceled->value]);
 
-        // Optionally extract body details
         $bodyData = $response->CancelSurveyOrderRequestBody ?? null;
 
         return ApiResponse::success([

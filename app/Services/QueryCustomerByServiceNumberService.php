@@ -5,7 +5,7 @@ namespace App\Services;
 class QueryCustomerByServiceNumberService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 5;
 
     protected function endpoint(): string
     {

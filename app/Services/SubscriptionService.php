@@ -9,7 +9,7 @@ class SubscriptionService extends BaseApiService
 {
 
    protected int $timeout = 10;
-   protected int $rateLimit = 15;
+   protected int $rateLimit = 5;
 
    public function __construct(
       protected readonly QueryAvailableNumberService $queryAvailableNumberService,
@@ -118,7 +118,7 @@ class SubscriptionService extends BaseApiService
 XML;
    }
 
-   private function parseResponseXml(array $data, string $xml): array
+   private function parseResponseXml(array $data, string $xml)
    {
       $parsed = simplexml_load_string($xml);
 
@@ -131,8 +131,6 @@ XML;
       }
 
       $namespaces = $parsed->getNamespaces(true);
-
-      // Navigate to Body
       $body = $parsed->children($namespaces['soapenv'])->Body ?? null;
       if ($body === null) {
          return [
@@ -141,8 +139,6 @@ XML;
             'ret_msg'  => 'Missing SOAP Body',
          ];
       }
-
-      // Navigate to CreateNewSubscriberRspMsg
       $responseMsg = $body->children($namespaces['ser'])->CreateNewSubscriberRspMsg ?? null;
       if ($responseMsg === null) {
          return [
@@ -151,28 +147,17 @@ XML;
             'ret_msg'  => 'Missing CreateNewSubscriberRspMsg',
          ];
       }
-
-      // Get Response Header
       $responseHeader = $responseMsg->ResponseHeader->children($namespaces['com']) ?? null;
       $retCode = (string) ($responseHeader->RetCode ?? '');
       $retMsg  = (string) ($responseHeader->RetMsg ?? '');
 
-      // Error handling: non-zero return code
       if ($retCode !== '0') {
-         return [
-            'success'   => false,
-            'ret_code'  => $retCode,
-            'ret_msg'   => $retMsg,
-         ];
+         return ApiResponse::error('Service subscription failed!');
       }
 
       $numberService = $this->getAvailableNumberServices();
       if (!$numberService) {
-         return [
-            'success'   => false,
-            'ret_code'  => '1',
-            'ret_msg'   => 'Unable to reserve number service',
-         ];
+         return ApiResponse::error('Unable to reserve number service');
       }
 
       SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])
@@ -185,12 +170,12 @@ XML;
 
       $responseMsg['number_service'] = $numberService;
 
-      return [
+      return ApiResponse::success([
          'success'   => true,
          'ret_code'  => $retCode,
          'ret_msg'   => $retMsg,
          'body'      => $responseMsg,
-      ];
+      ]);
    }
 
    protected function getAvailableNumberServices(): string | bool
@@ -232,9 +217,7 @@ XML;
          'res_code' => $numberService,
       ];
 
-      $status =  $this->reserveNumberService->pick($data);
-
-      return $status;
+      return $this->reserveNumberService->pick($data);
    }
 
    protected function releaseNumberService(string $numberService): bool
@@ -245,8 +228,6 @@ XML;
          'res_code' => $numberService,
       ];
 
-      $status =  $this->reserveNumberService->unpick($data);
-
-      return $status;
+      return $this->reserveNumberService->unpick($data);
    }
 }

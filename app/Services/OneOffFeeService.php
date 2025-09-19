@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 class OneOffFeeService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 5;
 
     protected function endpoint(): string
     {
@@ -108,16 +108,9 @@ XML;
             return [];
         }
 
-        // Register namespaces
         $namespaces = $xmlObject->getNamespaces(true);
-
-        // Navigate into the SOAP body
         $body = $xmlObject->children($namespaces['soapenv'])->Body;
-
-        // Inside Body → CalcOneOffFeeRspMsg
         $response = $body->children($namespaces['ser'])->CalcOneOffFeeRspMsg;
-
-        // Response Header
         $header = $response->children($namespaces['ser'])->ResponseHeader->children($namespaces['com']);
 
         $parsed = [
@@ -129,13 +122,10 @@ XML;
             'fees' => [],
         ];
 
-        // Response Body
         $respBody = $response->children($namespaces['ser'])->CalcOneOffFeeRespBody;
         $subBusiList = $respBody->children($namespaces['com'])->SubBusifeelist;
-
         // $parsed['external_sequence'] = (string) $subBusiList->ExternalSequnce;
 
-        // Loop SubBusifee list
         foreach ($subBusiList->SubBusifee as $fee) {
             $feeChildren = $fee->children($namespaces['com']);
 

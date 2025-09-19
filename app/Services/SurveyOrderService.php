@@ -8,7 +8,7 @@ use App\Models\SurveyRequest;
 class SurveyOrderService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 5;
 
     protected function endpoint(): string
     {
@@ -74,7 +74,7 @@ class SurveyOrderService extends BaseApiService
 XML;
     }
 
-    private function parseResponseXml($data, string $xml): array
+    private function parseResponseXml($data, string $xml)
     {
         $parsed = simplexml_load_string($xml);
 
@@ -90,11 +90,7 @@ XML;
         $retMsg  = (string) $responseHeader->RetMsg;
 
         if ($retCode !== '0') {
-            return [
-                'success'   => false,
-                'ret_code'  => $retCode,
-                'ret_msg'   => $retMsg,
-            ];
+            return ApiResponse::error('Unable to create survey order');
         }
 
         $customerSurveyOrderId = (string) $responseBody->CustomerSurveyOrderId;
@@ -105,28 +101,26 @@ XML;
             'status' => FFDServiceProvisionStatus::Waiting->value
         ]);
 
-        return [
+        return ApiResponse::success([
             'ret_code' => $retCode,
             'ret_msg' => $retMsg,
             'response_time' => (string) $responseHeader->ResponseTime,
             'customer_survey_order_id' =>  $customerSurveyOrderId,
-        ];
+        ]);
     }
 
     protected function parseBandwidth(string $value): int
     {
         $value = strtolower(trim($value));
-        if (!preg_match('/^\d+[mg]$/', $value)) {
-            return 0;
+
+        if (preg_match('/^(\d+)m$/', $value, $matches)) {
+            return (int) $matches[1];
         }
 
-        $unit = substr($value, -1);
-        $number = (int) substr($value, 0, -1);
+        if (preg_match('/^(\d+)gbps$/', $value, $matches)) {
+            return (int) $matches[1] * 1024;
+        }
 
-        return match ($unit) {
-            'm' => $number,
-            'g' => $number * 1024,
-            default => 0,
-        };
+        return 0;
     }
 }

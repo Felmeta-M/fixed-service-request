@@ -5,7 +5,7 @@ namespace App\Services;
 class ResourceService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 5;
 
     protected function endpoint(): string
     {
@@ -63,24 +63,35 @@ XML;
 
     protected function parseResponseXml(string $xml)
     {
-        $body = simplexml_load_string($xml, null, 0, "http://schemas.xmlsoap.org/soap/envelope/");
-        $body->registerXPathNamespace('ns1', 'http://oss.zsmart.ztesoft.com/om/webservice/types/');
+        $parsed = simplexml_load_string($xml);
+
+        if ($parsed === false) {
+            return [];
+        }
+
+        $namespaces = $parsed->getNamespaces(true);
 
         $resources = [];
-        foreach ($body->xpath('//ns1:RESOURCE_LIST/ns1:RESOURCE') as $res) {
+        $list = $parsed->children($namespaces['soapenv'])
+            ->Body
+            ->children($namespaces['ns1'])
+            ->RESOURCE_LIST
+            ->RESOURCE ?? [];
+
+        foreach ($list as $res) {
             $resources[] = [
-                'distance' => (string)$res->DISTANCE,
-                'ava_port' => (string)$res->AVAPORT,
-                'ne_id' => (string)$res->NEID,
-                'type_id' => (string)$res->TYPEID,
-                'longitude' => (string)$res->LONGITUDE,
-                'latitude' => (string)$res->LATITUDE,
-                'ne_name' => (string)$res->NENAME,
-                'cable_type' => (string)$res->CABLETYPE,
-                'cable_type_desc' => (string)$res->CABLETYPEDESC,
+                'distance'        => (string) ($res->DISTANCE ?? ''),
+                'ava_port'        => (string) ($res->AVAPORT ?? ''),
+                'ne_id'           => (string) ($res->NEID ?? ''),
+                'type_id'         => (string) ($res->TYPEID ?? ''),
+                'longitude'       => (string) ($res->LONGITUDE ?? ''),
+                'latitude'        => (string) ($res->LATITUDE ?? ''),
+                'ne_name'         => (string) ($res->NENAME ?? ''),
+                'cable_type'      => (string) ($res->CABLETYPE ?? ''),
+                'cable_type_desc' => (string) ($res->CABLETYPEDESC ?? ''),
             ];
         }
 
-        return ApiResponse::success($resources);
+        return $resources;
     }
 }

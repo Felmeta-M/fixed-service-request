@@ -7,7 +7,7 @@ namespace App\Services;
 class AccountListService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 5;
 
     protected function endpoint(): string
     {
@@ -67,23 +67,20 @@ XML;
      * Parse SOAP XML response into a usable PHP array.
      */
     protected function parseResponse(string $xml)
-    {  // Load XML
+    {
         $xmlObject = simplexml_load_string($xml);
 
         if ($xmlObject === false) {
             return ApiResponse::error("Invalid XML response for get account list");
         }
 
-        // Register namespaces
         $namespaces = $xmlObject->getNamespaces(true);
 
-        // Navigate to GetAccountListResponse
         $response = $xmlObject->children($namespaces['soapenv'])
             ->Body
             ->children($namespaces['ser'])
             ->GetAccountListResponse;
 
-        // --- Parse ResponseHeader ---
         $responseHeader = $response->ResponseHeader->children($namespaces['com']);
 
         $retCode = (string) $responseHeader->RetCode;
@@ -94,7 +91,6 @@ XML;
             return ApiResponse::error("Get account number API returned error: {$retMsg}");
         }
 
-        // --- Parse Account List ---
         $body = $response->GetAccountBody;
         $accounts = [];
 

@@ -5,7 +5,7 @@ namespace App\Services;
 class NidOtpService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 5;
 
     protected function endpoint(): string
     {
@@ -28,10 +28,9 @@ class NidOtpService extends BaseApiService
 
     protected function buildXml(array $data)
     {
-        $transactionId = uniqid();
+        $transactionId = $data['transaction_id'] ?? uniqid();
         $processTime = now()->format('YmdHis');
         $credentials = config('services.otp');
-        $transactionId = $data['transaction_id'] ?? $this->generateTransactionId();
 
         return <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
@@ -73,43 +72,32 @@ class NidOtpService extends BaseApiService
 XML;
     }
 
-    public function parseResponse(string $xml): array
+    public function parseResponse(string $xml)
     {
         $xmlObject = simplexml_load_string($xml);
 
-        // Get namespaces from root (only soapenv exists here)
         $rootNamespaces = $xmlObject->getNamespaces(true);
 
-        // Navigate to Body
         $body = $xmlObject->children($rootNamespaces['soapenv'])->Body;
 
-        // Now get namespaces from the Body (nid + com are declared here)
         $bodyNamespaces = $body->getNamespaces(true);
 
-        // Access the main response node
         $response = $body->children($bodyNamespaces['nid'])->RequestDataRspMsg;
 
-        // Extract header
         $header = $response->children($bodyNamespaces['com'])->ResponseHeader;
         $headerData = $header->children($bodyNamespaces['com']);
 
         $retCode = (string) $headerData->RetCode;
         $retMsg  = (string) $headerData->RetMsg;
 
-        // If fail
         if ($retCode !== '0') {
-            return [
-                'success'  => false,
-                'ret_code' => $retCode,
-                'ret_msg'  => $retMsg,
-            ];
+            return ApiResponse::error("National Id OTP request failed!");
         }
 
-        // Extract body
         $bodyData = $response->children($bodyNamespaces['nid'])->RequestDataRspBody;
         $responseFields = $bodyData->children($bodyNamespaces['nid'])->response->children($bodyNamespaces['nid']);
 
-        return [
+        return ApiResponse::success([
             'id'             => (string) $bodyData->children($bodyNamespaces['nid'])->id ?? '',
             'version'        => (string) $bodyData->children($bodyNamespaces['nid'])->version ?? '',
             'response_time'  => (string) $bodyData->children($bodyNamespaces['nid'])->responseTime ?? '',
@@ -118,21 +106,13 @@ XML;
             'masked_email'   => (string) $responseFields->maskedEmail ?? '',
             'ret_code'       => $retCode,
             'ret_msg'        => $retMsg,
-        ];
+        ]);
     }
 
     /**
      * Generate a UUID v4 for MessageID.
      */
     protected function uuid(): string
-    {
-        return (string) \Str::uuid();
-    }
-
-    /**
-     * Generate a transaction ID (could be UUID or something else unique).
-     */
-    protected function generateTransactionId(): string
     {
         return (string) \Str::uuid();
     }

@@ -5,7 +5,7 @@ namespace App\Services;
 class QueryAvailableNumberService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 5;
 
     protected function endpoint(): string
     {
@@ -75,7 +75,6 @@ XML;
 
         if ($retCode !== '0') {
             return [];
-            // return ApiResponse::error("Invalid XML response for query available number");
         }
 
         $numberList = [];
@@ -90,6 +89,5 @@ XML;
             ];
         }
         return $numberList;
-        // return ApiResponse::success($numberList);
     }
 }

@@ -8,7 +8,7 @@ use Illuminate\Http\UploadedFile;
 class EcafService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 5;
 
     protected function endpoint(): string
     {
@@ -31,7 +31,6 @@ class EcafService extends BaseApiService
 
     private function buildXml(array $data): string
     {
-        // $transactionId = uniqid();
         $credentials = config('services.ecaf');
 
         return <<<XML
@@ -60,7 +59,7 @@ class EcafService extends BaseApiService
                 <Image>
                     <ImageType>0</ImageType>
                     <Content>{$data['photo']}</Content>
-                    <ImageName>{$transactionId}</ImageName>
+                    <ImageName>{$data['transaction_id']}</ImageName>
                 </Image>
             </ImageData>
          </captureDetails>
@@ -73,26 +72,20 @@ XML;
     private function parseResponse(string $xml)
     {
         try {
-            // Load XML
             $xmlObject = simplexml_load_string($xml);
 
             if ($xmlObject === false) {
                 return ApiResponse::error("Invalid XML response");
             }
 
-            // Get namespaces
             $namespaces = $xmlObject->getNamespaces(true);
 
-            // Navigate to SOAP Body
             $body = $xmlObject->children($namespaces['soap'])->Body;
 
-            // Access UploadFileResponse (ns2 namespace)
             $response = $body->children($namespaces['ns2'])->UploadFileResponse;
 
-            // Get <return> node
             $return = $response->return;
 
-            // Extract values
             $errorCode = (string) $return->errorCode;
             $errorMessage = (string) $return->errorMessage;
             $rejectedCount = (int) $return->rejectedCount;

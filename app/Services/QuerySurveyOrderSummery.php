@@ -5,7 +5,7 @@ namespace App\Services;
 class QuerySurveyOrderSummery extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 5;
 
     protected function endpoint(): string
     {
@@ -64,8 +64,6 @@ XML;
         $parsed = simplexml_load_string($xml);
 
         $namespaces = $parsed->getNamespaces(true);
-
-        // Navigate to Body -> QuerySurveyOrderSummaryRspMsg
         $body = $parsed->children($namespaces['soapenv'])->Body;
         $responseMsg = $body->children($namespaces['ser'])->QuerySurveyOrderSummaryRspMsg;
 
@@ -76,10 +74,9 @@ XML;
         $retMsg  = (string) $responseHeader->RetMsg;
 
         if ($retCode !== '0') {
-            return ApiResponse::error($retMsg);
+            return ApiResponse::error('Query survey order summery failed!');
         }
 
-        // Extract orders
         $orders = [];
         if (isset($responseBody->CustomSurveyOrderList)) {
             foreach ($responseBody->CustomSurveyOrderList->children($namespaces['com']) as $order) {

@@ -5,29 +5,25 @@ namespace App\Services;
 class ReserveNumberService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 5;
 
     protected function endpoint(): string
     {
         return config('services.number_service_reserve.endpoint');
     }
-    /**
-     * Send UniqueResourceOperation request
-     */
+
     public function pick(array $data): bool
     {
-        $pick = true;
         $xmlPayload = $this->buildRequestXml($data);
         $xmlResponse = $this->executeRequest($xmlPayload);
-        return $this->parseResponseXml($xmlResponse, $pick);
+        return $this->parseResponseXml($xmlResponse);
     }
 
     public function unpick(array $data): bool
     {
-        $pick = false;
         $xmlPayload = $this->buildRequestXml($data);
         $xmlResponse = $this->executeRequest($xmlPayload);
-        return $this->parseResponseXml($xmlResponse, $pick);
+        return $this->parseResponseXml($xmlResponse);
     }
 
 
@@ -71,12 +67,12 @@ XML;
     /**
      * Parse SOAP response
      */
-    protected function parseResponseXml(string $xml, bool $pick): bool
+    protected function parseResponseXml(string $xml): bool
     {
         $parsed = simplexml_load_string($xml);
 
         if ($parsed === false) {
-            return false; // invalid XML
+            return false;
         }
 
         $namespaces = $parsed->getNamespaces(true);
@@ -87,11 +83,9 @@ XML;
 
         $result = (string) ($responseBody->Result ?? '');
 
-        // Success only if Result == '1'
-        if ($pick) {
-            return  $result === '1';
-        }
-
-        return $result === '-1';
+        return  match ($result) {
+            '1', '-1' => true,
+            default => false,
+        };
     }
 }

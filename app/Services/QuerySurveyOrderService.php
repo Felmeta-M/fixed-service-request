@@ -6,7 +6,7 @@ namespace App\Services;
 class QuerySurveyOrderService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 5;
 
     protected function endpoint(): string
     {
@@ -63,10 +63,8 @@ XML;
 
         $namespaces = $parsed->getNamespaces(true);
 
-        // Navigate into SOAP Body
         $body = $parsed->children($namespaces['soapenv'])->Body;
 
-        // Your response tag is QuerySurveyOrderDetailRspMsg (not HandleSurveyOrderRspMsg)
         $responseMsg = $body->children($namespaces['ser'])->QuerySurveyOrderDetailRspMsg;
 
         $responseHeader = $responseMsg->ResponseHeader->children($namespaces['com']);
@@ -76,13 +74,11 @@ XML;
         $retMsg  = (string) $responseHeader->RetMsg;
 
         if ($retCode !== '0') {
-            return ApiResponse::error($retMsg);
+            return ApiResponse::error('Query survey order failed!');
         }
 
-        // Extract CustomerSurveyOrderId
         $customerSurveyOrderId = (string) $responseBody->CustomerSurveyOrderId;
 
-        // Extract SubOrderList
         $subOrders = [];
         if (isset($responseBody->SubOrderList)) {
             foreach ($responseBody->SubOrderList->children($namespaces['com']) as $subOrder) {

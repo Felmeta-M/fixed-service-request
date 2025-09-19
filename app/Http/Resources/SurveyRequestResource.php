@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class SurveyRequestResource extends JsonResource
@@ -24,9 +25,9 @@ class SurveyRequestResource extends JsonResource
             'sec_contact_no'       => $this->sec_contact_no,
             'sec_contact_email'    => $this->sec_contact_email,
             'status'               => $this->status,
-            'completed_date'       => $this->completed_date,
-            'created_at'           => $this->created_at,
-            'subscribed_at'        => $this->subscribed_at,
+            'completed_date'       => Carbon::parse($this->completed_date)->diffForHumans(),
+            'created_at'           => Carbon::parse($this->created_at)->diffForHumans(), // 2 days ago
+            'subscribed_at'        => Carbon::parse($this->subscribed_at)->diffForHumans(),
         ];
     }
 }

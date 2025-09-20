@@ -6,7 +6,7 @@ namespace App\Services;
 class CustomerService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 5;
+    protected int $rateLimit = 15;
     protected string $transactionId;
 
     protected function endpoint(): string
@@ -31,8 +31,11 @@ class CustomerService extends BaseApiService
     protected function buildXml(array $data): string
     {
         $credentials = config('services.customer');
-        $this->transactionId = uniqid();
         $processTime = now()->format('YmdHis');
+        $this->transactionId = uniqid();
+        if (!$this->transactionId) {
+            throw new \InvalidArgumentException('Transaction id cannot empty');
+        }
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 

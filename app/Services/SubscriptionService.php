@@ -9,7 +9,7 @@ class SubscriptionService extends BaseApiService
 {
 
    protected int $timeout = 10;
-   protected int $rateLimit = 5;
+   protected int $rateLimit = 15;
 
    public function __construct(
       protected readonly QueryAvailableNumberService $queryAvailableNumberService,

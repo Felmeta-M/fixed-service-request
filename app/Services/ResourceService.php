@@ -5,7 +5,7 @@ namespace App\Services;
 class ResourceService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 5;
+    protected int $rateLimit = 15;
 
     protected function endpoint(): string
     {

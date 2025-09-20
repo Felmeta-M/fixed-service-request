@@ -4,11 +4,12 @@ namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\SurveyRequest;
+use InvalidArgumentException;
 
 class SurveyOrderService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 5;
+    protected int $rateLimit = 15;
 
     protected function endpoint(): string
     {
@@ -34,7 +35,11 @@ class SurveyOrderService extends BaseApiService
         $credentials = config('services.survey');
         $transactionId = uniqid();
         $contactNo = substr($data['contact_no'], -9);
+
         $bandwidth = $this->parseBandwidth($data['bandwidth']);
+        if (!$bandwidth) {
+            throw new \InvalidArgumentException('Bandwidth cannot be empty');
+        }
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">

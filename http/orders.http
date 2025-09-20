@@ -1,0 +1,15 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:typ="http://oss.zsmart.ztesoft.com/om/webservice/types/">
+    <soapenv:Header>
+    <typ:AuthenticationInfo>
+    <UserName>etoss</UserName>
+    <Password>bn9vKl593TcpOZe171i1Bw==</Password>
+    <TransactionId>20151118165838</TransactionId>
+    </typ:AuthenticationInfo>
+    </soapenv:Header>
+    <soapenv:Body>
+    <typ:searchOrder>
+    <ORDER_NBR>30146770770596</ORDER_NBR>
+    <SEARCH_TYPE>0</SEARCH_TYPE>
+    </typ:searchOrder>
+    </soapenv:Body>
+</soapenv:Envelope>

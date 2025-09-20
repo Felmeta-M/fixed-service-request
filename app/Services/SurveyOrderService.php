@@ -14,7 +14,7 @@ class SurveyOrderService extends BaseApiService
         return config('services.survey.endpoint');
     }
 
-    public function createSurveyOrder(array $data)
+    public function createSurveyOrder(array $data): \Illuminate\Http\JsonResponse
     {
         try {
             $xmlPayload = $this->buildRequestXml($data);

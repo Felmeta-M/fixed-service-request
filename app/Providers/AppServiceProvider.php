@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\CreateOrderService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -16,7 +17,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(CreateOrderService::class, function ($app) {
+            return new CreateOrderService(
+                config('services.telebirr.base_url'),
+                config('services.telebirr.web_base_url'),
+                config('services.telebirr.fabric_app_id'),
+                config('services.telebirr.app_secret'),
+                config('services.telebirr.merchant_app_id'),
+                config('services.telebirr.merchant_code')
+            );
+        });
     }
 
     /**

@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\v1\LocationController;
 use App\Http\Controllers\Api\v1\NidController;
 use App\Http\Controllers\Api\v1\OccupationController;
 use App\Http\Controllers\Api\v1\OneOffFeeController;
+use App\Http\Controllers\Api\v1\TelebirrController;
 use App\Http\Controllers\Api\v1\PrimaryOfferingController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderSummaryController;
@@ -86,4 +87,10 @@ Route::prefix('v1')->group(function () {
     Route::post('release-number-service', [ReserveNumberServiceController::class, 'release']);
 
     Route::post('calc-one-off-fee', [OneOffFeeController::class, 'calculateOneOffFee']);
+
+
+    Route::post('create-order', [TelebirrController::class, 'createOrder'])
+        ->name('create.order');
+    Route::post('payment/notify', [TelebirrController::class, 'paymentNotification'])
+        ->name('payment.notify');
 });

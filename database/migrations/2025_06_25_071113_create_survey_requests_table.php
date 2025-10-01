@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('customer_id')->nullable()->constrained('customers')->cascadeOnDelete()->cascadeOnUpdate();
             $table->bigInteger('customer_code')->index();
             $table->bigInteger('customer_survey_order_id')->unique();
-            $table->string('main_offer_id')->unique();
+            $table->string('main_offer_id');
             $table->string('service_number')->unique();
             $table->string('survey_type'); //new or change
             $table->string('telecom_region');
@@ -35,6 +35,8 @@ return new class extends Migration
             $table->dateTime('subscribed_at');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->unique(['customer_code', 'main_offer_id']);
         });
     }
 

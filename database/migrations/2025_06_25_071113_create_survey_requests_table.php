@@ -36,7 +36,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->unique(['customer_code', 'main_offer_id']);
+            $table->unique(['customer_code', 'main_offer_id']); //TODO: to be update the database for customer code and main offer id uniquencess
         });
     }
 

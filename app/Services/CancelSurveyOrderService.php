@@ -5,28 +5,31 @@ namespace App\Services;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\SurveyRequest;
 use Illuminate\Http\JsonResponse;
+use RuntimeException;
 
 class CancelSurveyOrderService extends BaseApiService
 {
     protected int $timeout = 10;
     protected int $rateLimit = 15;
 
+    public function __construct(protected readonly ReserveNumberService $reserveNumberService,) {}
+
     protected function endpoint(): string
     {
         return config('services.cancel_survey.endpoint');
     }
 
-    public function cancelSurveyOrder(string $customerSurveyOrderId): JsonResponse
+    public function cancelSurveyOrder(array $data): JsonResponse
     {
         try {
             // Build XML
-            $xmlPayload = $this->buildXml($customerSurveyOrderId);
+            $xmlPayload = $this->buildXml($data['customer_survey_order_id']);
 
             // Execute SOAP request
             $xmlResponse = $this->executeRequest($xmlPayload);
 
             // Parse XML response
-            return $this->parseResponse($customerSurveyOrderId, $xmlResponse);
+            return $this->parseResponse($data, $xmlResponse);
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
         } catch (\Throwable $e) {
@@ -65,7 +68,7 @@ class CancelSurveyOrderService extends BaseApiService
 XML;
     }
 
-    protected function parseResponse(string $customerSurveyOrderId, string $xml): JsonResponse
+    protected function parseResponse(array $data, string $xml): JsonResponse
     {
         $xmlObject  = simplexml_load_string($xml);
 
@@ -76,7 +79,6 @@ XML;
         $namespaces = $xmlObject->getNamespaces(true);
         $body = $xmlObject->children($namespaces['soapenv'])->Body;
         $response = $body->children($namespaces['ser'])->CancelSurveyOrderRspMsg;
-
         $header = $response->ResponseHeader->children($namespaces['com']);
         $retCode = (string) $header->RetCode;
         $retMsg  = (string) $header->RetMsg;
@@ -86,8 +88,27 @@ XML;
             return ApiResponse::error($retMsg);
         }
 
-        SurveyRequest::where('customer_survey_order_id', $customerSurveyOrderId)
-            ->first()?->update(['status' => FFDServiceProvisionStatus::Canceled->value]);
+        $surveyOrder =  SurveyRequest::where('customer_survey_order_id', $data['customer_survey_order_id'])->first();
+
+        if ($surveyOrder) {
+            $surveyOrder->update([
+                'status' => FFDServiceProvisionStatus::Canceled->value,
+                'reason' => $data['reason']
+            ]);
+        }
+
+        if ($surveyOrder?->service_number) {
+            $data = [
+                'res_type_id' => 10,
+                'oper_type' => 1030,
+                'res_code' => $surveyOrder?->service_number,
+            ];
+
+            $releaseNumber = $this->reserveNumberService->unpick($data);
+            // if (!$releaseNumber) {
+            //     throw new RuntimeException('Unable to release service number!!');
+            // }
+        }
 
         $bodyData = $response->CancelSurveyOrderRequestBody ?? null;
 

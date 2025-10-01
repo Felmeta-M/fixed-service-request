@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\v1\LocationController;
 use App\Http\Controllers\Api\v1\NidController;
 use App\Http\Controllers\Api\v1\OccupationController;
 use App\Http\Controllers\Api\v1\OneOffFeeController;
+use App\Http\Controllers\Api\v1\PaymentController;
 use App\Http\Controllers\Api\v1\TelebirrController;
 use App\Http\Controllers\Api\v1\PrimaryOfferingController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderController;
@@ -93,4 +94,6 @@ Route::prefix('v1')->group(function () {
         ->name('create.order');
     Route::post('payment/notify', [TelebirrController::class, 'paymentNotification'])
         ->name('payment.notify');
+
+    Route::apiResource('payments', PaymentController::class)->only(['index', 'show']);
 });

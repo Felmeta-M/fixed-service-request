@@ -18,10 +18,10 @@ class CancelSurveyOrderController extends Controller
     {
         $request->validate([
             'customer_survey_order_id' => 'required|string',
-            'reason' => 'required|string'
+            'cancel_reason' => 'required|string'
         ]);
 
-        $customerSurveyOrderId = $request->only(['customer_survey_order_id', 'reason']);
+        $customerSurveyOrderId = $request->only(['customer_survey_order_id', 'cancel_reason']);
 
         return $this->cancelSurveyOrderService->cancelSurveyOrder($customerSurveyOrderId);
     }

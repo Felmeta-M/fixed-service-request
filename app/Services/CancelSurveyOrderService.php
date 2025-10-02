@@ -93,7 +93,7 @@ XML;
         if ($surveyOrder) {
             $surveyOrder->update([
                 'status' => FFDServiceProvisionStatus::Canceled->value,
-                'reason' => $data['reason']
+                'cancel_reason' => $data['cancel_reason']
             ]);
         }
 

@@ -27,7 +27,7 @@ class SurveyOrderController extends Controller
             ], 404);
         }
 
-        $query->where('customer_code', $request->input('customer_code'));
+        $query->where('customer_code', $request->input('customer_code'))->whereNull('deleted_at');
 
         $surveyRequests = $query->paginate(10);
 

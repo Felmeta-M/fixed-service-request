@@ -44,21 +44,21 @@ class ResourceService extends BaseApiService
     </soapenv:Header>
     <soapenv:Body>
         <typ:resourceCheck xmlns:typ="http://oss.zsmart.ztesoft.com/om/webservice/types/">
-           <PROD_SPEC_CODE>{$data['PROD_SPEC_CODE']}</PROD_SPEC_CODE>
-            <NUMBER_LINE>{$data['NUMBER_LINE']}</NUMBER_LINE>
-            <ACC_NBR>{$data['ACC_NBR']}</ACC_NBR>
-            <EVENT_CODE>{$data['EVENT_CODE']}</EVENT_CODE>
-            <CUST_ID>{$data['CUST_ID']}</CUST_ID>
-            <CUST_NAME>{$data['CUST_NAME']}</CUST_NAME>
-            <CUST_ADDR>{$data['CUST_ADDR']}</CUST_ADDR>
-            <LONGITUDE>{$data['LONGITUDE']}</LONGITUDE>
-            <LATITUDE>{$data['LATITUDE']}</LATITUDE>
+           <PROD_SPEC_CODE>{$data['prod_spec_code']}</PROD_SPEC_CODE>
+            <NUMBER_LINE>{$data['number_line']}</NUMBER_LINE>
+            <ACC_NBR>{$data['acc_nbr']}</ACC_NBR>
+            <EVENT_CODE>{$data['event_code']}</EVENT_CODE>
+            <CUST_ID>{$data['cust_id']}</CUST_ID>
+            <CUST_NAME>{$data['cust_name']}</CUST_NAME>
+            <CUST_ADDR>{$data['cust_addr']}</CUST_ADDR>
+            <LONGITUDE>{$data['longitude']}</LONGITUDE>
+            <LATITUDE>{$data['latitude']}</LATITUDE>
             <STAFF_CODE>{$credentials['staff_code']}</STAFF_CODE>
             <STAFF_NAME>{$credentials['staff_name']}</STAFF_NAME>
-            <COMBO_FLAG>{$data['COMBO_FLAG']}</COMBO_FLAG>
+            <COMBO_FLAG>{$data['combo_flag']}</COMBO_FLAG>
             <TIMESTAMP>{$processTime}</TIMESTAMP>
-            <BANDWIDTH>{$data['BANDWIDTH']}</BANDWIDTH>
-            <RADIUS>{$data['RADIUS']}</RADIUS>
+            <BANDWIDTH>{$data['bandwidth']}</BANDWIDTH>
+            <RADIUS>{$data['radius']}</RADIUS>
         </typ:resourceCheck>
     </soapenv:Body>
 </soapenv:Envelope>

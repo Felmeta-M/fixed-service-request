@@ -128,6 +128,8 @@ return [
         'access_pwd' => env('CHECK_RESOURCE_ACCESS_PASSWORD'),
         'channel_id' => env('CHECK_RESOURCE_CHANNEL_ID'),
         'technical_channel_id' => env('CHECK_RESOURCE_TECHNICAL_CHANNEL_ID'),
+        'staff_name' => env('CHECK_RESOURCE_STAFF_NAME', 'superadmin'),
+        'staff_code' => env('CHECK_RESOURCE_STAFF_CODE', '1'),
     ],
 
     'select_offer' => [

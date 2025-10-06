@@ -53,8 +53,8 @@ class ResourceService extends BaseApiService
             <CUST_ADDR>{$data['CUST_ADDR']}</CUST_ADDR>
             <LONGITUDE>{$data['LONGITUDE']}</LONGITUDE>
             <LATITUDE>{$data['LATITUDE']}</LATITUDE>
-            <STAFF_CODE>{$data['STAFF_CODE']}</STAFF_CODE>
-            <STAFF_NAME>{$data['STAFF_NAME']}</STAFF_NAME>
+            <STAFF_CODE>{$credentials['staff_code']}</STAFF_CODE>
+            <STAFF_NAME>{$credentials['staff_name']}</STAFF_NAME>
             <COMBO_FLAG>{$data['COMBO_FLAG']}</COMBO_FLAG>
             <TIMESTAMP>{$processTime}</TIMESTAMP>
             <BANDWIDTH>{$data['BANDWIDTH']}</BANDWIDTH>

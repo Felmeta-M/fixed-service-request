@@ -22,8 +22,8 @@ class StoreResourceCheckRequest extends FormRequest
             'cust_addr'      => 'required|string',
             'longitude'      => 'required|numeric',
             'latitude'       => 'required|numeric',
-            'staff_code'     => 'required|string',
-            'staff_name'     => 'required|string',
+            // 'staff_code'     => 'required|string',
+            // 'staff_name'     => 'required|string',
             'combo_flag'     => 'required|boolean',
         ];
     }

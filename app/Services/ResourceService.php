@@ -29,6 +29,7 @@ class ResourceService extends BaseApiService
     protected function buildRequestXml(array $data): string
     {
         $transactionId = uniqid();
+        $processTime   = now()->format('YmdHis');
         $credentials = config('services.check_resource');
 
         return <<<XML
@@ -43,18 +44,21 @@ class ResourceService extends BaseApiService
     </soapenv:Header>
     <soapenv:Body>
         <typ:resourceCheck xmlns:typ="http://oss.zsmart.ztesoft.com/om/webservice/types/">
-            <PROD_SPEC_CODE>{$data['prod_spec_code']}</PROD_SPEC_CODE>
-            <NUMBER_LINE>{$data['number_line']}</NUMBER_LINE>
-            <EVENT_CODE>{$data['event_code']}</EVENT_CODE>
-            <CUST_ID>{$data['cust_id']}</CUST_ID>
-            <CUST_NAME>{$data['cust_name']}</CUST_NAME>
-            <LONGITUDE>{$data['longitude']}</LONGITUDE>
-            <LATITUDE>{$data['latitude']}</LATITUDE>
-            <STAFF_CODE>{$data['staff_code']}</STAFF_CODE>
-            <STAFF_NAME>{$data['staff_name']}</STAFF_NAME>
-            <COMBO_FLAG>{$data['combo_flag']}</COMBO_FLAG>
-            <TIMESTAMP>{$data['timestamp']}</TIMESTAMP>
-            <CUST_ADDR>{$data['cust_addr']}</CUST_ADDR>
+           <PROD_SPEC_CODE>{$data['PROD_SPEC_CODE']}</PROD_SPEC_CODE>
+            <NUMBER_LINE>{$data['NUMBER_LINE']}</NUMBER_LINE>
+            <ACC_NBR>{$data['ACC_NBR']}</ACC_NBR>
+            <EVENT_CODE>{$data['EVENT_CODE']}</EVENT_CODE>
+            <CUST_ID>{$data['CUST_ID']}</CUST_ID>
+            <CUST_NAME>{$data['CUST_NAME']}</CUST_NAME>
+            <CUST_ADDR>{$data['CUST_ADDR']}</CUST_ADDR>
+            <LONGITUDE>{$data['LONGITUDE']}</LONGITUDE>
+            <LATITUDE>{$data['LATITUDE']}</LATITUDE>
+            <STAFF_CODE>{$data['STAFF_CODE']}</STAFF_CODE>
+            <STAFF_NAME>{$data['STAFF_NAME']}</STAFF_NAME>
+            <COMBO_FLAG>{$data['COMBO_FLAG']}</COMBO_FLAG>
+            <TIMESTAMP>{$processTime}</TIMESTAMP>
+            <BANDWIDTH>{$data['BANDWIDTH']}</BANDWIDTH>
+            <RADIUS>{$data['RADIUS']}</RADIUS>
         </typ:resourceCheck>
     </soapenv:Body>
 </soapenv:Envelope>
@@ -92,6 +96,17 @@ XML;
             ];
         }
 
-        return $resources;
+        return $this->getShortestResource($resources);
+    }
+
+    public function getShortestResource(array $resources): ?array
+    {
+        if (empty($resources)) {
+            return null;
+        }
+
+        return collect($resources)
+            ->sortBy(fn($r) => $r['distance'])
+            ->first();
     }
 }

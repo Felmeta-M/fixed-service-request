@@ -19,13 +19,12 @@ class StoreResourceCheckRequest extends FormRequest
             'event_code'     => 'required|string',
             'cust_id'        => 'required|string',
             'cust_name'      => 'required|string',
+            'cust_addr'      => 'required|string',
             'longitude'      => 'required|numeric',
             'latitude'       => 'required|numeric',
             'staff_code'     => 'required|string',
             'staff_name'     => 'required|string',
             'combo_flag'     => 'required|boolean',
-            'timestamp'      => 'required|string',
-            'cust_addr'      => 'required|string',
         ];
     }
 }

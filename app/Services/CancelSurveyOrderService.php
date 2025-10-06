@@ -56,8 +56,8 @@ class CancelSurveyOrderService extends BaseApiService
             <com:ProcessTime>{$processTime}</com:ProcessTime>
             <com:ChannelId>{$config['channel_id']}</com:ChannelId>
             <com:TechnicalChannelId>{$config['tech_channel_id']}</com:TechnicalChannelId>
-            <com:AccessUser>{$config['user']}</com:AccessUser>
-            <com:AccessPwd>{$config['password']}</com:AccessPwd>
+            <com:AccessUser>{$config['access_user']}</com:AccessUser>
+            <com:AccessPwd>{$config['access_pwd']}</com:AccessPwd>
          </ser:RequestHeader>
          <ser:CancelSurveyOrderRequestBody>
             <com:CustomerSurveyOrderId>{$customerSurveyOrderId}</com:CustomerSurveyOrderId>

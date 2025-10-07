@@ -27,7 +27,7 @@ abstract class BaseApiService
     protected function headers(): array
     {
         return [
-            'Content-Type' => 'text/xml; charset=utf-8',
+            'Content-Type' => 'ttext/xml; charset=utf-8',
         ];
     }
 
@@ -56,6 +56,9 @@ abstract class BaseApiService
         $response = Http::withHeaders($this->headers())
             ->timeout($this->timeout)
             ->retry($this->maxRetries, 200, throw: false)
+            ->withOptions([
+                'verify' => false, // dev only
+            ])
             ->withBody($xmlPayload, 'text/xml')
             ->post($this->endpoint());
         if ($response->failed()) {

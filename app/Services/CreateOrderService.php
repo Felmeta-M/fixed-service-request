@@ -47,14 +47,10 @@ class CreateOrderService
         // 1️⃣ Get Fabric token
         $tokenService = app(FabricTokenService::class);
         $fabricToken = (string) $tokenService->applyFabricToken();
-
-        logger()->info('Fabric token obtained', ['token' => $fabricToken]);
-
+        logger()->info('Fabric token obtained', [$fabricToken]);
         // 2️⃣ Send create order request
         $createOrderResponse = $this->requestCreateOrder($fabricToken, $title, $amount);
-
         $responseData = json_decode($createOrderResponse);
-
         if (!isset($responseData->biz_content->prepay_id)) {
             throw new RuntimeException('Prepay ID not returned from Fabric API.');
         }
@@ -71,13 +67,12 @@ class CreateOrderService
     protected function requestCreateOrder(string $fabricToken, string $title, string $amount): string
     {
         $payload = $this->createRequestObject($title, $amount);
-
         $response = Http::withHeaders([
             'Content-Type'  => 'application/json',
             'X-APP-Key'     => $this->fabricAppId,
             'Authorization' => $fabricToken,
         ])
-            ->timeout(30)
+            ->timeout(10)
             ->withOptions([
                 'verify' => false, // dev only
             ])

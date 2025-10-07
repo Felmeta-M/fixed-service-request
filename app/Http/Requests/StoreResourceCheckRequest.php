@@ -23,8 +23,6 @@ class StoreResourceCheckRequest extends FormRequest
             'cust_addr'      => 'required|string',
             'longitude'      => 'required|numeric',
             'latitude'       => 'required|numeric',
-            'staff_code'     => 'nullable',
-            'staff_name'     => 'nullable',
             'combo_flag'     => 'nullable',
             'bandwidth'     => 'nullable',
             'radius'     => 'required',

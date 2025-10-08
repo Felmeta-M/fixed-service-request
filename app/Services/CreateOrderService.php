@@ -64,40 +64,57 @@ class CreateOrderService
     /**
      * Send create order request
      */
-    protected function requestCreateOrder(string $fabricToken, string $title, string $amount): string
+    protected function requestCreateOrder(string $fabricToken, string $title, string $amount)
     {
-        $payload = $this->createRequestObject($title, $amount);
-        $response = Http::withHeaders([
-            'Content-Type'  => 'application/json',
-            'X-APP-Key'     => $this->fabricAppId,
-            'Authorization' => $fabricToken,
-        ])
-            ->timeout(10)
-            ->withOptions([
-                'verify' => false, // dev only
-            ])
-            ->post("{$this->baseUrl}/payment/v1/merchant/preOrder", $payload);
+        $data = $this->createRequestObject($title, $amount);
+        $ch = curl_init("{$this->baseUrl}/payment/v1/merchant/preOrder");
 
-        if ($response->failed()) {
-            logger()->error('Create order failed', [
-                'status' => $response->status(),
-                'body'   => $response->body(),
-            ]);
-            throw new RuntimeException('Create order request failed.');
-        }
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Content-Type: application/json",
+            "X-APP-Key: {$this->fabricAppId}",
+            "Authorization: {$fabricToken}"
+        ]);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // dev only
 
-        return $response->body();
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        \Log::info($response);
+        return $response;
+        // $response = Http::withHeaders([
+        //     'Content-Type'  => 'application/json',
+        //     'X-APP-Key'     => $this->fabricAppId,
+        //     'Authorization' => $fabricToken,
+        // ])
+        //     ->timeout(10)
+        //     ->withOptions([
+        //         'verify' => false, // dev only
+        //     ])
+        //     ->post("{$this->baseUrl}/payment/v1/merchant/preOrder", $data);
+
+        // if ($response->failed()) {
+        //     logger()->error('Create order failed', [
+        //         'status' => $response->status(),
+        //         'body'   => $response->body(),
+        //     ]);
+        //     throw new RuntimeException('Create order request failed.');
+        // }
+        // return $response->body();
     }
 
     /**
      * Create request object for Fabric API
      */
-    protected function createRequestObject(string $title, string $amount): array
+    protected function createRequestObject(string $title, string $amount)
     {
         $bizContent = [
             'notify_url'           => $this->notifyUrl,
             'business_type'        => 'BuyGoods',
-            'trade_type'           => 'InApp',
+            'trade_type'           => 'Checkout',
             'appid'                => $this->merchantAppId,
             'merch_code'           => $this->merchantCode,
             'merch_order_id'       => TelebirrHelper::createMerchantOrderId(), // unique order id
@@ -116,13 +133,13 @@ class CreateOrderService
             'timestamp'   => TelebirrHelper::createTimeStamp(),
             'version'     => '1.0',
             'biz_content' => $bizContent,
-            'sign_type'   => 'SHA256WithRSA',
+            'sign_type'   => 'SHA256withRSA',
         ];
 
         // Sign the request
         $request['sign'] = app(TelebirrSignerService::class)->sign($request);
 
-        return $request;
+        return json_encode($request);
     }
 
     /**

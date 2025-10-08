@@ -93,13 +93,13 @@ XML;
             \Log::error('ResourceCheckResponse not found');
             throw new \Exception('ResourceCheckResponse not found');
         }
-        // $response = $responses[0];
+        $response = $responses[0];
         // \Log::info('ResourceCheckResponse found', ['children' => array_keys((array)$response)]);
         // Step 6: Trace each RESOURCE element
         $resources = [];
         if (isset($response->RESOURCE_LIST->RESOURCE)) {
             foreach ($response->RESOURCE_LIST->RESOURCE as $i => $res) {
-                \Log::info("RESOURCE #{$i}", ['xml' => $res->asXML()]);
+                // \Log::info("RESOURCE #{$i}", ['xml' => $res->asXML()]);
                 $resources[] = [
                     'distance' => (string)$res->DISTANCE,
                     'ava_port' => (string)$res->AVAPORT,
@@ -118,7 +118,6 @@ XML;
 
         // Step 7: Log final parsed info
         // \Log::info('Number of resources parsed', $resources);
-
         return $this->getShortestResource($resources);
     }
 

@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use Log;
 use phpseclib3\Crypt\PublicKeyLoader;
+use Storage;
 
 class TelebirrSignerService
 {
@@ -31,7 +33,6 @@ class TelebirrSignerService
             if (in_array($key, $this->excludeFields, true)) {
                 continue;
             }
-
             if ($key === 'biz_content' && is_array($value)) {
                 foreach ($value as $k => $v) {
                     $pairs[] = "{$k}={$v}";
@@ -51,14 +52,19 @@ class TelebirrSignerService
         return implode('&', $arr);
     }
 
-    protected function signWithRSA(string $data): string
+    protected function signWithRSA(string $data): ?string
     {
-        $key = PublicKeyLoader::load($this->privateKey)
-            ->withHash('sha256')
-            ->withMGFHash('sha256');
+        try {
+            $key = PublicKeyLoader::load($this->privateKey)
+                ->withHash('sha256')
+                ->withMGFHash('sha256');
 
-        $signature = $key->sign($data);
+            $signature = $key->sign($data);
 
-        return base64_encode($signature);
+            return base64_encode($signature);
+        } catch (\Throwable $e) {
+            Log::error("RSA signing failed: {$e->getMessage()}");
+            return null;
+        }
     }
 }

@@ -46,10 +46,11 @@ class CreateOrderService
     {
         // 1️⃣ Get Fabric token
         $tokenService = app(FabricTokenService::class);
-        $fabricToken = (string) $tokenService->applyFabricToken();
+        $fabricToken = $tokenService->applyFabricToken();
         logger()->info('Fabric token obtained', [$fabricToken]);
         // 2️⃣ Send create order request
         $createOrderResponse = $this->requestCreateOrder($fabricToken, $title, $amount);
+        \Log::info($createOrderResponse);
         $responseData = json_decode($createOrderResponse);
         if (!isset($responseData->biz_content->prepay_id)) {
             throw new RuntimeException('Prepay ID not returned from Fabric API.');
@@ -64,46 +65,50 @@ class CreateOrderService
     /**
      * Send create order request
      */
-    protected function requestCreateOrder(string $fabricToken, string $title, string $amount)
+    protected function requestCreateOrder($fabricToken,  $title,  $amount)
     {
         $data = $this->createRequestObject($title, $amount);
-        $ch = curl_init("{$this->baseUrl}/payment/v1/merchant/preOrder");
 
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->baseUrl . '/payment/v1/merchant/preOrder');
+        curl_setopt($ch, CURLOPT_POST, 1);
+
+        // Headers
+        $headers = [
             "Content-Type: application/json",
-            "X-APP-Key: {$this->fabricAppId}",
-            "Authorization: {$fabricToken}"
-        ]);
-        curl_setopt($ch, CURLOPT_POST, true);
+            "X-APP-Key: " . $this->fabricAppId,
+            "Authorization: " . $fabricToken,
+        ];
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        // Body
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // dev only
-
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        // Execute
         $response = curl_exec($ch);
+        \Log::info($response);
+        // Check for cURL errors
+        if ($response === false) {
+            $errorNumber = curl_errno($ch);
+            $errorMessage = curl_error($ch);
+            curl_close($ch);
+            throw new \RuntimeException("cURL error ({$errorNumber}): {$errorMessage}");
+        }
+
+        // Optionally get HTTP status code
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
         curl_close($ch);
 
-        \Log::info($response);
-        return $response;
-        // $response = Http::withHeaders([
-        //     'Content-Type'  => 'application/json',
-        //     'X-APP-Key'     => $this->fabricAppId,
-        //     'Authorization' => $fabricToken,
-        // ])
-        //     ->timeout(10)
-        //     ->withOptions([
-        //         'verify' => false, // dev only
-        //     ])
-        //     ->post("{$this->baseUrl}/payment/v1/merchant/preOrder", $data);
+        // Debug output (optional)
+        if ($httpCode >= 400) {
+            throw new \RuntimeException("HTTP error {$httpCode}: {$response}");
+        }
 
-        // if ($response->failed()) {
-        //     logger()->error('Create order failed', [
-        //         'status' => $response->status(),
-        //         'body'   => $response->body(),
-        //     ]);
-        //     throw new RuntimeException('Create order request failed.');
-        // }
-        // return $response->body();
+        return $response;
     }
 
     /**
@@ -117,20 +122,20 @@ class CreateOrderService
             'trade_type'           => 'Checkout',
             'appid'                => $this->merchantAppId,
             'merch_code'           => $this->merchantCode,
-            'merch_order_id'       => TelebirrHelper::createMerchantOrderId(), // unique order id
+            'merch_order_id'       => (string) TelebirrHelper::createMerchantOrderId(), // unique order id
             'title'                => $title,
             'total_amount'         => $amount,
             'trans_currency'       => 'ETB',
             'timeout_express'      => '120m',
-            'payee_identifier'     => '220311',
+            'payee_identifier'     => 'REDACTED_MERCHANT_CODE',
             'payee_identifier_type' => '04',
             'payee_type'           => '5000',
         ];
 
         $request = [
-            'nonce_str'   => TelebirrHelper::createNonceStr(),
+            'nonce_str'   => (string)TelebirrHelper::createNonceStr(),
             'method'      => 'payment.preorder',
-            'timestamp'   => TelebirrHelper::createTimeStamp(),
+            'timestamp'   => (string)TelebirrHelper::createTimeStamp(),
             'version'     => '1.0',
             'biz_content' => $bizContent,
             'sign_type'   => 'SHA256withRSA',
@@ -138,7 +143,7 @@ class CreateOrderService
 
         // Sign the request
         $request['sign'] = app(TelebirrSignerService::class)->sign($request);
-
+        \Log::info($request);
         return json_encode($request);
     }
 

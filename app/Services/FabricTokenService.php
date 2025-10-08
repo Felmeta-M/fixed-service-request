@@ -45,8 +45,6 @@ class FabricTokenService
             throw new \RuntimeException("Telebirr API request to Fabric token endpoint failed.");
         }
 
-        // Optionally extract token from JSON, or just return raw body
-        // $json = $response->json();
         \Log::info($response);
         return $response->body();
     }

@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use Log;
+use Illuminate\Support\Facades\Storage;
 use phpseclib3\Crypt\PublicKeyLoader;
-use Storage;
+use phpseclib3\Crypt\RSA;
 
 class TelebirrSignerService
 {
@@ -13,57 +13,88 @@ class TelebirrSignerService
 
     public function __construct()
     {
-        $this->privateKey = file_get_contents(config('telebirr.private_key_path'));
+        $this->privateKey = config('services.telebirr.private_key'); //file_get_contents(config('telebirr.private_key_path')); 
         $this->excludeFields = config('telebirr.exclude_fields');
     }
 
-    public function sign(array $request): string
-    {
-        $string = $this->buildString($request);
-        $sortedString = $this->sortedString($string);
-        return $this->signWithRSA($sortedString);
-    }
+    // public function sign(array $request): string
+    // {
+    //     $string = $this->buildString($request);
+    //     $sortedString = $this->sortedString($string);
+    //     return $this->signWithRSA($sortedString);
+    // }
 
-    protected function buildString(array $request): string
+    public function sign($request)
     {
-        ksort($request);
-
-        $pairs = [];
-        foreach ($request as $key => $value) {
-            if (in_array($key, $this->excludeFields, true)) {
+        $exclude_fields = array("sign", "sign_type", "header", "refund_info", "openType", "raw_request");
+        $data = $request;
+        ksort($data);
+        $stringApplet = '';
+        foreach ($data as $key => $values) {
+            if (in_array($key, $exclude_fields)) {
                 continue;
             }
-            if ($key === 'biz_content' && is_array($value)) {
-                foreach ($value as $k => $v) {
-                    $pairs[] = "{$k}={$v}";
+
+            if ($key == "biz_content") {
+                foreach ($values as $value => $single_value) {
+                    if ($stringApplet == '') {
+                        $stringApplet = $value . '=' . $single_value;
+                    } else {
+                        $stringApplet = $stringApplet . '&' . $value . '=' . $single_value;
+                    }
                 }
             } else {
-                $pairs[] = "{$key}={$value}";
+                if ($stringApplet == '') {
+                    $stringApplet = $key . '=' . $values;
+                } else {
+                    $stringApplet = $stringApplet . '&' . $key . '=' . $values;
+                }
             }
         }
 
-        return implode('&', $pairs);
+        $sortedString = $this->sortedString($stringApplet);
+
+        return $this->signWithRSA($sortedString);
     }
 
-    protected function sortedString(string $string): string
+    function sortedString($stringApplet)
     {
-        $arr = explode('&', $string);
-        sort($arr);
-        return implode('&', $arr);
+        $stringExplode = '';
+        $sortedArray = explode("&", $stringApplet);
+        sort($sortedArray);
+        foreach ($sortedArray as $x => $x_value) {
+            if ($stringExplode == '') {
+                $stringExplode = $x_value;
+            } else {
+                $stringExplode = $stringExplode . '&' . $x_value;
+            }
+        }
+
+        return $stringExplode;
     }
 
-    protected function signWithRSA(string $data): ?string
+    public function signWithRSA(string $data): ?string
     {
+
+        $privateKeyPath = storage_path('app/keys/private.pem');
+
+        if (!file_exists($privateKeyPath)) {
+            \Log::error('Private key file not found at: ' . $privateKeyPath);
+        } else {
+            $privateKey = file_get_contents($privateKeyPath);
+            \Log::info('Private key length: ' . strlen($privateKey));
+        }
+
         try {
-            $key = PublicKeyLoader::load($this->privateKey)
-                ->withHash('sha256')
-                ->withMGFHash('sha256');
+            $rsa = PublicKeyLoader::loadPrivateKey($privateKey)
+                ->withPadding(RSA::SIGNATURE_PKCS1) // PKCS#1 v1.5, same as old company code
+                ->withHash('sha256');
 
-            $signature = $key->sign($data);
+            $signatureByte = $rsa->sign($data);
 
-            return base64_encode($signature);
-        } catch (\Throwable $e) {
-            Log::error("RSA signing failed: {$e->getMessage()}");
+            return base64_encode($signatureByte);
+        } catch (\Exception $e) {
+            \Log::error('Error loading private key: ' . $e->getMessage());
             return null;
         }
     }

@@ -2,9 +2,7 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Storage;
 use phpseclib3\Crypt\PublicKeyLoader;
-use phpseclib3\Crypt\RSA;
 
 class TelebirrSignerService
 {
@@ -13,25 +11,23 @@ class TelebirrSignerService
 
     public function __construct()
     {
-        $this->privateKey = config('services.telebirr.private_key'); //file_get_contents(config('telebirr.private_key_path')); 
+        $this->privateKey = file_get_contents(config('telebirr.private_key_path'));  //config('services.telebirr.private_key');
         $this->excludeFields = config('telebirr.exclude_fields');
     }
 
-    // public function sign(array $request): string
-    // {
-    //     $string = $this->buildString($request);
-    //     $sortedString = $this->sortedString($string);
-    //     return $this->signWithRSA($sortedString);
-    // }
-
-    public function sign($request)
+    public function sign(array $request): string
     {
-        $exclude_fields = array("sign", "sign_type", "header", "refund_info", "openType", "raw_request");
-        $data = $request;
-        ksort($data);
+        $string = $this->buildString($request);
+        $sortedString = $this->sortedString($string);
+        return $this->signWithRSA($sortedString);
+    }
+
+    public function buildString($request)
+    {
+        ksort($request);
         $stringApplet = '';
-        foreach ($data as $key => $values) {
-            if (in_array($key, $exclude_fields)) {
+        foreach ($request as $key => $values) {
+            if (in_array($key, $this->excludeFields)) {
                 continue;
             }
 
@@ -52,9 +48,7 @@ class TelebirrSignerService
             }
         }
 
-        $sortedString = $this->sortedString($stringApplet);
-
-        return $this->signWithRSA($sortedString);
+        return $stringApplet;
     }
 
     function sortedString($stringApplet)
@@ -75,24 +69,11 @@ class TelebirrSignerService
 
     public function signWithRSA(string $data): ?string
     {
-
-        $privateKeyPath = storage_path('app/keys/private.pem');
-
-        if (!file_exists($privateKeyPath)) {
-            \Log::error('Private key file not found at: ' . $privateKeyPath);
-        } else {
-            $privateKey = file_get_contents($privateKeyPath);
-            \Log::info('Private key length: ' . strlen($privateKey));
-        }
-
         try {
-            $rsa = PublicKeyLoader::loadPrivateKey($privateKey)
-                ->withPadding(RSA::SIGNATURE_PKCS1) // PKCS#1 v1.5, same as old company code
-                ->withHash('sha256');
+            $rsa = PublicKeyLoader::loadPrivateKey(file_get_contents(storage_path('app/keys/private.pem')));
+            $signtureByte = $rsa->sign($data);
 
-            $signatureByte = $rsa->sign($data);
-
-            return base64_encode($signatureByte);
+            return base64_encode($signtureByte);
         } catch (\Exception $e) {
             \Log::error('Error loading private key: ' . $e->getMessage());
             return null;

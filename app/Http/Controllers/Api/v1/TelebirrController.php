@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Services\CreateOrderService;
+use App\Services\RsaSignatureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
@@ -12,7 +13,10 @@ use Symfony\Component\HttpFoundation\Response;
 class TelebirrController extends Controller
 {
 
-    public function __construct(protected readonly CreateOrderService $createOrderService) {}
+    public function __construct(
+        protected readonly CreateOrderService $createOrderService,
+        protected readonly RsaSignatureService $rsaSignatureService,
+    ) {}
 
     public function createOrder(Request $request)
     {
@@ -24,6 +28,7 @@ class TelebirrController extends Controller
         try {
 
             $rawRequest = $this->createOrderService->createOrder($request->title, (string)$request->amount);
+            // $rawRequest = $this->rsaSignatureService->createOrder($request->title, (string)$request->amount);
 
             return response()->json([
                 'success' => true,

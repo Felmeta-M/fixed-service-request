@@ -2,63 +2,29 @@
 
 namespace App\Helpers;
 
+use Illuminate\Support\Str;
+
+
 class TelebirrHelper
 {
     public static function createMerchantOrderId(): string
     {
-        return (string)floor(microtime(true) * 1000);
+        return now()->format('YmdHisv') . random_int(10, 99);
     }
 
+    /**
+     * Create a Unix timestamp as string.
+     */
     public static function createTimeStamp(): string
     {
         return (string) time();
     }
 
+    /**
+     * Create a 32-character cryptographically secure random string.
+     */
     public static function createNonceStr(): string
     {
-        $chars = [
-            "0",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "A",
-            "B",
-            "C",
-            "D",
-            "E",
-            "F",
-            "G",
-            "H",
-            "I",
-            "J",
-            "K",
-            "L",
-            "M",
-            "N",
-            "O",
-            "P",
-            "Q",
-            "R",
-            "S",
-            "T",
-            "U",
-            "V",
-            "W",
-            "X",
-            "Y",
-            "Z",
-        ];
-        $str = "";
-        for ($i = 0; $i < 32; $i++) {
-            $index = intval(rand() * 35);
-            $str .= $chars[$i];
-        }
-        return uniqid();
+        return Str::upper(Str::random(32)); // A-Z, 0-9
     }
 }

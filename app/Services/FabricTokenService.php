@@ -26,7 +26,7 @@ class FabricTokenService
      * @return array
      * @throws RequestException
      */
-    public function applyFabricToken(): string
+    public function applyFabricToken()
     {
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
@@ -45,7 +45,8 @@ class FabricTokenService
             throw new \RuntimeException("Telebirr API request to Fabric token endpoint failed.");
         }
 
-        \Log::info($response);
-        return $response->body();
+        $object = $response->object();
+
+        return $object->token;
     }
 }

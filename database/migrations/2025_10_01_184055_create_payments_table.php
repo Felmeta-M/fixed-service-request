@@ -17,6 +17,7 @@ return new class extends Migration
             $table->bigInteger('customer_code')->index();
             $table->bigInteger('customer_survey_order_id')->index();
             $table->bigInteger('reference_number')->unique();
+            $table->bigInteger('transaction_number')->nullable()->unique();
             $table->decimal('amount', 12, 4);
             $table->enum('status', array_column(FFDServiceProvisionStatus::cases(), 'value'))
                 ->default(FFDServiceProvisionStatus::Pending->value);

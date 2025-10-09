@@ -14,6 +14,7 @@ class Payment extends Model
         'customer_code',
         'customer_survey_order_id',
         'reference_number',
+        'transaction_number',
         'amount',
         'payload',
         'status',

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use phpseclib3\Crypt\PublicKeyLoader;
+use RuntimeException;
 
 class TelebirrSignerService
 {
@@ -24,47 +25,28 @@ class TelebirrSignerService
 
     public function buildString($request)
     {
-        ksort($request);
-        $stringApplet = '';
-        foreach ($request as $key => $values) {
-            if (in_array($key, $this->excludeFields)) {
-                continue;
-            }
-
-            if ($key == "biz_content") {
-                foreach ($values as $value => $single_value) {
-                    if ($stringApplet == '') {
-                        $stringApplet = $value . '=' . $single_value;
-                    } else {
-                        $stringApplet = $stringApplet . '&' . $value . '=' . $single_value;
-                    }
+        $sorted = collect($request)
+            ->sortKeys()
+            ->reject(fn($value, $key) => in_array($key, $this->excludeFields))
+            ->flatMap(function ($value, $key) {
+                if ($key === 'biz_content' && is_array($value)) {
+                    return collect($value)->mapWithKeys(fn($v, $k) => [$k => $v]);
                 }
-            } else {
-                if ($stringApplet == '') {
-                    $stringApplet = $key . '=' . $values;
-                } else {
-                    $stringApplet = $stringApplet . '&' . $key . '=' . $values;
-                }
-            }
-        }
 
-        return $stringApplet;
+                return [$key => $value];
+            });
+
+        return $sorted
+            ->map(fn($value, $key) => "{$key}={$value}")
+            ->values()
+            ->implode('&');
     }
 
     function sortedString($stringApplet)
     {
-        $stringExplode = '';
-        $sortedArray = explode("&", $stringApplet);
-        sort($sortedArray);
-        foreach ($sortedArray as $x => $x_value) {
-            if ($stringExplode == '') {
-                $stringExplode = $x_value;
-            } else {
-                $stringExplode = $stringExplode . '&' . $x_value;
-            }
-        }
-
-        return $stringExplode;
+        return collect(explode('&', $stringApplet))
+            ->sort()
+            ->implode('&');
     }
 
     public function signWithRSA(string $data): ?string
@@ -76,7 +58,7 @@ class TelebirrSignerService
             return base64_encode($signtureByte);
         } catch (\Exception $e) {
             \Log::error('Error loading private key: ' . $e->getMessage());
-            return null;
+            throw new \RuntimeException("Error loading private key.");
         }
     }
 }

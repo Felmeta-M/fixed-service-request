@@ -77,6 +77,7 @@ class CreateOrderService
 
         if ($response->failed()) {
             \Log::error("HTTP error: {$response->status()} with response: " . $response->body());
+            throw new \RuntimeException("Create order request failed.");
         }
 
         $object = $response->object();

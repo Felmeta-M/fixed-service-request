@@ -89,7 +89,6 @@ class CreateOrderService
      */
     protected function createRequestObject(array $data): array
     {
-        \Log::info($data);
         $merchant_order_id = TelebirrHelper::createMerchantOrderId();
         //TODO: insert into db
         $payment = [

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\CreateOrderService;
+use App\Services\PaymentService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -24,7 +25,8 @@ class AppServiceProvider extends ServiceProvider
                 config('services.telebirr.fabric_app_id'),
                 config('services.telebirr.app_secret'),
                 config('services.telebirr.merchant_app_id'),
-                config('services.telebirr.merchant_code')
+                config('services.telebirr.merchant_code'),
+                $app->make(PaymentService::class),
             );
         });
     }

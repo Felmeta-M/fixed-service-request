@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Services\CreateOrderService;
+use App\Services\PaymentService;
 use App\Services\RsaSignatureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -15,19 +16,20 @@ class TelebirrController extends Controller
 
     public function __construct(
         protected readonly CreateOrderService $createOrderService,
+        protected readonly PaymentService $paymentService,
         protected readonly RsaSignatureService $rsaSignatureService,
     ) {}
 
     public function createOrder(Request $request)
     {
-        $request->validate([
-            'title'  => 'required|string',
-            'amount' => 'required|numeric',
-        ]);
-
         try {
+            $validated =  $request->validate([
+                'customer_code'  => 'required|string',
+                'title'  => 'required|string',
+                'amount' => 'required|numeric',
+            ]);
 
-            $rawRequest = $this->createOrderService->createOrder($request->title, (string)$request->amount);
+            $rawRequest = $this->createOrderService->createOrder($validated);
             // $rawRequest = $this->rsaSignatureService->createOrder($request->title, (string)$request->amount);
 
             return response()->json([

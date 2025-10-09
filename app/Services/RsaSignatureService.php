@@ -34,7 +34,7 @@ class RsaSignatureService
         $prepayId = json_decode($createOrderResult)->biz_content->prepay_id;
         $rawRequest =  self::createRawRequest($prepayId);
         $rawRequest = $config['web_base_url'] . $rawRequest . "&version=1.0&trade_type=Checkout";
-        //dd($rawRequest);
+
         return trim((string)$rawRequest);
     }
 

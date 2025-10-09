@@ -12,6 +12,7 @@ class Payment extends Model
 
     protected $fillable = [
         'customer_code',
+        'customer_survey_order_id',
         'reference_number',
         'amount',
         'payload',

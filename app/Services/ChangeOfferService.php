@@ -6,7 +6,7 @@ use Illuminate\Http\JsonResponse;
 
 class ChangeOfferService extends BaseApiService
 {
-   protected int $timeout = 20;
+   protected int $timeout = 10;
    protected int $rateLimit = 15;
 
    protected function endpoint(): string

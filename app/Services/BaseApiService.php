@@ -13,8 +13,8 @@ abstract class BaseApiService
 {
     protected int $timeout = 15;
     protected int $maxRetries = 3;
-    protected int $rateLimit = 10;       // requests per decay window
-    protected int $decaySeconds = 60;    // seconds for rate limit
+    protected int $rateLimit = 15;       // requests per decay window
+    protected int $decaySeconds = 360;    // seconds for rate limit
 
     /**
      * Each concrete service must define its endpoint
@@ -27,7 +27,7 @@ abstract class BaseApiService
     protected function headers(): array
     {
         return [
-            'Content-Type' => 'text/xml; charset=utf-8',
+            'Content-Type' => 'ttext/xml; charset=utf-8',
         ];
     }
 
@@ -56,9 +56,11 @@ abstract class BaseApiService
         $response = Http::withHeaders($this->headers())
             ->timeout($this->timeout)
             ->retry($this->maxRetries, 200, throw: false)
+            ->withOptions([
+                'verify' => false, // dev only
+            ])
             ->withBody($xmlPayload, 'text/xml')
             ->post($this->endpoint());
-
         if ($response->failed()) {
             $this->logError($response);
             throw new RuntimeException("API request to {$this->endpoint()} failed.");

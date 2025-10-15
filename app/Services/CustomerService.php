@@ -5,8 +5,9 @@ namespace App\Services;
 
 class CustomerService extends BaseApiService
 {
-    protected int $timeout = 20;
+    protected int $timeout = 10;
     protected int $rateLimit = 15;
+    protected string $transactionId;
 
     protected function endpoint(): string
     {
@@ -30,8 +31,11 @@ class CustomerService extends BaseApiService
     protected function buildXml(array $data): string
     {
         $credentials = config('services.customer');
-        $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
+        $this->transactionId = uniqid();
+        if (!$this->transactionId) {
+            throw new \InvalidArgumentException('Transaction id cannot empty');
+        }
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
@@ -42,7 +46,7 @@ class CustomerService extends BaseApiService
         <ser:CreateNewCustomerReqMsg>
             <ser:RequestHeader>
                 <com:Version>1</com:Version>
-                <com:TransactionId>{$transactionId}</com:TransactionId>
+                <com:TransactionId>{$this->transactionId}</com:TransactionId>
                 <com:ProcessTime>{$processTime}</com:ProcessTime>
                 <com:Language>2022</com:Language>
                 <com:ChannelId>{$credentials['channel_id']}</com:ChannelId>
@@ -118,16 +122,13 @@ XML;
     XML;
     }
 
-    public function parseResponse(string $xml): array
+    public function parseResponse(string $xml)
     {
         $xmlObject = simplexml_load_string($xml);
 
         $namespaces = $xmlObject->getNamespaces(true);
-
-        // Navigate to the Body
         $body = $xmlObject->children($namespaces['soapenv'])->Body;
 
-        // Get the response message
         $response = $body->children($namespaces['ser'])->CreateNewCustomerRspMsg;
 
         $header = $response->children($namespaces['ser'])->ResponseHeader;
@@ -137,19 +138,18 @@ XML;
         $customerData = $bodyData->children($namespaces['com']);
         $retCode = (string) $headerData->RetCode;
         $retMsg  = (string) $headerData->RetMsg;
+
         if ($retCode !== '0') {
-            return [
-                'success'   => false,
-                'ret_code'  => $retCode,
-                'ret_msg'   => $retMsg,
-            ];
+            return ApiResponse::error("Create customer profile failed: {$retMsg}");
         }
-        return [
+
+        return ApiResponse::success([
             'response_time' => (string) $headerData->ResponseTime ?? '',
             'ret_code'      => $retCode,
             'ret_msg'       => $retMsg,
             'customer_id'   => (string) $customerData->CustomerId ?? '',
             'customer_code' => (string) $customerData->CustomerCode ?? '',
-        ];
+            'transaction_id' =>  $this->transactionId,
+        ]);
     }
 }

@@ -1,0 +1,166 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\FFDServiceProvisionStatus;
+use App\Helpers\TelebirrHelper;
+use Illuminate\Support\Facades\Http;
+use RuntimeException;
+
+class CreateOrderService
+{
+    protected string $baseUrl;
+    protected string $webBaseUrl;
+    protected string $fabricAppId;
+    protected string $merchantAppId;
+    protected string $appSecret;
+    protected string $merchantCode;
+    protected string $notifyUrl;
+
+    public function __construct(
+        string $baseUrl,
+        string $webBaseUrl,
+        string $fabricAppId,
+        string $appSecret,
+        string $merchantAppId,
+        string $merchantCode,
+        protected readonly PaymentService $paymentService,
+    ) {
+        $this->baseUrl       = $baseUrl;
+        $this->webBaseUrl       = $webBaseUrl;
+        $this->fabricAppId   = $fabricAppId;
+        $this->appSecret     = $appSecret;
+        $this->merchantAppId = $merchantAppId;
+        $this->merchantCode  = $merchantCode;
+        $this->notifyUrl = route('payment.notify');
+    }
+
+    /**
+     * Create an order and return the rawRequest string
+     *
+     * @param string $title
+     * @param string $amount
+     * @return string
+     * @throws RuntimeException
+     */
+    public function createOrder(array $data): string
+    {
+        // 1️⃣ Get Fabric token
+        $tokenService = app(FabricTokenService::class);
+
+        $fabricToken = $tokenService->applyFabricToken();
+
+        // 2️⃣ Send create order request
+        $prepay_id = $this->requestCreateOrder($fabricToken, $data);
+
+
+        // 3️⃣ Build rawRequest string for H5 page
+        return $this->createRawRequest($prepay_id);
+    }
+
+    /**
+     * Send create order request
+     */
+    protected function requestCreateOrder($fabricToken, array $data)
+    {
+        $url = $this->baseUrl . '/payment/v1/merchant/preOrder';
+
+        $payload = self::createRequestObject($data);
+
+        $response = Http::withHeaders([
+            'Content-Type'  => 'application/json',
+            'X-APP-Key'     => $this->fabricAppId,
+            'Authorization' => $fabricToken,
+        ])
+            ->withoutVerifying() // disables SSL verification (only for testing!)
+            ->post($url, $payload); // convert JSON string to array
+
+        if ($response->failed()) {
+            \Log::error("HTTP error: {$response->status()} with response: " . $response->body());
+            throw new \RuntimeException("Create order request failed.");
+        }
+
+        $object = $response->object();
+
+        return  $object->biz_content->prepay_id ?? null;
+    }
+
+    /**
+     * Create request object for Fabric API
+     */
+    protected function createRequestObject(array $data): array
+    {
+        $merchant_order_id = TelebirrHelper::createMerchantOrderId();
+        //TODO: insert into db
+        $payment = [
+            'customer_code' => $data['customer_code'],
+            'customer_survey_order_id' => $data['title'],
+            'reference_number' => $merchant_order_id,
+            'amount' => $data['amount'],
+            'status' => FFDServiceProvisionStatus::Pending->value
+        ];
+
+        $this->paymentService->create($payment);
+
+        $request = [
+            'nonce_str' => (string)TelebirrHelper::createNonceStr(),
+            'method' => 'payment.preorder',
+            'timestamp' => (string)TelebirrHelper::createTimeStamp(),
+            'version' => '1.0',
+            'biz_content' => [],
+        ];
+
+        $biz = [
+            'notify_url' => route('payment.notify'),
+            'business_type' => 'BuyGoods',
+            'trade_type' => 'Checkout',
+            'appid'      => $this->merchantAppId,
+            'merch_code' => $this->merchantCode,
+            'merch_order_id' => (string) $merchant_order_id,
+            'title' => (string) $data['title'],
+            'total_amount' => (string) $data['amount'],
+            'trans_currency' => 'ETB',
+            'timeout_express' => '120m',
+            'payee_identifier' => 'REDACTED_MERCHANT_CODE',
+            'payee_identifier_type' => '04',
+            'payee_type' => '5000',
+            'redirect_url' => route('home')
+
+        ];
+
+        $request['biz_content'] = $biz;
+        $request['sign_type'] = 'SHA256WithRSA';
+
+        $request['sign'] = app(TelebirrSignerService::class)->sign($request);
+
+        return $request;
+    }
+
+    /**
+     * Build rawRequest string for H5 page
+     */
+    protected function createRawRequest(string $prepayId): string
+    {
+        $maps = [
+            'appid'      => $this->merchantAppId,
+            'merch_code' => $this->merchantCode,
+            'nonce_str' => (string)TelebirrHelper::createNonceStr(),
+            'prepay_id' => $prepayId,
+            'timestamp' => (string)TelebirrHelper::createTimeStamp(),
+            'sign_type' => 'SHA256WithRSA',
+        ];
+        $rawRequest = '';
+        foreach ($maps as $map => $m) {
+            $rawRequest .= $map . '=' . $m . "&";
+        }
+        $sign = app(TelebirrSignerService::class)->sign($maps);
+
+        $rawRequest = $rawRequest . 'sign=' . $sign;
+
+        $rawRequest = $this->webBaseUrl . $rawRequest . "&version=1.0&trade_type=Checkout";
+
+        return trim((string)$rawRequest);
+
+        return $rawRequest;
+    }
+}

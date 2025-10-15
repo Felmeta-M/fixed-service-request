@@ -14,12 +14,14 @@ return new class extends Migration
         Schema::create('survey_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id')->nullable()->constrained('customers')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->string('customer_code');
-            $table->string('customer_survey_order_id')->unique();
+            $table->bigInteger('customer_code')->index();
+            $table->bigInteger('customer_survey_order_id')->unique();
+            $table->string('main_offer_id');
+            $table->string('service_number')->unique();
             $table->string('survey_type'); //new or change
             $table->string('telecom_region');
             $table->string('oper_type');
-            $table->string('main_offer_id');
+            $table->string('customer_type');
             $table->string('bandwidth');
             $table->string('contact_person');
             $table->string('contact_no');
@@ -30,8 +32,11 @@ return new class extends Migration
             $table->string('status');
             $table->text('cancel_reason');
             $table->bigInteger('completed_date');
+            $table->dateTime('subscribed_at');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->unique(['customer_code', 'main_offer_id']); //TODO: to be update the database for customer code and main offer id uniquencess
         });
     }
 

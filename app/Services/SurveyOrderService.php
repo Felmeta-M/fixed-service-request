@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\FFDServiceProvisionStatus;
 use App\Models\SurveyRequest;
+use InvalidArgumentException;
 
 class SurveyOrderService extends BaseApiService
 {
-    protected int $timeout = 20;
+    protected int $timeout = 10;
     protected int $rateLimit = 15;
 
     protected function endpoint(): string
@@ -24,7 +26,7 @@ class SurveyOrderService extends BaseApiService
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
         } catch (\Throwable $e) {
-            return ApiResponse::exception($e, 'Resource check failed.');
+            return ApiResponse::exception($e, 'Create survey order failed.');
         }
     }
 
@@ -33,6 +35,11 @@ class SurveyOrderService extends BaseApiService
         $credentials = config('services.survey');
         $transactionId = uniqid();
         $contactNo = substr($data['contact_no'], -9);
+
+        $bandwidth = $this->parseBandwidth($data['bandwidth']);
+        if (!$bandwidth) {
+            throw new \InvalidArgumentException('Bandwidth cannot be empty');
+        }
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
@@ -59,7 +66,7 @@ class SurveyOrderService extends BaseApiService
                <com:WeredaOrTown>{$data['survey_address_info']['wereda_town']}</com:WeredaOrTown>
                <com:Kebele>{$data['survey_address_info']['kebele']}</com:Kebele>
             </com:SurveyAddressInfo>
-            <com:bandwidth>{$data['bandwidth']}</com:bandwidth>
+            <com:bandwidth>{$bandwidth}</com:bandwidth>
             <com:ContactPerson>{$data['contact_person']}</com:ContactPerson>
             <com:ContactNo>{$contactNo}</com:ContactNo>
             <com:ContactEmail>{$data['contact_email']}</com:ContactEmail>
@@ -72,7 +79,7 @@ class SurveyOrderService extends BaseApiService
 XML;
     }
 
-    private function parseResponseXml($data, string $xml): array
+    private function parseResponseXml($data, string $xml)
     {
         $parsed = simplexml_load_string($xml);
 
@@ -88,11 +95,7 @@ XML;
         $retMsg  = (string) $responseHeader->RetMsg;
 
         if ($retCode !== '0') {
-            return [
-                'success'   => false,
-                'ret_code'  => $retCode,
-                'ret_msg'   => $retMsg,
-            ];
+            return ApiResponse::error('Unable to create survey order');
         }
 
         $customerSurveyOrderId = (string) $responseBody->CustomerSurveyOrderId;
@@ -100,13 +103,29 @@ XML;
         SurveyRequest::create([
             ...$data,
             'customer_survey_order_id' => $customerSurveyOrderId,
+            'status' => FFDServiceProvisionStatus::Waiting->value
         ]);
 
-        return [
+        return ApiResponse::success([
             'ret_code' => $retCode,
             'ret_msg' => $retMsg,
             'response_time' => (string) $responseHeader->ResponseTime,
             'customer_survey_order_id' =>  $customerSurveyOrderId,
-        ];
+        ]);
+    }
+
+    protected function parseBandwidth(string $value): int
+    {
+        $value = strtolower(trim($value));
+
+        if (preg_match('/^(\d+)m$/', $value, $matches)) {
+            return (int) $matches[1];
+        }
+
+        if (preg_match('/^(\d+)gbps$/', $value, $matches)) {
+            return (int) $matches[1] * 1024;
+        }
+
+        return 0;
     }
 }

@@ -2,10 +2,19 @@
 
 namespace App\Services;
 
+use App\Enums\FFDServiceProvisionStatus;
+use App\Models\SurveyRequest;
+
 class SubscriptionService extends BaseApiService
 {
-   protected int $timeout = 20;
+
+   protected int $timeout = 10;
    protected int $rateLimit = 15;
+
+   public function __construct(
+      protected readonly QueryAvailableNumberService $queryAvailableNumberService,
+      protected readonly ReserveNumberService $reserveNumberService,
+   ) {}
 
    protected function endpoint(): string
    {
@@ -17,12 +26,12 @@ class SubscriptionService extends BaseApiService
       try {
          $xmlPayload = $this->buildRequestXml($data);
          $xmlResponse = $this->executeRequest($xmlPayload);
-         $parsedXml = $this->parseResponseXml($xmlResponse);
+         $parsedXml = $this->parseResponseXml($data, $xmlResponse);
          return ApiResponse::success($parsedXml);
       } catch (\RuntimeException $e) {
          return ApiResponse::error($e->getMessage(), 500);
       } catch (\Throwable $e) {
-         return ApiResponse::exception($e, 'Resource check failed.');
+         return ApiResponse::exception($e, 'Create new subscriber failed.');
       }
    }
 
@@ -109,27 +118,116 @@ class SubscriptionService extends BaseApiService
 XML;
    }
 
-   private function parseResponseXml(string $xml): array
+   private function parseResponseXml(array $data, string $xml)
    {
-      $xmlObj = simplexml_load_string($xml, "SimpleXMLElement", 0, "soapenv", true);
-      $xmlObj->registerXPathNamespace('soapenv', 'http://schemas.xmlsoap.org/soap/envelope/');
-      $xmlObj->registerXPathNamespace('ser', 'http://oss.huawei.com/webservice/bss/services');
-      $xmlObj->registerXPathNamespace('com', 'http://www.huawei.com/bss/soaif/interface/common/');
+      $parsed = simplexml_load_string($xml);
 
-      $body = $xmlObj->xpath('//soapenv:Body')[0];
+      if ($parsed === false) {
+         return [
+            'success'  => false,
+            'ret_code' => null,
+            'ret_msg'  => 'Invalid XML response',
+         ];
+      }
 
-      $rsp = $body->children('ser', true)->CreateNewSubscriberRspMsg;
+      $namespaces = $parsed->getNamespaces(true);
+      $body = $parsed->children($namespaces['soapenv'])->Body ?? null;
+      if ($body === null) {
+         return [
+            'success'  => false,
+            'ret_code' => null,
+            'ret_msg'  => 'Missing SOAP Body',
+         ];
+      }
+      $responseMsg = $body->children($namespaces['ser'])->CreateNewSubscriberRspMsg ?? null;
+      if ($responseMsg === null) {
+         return [
+            'success'  => false,
+            'ret_code' => null,
+            'ret_msg'  => 'Missing CreateNewSubscriberRspMsg',
+         ];
+      }
+      $responseHeader = $responseMsg->ResponseHeader->children($namespaces['com']) ?? null;
+      $retCode = (string) ($responseHeader->RetCode ?? '');
+      $retMsg  = (string) ($responseHeader->RetMsg ?? '');
 
-      return [
-         'code' => (string) $rsp->ResponseHeader->children('com', true)->RetCode,
-         'message' => (string) $rsp->ResponseHeader->children('com', true)->RetMsg,
-         'customer_busi_order_id' => (string) $rsp->CustomerBusiOrderId,
-         'ext_params' => array_map(function ($param) {
-            return [
-               'name' => (string) $param->ParamName,
-               'value' => (string) $param->ParamValue,
-            ];
-         }, iterator_to_array($rsp->ExtParamList->children('com', true)->ParameterInfo ?? [])),
+      if ($retCode !== '0') {
+         return ApiResponse::error('Service subscription failed!');
+      }
+
+      $numberService = $this->getAvailableNumberServices();
+      if (!$numberService) {
+         return ApiResponse::error('Unable to reserve number service');
+      }
+
+      SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])
+         ->first()?->update([
+            'service_number' => $numberService,
+            'status' => FFDServiceProvisionStatus::Subscribed->value,
+            'subscribed_at' => now(),
+            //TODO: 'completed_date' => ??? it has to be updated based on they survey result
+         ]);
+
+      $responseMsg['number_service'] = $numberService;
+
+      return ApiResponse::success([
+         'success'   => true,
+         'ret_code'  => $retCode,
+         'ret_msg'   => $retMsg,
+         'body'      => $responseMsg,
+      ]);
+   }
+
+   protected function getAvailableNumberServices(): string | bool
+   {
+      $data = [
+         "pay_mode" => "1",
+         "tele_type" => "4",
+         "need_query_by_dept" => false,
+         "res_cnt" => 10
       ];
+
+      $numberList = $this->queryAvailableNumberService->queryAvailableNumbers($data) ?? [];
+      if (empty($numberList)) {
+         return false;
+      }
+
+      $filtered = array_filter($numberList, fn($item) => $item['Level'] === "6");
+      if (empty($filtered)) {
+         return false;
+      }
+
+      $numberServices = array_column($filtered, 'ServiceNumber');
+
+      foreach ($numberServices as $numberService) {
+         $status = $this->reserveNumberService($numberService);
+         if ($status === true) {
+            return $numberService;
+         }
+      }
+
+      return false;
+   }
+
+   protected function reserveNumberService(string $numberService): bool
+   {
+      $data = [
+         'res_type_id' => 10,
+         'oper_type' => 1029,
+         'res_code' => $numberService,
+      ];
+
+      return $this->reserveNumberService->pick($data);
+   }
+
+   protected function releaseNumberService(string $numberService): bool
+   {
+      $data = [
+         'res_type_id' => 10,
+         'oper_type' => 1030,
+         'res_code' => $numberService,
+      ];
+
+      return $this->reserveNumberService->unpick($data);
    }
 }

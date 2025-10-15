@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class SurveyRequestResource extends JsonResource
@@ -9,12 +10,12 @@ class SurveyRequestResource extends JsonResource
     public function toArray($request): array
     {
         return [
-            'id'                   => $this->id,
+            'customer_survey_order_id' => $this->customer_survey_order_id,
             'customer_code'        => $this->customer_code,
+            'customer_type'        => $this->customer_type,
             'survey_type'          => $this->survey_type,
-            'telecom_region'       => $this->telecom_region,
-            'oper_type'            => $this->oper_type,
             'main_offer_id'        => $this->main_offer_id,
+            'service_number'        => $this->service_number,
             'bandwidth'            => $this->bandwidth,
             'contact_person'       => $this->contact_person,
             'contact_no'           => $this->contact_no,
@@ -24,11 +25,9 @@ class SurveyRequestResource extends JsonResource
             'sec_contact_no'       => $this->sec_contact_no,
             'sec_contact_email'    => $this->sec_contact_email,
             'status'               => $this->status,
-            'completed_date'       => $this->completed_date,
-            'external_operid'      => $this->external_operid,
-            'customer_survey_order_id' => $this->customer_survey_order_id,
-            'response_time'        => $this->response_time,
-            'created_at'           => $this->created_at,
+            // 'completed_date'       => $this->completed_date ? Carbon::parse($this->completed_date)->diffForHumans() : $this->completed_date,
+            'created_at'           => Carbon::parse($this->created_at)->diffForHumans(),
+            'subscribed_at'        => $this->subscribed_at ? Carbon::parse($this->subscribed_at)->diffForHumans() : $this->subscribed_at,
         ];
     }
 }

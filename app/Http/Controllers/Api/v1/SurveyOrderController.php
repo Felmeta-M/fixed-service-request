@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\SurveyFormRequest;
+use App\Http\Requests\SurveyOrderFormRequest;
 use App\Http\Resources\SurveyRequestResource;
 use App\Models\SurveyRequest;
 use App\Services\SurveyOrderService;
 use Illuminate\Http\Request;
 
-class SurveyController extends Controller
+class SurveyOrderController extends Controller
 {
     public function __construct(protected readonly SurveyOrderService $surveyOrderService) {}
 
@@ -27,7 +27,7 @@ class SurveyController extends Controller
             ], 404);
         }
 
-        $query->where('customer_code', $request->input('customer_code'));
+        $query->where('customer_code', $request->input('customer_code'))->whereNull('deleted_at');
 
         $surveyRequests = $query->paginate(10);
 
@@ -37,7 +37,7 @@ class SurveyController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(SurveyFormRequest $surveyRequest)
+    public function store(SurveyOrderFormRequest $surveyRequest)
     {
         return $this->surveyOrderService->createSurveyOrder($surveyRequest->validated());
     }
@@ -81,7 +81,7 @@ class SurveyController extends Controller
         $request->validate([
             'customer_code' => 'required|string',
             'customer_survey_order_id' => 'required|string',
-            'status' => 'required|string|in:completed,cancel,reject,pending', // allowed statuses
+            'status' => 'required|string|in:Completed,Canceled,Waiting', // allowed statuses
         ]);
 
         $customerCode = $request->input('customer_code');

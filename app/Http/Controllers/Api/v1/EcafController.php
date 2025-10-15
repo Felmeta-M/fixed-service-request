@@ -17,41 +17,42 @@ class EcafController extends Controller
         try {
             // ✅ Validate request
             $validated = $request->validate([
-                'transaction_id' => 'required|string',
-                'cust_type'      => 'required|integer',
                 'cust_code'      => 'required|string',
                 'first_name'     => 'required|string',
-                'last_name'      => 'required|string',
-                'images'         => 'required|array',
-                'images.*.type'  => 'required|integer',
-                'images.*.file'  => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+                'last_name'     => 'required|string',
+                'other_name'    => 'required|string',
+                'transaction_id'    => 'required|string',
+                'photo'      => 'required|string',
+                // 'images'         => 'required|array',
+                // 'images.*.type'  => 'required|integer',
+                // 'images.*.file'  => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
             ]);
 
             // ✅ Convert images to base64
-            $images = [];
-            foreach ($request->file('images') as $index => $file) {
-                try {
-                    $images[] = [
-                        'type'    => $request->input("images.$index.type"),
-                        'content' => $this->ecafService->imageToBase64($file),
-                    ];
-                } catch (\Exception $e) {
-                    Log::error("Image conversion failed", [
-                        'file' => $file->getClientOriginalName(),
-                        'error' => $e->getMessage(),
-                    ]);
+            // $images = [];
+            // foreach ($request->file('images') as $index => $file) {
+            //     try {
+            //         $images[] = [
+            //             'type'    => $request->input("images.$index.type"),
+            //             'content' => $this->ecafService->imageToBase64($file),
+            //         ];
+            //     } catch (\Exception $e) {
+            //         Log::error("Image conversion failed", [
+            //             'file' => $file->getClientOriginalName(),
+            //             'error' => $e->getMessage(),
+            //         ]);
 
-                    return response()->json([
-                        'status'  => 'error',
-                        'message' => "Failed to process image at index {$index}.",
-                    ], Response::HTTP_BAD_REQUEST);
-                }
-            }
+            //         return response()->json([
+            //             'status'  => 'error',
+            //             'message' => "Failed to process image at index {$index}.",
+            //         ], Response::HTTP_BAD_REQUEST);
+            //     }
+            // }
 
-            $data = $request->except('images');
+            // $data = $request->except('images');
 
             // ✅ Call ECAF service
-            $response = $this->ecafService->uploadFile($data, $images);
+            $response = $this->ecafService->uploadFile($validated);
 
             return response()->json([
                 'status'  => 'success',

@@ -4,7 +4,7 @@ namespace App\Services;
 
 class QueryAvailableNumberService extends BaseApiService
 {
-    protected int $timeout = 20;
+    protected int $timeout = 10;
     protected int $rateLimit = 15;
 
     protected function endpoint(): string
@@ -12,18 +12,13 @@ class QueryAvailableNumberService extends BaseApiService
         return config('services.query_available_number.endpoint');
     }
 
-    public function queryAvailableNumbers(array $data)
+    public function queryAvailableNumbers(array $data): array
     {
-        try {
-            $xmlPayload = $this->buildXml($data);
-            $xmlResponse = $this->executeRequest($xmlPayload);
-            $parsedXml = $this->parseResponse($xmlResponse);
-            return ApiResponse::success($parsedXml);
-        } catch (\RuntimeException $e) {
-            return ApiResponse::error($e->getMessage(), 500);
-        } catch (\Throwable $e) {
-            return ApiResponse::exception($e, 'Query avaiable number failed.');
-        }
+
+        $xmlPayload = $this->buildXml($data);
+        $xmlResponse = $this->executeRequest($xmlPayload);
+
+        return  $this->parseResponse($xmlResponse);
     }
 
     /**
@@ -34,6 +29,8 @@ class QueryAvailableNumberService extends BaseApiService
         $transactionId = uniqid();
         $accessUser = config('services.query_available_number.user');
         $accessPwd = config('services.query_available_number.password');
+        $channelId = config('services.query_available_number.channel_id');
+        $techChannelId = config('services.query_available_number.tech_channel_id');
         $needQueryByDeptStr = $data['need_query_by_dept'] ? 'true' : 'false';
 
         return <<<XML
@@ -43,13 +40,14 @@ class QueryAvailableNumberService extends BaseApiService
       <ser:QueryAvailableNumberReqMsg>
          <ser:RequestHeader>
             <com:TransactionId>{$transactionId}</com:TransactionId>
-            <com:ChannelId>59</com:ChannelId>
-            <com:TechnicalChannelId>59</com:TechnicalChannelId>
+            <com:ChannelId>{$channelId}</com:ChannelId>
+            <com:TechnicalChannelId>{$techChannelId}</com:TechnicalChannelId>
             <com:AccessUser>{$accessUser}</com:AccessUser>
             <com:AccessPwd>{$accessPwd}</com:AccessPwd>
          </ser:RequestHeader>
          <ser:PayMode>{$data['pay_mode']}</ser:PayMode>
          <ser:TeleType>{$data['tele_type']}</ser:TeleType>
+         <ser:ResCnt>{$data['res_cnt']}</ser:ResCnt>
          <ser:NeedQueryByDept>{$needQueryByDeptStr}</ser:NeedQueryByDept>
       </ser:QueryAvailableNumberReqMsg>
    </soapenv:Body>
@@ -60,9 +58,14 @@ XML;
     /**
      * Parses the SOAP XML response and returns the available numbers as an array.
      */
-    protected function parseResponse(string $xml)
+    protected function parseResponse(string $xml): array
     {
         $soap = simplexml_load_string($xml);
+
+        if ($soap === false) {
+            return [];
+        }
+
         $body = $soap->children('http://schemas.xmlsoap.org/soap/envelope/')->Body;
 
         $response = $body->children('http://oss.huawei.com/webservice/bss/services')->QueryAvailableNumberRspMsg;
@@ -71,7 +74,7 @@ XML;
         $retCode = (string) $header->children('http://www.huawei.com/bss/soaif/interface/common/')->RetCode;
 
         if ($retCode !== '0') {
-            return ApiResponse::error("Invalid XML response for query available number");
+            return [];
         }
 
         $numberList = [];
@@ -85,7 +88,6 @@ XML;
                 'Level'         => (string) $number->Level,
             ];
         }
-
-        return ApiResponse::success($numberList);
+        return $numberList;
     }
 }

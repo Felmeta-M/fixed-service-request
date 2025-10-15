@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class NidKycService extends BaseApiService
 {
-    protected int $timeout = 20;
+    protected int $timeout = 10;
     protected int $rateLimit = 15;
 
     protected function endpoint(): string
@@ -95,34 +95,28 @@ XML;
                 return ApiResponse::error("Invalid XML response");
             }
 
-            // Root namespaces (soapenv is here)
             $rootNamespaces = $xmlObject->getNamespaces(true);
             if (!isset($rootNamespaces['soapenv'])) {
                 return ApiResponse::error("Missing SOAP namespace");
             }
 
-            // Navigate into <soapenv:Body>
             $body = $xmlObject->children($rootNamespaces['soapenv'])->Body ?? null;
             if (!$body) {
                 return ApiResponse::error("SOAP Body not found");
             }
 
-            // Body namespaces (nid + com are here)
             $bodyNamespaces = $body->getNamespaces(true);
 
-            // Get the response wrapper <nid:GetDataKycRspMsg>
             $responseMsg = $body->children($bodyNamespaces['nid'])->GetDataKycRspMsg ?? null;
             if (!$responseMsg) {
                 return ApiResponse::error("GetDataKycRspMsg not found");
             }
 
-            // --- Header ---
             $header = $responseMsg->children($bodyNamespaces['com'])->ResponseHeader ?? null;
             if (!$header) {
                 return ApiResponse::error("ResponseHeader not found");
             }
 
-            // --- Body ---
             $rspBody = $responseMsg->children($bodyNamespaces['nid'])->GetDataKycRspBody ?? null;
             if (!$rspBody) {
                 return ApiResponse::error("GetDataKycRspBody not found");
@@ -130,12 +124,11 @@ XML;
 
             $response = $rspBody->response ?? null;
             if (!$response) {
-                return ApiResponse::error("Response section not found");
+                return ApiResponse::error("National Id data fetch request failed!");
             }
 
             $photo = $response->identity->photo ?? '';
-            // $this->handlePhoto($photo);
-            // ✅ Successful parse
+
             return ApiResponse::success([
                 'transaction_id' => (string) ($header->TransactionId ?? ''),
                 'provider'       => (string) ($rspBody->id ?? ''),

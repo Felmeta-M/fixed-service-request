@@ -4,7 +4,7 @@ namespace App\Services;
 
 class PrimaryOfferingService extends BaseApiService
 {
-    protected int $timeout = 20;
+    protected int $timeout = 10;
     protected int $rateLimit = 15;
 
     protected function endpoint(): string
@@ -64,26 +64,22 @@ XML;
             return ApiResponse::error("Invalid XML response for Primary Offering");
         }
 
-        // Register namespaces
         $namespaces = $xmlObject->getNamespaces(true);
 
-        // Navigate to QueryAvailablePrimaryOfferingRspMsg
         $response = $xmlObject->children($namespaces['soapenv'])
             ->Body
             ->children($namespaces['ser'])
             ->QueryAvailablePrimaryOfferingRspMsg;
 
-        // --- Parse ResponseHeader ---
         $responseHeader = $response->ResponseHeader->children($namespaces['com']);
         $retCode  = (string) $responseHeader->RetCode;
         $retMsg   = (string) $responseHeader->RetMsg;
         $respTime = (string) $responseHeader->ResponseTime;
 
         if ($retCode !== '0') {
-            return ApiResponse::error("Primary Offering API returned error: {$retMsg}");
+            return ApiResponse::error("Primary Offering API returned error");
         }
 
-        // --- Parse PrimaryOffering ---
         $offering = $response->PrimaryOffering->children($namespaces['com']);
 
         $parsedOffering = [

@@ -15,10 +15,12 @@ class SurveyRequest extends Model
         'customer_id',
         'customer_code',
         'customer_survey_order_id',
+        'main_offer_id',
+        'service_number',
         'survey_type',
         'telecom_region',
         'oper_type',
-        'main_offer_id',
+        'customer_type',
         'bandwidth',
         'contact_person',
         'contact_no',
@@ -29,6 +31,7 @@ class SurveyRequest extends Model
         'cancel_reason',
         'status',
         'completed_date',
+        'subscribed_at',
     ];
 
     protected $dates = ['completed_date'];

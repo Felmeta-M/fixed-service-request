@@ -9,11 +9,15 @@ use App\Http\Controllers\Api\v1\EcafController;
 use App\Http\Controllers\Api\v1\LocationController;
 use App\Http\Controllers\Api\v1\NidController;
 use App\Http\Controllers\Api\v1\OccupationController;
+use App\Http\Controllers\Api\v1\OneOffFeeController;
+use App\Http\Controllers\Api\v1\PaymentController;
+use App\Http\Controllers\Api\v1\TelebirrController;
 use App\Http\Controllers\Api\v1\PrimaryOfferingController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderSummaryController;
+use App\Http\Controllers\Api\v1\ReserveNumberServiceController;
 use App\Http\Controllers\Api\v1\ResourceCheckController;
-use App\Http\Controllers\Api\v1\SurveyController;
+use App\Http\Controllers\Api\v1\SurveyOrderController;
 use App\Http\Controllers\Api\v1\SurveyTypeController;
 use App\Http\Controllers\Api\v1\ServiceClientController;
 use App\Http\Controllers\Api\v1\SubsriptionController;
@@ -53,23 +57,23 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::prefix('survey')->group(function () {
-        Route::post('/create', [SurveyController::class, 'store']);
+        Route::post('/create', [SurveyOrderController::class, 'store']);
         Route::post('/order', [QuerySurveyOrderController::class, 'querySurveyOrder']);
         Route::post('/order-summary', [QuerySurveyOrderSummaryController::class, 'querySurveyOrderSummary']);
     });
 
 
-    Route::get('survey-requests', [SurveyController::class, 'index']);
-    Route::get('survey-requests/show', [SurveyController::class, 'show']);
-    Route::patch('survey-requests/update', [SurveyController::class, 'update']);
-    Route::delete('survey-requests/delete', [SurveyController::class, 'destroy']);
+    Route::get('survey-requests', [SurveyOrderController::class, 'index']);
+    Route::get('survey-requests/show', [SurveyOrderController::class, 'show']);
+    Route::patch('survey-requests/update', [SurveyOrderController::class, 'update']);
+    Route::delete('survey-requests/delete', [SurveyOrderController::class, 'destroy']);
 
 
     Route::prefix('services')->group(function () {
         Route::post('/subscription', [SubsriptionController::class, 'store']);
     });
 
-    Route::prefix('payment')->group(function () {});
+    Route::post('ecaf-upload', [EcafController::class, 'upload']);
 
     Route::prefix('nid')->group(function () {
         Route::post('otp', [NidController::class, 'getOtp']);
@@ -81,4 +85,15 @@ Route::prefix('v1')->group(function () {
     Route::post('avaiable-number', [AvailableNumberController::class, 'getAvaiableNumber']);
     Route::post('cancel-survey-order', [CancelSurveyOrderController::class, 'cancel']);
     Route::post('resource-check', [ResourceCheckController::class, 'check']);
+    Route::post('release-number-service', [ReserveNumberServiceController::class, 'release']);
+
+    Route::post('calc-one-off-fee', [OneOffFeeController::class, 'calculateOneOffFee']);
+
+
+    Route::post('create-order', [TelebirrController::class, 'createOrder'])
+        ->name('create.order');
+    Route::post('payment/notify', [TelebirrController::class, 'paymentNotification'])
+        ->name('payment.notify');
+
+    Route::apiResource('payments', PaymentController::class)->only(['index', 'show']);
 });

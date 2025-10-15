@@ -1,75 +1,66 @@
-import FormInput from '@/components/form-input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { LoginForm } from '@/components/auth/login-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import GuestLayout from '@/layouts/GuestLayout';
-import { Link, router } from '@inertiajs/react';
-import { ArrowRight, Phone, UserPlus } from 'lucide-react';
-import React, { useState } from 'react';
+import { Toaster } from '@/components/ui/sonner';
+import { Link } from '@inertiajs/react';
+import { ArrowLeft, LogIn, Network, Shield } from 'lucide-react';
 
-export default function EnterPhone() {
-    const [phone, setPhone] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    async function handleSendOtp(e: React.FormEvent) {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-        try {
-            await router.post('/otp/send', { phone });
-        } catch (err) {
-            setError('Failed to send OTP. Please try again.');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    }
-
+export default function LoginPage() {
     return (
-        <GuestLayout>
-            <div className="flex min-h-screen items-center justify-center p-4">
-                <Card className="w-full max-w-md">
-                    <CardHeader className="text-center">
-                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
-                            <Phone className="h-8 w-8 text-white" />
+        <div className="mx-auto min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+            <header className="border-b bg-white shadow-sm">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="flex h-16 items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+                                <Network className="h-5 w-5 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-bold text-gray-900">EthioTelecom</h1>
+                                <p className="text-xs text-gray-500">Fixed Line Services</p>
+                            </div>
                         </div>
-                        <CardTitle>Welcome</CardTitle>
-                        <CardDescription>
-                            <div className="text-muted-foreground">Enter your phone number to receive an OTP</div>
-                        </CardDescription>
+                        <div className="flex items-center space-x-4">
+                            <Button size="sm" className="bg-primary text-white">
+                                <Link href={route('verification')} className="flex items-center">
+                                    <LogIn className="mr-2 h-4 w-4" />
+                                    Sign In
+                                </Link>
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center p-2">
+                <Card>
+                    <CardHeader className="text-center">
+                        <div className="mb-4 flex items-center justify-between">
+                            <Link href="/" className="inline-flex items-center text-primary hover:opacity-90">
+                                <ArrowLeft className="mr-1 h-4 w-4" />
+                                Home
+                            </Link>
+                            <h1 className="text-md font-bold text-foreground">Welcome Back</h1>
+                            <CardTitle className="flex items-center justify-center space-x-2">
+                                <Shield className="h-5 w-5 text-primary" />
+                                <span>Sign In</span>
+                            </CardTitle>
+                        </div>
+                        <CardDescription>Enter your mobile number to receive an OTP verification code</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {error && (
-                            <Alert className="mb-4" variant="destructive">
-                                <AlertDescription>{error}</AlertDescription>
-                            </Alert>
-                        )}
-
-                        <form onSubmit={handleSendOtp} className="space-y-4">
-                            <FormInput
-                                label="Phone number"
-                                id="phone"
-                                type="text"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                placeholder="Phone number"
-                                required
-                                autoFocus
-                            />
-                            <Button type="submit" className="w-full cursor-pointer" disabled={loading}>
-                                {loading ? 'Sending...' : 'Send OTP'} <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
-                            <div className="mt-4 text-center">
-                                <Link href={route('landing')} className="inline-flex items-center font-medium text-primary hover:underline">
-                                    <UserPlus className="mr-1 h-4 w-4" />
-                                    Create new account
-                                </Link>
-                            </div>
-                        </form>
+                        <LoginForm />
                     </CardContent>
                 </Card>
+                <div className="mt-6 text-center">
+                    <p className="text-sm text-muted-foreground">
+                        Don't have an account?{' '}
+                        <Link href="/customer/create" className="font-medium text-primary hover:underline">
+                            Register here
+                        </Link>
+                    </p>
+                </div>
             </div>
-        </GuestLayout>
+            <Toaster />
+        </div>
     );
 }

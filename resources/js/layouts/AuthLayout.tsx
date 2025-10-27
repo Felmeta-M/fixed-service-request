@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
+import { useActiveCustomer } from '@/store/customer-store';
 import { Link, usePage } from '@inertiajs/react';
 import { LogOut, Network } from 'lucide-react';
 import React from 'react';
@@ -11,6 +12,7 @@ type Props = {
 export default function AuthLayout({ children }: Props) {
     const { auth } = usePage().props as any;
     console.log('auth', auth);
+    const { activeCustomer } = useActiveCustomer();
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -23,7 +25,7 @@ export default function AuthLayout({ children }: Props) {
                             </div>
                             <div>
                                 <h1 className="text-xl font-bold text-gray-900">EthioTelecom</h1>
-                                <p className="text-xs text-gray-500">Customer Dashboard</p>
+                                <p className="text-xs text-gray-500">Fixed Services Requests Portal</p>
                             </div>
                         </div>
 
@@ -37,6 +39,14 @@ export default function AuthLayout({ children }: Props) {
                                     {auth?.user?.first_name} {auth?.user?.last_name}
                                 </span>
                             </div> */}
+                            {activeCustomer && (
+                                <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
+                                    <span>Welcome:</span>
+                                    <span className="font-medium text-primary">
+                                        {activeCustomer?.contacts[0].name1} {activeCustomer?.contacts[0].name2}
+                                    </span>
+                                </div>
+                            )}
                             <Button variant="outline" size="sm">
                                 <Link href={route('logout')} method="post" className="flex items-center">
                                     <LogOut className="mr-2 h-4 w-4" />

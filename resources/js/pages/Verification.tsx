@@ -3,10 +3,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import logo from '@/images/national_id_logo.png';
-import AuthLayout from '@/layouts/AuthLayout';
+import GuestLayout from '@/layouts/GuestLayout';
 import { Link } from '@inertiajs/react';
 import axios from 'axios';
-import { AlertCircle, ArrowLeft, CheckCircle, ChevronRight, Info, Loader2, LogIn, Network, Phone, Shield } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle, ChevronRight, Info, Loader2, LogIn, Network, Phone, Shield, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
 interface OtpResponse {
@@ -28,6 +28,7 @@ interface KycResponse {
     success: boolean;
     ret_code: string;
     message: string;
+    redirect_url?: string;
     data: {
         headers: {};
         original: {
@@ -72,16 +73,15 @@ interface VerificationError {
     ret_code?: string;
     isValidationError?: boolean;
     showNationalIdHelp?: boolean;
+    isCustomerNotFound?: boolean;
+    redirect_url?: string;
+    customer_data?: any;
 }
 
 // National ID validation function
 const validateEthiopianNationalId = (id: string): boolean => {
-    // Basic validation for National ID
     if (id.length !== 16) return false;
-
-    // Check if it contains only digits
     if (!/^\d+$/.test(id)) return false;
-
     return true;
 };
 
@@ -97,13 +97,13 @@ export default function VerificationPage() {
     const [maskedContact, setMaskedContact] = useState('');
     const [error, setError] = useState<VerificationError | null>(null);
     const [kycData, setKycData] = useState<any>(null);
+    const [customerNotFoundData, setCustomerNotFoundData] = useState<any>(null);
 
     const handleVerifyNationalId = async () => {
         setLoading(true);
         setError(null);
 
         try {
-            // Validate National ID format
             if (nationalId.length !== 16) {
                 throw {
                     message: 'National ID must be exactly 16 digits',
@@ -112,7 +112,6 @@ export default function VerificationPage() {
                 };
             }
 
-            // Validate National ID format
             if (!validateEthiopianNationalId(nationalId)) {
                 throw {
                     message: 'Invalid National ID format. Please check your ID number.',
@@ -121,35 +120,24 @@ export default function VerificationPage() {
                 };
             }
 
-            // Call the OTP endpoint
             const response = await axios.post('/api/v1/nid/otp', {
                 individual_id: nationalId,
             });
 
-            const otpData = (response.data as OtpResponse).data as OtpResponse['data'];
+            const otpData = response.data?.data?.original?.data;
+
             console.log('OTP Response:', otpData);
 
-            if (otpData.ret_code !== '0') {
-                // Handle specific error codes
-                if (otpData.ret_code === '9999') {
-                    throw {
-                        message: 'Invalid National ID. Please check your ID number and try again.',
-                        ret_code: otpData.ret_code,
-                        showNationalIdHelp: true,
-                    };
-                }
-
+            if (!otpData || otpData.ret_code !== '0') {
                 throw {
-                    message: (response.data as any).ret_msg || 'Failed to send verification code',
-                    ret_code: (response.data as any).ret_code,
+                    message: otpData?.ret_msg || 'Failed to send verification code',
+                    ret_code: otpData?.ret_code,
                 };
             }
 
-            // Store transaction ID and timestamp for the next step
             setTransactionId(otpData.transaction_id);
             setTimestamp(otpData.response_time);
 
-            // Show masked contact info to the user
             if ((response.data as any).masked_mobile || otpData.masked_mobile) {
                 setMaskedContact(`sent to ${(response.data as any).masked_mobile || otpData.masked_mobile}`);
             } else if ((response.data as any).masked_email || otpData.masked_email) {
@@ -188,7 +176,6 @@ export default function VerificationPage() {
         setError(null);
 
         try {
-            // Validate verification code
             if (verificationCode.length !== 6) {
                 throw {
                     message: 'Verification code must be exactly 6 digits',
@@ -206,6 +193,20 @@ export default function VerificationPage() {
             const kyc = response.data as KycResponse;
             console.log('KYC Response:', kyc);
 
+            // Handle customer not found case (ret_code 404)
+            // if (kyc.ret_code === '404') {
+            //     setCustomerNotFoundData(kyc.data);
+            //     setStep('customer-not-found');
+            //     return;
+            // }
+            // Handle customer not found case (ret_code 404) - this is NOT an error!
+            if (kyc.ret_code === '404') {
+                console.log('Customer not found - proceeding to create customer flow', kyc.data);
+                setCustomerNotFoundData(kyc.data);
+                setStep('customer-not-found');
+                return;
+            }
+
             // Check if the main response is successful
             if (!kyc.success || kyc.ret_code !== '0') {
                 throw {
@@ -214,31 +215,25 @@ export default function VerificationPage() {
                 };
             }
 
-            // CORRECTED: Access the actual KYC data from response.data.data.original
-            // const kycResponseData = kyc.data.original;
+            const kycResponseData = kyc.data;
 
-            // // Check if the KYC data is successful
-            // if (!kycResponseData.success || !kycResponseData.data.kyc_status) {
-            //     throw {
-            //         message: 'KYC verification failed',
-            //         ret_code: kyc.ret_code,
-            //     };
-            // }
-
-            // Store KYC data and proceed to success - use the corrected path
-            // setKycData(kycResponseData.data);
-            setKycData(kyc.data);
+            setKycData(kycResponseData);
             setStep('success');
 
             setTimeout(() => {
-                // Store KYC data in localStorage - use the corrected path
-                // localStorage.setItem('kycData', JSON.stringify(kycResponseData.data));
                 localStorage.setItem('kycData', JSON.stringify(kyc.data));
-                // router.visit('/survey-requests');
-                window.location.href = '/survey-requests';
+                window.location.href = '/profile';
             }, 2000);
         } catch (err: any) {
             console.error('KYC Error:', err);
+
+            // Check if this is actually a customer not found case that was caught as an error
+            if (err.response?.data?.ret_code === '404') {
+                console.log('Customer not found (from error catch)', err.response.data);
+                setCustomerNotFoundData(err.response.data);
+                setStep('customer-not-found');
+                return;
+            }
 
             if (err.response?.data?.message) {
                 setError({
@@ -259,25 +254,193 @@ export default function VerificationPage() {
         }
     };
 
+    // const handleCreateCustomer = () => {
+    //     // Redirect to customer creation page
+    //     window.location.href = '/customer/create';
+    // };
+
+    const handleCreateCustomer = () => {
+        // Use the redirect URL from the backend or fallback to default
+        const redirectUrl = customerNotFoundData?.redirect_url || '/create-customer';
+        console.log('Redirecting to:', redirectUrl);
+        window.location.href = redirectUrl;
+    };
+
     const resetVerification = () => {
         setNationalId('');
         setServiceNumber('');
         setVerificationCode('');
         setStep('option');
         setError(null);
+        setCustomerNotFoundData(null);
     };
 
     const formatDob = (dobString: string) => {
-        // Format YYYYMMDD to readable date
         const year = dobString.substring(0, 4);
         const month = dobString.substring(4, 6);
         const day = dobString.substring(6, 8);
         return `${year}-${month}-${day}`;
     };
 
+    // Customer Not Found Step
+    if (step === 'customer-not-found') {
+        const identity = customerNotFoundData?.identity || customerNotFoundData?.data?.identity || {};
+        const serviceNumber = customerNotFoundData?.service_number || customerNotFoundData?.data?.service_number || '';
+
+        return (
+            <GuestLayout>
+                <div className="flex items-center justify-center p-1">
+                    <Card className="w-full max-w-md overflow-hidden border-0 shadow-xl">
+                        <div className="bg-yellow-100 p-1">
+                            <div className="rounded-t-lg bg-white p-6">
+                                <div className="mb-4 flex items-center justify-center">
+                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
+                                        <UserPlus className="h-8 w-8 text-yellow-600" />
+                                    </div>
+                                </div>
+                                <CardTitle className="text-center text-2xl font-bold text-gray-800">Profile Not Found</CardTitle>
+                                <CardDescription className="mt-2 text-center">We couldn't find your customer profile</CardDescription>
+                            </div>
+                        </div>
+
+                        <CardContent className="space-y-6 p-6">
+                            <div className="rounded-lg bg-yellow-50 p-4">
+                                <div className="flex items-center justify-center">
+                                    <div className="text-center">
+                                        <p className="font-medium text-yellow-800">Hello, {identity?.name?.eng || 'User'}!</p>
+                                        <p className="mt-1 text-sm text-yellow-600">
+                                            Your National ID is verified but we need to create your customer profile.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 rounded-lg bg-blue-50 p-4">
+                                <h4 className="font-medium text-blue-800">Your Information</h4>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="font-medium">Name:</span>
+                                        <span>{identity.name?.eng || 'N/A'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-medium">Phone:</span>
+                                        <span>{identity.phone || 'N/A'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-medium">Service Number:</span>
+                                        <span>{serviceNumber || 'N/A'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-medium">Date of Birth:</span>
+                                        <span>{identity.dob ? formatDob(identity.dob) : 'N/A'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="font-medium">Gender:</span>
+                                        <span>{identity.gender?.eng || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="rounded-lg bg-gray-50 p-4">
+                                <p className="text-center text-sm text-gray-600">
+                                    Click the button below to create your customer profile and continue.
+                                </p>
+                            </div>
+                        </CardContent>
+
+                        <CardFooter className="flex flex-col gap-3 border-t bg-gray-50 p-6">
+                            <Button onClick={handleCreateCustomer} className="w-full bg-primary py-3 text-lg hover:opacity-90">
+                                <UserPlus className="mr-2 h-5 w-5" />
+                                Create Customer Profile
+                            </Button>
+                            <Button variant="outline" onClick={resetVerification} className="w-full py-3 text-lg">
+                                Try Different Method
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </div>
+            </GuestLayout>
+        );
+    }
+
+    // Customer Not Found Step
+    // if (step === 'customer-not-found') {
+    //     const identity = customerNotFoundData?.identity || {};
+    //     return (
+    //         <GuestLayout>
+    //             <div className="flex items-center justify-center p-1">
+    //                 <Card className="w-full max-w-md overflow-hidden border-0 shadow-xl">
+    //                     <div className="bg-yellow-100 p-1">
+    //                         <div className="rounded-t-lg bg-white p-6">
+    //                             <div className="mb-4 flex items-center justify-center">
+    //                                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
+    //                                     <UserPlus className="h-8 w-8 text-yellow-600" />
+    //                                 </div>
+    //                             </div>
+    //                             <CardTitle className="text-center text-2xl font-bold text-gray-800">Profile Not Found</CardTitle>
+    //                             <CardDescription className="mt-2 text-center">We couldn't find your customer profile</CardDescription>
+    //                         </div>
+    //                     </div>
+
+    //                     <CardContent className="space-y-6 p-6">
+    //                         <div className="rounded-lg bg-yellow-50 p-4">
+    //                             <div className="flex items-center justify-center">
+    //                                 <div className="text-center">
+    //                                     <p className="font-medium text-yellow-800">Hello, {identity?.name?.eng || 'User'}!</p>
+    //                                     <p className="mt-1 text-sm text-yellow-600">
+    //                                         Your National ID is verified but we need to create your customer profile.
+    //                                     </p>
+    //                                 </div>
+    //                             </div>
+    //                         </div>
+
+    //                         <div className="space-y-4 rounded-lg bg-blue-50 p-4">
+    //                             <h4 className="font-medium text-blue-800">Your Information</h4>
+    //                             <div className="space-y-2 text-sm">
+    //                                 <div className="flex justify-between">
+    //                                     <span className="font-medium">Name:</span>
+    //                                     <span>{identity.name?.eng || 'N/A'}</span>
+    //                                 </div>
+    //                                 <div className="flex justify-between">
+    //                                     <span className="font-medium">Phone:</span>
+    //                                     <span>{identity.phone || 'N/A'}</span>
+    //                                 </div>
+    //                                 <div className="flex justify-between">
+    //                                     <span className="font-medium">Date of Birth:</span>
+    //                                     <span>{identity.dob ? formatDob(identity.dob) : 'N/A'}</span>
+    //                                 </div>
+    //                                 <div className="flex justify-between">
+    //                                     <span className="font-medium">Gender:</span>
+    //                                     <span>{identity.gender?.eng || 'N/A'}</span>
+    //                                 </div>
+    //                             </div>
+    //                         </div>
+
+    //                         <div className="rounded-lg bg-gray-50 p-4">
+    //                             <p className="text-center text-sm text-gray-600">
+    //                                 Click the button below to create your customer profile and continue.
+    //                             </p>
+    //                         </div>
+    //                     </CardContent>
+
+    //                     <CardFooter className="flex flex-col gap-3 border-t bg-gray-50 p-6">
+    //                         <Button onClick={handleCreateCustomer} className="w-full bg-primary py-3 text-lg hover:opacity-90">
+    //                             <UserPlus className="mr-2 h-5 w-5" />
+    //                             Create Customer Profile
+    //                         </Button>
+    //                         <Button variant="outline" onClick={resetVerification} className="w-full py-3 text-lg">
+    //                             Try Different Method
+    //                         </Button>
+    //                     </CardFooter>
+    //                 </Card>
+    //             </div>
+    //         </GuestLayout>
+    //     );
+    // }
+
     if (step === 'success') {
         return (
-            <AuthLayout>
+            <GuestLayout>
                 <div className="flex items-center justify-center p-1">
                     <Card className="w-full max-w-md overflow-hidden border-0 shadow-xl">
                         <div className="bg-green-100 p-1">
@@ -329,13 +492,13 @@ export default function VerificationPage() {
                         </CardFooter>
                     </Card>
                 </div>
-            </AuthLayout>
+            </GuestLayout>
         );
     }
 
     if (step === 'error') {
         return (
-            <AuthLayout>
+            <GuestLayout>
                 <div className="flex items-center justify-center p-1">
                     <Card className="w-full max-w-md overflow-hidden border-0 shadow-xl">
                         <div className="bg-red-100 p-1">
@@ -393,7 +556,7 @@ export default function VerificationPage() {
                         </CardFooter>
                     </Card>
                 </div>
-            </AuthLayout>
+            </GuestLayout>
         );
     }
 

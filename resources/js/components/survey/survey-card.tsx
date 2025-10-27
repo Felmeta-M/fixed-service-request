@@ -1,6 +1,6 @@
 import { Calendar } from 'lucide-react';
-import SurveyActions from './SurveyActions';
-import SurveyStatusBadge from './SurveyStatusBadge';
+import SurveyActions from './survey-actions';
+import SurveyStatusBadge from './survey-status-badge';
 
 interface SurveyCardProps {
     survey: any;
@@ -20,7 +20,7 @@ export default function SurveyCard({ survey, onUpdate, updating, onUpdatingChang
         });
     };
 
-    const getServiceIcon = (serviceType: string) => {
+    const getServiceIcon = (main_offer_id: string) => {
         const serviceIcons: { [key: string]: string } = {
             Internet: '🌐',
             Voice: '📞',
@@ -28,10 +28,10 @@ export default function SurveyCard({ survey, onUpdate, updating, onUpdatingChang
             default: '📋',
         };
 
-        const type = serviceType?.toLowerCase();
-        if (type?.includes('internet')) return serviceIcons.Internet;
-        if (type?.includes('voice')) return serviceIcons.Voice;
-        if (type?.includes('combo')) return serviceIcons.Combo;
+        const type = main_offer_id?.toLowerCase();
+        if (type?.includes('1943913915')) return serviceIcons.Internet;
+        if (type?.includes('1943913916')) return serviceIcons.Voice;
+        if (type?.includes('1943913917')) return serviceIcons.Combo;
         return serviceIcons.default;
     };
 
@@ -45,6 +45,7 @@ export default function SurveyCard({ survey, onUpdate, updating, onUpdatingChang
         };
         return colors[status?.toLowerCase()] || colors.default;
     };
+    console.log('type', survey.main_offer_id);
 
     return (
         <div
@@ -54,11 +55,12 @@ export default function SurveyCard({ survey, onUpdate, updating, onUpdatingChang
             <div className="mb-4 flex items-start justify-between">
                 <div className="flex items-center space-x-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/80 text-2xl shadow-sm">
-                        {getServiceIcon(survey.serviceType)}
+                        {getServiceIcon(survey.main_offer_id)}
                     </div>
                     <div>
                         <h3 className="font-bold text-gray-900">Order Number: {survey.customer_survey_order_id}</h3>
-                        <p className="text-sm font-medium text-gray-600">{survey.service_type || 'New Service'}</p>
+                        {/* <p className="text-sm font-medium text-gray-600">{survey.survey_type || 'New Service'}</p> */}
+                        <p className="text-sm font-medium text-gray-600">{'New'}</p>
                     </div>
                 </div>
                 <SurveyStatusBadge status={survey.status} />
@@ -77,7 +79,7 @@ export default function SurveyCard({ survey, onUpdate, updating, onUpdatingChang
             <div className="flex items-center justify-between border-t border-gray-200/50 pt-4">
                 <div className="flex items-center text-sm text-gray-700">
                     <Calendar className="mr-2 h-4 w-4 text-gray-500" />
-                    <span>Created at: {formatDate(survey.created_at)}</span>
+                    <span>Created at: {survey.created_at}</span>
                 </div>
                 <SurveyActions survey={survey} onActionComplete={onUpdate} onUpdatingChange={onUpdatingChange} />
             </div>

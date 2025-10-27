@@ -1,6 +1,6 @@
-import DashboardStats from '@/components/survey/DashboardStats';
-import SurveyFilters from '@/components/survey/SurveyFilters';
-import SurveyTable from '@/components/survey/SurveyTable';
+import DashboardStats from '@/components/survey/dashboard-stats';
+import SurveyFilters from '@/components/survey/survey-filters';
+import SurveyTable from '@/components/survey/survey-table';
 import { useSurveyList } from '@/hooks/use-survey-list';
 import AuthLayout from '@/layouts/AuthLayout';
 import { useActiveCustomer } from '@/store/customer-store';
@@ -97,26 +97,6 @@ export default function Dashboard() {
 
     return (
         <AuthLayout>
-            {/* <div>
-                <h1 className="mb-4 text-2xl font-bold">Welcome, {user.phone}</h1>
-                <div className="mb-6">
-                    <span className="font-semibold">Total Support Requests:</span> {stats.support_requests_count}
-                </div>
-                <div>
-                    <h2 className="mb-2 text-xl font-semibold">Recent Activity</h2>
-                    <ul className="ml-5 list-disc">
-                        {stats.recent_activity.length === 0 ? (
-                            <li>No recent activity</li>
-                        ) : (
-                            stats.recent_activity.map((activity) => (
-                                <li key={activity.id}>
-                                    {activity.action} on {activity.date}
-                                </li>
-                            ))
-                        )}
-                    </ul>
-                </div>
-            </div> */}
             <div className="min-h-screen bg-gray-50/30">
                 <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
                     <div className="mb-8">
@@ -125,15 +105,7 @@ export default function Dashboard() {
                                 <h1 className="text-2xl font-bold text-gray-900">Survey Dashboard</h1>
                                 <p className="mt-2 text-gray-600">Manage your survey orders and track their progress</p>
 
-                                {activeCustomer && (
-                                    <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
-                                        <span>Welcome:</span>
-                                        <span className="font-medium text-primary">
-                                            {activeCustomer.contacts[0].name1} {activeCustomer.contacts[0].name2}
-                                            {/* ({activeCustomer.customer.code}) */}
-                                        </span>
-                                    </div>
-                                )}
+                                
                             </div>
 
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

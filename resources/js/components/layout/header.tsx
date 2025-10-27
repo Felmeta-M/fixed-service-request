@@ -1,3 +1,4 @@
+import { useActiveCustomer } from '@/store/customer-store';
 import { Link, router, usePage } from '@inertiajs/react';
 import { Menu, Network, X } from 'lucide-react';
 import { useState } from 'react';
@@ -7,6 +8,7 @@ export function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { auth } = usePage().props;
     console.log(auth.user); // This is Auth::user()
+    const { activeCustomer } = useActiveCustomer();
     return (
         <header className="sticky top-0 z-40 w-full bg-white shadow-sm sm:px-8">
             <div className="flex h-16 items-center justify-between">
@@ -30,6 +32,15 @@ export function Header() {
                         <Link href="/portal" className="text-gray-600 transition-colors hover:text-primary">
                             Customer Portal
                         </Link>
+                    )}
+                    {activeCustomer && (
+                        <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
+                            <span>Welcome:</span>
+                            <span className="font-medium text-primary">
+                                {activeCustomer.contacts[0].name1} {activeCustomer.contacts[0].name2}
+                                {/* ({activeCustomer.customer.code}) */}
+                            </span>
+                        </div>
                     )}
                     {localStorage.getItem('auth') ? (
                         <Button

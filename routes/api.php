@@ -75,10 +75,10 @@ Route::prefix('v1')->group(function () {
 
     Route::post('ecaf-upload', [EcafController::class, 'upload']);
 
-    Route::prefix('nid')->group(function () {
-        Route::post('otp', [NidController::class, 'getOtp']);
-        Route::post('kyc', [NidController::class, 'getKyc']);
-    });
+    // Route::prefix('nid')->group(function () {
+    //     Route::post('otp', [NidController::class, 'getOtp']);
+    //     Route::post('kyc', [NidController::class, 'getKyc']);
+    // });
 
     Route::post('account-list', [AccountController::class, 'getAccount']);
     Route::post('primary-offers', [PrimaryOfferingController::class, 'getPrimaryOffer']);

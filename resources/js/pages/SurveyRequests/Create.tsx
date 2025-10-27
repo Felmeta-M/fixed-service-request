@@ -10,45 +10,21 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useBandwidthOptions } from '@/hooks/use-bandwidth-options';
 import AuthLayout from '@/layouts/AuthLayout';
+import { formatCoordinate, formatCoordinatesForAPI, parseCoordinate } from '@/lib/coordinate-utils';
+import { checkResourceAvailability } from '@/lib/resource-check';
 import { SurveyRequest, SurveyRequestFormValues } from '@/types/survey';
-import { Link, router, useForm, usePage } from '@inertiajs/react';
+import { Link, router, useForm } from '@inertiajs/react';
 import axios from 'axios';
-import { ArrowLeft, FileText, Info, Loader2, MapPin, Package, Phone, Search, Wifi } from 'lucide-react';
+import { ArrowLeft, FileText, Info, Loader2, MapPin, Navigation, Package, Phone, Search, Wifi } from 'lucide-react';
 import { Suspense, useEffect, useState } from 'react';
 
-// Helper function to get customer code from stored data
-const getCustomerCodeFromStorage = () => {
-    try {
-        // Check for National ID verification data
-        const kycDataString = localStorage.getItem('kycData');
-        if (kycDataString) {
-            const kycData = JSON.parse(kycDataString);
-            // KYC data typically doesn't have customer code, so return default
-            return '828204303'; // Default fallback
-        }
-
-        // Check for phone verification data
-        const customerDataString = localStorage.getItem('customerData');
-        if (customerDataString) {
-            const customerData = JSON.parse(customerDataString);
-            if (customerData.customer && customerData.customer.code) {
-                return customerData.customer.code;
-            }
-        }
-    } catch (error) {
-        console.error('Error getting customer code from storage:', error);
-    }
-
-    return '828204303'; // Default fallback
-};
-
 export default function Create() {
-    const { props } = usePage<{ user?: any; isAuthenticated?: boolean }>();
-    const user = props.user;
+    // const { props } = usePage<{ user?: any; isAuthenticated?: boolean }>();
+    // const user = props.user;
     const isAuthenticated = true;
 
     // Get search params from URL
-    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+    // const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
@@ -61,14 +37,22 @@ export default function Create() {
     const [isGettingLocation, setIsGettingLocation] = useState(false);
     const [selectedBandwidth, setSelectedBandwidth] = useState('');
     const [bandwidthNumericValue, setBandwidthNumericValue] = useState(0);
-    const [customerType, setCustomerType] = useState<'residential' | 'enterprise'>('residential');
+
+    // Enhanced resource check states
+    const [resourceAvailable, setResourceAvailable] = useState<boolean | undefined>(undefined);
+    const [checkingResource, setCheckingResource] = useState(false);
+    const [resourceMessage, setResourceMessage] = useState('');
+    const [resourceData, setResourceData] = useState<any>(null);
+
+    const [hasValidLocation, setHasValidLocation] = useState(false);
 
     const { data, setData, processing } = useForm<SurveyRequestFormValues>('createSurvey', {
-        customer_code: getCustomerCodeFromStorage(),
-        survey_type: searchParams.get('survey_type') || 'EIC08',
-        telecom_region: searchParams.get('telecom_region') || '104',
-        oper_type: searchParams.get('oper_type') || 'A',
-        main_offer_id: searchParams.get('main_offer_id') || '1943913915',
+        // customer_code: getCustomerCodeFromStorage(),
+        customer_code: '',
+        survey_type: 'EIC08',
+        telecom_region: '104',
+        oper_type: 'A',
+        main_offer_id: '1943913915',
         survey_address_info: {
             region_city: '2',
             subcity_zone: '11',
@@ -78,14 +62,14 @@ export default function Create() {
             longitude: 0,
             address: '',
         },
-        bandwidth: searchParams.get('bandwidth') || '',
-        // bandwidth: searchParams.get('bandwidth') || '2048',
-        contact_person: 'Loading...', // Will be updated from storage
-        contact_no: 'Loading...', // Will be updated from storage
-        contact_email: 'Loading...', // Will be updated from storage
+        bandwidth: '',
+        contact_person: 'Loading...',
+        contact_no: 'Loading...',
+        contact_email: 'Loading...',
         completed_date: new Date(),
-        external_operid: searchParams.get('external_operid') || '512',
-        customer_type: customerType,
+        external_operid: '512',
+        // customer_type: customerType,
+        customer_type: '',
     });
 
     console.log('🚀 ~ SurveyRequestPage ~ surveyData:', data);
@@ -94,7 +78,9 @@ export default function Create() {
         {
             // id: 'fixed_broadband',
             id: '1943913915',
-            // id: '1457567289',
+            // id: '1457567289'
+            // res_id: '1457567289',
+            // ent_id: '1043913525',
             name: 'Fixed Broadband',
             description: 'High-speed internet connection',
             icon: Wifi,
@@ -109,24 +95,24 @@ export default function Create() {
         },
         {
             // id: 'combo',
-            id: '1122464948',
+            id: '102647257',
             name: 'Combo Services',
-            description: 'Bundle of internet and voice services ',
+            description: 'Bundle of internet and voice services (only for residential) ',
             icon: Package,
         },
     ];
 
     // Order type options
-    const surveyTypeOptions = [
-        { id: 'EIC08', name: 'Survey for New connection' },
-        { id: 'EIC09', name: 'Survey for Change primary offer' },
-        { id: 'EIC10', name: 'Survey for Upgrade' },
-        { id: 'EIC11', name: 'Survey for Downgrade' },
-        { id: 'EIC12', name: 'Survey for Shifting(within or across site)' },
-        { id: 'EIC13', name: 'Survey for Reconnection' },
-        { id: 'EIC14', name: 'Survey for Change Offering Attribute' },
-        { id: 'EIC16', name: 'Survey for Change Copper to Fiber' },
-    ];
+    // const surveyTypeOptions = [
+    //     { id: 'EIC08', name: 'Survey for New connection' },
+    //     { id: 'EIC09', name: 'Survey for Change primary offer' },
+    //     { id: 'EIC10', name: 'Survey for Upgrade' },
+    //     { id: 'EIC11', name: 'Survey for Downgrade' },
+    //     { id: 'EIC12', name: 'Survey for Shifting(within or across site)' },
+    //     { id: 'EIC13', name: 'Survey for Reconnection' },
+    //     { id: 'EIC14', name: 'Survey for Change Offering Attribute' },
+    //     { id: 'EIC16', name: 'Survey for Change Copper to Fiber' },
+    // ];
 
     // Fetch user data and prefill form
     // useEffect(() => {
@@ -182,6 +168,8 @@ export default function Create() {
                         contactPerson = kycData.identity?.name?.eng || 'Customer';
                         contactNo = kycData.identity?.phone || '';
                         contactEmail = kycData.email || 'customer@ethiotelecom.et';
+                        customerCode = kycData.customer_data.customer.code;
+                        console.log('Customer code:', kycData.customer_data.customer.code);
 
                         console.log('Using KYC data for contact info');
                     } catch (e) {
@@ -190,7 +178,7 @@ export default function Create() {
                 }
 
                 // If no KYC data or incomplete, check for phone verification data
-                const customerDataString = localStorage.getItem('customerData');
+                const customerDataString = localStorage.getItem('activeCustomer');
                 if (customerDataString && (!contactNo || contactNo === 'Loading...')) {
                     try {
                         const customerData = JSON.parse(customerDataString);
@@ -199,6 +187,7 @@ export default function Create() {
                         if (customerData.contacts && customerData.contacts.length > 0) {
                             contactPerson = `${customerData.contacts[0].name1 || ''} ${customerData.contacts[0].name2 || ''}`.trim() || contactPerson;
                             contactNo = customerData.contacts[0].mobile || contactNo;
+                            contactEmail = customerData.contacts[0].email || contactEmail;
                         }
 
                         // Also use customer name if available
@@ -207,6 +196,8 @@ export default function Create() {
                             contactPerson =
                                 `${customer.first_name || ''} ${customer.middle_name || ''} ${customer.last_name || ''}`.trim() || contactPerson;
                             customerCode = customer.code || customerCode;
+                            contactEmail = customer.email || contactEmail;
+                            customerCode = customer.code;
                         }
 
                         console.log('Using customer data for contact info');
@@ -229,6 +220,7 @@ export default function Create() {
                 // Set default values if localStorage fails
                 setData((prev) => ({
                     ...prev,
+                    customer_code: '828204303',
                     contact_person: 'Customer',
                     contact_no: '',
                     contact_email: 'customer@ethiotelecom.et',
@@ -238,35 +230,101 @@ export default function Create() {
 
         fetchUserDataFromLocalStorage();
     }, [setData]);
+
     // Helper function to get customer ID from stored data
-    const getCustomerIdFromStorage = () => {
-        try {
-            // Check for National ID verification data
-            const kycDataString = localStorage.getItem('kycData');
-            if (kycDataString) {
-                const kycData = JSON.parse(kycDataString);
-                // KYC data typically doesn't have customer ID, so return default
-                return '';
-            }
+    // const getCustomerIdFromStorage = () => {
+    //     try {
+    //         // Check for National ID verification data
+    //         const kycDataString = localStorage.getItem('kycData');
+    //         if (kycDataString) {
+    //             const kycData = JSON.parse(kycDataString);
+    //             if (kycData.customer_data && kycData.customer_data.customer && kycData.customer_data.customer.id) {
+    //                 console.log('Customer code:', kycData.customer_data.customer.id);
+    //                 return kycData.customer_data.customer.id;
+    //             }
+    //             // KYC data typically doesn't have customer id, default fallback
+    //             return '10101229372853';
+    //         }
 
-            // Check for phone verification data
-            const customerDataString = localStorage.getItem('customerData');
-            if (customerDataString) {
-                const customerData = JSON.parse(customerDataString);
-                if (customerData.customer && customerData.customer.id) {
-                    return customerData.customer.id;
-                }
-            }
-        } catch (error) {
-            console.error('Error getting customer ID from storage:', error);
-        }
+    //         // Check for phone verification data
+    //         const customerDataString = localStorage.getItem('activeCustomer');
+    //         if (customerDataString) {
+    //             const customerData = JSON.parse(customerDataString);
+    //             if (customerData.customer && customerData.customer.id) {
+    //                 return customerData.customer.id;
+    //             }
+    //             return '10101229372853';
+    //         }
+    //     } catch (error) {
+    //         console.error('Error getting customer ID from storage:', error);
+    //     }
 
-        return '';
-    };
+    //     return '';
+    // };
 
     const { residentialOptions, enterpriseOptions, loading: loadingBandwidths, error: errorBandwidths } = useBandwidthOptions();
 
-    // const bandwidthOptions = user?.customer_type === 'residential' ? residentialOptions : enterpriseOptions;
+    useEffect(() => {
+        const checkResource = async () => {
+            if (!selectedLocation || !data.contact_person || data.contact_person === 'Loading...') {
+                return;
+            }
+
+            setCheckingResource(true);
+            setResourceAvailable(undefined);
+            setResourceMessage('');
+
+            try {
+                const result = await checkResourceAvailability(
+                    {
+                        latitude: selectedLocation[0],
+                        longitude: selectedLocation[1],
+                    },
+                    data.contact_person,
+                );
+
+                setResourceAvailable(result.available);
+                setResourceMessage(result.message || '');
+
+                if (!result.available) {
+                    setError(result.message || 'Resource not available in this location');
+                } else {
+                    setError(''); // Clear any previous errors
+                }
+            } catch (error) {
+                setResourceAvailable(false);
+                setResourceMessage('Failed to check resource availability');
+                console.error('Resource check error:', error);
+            } finally {
+                setCheckingResource(false);
+            }
+        };
+
+        // Debounce the resource check to avoid too many API calls
+        const timeoutId = setTimeout(checkResource, 500);
+        return () => clearTimeout(timeoutId);
+    }, [selectedLocation, data.contact_person]);
+
+    // Update the useEffect for initial resource check
+    useEffect(() => {
+        // Check if we have valid coordinates and contact person
+        const hasCoords = data.survey_address_info.latitude !== 0 && data.survey_address_info.longitude !== 0;
+        const hasContact = data.contact_person && data.contact_person !== 'Loading...';
+
+        setHasValidLocation(hasCoords);
+
+        // Only check resource if we have valid coordinates and contact info
+        if (hasCoords && hasContact && selectedLocation) {
+            const [lat, lng] = selectedLocation;
+            const timeoutId = setTimeout(() => {
+                checkResourceForLocation(lat, lng);
+            }, 500);
+            return () => clearTimeout(timeoutId);
+        } else {
+            // If no valid location, ensure resource is marked as not available
+            setResourceAvailable(undefined);
+        }
+    }, [selectedLocation, data.contact_person, data.survey_address_info.latitude, data.survey_address_info.longitude]);
 
     const handleChange = (field: keyof SurveyRequest, value: any) => {
         setData((prev) => ({ ...prev, [field]: value }));
@@ -274,11 +332,29 @@ export default function Create() {
     };
 
     const handleNestedInputChange = (parent: keyof SurveyRequest, field: string, value: string) => {
+        let processedValue: any = value;
+
+        if (field === 'latitude' || field === 'longitude') {
+            // For manual input, store the raw value but validate it
+            if (value === '' || value === '-') {
+                // Allow empty or negative sign during typing
+                processedValue = value;
+            } else {
+                const numValue = parseFloat(value);
+                if (!isNaN(numValue)) {
+                    // Store the number, but don't format it yet to allow user typing
+                    processedValue = numValue;
+                } else {
+                    processedValue = 0;
+                }
+            }
+        }
+
         setData((prev) => ({
             ...prev,
             [parent]: {
                 ...(prev[parent] as any),
-                [field]: value,
+                [field]: processedValue,
             },
         }));
 
@@ -294,6 +370,7 @@ export default function Create() {
     const handleLocationSelect = (lat: number, lng: number, address: string) => {
         setSelectedLocation([lat, lng]);
         setMapCenter([lat, lng]);
+        setHasValidLocation(true);
 
         setData((prev) => ({
             ...prev,
@@ -304,6 +381,13 @@ export default function Create() {
                 address: address || prev.survey_address_info.address,
             },
         }));
+        // Reset resource check state when location changes
+        // setResourceAvailable(undefined); // Changed from null to undefined
+        // setResourceMessage('');
+        // Reset resource check state when location changes
+        setResourceAvailable(undefined);
+        setResourceMessage('');
+        setResourceData(null);
     };
 
     const getCurrentLocation = async () => {
@@ -315,10 +399,19 @@ export default function Create() {
         setLocationLoading(true);
         setLocationError('');
         setIsGettingLocation(true);
+        setResourceAvailable(undefined);
+        setResourceData(null);
 
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const { latitude, longitude } = position.coords;
+                // Format to 6 decimal places
+                const preciseLat = parseFloat(latitude.toFixed(6));
+                const preciseLng = parseFloat(longitude.toFixed(6));
+
+                handleLocationSelect(preciseLat, preciseLng, '');
+                // setLocationLoading(false);
+                // setIsGettingLocation(false);
 
                 // Update coordinates and map
                 setSelectedLocation([latitude, longitude]);
@@ -379,6 +472,206 @@ export default function Create() {
         );
     };
 
+    // const handleManualCoordinateCheck = async () => {
+    //     const lat = parseCoordinate(data.survey_address_info.latitude);
+    //     const lng = parseCoordinate(data.survey_address_info.longitude);
+
+    //     if (!lat || !lng) {
+    //         setLocationError('Please enter both latitude and longitude');
+    //         return;
+    //     }
+
+    //     if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    //         setLocationError('Invalid coordinates. Latitude must be between -90 and 90, Longitude between -180 and 180');
+    //         return;
+    //     }
+
+    //     // Format to 6 decimal places
+    //     const preciseLat = parseFloat(lat.toFixed(6));
+    //     const preciseLng = parseFloat(lng.toFixed(6));
+
+    //     setSelectedLocation([preciseLat, preciseLng]);
+    //     setMapCenter([preciseLat, preciseLng]);
+    //     setLocationError('');
+
+    //     // Update form data with precise coordinates
+    //     setData((prev) => ({
+    //         ...prev,
+    //         survey_address_info: {
+    //             ...prev.survey_address_info,
+    //             latitude: preciseLat,
+    //             longitude: preciseLng,
+    //         },
+    //     }));
+
+    //     // Trigger resource check
+    //     await checkResourceForLocation(preciseLat, preciseLng);
+    // };
+
+    // Function to get submit button text
+    const getSubmitButtonText = (): string => {
+        if (loading) return 'Submitting...';
+        if (checkingResource) return 'Checking Availability...';
+        if (!hasValidLocation) return 'Select Location First';
+        if (resourceAvailable === undefined) return 'Check Resource Availability';
+        if (resourceAvailable === false) return 'Resource Not Available';
+        return 'Submit Survey';
+    };
+    // Function to check if submit button should be disabled
+    const isSubmitDisabled = (): boolean => {
+        // Disable if:
+        // 1. Currently loading
+        // 2. Checking resource
+        // 3. No valid location selected
+        // 4. Resource is not available
+        // 5. Resource availability hasn't been checked yet
+        return loading || checkingResource || !hasValidLocation || resourceAvailable === false || resourceAvailable === undefined;
+    };
+
+    const handleManualCoordinateCheck = async () => {
+        let lat = data.survey_address_info.latitude;
+        let lng = data.survey_address_info.longitude;
+
+        // Convert string inputs to numbers if needed
+        if (typeof lat === 'string') {
+            lat = parseCoordinate(lat);
+        }
+        if (typeof lng === 'string') {
+            lng = parseCoordinate(lng);
+        }
+
+        if (!lat || !lng) {
+            setHasValidLocation(false);
+            setLocationError('Please enter both latitude and longitude');
+            return;
+        }
+
+        if (lat < -90 || lat > 90) {
+            setHasValidLocation(false);
+            setLocationError('Latitude must be between -90 and 90');
+            return;
+        }
+
+        if (lng < -180 || lng > 180) {
+            setHasValidLocation(false);
+            setLocationError('Longitude must be between -180 and 180');
+            return;
+        }
+
+        // Format to 6 decimal places and update the form data
+        const preciseLat = parseFloat(lat.toFixed(6));
+        const preciseLng = parseFloat(lng.toFixed(6));
+
+        // Update form data with precise coordinates
+        setData((prev) => ({
+            ...prev,
+            survey_address_info: {
+                ...prev.survey_address_info,
+                latitude: preciseLat,
+                longitude: preciseLng,
+            },
+        }));
+
+        setSelectedLocation([preciseLat, preciseLng]);
+        setMapCenter([preciseLat, preciseLng]);
+        setLocationError('');
+        setHasValidLocation(true);
+
+        // Show success message
+        setLocationError(`✓ Coordinates set to: ${formatCoordinate(preciseLat)}, ${formatCoordinate(preciseLng)}`);
+
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+            setLocationError('');
+        }, 3000);
+
+        // Trigger resource check
+        await checkResourceForLocation(preciseLat, preciseLng);
+    };
+
+    // Add this helper function for real-time validation
+    const validateCoordinateInput = (value: number | string, type: 'lat' | 'lng'): string => {
+        if (!value && value !== 0) return '';
+
+        const num = typeof value === 'string' ? parseFloat(value) : value;
+        if (isNaN(num)) return 'Invalid number';
+
+        if (type === 'lat' && (num < -90 || num > 90)) return 'Must be between -90 and 90';
+        if (type === 'lng' && (num < -180 || num > 180)) return 'Must be between -180 and 180';
+
+        return '';
+    };
+    // const handleManualCoordinateCheck = async () => {
+    //     const lat = Number(data.survey_address_info.latitude);
+    //     const lng = Number(data.survey_address_info.longitude);
+
+    //     if (!lat || !lng) {
+    //         setLocationError('Please enter both latitude and longitude');
+    //         return;
+    //     }
+
+    //     if (!validateCoordinates(lat, lng)) {
+    //         setLocationError('Invalid coordinates. Latitude must be between -90 and 90, Longitude between -180 and 180');
+    //         return;
+    //     }
+
+    //     setSelectedLocation([lat, lng]);
+    //     setMapCenter([lat, lng]);
+    //     setLocationError('');
+
+    //     // Trigger resource check
+    //     await checkResourceForLocation(lat, lng);
+    // };
+
+    // Enhanced resource check function
+    const checkResourceForLocation = async (lat: number, lng: number) => {
+        if (!data.contact_person || data.contact_person === 'Loading...') {
+            return;
+        }
+
+        setCheckingResource(true);
+        setResourceAvailable(undefined);
+        setResourceMessage('');
+        setResourceData(null);
+
+        try {
+            const result = await checkResourceAvailability(
+                {
+                    latitude: lat,
+                    longitude: lng,
+                },
+                data.contact_person,
+            );
+
+            setResourceAvailable(result.available);
+            setResourceMessage(result.message || '');
+            setResourceData(result.data);
+
+            if (!result.available) {
+                setError(result.message || 'Resource not available in this location');
+            } else {
+                setError('');
+            }
+        } catch (error) {
+            setResourceAvailable(false);
+            setResourceMessage('Failed to check resource availability');
+            console.error('Resource check error:', error);
+        } finally {
+            setCheckingResource(false);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedLocation && data.contact_person && data.contact_person !== 'Loading...') {
+            const [lat, lng] = selectedLocation;
+            const timeoutId = setTimeout(() => {
+                checkResourceForLocation(lat, lng);
+            }, 500);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [selectedLocation, data.contact_person]);
+    // const finalMainOfferId = customerType === 'residential' ? '1457567289' : '1043913525';
+
     const validateForm = (): boolean => {
         const newErrors: Record<string, string> = {};
 
@@ -391,11 +684,9 @@ export default function Create() {
             newErrors['survey_address_info.location'] = 'Please select a valid location';
         }
 
-        // if (!data.contact_person) newErrors.contact_person = 'Contact person is required';
-        // if (!data.contact_no) newErrors.contact_no = 'Contact number is required';
-        // if (data.contact_email && !/\S+@\S+\.\S+/.test(data.contact_email)) {
-        //     newErrors.contact_email = 'Please enter a valid email';
-        // }
+        if (resourceAvailable === false) {
+            newErrors['resource'] = 'Resource not available in selected location';
+        }
 
         setFormErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -430,8 +721,9 @@ export default function Create() {
                     date.getSeconds().toString().padStart(2, '0')
                 );
             };
+            const formattedCoords = formatCoordinatesForAPI(data.survey_address_info.latitude, data.survey_address_info.longitude);
             // Determine the main_offer_id based on customer type
-            const finalMainOfferId = customerType === 'residential' ? '1457567289' : '1043913525';
+            // const finalMainOfferId = customerType === 'residential' ? '1457567289' : '1043913525';
 
             //  const finalMainOfferId = customerType === 'residential' ? '1943913915' : '1043913525';
 
@@ -441,15 +733,17 @@ export default function Create() {
                 survey_type: data.survey_type,
                 telecom_region: data.telecom_region,
                 oper_type: data.oper_type,
-                // main_offer_id: data.main_offer_id,
-                main_offer_id: '1943913915', // TODO: Change this based on customer type
+                main_offer_id: data.main_offer_id,
+                // main_offer_id: '1943913915', // TODO: Change this based on customer type
                 survey_address_info: {
                     region_city: data.survey_address_info.region_city, // This should be numeric code
                     subcity_zone: data.survey_address_info.subcity_zone, // This should be numeric code
                     wereda_town: data.survey_address_info.wereda_town, // This should be numeric code
                     kebele: data.survey_address_info.kebele,
-                    latitude: data.survey_address_info.latitude,
-                    longitude: data.survey_address_info.longitude,
+                    // latitude: data.survey_address_info.latitude,
+                    // longitude: data.survey_address_info.longitude,
+                    latitude: formattedCoords.latitude, // This will be 6-decimal string
+                    longitude: formattedCoords.longitude, // This will be 6-decimal string
                     address: data.survey_address_info.address || '',
                 },
                 // bandwidth: data.bandwidth,
@@ -462,6 +756,8 @@ export default function Create() {
                 external_operid: data.external_operid,
                 // customer_type: customerType,
             };
+            console.log('Formatted coordinates for API:', formattedCoords);
+
             console.log('🚀 ~ handleSubmitOrder ~ submitData:', submitData);
 
             if (submitData) {
@@ -640,7 +936,7 @@ export default function Create() {
                         <Card>
                             <CardHeader>
                                 <div className="flex items-center space-x-4">
-                                    <Link href="/survey-requests" className="text-primary hover:opacity-90">
+                                    <Link href="/dashboard" className="text-primary hover:opacity-90">
                                         <ArrowLeft className="inline-block h-4 w-4" /> Dashboard
                                     </Link>
                                     <div className="h-6 w-px bg-gray-300"></div>
@@ -660,6 +956,7 @@ export default function Create() {
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                         {serviceOptions.map((service) => {
                                             const IconComponent = service.icon;
+
                                             return (
                                                 <div
                                                     key={service.id}
@@ -711,107 +1008,25 @@ export default function Create() {
                                     {formErrors.serviceType && <p className="mt-1 text-sm text-red-600">{formErrors.serviceType}</p>}
                                 </div>
 
-                                {/* <div>
-                                    <FormSelect
-                                        id="survey_type"
-                                        label="Survey Type *"
-                                        value={data.survey_type}
-                                        onChange={(val) => handleChange('survey_type', val)}
-                                        options={surveyTypeOptions.map((type) => ({
-                                            label: type.name,
-                                            value: type.id,
-                                        }))}
-                                        error={formErrors.survey_type}
-                                        placeholder="Select survey type"
-                                    />
-                                </div> */}
-
-                                {/* <div className="hidden"> */}
-                                {/* <FormInput
-                                        id="customer_code"
-                                        value={data.customer_code}
-                                        onChange={(e) => handleChange('customer_code', e.target.value)}
-                                        error={formErrors.customer_code}
-                                        placeholder="Enter customer code"
-                                        required
-                                    /> */}
-
-                                {/* <FormInput
-                                        id="telecom_region"
-                                        value={data.telecom_region}
-                                        onChange={(e) => handleChange('telecom_region', e.target.value)}
-                                        error={formErrors.telecom_region}
-                                        required
-                                    /> */}
-
-                                {/* <FormInput
-                                        id="main_offer_id"
-                                        value={data.main_offer_id}
-                                        onChange={(e) => handleChange('main_offer_id', e.target.value)}
-                                        error={formErrors.main_offer_id}
-                                    /> */}
-
-                                {/* <FormInput
-                                        id="survey_type"
-                                        value={data.survey_type}
-                                        onChange={(e) => handleChange('survey_type', e.target.value)}
-                                        error={formErrors.survey_type}
-                                        placeholder="Enter survey type"
-                                        required
-                                    /> */}
-                                {/* <div>
-                                        <FormSelect
-                                            id="oper_type"
-                                            label="Operation Type *"
-                                            value={data.oper_type}
-                                            onChange={(val) => handleChange('oper_type', val)}
-                                            options={[
-                                                { label: 'New', value: 'A' },
-                                                { label: 'Modify', value: 'M' },
-                                            ]}
-                                            error={formErrors.oper_type}
-                                            placeholder="Select operation type"
-                                        />
-                                    </div> */}
-                                {/* </div> */}
-
-                                {/* {data.main_offer_id === '1943913915' && (
-                                    <div>
-                                        <FormSelect
-                                            id="bandwidth"
-                                            label="Bandwidth"
-                                            value={data.bandwidth}
-                                            onChange={(val) => handleChange('bandwidth', val)}
-                                            options={bandwidthOptions}
-                                            error={formErrors.bandwidth}
-                                            loading={loadingBandwidths}
-                                            placeholder="Select bandwidth"
-                                        />
-                                    </div>
-                                )} */}
                                 {data.main_offer_id === '1943913915' && (
                                     <BandwidthSelector
                                         residentialOptions={residentialOptions}
                                         enterpriseOptions={enterpriseOptions}
                                         loading={loadingBandwidths}
                                         selectedBandwidth={selectedBandwidth}
-                                        customerType={customerType}
-                                        onCustomerTypeChange={(type) => {
-                                            setCustomerType(type);
-                                            setData('customer_type', type);
-                                        }}
                                         onBandwidthChange={(value, numericValue, type) => {
                                             setSelectedBandwidth(value);
                                             setBandwidthNumericValue(numericValue);
-                                            setCustomerType(type);
-                                            setData('bandwidth', numericValue.toString());
+                                            // setCustomerType(type);
                                             setData('customer_type', type);
+                                            // Update the form data with the numeric value
+                                            handleChange('bandwidth', numericValue.toString());
                                         }}
                                         error={formErrors.bandwidth}
                                     />
                                 )}
 
-                                {/* Location Selection */}
+                                {/* Enhanced Location Selection */}
                                 <div>
                                     <div className="mb-6">
                                         <Label className="text-md mb-4 font-medium">Installation Address</Label>
@@ -960,6 +1175,154 @@ export default function Create() {
                                         </div>
                                     )}
 
+                                    <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                        <Label className="mb-3 block text-sm font-medium text-gray-700">Enter Coordinates Manually</Label>
+
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="latitude" className="text-sm">
+                                                    Latitude *
+                                                </Label>
+                                                <Input
+                                                    id="latitude"
+                                                    type="number"
+                                                    step="any"
+                                                    value={data.survey_address_info.latitude || ''}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        handleNestedInputChange('survey_address_info', 'latitude', value);
+
+                                                        // Clear error when user starts typing
+                                                        if (value && formErrors['survey_address_info.latitude']) {
+                                                            setFormErrors((prev) => {
+                                                                const newErrors = { ...prev };
+                                                                delete newErrors['survey_address_info.latitude'];
+                                                                return newErrors;
+                                                            });
+                                                        }
+                                                    }}
+                                                    placeholder="9.007428"
+                                                    className="text-sm"
+                                                    disabled={locationOption === 'current' && isGettingLocation}
+                                                />
+                                                {data.survey_address_info.latitude !== 0 && (
+                                                    <div className="flex justify-between">
+                                                        {/* <p className="text-xs text-gray-500">
+                    Formatted: {formatCoordinate(data.survey_address_info.latitude)}
+                </p> */}
+                                                        {validateCoordinateInput(data.survey_address_info.latitude, 'lat') && (
+                                                            <p className="text-xs text-red-500">
+                                                                {validateCoordinateInput(data.survey_address_info.latitude, 'lat')}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="longitude" className="text-sm">
+                                                    Longitude *
+                                                </Label>
+                                                <Input
+                                                    id="longitude"
+                                                    type="number"
+                                                    step="any"
+                                                    value={data.survey_address_info.longitude || ''}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        handleNestedInputChange('survey_address_info', 'longitude', value);
+
+                                                        // Clear error when user starts typing
+                                                        if (value && formErrors['survey_address_info.longitude']) {
+                                                            setFormErrors((prev) => {
+                                                                const newErrors = { ...prev };
+                                                                delete newErrors['survey_address_info.longitude'];
+                                                                return newErrors;
+                                                            });
+                                                        }
+                                                    }}
+                                                    placeholder="38.733708"
+                                                    className="text-sm"
+                                                    disabled={locationOption === 'current' && isGettingLocation}
+                                                />
+                                                {data.survey_address_info.longitude !== 0 && (
+                                                    <div className="flex justify-between">
+                                                        {/* <p className="text-xs text-gray-500">
+                    Formatted: {formatCoordinate(data.survey_address_info.longitude)}
+                </p> */}
+                                                        {validateCoordinateInput(data.survey_address_info.longitude, 'lng') && (
+                                                            <p className="text-xs text-red-500">
+                                                                {validateCoordinateInput(data.survey_address_info.longitude, 'lng')}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-end space-y-2">
+                                                <Button
+                                                    onClick={handleManualCoordinateCheck}
+                                                    disabled={
+                                                        !data.survey_address_info.latitude ||
+                                                        !data.survey_address_info.longitude ||
+                                                        !!validateCoordinateInput(data.survey_address_info.latitude, 'lat') ||
+                                                        !!validateCoordinateInput(data.survey_address_info.longitude, 'lng')
+                                                    }
+                                                    size="sm"
+                                                    className="w-full bg-primary hover:bg-primary/90"
+                                                >
+                                                    <Navigation className="mr-2 h-4 w-4" />
+                                                    Check Resource
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Enhanced Resource Check Status */}
+                                    {checkingResource && (
+                                        <Alert className="mt-4 border-blue-200 bg-blue-50">
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <AlertDescription>Checking resource availability for this location...</AlertDescription>
+                                        </Alert>
+                                    )}
+
+                                    {resourceAvailable === true && (
+                                        <Alert className="mt-4 border-green-200 bg-green-50 text-green-800">
+                                            <AlertDescription>
+                                                <div className="flex items-center justify-between">
+                                                    {/* <span>✓ Resource available in this area. You can proceed with survey creation.</span> */}
+                                                    <span>✓ Resource available in this area. You can proceed with survey creation.</span>
+                                                </div>
+                                                {resourceData && (
+                                                    <div className="mt-2 text-xs">
+                                                        {/* <p>Available Ports: {resourceData.ava_port}</p> */}
+                                                        {/* <p>Distance: {resourceData.distance}m from node</p> */}
+                                                        {/* <p>Node: {resourceData.nename}</p> */}
+                                                        {/* <p>Technology Cable Type: {resourceData.cable_type_desc}</p> */}
+                                                    </div>
+                                                )}
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
+
+                                    {resourceAvailable === false && (
+                                        <Alert className="mt-4 border-red-200 bg-red-50 text-red-800">
+                                            <AlertDescription>
+                                                <div className="flex items-center justify-between">
+                                                    <span>
+                                                        ✗ {resourceMessage || 'Resource not available in this area. Survey creation is not allowed.'}
+                                                    </span>
+                                                </div>
+                                                {resourceData && (
+                                                    <div className="mt-2 text-xs">
+                                                        <p>Available Ports: {resourceData.ava_port}</p>
+                                                        <p>Distance: {resourceData.distance}m from node</p>
+                                                    </div>
+                                                )}
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
+
                                     {locationError && (
                                         <Alert variant="destructive" className="mt-4">
                                             <AlertDescription>{locationError}</AlertDescription>
@@ -973,102 +1336,19 @@ export default function Create() {
                                     )}
                                 </div>
 
-                                {/* Address Details */}
-                                <div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="latitude">Latitude</Label>
-                                            <Input
-                                                id="latitude"
-                                                type="number"
-                                                step="any"
-                                                value={data.survey_address_info.latitude || ''}
-                                                onChange={(e) => handleNestedInputChange('survey_address_info', 'latitude', e.target.value)}
-                                                placeholder="9.000000"
-                                                readOnly={locationOption === 'current'}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="longitude">Longitude</Label>
-                                            <Input
-                                                id="longitude"
-                                                type="number"
-                                                step="any"
-                                                value={data.survey_address_info.longitude || ''}
-                                                onChange={(e) => handleNestedInputChange('survey_address_info', 'longitude', e.target.value)}
-                                                placeholder="38.000000"
-                                                readOnly={locationOption === 'current'}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <div>
-                                            <Label>Region/City</Label>
-                                            <Input
-                                                value={data.survey_address_info.region_city}
-                                                onChange={(e) => handleNestedInputChange('survey_address_info', 'region_city', e.target.value)}
-                                                placeholder="Enter region/city"
-                                                className={formErrors['survey_address_info.region_city'] ? 'border-red-500' : ''}
-                                            />
-                                            {formErrors['survey_address_info.region_city'] && (
-                                                <p className="mt-1 text-sm text-red-600">{formErrors['survey_address_info.region_city']}</p>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <Label>Subcity/Zone</Label>
-                                            <Input
-                                                value={data.survey_address_info.subcity_zone}
-                                                onChange={(e) => handleNestedInputChange('survey_address_info', 'subcity_zone', e.target.value)}
-                                                placeholder="Enter subcity/zone"
-                                                className={formErrors['survey_address_info.subcity_zone'] ? 'border-red-500' : ''}
-                                            />
-                                            {formErrors['survey_address_info.subcity_zone'] && (
-                                                <p className="mt-1 text-sm text-red-600">{formErrors['survey_address_info.subcity_zone']}</p>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <div>
-                                            <Label>Wereda/Town</Label>
-                                            <Input
-                                                value={data.survey_address_info.wereda_town}
-                                                onChange={(e) => handleNestedInputChange('survey_address_info', 'wereda_town', e.target.value)}
-                                                placeholder="Enter wereda/town"
-                                                className={formErrors['survey_address_info.wereda_town'] ? 'border-red-500' : ''}
-                                            />
-                                            {formErrors['survey_address_info.wereda_town'] && (
-                                                <p className="mt-1 text-sm text-red-600">{formErrors['survey_address_info.wereda_town']}</p>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <Label>Kebele</Label>
-                                            <Input
-                                                value={data.survey_address_info.kebele}
-                                                onChange={(e) => handleNestedInputChange('survey_address_info', 'kebele', e.target.value)}
-                                                placeholder="Enter kebele"
-                                                className={formErrors['survey_address_info.kebele'] ? 'border-red-500' : ''}
-                                            />
-                                            {formErrors['survey_address_info.kebele'] && (
-                                                <p className="mt-1 text-sm text-red-600">{formErrors['survey_address_info.kebele']}</p>
-                                            )}
-                                        </div>
-                                    </div> */}
-
-                                    <div className="mt-4 hidden">
-                                        <Label>Address</Label>
-                                        <Textarea
-                                            value={data.survey_address_info.address}
-                                            onChange={(e) => handleNestedInputChange('survey_address_info', 'address', e.target.value)}
-                                            placeholder="Full address details"
-                                            rows={2}
-                                        />
-                                    </div>
+                                <div className="mt-4 hidden">
+                                    <Label>Address</Label>
+                                    <Textarea
+                                        value={data.survey_address_info.address}
+                                        onChange={(e) => handleNestedInputChange('survey_address_info', 'address', e.target.value)}
+                                        placeholder="Full address details"
+                                        rows={2}
+                                    />
                                 </div>
+                                {/* </div> */}
 
                                 {/* Contact Information */}
-                                <div className='hidden'>
+                                <div className="hidden">
                                     <h3 className="mb-4 text-lg font-medium">Primary Contact</h3>
                                     <div className="mb-3 rounded-lg bg-blue-50 p-3">
                                         <p className="text-sm text-blue-700">
@@ -1116,16 +1396,30 @@ export default function Create() {
                                     <Link href="/survey-requests">
                                         <Button variant="outline">Cancel</Button>
                                     </Link>
-                                    <Button onClick={handleSubmitOrder} disabled={loading} size="lg">
-                                        {loading ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Submitting...
-                                            </>
-                                        ) : (
-                                            'Submit Survey'
-                                        )}
-                                    </Button>
+
+                                    <div className="flex flex-col items-end gap-2">
+                                        <Button onClick={handleSubmitOrder} disabled={isSubmitDisabled()} size="lg" className="min-w-[160px]">
+                                            {loading ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Submitting...
+                                                </>
+                                            ) : checkingResource ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Checking...
+                                                </>
+                                            ) : !hasValidLocation ? (
+                                                'Select Location'
+                                            ) : resourceAvailable === undefined ? (
+                                                'Check Availability First'
+                                            ) : resourceAvailable === false ? (
+                                                'Resource Not Available'
+                                            ) : (
+                                                'Submit Survey'
+                                            )}
+                                        </Button>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -1154,6 +1448,52 @@ export default function Create() {
 
                                 <Separator />
 
+                                <div className="flex items-center justify-between">
+                                    <span className="text-gray-600">Resource Status:</span>
+                                    {checkingResource ? (
+                                        <Badge variant="outline" className="bg-blue-100">
+                                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                            Checking...
+                                        </Badge>
+                                    ) : resourceAvailable === true ? (
+                                        <Badge variant="outline" className="bg-green-100 text-green-800">
+                                            Available
+                                        </Badge>
+                                    ) : resourceAvailable === false ? (
+                                        <Badge variant="outline" className="bg-red-100 text-red-800">
+                                            Not Available
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline">Select Location</Badge>
+                                    )}
+                                </div>
+
+                                {resourceData && (
+                                    <>
+                                        <Separator />
+                                        <div className="space-y-2 text-xs">
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Available Ports:</span>
+                                                <span className="font-medium">{resourceData.ava_port}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Distance:</span>
+                                                <span className="font-medium">{resourceData.distance}m</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Node ID:</span>
+                                                <span className="font-medium">{resourceData.neid}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Technology:</span>
+                                                <span className="font-medium">{resourceData.cable_type_desc}</span>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                <Separator />
+
                                 <div className="space-y-2 text-sm">
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Survey Type:</span>
@@ -1171,7 +1511,7 @@ export default function Create() {
                                         <>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-600">Customer Type:</span>
-                                                <span className="font-medium capitalize">{customerType}</span>
+                                                <span className="font-medium capitalize">{data.customer_type}</span>
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-600">Bandwidth:</span>
@@ -1183,7 +1523,9 @@ export default function Create() {
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-gray-600">Service ID:</span>
-                                                <span className="font-medium">{customerType === 'residential' ? '1457567289' : '1043913525'}</span>
+                                                <span className="font-medium">
+                                                    {data.customer_type === 'residential' ? '1457567289' : '1043913525'}
+                                                </span>
                                             </div>
                                         </>
                                     )}

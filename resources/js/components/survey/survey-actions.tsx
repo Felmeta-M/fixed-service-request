@@ -1,9 +1,10 @@
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { router } from '@inertiajs/react';
-import { Eye, MoreVertical, Play, Trash2, X } from 'lucide-react';
+import { MoreVertical, Play, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { CancelConfirmationDialog } from './CancelConfirmationDialog';
-import DeleteConfirmationDialog from './DeleteConfirmationDialog';
+import { CancelConfirmationDialog } from './cancel-confirmation-dialog';
+import DeleteConfirmationDialog from './delete-confirmation-dialog';
+import SurveyDetailModal from './survey-detail-modal';
 
 interface SurveyActionsProps {
     survey: any;
@@ -18,6 +19,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const [error, setError] = useState('');
     const [customerData, setCustomerData] = useState(null);
     const [showErrorDialog, setShowErrorDialog] = useState(false);
+    const [openDetailModal, setOpenDetailModal] = useState(false);
 
     useEffect(() => {
         // Load data from localStorage
@@ -33,36 +35,85 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         }
     }, []);
 
+    // const handleViewDetails = () => {
+    //     router.visit(`/survey-requests/detail/${survey.customer_survey_order_id}?customer_code=${survey.customer_code}`);
+    // };
     const handleViewDetails = () => {
-        router.visit(`/survey-requests/detail/${survey.customer_survey_order_id}?customer_code=${survey.customer_code}`);
+        setOpenDetailModal(true);
     };
 
+    // const handleCancel = async (cancellationReason?: string) => {
+    //     setLoading(true);
+    //     onUpdatingChange(true);
+    //     try {
+    //         console.log('Cancelling survey order with ID:', survey.customer_survey_order_id);
+    //         const response = await fetch('/api/v1/cancel-survey-order', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //             },
+    //             body: JSON.stringify({
+    //                 // customer_code: survey.customer_code,
+    //                 customer_survey_order_id: survey.customer_survey_order_id,
+    //                 // cancellation_reason: cancellationReason,
+    //             }),
+    //         });
+    //         console.log('Cancel response:', response);
+    //         console.log('Response status:', response.status);
+
+    //         // const result = await response.json();
+    //         // console.log('Cancel result:', result);
+
+    //         if (response.status == 200) {
+    //             onActionComplete();
+    //         } else {
+    //             alert(response.message || 'Failed to cancel survey order');
+    //         }
+    //     } catch (err) {
+    //         alert('Failed to cancel survey order');
+    //         console.error('Cancel error:', err);
+    //     } finally {
+    //         setLoading(false);
+    //         onUpdatingChange(false);
+    //         setOpenCancelDialog(false);
+    //     }
+    // };
+
     const handleCancel = async (cancellationReason?: string) => {
+        if (!cancellationReason) {
+            alert('Please provide a reason for cancellation.');
+            return;
+        }
+
         setLoading(true);
         onUpdatingChange(true);
+
         try {
-            const response = await fetch('/api/v1/survey-requests/cancel', {
+            console.log('Cancelling survey order with ID:', survey.customer_survey_order_id);
+
+            const response = await fetch('/api/v1/cancel-survey-order', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    Accept: 'application/json',
                 },
                 body: JSON.stringify({
-                    customer_code: survey.customer_code,
-                    customer_survey_order_id: survey.customer_survey_order_id,
-                    cancellation_reason: cancellationReason,
+                    customer_survey_order_id: String(survey.customer_survey_order_id),
+                    cancel_reason: cancellationReason,
                 }),
             });
 
             const result = await response.json();
+            console.log('Cancel result:', result);
 
-            if (result.success) {
+            if (response.ok && result.success) {
                 onActionComplete();
             } else {
                 alert(result.message || 'Failed to cancel survey order');
             }
         } catch (err) {
-            alert('Failed to cancel survey order');
             console.error('Cancel error:', err);
+            alert('Failed to cancel survey order');
         } finally {
             setLoading(false);
             onUpdatingChange(false);
@@ -169,6 +220,9 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             return;
         }
 
+        console.log('Customer Data:', customerData);
+        console.log('Survey Data:', survey);
+
         setLoading(true);
         onUpdatingChange(true);
         setError('');
@@ -181,8 +235,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             // Create subscriber immediately
             const payload = {
                 offering_id: survey.main_offer_id || survey.offering_id || customerData?.ext_params?.PrimaryOfferId || '',
-                survey_order_id: survey.customer_survey_order_id,
-                customer_code: survey.customer_code,
+                survey_order_id: String(survey.customer_survey_order_id),
+                customer_code: String(survey.customer_code),
                 first_name: customerInfo.first_name,
                 middle_name: customerInfo.middle_name,
                 last_name: customerInfo.last_name,
@@ -381,12 +435,12 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                         </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                        {canViewDetail && (
+                        {/* {canViewDetail && (
                             <DropdownMenuItem onClick={handleViewDetails}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
                             </DropdownMenuItem>
-                        )}
+                        )} */}
 
                         {canCancel && (
                             <DropdownMenuItem onClick={() => setOpenCancelDialog(true)} className="text-orange-600">
@@ -395,7 +449,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                             </DropdownMenuItem>
                         )}
 
-                        {canDelete && (
+                        {/* {canDelete && (
                             <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => setOpenDeleteDialog(true)} className="text-red-600">
@@ -403,7 +457,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                                     Delete Survey
                                 </DropdownMenuItem>
                             </>
-                        )}
+                        )} */}
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
@@ -469,6 +523,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 confirmText={loading ? 'Deleting...' : 'Yes, Delete'}
                 cancelText="No, Keep It"
             />
+
+            <SurveyDetailModal open={openDetailModal} onOpenChange={setOpenDetailModal} survey={survey} />
         </>
     );
 }

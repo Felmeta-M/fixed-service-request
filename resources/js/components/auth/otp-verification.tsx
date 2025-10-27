@@ -14,7 +14,7 @@ export function OTPVerification() {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    const [countdown, setCountdown] = useState(60);
+    const [countdown, setCountdown] = useState(60 * 5);
     const [canResend, setCanResend] = useState(false);
 
     useEffect(() => {

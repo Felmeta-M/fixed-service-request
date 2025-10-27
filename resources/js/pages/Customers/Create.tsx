@@ -6,11 +6,11 @@ import { Label } from '@/components/ui/label';
 import { useCustomerCategories, useCustomerSubcategories, useCustomerTypes } from '@/hooks/use-customer-types';
 import { useOccupations } from '@/hooks/use-occupations';
 import { useRegions, useWoredas, useZones } from '@/hooks/use-regions';
-import CustomerLayout from '@/layouts/customer-layout';
+import GuestLayout from '@/layouts/GuestLayout';
 import { CustomerFormValues, customerSchema } from '@/types/customer';
 import { Head, router, useForm } from '@inertiajs/react';
 import axios from 'axios';
-import { ArrowLeft, ArrowRight, Building, CheckCircle, FileText, Home, MapPin, Phone, User } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building, CheckCircle, FileText, Home, MapPin, Phone, Upload, User } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -18,6 +18,10 @@ export default function Create() {
     const { occupations, loading, error: occupationError } = useOccupations();
     const [step, setStep] = useState(1);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const [customerCreated, setCustomerCreated] = useState(false);
+    const [createdCustomerData, setCreatedCustomerData] = useState<any>(null);
+
     const { data, setData, processing } = useForm<CustomerFormValues>('createCustomer', {
         first_name: '',
         middle_name: '',
@@ -57,13 +61,56 @@ export default function Create() {
         customer_subcategory: undefined,
         customer_level: '2',
     });
-    console.log('🚀 ~ Create ~ data:', data);
+
+    // Get NID data from session storage or local storage
+    const [nidData, setNidData] = useState<any>(null);
+
+    useEffect(() => {
+        // Try to get NID data from various sources
+        const sessionData = sessionStorage.getItem('activeCustomer');
+        const localData = localStorage.getItem('kycData');
+
+        if (sessionData) {
+            try {
+                const parsed = JSON.parse(sessionData);
+                setNidData(parsed);
+                // Pre-fill form with NID data
+                if (parsed.nid_identity) {
+                    const identity = parsed.nid_identity;
+                    setData({
+                        ...data,
+                        first_name: identity.name?.eng?.split(' ')[0] || '',
+                        last_name: identity.name?.eng?.split(' ').slice(1).join(' ') || '',
+                        gender:
+                            identity.gender?.eng?.toLowerCase() === 'male' ? '1' : identity.gender?.eng?.toLowerCase() === 'female' ? '2' : undefined,
+                        date_of_birth: identity.dob ? formatDobForInput(identity.dob) : '',
+                        identification_type: '2', // National ID
+                        identification_number: parsed.service_number || '',
+                    });
+
+                    if (identity.phone) {
+                        setData('contact', {
+                            ...data.contact,
+                            mobile_no: identity.phone,
+                            notification_mode: '1', // SMS
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error parsing NID data:', error);
+            }
+        } else if (localData) {
+            try {
+                const parsed = JSON.parse(localData);
+                setNidData(parsed);
+            } catch (error) {
+                console.error('Error parsing local KYC data:', error);
+            }
+        }
+    }, []);
 
     const { types, loading: typesLoading, error: typesError } = useCustomerTypes();
-    console.log('🚀 ~ Create ~ types:', types);
-
     const { categories, loading: categoriesLoading, error: categoriesError } = useCustomerCategories(data.customer_type);
-    console.log('Categories', categories);
     const { subcategories, loading: subcategoriesLoading, error: subcategoriesError } = useCustomerSubcategories(data.customer_category);
 
     const { regions: regionOptions, loading: loadingRegions } = useRegions();
@@ -74,6 +121,7 @@ export default function Create() {
     useEffect(() => {
         setData('contact_person', contactPersons);
     }, [contactPersons, setData]);
+
     const addContactPerson = () =>
         setContactPersons((prev) => [
             ...prev,
@@ -82,6 +130,65 @@ export default function Create() {
     const removeContactPerson = (i: number) => setContactPersons((prev) => prev.filter((_, idx) => idx !== i));
     const updateContactPerson = (i: number, field: string, val: string) =>
         setContactPersons((prev) => prev.map((p, idx) => (idx === i ? { ...p, [field]: val } : p)));
+
+    // Helper function to format date of birth for input field
+    const formatDobForInput = (dobString: string) => {
+        if (!dobString) return '';
+        // Format YYYYMMDD to YYYY-MM-DD
+        const year = dobString.substring(0, 4);
+        const month = dobString.substring(4, 6);
+        const day = dobString.substring(6, 8);
+        return `${year}-${month}-${day}`;
+    };
+
+    // Function to upload photo to ECAF
+    const uploadPhotoToEcaf = async (customerData: any, transactionId: string) => {
+        try {
+            setUploadingPhoto(true);
+
+            // Get the photo from NID data
+            const photoBase64 = nidData?.nid_identity?.photo_base64 || nidData?.identity?.photo_base64;
+
+            if (!photoBase64) {
+                console.warn('No photo found in NID data');
+                return { success: false, message: 'No photo available from National ID' };
+            }
+
+            // Prepare ECAF upload data
+            const ecafData = {
+                cust_code: customerData.customer_code || customerData.customer_id,
+                first_name: data.first_name,
+                last_name: data.last_name,
+                other_name: data.middle_name || '',
+                transaction_id: transactionId,
+                photo: photoBase64, // Use the base64 photo from NID
+            };
+
+            console.log('Uploading photo to ECAF:', {
+                cust_code: ecafData.cust_code,
+                transaction_id: ecafData.transaction_id,
+                has_photo: !!photoBase64,
+            });
+
+            const response = await axios.post('/api/v1/ecaf-upload', ecafData);
+
+            if (response.data.status === 'success') {
+                console.log('ECAF upload successful:', response.data);
+                return { success: true, data: response.data };
+            } else {
+                console.error('ECAF upload failed:', response.data);
+                return { success: false, message: response.data.message || 'ECAF upload failed' };
+            }
+        } catch (error: any) {
+            console.error('ECAF upload error:', error);
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to upload photo to ECAF',
+            };
+        } finally {
+            setUploadingPhoto(false);
+        }
+    };
 
     const submit: FormEventHandler = async (e) => {
         e.preventDefault();
@@ -107,19 +214,45 @@ export default function Create() {
         };
 
         try {
+            // Step 1: Create customer
             const response = await axios.post('http://localhost:8000/api/v1/customer/create', apiData);
 
             if (response.data.success) {
-                const customer = response.data.customer;
-                const phone = customer?.contact?.mobile_no || data?.contact?.mobile_no || customer?.mobile_no;
-                if (!phone) {
-                    toast.error('Customer created but phone number not found', {
+                const customer = response.data.data?.original?.data || response.data.data;
+                setCreatedCustomerData(customer);
+                setCustomerCreated(true);
+
+                // Step 2: Upload photo to ECAF if we have NID data with photo
+                if (nidData && (nidData.nid_identity?.photo_base64 || nidData.identity?.photo_base64)) {
+                    const transactionId = customer.transaction_id || `txn_${Date.now()}`;
+
+                    toast.info('Uploading customer photo...', {
                         position: 'top-right',
-                        className: 'bg-yellow-50 text-yellow-800 border-yellow-100',
+                        className: 'bg-blue-50 text-blue-800 border-blue-100',
                     });
-                    return;
+
+                    const uploadResult = await uploadPhotoToEcaf(customer, transactionId);
+
+                    if (uploadResult.success) {
+                        toast.success('Customer created and photo uploaded successfully!', {
+                            position: 'top-right',
+                            className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
+                        });
+                    } else {
+                        toast.warning(`Customer created but photo upload failed: ${uploadResult.message}`, {
+                            position: 'top-right',
+                            className: 'bg-yellow-50 text-yellow-800 border-yellow-100',
+                        });
+                    }
+                } else {
+                    toast.success('Customer created successfully!', {
+                        position: 'top-right',
+                        className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
+                    });
                 }
 
+                // Step 3: Redirect to dashboard
+                const phone = customer?.contact?.mobile_no || data?.contact?.mobile_no || customer?.mobile_no;
                 if (phone) {
                     localStorage.setItem(
                         'auth',
@@ -128,24 +261,27 @@ export default function Create() {
                             authenticated: true,
                         }),
                     );
-                    router.get(
-                        route('customer.portal'),
-                        {
-                            phone: phone,
-                        },
-                        {
-                            preserveState: false,
-                        },
-                    );
-                }
 
-                toast.success(response.data.message, {
-                    position: 'top-right',
-                    className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
-                });
+                    // Add a small delay to show success message
+                    setTimeout(() => {
+                        router.get(
+                            route('dashboard'),
+                            {
+                                phone: phone,
+                            },
+                            {
+                                preserveState: false,
+                            },
+                        );
+                    }, 2000);
+                } else {
+                    toast.error('Customer created but phone number not found', {
+                        position: 'top-right',
+                        className: 'bg-yellow-50 text-yellow-800 border-yellow-100',
+                    });
+                }
             } else {
                 const { ret_code, ret_msg } = response.data;
-
                 const errorMessage = ret_msg?.split('@')[0].trim();
 
                 if (ret_code === '1251046016' && ret_msg.includes('Age')) {
@@ -199,6 +335,7 @@ export default function Create() {
             return newErrors;
         });
     };
+
     const handleNestedInputChange = (parent: string, field: string, value: string) => {
         setData(parent, {
             ...data[parent],
@@ -212,6 +349,7 @@ export default function Create() {
             return newErrors;
         });
     };
+
     const handleSelectChange = (field: string, value: string) => {
         setData(field, value);
         setFormErrors((prev) => {
@@ -220,6 +358,7 @@ export default function Create() {
             return newErrors;
         });
     };
+
     const clearFieldError = (fieldPath: string) => {
         setFormErrors((prev) => {
             const newErrors = { ...prev };
@@ -253,15 +392,53 @@ export default function Create() {
         </div>
     );
 
+    // Show loading state when uploading photo
+    if (uploadingPhoto) {
+        return (
+            <GuestLayout>
+                <div className="flex min-h-screen items-center justify-center">
+                    <Card className="w-full max-w-md">
+                        <CardContent className="flex flex-col items-center space-y-4 p-6 text-center">
+                            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
+                            <h2 className="text-xl font-semibold">Uploading Customer Photo</h2>
+                            <p className="text-gray-600">Please wait while we upload the photo from your National ID...</p>
+                        </CardContent>
+                    </Card>
+                </div>
+            </GuestLayout>
+        );
+    }
+
     return (
-        <CustomerLayout>
+        <GuestLayout>
             <Head title="Create Customer" />
-            {Object.keys(formErrors).length > 0 && (
-                <div className="mb-4 rounded-lg bg-red-50 p-4">
-                    <h3 className="font-medium text-red-800">Validation Errors</h3>
-                    <pre className="text-sm text-red-600">{JSON.stringify(formErrors, null, 2)}</pre>
+
+            {/* Photo Upload Status */}
+            {nidData && (nidData.nid_identity?.photo_base64 || nidData.identity?.photo_base64) && (
+                <div className="mx-auto max-w-4xl px-4 pb-4 sm:px-6">
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                        <div className="flex items-center gap-3">
+                            <Upload className="h-5 w-5 text-blue-600" />
+                            <div>
+                                <p className="font-medium text-blue-800">National ID Photo Available</p>
+                                <p className="text-sm text-blue-600">
+                                    Your photo from National ID verification will be automatically uploaded after customer creation.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
+
+            {Object.keys(formErrors).length > 0 && (
+                <div className="mx-auto max-w-4xl px-4 pb-4 sm:px-6">
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                        <h3 className="font-medium text-red-800">Validation Errors</h3>
+                        <pre className="text-sm text-red-600">{JSON.stringify(formErrors, null, 2)}</pre>
+                    </div>
+                </div>
+            )}
+
             <div className="mx-auto max-w-4xl space-y-6 px-4 pb-10 sm:px-6">
                 <div className="rounded-b-lg p-4 shadow-sm">
                     <h1 className="text-2xl font-bold text-gray-900">Create New Customer</h1>
@@ -336,9 +513,7 @@ export default function Create() {
                                                     data.customer_type === '2' ? 'bg-blue-100' : 'bg-gray-100'
                                                 }`}
                                             >
-                                                <Building
-                                                    className={`h-6 w-6 ${data.customer_type === 'enterprise' ? 'text-blue-600' : 'text-gray-600'}`}
-                                                />
+                                                <Building className={`h-6 w-6 ${data.customer_type === '2' ? 'text-blue-600' : 'text-gray-600'}`} />
                                             </div>
                                             <span className="font-medium">Enterprise</span>
                                             <span className="text-center text-xs text-gray-500">For business and organizations</span>
@@ -353,10 +528,8 @@ export default function Create() {
                                             />
                                         </div>
                                     </div>
-                                    {loading && <p>{typesLoading}</p>}
-                                    {formErrors.customer_type && (
-                                        <p className="text-sm font-medium text-destructive">{formErrors.customer_type || typesError}</p>
-                                    )}
+                                    {typesLoading && <p className="text-sm text-gray-500">Loading customer types...</p>}
+                                    {formErrors.customer_type && <p className="text-sm font-medium text-destructive">{formErrors.customer_type}</p>}
                                 </div>
                                 {/* Customer Category and Subcategory */}
                                 <>
@@ -387,23 +560,6 @@ export default function Create() {
                                         error={formErrors.customer_subcategory || subcategoriesError}
                                         loading={subcategoriesLoading}
                                     />
-                                    {/* <FormSelect
-                                        label="Customer Level"
-                                        id="customer_level"
-                                        value={data.customer_level || ''}
-                                        onChange={(value) => handleSelectChange('customer_level', value)}
-                                        options={[
-                                            { label: 'Vcc', value: '2' },
-                                            { label: 'Vic', value: '3' },
-                                            { label: 'Platinum', value: '4' },
-                                            { label: 'Gold', value: '5' },
-                                            { label: 'Silver', value: '6' },
-                                            { label: 'Bronze', value: '7' },
-                                            { label: 'Copper', value: '8' },
-                                        ]}
-                                        placeholder="Select Customer Level"
-                                        error={formErrors.customer_level}
-                                    /> */}
                                 </>
                                 <FormSelect
                                     label="Title"
@@ -575,7 +731,6 @@ export default function Create() {
                                         options={[
                                             { label: 'SMS', value: '1' },
                                             { label: 'Email', value: '2' },
-                                            // { label: 'Ivr', value: '3' },
                                         ]}
                                         placeholder="Select notification mode"
                                         error={formErrors['contact.notification_mode']}
@@ -938,15 +1093,26 @@ export default function Create() {
                         <Button
                             type="button"
                             onClick={submit}
-                            disabled={processing}
-                            className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md`}
+                            disabled={processing || uploadingPhoto}
+                            className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${
+                                uploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
+                            }`}
                         >
-                            Submit Customer
-                            <CheckCircle className="h-4 w-4" />
+                            {uploadingPhoto ? (
+                                <>
+                                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                                    Creating...
+                                </>
+                            ) : (
+                                <>
+                                    Submit Customer
+                                    <CheckCircle className="h-4 w-4" />
+                                </>
+                            )}
                         </Button>
                     )}
                 </div>
             </div>
-        </CustomerLayout>
+        </GuestLayout>
     );
 }

@@ -1,6 +1,6 @@
 import { FileText } from 'lucide-react';
 import { useState } from 'react';
-import SurveyCard from './SurveyCard';
+import SurveyCard from './survey-card';
 
 interface SurveyTableProps {
     surveys: any[];

@@ -11,7 +11,8 @@ interface Survey {
     address?: string;
     contact_person?: string;
     main_offer_id?: string;
-    serviceType?: string;
+    service_type?: string;
+    cancellation_reason?: string;
 }
 
 interface UseSurveyListReturn {
@@ -104,9 +105,10 @@ export function useSurveyList(): UseSurveyListReturn {
 
                 const json: ApiResponse = await res.json();
 
-                if (!json.success) {
-                    throw new Error('API returned unsuccessful response');
-                }
+                // if (!json.success) {
+                //     throw new Error('API returned unsuccessful response');
+                // }
+                
 
                 const surveysData = json.data || [];
 
@@ -141,7 +143,7 @@ export function useSurveyList(): UseSurveyListReturn {
                             customer_code: 'demo-customer',
                             address: '123 Main Street, Demo City',
                             contact_person: 'John Doe',
-                            serviceType: 'voice',
+                            service_type: 'voice',
                         },
                         {
                             id: '2',
@@ -153,7 +155,7 @@ export function useSurveyList(): UseSurveyListReturn {
                             customer_code: 'demo-customer',
                             address: '456 Oak Avenue, Sample Town',
                             contact_person: 'Jane Smith',
-                            serviceType: 'internet',
+                            service_type: 'internet',
                         },
                         {
                             id: '3',
@@ -165,7 +167,8 @@ export function useSurveyList(): UseSurveyListReturn {
                             customer_code: 'demo-customer',
                             address: '789 Pine Road, Test Village',
                             contact_person: 'Bob Johnson',
-                            serviceType: 'combo',
+                            service_type: 'combo',
+                            cancellation_reason: 'Cancellation due to change in plans.',
                         },
                         {
                             id: '4',
@@ -177,8 +180,8 @@ export function useSurveyList(): UseSurveyListReturn {
                             customer_code: 'demo-customer',
                             address: '789 Pine Road, Test Village',
                             contact_person: 'Bob Johnson',
-                            serviceType: 'combo',
-                        }
+                            service_type: 'combo',
+                        },
                     ];
                     setSurveys(fakeSurveys);
                     setHasMore(false);

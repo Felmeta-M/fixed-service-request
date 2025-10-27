@@ -1,5 +1,5 @@
 import AuthLayout from '@/layouts/AuthLayout';
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 export default function CreateSubscriber() {
@@ -144,8 +144,10 @@ export default function CreateSubscriber() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    title: 'Service Subscription Fee',
+                    // title: 'Service Subscription Fee',
+                    title: surveyOrderId,
                     amount: calculatedAmount,
+                    customer_code: customerData?.customer?.code || '',
                 }),
             });
 
@@ -230,7 +232,7 @@ export default function CreateSubscriber() {
                         <div className="bg-primary px-6 py-4">
                             <h1 className="text-2xl font-bold text-white">
                                 {step === 'checkout' && 'Service Details'}
-                                {step === 'payment' && 'Payment Summary'}
+                                {step === 'payment' && 'Invoice Summary'}
                             </h1>
                             <p className="text-primary-100 mt-1">
                                 {step === 'checkout' && 'Your service details'}
@@ -305,7 +307,7 @@ export default function CreateSubscriber() {
 
                                     <div className="flex justify-end space-x-4 border-t border-gray-200 pt-6">
                                         <button
-                                            onClick={() => setStep('subscriber')}
+                                            onClick={() => router.visit('/dashboard')}
                                             className="rounded-md border border-gray-300 px-6 py-2 text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-primary focus:outline-none"
                                             disabled={loading}
                                         >
@@ -347,7 +349,7 @@ export default function CreateSubscriber() {
                             {step === 'payment' && feeData && (
                                 <>
                                     <div className="mb-8">
-                                        <h2 className="mb-4 text-lg font-semibold text-gray-900">Payment Summary</h2>
+                                        <h2 className="mb-4 text-lg font-semibold text-gray-900">Invoice Summary</h2>
 
                                         <div className="mb-6 rounded-lg border border-gray-200 p-4">
                                             <div className="mb-4">

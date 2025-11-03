@@ -2,30 +2,34 @@
 
 namespace App\Enums;
 
-enum FFDServiceProvisionStatus: string
+enum FFDServiceProvisionStatus: int
 {
-    case Waiting    = 'waiting';
-    case Completed  = 'completed';
-    case Subscribed = 'subscribed';
-    case Reserved   = 'reserved';
-    case Released   = 'released';
-    case Canceled   = 'canceled';
-    case Pending    = 'pending';
-    case Paid       = 'paid';
-    case Rejected   = 'rejected';
+    case Created    = 0;
+    case Processing = 1;
+    case Suspended  = 2;
+    case Waiting    = 3;
+    case Failed     = 4;
+    case Completed  = 5;
+    case Ready      = 6;
+    case Cancelled  = 9;
+    case Pending    = 10;
+    case Paid       = 11;
+    case Refund     = 13;
 
     public function label(): string
     {
         return match ($this) {
-            self::Waiting    => 'Survey waiting',
-            self::Completed  => 'Survey completed',
-            self::Canceled   => 'Survey canceled',
-            self::Subscribed => 'Service subscribed',
-            self::Reserved   => 'Service number reserved',
-            self::Released   => 'Service number released',
-            self::Pending    => 'Payment pending',
-            self::Paid       => 'Payment completed',
-            self::Rejected   => 'Payment rejected',
+            self::Created    => 'Created',
+            self::Processing => 'Processing',
+            self::Suspended  => 'Suspended',
+            self::Waiting    => 'Waiting',
+            self::Failed,
+            self::Completed  => 'Completed',
+            self::Ready      => 'Ready',
+            self::Cancelled  => 'Cancelled',
+            self::Pending    => 'Pending',
+            self::Paid       => 'Paid',
+            self::Refund     => 'Refund',
         };
     }
 

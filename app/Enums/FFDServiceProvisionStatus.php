@@ -23,7 +23,7 @@ enum FFDServiceProvisionStatus: int
             self::Processing => 'Processing',
             self::Suspended  => 'Suspended',
             self::Waiting    => 'Waiting',
-            self::Failed,
+            self::Failed     => 'Failed',
             self::Completed  => 'Completed',
             self::Ready      => 'Ready',
             self::Cancelled  => 'Cancelled',

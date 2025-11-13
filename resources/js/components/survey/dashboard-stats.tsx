@@ -41,18 +41,18 @@ export default function DashboardStats({ stats }: DashboardStatsProps) {
             label: 'Completed',
             value: stats.completed,
             icon: CheckCircle,
-            color: 'bg-green-500',
-            bgColor: 'bg-green-50',
-            textColor: 'text-green-700',
+            color: 'bg-primary',
+            bgColor: 'bg-primary/10',
+            textColor: 'text-primary',
         },
-        {
-            label: 'Subscribed',
-            value: stats.subscribed,
-            icon: CheckCircle,
-            color: 'bg-emerald-500',
-            bgColor: 'bg-emerald-50',
-            textColor: 'text-emerald-700',
-        },
+        // {
+        //     label: 'Subscribed',
+        //     value: stats.subscribed,
+        //     icon: CheckCircle,
+        //     color: 'bg-emerald-500',
+        //     bgColor: 'bg-emerald-50',
+        //     textColor: 'text-emerald-700',
+        // },
         {
             label: 'Cancelled',
             value: stats.cancelled,
@@ -64,7 +64,7 @@ export default function DashboardStats({ stats }: DashboardStatsProps) {
     ];
 
     return (
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {statCards.map((stat) => (
                 <div key={stat.label} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:shadow-md">
                     <div className="flex items-center">

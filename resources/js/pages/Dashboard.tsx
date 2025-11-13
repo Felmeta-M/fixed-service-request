@@ -1,6 +1,6 @@
+import SurveyTable from '@/components/survey-table';
 import DashboardStats from '@/components/survey/dashboard-stats';
-import SurveyFilters from '@/components/survey/survey-filters';
-import SurveyTable from '@/components/survey/survey-table';
+// import SurveyTable from '@/components/survey/survey-table';
 import { useSurveyList } from '@/hooks/use-survey-list';
 import AuthLayout from '@/layouts/AuthLayout';
 import { useActiveCustomer } from '@/store/customer-store';
@@ -104,8 +104,6 @@ export default function Dashboard() {
                             <div className="flex-1">
                                 <h1 className="text-2xl font-bold text-gray-900">Survey Dashboard</h1>
                                 <p className="mt-2 text-gray-600">Manage your survey orders and track their progress</p>
-
-                                
                             </div>
 
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -134,14 +132,14 @@ export default function Dashboard() {
 
                     <DashboardStats stats={stats} />
 
-                    {!loading && (
+                    {/* {!loading && (
                         <div className="mb-4 flex items-center justify-between">
                             <p className="text-sm text-gray-600">
                                 Showing <span className="font-semibold">{surveys.length}</span>
                                 {total > surveys.length ? ` of ${total}` : ''} survey orders
-                            </p>
+                            </p> */}
 
-                            {/* {surveys.length > 0 && (
+                    {/* {surveys.length > 0 && (
                                 <button
                                     onClick={handleRefresh}
                                     disabled={loading}
@@ -151,17 +149,17 @@ export default function Dashboard() {
                                     Refresh
                                 </button>
                             )} */}
-                        </div>
-                    )}
+                    {/* </div> */}
+                    {/* )} */}
 
-                    <SurveyFilters
+                    {/* <SurveyFilters
                         searchTerm={searchTerm}
                         onSearchChange={handleSearchChange}
                         statusFilter={statusFilter}
                         onStatusFilterChange={handleStatusFilterChange}
                         onRefresh={handleRefresh}
                         loading={loading}
-                    />
+                    /> */}
 
                     {error && (
                         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">

@@ -29,7 +29,7 @@ class SurveyOrderController extends Controller
 
         $query->where('customer_code', $request->input('customer_code'))->whereNull('deleted_at');
 
-        $surveyRequests = $query->paginate(10);
+        $surveyRequests = $query->latest()->paginate(10);
 
         return SurveyRequestResource::collection($surveyRequests);
     }

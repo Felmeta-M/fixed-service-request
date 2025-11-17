@@ -1,13 +1,21 @@
 <?php
 
+use App\Http\Controllers\Api\v1\EsignetController;
 use App\Http\Controllers\Api\v1\NidController;
 use App\Http\Controllers\OtpAuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SupportRequestController;
 use Inertia\Inertia;
 
-Route::get('/', fn() => Inertia::render('Home'))->name('home');
+Route::get('/', fn() => Inertia::render('Login'))->name('home');
+// Route::get('/', fn() => Inertia::render('Home'))->name('home');
 Route::get('/verification', fn() => Inertia::render('Verification'))->name('verification');
+
+Route::get('/login/esignet', [EsignetController::class, 'redirectToEsignet'])
+    ->name('esignet.login');
+
+Route::get('/callback', [EsignetController::class, 'handleEsignetCallback'])
+    ->name('esignet.callback');
 
 // NID routes in web.php with session support
 Route::prefix('api/v1')->middleware('web')->group(function () {

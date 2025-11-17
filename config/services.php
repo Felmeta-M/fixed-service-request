@@ -263,4 +263,16 @@ return [
         'assertion_type' => env('FAYDA_ASSERTION_TYPE'),
     ],
 
+    'esignet' => [
+        'client_id'              => env('NEXT_PUBLIC_CLIENT_ID'),
+        'redirect_uri'           => env('NEXT_PUBLIC_REDIRECT_URI'),
+        'authorization_endpoint' => env('NEXT_PUBLIC_AUTHORIZATION_ENDPOINT'),
+        'token_endpoint'         => env('NEXT_PUBLIC_TOKEN_ENDPOINT'),
+        'userinfo_endpoint'      => env('NEXT_PUBLIC_USERINFO_ENDPOINT'),
+        'client_assertion_type'  => env('NEXT_PUBLIC_CLIENT_ASSERTION_TYPE'),
+        'private_key'            => env('PRIVATE_KEY'),
+        'expiration_time'        => env('EXPIRATION_TIME', 15),
+        'algorithm'              => env('ALGORITHM', 'RS256'),
+    ],
+
 ];

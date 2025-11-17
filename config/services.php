@@ -36,9 +36,9 @@ return [
     ],
 
     'api_sec' => [
-        'timeout'       => 15,
-        'max_retries'   => 3,
-        'rate_limit'    => 5,   // requests per second
+        'timeout' => 15,
+        'max_retries' => 3,
+        'rate_limit' => 5,   // requests per second
         'decay_seconds' => 60,
     ],
 
@@ -55,7 +55,7 @@ return [
         'access_password' => env('SOAP_ACCESS_PASSWORD'),
     ],
 
-    'customer' =>  [
+    'customer' => [
         'access_user' => env('CUSTOMER_ACCESS_USER', 'kiosk'),
         'access_password' => env('CUSTOMER_ACCESS_PWD'),
         'channel_id' => env('CUSTOMER_CHANNEL_ID', '61'),
@@ -72,12 +72,12 @@ return [
     ],
 
     'query_customer_by_service_number' => [
-        'endpoint'      => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_CUSTOMER_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
-        'language'               => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_LANGUAGE'),
-        'channel_id'             => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_CHANNEL_ID'),
-        'technical_channel_id'   => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_TECH_CHANNEL_ID'),
-        'access_user'            => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_ACCESS_USER'),
-        'access_pwd'             => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_ACCESS_PWD'),
+        'endpoint' => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_CUSTOMER_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'language' => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_LANGUAGE'),
+        'channel_id' => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_CHANNEL_ID'),
+        'technical_channel_id' => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_TECH_CHANNEL_ID'),
+        'access_user' => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_ACCESS_USER'),
+        'access_pwd' => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_ACCESS_PWD'),
     ],
 
     'survey' => [
@@ -97,11 +97,11 @@ return [
     ],
 
     'cancel_survey' => [
-        'endpoint'         => env('CANCEL_SURVEY_ENDPOINT', "REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF"),
-        'channel_id'       => env('CANCEL_SURVEY_CHANNEL_ID', '59'),
-        'tech_channel_id'  => env('CANCEL_SURVEY_TECH_CHANNEL_ID', '35'),
-        'access_user'      => env('CANCEL_SURVEY_USER', 'ecaf'),
-        'access_pwd'       => env('CANCEL_SURVEY_PASSWORD'),
+        'endpoint' => env('CANCEL_SURVEY_ENDPOINT', "REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF"),
+        'channel_id' => env('CANCEL_SURVEY_CHANNEL_ID', '59'),
+        'tech_channel_id' => env('CANCEL_SURVEY_TECH_CHANNEL_ID', '35'),
+        'access_user' => env('CANCEL_SURVEY_USER', 'ecaf'),
+        'access_pwd' => env('CANCEL_SURVEY_PASSWORD'),
     ],
 
     'query_survey_summery' => [
@@ -242,13 +242,25 @@ return [
     ],
 
     'telebirr' => [
-        'base_url'       => env('TELEBIRR_BASE_URL', 'https://developerportal.ethiotelebirr.et:38443/apiaccess/payment/gateway'),
-        'web_base_url'       => env('WEB_TELEBIRR_BASE_URL', 'https://developerportal.ethiotelebirr.et:38443/payment/web/h5/paygate?'),
-        'fabric_app_id'  => env('TELEBIRR_APP_ID', 'REDACTED_APP_KEY'),
-        'app_secret'     => env('TELEBIRR_APP_SECRET', 'REDACTED_SECRET'),
+        'base_url' => env('TELEBIRR_BASE_URL', 'https://developerportal.ethiotelebirr.et:38443/apiaccess/payment/gateway'),
+        'web_base_url' => env('WEB_TELEBIRR_BASE_URL', 'https://developerportal.ethiotelebirr.et:38443/payment/web/h5/paygate?'),
+        'fabric_app_id' => env('TELEBIRR_APP_ID', 'REDACTED_APP_KEY'),
+        'app_secret' => env('TELEBIRR_APP_SECRET', 'REDACTED_SECRET'),
         'merchant_app_id' => env('TELEBIRR_MERCHANT_APP_ID', 'REDACTED_MERCHANT_APP_ID'),
         'merchant_code' => env('TELEBIRR_MERCHANT_CODE', 'REDACTED_MERCHANT_CODE'),
-        "private_key" => "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC/ZcoOng1sJZ4CegopQVCw3HYqqVRLEudgT+dDpS8fRVy7zBgqZunju2VRCQuHeWs7yWgc9QGd4/8kRSLY+jlvKNeZ60yWcqEY+eKyQMmcjOz2Sn41fcVNgF+HV3DGiV4b23B6BCMjnpEFIb9d99/TsjsFSc7gCPgfl2yWDxE/Y1B2tVE6op2qd63YsMVFQGdre/CQYvFJENpQaBLMq4hHyBDgluUXlF0uA1X7UM0ZjbFC6ZIB/Hn1+pl5Ua8dKYrkVaecolmJT/s7c/+/1JeN+ja8luBoONsoODt2mTeVJHLF9Y3oh5rI+IY8HukIZJ1U6O7/JcjH3aRJTZagXUS9AgMBAAECggEBALBIBx8JcWFfEDZFwuAWeUQ7+VX3mVx/770kOuNx24HYt718D/HV0avfKETHqOfA7AQnz42EF1Yd7Rux1ZO0e3unSVRJhMO4linT1XjJ9ScMISAColWQHk3wY4va/FLPqG7N4L1w3BBtdjIc0A2zRGLNcFDBlxl/CVDHfcqD3CXdLukm/friX6TvnrbTyfAFicYgu0+UtDvfxTL3pRL3u3WTkDvnFK5YXhoazLctNOFrNiiIpCW6dJ7WRYRXuXhz7C0rENHyBtJ0zura1WD5oDbRZ8ON4v1KV4QofWiTFXJpbDgZdEeJJmFmt5HIi+Ny3P5n31WwZpRMHGeHrV23//0CgYEA+2/gYjYWOW3JgMDLX7r8fGPTo1ljkOUHuH98H/a/lE3wnnKKx+2ngRNZX4RfvNG4LLeWTz9plxR2RAqqOTbX8fj/NA/sS4mru9zvzMY1925FcX3WsWKBgKlLryl0vPScq4ejMLSCmypGz4VgLMYZqT4NYIkU2Lo1G1MiDoLy0CcCgYEAwt77exynUhM7AlyjhAA2wSINXLKsdFFF1u976x9kVhOfmbAutfMJPEQWb2WXaOJQMvMpgg2rU5aVsyEcuHsRH/2zatrxrGqLqgxaiqPz4ELINIh1iYK/hdRpr1vATHoebOv1wt8/9qxITNKtQTgQbqYci3KV1lPsOrBAB5S57nsCgYAvw+cagS/jpQmcngOEoh8I+mXgKEET64517DIGWHe4kr3dO+FFbc5eZPCbhqgxVJ3qUM4LK/7BJq/46RXBXLvVSfohR80Z5INtYuFjQ1xJLveeQcuhUxdK+95W3kdBBi8lHtVPkVsmYvekwK+ukcuaLSGZbzE4otcn47kajKHYDQKBgDbQyIbJ+ZsRw8CXVHu2H7DWJlIUBIS3s+CQ/xeVfgDkhjmSIKGX2to0AOeW+S9MseiTE/L8a1wY+MUppE2UeK26DLUbH24zjlPoI7PqCJjl0DFOzVlACSXZKV1lfsNEeriC61/EstZtgezyOkAlSCIH4fGr6tAeTU349Bnt0RtvAoGBAObgxjeH6JGpdLz1BbMj8xUHuYQkbxNeIPhH29CySn0vfhwg9VxAtIoOhvZeCfnsCRTj9OZjepCeUqDiDSoFznglrKhfeKUndHjvg+9kiae92iI6qJudPCHMNwP8wMSphkxUqnXFR3lr9A765GA980818UWZdrhrjLKtIIZdh+X1",
+        "private_key" => env('TELEBIRR_PRIVATE_KEY', ''),
         'notify_url' => env("NOTIFY_URL", 'https://onlinefixedservices.ethiotelecom.et/api/v1/payment/notify')
     ],
+
+    'fayda' => [
+        'client_id' => env('FAYDA_CLIENT_ID'),
+        'redirect_uri' => env('FAYDA_REDIRECT_URI'),
+        'auth_url' => env('FAYDA_AUTH_URL'),
+        'token_url' => env('FAYDA_TOKEN_URL'),
+        'userinfo_url' => env('FAYDA_USERINFO_URL'),
+        'private_jwk' => env('FAYDA_PRIVATE_JWK'),
+        'alg' => env('FAYDA_ALG', 'RS256'),
+        'assertion_type' => env('FAYDA_ASSERTION_TYPE'),
+    ],
+
 ];

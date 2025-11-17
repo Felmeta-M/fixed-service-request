@@ -1,0 +1,86 @@
+### STEP 0: Environment Variables (for PHPStorm HTTP client)
+@client_id = crXYIYg2cJiNTaw5t-peoPzCRo-3JATNfBd5A86U8t0
+@redirect_uri = http://localhost:3000/callback
+@auth_url = https://esignet.ida.fayda.et/authorize
+@token_url = https://esignet.ida.fayda.et/v1/esignet/oauth/v2/token
+@userinfo_url = https://esignet.ida.fayda.et/v1/esignet/oidc/userinfo
+@state = b8c201c0e2d093e8a46ec9fb8041506d
+@code = 5upaaxGDc1mowg2Cd0mMAxz-1frIwebyrUMeoRFCGfI
+@code_verifier = ImV6FmnN48x04zoCRlSjrDl1-FELrwH6T6k64ZeJcxA
+@access_token=
+
+# Helper: Generate a random state (you can manually replace in requests)
+# In PHPStorm, just replace {{GENERATE_RANDOM_STATE}} with a random string.
+
+---
+
+### STEP 1: Start OAuth Login (get authorization URL)
+GET http://localhost:8000/api/v1/fayda/auth/start
+Accept: application/json
+
+# Response Example:
+# {
+#   "auth_url": "https://esignet.ida.fayda.et/authorize?client_id=...&state=abc123",
+#   "state": "abc123"
+# }
+
+---
+
+### STEP 2: Visit Authorization URL in Browser
+# Copy the `auth_url` returned from Step 1 and open it in your browser.
+# Login and authorize.
+# Fayda will redirect you to your redirect_uri, e.g.,
+# http://localhost:3000/callback?code=AUTH_CODE&state=abc123
+# Copy the `code` and `state` from URL.
+
+### STEP 3: Exchange Authorization Code for Tokens
+# Replace {{code}} with code from browser redirect
+# Replace {{state}} with state returned in Step 1
+POST http://localhost:8000/api/v1/fayda/auth/callback
+Content-Type: application/json
+
+{
+    "code": "{{code}}",
+    "state": "{{state}}",
+    "code_verifier": "{{code_verifier}}"
+}
+
+
+### STEP 4: Fetch User Info using Access Token
+# Replace {{access_token}} with access_token from Step 3
+GET {{userinfo_url}}
+Authorization: Bearer {{access_token}}
+Accept: application/json
+
+# Response Example:
+# {
+#   "sub": "12xxxxxx",
+#   "given_name": "John",
+#   "family_name": "Doe",
+#   "email": "john.doe@example.com"
+# }
+
+###
+
+# curl -X POST https://fayda.gov.et/oauth2/token
+# -d "grant_type=authorization_code"
+# -d "code=PASTE_YOUR_CODE_HERE"
+# -d "redirect_uri=https://yourapp.com/callback"
+# -d "client_id=YOUR_CLIENT_ID"
+# -d "code_verifier=PASTE_CODE_VERIFIER"
+# -d "client_assertion=PASTE_JWT_HERE"
+# -d "client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+POST https://fayda.gov.et/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type = authorization_code &
+code = PASTE_YOUR_CODE_HERE &
+redirect_uri = https://yourapp.com/callback &
+client_id = YOUR_CLIENT_ID &
+code_verifier = PASTE_CODE_VERIFIER &
+client_assertion = PASTE_JWT_HERE &
+client_assertion_type = urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+
+###
+
+

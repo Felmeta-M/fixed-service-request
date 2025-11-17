@@ -6,26 +6,32 @@ use App\Http\Controllers\Api\v1\BandwidthOptionController;
 use App\Http\Controllers\Api\v1\CancelSurveyOrderController;
 use App\Http\Controllers\Api\v1\CustomerController;
 use App\Http\Controllers\Api\v1\EcafController;
+use App\Http\Controllers\Api\v1\FaydaAuthController;
 use App\Http\Controllers\Api\v1\LocationController;
-use App\Http\Controllers\Api\v1\NidController;
 use App\Http\Controllers\Api\v1\OccupationController;
 use App\Http\Controllers\Api\v1\OneOffFeeController;
 use App\Http\Controllers\Api\v1\PaymentController;
-use App\Http\Controllers\Api\v1\TelebirrController;
 use App\Http\Controllers\Api\v1\PrimaryOfferingController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderSummaryController;
 use App\Http\Controllers\Api\v1\ReserveNumberServiceController;
 use App\Http\Controllers\Api\v1\ResourceCheckController;
-use App\Http\Controllers\Api\v1\SurveyOrderController;
-use App\Http\Controllers\Api\v1\SurveyTypeController;
 use App\Http\Controllers\Api\v1\ServiceClientController;
 use App\Http\Controllers\Api\v1\SubsriptionController;
+use App\Http\Controllers\Api\v1\SurveyOrderController;
+use App\Http\Controllers\Api\v1\SurveyTypeController;
+use App\Http\Controllers\Api\v1\TelebirrController;
 use App\Http\Middleware\AuthenticateServiceClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
+    // Start OAuth flow: returns auth_url, state, and code_verifier
+    Route::get('fayda/auth/start', [FaydaAuthController::class, 'start']);
+
+    // Callback: frontend sends code, state, and code_verifier
+    Route::post('fayda/auth/callback', [FaydaAuthController::class, 'callback']);
+
     Route::middleware(['throttle:service_client'])->group(function () {
         Route::post('/issue-token', [ServiceClientController::class, 'issueToken']);
         Route::get('/fetch-token', function (Request $request) {

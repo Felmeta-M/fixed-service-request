@@ -40,6 +40,7 @@ interface ApiResponse {
 
 export function useSurveyList(): UseSurveyListReturn {
     const [surveys, setSurveys] = useState<Survey[]>([]);
+    console.log('🚀 ~ useSurveyList ~ surveys:', surveys);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
@@ -108,7 +109,6 @@ export function useSurveyList(): UseSurveyListReturn {
                 // if (!json.success) {
                 //     throw new Error('API returned unsuccessful response');
                 // }
-                
 
                 const surveysData = json.data || [];
 

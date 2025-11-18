@@ -7,8 +7,11 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SupportRequestController;
 use Inertia\Inertia;
 
-Route::get('/', fn() => Inertia::render('Login'))->name('login');
-Route::get('/home', fn() => Inertia::render('Home'))->name('home');
+
+Route::get('/login', fn() => Inertia::render('Login'))->name('login');
+
+// Route::get('/', fn() => Inertia::render('Login'))->name('login');
+Route::get('/', fn() => Inertia::render('Home'))->name('home');
 Route::get('/verification', fn() => Inertia::render('Verification'))->name('verification');
 
 Route::get('/login/esignet', [EsignetController::class, 'redirectToEsignet'])
@@ -34,6 +37,9 @@ Route::middleware('guest:otp')->group(function () {
 
 // OTP protected pages
 Route::middleware(['otp.auth'])->group(function () {
+    // Main service page (landing page after login)
+    Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name('services');
+    Route::get('/services/new', action: fn() => Inertia::render('Services/new'))->name('services.new');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     // Route::get('/survey-requests', fn() => Inertia::render('SurveyRequests/Index'))->name('survey.requests.dashboard');
     Route::get('/support-request', [SupportRequestController::class, 'index'])->name('support.request');

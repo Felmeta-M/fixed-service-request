@@ -821,7 +821,7 @@ export default function CreateSubscriber() {
             '1207609454': 'Fixed Voice',
             '102647257': 'Combo Services',
         };
-        return serviceTypes[offeringId] || 'Telecom Service';
+        return serviceTypes[offeringId] || 'Fixed Broadband';
     };
 
     return (
@@ -992,7 +992,7 @@ export default function CreateSubscriber() {
                                                     <p className="mt-1 text-sm text-blue-600">{getServiceTypeName(offeringId)} Service</p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-sm text-blue-600">Order #</p>
+                                                    <p className="text-sm text-blue-600">Order Number</p>
                                                     <p className="font-semibold text-blue-900">{surveyOrderId}</p>
                                                 </div>
                                             </div>

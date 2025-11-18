@@ -1,131 +1,159 @@
 import { Link } from '@inertiajs/react';
-import { Facebook, Linkedin, Mail, MapPin, Network, Phone, Twitter } from 'lucide-react';
+import { Facebook, Instagram, Mail, MapPin, Network, Phone, Twitter, Youtube } from 'lucide-react';
 
-export function Footer() {
+export const Footer = () => {
+    const currentYear = new Date().getFullYear();
+
+    const footerSections = [
+        {
+            title: 'Services',
+            links: [
+                { name: 'Fixed Voice', href: '#' },
+                { name: 'Fixed Broadband', href: '#' },
+                { name: 'Combo Packages', href: '#' },
+                { name: 'Business Solutions', href: '#' },
+                { name: 'Enterprise Services', href: '#' },
+            ],
+        },
+        {
+            title: 'Support',
+            links: [
+                { name: 'Help Center', href: '#' },
+                { name: 'Service Status', href: '#' },
+                { name: 'Contact Support', href: '#' },
+                { name: 'Service Centers', href: '#' },
+                { name: 'FAQ', href: '#' },
+            ],
+        },
+        {
+            title: 'Company',
+            links: [
+                { name: 'About Us', href: '#' },
+                { name: 'Careers', href: '#' },
+                { name: 'News & Updates', href: '#' },
+                { name: 'Privacy Policy', href: '#' },
+                { name: 'Terms of Service', href: '#' },
+            ],
+        },
+        {
+            title: 'Resources',
+            links: [
+                { name: 'Blog', href: '#' },
+                { name: 'Developers', href: '#' },
+                { name: 'Partners', href: '#' },
+                { name: 'Sitemap', href: '#' },
+                { name: 'Downloads', href: '#' },
+            ],
+        },
+    ];
+
+    const socialLinks = [
+        { icon: Facebook, href: '#', label: 'Facebook' },
+        { icon: Twitter, href: '#', label: 'Twitter' },
+        { icon: Instagram, href: '#', label: 'Instagram' },
+        { icon: Youtube, href: '#', label: 'YouTube' },
+    ];
+
+    const contactInfo = [
+        { icon: Phone, text: '+251 11 123 4567' },
+        { icon: Mail, text: 'support@ethiotelecom.et' },
+        { icon: MapPin, text: 'Addis Ababa, Ethiopia' },
+    ];
+
     return (
-        <footer className="rounded-t-md bg-gray-800 text-white sm:px-8">
-            <div className="grid gap-8 pt-2 md:grid-cols-4">
-                {/* Brand Section */}
-                <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                        <div className="bg-primarybg flex h-10 w-10 items-center justify-center rounded-lg">
-                            <Network className="h-6 w-6 text-primary" />
+        <footer className="bg-gray-900 text-white">
+            {/* Main Footer Content */}
+            <div className="mx-auto max-w-screen-2xl px-4 py-16 sm:px-6 lg:px-2">
+                <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+                    {/* Brand Section */}
+                    <div className="xl:col-span-2">
+                        <div className="mb-6 flex items-center space-x-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-cyan-800">
+                                <Network className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-bold">EthioTelecom</h3>
+                                <p className="text-gray-400">Fixed Line Services</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="text-xl font-bold">Ethio Telecom Fixed Services</h3>
-                            <p className="text-sm text-gray-300">The Right to Connect</p>
+                        <p className="mb-6 max-w-md text-lg text-gray-400">
+                            Ethiopia's leading telecommunications provider, connecting communities and empowering digital transformation across the
+                            nation.
+                        </p>
+
+                        {/* Contact Information */}
+                        <div className="mb-6 space-y-3">
+                            {contactInfo.map((item, index) => (
+                                <div key={index} className="flex items-center space-x-3 text-gray-400">
+                                    <item.icon className="h-4 w-4" />
+                                    <span className="text-sm">{item.text}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Social Links */}
+                        <div className="flex space-x-4">
+                            {socialLinks.map((social, index) => (
+                                <Link
+                                    key={index}
+                                    href={social.href}
+                                    className="rounded-lg bg-gray-800 p-2 transition-colors duration-200 hover:bg-emerald-600"
+                                    aria-label={social.label}
+                                >
+                                    <social.icon className="h-5 w-5" />
+                                </Link>
+                            ))}
                         </div>
                     </div>
-                    <p className="text-sm text-gray-200">
-                        Connecting Ethiopia with reliable fixed line voice and high-speed internet services. Your trusted telecommunications partner.
-                    </p>
-                    <div className="flex space-x-4">
-                        <a href="#" className="text-gray-200 transition-colors hover:text-primary">
-                            <Facebook className="h-5 w-5" />
-                        </a>
-                        <a href="#" className="text-gray-200 transition-colors hover:text-primary">
-                            <Twitter className="h-5 w-5" />
-                        </a>
-                        <a href="#" className="text-gray-200 transition-colors hover:text-primary">
-                            <Linkedin className="h-5 w-5" />
-                        </a>
-                    </div>
-                </div>
 
-                {/* Services */}
-                <div>
-                    <h4 className="mb-4 text-lg font-semibold">Services</h4>
-                    <ul className="space-y-2 text-gray-200">
-                        <li>
-                            <Link href="#" className="transition-colors hover:text-primary">
-                                Fixed Line Voice
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="#" className="transition-colors hover:text-primary">
-                                High-Speed Internet
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="#" className="transition-colors hover:text-primary">
-                                Bundle Packages
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="#" className="transition-colors hover:text-primary">
-                                Enterprise Solutions
-                            </Link>
-                        </li>
-                    </ul>
-                </div>
-
-                {/* Support */}
-                <div>
-                    <h4 className="mb-4 text-lg font-semibold">Support</h4>
-                    <ul className="space-y-2 text-gray-200">
-                        <li>
-                            <Link href="/portal" className="transition-colors hover:text-primary">
-                                Customer Portal
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="#" className="transition-colors hover:text-primary">
-                                Help Center
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="#" className="transition-colors hover:text-primary">
-                                Technical Support
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="#" className="transition-colors hover:text-primary">
-                                Service Status
-                            </Link>
-                        </li>
-                    </ul>
-                </div>
-
-                {/* Contact */}
-                <div>
-                    <h4 className="mb-4 text-lg font-semibold">Contact Us</h4>
-                    <div className="space-y-3 text-gray-200">
-                        <div className="flex items-center space-x-3">
-                            <Phone className="h-4 w-4" />
-                            <span className="text-sm">+251-11-123-4567</span>
+                    {/* Footer Links */}
+                    {footerSections.map((section, index) => (
+                        <div key={index}>
+                            <h4 className="mb-6 text-lg font-semibold text-white">{section.title}</h4>
+                            <ul className="space-y-3">
+                                {section.links.map((link, linkIndex) => (
+                                    <li key={linkIndex}>
+                                        <Link
+                                            href={link.href}
+                                            className="group flex items-center space-x-2 text-sm text-gray-400 transition-colors duration-200 hover:text-white"
+                                        >
+                                            <span className="h-1 w-1 rounded-full bg-emerald-500 opacity-0 transition-opacity duration-200 group-hover:opacity-100"></span>
+                                            <span>{link.name}</span>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
-                        <div className="flex items-center space-x-3">
-                            <Mail className="h-4 w-4" />
-                            <span className="text-sm">support@ethiotelecom.et</span>
-                        </div>
-                        <div className="flex items-start space-x-3">
-                            <MapPin className="mt-0.5 h-4 w-4" />
-                            <span className="text-sm">
-                                Bole Road, Addis Ababa
-                                <br />
-                                Ethiopia
-                            </span>
-                        </div>
-                    </div>
+                    ))}
                 </div>
             </div>
 
-            <div className="mt-6 border-t border-green-800 pt-6">
-                <div className="flex flex-col items-center justify-between md:flex-row">
-                    <p className="text-sm text-gray-200">© 2025 Ethio Telecom. All rights reserved.</p>
-                    <div className="mt-4 flex space-x-6 md:mt-0">
-                        <Link href="#" className="text-sm text-gray-200 transition-colors hover:text-primary">
-                            Privacy Policy
-                        </Link>
-                        <Link href="#" className="text-sm text-gray-200 transition-colors hover:text-primary">
-                            Terms of Service
-                        </Link>
-                        <Link href="#" className="text-sm text-gray-200 transition-colors hover:text-primary">
-                            Cookie Policy
-                        </Link>
+            {/* Bottom Bar */}
+            <div className="border-t border-gray-800">
+                <div className="max-w-8xl mx-auto px-4 py-8 sm:px-6 lg:px-2">
+                    <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+                        <div className="text-center md:text-left">
+                            <p className="text-sm text-gray-400">
+                                &copy; {currentYear} EthioTelecom. All rights reserved. | Connecting Ethiopia to the Future
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-400">
+                            <Link href="#" className="transition-colors duration-200 hover:text-white">
+                                Privacy Policy
+                            </Link>
+                            <Link href="#" className="transition-colors duration-200 hover:text-white">
+                                Terms of Service
+                            </Link>
+                            <Link href="#" className="transition-colors duration-200 hover:text-white">
+                                Cookie Policy
+                            </Link>
+                            <Link href="#" className="transition-colors duration-200 hover:text-white">
+                                Sitemap
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>
         </footer>
     );
-}
+};

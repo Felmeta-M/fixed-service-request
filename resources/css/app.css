@@ -86,6 +86,7 @@
     --popover-foreground: oklch(0.145 0 0);
     /* --primary: oklch(0.205 0 0); */
     --primary: oklch(0.7899 0.2065 131.79);
+    /* --primary: oklch(0.7878 0.2168 135.96); */
     --primary-bg:  oklch(1 0 0);
     --secondary-bg: oklch(0.9703 0.0207 166.11);
 
@@ -185,4 +186,36 @@
 }
 .text-secondaryblack {
   color: var(--secondary-black);
+}
+/*
+  ---break---
+*/
+@theme inline {
+    --color-sidebar:
+        var(--sidebar);
+    --color-sidebar-foreground:
+        var(--sidebar-foreground);
+    --color-sidebar-primary:
+        var(--sidebar-primary);
+    --color-sidebar-primary-foreground:
+        var(--sidebar-primary-foreground);
+    --color-sidebar-accent:
+        var(--sidebar-accent);
+    --color-sidebar-accent-foreground:
+        var(--sidebar-accent-foreground);
+    --color-sidebar-border:
+        var(--sidebar-border);
+    --color-sidebar-ring:
+        var(--sidebar-ring);
+}
+/*
+  ---break---
+*/
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    }
 }

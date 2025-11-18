@@ -1,261 +1,319 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import GuestLayout from '@/layouts/GuestLayout';
 import { Link } from '@inertiajs/react';
-import { CreditCard, LogIn, MapPin, Network, Package, Phone, Users, Wifi } from 'lucide-react';
+import { ArrowRight, CheckCircle, MapPin, Package, Phone, Star, Users, Wifi } from 'lucide-react';
+import telebirrLogo from '../images/telebirr-logo.png';
 
 export default function HomePage() {
+    const features = [
+        {
+            icon: MapPin,
+            title: 'GIS Coverage Check',
+            description: 'Real-time coverage verification using GPS and GIS mapping technology',
+            color: 'blue',
+        },
+        {
+            image: telebirrLogo,
+            title: 'Telebirr Payment',
+            description: 'Secure and convenient payment processing through Telebirr integration',
+            color: 'green',
+        },
+        {
+            icon: Users,
+            title: '24/7 Support',
+            description: 'Round-the-clock customer service and technical support',
+            color: 'purple',
+        },
+        // {
+        //     icon: Clock,
+        //     title: 'Fast Processing',
+        //     description: 'Quick service activation and minimal waiting times',
+        //     color: 'orange',
+        // },
+        // {
+        //     icon: Shield,
+        //     title: 'Secure Platform',
+        //     description: 'Bank-level security for all your transactions and data',
+        //     color: 'red',
+        // },
+        // {
+        //     icon: HeadphonesIcon,
+        //     title: 'Dedicated Help',
+        //     description: 'Personalized assistance throughout your service journey',
+        //     color: 'indigo',
+        // },
+    ];
+
+    const services = [
+        {
+            icon: Phone,
+            title: 'Fixed Voice',
+            description: 'Reliable landline telephone service for your home or business',
+            features: ['Crystal clear voice quality', 'Local and international calling', 'Competitive rates'],
+            color: 'blue',
+        },
+        {
+            icon: Wifi,
+            title: 'Fixed Broadband',
+            description: 'High-speed internet connection for seamless online experience',
+            features: ['Multiple speed options', 'Unlimited data plans', '24/7 technical support'],
+            color: 'green',
+        },
+        {
+            icon: Package,
+            title: 'Combo Services',
+            description: 'Combined voice and broadband packages for maximum value',
+            features: ['Voice + Internet bundle', 'Cost-effective packages', 'Single billing convenience'],
+            color: 'purple',
+        },
+    ];
+
+    const stats = [
+        { number: '50K+', label: 'Happy Customers' },
+        { number: '98%', label: 'Service Uptime' },
+        { number: '24/7', label: 'Customer Support' },
+        { number: '15min', label: 'Average Setup Time' },
+    ];
+
+    const testimonials = [
+        {
+            name: 'Alem Tesfaye',
+            role: 'Small Business Owner',
+            content: 'The online service provisioning saved me days of waiting. Everything was completed in under 30 minutes!',
+            rating: 5,
+        },
+        {
+            name: 'Meron Getachew',
+            role: 'Home User',
+            content: 'The GIS coverage check was incredibly accurate. No more guessing if service is available in my area.',
+            rating: 5,
+        },
+        {
+            name: 'Dawit Hailu',
+            role: 'Enterprise Client',
+            content: 'Telebirr integration made payments so convenient. Highly recommended for busy professionals.',
+            rating: 4,
+        },
+    ];
+
     return (
-        <div className="container mx-auto min-h-screen max-w-screen-2xl bg-gradient-to-br from-blue-50 to-indigo-100">
-            <header className="border-b bg-white shadow-sm">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 items-center justify-between">
-                        <Link href="/">
-                            <div className="flex items-center space-x-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                                    <Network className="h-5 w-5 text-white" />
-                                </div>
-                                <div>
-                                    <h1 className="text-xl font-bold text-gray-900">EthioTelecom</h1>
-                                    <p className="text-xs text-gray-500">Fixed Line Services</p>
-                                </div>
-                            </div>
-                        </Link>
-                        <div className="flex items-center space-x-3">
-                            {/* <select className="rounded-md border px-2 py-1 text-sm">
-                                <option value="en">English</option>
-                                <option value="am">አማርኛ</option>
-                                <option value="or">Afaan Oromoo</option>
-                                <option value="ti">ትግርኛ</option>
-                                <option value="so">Af Somali</option>
-                            </select> */}
-                            <Link href={route('verification')}>
-                                <Button size="sm">
-                                    Sign In
-                                    <LogIn className="ml-2 h-4 w-4" />
+        <GuestLayout>
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+                {/* Hero Section */}
+                <section className="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
+                    <div className="absolute inset-0 mx-auto max-w-screen-2xl rounded-3xl bg-gradient-to-r from-emerald-600/10 to-cyan-600/10" />
+                    <div className="relative mx-auto max-w-4xl text-center">
+                        <Badge variant="secondary" className="mb-6 border-emerald-200 bg-emerald-100 px-4 py-2 text-sm font-semibold text-cyan-700">
+                            🚀 Online Service Provisioning Platform
+                        </Badge>
+                        <h1 className="mb-6 text-5xl leading-tight font-bold text-gray-900">
+                            Manage Your{' '}
+                            <span className="bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">Fixed Line Services</span>{' '}
+                            Online
+                        </h1>
+                        <p className="mx-auto mb-8 max-w-2xl text-xl leading-relaxed text-gray-600">
+                            Request new services, manage existing connections, and handle service changes without visiting our service centers. Fast,
+                            convenient, and secure digital experience.
+                        </p>
+                        <div className="flex flex-col justify-center gap-4 sm:flex-row">
+                            <Link href={route('otp.phone')}>
+                                <Button
+                                    size="lg"
+                                    className="bg-gradient-to-r from-emerald-600 to-cyan-600 px-8 py-3 text-lg text-white shadow-lg transition-all duration-200 hover:from-cyan-600 hover:to-cyan-800 hover:shadow-xl"
+                                >
+                                    <MapPin className="mr-3 h-5 w-5" />
+                                    Get Started Now
+                                    <ArrowRight className="ml-2 h-5 w-5" />
+                                </Button>
+                            </Link>
+                            <Link href="#services">
+                                <Button
+                                    size="lg"
+                                    variant="outline"
+                                    className="border-2 border-gray-300 px-8 py-3 text-lg transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-50"
+                                >
+                                    Explore Services
                                 </Button>
                             </Link>
                         </div>
                     </div>
-                </div>
-            </header>
+                </section>
 
-            <section className="px-4 py-16 sm:px-6 lg:px-8">
-                <div className="mx-auto max-w-4xl text-center">
-                    <Badge variant="outline" className="mb-4">
-                        Online Service Provisioning Platform
-                    </Badge>
-                    <h1 className="mb-6 text-4xl font-bold text-gray-900">Manage Your Fixed Line Services Online</h1>
-                    <p className="mx-auto mb-8 max-w-2xl text-xl text-gray-600">
-                        Request new services, manage existing connections, and handle service changes without visiting our service centers. Fast,
-                        convenient, and secure.
-                    </p>
-                    <div className="flex flex-col justify-center gap-4 sm:flex-row">
-                        <Link href={route('verification')}>
-                            <Button size="lg" className="bg-primary">
-                                <MapPin className="mr-2 h-5 w-5" />
-                                Get Started
-                            </Button>
-                        </Link>
-                        <Link href={route('verification')}>
-                            <Button size="lg" variant="outline">
-                                <Phone className="mr-2 h-5 w-5" />
-                                New Connection
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
-            </section>
-
-            <section className="bg-white px-4 py-16 sm:px-6 lg:px-8">
-                <div className="mx-auto max-w-6xl">
-                    <div className="mb-12 text-center">
-                        <h2 className="mb-4 text-3xl font-bold text-gray-900">Our Services</h2>
-                        <p className="mx-auto max-w-2xl text-gray-600">
-                            Choose from our comprehensive range of fixed line services designed to meet your communication needs.
-                        </p>
-                    </div>
-
-                    <div className="grid gap-8 md:grid-cols-3">
-                        <Card className="transition-shadow hover:shadow-lg">
-                            <CardHeader>
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
-                                    <Phone className="h-6 w-6 text-blue-600" />
+                {/* Stats Section */}
+                <section className="px-4 py-12 sm:px-6 lg:px-8">
+                    <div className="mx-auto max-w-screen-2xl">
+                        <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+                            {stats.map((stat, index) => (
+                                <div
+                                    key={index}
+                                    className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm transition-shadow duration-200 hover:shadow-md"
+                                >
+                                    <div className="mb-2 text-3xl font-bold text-gray-900">{stat.number}</div>
+                                    <div className="text-sm font-medium text-gray-600">{stat.label}</div>
                                 </div>
-                                <CardTitle>Fixed Voice</CardTitle>
-                                <CardDescription>Reliable landline telephone service for your home or business</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <ul className="space-y-2 text-sm text-gray-600">
-                                    <li>• Crystal clear voice quality</li>
-                                    <li>• Local and international calling</li>
-                                    <li>• Competitive rates</li>
-                                </ul>
-                                <Button className="mt-4 w-full bg-transparent" variant="outline">
-                                    Learn More
-                                </Button>
-                            </CardContent>
-                        </Card>
+                            ))}
+                        </div>
+                    </div>
+                </section>
 
-                        <Card className="transition-shadow hover:shadow-lg">
-                            <CardHeader>
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-                                    <Wifi className="h-6 w-6 text-green-600" />
+                {/* Services Section */}
+                <section id="services" className="bg-white px-4 py-20 sm:px-6 lg:px-8">
+                    <div className="mx-auto max-w-screen-2xl">
+                        <div className="mb-16 text-center">
+                            <Badge variant="outline" className="mb-4 border-emerald-200 bg-emerald-50 px-4 py-1 text-emerald-600">
+                                Our Services
+                            </Badge>
+                            <h2 className="mb-4 text-4xl font-bold text-gray-900">Comprehensive Fixed Line Solutions</h2>
+                            <p className="mx-auto max-w-2xl text-lg text-gray-600">
+                                Choose from our range of reliable fixed line services designed to meet your communication needs
+                            </p>
+                        </div>
+
+                        <div className="grid gap-8 md:grid-cols-3">
+                            {services.map((service, index) => (
+                                <Card
+                                    key={index}
+                                    className="group transform border-0 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+                                >
+                                    <CardHeader className="pb-4">
+                                        <div
+                                            className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-${service.color}-100 transition-transform duration-200 group-hover:scale-110`}
+                                        >
+                                            <service.icon className={`h-7 w-7 text-${service.color}-600`} />
+                                        </div>
+                                        <CardTitle className="text-xl">{service.title}</CardTitle>
+                                        <CardDescription className="mt-2 text-base">{service.description}</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <ul className="mb-6 space-y-3">
+                                            {service.features.map((feature, featureIndex) => (
+                                                <li key={featureIndex} className="flex items-center text-sm text-gray-600">
+                                                    <CheckCircle className={`h-4 w-4 text-${service.color}-500 mr-3 flex-shrink-0`} />
+                                                    {feature}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <Button className="w-full bg-transparent hover:bg-gray-50" variant="outline">
+                                            Learn More
+                                            <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Features Section */}
+                <section className="bg-gradient-to-br from-slate-50 to-blue-50 px-4 py-20 sm:px-6 lg:px-8">
+                    <div className="mx-auto max-w-screen-2xl">
+                        <div className="mb-16 text-center">
+                            <Badge variant="outline" className="mb-4 border-emerald-200 bg-emerald-50 px-4 py-1 text-emerald-600">
+                                Why Choose Us
+                            </Badge>
+                            <h2 className="mb-4 text-4xl font-bold text-gray-900">Experience the Difference</h2>
+                            <p className="mx-auto max-w-2xl text-lg text-gray-600">
+                                We combine cutting-edge technology with exceptional service to deliver the best customer experience
+                            </p>
+                        </div>
+
+                        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                            {features.map((feature, index) => (
+                                <div
+                                    key={index}
+                                    className="group transform rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                                >
+                                    <div
+                                        className={`mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-${feature.color}-100 transition-transform duration-200 group-hover:scale-110`}
+                                    >
+                                        {feature.image ? (
+                                            <img src={feature.image} alt="Telebirr Logo" className="h-14 w-14 object-contain" />
+                                        ) : (
+                                            <feature.icon className={`h-8 w-8 text-${feature.color}-600`} />
+                                        )}
+                                    </div>
+                                    <h3 className="mb-4 text-xl font-semibold text-gray-900">{feature.title}</h3>
+                                    <p className="leading-relaxed text-gray-600">{feature.description}</p>
                                 </div>
-                                <CardTitle>Fixed Broadband</CardTitle>
-                                <CardDescription>High-speed internet connection for seamless online experience</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <ul className="space-y-2 text-sm text-gray-600">
-                                    <li>• Multiple speed options</li>
-                                    <li>• Unlimited data plans</li>
-                                    <li>• 24/7 technical support</li>
-                                </ul>
-                                <Button className="mt-4 w-full bg-transparent" variant="outline">
-                                    Learn More
-                                </Button>
-                            </CardContent>
-                        </Card>
+                            ))}
+                        </div>
+                    </div>
+                </section>
 
-                        <Card className="transition-shadow hover:shadow-lg">
-                            <CardHeader>
-                                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
-                                    <Package className="h-6 w-6 text-purple-600" />
+                {/* Testimonials Section */}
+                <section className="bg-white px-4 py-20 sm:px-6 lg:px-8">
+                    <div className="mx-auto max-w-screen-2xl">
+                        <div className="mb-16 text-center">
+                            <Badge variant="outline" className="mb-4 border-amber-200 bg-amber-50 px-4 py-1 text-amber-600">
+                                Customer Stories
+                            </Badge>
+                            <h2 className="mb-4 text-4xl font-bold text-gray-900">What Our Customers Say</h2>
+                            <p className="mx-auto max-w-2xl text-lg text-gray-600">
+                                Don't just take our word for it - hear from our satisfied customers
+                            </p>
+                        </div>
+
+                        <div className="grid gap-8 md:grid-cols-3">
+                            {testimonials.map((testimonial, index) => (
+                                <div
+                                    key={index}
+                                    className="rounded-2xl border border-gray-200 bg-gray-50 p-6 transition-shadow duration-200 hover:shadow-lg"
+                                >
+                                    <div className="mb-4 flex">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star
+                                                key={i}
+                                                className={`h-4 w-4 ${i < testimonial.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`}
+                                            />
+                                        ))}
+                                    </div>
+                                    <p className="mb-4 text-gray-700 italic">"{testimonial.content}"</p>
+                                    <div>
+                                        <div className="font-semibold text-gray-900">{testimonial.name}</div>
+                                        <div className="text-sm text-gray-600">{testimonial.role}</div>
+                                    </div>
                                 </div>
-                                <CardTitle>Combo Services</CardTitle>
-                                <CardDescription>Combined voice and broadband packages for maximum value</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <ul className="space-y-2 text-sm text-gray-600">
-                                    <li>• Voice + Internet bundle</li>
-                                    <li>• Cost-effective packages</li>
-                                    <li>• Single billing convenience</li>
-                                </ul>
-                                <Button className="mt-4 w-full bg-transparent" variant="outline">
-                                    Learn More
-                                </Button>
-                            </CardContent>
-                        </Card>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <section className="px-4 py-16 sm:px-6 lg:px-8">
-                <div className="mx-auto max-w-6xl">
-                    <div className="mb-12 text-center">
-                        <h2 className="mb-4 text-3xl font-bold text-gray-900">Why Choose Our Platform?</h2>
-                    </div>
-
-                    <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                        <div className="text-center">
-                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-                                <MapPin className="h-8 w-8 text-blue-600" />
+                {/* CTA Section */}
+                <section className="px-4 py-20 sm:px-6 lg:px-8">
+                    <div className="mx-auto max-w-4xl text-center">
+                        <div className="rounded-3xl bg-gradient-to-r from-emerald-600 to-cyan-600 p-12 text-white shadow-2xl">
+                            <h2 className="mb-4 text-4xl font-bold">Ready to Get Started?</h2>
+                            <p className="mx-auto mb-8 max-w-2xl text-xl text-emerald-100">
+                                Join thousands of satisfied customers who manage their fixed line services online
+                            </p>
+                            <div className="flex flex-col justify-center gap-4 sm:flex-row">
+                                <Link href={route('otp.phone')}>
+                                    <Button
+                                        size="lg"
+                                        className="bg-white px-8 py-3 text-lg font-semibold text-cyan-600 shadow-lg transition-all duration-200 hover:bg-gray-100 hover:shadow-xl"
+                                    >
+                                        <MapPin className="mr-3 h-5 w-5" />
+                                        Check Coverage & Start
+                                    </Button>
+                                </Link>
+                                <Link href="#services">
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        className="border-2 border-white px-8 py-3 text-lg text-cyan-600 transition-all duration-200 hover:bg-white hover:text-cyan-700"
+                                    >
+                                        Learn More First
+                                    </Button>
+                                </Link>
                             </div>
-                            <h3 className="mb-2 text-lg font-semibold">GIS Coverage Check</h3>
-                            <p className="text-gray-600">Real-time coverage verification using GPS and GIS mapping technology</p>
-                        </div>
-
-                        <div className="text-center">
-                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                                <CreditCard className="h-8 w-8 text-green-600" />
-                            </div>
-                            <h3 className="mb-2 text-lg font-semibold">Telebirr Payment</h3>
-                            <p className="text-gray-600">Secure and convenient payment processing through Telebirr integration</p>
-                        </div>
-
-                        <div className="text-center">
-                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-purple-100">
-                                <Users className="h-8 w-8 text-purple-600" />
-                            </div>
-                            <h3 className="mb-2 text-lg font-semibold">24/7 Support</h3>
-                            <p className="text-gray-600">Round-the-clock customer service and technical support</p>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <footer className="bg-gray-900 py-12 text-white">
-                <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid gap-8 md:grid-cols-4">
-                        <div>
-                            <div className="mb-4 flex items-center space-x-2">
-                                <div className="flex h-6 w-6 items-center justify-center rounded bg-primary">
-                                    <Network className="h-4 w-4 text-white" />
-                                </div>
-                                <span className="font-bold">EthioTelecom</span>
-                            </div>
-                            <p className="text-sm text-gray-400">Ethiopia's leading telecommunications service provider</p>
-                        </div>
-
-                        <div>
-                            <h4 className="mb-4 font-semibold">Services</h4>
-                            <ul className="space-y-2 text-sm text-gray-400">
-                                <li>
-                                    <Link href="#" className="hover:text-white">
-                                        Fixed Voice
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link href="#" className="hover:text-white">
-                                        Fixed Broadband
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link href="#" className="hover:text-white">
-                                        Combo Packages
-                                    </Link>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="mb-4 font-semibold">Support</h4>
-                            <ul className="space-y-2 text-sm text-gray-400">
-                                <li>
-                                    <Link href="#" className="hover:text-white">
-                                        Help Center
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link href="#" className="hover:text-white">
-                                        Contact Us
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link href="#" className="hover:text-white">
-                                        Service Centers
-                                    </Link>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="mb-4 font-semibold">Company</h4>
-                            <ul className="space-y-2 text-sm text-gray-400">
-                                <li>
-                                    <Link href="#" className="hover:text-white">
-                                        About Us
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link href="#" className="hover:text-white">
-                                        Privacy Policy
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link href="#" className="hover:text-white">
-                                        Terms of Service
-                                    </Link>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div className="mt-8 border-t border-gray-800 pt-8 text-center text-sm text-gray-400">
-                        <p>&copy; 2025 EthioTelecom. All rights reserved.</p>
-                    </div>
-                </div>
-            </footer>
-        </div>
+                {/* <Footer /> */}
+            </div>
+        </GuestLayout>
     );
 }

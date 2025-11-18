@@ -19,7 +19,7 @@ class EsignetService
     protected string $userinfoEndpoint;
     protected string $clientAssertionType;
     protected string $privateKeyJson;
-    protected int    $expirationTime;
+    protected int $expirationTime;
     protected string $algorithm;
 
     public function __construct()
@@ -27,15 +27,15 @@ class EsignetService
         try {
             $config = config('services.esignet');
 
-            $this->clientId              = $config['client_id'];
-            $this->redirectUri           = $config['redirect_uri'];
+            $this->clientId = $config['client_id'];
+            $this->redirectUri = $config['redirect_uri'];
             $this->authorizationEndpoint = $config['authorization_endpoint'];
-            $this->tokenEndpoint         = $config['token_endpoint'];
-            $this->userinfoEndpoint      = $config['userinfo_endpoint'];
-            $this->clientAssertionType   = $config['client_assertion_type'];
-            $this->privateKeyJson        = $config['private_key'];
-            $this->expirationTime        = $config['expiration_time'];
-            $this->algorithm             = $config['algorithm'];
+            $this->tokenEndpoint = $config['token_endpoint'];
+            $this->userinfoEndpoint = $config['userinfo_endpoint'];
+            $this->clientAssertionType = $config['client_assertion_type'];
+            $this->privateKeyJson = $config['private_key'];
+            $this->expirationTime = $config['expiration_time'];
+            $this->algorithm = $config['algorithm'];
         } catch (\Throwable $e) {
             Log::error("EsignetService::__construct failed", [
                 'error' => $e->getMessage(),
@@ -63,18 +63,18 @@ class EsignetService
             // ]);
 
             $authUrl = $this->authorizationEndpoint . '?' . http_build_query([
-                'response_type'         => 'code',
-                'client_id'             => $this->clientId,
-                'redirect_uri'          => $this->redirectUri,
-                'scope'                 => 'openid profile email',
-                'code_challenge'        => $codeChallenge,
+                'response_type' => 'code',
+                'client_id' => $this->clientId,
+                'redirect_uri' => $this->redirectUri,
+                'scope' => 'openid profile email',
+                'code_challenge' => $codeChallenge,
                 'code_challenge_method' => 'S256',
-                'state'                 => $state,
+                'state' => $state,
             ]);
 
             return [
-                'authUrl'      => $authUrl,
-                'state'        => $state,
+                'authUrl' => $authUrl,
+                'state' => $state,
                 'codeVerifier' => $codeVerifier,
             ];
         } catch (\Throwable $e) {
@@ -110,12 +110,12 @@ class EsignetService
 
         try {
             $response = Http::asForm()->post($this->tokenEndpoint, [
-                'grant_type'            => 'authorization_code',
-                'code'                  => $code,
-                'redirect_uri'          => $this->redirectUri,
-                'client_id'             => $this->clientId,
-                'code_verifier'         => $codeVerifier,
-                'client_assertion'      => $clientAssertion,
+                'grant_type' => 'authorization_code',
+                'code' => $code,
+                'redirect_uri' => $this->redirectUri,
+                'client_id' => $this->clientId,
+                'code_verifier' => $codeVerifier,
+                'client_assertion' => $clientAssertion,
                 'client_assertion_type' => $this->clientAssertionType,
             ]);
 
@@ -141,19 +141,16 @@ class EsignetService
         try {
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$accessToken}",
-                'Accept'        => '*/*',
+                'Accept' => '*/*',
             ])
                 ->withOptions([
                     'verify' => app()->isProduction(),
-                    'http_errors' => false, // don’t throw exceptions on 4xx/5xx
+                    'http_errors' => false,
                 ])
                 ->get($this->userinfoEndpoint);
 
             $status = $response->status();
             $body = $response->body();
-
-            // Log::info('EsignetService::getUserInfo - Status', ['status' => $status]);
-            // Log::info('EsignetService::getUserInfo - Body', ['body' => $body]);
 
             if ($status !== 200 || empty($body)) {
                 Log::error('Failed fetching user info', ['response' => ['status' => $status, 'body' => $body]]);
@@ -170,28 +167,32 @@ class EsignetService
                 'gender',
                 'nationality',
                 'phone_number',
-                'address',
+                // 'address',
                 'picture'
             ];
 
             $dataToInsert = array_intersect_key($userInfo, array_flip($allowedFields));
 
-            // Upsert based on phone_number
-            $phone = substr($dataToInsert['phone_number'], -9) ?? null;
-            if (!$phone) {
-                throw new \Exception('Phone number missing');
-            }
+            $rawPhone = $dataToInsert['phone_number'] ?? null;
+            $digits = preg_replace('/\D/', '', $rawPhone); // remove non-number
+
+            $formattedPhone = substr($digits, -9);
+
+            $dataToInsert['phone_number'] = $formattedPhone;
+
             $customer = DB::table('customers')->updateOrInsert(
-                ['phone_number' => $phone],
+                ['phone_number' => $formattedPhone],
                 [
                     ...$dataToInsert,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]
             );
+
             if ($customer) {
-                return DB::table('customers')->where('phone_number', $phone)->first();;
+                return DB::table('customers')->where('phone_number', $formattedPhone)->first();
             }
+
         } catch (\Exception $e) {
             Log::error('Exception fetching user info', ['error' => $e->getMessage()]);
             throw new \Exception('Exception fetching user info');
@@ -291,11 +292,11 @@ class EsignetService
 
             $b64 = fn($data) => rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
 
-            $headerB64  = $b64(json_encode($header));
+            $headerB64 = $b64(json_encode($header));
             $payloadB64 = $b64(json_encode($payload));
 
-            $signature  = $privateKey->sign("$headerB64.$payloadB64");
-            $sigB64     = $b64($signature);
+            $signature = $privateKey->sign("$headerB64.$payloadB64");
+            $sigB64 = $b64($signature);
 
             // Log::info("Client assertion successfully signed");
 

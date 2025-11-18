@@ -266,7 +266,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate }: Survey
                     if (id.includes('1943913918')) return '🌐 Internet';
                     if (id.includes('102647257')) return '📞 Voice';
                     if (id.includes('1207609455')) return '📦 Combo';
-                    return '📋 Unknown';
+                    return '🌐 Internet';
                 },
             },
             {

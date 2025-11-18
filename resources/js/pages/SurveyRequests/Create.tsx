@@ -1579,7 +1579,6 @@
 //     );
 // }
 
-
 import LocationMap from '@/components/location-map';
 import { BandwidthSelector } from '@/components/survey/bandwidth-selector';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -1589,7 +1588,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
 import { useBandwidthOptions } from '@/hooks/use-bandwidth-options';
 import AuthLayout from '@/layouts/AuthLayout';
 import { formatCoordinate, formatCoordinatesForAPI, parseCoordinate } from '@/lib/coordinate-utils';
@@ -1597,7 +1595,7 @@ import { checkResourceAvailability } from '@/lib/resource-check';
 import { SurveyRequest, SurveyRequestFormValues } from '@/types/survey';
 import { Link, router, useForm } from '@inertiajs/react';
 import axios from 'axios';
-import { ArrowLeft, ChevronDown, ChevronUp, FileText, Info, Loader2, MapPin, Navigation, Package, Phone, Search, Wifi } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, FileText, Loader2, MapPin, Navigation, Package, Phone, Search, Wifi } from 'lucide-react';
 import { Suspense, useEffect, useState } from 'react';
 
 export default function Create() {
@@ -2240,7 +2238,7 @@ export default function Create() {
         );
     }
 
-    const getCurrentMethod = () => locationMethods.find(method => method.id === locationOption);
+    const getCurrentMethod = () => locationMethods.find((method) => method.id === locationOption);
 
     return (
         <AuthLayout>
@@ -2256,14 +2254,14 @@ export default function Create() {
                         <Card className="border-0 shadow-lg">
                             <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 pb-6">
                                 <div className="flex items-center space-x-4">
-                                    <Link href="/dashboard" className="flex items-center space-x-2 text-primary hover:opacity-90 transition-colors">
+                                    <Link href="/dashboard" className="flex items-center space-x-2 text-primary transition-colors hover:opacity-90">
                                         <ArrowLeft className="h-4 w-4" />
                                         <span className="font-medium">Back to Dashboard</span>
                                     </Link>
                                     <div className="h-6 w-px bg-gray-300"></div>
                                     <div>
                                         <CardTitle className="text-2xl font-bold text-gray-900">Create Survey Order</CardTitle>
-                                        <CardDescription className="text-gray-600 mt-1">
+                                        <CardDescription className="mt-1 text-gray-600">
                                             Complete all fields to submit your <span className="font-semibold">survey</span> order
                                         </CardDescription>
                                     </div>
@@ -2354,7 +2352,9 @@ export default function Create() {
                                         {/* Current Selected Method */}
                                         {locationOption && (
                                             <div className="mb-6">
-                                                <div className={`rounded-xl border-2 p-4 shadow-sm transition-all duration-200 ${getCurrentMethod()?.borderColor} ${getCurrentMethod()?.bgColor}`}>
+                                                <div
+                                                    className={`rounded-xl border-2 p-4 shadow-sm transition-all duration-200 ${getCurrentMethod()?.borderColor} ${getCurrentMethod()?.bgColor}`}
+                                                >
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center space-x-4">
                                                             <div className={`rounded-lg p-2 ${getCurrentMethod()?.bgColor}`}>
@@ -2385,7 +2385,11 @@ export default function Create() {
                                                 className="border-gray-300 bg-white hover:bg-gray-50"
                                             >
                                                 <span>{showLocationOptions ? 'Hide Other Methods' : 'Change Location Method'}</span>
-                                                {showLocationOptions ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />}
+                                                {showLocationOptions ? (
+                                                    <ChevronUp className="ml-2 h-4 w-4" />
+                                                ) : (
+                                                    <ChevronDown className="ml-2 h-4 w-4" />
+                                                )}
                                             </Button>
                                         </div>
 
@@ -2426,14 +2430,14 @@ export default function Create() {
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex-1">
                                                         <h4 className="font-semibold text-blue-900">Current Location Detection</h4>
-                                                        <p className="text-sm text-blue-700 mt-1">
+                                                        <p className="mt-1 text-sm text-blue-700">
                                                             We'll use your device's GPS to automatically detect your precise location
                                                         </p>
                                                     </div>
                                                     <Button
                                                         onClick={getCurrentLocation}
                                                         disabled={locationLoading}
-                                                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                                                        className="bg-blue-600 text-white hover:bg-blue-700"
                                                     >
                                                         {locationLoading ? (
                                                             <>
@@ -2457,9 +2461,10 @@ export default function Create() {
                                                 )}
 
                                                 {data.survey_address_info.latitude !== 0 && (
-                                                    <div className="mt-4 rounded-lg bg-white p-3 border border-blue-200">
+                                                    <div className="mt-4 rounded-lg border border-blue-200 bg-white p-3">
                                                         <div className="text-sm text-blue-800">
-                                                            <strong>✓ Location detected:</strong> {data.survey_address_info.latitude?.toFixed(6)}, {data.survey_address_info.longitude?.toFixed(6)}
+                                                            <strong>✓ Location detected:</strong> {data.survey_address_info.latitude?.toFixed(6)},{' '}
+                                                            {data.survey_address_info.longitude?.toFixed(6)}
                                                         </div>
                                                     </div>
                                                 )}
@@ -2469,14 +2474,15 @@ export default function Create() {
                                         {locationOption === 'other' && (
                                             <div className="space-y-4">
                                                 <div className="rounded-xl border border-green-200 bg-green-50 p-6">
-                                                    <h4 className="font-semibold text-green-900 mb-2">Interactive Map Selection</h4>
+                                                    <h4 className="mb-2 font-semibold text-green-900">Interactive Map Selection</h4>
                                                     <p className="text-sm text-green-700">
-                                                        Click on the map to select your exact installation location. You can zoom and pan to find the precise spot.
+                                                        Click on the map to select your exact installation location. You can zoom and pan to find the
+                                                        precise spot.
                                                     </p>
                                                 </div>
                                                 <Suspense
                                                     fallback={
-                                                        <div className="flex h-96 items-center justify-center rounded-xl bg-gray-100 border border-gray-200">
+                                                        <div className="flex h-96 items-center justify-center rounded-xl border border-gray-200 bg-gray-100">
                                                             <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                                                             <span className="ml-2 text-gray-600">Loading map...</span>
                                                         </div>
@@ -2489,9 +2495,10 @@ export default function Create() {
                                                     />
                                                 </Suspense>
                                                 {selectedLocation && (
-                                                    <div className="rounded-lg bg-green-50 p-3 border border-green-200">
+                                                    <div className="rounded-lg border border-green-200 bg-green-50 p-3">
                                                         <div className="text-sm text-green-800">
-                                                            <strong>✓ Location selected:</strong> {selectedLocation[0].toFixed(6)}, {selectedLocation[1].toFixed(6)}
+                                                            <strong>✓ Location selected:</strong> {selectedLocation[0].toFixed(6)},{' '}
+                                                            {selectedLocation[1].toFixed(6)}
                                                         </div>
                                                     </div>
                                                 )}
@@ -2500,8 +2507,8 @@ export default function Create() {
 
                                         {locationOption === 'manual' && (
                                             <div className="rounded-xl border border-purple-200 bg-purple-50 p-6">
-                                                <h4 className="font-semibold text-purple-900 mb-4">Enter Coordinates Manually</h4>
-                                                
+                                                <h4 className="mb-4 font-semibold text-purple-900">Enter Coordinates Manually</h4>
+
                                                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                                                     <div className="space-y-2">
                                                         <Label htmlFor="latitude" className="text-sm font-medium text-gray-700">
@@ -2526,11 +2533,12 @@ export default function Create() {
                                                             placeholder="9.007428"
                                                             className="bg-white"
                                                         />
-                                                        {data.survey_address_info.latitude !== 0 && validateCoordinateInput(data.survey_address_info.latitude, 'lat') && (
-                                                            <p className="text-xs text-red-500">
-                                                                {validateCoordinateInput(data.survey_address_info.latitude, 'lat')}
-                                                            </p>
-                                                        )}
+                                                        {data.survey_address_info.latitude !== 0 &&
+                                                            validateCoordinateInput(data.survey_address_info.latitude, 'lat') && (
+                                                                <p className="text-xs text-red-500">
+                                                                    {validateCoordinateInput(data.survey_address_info.latitude, 'lat')}
+                                                                </p>
+                                                            )}
                                                     </div>
 
                                                     <div className="space-y-2">
@@ -2556,11 +2564,12 @@ export default function Create() {
                                                             placeholder="38.733708"
                                                             className="bg-white"
                                                         />
-                                                        {data.survey_address_info.longitude !== 0 && validateCoordinateInput(data.survey_address_info.longitude, 'lng') && (
-                                                            <p className="text-xs text-red-500">
-                                                                {validateCoordinateInput(data.survey_address_info.longitude, 'lng')}
-                                                            </p>
-                                                        )}
+                                                        {data.survey_address_info.longitude !== 0 &&
+                                                            validateCoordinateInput(data.survey_address_info.longitude, 'lng') && (
+                                                                <p className="text-xs text-red-500">
+                                                                    {validateCoordinateInput(data.survey_address_info.longitude, 'lng')}
+                                                                </p>
+                                                            )}
                                                     </div>
 
                                                     <div className="flex items-end">
@@ -2572,7 +2581,7 @@ export default function Create() {
                                                                 !!validateCoordinateInput(data.survey_address_info.latitude, 'lat') ||
                                                                 !!validateCoordinateInput(data.survey_address_info.longitude, 'lng')
                                                             }
-                                                            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                                                            className="w-full bg-purple-600 text-white hover:bg-purple-700"
                                                         >
                                                             <Navigation className="mr-2 h-4 w-4" />
                                                             Set Coordinates
@@ -2637,15 +2646,15 @@ export default function Create() {
                                     </Link>
 
                                     <div className="flex flex-col items-end gap-2">
-                                        <Button 
-                                            onClick={handleSubmitOrder} 
-                                            disabled={isSubmitDisabled()} 
-                                            size="lg" 
-                                            className="min-w-[200px] bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        <Button
+                                            onClick={handleSubmitOrder}
+                                            disabled={isSubmitDisabled()}
+                                            size="lg"
+                                            className="min-w-[200px] rounded-lg bg-primary px-6 py-3 font-semibold text-white transition-all duration-200 hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {getSubmitButtonText()}
                                         </Button>
-                                        <p className="text-xs text-gray-500 text-center">
+                                        <p className="text-center text-xs text-gray-500">
                                             {!hasValidLocation && 'Please select a valid location first'}
                                             {hasValidLocation && resourceAvailable === undefined && 'Check resource availability before submitting'}
                                             {resourceAvailable === true && 'Ready to submit your survey order'}
@@ -2660,7 +2669,7 @@ export default function Create() {
                     {/* Order Summary Sidebar */}
                     <div className="lg:col-span-1">
                         <Card className="sticky top-8 border-0 shadow-xl">
-                            <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+                            <CardHeader className="border-b bg-gradient-to-r from-gray-50 to-gray-100">
                                 <CardTitle className="flex items-center space-x-3 text-gray-900">
                                     <div className="rounded-lg bg-primary p-2">
                                         <FileText className="h-6 w-6 text-white" />
@@ -2669,7 +2678,7 @@ export default function Create() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-6 pt-6">
-                                <div className="flex items-center space-x-4 p-3 rounded-lg bg-gray-50">
+                                <div className="flex items-center space-x-4 rounded-lg bg-gray-50 p-3">
                                     {(() => {
                                         const ServiceIcon = getServiceIcon(data.main_offer_id);
                                         return <ServiceIcon className="h-10 w-10 text-primary" />;
@@ -2684,22 +2693,22 @@ export default function Create() {
 
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-gray-600 font-medium">Resource Status:</span>
+                                        <span className="font-medium text-gray-600">Resource Status:</span>
                                         {checkingResource ? (
-                                            <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                                            <Badge variant="outline" className="border-blue-200 bg-blue-100 text-blue-800">
                                                 <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                                                 Checking...
                                             </Badge>
                                         ) : resourceAvailable === true ? (
-                                            <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                                            <Badge variant="outline" className="border-green-200 bg-green-100 text-green-800">
                                                 Available
                                             </Badge>
                                         ) : resourceAvailable === false ? (
-                                            <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+                                            <Badge variant="outline" className="border-red-200 bg-red-100 text-red-800">
                                                 Not Available
                                             </Badge>
                                         ) : (
-                                            <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-200">
+                                            <Badge variant="outline" className="border-gray-200 bg-gray-100 text-gray-600">
                                                 Select Location
                                             </Badge>
                                         )}
@@ -2734,7 +2743,7 @@ export default function Create() {
                                     <div className="space-y-3 text-sm">
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Survey Type:</span>
-                                            <Badge variant="outline" className="text-xs bg-blue-50">
+                                            <Badge variant="outline" className="bg-blue-50 text-xs">
                                                 {getSurveyType(data.survey_type)}
                                             </Badge>
                                         </div>
@@ -2758,11 +2767,11 @@ export default function Create() {
                                             <div className="space-y-2 pt-2">
                                                 <div className="flex justify-between">
                                                     <span className="text-gray-600">Latitude:</span>
-                                                    <span className="font-semibold font-mono">{data.survey_address_info.latitude.toFixed(6)}</span>
+                                                    <span className="font-mono font-semibold">{data.survey_address_info.latitude.toFixed(6)}</span>
                                                 </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-gray-600">Longitude:</span>
-                                                    <span className="font-semibold font-mono">{data.survey_address_info.longitude.toFixed(6)}</span>
+                                                    <span className="font-mono font-semibold">{data.survey_address_info.longitude.toFixed(6)}</span>
                                                 </div>
                                             </div>
                                         )}

@@ -87,7 +87,7 @@ export function CancelConfirmationDialog({
                                     {showReasonInput && (
                                         <div className="space-y-2">
                                             <label htmlFor="cancellationReason" className="block text-sm font-medium text-gray-700">
-                                                Reason for cancellation
+                                                Reason for cancellation <span className="text-red-500">*</span>
                                             </label>
                                             <textarea
                                                 id="cancellationReason"

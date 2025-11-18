@@ -13,32 +13,12 @@ class Customer extends Model
     use HasFactory;
     use SoftDeletes;
 
-    protected $fillable = [
-        'code',
-        'first_name',
-        'middle_name',
-        'last_name',
-        'title',
-        'gender',
-        'nationality',
-        'identification_type',
-        'identification_number',
-        'date_of_birth',
-        'place_of_birth',
-        'occupation',
-        'education',
-        'religion',
-        'income',
-        'primary_language',
-        'address',
-        'contact',
-        'contact_persons',
-    ];
+    protected $guarded = ['id'];
 
     protected $casts = [
         'address' => 'array',
         'contact' => 'array',
         'contact_persons' => 'array',
-        'date_of_birth' => 'date',
+        'birthdate' => 'date',
     ];
 }

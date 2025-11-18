@@ -7,8 +7,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SupportRequestController;
 use Inertia\Inertia;
 
-Route::get('/', fn() => Inertia::render('Login'))->name('home');
-// Route::get('/', fn() => Inertia::render('Home'))->name('home');
+Route::get('/', fn() => Inertia::render('Login'))->name('login');
+Route::get('/home', fn() => Inertia::render('Home'))->name('home');
 Route::get('/verification', fn() => Inertia::render('Verification'))->name('verification');
 
 Route::get('/login/esignet', [EsignetController::class, 'redirectToEsignet'])

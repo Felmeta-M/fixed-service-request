@@ -2,8 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use phpseclib3\Crypt\RSA;
+
+use function Symfony\Component\Clock\now;
 
 class EsignetService
 {
@@ -19,127 +24,287 @@ class EsignetService
 
     public function __construct()
     {
-        $config = config('services.esignet');
+        try {
+            $config = config('services.esignet');
 
-        $this->clientId              = $config['client_id'];
-        $this->redirectUri           = $config['redirect_uri'];
-        $this->authorizationEndpoint = $config['authorization_endpoint'];
-        $this->tokenEndpoint         = $config['token_endpoint'];
-        $this->userinfoEndpoint      = $config['userinfo_endpoint'];
-        $this->clientAssertionType   = $config['client_assertion_type'];
-        $this->privateKeyJson        = $config['private_key'];
-        $this->expirationTime        = $config['expiration_time'];
-        $this->algorithm             = $config['algorithm'];
+            $this->clientId              = $config['client_id'];
+            $this->redirectUri           = $config['redirect_uri'];
+            $this->authorizationEndpoint = $config['authorization_endpoint'];
+            $this->tokenEndpoint         = $config['token_endpoint'];
+            $this->userinfoEndpoint      = $config['userinfo_endpoint'];
+            $this->clientAssertionType   = $config['client_assertion_type'];
+            $this->privateKeyJson        = $config['private_key'];
+            $this->expirationTime        = $config['expiration_time'];
+            $this->algorithm             = $config['algorithm'];
+        } catch (\Throwable $e) {
+            Log::error("EsignetService::__construct failed", [
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
+
 
     /**
      * Build Authorization URL with PKCE
      */
     public function buildAuthorizationUrl(): array
     {
-        $codeVerifier = bin2hex(random_bytes(32));
-        $codeChallenge = rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
-        $state = bin2hex(random_bytes(16));
+        // Log::info("EsignetService::buildAuthorizationUrl - Generating PKCE");
 
-        $authUrl = $this->authorizationEndpoint . '?' . http_build_query([
-            'response_type'         => 'code',
-            'client_id'             => $this->clientId,
-            'redirect_uri'          => $this->redirectUri,
-            'scope'                 => 'openid profile email',
-            'code_challenge'        => $codeChallenge,
-            'code_challenge_method' => 'S256',
-            'state'                 => $state,
-        ]);
+        try {
+            $codeVerifier = bin2hex(random_bytes(32));
+            $codeChallenge = rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
+            $state = bin2hex(random_bytes(16));
 
-        return [
-            'authUrl'      => $authUrl,
-            'state'        => $state,
-            'codeVerifier' => $codeVerifier,
-        ];
+            // Log::info("PKCE generated", [
+            //     'code_challenge' => $codeChallenge,
+            //     'state' => $state
+            // ]);
+
+            $authUrl = $this->authorizationEndpoint . '?' . http_build_query([
+                'response_type'         => 'code',
+                'client_id'             => $this->clientId,
+                'redirect_uri'          => $this->redirectUri,
+                'scope'                 => 'openid profile email',
+                'code_challenge'        => $codeChallenge,
+                'code_challenge_method' => 'S256',
+                'state'                 => $state,
+            ]);
+
+            return [
+                'authUrl'      => $authUrl,
+                'state'        => $state,
+                'codeVerifier' => $codeVerifier,
+            ];
+        } catch (\Throwable $e) {
+            Log::error("Error generating authorization URL", [
+                "error" => $e->getMessage()
+            ]);
+
+            return [
+                'error' => 'Failed to build authorization URL'
+            ];
+        }
     }
 
 
     /**
-     * Exchange Authorization Code for Access Token using PKCE
+     * Exchange Code for Token
      */
     public function exchangeCodeForToken(string $code, string $codeVerifier): array
     {
-        $clientAssertion = $this->generateClientAssertion();
+        // Log::info("EsignetService::exchangeCodeForToken - Starting token exchange");
 
-        $response = Http::asForm()->post($this->tokenEndpoint, [
-            'grant_type'            => 'authorization_code',
-            'code'                  => $code,
-            'redirect_uri'          => $this->redirectUri,
-            'client_id'             => $this->clientId,
-            'code_verifier'         => $codeVerifier,
-            'client_assertion'      => $clientAssertion,
-            'client_assertion_type' => $this->clientAssertionType,
-        ]);
+        try {
+            $clientAssertion = $this->generateClientAssertion();
 
-        return $response->json();
+            // Log::info("Client assertion successfully generated");
+        } catch (\Throwable $e) {
+            Log::error("Failed generating client assertion", [
+                'error' => $e->getMessage()
+            ]);
+
+            return ['error' => 'Failed generating client assertion.'];
+        }
+
+        try {
+            $response = Http::asForm()->post($this->tokenEndpoint, [
+                'grant_type'            => 'authorization_code',
+                'code'                  => $code,
+                'redirect_uri'          => $this->redirectUri,
+                'client_id'             => $this->clientId,
+                'code_verifier'         => $codeVerifier,
+                'client_assertion'      => $clientAssertion,
+                'client_assertion_type' => $this->clientAssertionType,
+            ]);
+
+            // Log::info("Token endpoint response", [
+            //     'status' => $response->status(),
+            //     'body'   => $response->json()
+            // ]);
+
+            return $response->json();
+        } catch (\Throwable $e) {
+            Log::error("Error exchanging code for token", [
+                "error" => $e->getMessage()
+            ]);
+
+            return [
+                "error" => "Failed to exchange code for token."
+            ];
+        }
     }
 
-    /**
-     * Get User Info from Access Token
-     */
-    public function getUserInfo(string $accessToken): array
+    public function getUserInfo(string $accessToken)
     {
-        return Http::withToken($accessToken)
-            ->get($this->userinfoEndpoint)
-            ->json();
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$accessToken}",
+                'Accept'        => '*/*',
+            ])
+                ->withOptions([
+                    'verify' => app()->isProduction(),
+                    'http_errors' => false, // don’t throw exceptions on 4xx/5xx
+                ])
+                ->get($this->userinfoEndpoint);
+
+            $status = $response->status();
+            $body = $response->body();
+
+            // Log::info('EsignetService::getUserInfo - Status', ['status' => $status]);
+            // Log::info('EsignetService::getUserInfo - Body', ['body' => $body]);
+
+            if ($status !== 200 || empty($body)) {
+                Log::error('Failed fetching user info', ['response' => ['status' => $status, 'body' => $body]]);
+                throw new \Exception('Failed fetching user info');
+            }
+
+            $userInfo = $this->decodeJwtPayload($body);
+            // Log::info('user inof', $userInfo);
+
+            $allowedFields = [
+                'sub',
+                'name',
+                'birthdate',
+                'gender',
+                'nationality',
+                'phone_number',
+                'address',
+                'picture'
+            ];
+
+            $dataToInsert = array_intersect_key($userInfo, array_flip($allowedFields));
+
+            // Upsert based on phone_number
+            $phone = substr($dataToInsert['phone_number'], -9) ?? null;
+            if (!$phone) {
+                throw new \Exception('Phone number missing');
+            }
+            $customer = DB::table('customers')->updateOrInsert(
+                ['phone_number' => $phone],
+                [
+                    ...$dataToInsert,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+            if ($customer) {
+                return DB::table('customers')->where('phone_number', $phone)->first();;
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception fetching user info', ['error' => $e->getMessage()]);
+            throw new \Exception('Exception fetching user info');
+        }
     }
 
+    public function decodeJwtPayload(string $jwt): array
+    {
+        try {
+            $parts = explode('.', $jwt);
+            if (count($parts) < 2) {
+                throw new \Exception('Invalid JWT format');
+            }
+
+            $payload = $parts[1];
+            // base64 decode, URL-safe
+            $decoded = json_decode(
+                base64_decode(strtr($payload, '-_', '+/')),
+                true
+            );
+
+            return $decoded ?: [];
+        } catch (\Exception $e) {
+            Log::error('Failed decoding JWT', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+
     /**
-     * Generate JWT client_assertion
+     * Loads RSA Private Key (JWK)
+     */
+    protected function loadPrivateKey(): RSA
+    {
+        // Log::info("EsignetService::loadPrivateKey - Decoding JWK");
+
+        try {
+            $jwkJson = base64_decode($this->privateKeyJson);
+
+            if (!$jwkJson) {
+                throw new \Exception("Base64 decode failed — JWK is invalid");
+            }
+
+            // Log::info("JWK JSON decoded successfully");
+
+            $key = RSA::loadPrivateKey($jwkJson, 'JWK')
+                ->withPadding(RSA::SIGNATURE_PKCS1);
+
+            // Log::info("RSA private key loaded successfully");
+
+            return $key;
+        } catch (\Throwable $e) {
+            Log::error("Failed loading private key", [
+                'error' => $e->getMessage()
+            ]);
+            throw $e; // keep throwing so generateClientAssertion can catch it
+        }
+    }
+
+
+    /**
+     * Generates JWT Client Assertion
      */
     protected function generateClientAssertion(): string
     {
-        $privateKey = $this->loadPrivateKey(); // now handles base64 JWK JSON
+        // Log::info("EsignetService::generateClientAssertion - Start");
 
-        $header = ['alg' => $this->algorithm, 'typ' => 'JWT'];
-        $now = time();
-        $payload = [
-            'iss' => $this->clientId,
-            'sub' => $this->clientId,
-            'aud' => $this->tokenEndpoint,
-            'iat' => $now,
-            'exp' => $now + ($this->expirationTime * 60),
-            'jti' => bin2hex(random_bytes(16)),
-        ];
-
-        $headerB64  = rtrim(strtr(base64_encode(json_encode($header)), '+/', '-_'), '=');
-        $payloadB64 = rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
-        $sigB64     = rtrim(strtr(base64_encode($privateKey->sign($headerB64 . '.' . $payloadB64)), '+/', '-_'), '=');
-
-        return "{$headerB64}.{$payloadB64}.{$sigB64}";
-    }
-
-
-
-    protected function loadPrivateKey(): RSA
-    {
-        // Decode base64 JSON from .env
-        $jwkJson = base64_decode($this->privateKeyJson); // $this->privateKeyPem still holds base64 string
-        $jwkData = json_decode($jwkJson, true);
-
-        if (!$jwkData || !isset($jwkData['n'], $jwkData['e'], $jwkData['d'])) {
-            throw new \Exception("Invalid private key format: not a valid JWK JSON");
+        try {
+            $privateKey = $this->loadPrivateKey();
+        } catch (\Throwable $e) {
+            Log::error("loadPrivateKey failed inside generateClientAssertion", [
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
 
-        // Convert base64url values to binary
-        $base64urlDecode = fn($val) => base64_decode(strtr($val, '-_', '+/'));
+        try {
+            $header = [
+                'alg' => $this->algorithm,
+                'typ' => 'JWT'
+            ];
 
-        $rsaKeyArray = [
-            'n'  => $base64urlDecode($jwkData['n']),
-            'e'  => $base64urlDecode($jwkData['e']),
-            'd'  => $base64urlDecode($jwkData['d']),
-            'p'  => isset($jwkData['p']) ? $base64urlDecode($jwkData['p']) : null,
-            'q'  => isset($jwkData['q']) ? $base64urlDecode($jwkData['q']) : null,
-            'dp' => isset($jwkData['dp']) ? $base64urlDecode($jwkData['dp']) : null,
-            'dq' => isset($jwkData['dq']) ? $base64urlDecode($jwkData['dq']) : null,
-            'qi' => isset($jwkData['qi']) ? $base64urlDecode($jwkData['qi']) : null,
-        ];
+            $now = time();
 
-        return RSA::loadPrivateKey($rsaKeyArray)->withPadding(RSA::SIGNATURE_PKCS1);
+            $payload = [
+                'iss' => $this->clientId,
+                'sub' => $this->clientId,
+                'aud' => $this->tokenEndpoint,
+                'iat' => $now,
+                'exp' => $now + ($this->expirationTime * 60),
+                'jti' => bin2hex(random_bytes(16)),
+            ];
+
+            // Log::info("JWT payload created", [
+            //     'payload' => $payload
+            // ]);
+
+            $b64 = fn($data) => rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+
+            $headerB64  = $b64(json_encode($header));
+            $payloadB64 = $b64(json_encode($payload));
+
+            $signature  = $privateKey->sign("$headerB64.$payloadB64");
+            $sigB64     = $b64($signature);
+
+            // Log::info("Client assertion successfully signed");
+
+            return "$headerB64.$payloadB64.$sigB64";
+        } catch (\Throwable $e) {
+            Log::error("Failed generating client assertion", [
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
 }

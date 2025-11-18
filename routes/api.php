@@ -6,7 +6,6 @@ use App\Http\Controllers\Api\v1\BandwidthOptionController;
 use App\Http\Controllers\Api\v1\CancelSurveyOrderController;
 use App\Http\Controllers\Api\v1\CustomerController;
 use App\Http\Controllers\Api\v1\EcafController;
-use App\Http\Controllers\Api\v1\FaydaAuthController;
 use App\Http\Controllers\Api\v1\LocationController;
 use App\Http\Controllers\Api\v1\OccupationController;
 use App\Http\Controllers\Api\v1\OneOffFeeController;
@@ -26,12 +25,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
-    // Start OAuth flow: returns auth_url, state, and code_verifier
-    Route::get('fayda/auth/start', [FaydaAuthController::class, 'start']);
-
-    // Callback: frontend sends code, state, and code_verifier
-    Route::post('fayda/auth/callback', [FaydaAuthController::class, 'callback']);
-
     Route::middleware(['throttle:service_client'])->group(function () {
         Route::post('/issue-token', [ServiceClientController::class, 'issueToken']);
         Route::get('/fetch-token', function (Request $request) {

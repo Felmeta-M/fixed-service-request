@@ -27,7 +27,7 @@ abstract class BaseApiService
     protected function headers(): array
     {
         return [
-            'Content-Type' => 'ttext/xml; charset=utf-8',
+            'Content-Type' => 'text/xml; charset=utf-8',
         ];
     }
 

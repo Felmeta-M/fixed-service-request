@@ -50,17 +50,10 @@ class EsignetService
      */
     public function buildAuthorizationUrl(): array
     {
-        // Log::info("EsignetService::buildAuthorizationUrl - Generating PKCE");
-
         try {
             $codeVerifier = bin2hex(random_bytes(32));
             $codeChallenge = rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
             $state = bin2hex(random_bytes(16));
-
-            // Log::info("PKCE generated", [
-            //     'code_challenge' => $codeChallenge,
-            //     'state' => $state
-            // ]);
 
             $authUrl = $this->authorizationEndpoint . '?' . http_build_query([
                 'response_type' => 'code',
@@ -94,12 +87,8 @@ class EsignetService
      */
     public function exchangeCodeForToken(string $code, string $codeVerifier): array
     {
-        // Log::info("EsignetService::exchangeCodeForToken - Starting token exchange");
-
         try {
             $clientAssertion = $this->generateClientAssertion();
-
-            // Log::info("Client assertion successfully generated");
         } catch (\Throwable $e) {
             Log::error("Failed generating client assertion", [
                 'error' => $e->getMessage()
@@ -118,11 +107,6 @@ class EsignetService
                 'client_assertion' => $clientAssertion,
                 'client_assertion_type' => $this->clientAssertionType,
             ]);
-
-            // Log::info("Token endpoint response", [
-            //     'status' => $response->status(),
-            //     'body'   => $response->json()
-            // ]);
 
             return $response->json();
         } catch (\Throwable $e) {
@@ -167,7 +151,7 @@ class EsignetService
                 'gender',
                 'nationality',
                 'phone_number',
-                // 'address',
+                'address',
                 'picture'
             ];
 
@@ -192,7 +176,6 @@ class EsignetService
             if ($customer) {
                 return DB::table('customers')->where('phone_number', $formattedPhone)->first();
             }
-
         } catch (\Exception $e) {
             Log::error('Exception fetching user info', ['error' => $e->getMessage()]);
             throw new \Exception('Exception fetching user info');
@@ -227,8 +210,6 @@ class EsignetService
      */
     protected function loadPrivateKey(): RSA
     {
-        // Log::info("EsignetService::loadPrivateKey - Decoding JWK");
-
         try {
             $jwkJson = base64_decode($this->privateKeyJson);
 
@@ -236,12 +217,8 @@ class EsignetService
                 throw new \Exception("Base64 decode failed — JWK is invalid");
             }
 
-            // Log::info("JWK JSON decoded successfully");
-
             $key = RSA::loadPrivateKey($jwkJson, 'JWK')
                 ->withPadding(RSA::SIGNATURE_PKCS1);
-
-            // Log::info("RSA private key loaded successfully");
 
             return $key;
         } catch (\Throwable $e) {
@@ -258,8 +235,6 @@ class EsignetService
      */
     protected function generateClientAssertion(): string
     {
-        // Log::info("EsignetService::generateClientAssertion - Start");
-
         try {
             $privateKey = $this->loadPrivateKey();
         } catch (\Throwable $e) {
@@ -286,10 +261,6 @@ class EsignetService
                 'jti' => bin2hex(random_bytes(16)),
             ];
 
-            // Log::info("JWT payload created", [
-            //     'payload' => $payload
-            // ]);
-
             $b64 = fn($data) => rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
 
             $headerB64 = $b64(json_encode($header));
@@ -297,8 +268,6 @@ class EsignetService
 
             $signature = $privateKey->sign("$headerB64.$payloadB64");
             $sigB64 = $b64($signature);
-
-            // Log::info("Client assertion successfully signed");
 
             return "$headerB64.$payloadB64.$sigB64";
         } catch (\Throwable $e) {

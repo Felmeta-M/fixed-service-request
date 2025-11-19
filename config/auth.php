@@ -41,6 +41,11 @@ return [
             'provider' => 'users',
         ],
 
+        'customer' => [
+            'driver' => 'session',
+            'provider' => 'customers',
+        ],
+
         'otp' => [
             'driver' => 'session',
             'provider' => 'otps',
@@ -66,16 +71,21 @@ return [
     */
 
     'providers' => [
-    'users' => [
-        'driver' => 'eloquent',
-        'model' => App\Models\User::class,
-    ],
+        'users' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\User::class,
+        ],
 
-    'otps' => [
-        'driver' => 'eloquent',
-        'model' => App\Models\Otp::class,
+        'customers' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Customer::class,
+        ],
+
+        'otps' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Otp::class,
+        ],
     ],
-],
 
     /*
     |--------------------------------------------------------------------------

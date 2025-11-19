@@ -11,7 +11,7 @@ class EnsureOtpAuthenticated
     {
         $user = Auth::guard('otp')->user();
 
-        \Log::info("user" . $user);
+//        \Log::info("user" . $user);
 
         if (!$user) {
             return redirect()->route('otp.phone');

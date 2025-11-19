@@ -204,7 +204,6 @@
 // components/services/ServiceCreationFlow.tsx
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSurveyList } from '@/hooks/use-survey-list';
@@ -361,9 +360,9 @@ export function ServiceCreationFlow({ currentStep, onStepChange }: ServiceCreati
                         <CardTitle className="text-2xl font-bold text-gray-900">{stepTitles[currentStep].title}</CardTitle>
                         <CardDescription className="mt-1 text-gray-600">{stepTitles[currentStep].description}</CardDescription>
                     </div>
-                    <Badge variant="outline" className="bg-primary/10 text-primary">
+                    {/* <Badge variant="outline" className="">
                         Step {currentStep + 1} of 3
-                    </Badge>
+                    </Badge> */}
                 </div>
             </CardHeader>
 
@@ -375,7 +374,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange }: ServiceCreati
                     <div className="mt-8 flex justify-between border-t pt-6">
                         <Button variant="outline" onClick={prevStep} disabled={currentStep === 0} className="flex items-center space-x-2">
                             <ArrowLeft className="h-4 w-4" />
-                            Previous
+                            Back
                         </Button>
 
                         <Button
@@ -383,7 +382,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange }: ServiceCreati
                             disabled={!canProceedToNextStep() || hasActiveSurvey}
                             className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
                         >
-                            {currentStep === 1 ? 'Review & Submit' : 'Continue'}
+                            {currentStep === 1 ? 'Next' : 'Next'}
                             <ChevronRight className="h-4 w-4" />
                         </Button>
                     </div>

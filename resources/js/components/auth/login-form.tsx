@@ -248,10 +248,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import logo from '@/images/national_id_logo.png';
 import { cn } from '@/lib/utils';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
-import { ArrowLeft, IdCard, Loader2, Phone } from 'lucide-react';
+import { ArrowLeft, Loader2, Phone } from 'lucide-react';
 import { useState } from 'react';
 
 interface VerificationError {
@@ -280,9 +281,9 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
     const [nationalIdStep, setNationalIdStep] = useState<'input' | 'verify'>('input');
 
     const start = async () => {
-        const res = await fetch("/login/esignet");
+        const res = await fetch('/login/esignet');
         const data = await res.json();
-        console.log("🚀 ~ start ~ data:", data)
+        console.log('🚀 ~ start ~ data:', data);
         window.location.href = data.authUrl;
     };
 
@@ -457,7 +458,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                                             required
                                         />
                                     </div>
-                                    <Button type="submit" disabled={isLoadingPhone} className="w-full">
+                                    <Button type="submit" disabled={isLoadingPhone} className="mt-2 w-full">
                                         {isLoadingPhone ? (
                                             <>
                                                 <Loader2 className="mr-2 size-4 animate-spin" />
@@ -466,12 +467,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                                         ) : (
                                             <>
                                                 <Phone className="mr-2 size-4" />
-                                                Send OTP
+                                                Login
                                             </>
                                         )}
                                     </Button>
                                 </form>
-                                <FieldDescription>Enter your ethio telecom number to receive an OTP</FieldDescription>
+                                <FieldDescription className="w-[80%]">Enter your ethio telecom number to receive an OTP</FieldDescription>
                             </Field>
 
                             {phoneError && <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{phoneError}</div>}
@@ -503,9 +504,10 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                                     onClick={start}
                                     variant="outline"
                                     type="button"
+                                    className="mb-2"
                                 >
-                                    <IdCard className="" />
-                                    National ID
+                                    <img src={logo} alt="National ID Logo" className="ml-2 h-5 w-5" />
+                                    Login with National ID
                                 </Button>
                             </Field>
                         </FieldGroup>

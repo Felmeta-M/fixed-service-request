@@ -9,11 +9,7 @@ export default function FormSelect({ label, id, value, onChange, options, placeh
                 {label}
             </Label>
             <Select value={value} onValueChange={onChange} disabled={disabled || loading}>
-                <SelectTrigger
-                    className={`${
-                        error ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-green-200'
-                    } flex items-center justify-between focus:ring-2`}
-                >
+                <SelectTrigger className={`${error ? 'border-red-300' : 'border-gray-300'} flex items-center justify-between`}>
                     {loading ? (
                         <div className="flex items-center space-x-2">
                             <svg className="h-4 w-4 animate-spin text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -29,7 +25,7 @@ export default function FormSelect({ label, id, value, onChange, options, placeh
                 {!loading && (
                     <SelectContent className="bg-white shadow-lg">
                         {options.map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value} className="hover:bg-green-50 focus:bg-green-50">
+                            <SelectItem key={opt.value} value={opt.value} className=" ">
                                 {opt.label}
                             </SelectItem>
                         ))}

@@ -1,0 +1,13 @@
+export const ServiceProvisionStatus = {
+    0: { label: 'Created', text: 'text-gray-700', bg: 'bg-gray-400' },
+    1: { label: 'Processing', text: 'text-blue-700', bg: 'bg-blue-400' },
+    2: { label: 'Suspended', text: 'text-orange-700', bg: 'bg-orange-400' },
+    3: { label: 'Waiting Survey', text: 'text-yellow-700', bg: 'bg-yellow-400' },
+    4: { label: 'Failed', text: 'text-red-700', bg: 'bg-red-400' },
+    5: { label: 'Survey Completed', text: 'text-green-700', bg: 'bg-green-400' },
+    6: { label: 'Ready', text: 'text-indigo-700', bg: 'bg-indigo-400' },
+    9: { label: 'Survey Cancelled', text: 'text-rose-700', bg: 'bg-rose-400' },
+    10: { label: 'Pending Payment', text: 'text-purple-700', bg: 'bg-purple-400' },
+    11: { label: 'Paid', text: 'text-emerald-700', bg: 'bg-emerald-400' },
+    13: { label: 'Refund', text: 'text-teal-700', bg: 'bg-teal-400' },
+} as const;

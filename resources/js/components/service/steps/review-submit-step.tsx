@@ -206,7 +206,7 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
             )}
 
             {/* Final Check */}
-            <Card className="border-l-4 border-l-green-500 bg-green-50">
+            {/* <Card className="border-l-4 border-l-green-500 bg-green-50">
                 <CardContent className="p-6">
                     <div className="flex items-center space-x-4">
                         <CheckCircle className="h-8 w-8 text-green-500" />
@@ -218,7 +218,7 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
                         </div>
                     </div>
                 </CardContent>
-            </Card>
+            </Card> */}
 
             {error && (
                 <Alert variant="destructive">
@@ -229,7 +229,7 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
             {/* Submit Actions */}
             <div className="flex justify-between border-t pt-6">
                 <Button variant="outline" onClick={onBack} disabled={submitting}>
-                    Back to Location
+                    Back
                 </Button>
 
                 <Button onClick={handleSubmit} disabled={submitting || !formData.resourceAvailable} className="bg-green-600 hover:bg-green-700">
@@ -241,7 +241,7 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
                     ) : (
                         <>
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Submit Service Request
+                            Submit
                         </>
                     )}
                 </Button>

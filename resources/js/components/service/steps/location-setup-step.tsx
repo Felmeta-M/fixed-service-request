@@ -3,9 +3,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { formatCoordinate, parseCoordinate } from '@/lib/coordinate-utils';
+import { parseCoordinate } from '@/lib/coordinate-utils';
 import { checkResourceAvailability } from '@/lib/resource-check';
 import { CheckCircle, Loader2, MapPin, Navigation, Search } from 'lucide-react';
 import { useState } from 'react';
@@ -130,9 +130,9 @@ export function LocationSetupStep({ formData, onUpdate }: LocationSetupStepProps
     return (
         <div className="space-y-6">
             {/* Location Method Selection */}
-            <div>
-                <h3 className="mb-4 text-lg font-semibold text-gray-900">Choose Location Method</h3>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {/* <div> */}
+            {/* <h3 className="mb-4 text-lg font-semibold text-gray-900">Choose Location Method</h3> */}
+            {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     {locationMethods.map((method) => {
                         const IconComponent = method.icon;
                         const isSelected = locationMethod === method.id;
@@ -140,10 +140,10 @@ export function LocationSetupStep({ formData, onUpdate }: LocationSetupStepProps
                         return (
                             <Card
                                 key={method.id}
-                                className={`cursor-pointer border-2 transition-all duration-200 ${isSelected ? 'border-primary shadow-md' : 'border-gray-200 hover:border-gray-300'} `}
+                                className={`cursor-pointer transition-all duration-200 ${isSelected ? 'border-primary shadow-md' : 'border-gray-200 hover:border-gray-300'} `}
                                 onClick={() => setLocationMethod(method.id)}
                             >
-                                <CardContent className="p-4">
+                                <CardContent>
                                     <div className="flex items-center space-x-3">
                                         <div className={`rounded-lg p-2 ${method.bgColor}`}>
                                             <IconComponent className={`h-5 w-5 ${method.color}`} />
@@ -158,13 +158,52 @@ export function LocationSetupStep({ formData, onUpdate }: LocationSetupStepProps
                         );
                     })}
                 </div>
+            </div> */}
+            <div className="mt-6 grid grid-cols-1 gap-y-6 md:grid-cols-3 md:gap-x-4">
+                {locationMethods.map((method) => {
+                    const Icon = method.icon;
+                    const isSelected = locationMethod === method.id;
+
+                    return (
+                        <label
+                            key={method.id}
+                            onClick={() => setLocationMethod(method.id)}
+                            className={`group relative flex cursor-pointer flex-col rounded-lg border bg-white p-5 transition ${
+                                isSelected ? 'border-primary shadow-md ring-1 ring-primary' : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                            }`}
+                        >
+                            {/* Hidden input for accessibility */}
+                            <input
+                                type="radio"
+                                name="locationMethod"
+                                value={method.id}
+                                checked={isSelected}
+                                onChange={() => {}}
+                                className="absolute inset-0 cursor-pointer opacity-0"
+                            />
+
+                            <div className="flex items-start gap-3">
+                                <div className={`rounded-xl p-3 ${isSelected ? 'text-primary' : 'text-gray-600'}`}>
+                                    <Icon className={`h-6 w-6`} />
+                                </div>
+
+                                <div className="flex-1">
+                                    <h4 className="font-semibold text-gray-900">{method.name}</h4>
+                                    <p className="mt-1 text-xs text-gray-500">{method.description}</p>
+                                </div>
+                            </div>
+
+                            {isSelected && <CheckCircle className="absolute top-3 right-3 h-5 w-5 text-primary" />}
+                        </label>
+                    );
+                })}
             </div>
 
             {/* Location Method Content */}
-            <div className="mt-6">
+            <div className="mt-4">
                 {locationMethod === 'current' && (
                     <Card>
-                        <CardContent className="p-6">
+                        <CardContent>
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h4 className="font-semibold text-gray-900">Current Location Detection</h4>
@@ -208,49 +247,75 @@ export function LocationSetupStep({ formData, onUpdate }: LocationSetupStepProps
 
                 {locationMethod === 'manual' && (
                     <Card>
-                        <CardContent className="p-6">
+                        <CardContent>
                             <h4 className="mb-4 font-semibold text-gray-900">Enter Coordinates</h4>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                <div>
-                                    <Label htmlFor="latitude">Latitude</Label>
-                                    <Input
-                                        id="latitude"
-                                        type="number"
-                                        step="any"
-                                        // value={formData.latitude || ''}
-                                        value={formData.latitude || '9.007428'}
-                                        onChange={(e) => onUpdate({ latitude: parseFloat(e.target.value) || 0 })}
-                                        placeholder="9.007428"
-                                    />
+                            <FieldGroup>
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                    <Field>
+                                        <FieldLabel htmlFor="latitude">Latitude</FieldLabel>
+                                        <Input
+                                            id="latitude"
+                                            type="number"
+                                            step="any"
+                                            placeholder="9.007428"
+                                            required
+                                            value={formData.latitude || '9.007428'}
+                                            onChange={(e) => onUpdate({ latitude: parseFloat(e.target.value) || 0 })}
+                                        />
+                                    </Field>
+                                    {/* <div>
+                                        <Label htmlFor="latitude">Latitude</Label>
+                                        <Input
+                                            id="latitude"
+                                            type="number"
+                                            step="any"
+                                            // value={formData.latitude || ''}
+                                            value={formData.latitude || '9.007428'}
+                                            onChange={(e) => onUpdate({ latitude: parseFloat(e.target.value) || 0 })}
+                                            placeholder="9.007428"
+                                        />
+                                    </div> */}
+                                    <Field>
+                                        <FieldLabel htmlFor="longitude">Longitude</FieldLabel>
+                                        <Input
+                                            id="longitude"
+                                            type="number"
+                                            step="any"
+                                            placeholder="38.733708"
+                                            required
+                                            value={formData.longitude || '38.733708'}
+                                            onChange={(e) => onUpdate({ longitude: parseFloat(e.target.value) || 0 })}
+                                        />
+                                    </Field>
+                                    {/* <div>
+                                        <Label htmlFor="longitude">Longitude</Label>
+                                        <Input
+                                            id="longitude"
+                                            type="number"
+                                            step="any"
+                                            // value={formData.longitude || ''}
+                                            value={formData.longitude || '38.733708'}
+                                            onChange={(e) => onUpdate({ longitude: parseFloat(e.target.value) || 0 })}
+                                            placeholder="38.733708"
+                                        />
+                                    </div> */}
+                                    <div className="flex items-end">
+                                        <Button onClick={handleManualCoordinateSubmit} className="w-full hover:opacity-90">
+                                            <Navigation className="mr-2 h-4 w-4" />
+                                            Set Coordinates
+                                        </Button>
+                                    </div>
                                 </div>
-                                <div>
-                                    <Label htmlFor="longitude">Longitude</Label>
-                                    <Input
-                                        id="longitude"
-                                        type="number"
-                                        step="any"
-                                        // value={formData.longitude || ''}
-                                        value={formData.longitude || '38.733708'}
-                                        onChange={(e) => onUpdate({ longitude: parseFloat(e.target.value) || 0 })}
-                                        placeholder="38.733708"
-                                    />
-                                </div>
-                                <div className="flex items-end">
-                                    <Button onClick={handleManualCoordinateSubmit} className="w-full hover:opacity-90">
-                                        <Navigation className="mr-2 h-4 w-4" />
-                                        Set Coordinates
-                                    </Button>
-                                </div>
-                            </div>
+                            </FieldGroup>
                         </CardContent>
                     </Card>
                 )}
             </div>
 
             {/* Location Status */}
-            {formData.latitude !== 0 && formData.longitude !== 0 && (
+            {/* {formData.latitude !== 0 && formData.longitude !== 0 && (
                 <Card className="border-l-4 border-l-green-500">
-                    <CardContent className="p-4">
+                    <CardContent>
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="font-semibold text-green-800">Location Set</p>
@@ -262,7 +327,7 @@ export function LocationSetupStep({ formData, onUpdate }: LocationSetupStepProps
                         </div>
                     </CardContent>
                 </Card>
-            )}
+            )} */}
 
             {/* Resource Check Status */}
             {checkingResource && (
@@ -290,15 +355,17 @@ export function LocationSetupStep({ formData, onUpdate }: LocationSetupStepProps
             )}
 
             {formData.resourceAvailable === false && (
-                <Alert className="border-red-200">
-                    <AlertDescription className="text-red-800">
-                        <div className="flex items-center justify-between">
-                            <span className="font-semibold">Resource not available</span>
-                            <Badge variant="destructive">Cannot proceed</Badge>
-                        </div>
-                        <p className="mt-1">{formData.resourceMessage || 'Service not available in this location.'}</p>
-                    </AlertDescription>
-                </Alert>
+                <div className="flex items-center justify-between">
+                    <Alert className="flex justify-between border-red-200">
+                        <AlertDescription className="text-red-700">
+                            <div className="flex items-center justify-between">
+                                <span className="font-semibold">Resource not available</span>
+                            </div>
+                            <p className="mt-1">{formData.resourceMessage || 'Service not available in this location.'}</p>
+                        </AlertDescription>
+                        <Badge variant="destructive">Cannot proceed</Badge>
+                    </Alert>
+                </div>
             )}
 
             {locationError && (

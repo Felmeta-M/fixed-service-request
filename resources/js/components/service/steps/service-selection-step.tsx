@@ -153,7 +153,7 @@ const serviceTypes = [
     {
         id: '1943913915',
         name: 'Fixed Broadband',
-        description: 'High-speed internet connection for home or business',
+        description: 'High-speed internet connection',
         icon: Wifi,
         color: 'blue',
         // features: ['Fast internet speeds', 'Reliable connectivity', '24/7 support'],
@@ -161,7 +161,7 @@ const serviceTypes = [
     {
         id: '1207609454',
         name: 'Fixed Voice',
-        description: 'Clear telephone service with reliable connectivity',
+        description: 'Reliable telephone service connectivity',
         icon: Phone,
         color: 'green',
         // features: ['Crystal clear calls', 'Unlimited local calls', 'Voicemail included'],
@@ -194,85 +194,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
 
     return (
         <div className="w-full space-y-6">
-            {/* Welcome Message */}
-            {/* <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900">Welcome to Service Setup</h2>
-                <p className="mt-2 text-gray-600">Let's get you connected with Ethio Telecom's premium fixed services</p>
-            </div> */}
-            {/* Service Type Selection */}
-            {/* <div> */}
-            {/* <h3 className="mb-4 text-lg font-semibold text-gray-900">Choose Your Service</h3> */}
-            {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    {serviceTypes.map((service) => {
-                        const IconComponent = service.icon;
-                        const isSelected = formData.serviceType === service.id;
-                        const isDisabled = hasActiveSurvey;
-
-                        return (
-                            <Card
-                                key={service.id}
-                                className={`cursor-pointer border-2 transition-all duration-200 ${
-                                    isSelected
-                                        ? 'shadow-md'
-                                        : isDisabled
-                                          ? 'cursor-not-allowed border-gray-200 bg-gray-100 opacity-60'
-                                          : 'border-gray-200 hover:border-gray-300 hover:shadow-lg'
-                                } `}
-                                onClick={() => !isDisabled && handleServiceSelect(service.id)}
-                            >
-                                <CardContent className="p-6">
-                                    <div className="flex items-start space-x-4">
-                                        <div
-                                            className={`rounded-xl p-3 ${
-                                                isSelected
-                                                    ? 'text-primary'
-                                                    : isDisabled
-                                                      ? 'bg-gray-300 text-gray-500' */}
-            {/* : // : `bg-${service.color}-100 text-${service.color}-600` */}
-            {/* ` text-${service.color}-600`
-                                            } `}
-                                        >
-                                            <IconComponent className="h-6 w-6" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3
-                                                className={`font-semibold ${
-                                                    isSelected ? 'text-primary' : isDisabled ? 'text-gray-500' : 'text-gray-900'
-                                                } `}
-                                            >
-                                                {service.name}
-                                            </h3>
-                                            <p className={`mt-1 text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-600'}`}>{service.description}</p>
-                                            <ul className="mt-3 space-y-1">
-                                                {service.features.map((feature, index) => (
-                                                    <li key={index} className="flex items-center text-xs text-gray-500">
-                                                        <CheckCircle className="mr-2 h-3 w-3 text-green-500" />
-                                                        {feature}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    </div>
-                                    {isSelected && (
-                                        <div className="mt-3 flex items-center justify-end">
-                                            <Badge variant="outline" className="bg-white text-green-600">
-                                                Selected
-                                            </Badge>
-                                        </div>
-                                    )}
-                                    {isDisabled && !isSelected && (
-                                        <div className="mt-3 flex items-center justify-end">
-                                            <Badge variant="outline" className="bg-gray-100 text-gray-500">
-                                                Unavailable
-                                            </Badge>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        );
-                    })}
-                </div>
-            </div> */}
+          
             <div className="mt-6 grid grid-cols-1 gap-y-6 md:grid-cols-3 md:gap-x-4">
                 {serviceTypes.map((service) => {
                     const Icon = service.icon;
@@ -304,14 +226,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                                     <h4 className={`font-semibold ${isSelected ? '' : ''}`}>{service.name}</h4>
                                     <p className="mt-1 text-xs text-gray-500">{service.description}</p>
 
-                                    {/* <ul className="mt-3 space-y-1">
-                                        {service.features.map((feature, i) => (
-                                            <li key={i} className="flex items-center text-xs text-gray-500">
-                                                <CheckCircle className="mr-2 h-3 w-3 text-green-500" />
-                                                {feature}
-                                            </li>
-                                        ))}
-                                    </ul> */}
+                                    
                                 </div>
                             </div>
 
@@ -323,7 +238,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
             {/* Bandwidth Selection (Only for Broadband) */}
             {formData.serviceType === '1943913915' && !hasActiveSurvey && (
                 <div className="mt-6">
-                    <h3 className="mb-4 text-lg font-semibold text-gray-900">Select Your Bandwidth</h3>
+                    {/* <h3 className="mb-4 text-lg font-semibold text-gray-900">Select Your Bandwidth</h3> */}
                     <BandwidthSelector
                         residentialOptions={residentialOptions}
                         enterpriseOptions={enterpriseOptions}
@@ -333,25 +248,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                     />
                 </div>
             )}
-            {/* Selection Summary */}
-            {/* {formData.serviceType && !hasActiveSurvey && (
-                <Card className="border-l-4 border-l-green-500">
-                    <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="font-semibold text-green-800">Service Selected</p>
-                                <p className="text-sm">
-                                    {serviceTypes.find((s) => s.id === formData.serviceType)?.name}
-                                    {formData.bandwidth && ` • ${formData.bandwidth}`}
-                                </p> */}
-            {/* <p className="mt-1 text-xs text-green-600">Ready to proceed to location setup</p> */}
-            {/* </div>
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                        </div>
-                    </CardContent>
-                </Card>
-            )} */}
-            {/* Active Survey Warning */}
+            
             {hasActiveSurvey && (
                 <Card className="bg-gray-50">
                     <CardContent className="p-4">

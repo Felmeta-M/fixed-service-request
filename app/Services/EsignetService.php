@@ -2,45 +2,50 @@
 
 namespace App\Services;
 
-
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use phpseclib3\Crypt\RSA;
-use RuntimeException;
 use Throwable;
 use function Symfony\Component\Clock\now;
 
 class EsignetService
 {
     protected string $clientId;
+
     protected string $redirectUri;
+
     protected string $authorizationEndpoint;
+
     protected string $tokenEndpoint;
+
     protected string $userinfoEndpoint;
+
     protected string $clientAssertionType;
+
     protected string $privateKeyJson;
+
     protected int $expirationTime;
+
     protected string $algorithm;
 
-    public function __construct(
-        protected QueryCustomerByServiceNumberService $queryCustomerByService
-    )
+    public function __construct()
     {
         try {
             $config = config('services.esignet');
 
             foreach ($config as $key => $value) {
                 $property = Str::camel($key);
+
                 if (property_exists($this, $property)) {
                     $this->{$property} = $value;
                 }
             }
 
         } catch (Throwable $e) {
-            Log::error("EsignetService::__construct failed", [
+            Log::error('EsignetService::__construct failed', [
                 'error' => $e->getMessage(),
             ]);
             throw $e;
@@ -73,16 +78,15 @@ class EsignetService
                 'codeVerifier' => $codeVerifier,
             ];
         } catch (Throwable $e) {
-            Log::error("Error generating authorization URL", [
-                "error" => $e->getMessage()
+            Log::error('Error generating authorization URL', [
+                'error' => $e->getMessage(),
             ]);
 
             return [
-                'error' => 'Failed to build authorization URL'
+                'error' => 'Failed to build authorization URL',
             ];
         }
     }
-
 
     /**
      * Exchange Code for Token
@@ -92,8 +96,8 @@ class EsignetService
         try {
             $clientAssertion = $this->generateClientAssertion();
         } catch (Throwable $e) {
-            Log::error("Failed generating client assertion", [
-                'error' => $e->getMessage()
+            Log::error('Failed generating client assertion', [
+                'error' => $e->getMessage(),
             ]);
 
             return ['error' => 'Failed generating client assertion.'];
@@ -112,12 +116,12 @@ class EsignetService
 
             return $response->json();
         } catch (Throwable $e) {
-            Log::error("Error exchanging code for token", [
-                "error" => $e->getMessage()
+            Log::error('Error exchanging code for token', [
+                'error' => $e->getMessage(),
             ]);
 
             return [
-                "error" => "Failed to exchange code for token."
+                'error' => 'Failed to exchange code for token.',
             ];
         }
     }
@@ -130,8 +134,8 @@ class EsignetService
         try {
             $privateKey = $this->loadPrivateKey();
         } catch (Throwable $e) {
-            Log::error("loadPrivateKey failed inside generateClientAssertion", [
-                'error' => $e->getMessage()
+            Log::error('loadPrivateKey failed inside generateClientAssertion', [
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -139,7 +143,7 @@ class EsignetService
         try {
             $header = [
                 'alg' => $this->algorithm,
-                'typ' => 'JWT'
+                'typ' => 'JWT',
             ];
 
             $now = time();
@@ -163,8 +167,8 @@ class EsignetService
 
             return "$headerB64.$payloadB64.$sigB64";
         } catch (Throwable $e) {
-            Log::error("Failed generating client assertion", [
-                'error' => $e->getMessage()
+            Log::error('Failed generating client assertion', [
+                'error' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -179,7 +183,7 @@ class EsignetService
             $jwkJson = base64_decode($this->privateKeyJson);
 
             if (!$jwkJson) {
-                throw new Exception("Base64 decode failed — JWK is invalid");
+                throw new Exception('Base64 decode failed — JWK is invalid');
             }
 
             $key = RSA::loadPrivateKey($jwkJson, 'JWK')
@@ -187,8 +191,8 @@ class EsignetService
 
             return $key;
         } catch (Throwable $e) {
-            Log::error("Failed loading private key", [
-                'error' => $e->getMessage()
+            Log::error('Failed loading private key', [
+                'error' => $e->getMessage(),
             ]);
             throw $e; // keep throwing so generateClientAssertion can catch it
         }
@@ -226,7 +230,7 @@ class EsignetService
                 'nationality',
                 'phone_number',
                 'address',
-                'picture'
+                'picture',
             ];
 
             $dataToInsert = array_intersect_key($userInfo, array_flip($allowedFields));
@@ -234,14 +238,15 @@ class EsignetService
             $rawPhone = $dataToInsert['phone_number'] ?? null;
             $digits = preg_replace('/\D/', '', $rawPhone); // remove non-number
             $formattedPhone = substr($digits, -9);
-            //TODO: check customer age, is_verified
-            if ($this->isEthioTelecomCustomer($formattedPhone)) {
-                $this->getCustomerOrFail($formattedPhone);
+            if (!$formattedPhone) {
+                return null;
             }
-
+            if (!preg_match('/^(09|\+2519)/', $formattedPhone)) {
+                return $formattedPhone;
+            }
             $dataToInsert['phone_number'] = $formattedPhone;
 
-            $customer = DB::table('customers')->updateOrInsert(
+            DB::table('customers')->updateOrInsert(
                 ['phone_number' => $formattedPhone],
                 [
                     ...$dataToInsert,
@@ -250,12 +255,10 @@ class EsignetService
                 ]
             );
 
-            if ($customer) {
-                return DB::table('customers')->where('phone_number', $formattedPhone)->first();
-            }
+            return $formattedPhone;
         } catch (Exception $e) {
             Log::error('Exception fetching user info', ['error' => $e->getMessage()]);
-            throw new Exception('Exception fetching user info');
+            return null;
         }
     }
 
@@ -263,6 +266,7 @@ class EsignetService
     {
         try {
             $parts = explode('.', $jwt);
+
             if (count($parts) < 2) {
                 throw new Exception('Invalid JWT format');
             }
@@ -277,30 +281,8 @@ class EsignetService
             return $decoded ?: [];
         } catch (Exception $e) {
             Log::error('Failed decoding JWT', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
-
-    function isEthioTelecomCustomer(string $digits): bool
-    {
-        $formattedPhone = substr($digits, -9);
-
-        if (preg_match('/^9\d{8}$/', $formattedPhone) !== 1) {
-            throw new RuntimeException("Phone number is not an Ethio Telecom customer.");
-        }
-
-        return true;
-    }
-
-    function getCustomerOrFail(string $formattedPhone)
-    {
-        $customer = $this->queryCustomerByService->getCustomer($formattedPhone);
-
-        if ($customer === null) {
-            throw new RuntimeException("Customer not found for phone: {$formattedPhone}");
-        }
-
-        return $customer;
-    }
-
 }

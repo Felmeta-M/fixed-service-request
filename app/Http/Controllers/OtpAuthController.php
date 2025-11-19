@@ -2,15 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Otp;
+use App\Services\LocalAuthService;
 use App\Traits\InteractsWithSMSGateway;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Otp;
-use Carbon\Carbon;
+use Log;
+use Throwable;
 
 class OtpAuthController extends Controller
 {
     use InteractsWithSMSGateway;
+
+    public function __construct(protected LocalAuthService $localAuthService)
+    {
+    }
+
     public function showPhoneForm()
     {
         return inertia('Auth/EnterPhone');
@@ -42,9 +50,9 @@ class OtpAuthController extends Controller
             return redirect()
                 ->route('otp.verify.form')
                 ->with('phone', $request->phone);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Log error for debugging
-            \Log::error("OTP send failed: " . $e->getMessage(), [
+            Log::error('OTP send failed: ' . $e->getMessage(), [
                 'phone' => $request->phone ?? null,
             ]);
 
@@ -71,9 +79,7 @@ class OtpAuthController extends Controller
             return back()->withErrors(['code' => 'Invalid or expired OTP']);
         }
 
-        Auth::guard('otp')->login($otp);
-
-        return redirect()->route('dashboard');
+        $this->localAuthService->handle($otp->phone);
     }
 
     public function logout(Request $request)
@@ -81,6 +87,7 @@ class OtpAuthController extends Controller
         Auth::guard('otp')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('home');
     }
 }

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api\v1;
 
-use App\Http\Controllers\Auth\ClientAuthController;
 use App\Http\Controllers\Controller;
 use App\Services\EsignetService;
+use App\Services\LocalAuthService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -12,8 +12,8 @@ use Throwable;
 class EsignetController extends Controller
 {
     public function __construct(
-        protected EsignetService       $esign,
-        protected ClientAuthController $client_auth_controller
+        protected EsignetService   $esign,
+        protected LocalAuthService $localAuthService,
     )
     {
     }
@@ -27,9 +27,10 @@ class EsignetController extends Controller
             $authData = $this->esign->buildAuthorizationUrl();
 
             if (isset($authData['error'])) {
-                Log::error("Failed building authorization URL", $authData);
+                Log::error('Failed building authorization URL', $authData);
+
                 return response()->json([
-                    'error' => 'Failed to initiate authentication'
+                    'error' => 'Failed to initiate authentication',
                 ], 500);
             }
 
@@ -42,38 +43,33 @@ class EsignetController extends Controller
 
             return response()->json($authData);
         } catch (Throwable $e) {
-            Log::error("Exception in redirectToEsignet", [
-                'error' => $e->getMessage()
+            Log::error('Exception in redirectToEsignet', [
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
-                'error' => 'Unexpected error initializing authentication'
+                'error' => 'Unexpected error initializing authentication',
             ], 500);
         }
     }
-
 
     /**
      * Handle callback from ESIGNET
      */
     public function handleEsignetCallback(Request $request)
     {
-        // Log::info("EsignetController::handleEsignetCallback - Start", [
-        //     'query' => $request->all()
-        // ]);
-
         try {
             $request->validate([
                 'code' => 'required|string',
                 'state' => 'required|string',
             ]);
         } catch (Throwable $e) {
-            Log::warning("Validation failed", [
-                'error' => $e->getMessage()
+            Log::warning('Validation failed', [
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
-                'error' => 'Missing or invalid parameters'
+                'error' => 'Missing or invalid parameters',
             ], 422);
         }
 
@@ -81,37 +77,33 @@ class EsignetController extends Controller
             $codeVerifier = session('esignet_code_verifier');
             $stateSaved = session('esignet_state');
 
-            // Log::info("Loaded stored session PKCE params", [
-            //     'stored_verifier' => $codeVerifier,
-            //     'stored_state'    => $stateSaved
-            // ]);
-
             if (!$codeVerifier || !$stateSaved) {
-                Log::error("Session expired or missing");
+                Log::error('Session expired or missing');
+
                 return response()->json([
-                    'error' => 'Session expired. Restart login.'
+                    'error' => 'Session expired. Restart login.',
                 ], 440);
             }
 
             if ($request->state !== $stateSaved) {
-                Log::error("State mismatch", [
+                Log::error('State mismatch', [
                     'received' => $request->state,
-                    'expected' => $stateSaved
+                    'expected' => $stateSaved,
                 ]);
+
                 return response()->json([
-                    'error' => 'Invalid state parameter'
+                    'error' => 'Invalid state parameter',
                 ], 403);
             }
         } catch (Throwable $e) {
-            Log::error("Failed reading session data", [
-                'error' => $e->getMessage()
+            Log::error('Failed reading session data', [
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
-                'error' => 'Session error'
+                'error' => 'Session error',
             ], 500);
         }
-
 
         /**
          * Exchange code for token
@@ -120,49 +112,42 @@ class EsignetController extends Controller
             $tokenResponse = $this->esign->exchangeCodeForToken($request->code, $codeVerifier);
 
             if (!isset($tokenResponse['access_token'])) {
-                Log::error("Token exchange failed", [
-                    'response' => $tokenResponse
+                Log::error('Token exchange failed', [
+                    'response' => $tokenResponse,
                 ]);
 
                 return response()->json([
                     'error' => 'Failed to obtain access token',
-                    'details' => $tokenResponse
+                    'details' => $tokenResponse,
                 ], 400);
             }
 
             // Log::info("Token successfully received", [$tokenResponse]);
         } catch (Throwable $e) {
-            Log::error("Exception exchanging code for token", [
-                'error' => $e->getMessage()
+            Log::error('Exception exchanging code for token', [
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
-                'error' => 'Token request failed'
+                'error' => 'Token request failed',
             ], 500);
         }
-
 
         /**
          * Get User Info
          */
         try {
             $customer = $this->esign->getUserInfo($tokenResponse['access_token']);
-//            Auth::guard('customers')->loginUsingId($customer->id);
-//            Log::info('customers user profile', auth('customers')->user());
-////            return redirect()->route('dashboard');
-            return response()->json([
-                'customer' => $customer
-            ]);
+            $this->localAuthService->handle($customer['phone_number']);
         } catch (Throwable $e) {
-            Log::error("Exception fetching user info", [
-                'error' => $e->getMessage()
+            Log::error('Exception fetching user info', [
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
-                'error' => 'Failed contacting userinfo endpoint'
+                'error' => 'Failed contacting userinfo endpoint',
             ], 500);
         }
-
 
         /**
          * Cleanup & return success

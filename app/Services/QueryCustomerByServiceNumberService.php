@@ -2,26 +2,27 @@
 
 namespace App\Services;
 
+use Illuminate\Http\JsonResponse;
+use RuntimeException;
+use Throwable;
+
 class QueryCustomerByServiceNumberService extends BaseApiService
 {
     protected int $timeout = 10;
+
     protected int $rateLimit = 15;
 
-    protected function endpoint(): string
-    {
-        return config('services.query_customer_by_service_number.endpoint');
-    }
-
-    public function getCustomer(string $serviceNumber)
+    public function getCustomer(string $serviceNumber): JsonResponse
     {
         try {
-            $xmlPayload = $this->buildRequestXml($serviceNumber);
+            $xmlPayload  = $this->buildRequestXml($serviceNumber);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            $parsedXml = $this->parseResponseXml($xmlResponse);
+            $parsedXml   = $this->parseResponseXml($xmlResponse);
+
             return ApiResponse::success($parsedXml);
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return ApiResponse::exception($e, 'Query customer by service number failed.');
         }
     }
@@ -29,12 +30,12 @@ class QueryCustomerByServiceNumberService extends BaseApiService
     protected function buildRequestXml(string $serviceNumber): string
     {
         $transactionId = uniqid();
-        $processTime = now()->format('YmdHis');
-        $config = config('services.query_customer_by_service_number');
+        $processTime   = now()->format('YmdHis');
+        $config        = config('services.query_customer_by_service_number');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
- xmlns:ser="http://oss.huawei.com/webservice/bss/services" 
+ xmlns:ser="http://oss.huawei.com/webservice/bss/services"
  xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
    <soapenv:Header/>
    <soapenv:Body>
@@ -63,11 +64,11 @@ XML;
         $xmlObject  = simplexml_load_string($xml);
         $namespaces = $xmlObject->getNamespaces(true);
 
-        $body = $xmlObject->children($namespaces['soapenv'])->Body;
+        $body     = $xmlObject->children($namespaces['soapenv'])->Body;
         $response = $body->children($namespaces['ser'])->GetCustomerResponse;
 
-        $header = $response->ResponseHeader->children($namespaces['com']);
-        $body   = $response->GetCustomerBody->children($namespaces['com']);
+        $header  = $response->ResponseHeader->children($namespaces['com']);
+        $body    = $response->GetCustomerBody->children($namespaces['com']);
         $retCode = (string) $header->RetCode;
         $retMsg  = (string) $header->RetMsg;
 
@@ -76,10 +77,10 @@ XML;
         }
 
         $result = [
-            'success'   => true,
-            'ret_code'  => $retCode,
-            'ret_msg'   => $retMsg,
-            'customer'  => [
+            'success'  => true,
+            'ret_code' => $retCode,
+            'ret_msg'  => $retMsg,
+            'customer' => [
                 'id'               => (string) $body->CustomerId,
                 'code'             => (string) $body->CustomerCode,
                 'first_name'       => (string) $body->FirstName,
@@ -128,11 +129,11 @@ XML;
 
         foreach ($body->SubscriberList->SubscriberAbstractInfo ?? [] as $subscriber) {
             $result['subscribers'][] = [
-                'subscriber_id'     => (string) $subscriber->SubscriberId,
-                'service_number'    => (string) $subscriber->ServiceNumber,
-                'payment_type'      => (string) $subscriber->PaymentType,
+                'subscriber_id'      => (string) $subscriber->SubscriberId,
+                'service_number'     => (string) $subscriber->ServiceNumber,
+                'payment_type'       => (string) $subscriber->PaymentType,
                 'default_account_id' => (string) $subscriber->DefaultAccountId,
-                'status'            => (string) $subscriber->Status,
+                'status'             => (string) $subscriber->Status,
             ];
         }
 
@@ -141,5 +142,10 @@ XML;
         }
 
         return $result;
+    }
+
+    protected function endpoint(): string
+    {
+        return config('services.query_customer_by_service_number.endpoint');
     }
 }

@@ -2,8 +2,9 @@
 
 use App\Http\Controllers\Api\v1\EsignetController;
 use App\Http\Controllers\Api\v1\NidController;
-use App\Http\Controllers\OtpAuthController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OtpAuthController;
 use App\Http\Controllers\SupportRequestController;
 use Inertia\Inertia;
 
@@ -19,6 +20,9 @@ Route::get('/login/esignet', [EsignetController::class, 'redirectToEsignet'])
 
 Route::get('/callback', [EsignetController::class, 'handleEsignetCallback'])
     ->name('esignet.callback');
+
+Route::get('/customers', [CustomerController::class, 'create'])
+    ->name('customer.create');
 
 // NID routes in web.php with session support
 Route::prefix('api/v1')->middleware('web')->group(function () {

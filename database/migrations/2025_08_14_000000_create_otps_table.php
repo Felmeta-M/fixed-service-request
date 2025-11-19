@@ -10,7 +10,8 @@ return new class extends Migration {
         Schema::create('otps', function (Blueprint $table) {
             $table->id();
             $table->string('phone')->index();
-            $table->string('code');
+            $table->string('code')->unique();
+            $table->string('name')->nullable();
             $table->timestamp('expires_at');
             $table->timestamps();
         });

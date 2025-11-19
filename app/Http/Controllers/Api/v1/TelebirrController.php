@@ -9,34 +9,38 @@ use App\Services\PaymentService;
 use App\Services\RsaSignatureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 
 class TelebirrController extends Controller
 {
 
     public function __construct(
-        protected readonly CreateOrderService $createOrderService,
-        protected readonly PaymentService $paymentService,
+        protected readonly CreateOrderService  $createOrderService,
+        protected readonly PaymentService      $paymentService,
         protected readonly RsaSignatureService $rsaSignatureService,
-    ) {}
+    )
+    {
+    }
 
     public function createOrder(Request $request)
     {
         try {
-            $validated =  $request->validate([
-                'customer_code'  => 'required|string',
-                'title'  => 'required|string',
+            $validated = $request->validate([
+                'customer_code' => 'required|string',
+                'title' => 'required|string',
                 'amount' => 'required|numeric',
             ]);
 
             $rawRequest = $this->createOrderService->createOrder($validated);
+            Log::info('raw request', $rawRequest);
             // $rawRequest = $this->rsaSignatureService->createOrder($request->title, (string)$request->amount);
 
             return response()->json([
                 'success' => true,
                 'rawRequest' => $rawRequest,
             ]);
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -58,8 +62,8 @@ class TelebirrController extends Controller
 
         // Extract necessary info
         $orderId = $request->input('merch_order_id');
-        $status  = $request->input('trade_status'); // or whatever field Fabric sends
-        $amount  = $request->input('total_amount');
+        $status = $request->input('trade_status'); // or whatever field Fabric sends
+        $amount = $request->input('total_amount');
 
         // TODO: Update order/payment status in DB
         // Order::where('merch_order_id', $orderId)->update(['status' => $status]);

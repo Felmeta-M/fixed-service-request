@@ -21,6 +21,13 @@ Route::get('/login/esignet', [EsignetController::class, 'redirectToEsignet'])
 Route::get('/callback', [EsignetController::class, 'handleEsignetCallback'])
     ->name('esignet.callback');
 
+Route::get('/auth/error', function () {
+    return Inertia::render('Auth/Error', [
+        'error' => session('error'),
+    ]);
+})->name('auth.error');
+
+
 Route::get('/customers', [CustomerController::class, 'create'])
     ->name('customer.create');
 

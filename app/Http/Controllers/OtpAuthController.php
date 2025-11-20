@@ -8,7 +8,6 @@ use App\Traits\InteractsWithSMSGateway;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Log;
 use Throwable;
 
 class OtpAuthController extends Controller
@@ -26,17 +25,24 @@ class OtpAuthController extends Controller
 
     public function sendOneTimePassword(Request $request)
     {
-        // Validate request
-        $request->validate([
-            'phone' => 'required|string|min:10|max:15',
-        ]);
-
         try {
+            $request->validate([
+                'phone' => 'required|string',
+            ]);
+            $phone = substr($request->phone, -9);
+
+            if (!preg_match('/^(?:\+2519|2519|09|9)\d{8}$/', $phone)) {
+                return response()->json([
+                    'errors' => [
+                        'phone' => ['Phone number must be Ethio Telecom.'],
+                    ],
+                ], 422);
+            }
+
             $otpCode = rand(100000, 999999);
 
-            // Save or update OTP
             Otp::updateOrCreate(
-                ['phone' => $request->phone],
+                ['phone' => $phone],
                 [
                     'code' => $otpCode,
                     'expires_at' => now()->addMinutes(5),
@@ -44,19 +50,13 @@ class OtpAuthController extends Controller
             );
 
             // Try sending SMS
-            $this->sendSmsOnly($request->phone, $otpCode);
+            $this->sendSmsOnly($phone, $otpCode);
 
             // Success → redirect to OTP verify form
             return redirect()
                 ->route('otp.verify.form')
                 ->with('phone', $request->phone);
         } catch (Throwable $e) {
-            // Log error for debugging
-            Log::error('OTP send failed: ' . $e->getMessage(), [
-                'phone' => $request->phone ?? null,
-            ]);
-
-            // Redirect back with error message
             return redirect()
                 ->back()
                 ->withInput()
@@ -66,7 +66,8 @@ class OtpAuthController extends Controller
 
     public function showVerifyForm()
     {
-        return inertia('Auth/VerifyOtp');
+        $phone = session('phone');
+        return inertia('Auth/VerifyOtp', ['phone' => $phone]);
     }
 
     public function verifyOneTimePassword(Request $request)

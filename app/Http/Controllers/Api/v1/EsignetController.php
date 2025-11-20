@@ -6,153 +6,119 @@ use App\Http\Controllers\Controller;
 use App\Services\EsignetService;
 use App\Services\LocalAuthService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Throwable;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class EsignetController extends Controller
 {
     public function __construct(
-        protected EsignetService   $esign,
-        protected LocalAuthService $localAuthService,
+        protected EsignetService   $esignet,
+        protected LocalAuthService $localAuth
     )
     {
     }
 
-    /**
-     * Redirect to ESIGNET login page
-     */
+    /** Starts ESIGNET login */
     public function redirectToEsignet()
     {
-        try {
-            $authData = $this->esign->buildAuthorizationUrl();
+        $result = $this->esignet->buildAuthorizationUrl();
 
-            if (isset($authData['error'])) {
-                Log::error('Failed building authorization URL', $authData);
-
-                return response()->json([
-                    'error' => 'Failed to initiate authentication',
-                ], 500);
-            }
-
-            session([
-                'esignet_code_verifier' => $authData['codeVerifier'],
-                'esignet_state' => $authData['state'],
+        if ($result['status'] !== 'ok') {
+            return Inertia::render('ErrorPage', [
+                'message' => $result['message']
             ]);
-
-            // Log::info("Stored PKCE verifier & state in session");
-
-            return response()->json($authData);
-        } catch (Throwable $e) {
-            Log::error('Exception in redirectToEsignet', [
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'error' => 'Unexpected error initializing authentication',
-            ], 500);
         }
+
+        session([
+            'esign_state' => $result['state'],
+            'esign_code_verifier' => $result['code_verifier'],
+        ]);
+
+        return redirect()->away($result['auth_url']);
     }
 
-    /**
-     * Handle callback from ESIGNET
-     */
+    /** Callback handler */
     public function handleEsignetCallback(Request $request)
     {
-        try {
-            $request->validate([
-                'code' => 'required|string',
-                'state' => 'required|string',
-            ]);
-        } catch (Throwable $e) {
-            Log::warning('Validation failed', [
-                'error' => $e->getMessage(),
-            ]);
+        $request->validate([
+            'code' => 'required|string',
+            'state' => 'required|string',
+        ]);
 
-            return response()->json([
-                'error' => 'Missing or invalid parameters',
-            ], 422);
+        if ($request->state !== session('esign_state')) {
+            return Inertia::render('ErrorPage', [
+                'message' => 'Invalid login session (state mismatch).'
+            ]);
         }
 
-        try {
-            $codeVerifier = session('esignet_code_verifier');
-            $stateSaved = session('esignet_state');
+        $verifier = session('esign_code_verifier');
 
-            if (!$codeVerifier || !$stateSaved) {
-                Log::error('Session expired or missing');
-
-                return response()->json([
-                    'error' => 'Session expired. Restart login.',
-                ], 440);
-            }
-
-            if ($request->state !== $stateSaved) {
-                Log::error('State mismatch', [
-                    'received' => $request->state,
-                    'expected' => $stateSaved,
-                ]);
-
-                return response()->json([
-                    'error' => 'Invalid state parameter',
-                ], 403);
-            }
-        } catch (Throwable $e) {
-            Log::error('Failed reading session data', [
-                'error' => $e->getMessage(),
+        // 1. Exchange token
+        $token = $this->esignet->exchangeCodeForToken($request->code, $verifier);
+        if ($token['status'] !== 'ok') {
+            return Inertia::render('ErrorPage', [
+                'message' => $token['message']
             ]);
-
-            return response()->json([
-                'error' => 'Session error',
-            ], 500);
         }
 
-        /**
-         * Exchange code for token
-         */
-        try {
-            $tokenResponse = $this->esign->exchangeCodeForToken($request->code, $codeVerifier);
-
-            if (!isset($tokenResponse['access_token'])) {
-                Log::error('Token exchange failed', [
-                    'response' => $tokenResponse,
-                ]);
-
-                return response()->json([
-                    'error' => 'Failed to obtain access token',
-                    'details' => $tokenResponse,
-                ], 400);
-            }
-
-            // Log::info("Token successfully received", [$tokenResponse]);
-        } catch (Throwable $e) {
-            Log::error('Exception exchanging code for token', [
-                'error' => $e->getMessage(),
+        // 2. Fetch user info
+        $user = $this->esignet->getUserInfo($token['token']['access_token']);
+        if ($user['status'] !== 'ok') {
+            return Inertia::render('ErrorPage', [
+                'message' => $user['message']
             ]);
-
-            return response()->json([
-                'error' => 'Token request failed',
-            ], 500);
         }
 
-        /**
-         * Get User Info
-         */
-        try {
-            $customer = $this->esign->getUserInfo($tokenResponse['access_token']);
-            $this->localAuthService->handle($customer['phone_number']);
-        } catch (Throwable $e) {
-            Log::error('Exception fetching user info', [
-                'error' => $e->getMessage(),
-            ]);
+        // 3. Local auth validation + CRM sync
+        $local = $this->localAuth->handle($user['phone']);
 
-            return response()->json([
-                'error' => 'Failed contacting userinfo endpoint',
-            ], 500);
-        }
+        return $this->respondToLocalAuthResult($local);
+    }
 
-        /**
-         * Cleanup & return success
-         */
-        session()->forget(['esignet_code_verifier', 'esignet_state']);
-        // Log::info("Session cleaned");
+    /** Handle result from LocalAuthService */
+    private function respondToLocalAuthResult(array $result)
+    {
+        return match ($result['status']) {
+
+            'under_age' =>
+            Inertia::render('ErrorPage', [
+                'message' => 'You must be 18 or older to use this service.'
+            ]),
+
+            'invalid_phone' =>
+            redirect()->route('customer.create')->with([
+                'error' => 'Phone number must be Ethio Telecom (09 or +2519).',
+                'prefill' => $result['data'] ?? [],
+            ]),
+
+            'incomplete' =>
+            redirect()->route('customer.create')->with([
+                'error' => 'Your profile is incomplete. Please update it.',
+                'prefill' => $result['data'] ?? [],
+            ]),
+
+            'not_found' =>
+            redirect()->route('customer.create')->with([
+                'error' => 'Your phone number could not be found in our system.',
+            ]),
+
+            'ok' => $this->finishLogin($result['data']),
+
+            default =>
+            Inertia::render('ErrorPage', [
+                'message' => 'Unknown authentication error.'
+            ]),
+        };
+    }
+
+    /** Final login */
+    private function finishLogin(array $data)
+    {
+        $user = $this->localAuth->resolveUserForAuth($data);
+        Auth::guard('otp')->login($user);
+
+        session()->forget(['esign_state', 'esign_code_verifier']);
+
+        return redirect()->route('dashboard');
     }
 }

@@ -2,7 +2,6 @@
 
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { useActiveCustomer } from '@/store/customer-store';
 import { usePage } from '@inertiajs/react';
 import { ReactNode } from 'react';
 
@@ -17,14 +16,7 @@ const getHeader = (url: string) => {
 export default function MainLayout({ children }: ServicesLayoutProps) {
     const page = usePage();
     const header = getHeader(page.url);
-    const { activeCustomer, clearActiveCustomer } = useActiveCustomer();
-    
-    // if (!activeCustomer) {
-    //     router.visit('/dashboard', {
-    //         onBefore: () => {
-    //             clearActiveCustomer();
-    //         },
-    //     });
+
     return (
         <SidebarProvider>
             <AppSidebar />

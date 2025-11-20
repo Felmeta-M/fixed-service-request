@@ -79,6 +79,8 @@ interface ServiceListProps {
 
 export function ServiceList({ globalFilter, typeFilter, statusFilter }: ServiceListProps) {
     const { surveys, loading, error, fetchSurveys, refetch, hasMore, loadMore, total } = useSurveyList();
+    console.log('🚀 ~ ServiceList ~ error:', error);
+    console.log('🚀 ~ ServiceList ~ surveys:', surveys);
 
     useEffect(() => {
         fetchSurveys();

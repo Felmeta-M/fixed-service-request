@@ -100,6 +100,7 @@ import { LayoutDashboard, Wifi } from 'lucide-react';
 import {
     Sidebar,
     SidebarContent,
+    SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
@@ -110,6 +111,7 @@ import {
 } from '@/components/ui/sidebar';
 import logo from '@/images/ethio_logo_full.png';
 import { Link, usePage } from '@inertiajs/react';
+import { NavUser } from './nav-user';
 
 // Menu items.
 const items = [
@@ -130,13 +132,13 @@ export function AppSidebar() {
 
     const isCurrentPath = (itemUrl: string) => {
         return url === itemUrl;
-    }
+    };
 
     return (
         <Sidebar>
             <SidebarHeader>
                 <div className="flex">
-                <img src={logo} alt="Company Logo" className="h-12 w-auto" />
+                    <img src={logo} alt="Company Logo" className="h-12 w-auto" />
                 </div>
             </SidebarHeader>
             <SidebarContent>
@@ -147,20 +149,23 @@ export function AppSidebar() {
                             {items.map((item) => {
                                 const isActive = isCurrentPath(item.url);
                                 return (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton asChild isActive={isActive}>
-                                        <Link href={item.url}>
-                                            <item.icon />
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                                )
+                                    <SidebarMenuItem key={item.title}>
+                                        <SidebarMenuButton asChild isActive={isActive}>
+                                            <Link href={item.url}>
+                                                <item.icon />
+                                                <span>{item.title}</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                );
                             })}
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
+            <SidebarFooter>
+                <NavUser />
+            </SidebarFooter>
         </Sidebar>
     );
 }

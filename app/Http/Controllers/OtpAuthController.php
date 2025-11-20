@@ -6,8 +6,10 @@ use App\Models\Otp;
 use App\Services\LocalAuthService;
 use App\Traits\InteractsWithSMSGateway;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 use Throwable;
 
 class OtpAuthController extends Controller
@@ -45,7 +47,7 @@ class OtpAuthController extends Controller
                 ['phone' => $phone],
                 [
                     'code' => $otpCode,
-                    'expires_at' => now()->addMinutes(5),
+                    'expires_at' => now()->addMinutes(10),
                 ]
             );
 
@@ -80,10 +82,57 @@ class OtpAuthController extends Controller
             return back()->withErrors(['code' => 'Invalid or expired OTP']);
         }
 
-        $this->localAuthService->handle($otp->phone);
+        $local = $this->localAuthService->handle($otp->phone);
+
+        return $this->respondToLocalAuthResult($local);
     }
 
-    public function logout(Request $request)
+    /** Handle result from LocalAuthService */
+    private function respondToLocalAuthResult(array $result)
+    {
+        return match ($result['status']) {
+
+            'under_age' =>
+            Inertia::render('ErrorPage', [
+                'message' => 'You must be 18 or older to use this service.'
+            ]),
+
+            'invalid_phone' =>
+            redirect()->route('customer.create')->with([
+                'error' => 'Phone number must be Ethio Telecom (09 or +2519).',
+                'prefill' => $result['data'] ?? [],
+            ]),
+
+            'incomplete' =>
+            redirect()->route('customer.create')->with([
+                'error' => 'Your profile is incomplete. Please update it.',
+                'prefill' => $result['data'] ?? [],
+            ]),
+
+            'not_found' =>
+            redirect()->route('customer.create')->with([
+                'error' => 'Your phone number could not be found in our system.',
+            ]),
+
+            'ok' => $this->finishLogin($result['data']),
+
+            default =>
+            Inertia::render('ErrorPage', [
+                'message' => 'Unknown authentication error.'
+            ]),
+        };
+    }
+
+    /** Final login */
+    private function finishLogin(array $data): RedirectResponse
+    {
+        $user = $this->localAuthService->resolveUserForAuth($data);
+        Auth::guard('otp')->login($user);
+
+        return redirect()->route('dashboard');
+    }
+
+    public function logout(Request $request): RedirectResponse
     {
         Auth::guard('otp')->logout();
         $request->session()->invalidate();

@@ -4,6 +4,7 @@ import { useSurveyList } from '@/hooks/use-survey-list';
 import MainLayout from '@/layouts/main-layout';
 import { BarChart3, Package, Phone, RefreshCw, TrendingUp, Users, Wifi } from 'lucide-react';
 import { useMemo } from 'react';
+import { usePage } from '@inertiajs/react';
 
 // Mock chart components - replace with actual chart library
 const ServiceStatusChart = ({ data }: { data: any[] }) => (
@@ -37,6 +38,9 @@ const MonthlyTrendChart = ({ data }: { data: any[] }) => (
 
 export default function Dashboard() {
     const { surveys, loading, refetch } = useSurveyList();
+    const { auth } = usePage().props;
+    const { user } = auth;
+    console.log(user);
 
     const stats = useMemo(() => {
         const statusCounts = surveys.reduce(

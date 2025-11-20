@@ -13,7 +13,7 @@ class EsignetController extends Controller
 {
     public function __construct(
         protected EsignetService   $esignet,
-        protected LocalAuthService $localAuth
+        protected LocalAuthService $localAuthService
     )
     {
     }
@@ -70,7 +70,7 @@ class EsignetController extends Controller
         }
 
         // 3. Local auth validation + CRM sync
-        $local = $this->localAuth->handle($user['phone']);
+        $local = $this->localAuthService->handle($user['phone']);
 
         return $this->respondToLocalAuthResult($local);
     }
@@ -114,7 +114,7 @@ class EsignetController extends Controller
     /** Final login */
     private function finishLogin(array $data)
     {
-        $user = $this->localAuth->resolveUserForAuth($data);
+        $user = $this->localAuthService->resolveUserForAuth($data);
         Auth::guard('otp')->login($user);
 
         session()->forget(['esign_state', 'esign_code_verifier']);

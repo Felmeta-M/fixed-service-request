@@ -45,31 +45,29 @@ class LocalAuthService
      */
     private function extractUserInfo(?string $phone): array
     {
-        if (!$phone || !preg_match('/^(09|\+2519)/', $phone)) {
+        if (!$phone || !preg_match('/^(09|9|\+2519)/', $phone)) {
             return [];
         }
-
-        // Replace hard-coded value once CRM is ready
         $response = $this->queryCustomerByService->getCustomer('123555754');
-        logger('crm response', [$response]);
+        $response = json_decode($response->getContent(), true);
         if (
             empty($response['success']) ||
-            empty($response['customer'])
+            empty($response['data']['customer'])
         ) {
             return [];
         }
 
-        $c = $response['customer'];
+        $customer = $response['data']['customer'];
 
         return [
-            'customer_id' => $c['id'] ?? null,
-            'customer_code' => $c['code'] ?? null,
-            'name' => (isset($c['first_name'], $c['last_name']))
-                ? "{$c['first_name']} {$c['last_name']}"
+            'customer_id' => $customer['id'] ?? null,
+            'customer_code' => $customer['code'] ?? null,
+            'name' => (isset($customer['first_name'], $customer['last_name']))
+                ? "{$customer['first_name']} {$customer['last_name']}"
                 : null,
-            'email' => $c['email'] ?? null,
+            'email' => $customer['email'] ?? null,
             'phone' => $phone,
-            'age' => $this->calculateAge($c['dob'] ?? null),
+            'age' => $this->calculateAge($customer['dob'] ?? null),
         ];
     }
 
@@ -96,11 +94,11 @@ class LocalAuthService
             return ['status' => 'not_found'];
         }
 
-        if (empty($data['name']) || empty($data['email']) || empty($data['phone'])) {
+        if (empty($data['name']) || empty($data['phone'])) {
             return ['status' => 'incomplete'];
         }
 
-        if (!preg_match('/^(09|\+2519)/', $data['phone'])) {
+        if (!preg_match('/^(09|9|\+2519)/', $data['phone'])) {
             return ['status' => 'invalid_phone'];
         }
 
@@ -117,12 +115,15 @@ class LocalAuthService
      */
     public function resolveUserForAuth(array $data): Otp
     {
-        return Otp::firstOrCreate(
+        logger('customer data', [$data]);
+        return Otp::updateOrCreate(
             ['phone' => $data['phone']],
             [
+                'customer_code' => $data['customer_code'],
                 'name' => $data['name'],
                 'phone' => $data['phone'],
             ]
         );
+
     }
 }

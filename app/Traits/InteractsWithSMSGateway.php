@@ -3,9 +3,11 @@
 namespace App\Traits;
 
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 trait InteractsWithSMSGateway
 {
@@ -17,7 +19,6 @@ trait InteractsWithSMSGateway
 
         $smsEndPoint = config('ffd.sms_end_point');
         $url = "{$smsEndPoint}{$encodedPhoneNumber}&message={$encodedMessage}";
-        \Log::info("Sending SMS to {$phone}: {$message}", ['url' => $url]);
         return self::sendRequest($url);
     }
 
@@ -29,7 +30,7 @@ trait InteractsWithSMSGateway
                 return true;
             }
             return false;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Log the error in case of an exception
             Log::error("HTTP request error occurred: ", ['error' => $e->getMessage()]);
         }
@@ -62,7 +63,7 @@ trait InteractsWithSMSGateway
                     'message' => 'OTP could not be sent'
                 ], 500);
             }
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             Log::info($th->getMessage());
             return response()->json([
                 'success' => false,
@@ -76,7 +77,7 @@ trait InteractsWithSMSGateway
         $characters = '123456789';
         $charactersLength = strlen($characters);
         $code = '';
-        for ($i = 0; $i < (int) $length; $i++) {
+        for ($i = 0; $i < (int)$length; $i++) {
             $code .= $characters[rand(0, $charactersLength - 1)];
         }
 
@@ -96,13 +97,6 @@ trait InteractsWithSMSGateway
         ]);
 
         return $otp;
-    }
-
-    public static function findOTP(string $otp)
-    {
-        return DB::table('service_clients')
-            ->where('otp_code', sha1($otp))
-            ->first();
     }
 
     public static function verifyOTP(string $otp)
@@ -130,6 +124,13 @@ trait InteractsWithSMSGateway
                 'otp_code' => $otpRecord->otp_code,
             ]
         ];
+    }
+
+    public static function findOTP(string $otp)
+    {
+        return DB::table('service_clients')
+            ->where('otp_code', sha1($otp))
+            ->first();
     }
 
     public static function deleteOTP(string $otp): int

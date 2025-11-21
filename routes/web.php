@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\v1\EsignetController;
 use App\Http\Controllers\Api\v1\NidController;
+use App\Http\Controllers\Api\v1\TelebirrController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OtpAuthController;
@@ -88,3 +89,5 @@ Route::middleware(['otp.auth'])->group(function () {
 
     // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
+
+Route::post('/telebirr/notify', [TelebirrController::class, 'notify'])->name('telebirr.notify');

@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Payment;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 
 class PaymentService
 {
@@ -15,14 +15,13 @@ class PaymentService
     public function create(array $data): Payment
     {
         return DB::transaction(function () use ($data) {
-            return Payment::firstOrCreate(
-                ['reference_number' => $data['reference_number']],
+            return Payment::create(
                 [
-                    'customer_code'    => $data['customer_code'],
-                    'customer_survey_order_id'    => $data['customer_survey_order_id'],
-                    'amount'           => $data['amount'],
-                    'payload'          => $data['payload'] ?? [],
-                    'status'           => $data['status'],
+                    'customer_code' => $data['customer_code'],
+                    'customer_survey_order_id' => $data['customer_survey_order_id'],
+                    'amount' => $data['amount'],
+                    'payload' => $data['payload'] ?? [],
+                    'status' => $data['status'],
                 ]
             );
         });
@@ -31,14 +30,23 @@ class PaymentService
     /**
      * Retrieve a payment by ID or reference number.
      */
-    public function find(string|int $referenceNumber): Payment
+    public function find(string|int $customer_survey_order_id): Payment
     {
-        $payment = Payment::query()->where('reference_number', $referenceNumber)->first();
+        $payment = Payment::query()->where('customer_survey_order_id', $customer_survey_order_id)->first();
 
-        if (! $payment) {
+        if (!$payment) {
             throw new ModelNotFoundException('Payment not found.');
         }
 
+        return $payment;
+    }
+
+    /**
+     * Mark a payment as paid.
+     */
+    public function markAsPaid(Payment $payment): Payment
+    {
+        $payment->update(['status' => FFDServiceProvisionStatus::Paid->value]);
         return $payment;
     }
 
@@ -49,15 +57,6 @@ class PaymentService
     {
         $payment->update($data);
         return $payment->fresh();
-    }
-
-    /**
-     * Mark a payment as paid.
-     */
-    public function markAsPaid(Payment $payment): Payment
-    {
-        $payment->update(['status' => FFDServiceProvisionStatus::Paid->value]);
-        return $payment;
     }
 
     /**

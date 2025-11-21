@@ -3,14 +3,16 @@
 namespace App\Http\Controllers\Api\v1;
 
 
+use App\Enums\FFDServiceProvisionStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Payment;
+use App\Models\SurveyRequest;
 use App\Services\CreateOrderService;
 use App\Services\PaymentService;
 use App\Services\RsaSignatureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\Response;
 
 class TelebirrController extends Controller
 {
@@ -28,13 +30,12 @@ class TelebirrController extends Controller
         try {
             $validated = $request->validate([
                 'customer_code' => 'required|string',
+                'customer_survey_order_id' => 'required|string',
                 'title' => 'required|string',
                 'amount' => 'required|numeric',
             ]);
 
             $rawRequest = $this->createOrderService->createOrder($validated);
-            Log::info('raw request', $rawRequest);
-            // $rawRequest = $this->rsaSignatureService->createOrder($request->title, (string)$request->amount);
 
             return response()->json([
                 'success' => true,
@@ -48,30 +49,58 @@ class TelebirrController extends Controller
         }
     }
 
-    /**
-     * Handle Fabric payment notifications
-     */
-    public function paymentNotification(Request $request)
+    public function notify(Request $request)
     {
-        // Log incoming notification for debugging
-        Log::info('Fabric payment notification received', $request->all());
+        // Log raw request for debugging (optional)
+        Log::info('Telebirr Notification Received', $request->all());
 
-        // TODO: verify signature here if Fabric sends one
-        // $valid = SignatureHelper::verify($request->all());
-        // if (!$valid) return response('Invalid signature', 400);
+        // Validate required fields
+        $data = $request->validate([
+            'merch_code' => 'required',
+            'merch_order_id' => 'required',
+            'payment_order_id' => 'required',
+            'total_amount' => 'required',
+            'trans_id' => 'required',
+            'trade_status' => 'required'
+        ]);
 
-        // Extract necessary info
-        $orderId = $request->input('merch_order_id');
-        $status = $request->input('trade_status'); // or whatever field Fabric sends
-        $amount = $request->input('total_amount');
+        // Lookup the payment by your internal order ID
+        $payment = Payment::where('merch_order_id', $data['merch_order_id'])->first();
 
-        // TODO: Update order/payment status in DB
-        // Order::where('merch_order_id', $orderId)->update(['status' => $status]);
+        if (!$payment) {
+            Log::error("Telebirr Callback Error: Order not found: " . $data['merch_order_id']);
+            return; // no return json, just exit
+        }
 
-        // Respond with 200 to acknowledge Fabric
-        return response()->json([
-            'success' => true,
-            'message' => 'Notification received',
-        ], Response::HTTP_OK);
+        // 🛑 Idempotency: Skip if already processed
+        if ($payment->status === 'paid') {
+            Log::info("Telebirr Duplicate Callback Ignored for order: " . $payment->merch_order_id);
+            return; // ignore duplicate hits
+        }
+
+        // Process payment
+        if ($data['trade_status'] === 'Completed') {
+            $payment->update([
+                'status' => 'paid',
+                'transaction_id' => $data['trans_id'],
+                'amount' => $data['total_amount'],
+            ]);
+
+            // Update related survey order
+            SurveyRequest::query()
+                ->where('customer_survey_order_id', $payment->customer_survey_order_id)
+                ->update([
+                    'status' => FFDServiceProvisionStatus::Paid
+                ]);
+
+            Log::info("Telebirr Payment Completed: Order " . $payment->merch_order_id);
+
+        } else {
+
+            $payment->update(['status' => 'failed']);
+
+            Log::warning("Telebirr Payment Failed: Order " . $payment->order_id);
+        }
     }
+
 }

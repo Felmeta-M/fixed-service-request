@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -35,8 +34,6 @@ return new class extends Migration
             $table->dateTime('subscribed_at');
             $table->timestamps();
             $table->softDeletes();
-
-            $table->unique(['customer_code', 'main_offer_id']); //TODO: to be update the database for customer code and main offer id uniquencess
         });
     }
 

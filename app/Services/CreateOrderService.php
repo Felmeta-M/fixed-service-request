@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Helpers\TelebirrHelper;
 use Illuminate\Support\Facades\Http;
+use Log;
 use RuntimeException;
 
 class CreateOrderService
@@ -18,21 +19,22 @@ class CreateOrderService
     protected string $notifyUrl;
 
     public function __construct(
-        string $baseUrl,
-        string $webBaseUrl,
-        string $fabricAppId,
-        string $appSecret,
-        string $merchantAppId,
-        string $merchantCode,
+        string                            $baseUrl,
+        string                            $webBaseUrl,
+        string                            $fabricAppId,
+        string                            $appSecret,
+        string                            $merchantAppId,
+        string                            $merchantCode,
         protected readonly PaymentService $paymentService,
-    ) {
-        $this->baseUrl       = $baseUrl;
-        $this->webBaseUrl       = $webBaseUrl;
-        $this->fabricAppId   = $fabricAppId;
-        $this->appSecret     = $appSecret;
+    )
+    {
+        $this->baseUrl = $baseUrl;
+        $this->webBaseUrl = $webBaseUrl;
+        $this->fabricAppId = $fabricAppId;
+        $this->appSecret = $appSecret;
         $this->merchantAppId = $merchantAppId;
-        $this->merchantCode  = $merchantCode;
-        $this->notifyUrl = route('payment.notify');
+        $this->merchantCode = $merchantCode;
+        $this->notifyUrl = route('telebirr.notify');
     }
 
     /**
@@ -68,21 +70,21 @@ class CreateOrderService
         $payload = self::createRequestObject($data);
 
         $response = Http::withHeaders([
-            'Content-Type'  => 'application/json',
-            'X-APP-Key'     => $this->fabricAppId,
+            'Content-Type' => 'application/json',
+            'X-APP-Key' => $this->fabricAppId,
             'Authorization' => $fabricToken,
         ])
             ->withoutVerifying() // disables SSL verification (only for testing!)
             ->post($url, $payload); // convert JSON string to array
 
         if ($response->failed()) {
-            \Log::error("HTTP error: {$response->status()} with response: " . $response->body());
-            throw new \RuntimeException("Create order request failed.");
+            Log::error("HTTP error: {$response->status()} with response: " . $response->body());
+            throw new RuntimeException("Create order request failed.");
         }
 
         $object = $response->object();
 
-        return  $object->biz_content->prepay_id ?? null;
+        return $object->biz_content->prepay_id ?? null;
     }
 
     /**
@@ -95,7 +97,6 @@ class CreateOrderService
         $payment = [
             'customer_code' => $data['customer_code'],
             'customer_survey_order_id' => $data['title'],
-            'reference_number' => $merchant_order_id,
             'amount' => $data['amount'],
             'status' => FFDServiceProvisionStatus::Pending->value
         ];
@@ -114,11 +115,11 @@ class CreateOrderService
             'notify_url' => route('payment.notify'),
             'business_type' => 'BuyGoods',
             'trade_type' => 'Checkout',
-            'appid'      => $this->merchantAppId,
+            'appid' => $this->merchantAppId,
             'merch_code' => $this->merchantCode,
-            'merch_order_id' => (string) $merchant_order_id,
-            'title' => (string) $data['title'],
-            'total_amount' => (string) $data['amount'],
+            'merch_order_id' => (string)$merchant_order_id,
+            'title' => (string)$data['title'],
+            'total_amount' => (string)$data['amount'],
             'trans_currency' => 'ETB',
             'timeout_express' => '120m',
             'payee_identifier' => 'REDACTED_MERCHANT_CODE',
@@ -142,7 +143,7 @@ class CreateOrderService
     protected function createRawRequest(string $prepayId): string
     {
         $maps = [
-            'appid'      => $this->merchantAppId,
+            'appid' => $this->merchantAppId,
             'merch_code' => $this->merchantCode,
             'nonce_str' => (string)TelebirrHelper::createNonceStr(),
             'prepay_id' => $prepayId,

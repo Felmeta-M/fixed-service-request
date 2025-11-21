@@ -17,12 +17,9 @@ export const Header = () => {
         <header className="sticky top-0 z-50 w-full border-b bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/60">
             <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-2">
                 <div className="flex h-16 items-center justify-between">
-                    {/* Logo Section */}
                     <div className="flex items-center space-x-3">
                         <div className="flex items-center space-x-3">
-                            {/* <Link href="/"> */}
-                            <img src={logo} alt="EthioTelecom Logo" className="h-12 w-full transition-all duration-200 hover:scale-105" />
-                            {/* </Link> */}
+                            <img src={logo} alt="EthioTelecom Logo" className="h-12 w-full transition-all duration-200" />
                         </div>
                     </div>
 

@@ -9,7 +9,7 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            window.location.href = '/sendotp';
+            window.location.href = '/otp/phone';
         }
         return Promise.reject(error);
     },

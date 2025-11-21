@@ -62,10 +62,8 @@ export const Footer = () => {
 
     return (
         <footer className="bg-gray-900 text-white">
-            {/* Main Footer Content */}
             <div className="mx-auto max-w-screen-2xl px-4 py-16 sm:px-6 lg:px-2">
                 <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-                    {/* Brand Section */}
                     <div className="xl:col-span-2">
                         <div className="mb-6 flex items-center space-x-3">
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-cyan-800">
@@ -81,7 +79,6 @@ export const Footer = () => {
                             nation.
                         </p>
 
-                        {/* Contact Information */}
                         <div className="mb-6 space-y-3">
                             {contactInfo.map((item, index) => (
                                 <div key={index} className="flex items-center space-x-3 text-gray-400">
@@ -91,7 +88,6 @@ export const Footer = () => {
                             ))}
                         </div>
 
-                        {/* Social Links */}
                         <div className="flex space-x-4">
                             {socialLinks.map((social, index) => (
                                 <Link
@@ -106,7 +102,6 @@ export const Footer = () => {
                         </div>
                     </div>
 
-                    {/* Footer Links */}
                     {footerSections.map((section, index) => (
                         <div key={index}>
                             <h4 className="mb-6 text-lg font-semibold text-white">{section.title}</h4>
@@ -128,7 +123,6 @@ export const Footer = () => {
                 </div>
             </div>
 
-            {/* Bottom Bar */}
             <div className="border-t border-gray-800">
                 <div className="max-w-8xl mx-auto px-4 py-8 sm:px-6 lg:px-2">
                     <div className="flex flex-col items-center justify-between gap-4 md:flex-row">

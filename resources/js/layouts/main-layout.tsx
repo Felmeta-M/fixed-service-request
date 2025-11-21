@@ -1,5 +1,3 @@
-'use client';
-
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { usePage } from '@inertiajs/react';

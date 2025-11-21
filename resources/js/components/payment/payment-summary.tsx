@@ -1,9 +1,8 @@
-// components/payment/payment-summary.tsx
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { CreditCard, MapPin, Package, Phone, Shield, User, Wifi } from 'lucide-react';
+import { CreditCard, Package, Phone, Shield, User, Wifi } from 'lucide-react';
 
 interface PaymentSummaryProps {
     surveyData: any;
@@ -36,7 +35,6 @@ export function PaymentSummary({
 
     const ServiceIcon = serviceType.icon;
 
-    // Calculate total amount
     const totalAmount =
         feeData?.fees?.reduce((total, fee) => {
             const feeAmount = parseInt(fee.original_fee) / 10000;
@@ -81,7 +79,6 @@ export function PaymentSummary({
                 </div>
 
                 <div className="space-y-6">
-                    {/* Customer Information Card */}
                     <Card className="border-none shadow-none">
                         <CardHeader className="pb-2">
                             <div className="flex items-center gap-3">
@@ -102,13 +99,12 @@ export function PaymentSummary({
                                 <DetailItem label="Customer Code" value={customerInfo?.customer_code || 'N/A'} />
                                 {/* <DetailItem label="Customer Code" value={subscriberData?.customer_code || 'N/A'} /> */}
                             </div>
-                            <div className="pt-2">
+                            {/* <div className="pt-2">
                                 <DetailItem label="Installation Address" value={addressInfo} icon={<MapPin className="h-4 w-4" />} fullWidth />
-                            </div>
+                            </div> */}
                         </CardContent>
                     </Card>
 
-                    {/* Service Details Card */}
                     <Card className="border-none shadow-none">
                         <CardHeader className="pb-2">
                             <div className="flex items-center gap-3">
@@ -125,11 +121,15 @@ export function PaymentSummary({
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div className="space-y-3">
                                     <DetailItem label="Service Type" value={serviceType.label} icon={<ServiceIcon className="h-4 w-4" />} />
-                                    <DetailItem label="Service Number" value={serviceNumber} highlight />
+                                    <DetailItem label="Service Number" value={serviceNumber} />
                                     {/* <DetailItem label="Order ID" value={surveyData.customer_survey_order_id} /> */}
                                 </div>
                                 <div className="space-y-3">
-                                    <DetailItem label="Subscription Type" value="New Connection" badge={{ variant: 'default', text: 'New' }} />
+                                    <DetailItem
+                                        label="Subscription Type"
+                                        value="New Connection"
+                                        // badge={{ variant: 'default', text: 'New' }}
+                                    />
                                     <DetailItem label="Order ID" value={'20000455461249'} />
                                     {/* <DetailItem label="Status" value="Ready for Activation" badge={{ variant: 'success', text: 'Active' }} /> */}
                                     {/* <DetailItem label="Activation" value="Immediate after payment" icon={<Clock className="h-4 w-4" />} /> */}
@@ -138,7 +138,6 @@ export function PaymentSummary({
                         </CardContent>
                     </Card>
 
-                    {/* Fee Breakdown Card */}
                     <Card className="border-none shadow-none">
                         <CardHeader className="pb-4">
                             <div className="flex items-center gap-3">
@@ -163,7 +162,6 @@ export function PaymentSummary({
                                             <span className="font-semibold text-gray-900">{parseInt(fee.original_fee) / 10000} ETB</span>
                                         </div>
 
-                                        {/* Discount */}
                                         {parseInt(fee.discount_fee) > 0 && (
                                             <div className="ml-4 flex justify-between text-sm">
                                                 <span className="text-primary">Discount</span>
@@ -171,7 +169,6 @@ export function PaymentSummary({
                                             </div>
                                         )}
 
-                                        {/* Taxes */}
                                         {fee.taxes?.map((tax, taxIndex) => (
                                             <div key={taxIndex} className="ml-4 flex justify-between text-sm">
                                                 <span className="text-gray-500">+ {tax.name}</span>
@@ -183,7 +180,6 @@ export function PaymentSummary({
 
                                 <Separator />
 
-                                {/* Total */}
                                 <div className="flex items-center justify-between pt-2">
                                     <span className="text-lg font-bold text-gray-900">Total Amount</span>
                                     <span className="text-2xl font-bold text-primary">{totalAmount} ETB</span>
@@ -192,13 +188,11 @@ export function PaymentSummary({
                         </CardContent>
                     </Card>
 
-                    {/* Pay Button */}
                     <div className="flex flex-col items-center gap-4 pt-4">
                         <Button
                             onClick={onPaymentConfirm}
                             disabled={loading}
-                            className="h-12 w-full max-w-md bg-gradient-to-r from-primary to-primary/90 text-lg font-semibold hover:from-primary/90 hover:to-primary"
-                            size="lg"
+                            className="w-full max-w-sm bg-primary text-lg font-semibold hover:opacity-90"
                         >
                             {loading ? (
                                 <div className="flex items-center gap-2">
@@ -206,10 +200,7 @@ export function PaymentSummary({
                                     Processing...
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-2">
-                                    <CreditCard className="h-5 w-5" />
-                                    Pay Now
-                                </div>
+                                <div className="flex items-center gap-2">Pay Now</div>
                             )}
                         </Button>
 
@@ -224,7 +215,6 @@ export function PaymentSummary({
     );
 }
 
-// Helper component for detail items
 function DetailItem({
     label,
     value,

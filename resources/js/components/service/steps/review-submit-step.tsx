@@ -30,7 +30,7 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
 
         try {
             const submitData = {
-                customer_code: formData.customerCode || '828204303', // Get from localStorage
+                customer_code: formData.customerCode || '828204303',
                 survey_type: 'EIC08',
                 telecom_region: '104',
                 oper_type: 'A',
@@ -74,7 +74,7 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
                 existingSurveys.push(newSurvey);
                 localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
 
-                // Redirect to dashboard
+                // Redirect to services
                 router.visit('/services');
             } else {
                 setError(response.data.message || 'Failed to create service request');

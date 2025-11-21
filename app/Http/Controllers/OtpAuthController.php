@@ -144,7 +144,7 @@ class OtpAuthController extends Controller
         Auth::guard('otp')->login($user);
         \Log::info('User logged in via OTP: ' . $user->id);
 
-        return redirect()->route('dashboard');
+        return redirect()->route('services');
     }
 
     public function logout(Request $request): RedirectResponse

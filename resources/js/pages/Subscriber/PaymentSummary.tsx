@@ -86,6 +86,10 @@ export default function PaymentSummaryPage() {
         survey_data,
     });
 
+    console.log('🚀 ~ PaymentSummaryPage ~ fee_data:', fee_data);
+    if (!survey_data || !subscriber_data) {
+        return <div>Loading...</div>;
+    }
     const [loading, setLoading] = useState(false);
 
     const handlePaymentConfirm = async () => {
@@ -96,9 +100,9 @@ export default function PaymentSummaryPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    title: survey_id,
+                    customerSurveyOrderId: survey_id,
                     amount: fee_data.totalAmount,
-                    customer_code: customer_data?.customer?.code || '',
+                    customerCode: customer_data?.customer_code || '',
                     service_number: service_number,
                     subscriber_id: subscriber_data.subscriber_id,
                 }),

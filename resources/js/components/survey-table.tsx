@@ -189,22 +189,6 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
 
     return (
         <div className="w-full flex-col justify-start gap-6">
-            {/* Summary Stats */}
-            {/* <div className="mb-4 flex flex-wrap gap-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                    <span>Ready to Pay: {filteredSurveys.filter((s) => Number(s.status) === 5).length}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
-                    <span>Pending: {filteredSurveys.filter((s) => Number(s.status) === 3).length}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <div className="h-2 w-2 rounded-full bg-red-500"></div>
-                    <span>Cancelled: {filteredSurveys.filter((s) => Number(s.status) === 9).length}</span>
-                </div>
-            </div> */}
-
             <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
                 <Table>
                     <TableHeader className="bg-gray-50">

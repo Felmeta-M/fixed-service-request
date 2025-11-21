@@ -55,7 +55,7 @@ export const Header = () => {
 
                                 {/* User Menu */}
                                 <div className="flex items-center space-x-2">
-                                    <Link href="/dashboard">
+                                    <Link href="/Services">
                                         <Button variant="ghost" size="sm" className="flex items-center hover:bg-gray-100">
                                             <LayoutDashboard className="h-4 w-4" />
                                             <span>Dashboard</span>
@@ -143,7 +143,7 @@ export const Header = () => {
 
                                 {/* Mobile Navigation Links */}
                                 <Link
-                                    href="/dashboard"
+                                    href="/services"
                                     className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
                                     onClick={() => setIsMobileMenuOpen(false)}
                                 >

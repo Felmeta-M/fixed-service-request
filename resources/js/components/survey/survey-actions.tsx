@@ -955,26 +955,39 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         setLoading(true);
         onUpdatingChange(true);
         setError('');
+        console.log('🚀 ~ handlePayNow ~ customerData:', customerData);
 
         try {
             const subscriberResult = await createSubscriber();
+            console.log('🚀 ~ handlePayNow ~ subscriberResult:', subscriberResult);
             const availableNumbers = await fetchAvailableNumbers();
+            console.log('🚀 ~ handlePayNow ~ availableNumbers:', availableNumbers);
             const serviceNumber = availableNumbers[0]?.ServiceNumber;
+            console.log('🚀 ~ handlePayNow ~ serviceNumber:', serviceNumber);
 
             if (!serviceNumber) throw new Error('No service numbers available');
 
             const feeData = await calculateServiceFees(subscriberResult.data.subscriber_id, serviceNumber);
+            console.log('🚀 ~ handlePayNow ~ feeData:', feeData);
             feeData.service_number = serviceNumber;
+
+            console.log('paynow survey order id ', survey.customer_survey_order_id);
 
             router.visit(route('payment.summary'), {
                 method: 'get',
                 data: {
-                    survey_id: survey.customer_survey_order_id,
-                    subscriber_data: subscriberResult.data,
-                    service_number: serviceNumber,
-                    fee_data: feeData,
-                    customer_data: customerData,
-                    survey_data: survey,
+                     survey_id: survey.customer_survey_order_id,
+        subscriber_data: JSON.stringify(subscriberResult.data),
+        service_number: serviceNumber,
+        fee_data: JSON.stringify(feeData),
+        customer_data: JSON.stringify(customerData),
+        survey_data: JSON.stringify(survey),
+                //     survey_id: survey.customer_survey_order_id,
+                //     subscriber_data: subscriberResult.data,
+                //     service_number: serviceNumber,
+                //     fee_data: feeData,
+                //     customer_data: customerData,
+                //     survey_data: survey,
                 },
             });
         } catch (err: any) {

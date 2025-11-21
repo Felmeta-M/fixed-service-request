@@ -2,11 +2,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import GuestLayout from '@/layouts/GuestLayout';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { ArrowRight, CheckCircle, MapPin, Package, Phone, Star, Users, Wifi } from 'lucide-react';
 import telebirrLogo from '../images/telebirr-logo.png';
 
 export default function HomePage() {
+    const { auth } = usePage().props;
+    if (auth?.user) {
+        window.location.href = route('services');
+    }
     const features = [
         {
             icon: MapPin,

@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OtpAuthController;
 use App\Http\Controllers\SupportRequestController;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 
 // Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name('services');
 // Route::get('//services/create', action: fn() => Inertia::render('/services/create'))->name('services.new');
@@ -58,14 +59,26 @@ Route::middleware(['otp.auth'])->group(function () {
     Route::get('/services/create', action: fn() => Inertia::render('Services/Create'))->name('services.create');
 
     // Route::get('/payment/summary', fn() => Inertia::render('Subscriber/PaymentSummary'))->name('payment.summary');
+    // Route::get('/payment/summary', function (Request $request) {
+    //     return Inertia::render('Subscriber/PaymentSummary', [
+    //         'survey_id' => $request->query('survey_id'),
+    //         'subscriber_data' => $request->query('subscriber_data'),
+    //         'service_number' => $request->query('service_number'),
+    //         'fee_data' => $request->query('fee_data'),
+    //         'customer_data' => $request->query('customer_data'),
+    //         'survey_data' => $request->query('survey_data'),
+    //         'is_fallback' => $request->query('is_fallback', false),
+    //     ]);
+    // })->name('payment.summary');
     Route::get('/payment/summary', function (Request $request) {
         return Inertia::render('Subscriber/PaymentSummary', [
-            // 'survey_id' => $request->query('survey_id'),
-            // 'subscriber_data' => $request->query('subscriber_data'),
-            // 'service_number' => $request->query('service_number'),
-            // 'fee_data' => $request->query('fee_data'),
-            // 'customer_data' => $request->query('customer_data'),
-            // 'survey_data' => $request->query('survey_data'),
+            'survey_id' => $request->query('survey_id'),
+            'subscriber_data' => json_decode($request->query('subscriber_data')),
+            'service_number' => $request->query('service_number'),
+            'fee_data' => json_decode($request->query('fee_data')),
+            'customer_data' => json_decode($request->query('customer_data')),
+            'survey_data' => json_decode($request->query('survey_data')),
+            'is_fallback' => filter_var($request->query('is_fallback', false), FILTER_VALIDATE_BOOLEAN),
         ]);
     })->name('payment.summary');
     // Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

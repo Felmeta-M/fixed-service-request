@@ -30,6 +30,7 @@ export function PaymentSummary({
     onPaymentConfirm,
     loading = false,
 }: PaymentSummaryProps) {
+    console.log('🚀 ~ PaymentSummary ~ subscriberData:', subscriberData);
     // const serviceType = serviceTypeMap[surveyData.main_offer_id] || serviceTypeMap['1943913918'];
     const serviceType = serviceTypeMap['1943913918'] || serviceTypeMap['1943913918'];
 
@@ -45,15 +46,17 @@ export function PaymentSummary({
         }, 0) || 0;
 
     const getCustomerInfo = () => {
-        if (!customerData?.customer) return { name: 'N/A', phone: 'N/A' };
+        if (!customerData) return { name: 'N/A', phone: 'N/A' };
 
-        const customer = customerData.customer;
-        const contact = customerData.contacts?.[0];
+        const customer = customerData;
+        const contact = customerData.phone;
+        const customer_code = customerData.customer_code;
 
         return {
-            name: `${customer.first_name || ''} ${customer.middle_name || ''} ${customer.last_name || ''}`.trim(),
-            phone: contact?.mobile || 'N/A',
+            name: `${customer.name || ''} ${customer.name || ''} ${customer.name || ''}`.trim(),
+            phone: contact || 'N/A',
             email: contact?.email || 'N/A',
+            customer_code: customer_code || 'N/A',
         };
     };
 
@@ -65,6 +68,7 @@ export function PaymentSummary({
     };
 
     const customerInfo = getCustomerInfo();
+    console.log('🚀 ~ PaymentSummary ~ customerInfo:', customerInfo);
     const addressInfo = getAddressInfo();
 
     return (
@@ -127,7 +131,8 @@ export function PaymentSummary({
                                     <DetailItem label="Full Name" value={customerInfo.name} />
                                     <DetailItem label="Phone Number" value={customerInfo.phone} />
                                     <DetailItem label="Email" value={customerInfo.email} />
-                                    <DetailItem label="Customer Code" value={subscriberData?.customer_code || 'N/A'} />
+                                    <DetailItem label="Customer Code" value={customerInfo?.customer_code || 'N/A'} />
+                                    {/* <DetailItem label="Customer Code" value={subscriberData?.customer_code || 'N/A'} /> */}
                                 </div>
                                 <div className="pt-2">
                                     <DetailItem label="Installation Address" value={addressInfo} icon={<MapPin className="h-4 w-4" />} fullWidth />

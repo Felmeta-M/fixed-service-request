@@ -92,6 +92,15 @@ export default function PaymentSummaryPage() {
     }
     const [loading, setLoading] = useState(false);
 
+    // Calculate total amount
+    const totalAmount =
+        fee_data?.fees?.reduce((total, fee) => {
+            const feeAmount = parseInt(fee.original_fee) / 10000;
+            const discount = parseInt(fee.discount_fee) / 10000;
+            const taxAmount = fee.taxes?.reduce((taxTotal, tax) => taxTotal + parseInt(tax.fee) / 10000, 0) || 0;
+            return total + feeAmount - discount + taxAmount;
+        }, 0) || 0;
+
     const handlePaymentConfirm = async () => {
         setLoading(true);
 
@@ -101,12 +110,13 @@ export default function PaymentSummaryPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     customerSurveyOrderId: survey_id,
-                    amount: fee_data.totalAmount,
+                    amount: totalAmount,
                     customerCode: customer_data?.customer_code || '',
-                    service_number: service_number,
+                    // service_number: service_number,
                     subscriber_id: subscriber_data.subscriber_id,
                 }),
             });
+            console.log('🚀 ~ handlePaymentConfirm ~ response:', response);
 
             const result = await response.json();
 

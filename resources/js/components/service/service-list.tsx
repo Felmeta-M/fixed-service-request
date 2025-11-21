@@ -121,7 +121,7 @@ export function ServiceList({ globalFilter, typeFilter, statusFilter }: ServiceL
                     <FileText className="mx-auto mb-4 h-12 w-12 text-gray-300" />
                     <h3 className="mb-2 text-lg font-semibold text-gray-900">No services found</h3>
                     <p className="mb-4 text-gray-600">Get started by creating your first service request to manage your telecom services.</p>
-                    <Link href="//services/create">
+                    <Link href="/services/create">
                         <Button>Create Your First Service</Button>
                     </Link>
                 </CardContent>

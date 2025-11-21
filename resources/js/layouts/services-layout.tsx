@@ -24,7 +24,7 @@ export default function ServicesLayout({ children, isCreatingService = false, cu
                             <h1 className="text-xl font-semibold text-gray-900">Create new service</h1>
                         </div>
                     </div>
-                    <Link href="/s">
+                    <Link href="/services">
                         <Button variant="ghost" className="flex items-center gap-2">
                             <ArrowLeft className="h-4 w-4" />
                             Services

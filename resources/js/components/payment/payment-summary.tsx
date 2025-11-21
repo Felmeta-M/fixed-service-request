@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2, CreditCard, MapPin, Package, Phone, Shield, User, Wifi } from 'lucide-react';
+import { CreditCard, MapPin, Package, Phone, Shield, User, Wifi } from 'lucide-react';
 
 interface PaymentSummaryProps {
     surveyData: any;
@@ -80,195 +80,143 @@ export function PaymentSummary({
                     <p className="text-lg text-gray-500">Review your order details and proceed to payment</p>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-3">
-                    {/* Main Content - 2/3 width */}
-                    <div className="space-y-6 lg:col-span-2">
-                        {/* Service Details Card */}
-                        <Card className="border-none">
-                            <CardHeader className="pb-2">
-                                <div className="flex items-center gap-3">
-                                    <div className="rounded-lg p-2">
-                                        <ServiceIcon className={`h-6 w-6 ${serviceType.color}`} />
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-xl">Service Details</CardTitle>
-                                        <CardDescription>Your selected service configuration</CardDescription>
-                                    </div>
+                <div className="space-y-6">
+                    {/* Customer Information Card */}
+                    <Card className="border-none shadow-none">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-lg p-2">
+                                    <User className="h-6 w-6 text-primary" />
                                 </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    <div className="space-y-3">
-                                        <DetailItem label="Service Type" value={serviceType.label} icon={<ServiceIcon className="h-4 w-4" />} />
-                                        <DetailItem label="Service Number" value={serviceNumber} highlight />
-                                        {/* <DetailItem label="Order ID" value={surveyData.customer_survey_order_id} /> */}
-                                    </div>
-                                    <div className="space-y-3">
-                                        <DetailItem label="Subscription Type" value="New Connection" badge={{ variant: 'default', text: 'New' }} />
-                                        <DetailItem label="Order ID" value={'20000455461249'} />
-                                        {/* <DetailItem label="Status" value="Ready for Activation" badge={{ variant: 'success', text: 'Active' }} /> */}
-                                        {/* <DetailItem label="Activation" value="Immediate after payment" icon={<Clock className="h-4 w-4" />} /> */}
-                                    </div>
+                                <div>
+                                    <CardTitle className="text-xl">Customer Information</CardTitle>
+                                    <CardDescription>Your account details</CardDescription>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <DetailItem label="Full Name" value={customerInfo.name} />
+                                <DetailItem label="Phone Number" value={customerInfo.phone} />
+                                <DetailItem label="Email" value={customerInfo.email} />
+                                <DetailItem label="Customer Code" value={customerInfo?.customer_code || 'N/A'} />
+                                {/* <DetailItem label="Customer Code" value={subscriberData?.customer_code || 'N/A'} /> */}
+                            </div>
+                            <div className="pt-2">
+                                <DetailItem label="Installation Address" value={addressInfo} icon={<MapPin className="h-4 w-4" />} fullWidth />
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                        {/* Customer Information Card */}
-                        <Card>
-                            <CardHeader className="pb-2">
-                                <div className="flex items-center gap-3">
-                                    <div className="rounded-lg p-2">
-                                        <User className="h-6 w-6 text-primary" />
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-xl">Customer Information</CardTitle>
-                                        <CardDescription>Your account details</CardDescription>
-                                    </div>
+                    {/* Service Details Card */}
+                    <Card className="border-none shadow-none">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-lg p-2">
+                                    <ServiceIcon className={`h-6 w-6 ${serviceType.color}`} />
                                 </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    <DetailItem label="Full Name" value={customerInfo.name} />
-                                    <DetailItem label="Phone Number" value={customerInfo.phone} />
-                                    <DetailItem label="Email" value={customerInfo.email} />
-                                    <DetailItem label="Customer Code" value={customerInfo?.customer_code || 'N/A'} />
-                                    {/* <DetailItem label="Customer Code" value={subscriberData?.customer_code || 'N/A'} /> */}
+                                <div>
+                                    <CardTitle className="text-xl">Service Details</CardTitle>
+                                    <CardDescription>Your selected service configuration</CardDescription>
                                 </div>
-                                <div className="pt-2">
-                                    <DetailItem label="Installation Address" value={addressInfo} icon={<MapPin className="h-4 w-4" />} fullWidth />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div className="space-y-3">
+                                    <DetailItem label="Service Type" value={serviceType.label} icon={<ServiceIcon className="h-4 w-4" />} />
+                                    <DetailItem label="Service Number" value={serviceNumber} highlight />
+                                    {/* <DetailItem label="Order ID" value={surveyData.customer_survey_order_id} /> */}
                                 </div>
-                            </CardContent>
-                        </Card>
+                                <div className="space-y-3">
+                                    <DetailItem label="Subscription Type" value="New Connection" badge={{ variant: 'default', text: 'New' }} />
+                                    <DetailItem label="Order ID" value={'20000455461249'} />
+                                    {/* <DetailItem label="Status" value="Ready for Activation" badge={{ variant: 'success', text: 'Active' }} /> */}
+                                    {/* <DetailItem label="Activation" value="Immediate after payment" icon={<Clock className="h-4 w-4" />} /> */}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                        {/* Fee Breakdown Card */}
-                        <Card className="border-none">
-                            <CardHeader className="pb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="rounded-lg p-2">
-                                        <CreditCard className="h-6 w-6 text-primary" />
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-xl">Payment Summary</CardTitle>
-                                        <CardDescription>Breakdown of charges and fees</CardDescription>
-                                    </div>
+                    {/* Fee Breakdown Card */}
+                    <Card className="border-none shadow-none">
+                        <CardHeader className="pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-lg p-2">
+                                    <CreditCard className="h-6 w-6 text-primary" />
                                 </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    {feeData?.fees?.map((fee, index) => (
-                                        <div key={index} className="space-y-2">
-                                            <div className="flex items-start justify-between">
-                                                <div>
-                                                    <span className="font-medium text-gray-900">{fee.item_name}</span>
-                                                    <p className="text-sm text-gray-500">One-time activation fee</p>
-                                                </div>
-                                                <span className="font-semibold text-gray-900">{parseInt(fee.original_fee) / 10000} ETB</span>
+                                <div>
+                                    <CardTitle className="text-xl">Payment Summary</CardTitle>
+                                    <CardDescription>Breakdown of charges and fees</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {feeData?.fees?.map((fee, index) => (
+                                    <div key={index} className="space-y-2">
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <span className="font-medium text-gray-900">{fee.item_name}</span>
+                                                <p className="text-sm text-gray-500">One-time activation fee</p>
                                             </div>
-
-                                            {/* Discount */}
-                                            {parseInt(fee.discount_fee) > 0 && (
-                                                <div className="ml-4 flex justify-between text-sm">
-                                                    <span className="text-primary">Discount</span>
-                                                    <span className="text-primary">-{parseInt(fee.discount_fee) / 10000} ETB</span>
-                                                </div>
-                                            )}
-
-                                            {/* Taxes */}
-                                            {fee.taxes?.map((tax, taxIndex) => (
-                                                <div key={taxIndex} className="ml-4 flex justify-between text-sm">
-                                                    <span className="text-gray-500">+ {tax.name}</span>
-                                                    <span className="text-gray-500">{parseInt(tax.fee) / 10000} ETB</span>
-                                                </div>
-                                            ))}
+                                            <span className="font-semibold text-gray-900">{parseInt(fee.original_fee) / 10000} ETB</span>
                                         </div>
-                                    ))}
 
-                                    <Separator />
-
-                                    {/* Total */}
-                                    <div className="flex items-center justify-between pt-2">
-                                        <span className="text-lg font-bold text-gray-900">Total Amount</span>
-                                        <span className="text-2xl font-bold text-primary">{totalAmount} ETB</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* Sidebar - 1/3 width */}
-                    <div className="space-y-6">
-                        {/* Order Summary Card */}
-                        <Card className="sticky top-6 border-none">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <CheckCircle2 className="h-5 w-5" />
-                                    Order Summary
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <div className="space-y-4">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Service</span>
-                                        <span className="font-medium">{serviceType.label}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Service Number</span>
-                                        <span className="font-medium">{serviceNumber}</span>
-                                    </div>
-                                    {/* <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Activation</span>
-                                        <Badge variant="success" className="text-xs">
-                                            Immediate
-                                        </Badge>
-                                    </div> */}
-
-                                    <Separator />
-
-                                    <div className="flex items-center justify-between text-lg font-bold">
-                                        <span>Total</span>
-                                        <span>{totalAmount} ETB</span>
-                                    </div>
-
-                                    <Button
-                                        onClick={onPaymentConfirm}
-                                        disabled={loading}
-                                        className="h-12 w-full bg-gradient-to-r from-primary to-primary/90 text-lg font-semibold hover:from-primary/90 hover:to-primary"
-                                        size="lg"
-                                    >
-                                        {loading ? (
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                                Processing...
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-2">
-                                                <CreditCard className="h-5 w-5" />
-                                                Pay Now
+                                        {/* Discount */}
+                                        {parseInt(fee.discount_fee) > 0 && (
+                                            <div className="ml-4 flex justify-between text-sm">
+                                                <span className="text-primary">Discount</span>
+                                                <span className="text-primary">-{parseInt(fee.discount_fee) / 10000} ETB</span>
                                             </div>
                                         )}
-                                    </Button>
 
-                                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                                        <Shield className="h-3 w-3" />
-                                        <span>Secure payment processed by Telebirr</span>
+                                        {/* Taxes */}
+                                        {fee.taxes?.map((tax, taxIndex) => (
+                                            <div key={taxIndex} className="ml-4 flex justify-between text-sm">
+                                                <span className="text-gray-500">+ {tax.name}</span>
+                                                <span className="text-gray-500">{parseInt(tax.fee) / 10000} ETB</span>
+                                            </div>
+                                        ))}
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                ))}
 
-                        {/* Support Card */}
-                        <Card className="border-none">
-                            <CardContent className="p-4">
-                                <div className="text-center">
-                                    <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full">
-                                        <Phone className="h-5 w-5 text-primary" />
-                                    </div>
-                                    <h4 className="font-semibold">Need Help?</h4>
-                                    <p className="mt-1 text-sm">Contact our support team for assistance</p>
-                                    <p className="mt-2 text-lg font-bold">+251 900 123 456</p>
+                                <Separator />
+
+                                {/* Total */}
+                                <div className="flex items-center justify-between pt-2">
+                                    <span className="text-lg font-bold text-gray-900">Total Amount</span>
+                                    <span className="text-2xl font-bold text-primary">{totalAmount} ETB</span>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Pay Button */}
+                    <div className="flex flex-col items-center gap-4 pt-4">
+                        <Button
+                            onClick={onPaymentConfirm}
+                            disabled={loading}
+                            className="h-12 w-full max-w-md bg-gradient-to-r from-primary to-primary/90 text-lg font-semibold hover:from-primary/90 hover:to-primary"
+                            size="lg"
+                        >
+                            {loading ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                    Processing...
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <CreditCard className="h-5 w-5" />
+                                    Pay Now
+                                </div>
+                            )}
+                        </Button>
+
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <Shield className="h-3 w-3" />
+                            <span>Secure payment processed by Telebirr</span>
+                        </div>
                     </div>
                 </div>
             </div>

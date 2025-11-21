@@ -799,7 +799,7 @@
 //             //Redirect to dashboard
 //             router.visit('/dashboard');
 
-//             const response = await axios.post('http://localhost:8000/api/v1/survey/create', submitData);
+//             const response = await axios.post('http://localhost:3000/api/v1/survey/create', submitData);
 
 //             if (response.data.success) {
 //                 console.log('success!!!');
@@ -2126,7 +2126,7 @@ export default function Create() {
             existingSurveys.push(newSurvey);
             localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
 
-            const response = await axios.post('http://localhost:8000/api/v1/survey/create', submitData);
+            const response = await axios.post('http://localhost:3000/api/v1/survey/create', submitData);
 
             if (response.data.success) {
                 const newSurvey = {

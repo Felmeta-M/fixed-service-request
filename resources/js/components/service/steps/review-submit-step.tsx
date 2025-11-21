@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
-import { CheckCircle, Loader2, MapPin, User, Wifi } from 'lucide-react';
+import { CheckCircle, Loader2, Wifi } from 'lucide-react';
 import { useState } from 'react';
 
 interface ReviewSubmitStepProps {
@@ -29,7 +29,6 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
         setError('');
 
         try {
-            // Format the data for API submission
             const submitData = {
                 customer_code: formData.customerCode || '828204303', // Get from localStorage
                 survey_type: 'EIC08',
@@ -76,7 +75,7 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
                 localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
 
                 // Redirect to dashboard
-                router.visit('/dashboard');
+                router.visit('/services');
             } else {
                 setError(response.data.message || 'Failed to create service request');
             }
@@ -90,89 +89,82 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
     return (
         <div className="space-y-6">
             {/* Review Summary */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                {/* Service Details */}
+            <div className="3xl:grid-cols-3 grid grid-cols-1 gap-6 lg:grid-cols-1">
+                {/* Service Details (match Resource Details layout) */}
                 <Card>
-                    <CardContent className="p-6">
-                        <div className="mb-4 flex items-center space-x-3">
-                            <div className="rounded-lg bg-blue-100 p-2">
-                                <Wifi className="h-5 w-5 text-blue-600" />
+                    <CardContent>
+                        <h3 className="mb-4 font-semibold text-gray-900">Service Details</h3>
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                            <div>
+                                <span className="text-sm text-gray-600">Service Type</span>
+                                <p className="font-semibold">{serviceInfo?.name}</p>
                             </div>
-                            <h3 className="font-semibold text-gray-900">Service Details</h3>
-                        </div>
-                        <div className="space-y-3">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Service Type:</span>
-                                <span className="font-semibold">{serviceInfo?.name}</span>
+                            <div>
+                                <span className="text-sm text-gray-600">Bandwidth</span>
+                                <p className="font-semibold">{formData.bandwidth || '-'}</p>
                             </div>
-                            {formData.bandwidth && (
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Bandwidth:</span>
-                                    <span className="font-semibold">{formData.bandwidth}</span>
-                                </div>
-                            )}
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Customer Type:</span>
-                                <span className="font-semibold capitalize">{formData.customerType || 'residential'}</span>
+                            <div>
+                                <span className="text-sm text-gray-600">Customer Type</span>
+                                <p className="font-semibold capitalize">{formData.customerType || 'residential'}</p>
+                            </div>
+                            <div>
+                                <span className="text-sm text-gray-600">Main Offer ID</span>
+                                <p className="font-semibold">{formData.serviceType || '-'}</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Location Details */}
+                {/* Location Details (match Resource Details layout) */}
                 <Card>
-                    <CardContent className="p-6">
-                        <div className="mb-4 flex items-center space-x-3">
-                            <div className="rounded-lg bg-green-100 p-2">
-                                <MapPin className="h-5 w-5 text-green-600" />
+                    <CardContent>
+                        <h3 className="mb-4 font-semibold text-gray-900">Location</h3>
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                            <div>
+                                <span className="text-sm text-gray-600">Latitude</span>
+                                <p className="font-mono font-semibold">{formData.latitude.toFixed(6)}</p>
                             </div>
-                            <h3 className="font-semibold text-gray-900">Location</h3>
-                        </div>
-                        <div className="space-y-3">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Latitude:</span>
-                                <span className="font-mono font-semibold">{formData.latitude.toFixed(6)}</span>
+                            <div>
+                                <span className="text-sm text-gray-600">Longitude</span>
+                                <p className="font-mono font-semibold">{formData.longitude.toFixed(6)}</p>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Longitude:</span>
-                                <span className="font-mono font-semibold">{formData.longitude.toFixed(6)}</span>
+                            <div>
+                                <span className="text-sm text-gray-600">Resource</span>
+                                <p className="font-semibold">
+                                    <Badge className={formData.resourceAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                                        {formData.resourceAvailable ? 'Available' : 'Not Available'}
+                                    </Badge>
+                                </p>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Resource:</span>
-                                <Badge className={formData.resourceAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                                    {formData.resourceAvailable ? 'Available' : 'Not Available'}
-                                </Badge>
+                            <div>
+                                <span className="text-sm text-gray-600">Address</span>
+                                <p className="font-semibold">{formData.address || '-'}</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Contact Details */}
+                {/* Contact Details (match Resource Details layout) */}
                 <Card>
-                    <CardContent className="p-6">
-                        <div className="mb-4 flex items-center space-x-3">
-                            <div className="rounded-lg bg-purple-100 p-2">
-                                <User className="h-5 w-5 text-purple-600" />
+                    <CardContent>
+                        <h3 className="mb-4 font-semibold text-gray-900">Contact</h3>
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                            <div>
+                                <span className="text-sm text-gray-600">Contact Person</span>
+                                <p className="font-semibold">{formData.contactPerson || 'Customer'}</p>
                             </div>
-                            <h3 className="font-semibold text-gray-900">Contact</h3>
-                        </div>
-                        <div className="space-y-3">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Contact Person:</span>
-                                <span className="font-semibold">{formData.contactPerson || 'Customer'}</span>
+                            <div>
+                                <span className="text-sm text-gray-600">Phone</span>
+                                <p className="font-semibold">{formData.contactNo || '-'}</p>
                             </div>
-                            {formData.contactNo && (
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Phone:</span>
-                                    <span className="font-semibold">{formData.contactNo}</span>
-                                </div>
-                            )}
-                            {formData.contactEmail && (
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Email:</span>
-                                    <span className="font-semibold">{formData.contactEmail}</span>
-                                </div>
-                            )}
+                            <div>
+                                <span className="text-sm text-gray-600">Email</span>
+                                <p className="font-semibold">{formData.contactEmail || '-'}</p>
+                            </div>
+                            <div>
+                                <span className="text-sm text-gray-600">Preferred</span>
+                                <p className="font-semibold">{formData.contactPreferred || '-'}</p>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -181,7 +173,7 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
             {/* Resource Details */}
             {formData.resourceData && (
                 <Card>
-                    <CardContent className="p-6">
+                    <CardContent>
                         <h3 className="mb-4 font-semibold text-gray-900">Resource Details</h3>
                         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                             <div>
@@ -204,21 +196,6 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
                     </CardContent>
                 </Card>
             )}
-
-            {/* Final Check */}
-            {/* <Card className="border-l-4 border-l-green-500 bg-green-50">
-                <CardContent className="p-6">
-                    <div className="flex items-center space-x-4">
-                        <CheckCircle className="h-8 w-8 text-green-500" />
-                        <div className="flex-1">
-                            <h3 className="font-semibold text-green-800">Ready to Submit</h3>
-                            <p className="text-green-700">
-                                All required information has been provided. Review the details above and submit your service request.
-                            </p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card> */}
 
             {error && (
                 <Alert variant="destructive">

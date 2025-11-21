@@ -26,24 +26,6 @@ export default function HomePage() {
             description: 'Round-the-clock customer service and technical support',
             color: 'purple',
         },
-        // {
-        //     icon: Clock,
-        //     title: 'Fast Processing',
-        //     description: 'Quick service activation and minimal waiting times',
-        //     color: 'orange',
-        // },
-        // {
-        //     icon: Shield,
-        //     title: 'Secure Platform',
-        //     description: 'Bank-level security for all your transactions and data',
-        //     color: 'red',
-        // },
-        // {
-        //     icon: HeadphonesIcon,
-        //     title: 'Dedicated Help',
-        //     description: 'Personalized assistance throughout your service journey',
-        //     color: 'indigo',
-        // },
     ];
 
     const services = [
@@ -100,18 +82,16 @@ export default function HomePage() {
 
     return (
         <GuestLayout>
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+            <div className="min-h-screen">
                 {/* Hero Section */}
                 <section className="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
-                    <div className="absolute inset-0 mx-auto max-w-screen-2xl rounded-3xl bg-gradient-to-r from-emerald-600/10 to-cyan-600/10" />
+                    <div className="absolute inset-0 mx-auto max-w-screen-2xl rounded-3xl bg-white" />
                     <div className="relative mx-auto max-w-4xl text-center">
-                        <Badge variant="secondary" className="mb-6 border-emerald-200 bg-emerald-100 px-4 py-2 text-sm font-semibold text-cyan-700">
-                            🚀 Online Service Provisioning Platform
+                        <Badge variant="outline" className="mb-4 border px-4 text-sm font-semibold text-primary">
+                            Online Service Provisioning Platform
                         </Badge>
                         <h1 className="mb-6 text-5xl leading-tight font-bold text-gray-900">
-                            Manage Your{' '}
-                            <span className="bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">Fixed Line Services</span>{' '}
-                            Online
+                            Manage Your <span className="bg-primary bg-clip-text text-transparent">Fixed Line Services</span> Online
                         </h1>
                         <p className="mx-auto mb-8 max-w-2xl text-xl leading-relaxed text-gray-600">
                             Request new services, manage existing connections, and handle service changes without visiting our service centers. Fast,
@@ -121,7 +101,7 @@ export default function HomePage() {
                             <Link href={route('otp.phone')}>
                                 <Button
                                     size="lg"
-                                    className="bg-gradient-to-r from-emerald-600 to-cyan-600 px-8 py-3 text-lg text-white shadow-lg transition-all duration-200 hover:from-cyan-600 hover:to-cyan-800 hover:shadow-xl"
+                                    className="bg-primary px-8 py-3 text-lg text-white shadow-lg transition-all duration-200 hover:from-cyan-600 hover:to-cyan-800 hover:shadow-xl"
                                 >
                                     <MapPin className="mr-3 h-5 w-5" />
                                     Get Started Now
@@ -132,7 +112,7 @@ export default function HomePage() {
                                 <Button
                                     size="lg"
                                     variant="outline"
-                                    className="border-2 border-gray-300 px-8 py-3 text-lg transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-50"
+                                    className="border-2 border-gray-300 px-8 py-3 text-lg transition-all duration-200"
                                 >
                                     Explore Services
                                 </Button>

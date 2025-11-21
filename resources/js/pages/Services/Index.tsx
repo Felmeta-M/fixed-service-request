@@ -14,7 +14,7 @@
 //                         <p className="text-gray-400">Complete history of your service requests and their status</p>
 //                     </div>
 //                     <div className="">
-//                         <Link href="/services/new">
+//                         <Link href="//services/create">
 //                             <Button size="sm" className="">
 //                                 <Plus className="mr-2 h-4 w-4" />
 //                                 New Service Request
@@ -95,7 +95,7 @@
 //                                 </select> */}
 //                             </div>
 //                         </div>
-//                         <Link href="/services/new">
+//                         <Link href="//services/create">
 //                             <Button size="sm">
 //                                 <Plus className="mr-2 h-4 w-4" />
 //                                 New Service Request
@@ -110,16 +110,655 @@
 //     );
 // }
 
+// import { ServiceList } from '@/components/service/service-list';
+// import { Button } from '@/components/ui/button';
+// import { Input } from '@/components/ui/input';
+// import MainLayout from '@/layouts/main-layout';
+// import { ServiceProvisionStatus } from '@/lib/status-map';
+// import { Link } from '@inertiajs/react';
+// import { ChevronDown, ChevronUp, Filter, Plus, X } from 'lucide-react';
+// import { useState } from 'react';
+
+// export default function ServicesPage() {
+//     const [globalFilter, setGlobalFilter] = useState('');
+//     const [typeFilter, setTypeFilter] = useState('');
+//     const [statusFilter, setStatusFilter] = useState('');
+//     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+//     const [appliedFilters, setAppliedFilters] = useState({
+//         type: '',
+//         status: '',
+//     });
+
+//     const handleApplyFilters = () => {
+//         setAppliedFilters({
+//             type: typeFilter,
+//             status: statusFilter,
+//         });
+//         setShowAdvancedFilters(false);
+//     };
+
+//     const handleClearFilters = () => {
+//         setTypeFilter('');
+//         setStatusFilter('');
+//         setAppliedFilters({
+//             type: '',
+//             status: '',
+//         });
+//         setShowAdvancedFilters(false);
+//     };
+
+//     const hasActiveFilters = appliedFilters.type || appliedFilters.status;
+
+//     return (
+//         <MainLayout>
+//             <div className="w-full space-y-1">
+//                 <div className="flex flex-col items-center justify-between lg:flex-row">
+//                     <div className="space-y-0.5">
+//                         <h3 className="text-lg">All Service Requests</h3>
+//                         <p className="sm:text-md text-sm text-gray-400">Complete history of your service requests and their status</p>
+//                     </div>
+//                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+//                         <div className="flex items-center justify-between gap-4">
+//                             <div className="flex flex-1 items-center gap-2">
+//                                 <Input
+//                                     placeholder="Search surveys..."
+//                                     value={globalFilter}
+//                                     onChange={(e) => setGlobalFilter(e.target.value)}
+//                                     className="max-w-sm"
+//                                 />
+//                             </div>
+
+//                             <div className="flex items-center gap-2">
+//                                 {/* Advanced Filter Toggle Button */}
+//                                 <Button
+//                                     variant={hasActiveFilters ? 'default' : 'outline'}
+//                                     size="sm"
+//                                     onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+//                                     className="flex items-center gap-2"
+//                                 >
+//                                     <Filter className="h-4 w-4" />
+//                                     Filters
+//                                     {hasActiveFilters && <span className="flex h-2 w-2 rounded-full bg-primary-foreground" />}
+//                                     {showAdvancedFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+//                                 </Button>
+
+//                                 {/* Clear Filters Button - Only show when filters are active */}
+//                                 {hasActiveFilters && (
+//                                     <Button
+//                                         variant="ghost"
+//                                         size="sm"
+//                                         onClick={handleClearFilters}
+//                                         className="flex items-center gap-1 text-muted-foreground hover:text-destructive"
+//                                     >
+//                                         <X className="h-4 w-4" />
+//                                         Clear
+//                                     </Button>
+//                                 )}
+//                             </div>
+//                         </div>
+//                         <Link href="//services/create">
+//                             <Button size="sm">
+//                                 <Plus className="h-4 w-4" />
+//                                 New Service Request
+//                             </Button>
+//                         </Link>
+//                     </div>
+//                 </div>
+
+//                 <div className="flex flex-col gap-4">
+//                     {/* Advanced Filters - Expandable Section */}
+//                     {showAdvancedFilters && (
+//                         <div className="flex items-end justify-between gap-4 border-t pt-4">
+//                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+//                                 {/* Type Filter */}
+//                                 <div className="space-y-2">
+//                                     <label className="text-sm font-medium text-gray-700">Service Type</label>
+//                                     <select
+//                                         value={typeFilter}
+//                                         onChange={(e) => setTypeFilter(e.target.value)}
+//                                         className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+//                                     >
+//                                         <option value="">All Types</option>
+//                                         <option value="1943913918">🌐 Internet</option>
+//                                         <option value="102647257">📞 Voice</option>
+//                                         <option value="1207609455">📦 Combo</option>
+//                                     </select>
+//                                 </div>
+
+//                                 {/* Status Filter */}
+//                                 <div className="space-y-2">
+//                                     <label className="text-sm font-medium text-gray-700">Status</label>
+//                                     <select
+//                                         value={statusFilter}
+//                                         onChange={(e) => setStatusFilter(e.target.value)}
+//                                         className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+//                                     >
+//                                         <option value="">All Status</option>
+//                                         {Object.values(ServiceProvisionStatus).map((s, i) => (
+//                                             <option key={i} value={s.label.toLowerCase()}>
+//                                                 {s.label}
+//                                             </option>
+//                                         ))}
+//                                     </select>
+//                                 </div>
+//                             </div>
+
+//                             {/* Apply/Cancel Buttons */}
+//                             <div className="flex items-center gap-2">
+//                                 <Button variant="default" size="sm" onClick={handleApplyFilters} className="flex items-center gap-2">
+//                                     Apply
+//                                 </Button>
+//                                 <Button variant="outline" size="sm" onClick={() => setShowAdvancedFilters(false)}>
+//                                     Cancel
+//                                 </Button>
+//                             </div>
+//                         </div>
+//                     )}
+
+//                     {/* Active Filters Badges */}
+//                     {hasActiveFilters && !showAdvancedFilters && (
+//                         <div className="flex flex-wrap gap-2 border-t pt-3">
+//                             {appliedFilters.type && (
+//                                 <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+//                                     Type:{' '}
+//                                     {appliedFilters.type === '1943913918' ? 'Internet' : appliedFilters.type === '102647257' ? 'Voice' : 'Combo'}
+//                                     <button
+//                                         onClick={() => {
+//                                             setTypeFilter('');
+//                                             setAppliedFilters((prev) => ({ ...prev, type: '' }));
+//                                         }}
+//                                         className="ml-1 rounded-full hover:bg-primary/20"
+//                                     >
+//                                         <X className="h-3 w-3" />
+//                                     </button>
+//                                 </div>
+//                             )}
+//                             {appliedFilters.status && (
+//                                 <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+//                                     Status: {appliedFilters.status.charAt(0).toUpperCase() + appliedFilters.status.slice(1)}
+//                                     <button
+//                                         onClick={() => {
+//                                             setStatusFilter('');
+//                                             setAppliedFilters((prev) => ({ ...prev, status: '' }));
+//                                         }}
+//                                         className="ml-1 rounded-full hover:bg-primary/20"
+//                                     >
+//                                         <X className="h-3 w-3" />
+//                                     </button>
+//                                 </div>
+//                             )}
+//                         </div>
+//                     )}
+//                 </div>
+//                 <ServiceList globalFilter={globalFilter} typeFilter={appliedFilters.type} statusFilter={appliedFilters.status} />
+//             </div>
+//         </MainLayout>
+//     );
+// }
+
+// import { ServiceList } from '@/components/service/service-list';
+// import { Button } from '@/components/ui/button';
+// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+// import { Input } from '@/components/ui/input';
+// import { useSurveyList } from '@/hooks/use-survey-list';
+// import MainLayout from '@/layouts/main-layout';
+// import { ServiceProvisionStatus } from '@/lib/status-map';
+// import { Link } from '@inertiajs/react';
+// import { AlertCircle, BarChart3, Box, CheckCircle2, ChevronDown, ChevronUp, Clock, Filter, Phone, Plus, TrendingUp, Wifi, X } from 'lucide-react';
+// import { useEffect, useMemo, useState } from 'react';
+
+// const typeMap = {
+//     '1943913918': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
+//     '102647257': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
+//     '1207609455': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
+// };
+
+// interface DashboardStats {
+//     totalServices: number;
+//     activeServices: number;
+//     pendingRequests: number;
+//     completedServices: number;
+// }
+
+// interface RecentActivity {
+//     id: string;
+//     type: string;
+//     message: string;
+//     time: string;
+//     status: string;
+// }
+
+// export default function CustomerDashboard() {
+//     const [globalFilter, setGlobalFilter] = useState('');
+//     const [typeFilter, setTypeFilter] = useState('');
+//     const [statusFilter, setStatusFilter] = useState('');
+//     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+//     const [appliedFilters, setAppliedFilters] = useState({
+//         type: '',
+//         status: '',
+//     });
+
+//     const { surveys, loading, error, fetchSurveys, refetch, hasMore, loadMore, total } = useSurveyList();
+
+//     console.log('🚀 ~ Dashboard ~ surveys:', surveys);
+//     useEffect(() => {
+//         fetchSurveys();
+//     }, []);
+
+//     // Calculate dashboard stats from survey data
+//     const dashboardStats = useMemo((): DashboardStats => {
+//         if (!surveys.length) {
+//             return {
+//                 totalServices: 0,
+//                 activeServices: 0,
+//                 pendingRequests: 0,
+//                 completedServices: 0,
+//             };
+//         }
+
+//         const totalServices = surveys.length;
+//         const activeServices = surveys.filter((survey) => {
+//             const statusNum = Number(survey.status);
+//             return statusNum >= 200 && statusNum < 400; // Active status range
+//         }).length;
+
+//         const pendingRequests = surveys.filter((survey) => {
+//             const statusNum = Number(survey.status);
+//             return statusNum < 200; // Pending status range
+//         }).length;
+
+//         const completedServices = surveys.filter((survey) => {
+//             const statusNum = Number(survey.status);
+//             return statusNum >= 400; // Completed status range
+//         }).length;
+
+//         return {
+//             totalServices,
+//             activeServices,
+//             pendingRequests,
+//             completedServices,
+//         };
+//     }, [surveys]);
+
+//     // Generate recent activities from survey data
+//     const recentActivities = useMemo((): RecentActivity[] => {
+//         if (!surveys.length) return [];
+
+//         return surveys
+//             .slice(0, 5) // Show only 5 most recent
+//             .map((survey) => {
+//                 const serviceType = typeMap[survey.main_offer_id as keyof typeof typeMap]?.label || 'Service';
+//                 const statusInfo = ServiceProvisionStatus[Number(survey.status)] || { label: 'Updated' };
+
+//                 return {
+//                     id: survey.id,
+//                     type: 'service_update',
+//                     message: `${serviceType} request ${survey.customer_survey_order_id} - ${statusInfo.label}`,
+//                     time: formatTimeAgo(survey.updated_at || survey.created_at),
+//                     status: getActivityStatus(Number(survey.status)),
+//                 };
+//             });
+//     }, [surveys]);
+
+//     const handleApplyFilters = () => {
+//         setAppliedFilters({
+//             type: typeFilter,
+//             status: statusFilter,
+//         });
+//         setShowAdvancedFilters(false);
+//     };
+
+//     const handleClearFilters = () => {
+//         setTypeFilter('');
+//         setStatusFilter('');
+//         setAppliedFilters({
+//             type: '',
+//             status: '',
+//         });
+//         setShowAdvancedFilters(false);
+//     };
+
+//     const hasActiveFilters = appliedFilters.type || appliedFilters.status;
+
+//     // Format time ago for recent activities
+//     function formatTimeAgo(dateString: string): string {
+//         const date = new Date(dateString);
+//         const now = new Date();
+//         const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+//         if (diffInSeconds < 60) return 'Just now';
+//         if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+//         if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+//         if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+//         return date.toLocaleDateString();
+//     }
+
+//     // Determine activity status based on survey status
+//     function getActivityStatus(status: number): string {
+//         if (status >= 400) return 'completed';
+//         if (status >= 200) return 'in-progress';
+//         return 'pending';
+//     }
+
+//     const StatCard = ({ title, value, description, icon: Icon, trend, color, loading: isLoading }: any) => (
+//         <Card>
+//             <CardContent className="p-6">
+//                 {isLoading ? (
+//                     <div className="flex items-center justify-between">
+//                         <div className="flex-1 space-y-2">
+//                             <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200"></div>
+//                             <div className="h-8 w-3/4 animate-pulse rounded bg-gray-200"></div>
+//                             <div className="h-3 w-2/3 animate-pulse rounded bg-gray-200"></div>
+//                         </div>
+//                         <div className="animate-pulse rounded-full bg-gray-200 p-3">
+//                             <div className="h-6 w-6"></div>
+//                         </div>
+//                     </div>
+//                 ) : (
+//                     <>
+//                         <div className="flex items-center justify-between">
+//                             <div className="space-y-2">
+//                                 <p className="text-sm font-medium text-muted-foreground">{title}</p>
+//                                 <p className="text-3xl font-bold">{value}</p>
+//                                 <p className="text-xs text-muted-foreground">{description}</p>
+//                             </div>
+//                             <div className={`rounded-full p-3 ${color} bg-opacity-10`}>
+//                                 <Icon className={`h-6 w-6 ${color.replace('bg-', 'text-')}`} />
+//                             </div>
+//                         </div>
+//                         {trend && (
+//                             <div className="mt-3 flex items-center text-xs">
+//                                 <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+//                                 <span className="text-green-500">{trend}</span>
+//                                 <span className="ml-1 text-muted-foreground">from last month</span>
+//                             </div>
+//                         )}
+//                     </>
+//                 )}
+//             </CardContent>
+//         </Card>
+//     );
+
+//     if (error) {
+//         return (
+//             <MainLayout>
+//                 <div className="w-full space-y-6">
+//                     <Card>
+//                         <CardContent className="p-6">
+//                             <div className="flex items-center space-x-3 text-red-600">
+//                                 <AlertCircle className="h-5 w-5" />
+//                                 <div>
+//                                     <p className="font-medium">Error loading dashboard</p>
+//                                     <p className="text-sm">{error}</p>
+//                                 </div>
+//                             </div>
+//                         </CardContent>
+//                     </Card>
+//                 </div>
+//             </MainLayout>
+//         );
+//     }
+
+//     return (
+//         <MainLayout>
+//             <div className="w-full space-y-6">
+//                 {/* Header Section */}
+//                 <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+//                     <div className="space-y-1">
+//                         <h1 className="text-3xl font-bold tracking-tight">Customer Dashboard</h1>
+//                         <p className="text-muted-foreground">
+//                             {loading ? 'Loading your services...' : `Welcome back! Managing ${total} service requests.`}
+//                         </p>
+//                     </div>
+//                     <div className="flex items-center gap-3">
+//                         <Input
+//                             placeholder="Search services..."
+//                             value={globalFilter}
+//                             onChange={(e) => setGlobalFilter(e.target.value)}
+//                             className="max-w-sm"
+//                         />
+//                         <Link href="//services/create">
+//                             <Button>
+//                                 <Plus className="mr-2 h-4 w-4" />
+//                                 New Service
+//                             </Button>
+//                         </Link>
+//                     </div>
+//                 </div>
+
+//                 {/* Stats Grid */}
+//                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+//                     <StatCard
+//                         title="Total Services"
+//                         value={dashboardStats.totalServices}
+//                         description="All your service requests"
+//                         icon={BarChart3}
+//                         color="text-blue-600"
+//                         loading={loading}
+//                     />
+//                     <StatCard
+//                         title="Active Services"
+//                         value={dashboardStats.activeServices}
+//                         description="Currently in progress"
+//                         icon={CheckCircle2}
+//                         color="text-green-600"
+//                         loading={loading}
+//                     />
+//                     <StatCard
+//                         title="Pending Requests"
+//                         value={dashboardStats.pendingRequests}
+//                         description="Awaiting action"
+//                         icon={Clock}
+//                         color="text-orange-600"
+//                         loading={loading}
+//                     />
+//                     <StatCard
+//                         title="Completed"
+//                         value={dashboardStats.completedServices}
+//                         description="Successfully delivered"
+//                         icon={TrendingUp}
+//                         color="text-purple-600"
+//                         loading={loading}
+//                     />
+//                 </div>
+
+//                 <Card>
+//                     <CardHeader>
+//                         <div className="flex flex-col justify-between lg:flex-row lg:items-center">
+//                             <div>
+//                                 <CardTitle>Your Services</CardTitle>
+//                                 <CardDescription>{loading ? 'Loading services...' : `Managing ${total} service requests`}</CardDescription>
+//                             </div>
+//                             <div className="mt-4 flex items-center gap-2 lg:mt-0">
+//                                 <Button
+//                                     variant={hasActiveFilters ? 'default' : 'outline'}
+//                                     size="sm"
+//                                     onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+//                                     className="flex items-center gap-2"
+//                                 >
+//                                     <Filter className="h-4 w-4" />
+//                                     Filters
+//                                     {hasActiveFilters && <span className="flex h-2 w-2 rounded-full bg-primary-foreground" />}
+//                                     {showAdvancedFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+//                                 </Button>
+
+//                                 {hasActiveFilters && (
+//                                     <Button
+//                                         variant="ghost"
+//                                         size="sm"
+//                                         onClick={handleClearFilters}
+//                                         className="flex items-center gap-1 text-muted-foreground hover:text-destructive"
+//                                     >
+//                                         <X className="h-4 w-4" />
+//                                         Clear
+//                                     </Button>
+//                                 )}
+//                             </div>
+//                         </div>
+//                     </CardHeader>
+//                     <CardContent>
+//                         {/* Advanced Filters */}
+//                         <div className="mb-6 flex flex-col gap-4">
+//                             {showAdvancedFilters && (
+//                                 <div className="flex items-end justify-between gap-4 border-t pt-4">
+//                                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+//                                         {/* Type Filter */}
+//                                         <div className="space-y-2">
+//                                             <label className="text-sm font-medium text-gray-700">Service Type</label>
+//                                             <select
+//                                                 value={typeFilter}
+//                                                 onChange={(e) => setTypeFilter(e.target.value)}
+//                                                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+//                                             >
+//                                                 <option value="">All Types</option>
+//                                                 <option value="1943913918">🌐 Internet</option>
+//                                                 <option value="102647257">📞 Voice</option>
+//                                                 <option value="1207609455">📦 Combo</option>
+//                                             </select>
+//                                         </div>
+
+//                                         {/* Status Filter */}
+//                                         <div className="space-y-2">
+//                                             <label className="text-sm font-medium text-gray-700">Status</label>
+//                                             <select
+//                                                 value={statusFilter}
+//                                                 onChange={(e) => setStatusFilter(e.target.value)}
+//                                                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+//                                             >
+//                                                 <option value="">All Status</option>
+//                                                 {Object.values(ServiceProvisionStatus).map((s, i) => (
+//                                                     <option key={i} value={s.label.toLowerCase()}>
+//                                                         {s.label}
+//                                                     </option>
+//                                                 ))}
+//                                             </select>
+//                                         </div>
+//                                     </div>
+
+//                                     {/* Apply/Cancel Buttons */}
+//                                     <div className="flex items-center gap-2">
+//                                         <Button variant="default" size="sm" onClick={handleApplyFilters} className="flex items-center gap-2">
+//                                             Apply
+//                                         </Button>
+//                                         <Button variant="outline" size="sm" onClick={() => setShowAdvancedFilters(false)}>
+//                                             Cancel
+//                                         </Button>
+//                                     </div>
+//                                 </div>
+//                             )}
+
+//                             {/* Active Filters Badges */}
+//                             {hasActiveFilters && !showAdvancedFilters && (
+//                                 <div className="flex flex-wrap gap-2">
+//                                     {appliedFilters.type && (
+//                                         <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+//                                             Type:{' '}
+//                                             {appliedFilters.type === '1943913918'
+//                                                 ? 'Internet'
+//                                                 : appliedFilters.type === '102647257'
+//                                                   ? 'Voice'
+//                                                   : 'Combo'}
+//                                             <button
+//                                                 onClick={() => {
+//                                                     setTypeFilter('');
+//                                                     setAppliedFilters((prev) => ({ ...prev, type: '' }));
+//                                                 }}
+//                                                 className="ml-1 rounded-full hover:bg-primary/20"
+//                                             >
+//                                                 <X className="h-3 w-3" />
+//                                             </button>
+//                                         </div>
+//                                     )}
+//                                     {appliedFilters.status && (
+//                                         <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+//                                             Status: {appliedFilters.status.charAt(0).toUpperCase() + appliedFilters.status.slice(1)}
+//                                             <button
+//                                                 onClick={() => {
+//                                                     setStatusFilter('');
+//                                                     setAppliedFilters((prev) => ({ ...prev, status: '' }));
+//                                                 }}
+//                                                 className="ml-1 rounded-full hover:bg-primary/20"
+//                                             >
+//                                                 <X className="h-3 w-3" />
+//                                             </button>
+//                                         </div>
+//                                     )}
+//                                 </div>
+//                             )}
+//                         </div>
+
+//                         <ServiceList globalFilter={globalFilter} typeFilter={appliedFilters.type} statusFilter={appliedFilters.status} />
+//                     </CardContent>
+//                 </Card>
+//             </div>
+//         </MainLayout>
+//     );
+// }
+
 import { ServiceList } from '@/components/service/service-list';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useSurveyList } from '@/hooks/use-survey-list';
 import MainLayout from '@/layouts/main-layout';
 import { ServiceProvisionStatus } from '@/lib/status-map';
-import { Link } from '@inertiajs/react';
-import { ChevronDown, ChevronUp, Filter, Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { Link, usePage } from '@inertiajs/react';
+import {
+    Activity,
+    AlertCircle,
+    BarChart3,
+    Box,
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    Filter,
+    Phone,
+    Plus,
+    TrendingUp,
+    Users,
+    Wifi,
+    X,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
-export default function ServicesPage() {
+const typeMap = {
+    '1943913918': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
+    '102647257': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
+    '1207609455': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
+};
+
+interface DashboardStats {
+    totalServices: number;
+    activeServices: number;
+    pendingRequests: number;
+    completedServices: number;
+}
+
+interface RecentActivity {
+    id: string;
+    type: string;
+    message: string;
+    time: string;
+    status: string;
+}
+
+// Define status categories
+const STATUS_CATEGORIES = {
+    ACTIVE: [1, 3, 6, 11], // Processing, Waiting, Ready, Paid
+    PENDING: [0, 10], // Created, Pending Payment
+    COMPLETED: [4, 5, 9, 13], // Failed, Survey Completed, Cancelled, Refund
+    SUSPENDED: [2], // Suspended
+} as const;
+
+const quickActions = [
+    { label: 'New Service Request', icon: Plus, href: '//services/create', color: 'bg-blue-500' },
+    { label: 'View Bills', icon: BarChart3, href: '/billing', color: 'bg-green-500' },
+    { label: 'Support Center', icon: Users, href: '/support', color: 'bg-purple-500' },
+    { label: 'Network Status', icon: Activity, href: '/status', color: 'bg-orange-500' },
+];
+
+export default function CustomerDashboard() {
     const [globalFilter, setGlobalFilter] = useState('');
     const [typeFilter, setTypeFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
@@ -129,17 +768,85 @@ export default function ServicesPage() {
         status: '',
     });
 
-    const handleApplyFilters = () => {
-        setAppliedFilters({
-            type: typeFilter,
-            status: statusFilter,
-        });
-        setShowAdvancedFilters(false);
+    const { auth } = usePage().props;
+
+    const { surveys, loading, error, fetchSurveys, refetch, hasMore, loadMore, total } = useSurveyList();
+
+    console.log('🚀 ~ Dashboard ~ surveys:', surveys);
+
+    useEffect(() => {
+        fetchSurveys();
+    }, []);
+
+    // Calculate dashboard stats from survey data
+    const dashboardStats = useMemo((): DashboardStats => {
+        if (!surveys.length) {
+            return {
+                totalServices: 0,
+                activeServices: 0,
+                pendingRequests: 0,
+                completedServices: 0,
+            };
+        }
+
+        const totalServices = surveys.length;
+
+        // Active services: Processing, Waiting, Ready, Paid
+        const activeServices = surveys.filter((survey) => {
+            const statusNum = Number(survey.status);
+            return STATUS_CATEGORIES.ACTIVE.includes(statusNum);
+        }).length;
+
+        // Pending requests: Created, Pending Payment
+        const pendingRequests = surveys.filter((survey) => {
+            const statusNum = Number(survey.status);
+            return STATUS_CATEGORIES.PENDING.includes(statusNum);
+        }).length;
+
+        // Completed services: Failed, Survey Completed, Cancelled, Refund
+        const completedServices = surveys.filter((survey) => {
+            const statusNum = Number(survey.status);
+            return STATUS_CATEGORIES.COMPLETED.includes(statusNum);
+        }).length;
+
+        return {
+            totalServices,
+            activeServices,
+            pendingRequests,
+            completedServices,
+        };
+    }, [surveys]);
+
+    // Generate recent activities from survey data
+    const recentActivities = useMemo((): RecentActivity[] => {
+        if (!surveys.length) return [];
+
+        return surveys
+            .slice(0, 5) // Show only 5 most recent
+            .map((survey) => {
+                const serviceType = typeMap[survey.main_offer_id as keyof typeof typeMap]?.label || 'Service';
+                const statusInfo = ServiceProvisionStatus[Number(survey.status)] || { label: 'Updated' };
+
+                return {
+                    id: survey.id,
+                    type: 'service_update',
+                    message: `${serviceType} request ${survey.customer_survey_order_id} - ${statusInfo.label}`,
+                    time: formatTimeAgo(survey.updated_at || survey.created_at),
+                    status: getActivityStatus(Number(survey.status)),
+                };
+            });
+    }, [surveys]);
+
+    // Handle filter changes immediately
+    const handleTypeFilterChange = (value: string) => {
+        setAppliedFilters((prev) => ({ ...prev, type: value }));
+    };
+
+    const handleStatusFilterChange = (value: string) => {
+        setAppliedFilters((prev) => ({ ...prev, status: value }));
     };
 
     const handleClearFilters = () => {
-        setTypeFilter('');
-        setStatusFilter('');
         setAppliedFilters({
             type: '',
             status: '',
@@ -149,27 +856,176 @@ export default function ServicesPage() {
 
     const hasActiveFilters = appliedFilters.type || appliedFilters.status;
 
+    const handleApplyFilters = () => {
+        setAppliedFilters({
+            type: typeFilter,
+            status: statusFilter,
+        });
+        setShowAdvancedFilters(false);
+    };
+
+    // const handleClearFilters = () => {
+    //     setTypeFilter('');
+    //     setStatusFilter('');
+    //     setAppliedFilters({
+    //         type: '',
+    //         status: '',
+    //     });
+    //     setShowAdvancedFilters(false);
+    // };
+
+    // const hasActiveFilters = appliedFilters.type || appliedFilters.status;
+
+    // Format time ago for recent activities
+    function formatTimeAgo(dateString: string): string {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+        if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+        return date.toLocaleDateString();
+    }
+
+    // Determine activity status based on survey status
+    function getActivityStatus(status: number): string {
+        if (STATUS_CATEGORIES.COMPLETED.includes(status)) return 'completed';
+        if (STATUS_CATEGORIES.ACTIVE.includes(status)) return 'in-progress';
+        return 'pending';
+    }
+
+    const StatCard = ({ title, value, description, icon: Icon, trend, color, loading: isLoading }: any) => (
+        <Card>
+            <CardContent className="pr-4 pl-4">
+                {isLoading ? (
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1 space-y-2">
+                            <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200"></div>
+                            <div className="h-8 w-3/4 animate-pulse rounded bg-gray-200"></div>
+                            <div className="h-3 w-2/3 animate-pulse rounded bg-gray-200"></div>
+                        </div>
+                        <div className="animate-pulse rounded-full bg-gray-200 p-3">
+                            <div className="h-6 w-6"></div>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-2">
+                                <p className="text-sm font-medium text-muted-foreground">{title}</p>
+                                <p className="text-3xl font-bold">{value}</p>
+                                <p className="text-xs text-muted-foreground">{description}</p>
+                            </div>
+                            <div className={`rounded-full p-3 ${color} bg-opacity-10`}>
+                                <Icon className={`h-6 w-6 ${color.replace('bg-', 'text-')}`} />
+                            </div>
+                        </div>
+                        {trend && (
+                            <div className="mt-3 flex items-center text-xs">
+                                <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+                                <span className="text-green-500">{trend}</span>
+                                <span className="ml-1 text-muted-foreground">from last month</span>
+                            </div>
+                        )}
+                    </>
+                )}
+            </CardContent>
+        </Card>
+    );
+
+    if (error) {
+        return (
+            <MainLayout>
+                <div className="w-full space-y-6">
+                    <Card>
+                        <CardContent className="p-6">
+                            <div className="flex items-center space-x-3 text-red-600">
+                                <AlertCircle className="h-5 w-5" />
+                                <div>
+                                    <p className="font-medium">Error loading dashboard</p>
+                                    <p className="text-sm">{error}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </MainLayout>
+        );
+    }
+    const firstName = auth.user?.name ? auth.user.name.split(' ')[0] : '';
+
     return (
         <MainLayout>
             <div className="w-full space-y-6">
-                <div className="flex flex-col items-center justify-between lg:flex-row">
-                    <div className="space-y-0.5">
-                        <h3 className="text-lg">All Service Requests</h3>
-                        <p className="sm:text-md text-sm text-gray-400">Complete history of your service requests and their status</p>
+                {/* Header Section */}
+                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+                    <div className="">
+                        <h1 className="text-2xl font-bold tracking-tight">Welcome {firstName}</h1>
+                        <p className="text-muted-foreground">{loading ? 'Loading your services...' : `Managing ${total} service requests.`}</p>
                     </div>
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex flex-1 items-center gap-2">
+                    <Link href="/services/create">
+                        <Button>
+                            <Plus className="h-4 w-4" />
+                            New Service
+                        </Button>
+                    </Link>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <StatCard
+                        title="Total Services"
+                        value={dashboardStats.totalServices}
+                        description="All your service requests"
+                        icon={BarChart3}
+                        color="text-blue-600"
+                        loading={loading}
+                    />
+                    <StatCard
+                        title="Active Services"
+                        value={dashboardStats.activeServices}
+                        description="Currently in progress"
+                        icon={CheckCircle2}
+                        color="text-green-600"
+                        loading={loading}
+                    />
+                    <StatCard
+                        title="Pending Requests"
+                        value={dashboardStats.pendingRequests}
+                        description="Awaiting action"
+                        icon={Clock}
+                        color="text-orange-600"
+                        loading={loading}
+                    />
+                    <StatCard
+                        title="Completed"
+                        value={dashboardStats.completedServices}
+                        description="Successfully delivered"
+                        icon={TrendingUp}
+                        color="text-purple-600"
+                        loading={loading}
+                    />
+                </div>
+
+                {/* Services Section */}
+                {/* <Card className="border-0 pl-0 shadow-none">
+                    <CardHeader className="p-0">
+                        <div className="flex flex-col justify-between lg:flex-row lg:items-center">
+                            <div className="flex gap-2">
+                                <div className="w-full">
+                                    <CardTitle>Your Services</CardTitle>
+                                    <CardDescription>{loading ? 'Loading services...' : `You have ${total} service requests`}</CardDescription>
+                                </div>
+                            </div>
+                            <div className="mt-4 flex items-center gap-2 lg:mt-0">
                                 <Input
-                                    placeholder="Search surveys..."
+                                    placeholder="Search services..."
                                     value={globalFilter}
                                     onChange={(e) => setGlobalFilter(e.target.value)}
                                     className="max-w-sm"
                                 />
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                {/* Advanced Filter Toggle Button */}
                                 <Button
                                     variant={hasActiveFilters ? 'default' : 'outline'}
                                     size="sm"
@@ -182,7 +1038,6 @@ export default function ServicesPage() {
                                     {showAdvancedFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                 </Button>
 
-                                {/* Clear Filters Button - Only show when filters are active */}
                                 {hasActiveFilters && (
                                     <Button
                                         variant="ghost"
@@ -196,101 +1051,207 @@ export default function ServicesPage() {
                                 )}
                             </div>
                         </div>
-                        <Link href="/services/new">
-                            <Button size="sm">
-                                <Plus className="h-4 w-4" />
-                                New Service Request
-                            </Button>
-                        </Link>
-                    </div>
-                </div>
+                    </CardHeader>
+                    <CardContent className="p-0"> */}
+                {/* Advanced Filters */}
+                {/* <div className="flex flex-col gap-4">
+                            {showAdvancedFilters && (
+                                <div className="flex items-end justify-between gap-4 border-t pb-4">
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"> */}
+                {/* Type Filter */}
+                {/* <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-700">Service Type</label>
+                                            <select
+                                                value={typeFilter}
+                                                onChange={(e) => setTypeFilter(e.target.value)}
+                                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                                            >
+                                                <option value="">All Types</option>
+                                                <option value="1943913918">🌐 Internet</option>
+                                                <option value="102647257">📞 Voice</option>
+                                                <option value="1207609455">📦 Combo</option>
+                                            </select>
+                                        </div> */}
 
-                <div className="flex flex-col gap-4">
-                    {/* Advanced Filters - Expandable Section */}
-                    {showAdvancedFilters && (
-                        <div className="flex items-end justify-between gap-4 border-t pt-4">
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {/* Type Filter */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700">Service Type</label>
-                                    <select
-                                        value={typeFilter}
-                                        onChange={(e) => setTypeFilter(e.target.value)}
-                                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
-                                    >
-                                        <option value="">All Types</option>
-                                        <option value="1943913918">🌐 Internet</option>
-                                        <option value="102647257">📞 Voice</option>
-                                        <option value="1207609455">📦 Combo</option>
-                                    </select>
-                                </div>
+                {/* Status Filter */}
+                {/* <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-700">Status</label>
+                                            <select
+                                                value={statusFilter}
+                                                onChange={(e) => setStatusFilter(e.target.value)}
+                                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                                            >
+                                                <option value="">All Status</option>
+                                                {Object.values(ServiceProvisionStatus).map((s, i) => (
+                                                    <option key={i} value={s.label.toLowerCase()}>
+                                                        {s.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div> */}
 
-                                {/* Status Filter */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700">Status</label>
-                                    <select
-                                        value={statusFilter}
-                                        onChange={(e) => setStatusFilter(e.target.value)}
-                                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
-                                    >
-                                        <option value="">All Status</option>
-                                        {Object.values(ServiceProvisionStatus).map((s, i) => (
-                                            <option key={i} value={s.label.toLowerCase()}>
-                                                {s.label}
-                                            </option>
-                                        ))}
-                                    </select>
+                {/* Apply/Cancel Buttons */}
+                {/* <div className="flex items-center gap-2">
+                                        <Button variant="default" size="sm" onClick={handleApplyFilters} className="flex items-center gap-2">
+                                            Apply
+                                        </Button>
+                                        <Button variant="outline" size="sm" onClick={() => setShowAdvancedFilters(false)}>
+                                            Cancel
+                                        </Button>
+                                    </div>
                                 </div>
+                            )} */}
+
+                {/* Active Filters Badges */}
+                {/* {hasActiveFilters && !showAdvancedFilters && (
+                                <div className="flex flex-wrap gap-2">
+                                    {appliedFilters.type && (
+                                        <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+                                            Type:{' '}
+                                            {appliedFilters.type === '1943913918'
+                                                ? 'Internet'
+                                                : appliedFilters.type === '102647257'
+                                                  ? 'Voice'
+                                                  : 'Combo'}
+                                            <button
+                                                onClick={() => {
+                                                    setTypeFilter('');
+                                                    setAppliedFilters((prev) => ({ ...prev, type: '' }));
+                                                }}
+                                                className="ml-1 rounded-full hover:bg-primary/20"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                    )}
+                                    {appliedFilters.status && (
+                                        <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+                                            Status: {appliedFilters.status.charAt(0).toUpperCase() + appliedFilters.status.slice(1)}
+                                            <button
+                                                onClick={() => {
+                                                    setStatusFilter('');
+                                                    setAppliedFilters((prev) => ({ ...prev, status: '' }));
+                                                }}
+                                                className="ml-1 rounded-full hover:bg-primary/20"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div> */}
+                {/* Services Section */}
+                <Card className="border-0 pl-0 shadow-none">
+                    <CardHeader className="p-0">
+                        <div className="flex flex-col justify-between lg:flex-row lg:items-center">
+                            <div>
+                                <CardTitle>Your Services</CardTitle>
+                                <CardDescription>{` Here are your fixed service requests`}</CardDescription>
                             </div>
-
-                            {/* Apply/Cancel Buttons */}
-                            <div className="flex items-center gap-2">
-                                <Button variant="default" size="sm" onClick={handleApplyFilters} className="flex items-center gap-2">
-                                    Apply
-                                </Button>
-                                <Button variant="outline" size="sm" onClick={() => setShowAdvancedFilters(false)}>
-                                    Cancel
+                            <div className="mt-4 flex items-center gap-2 lg:mt-0">
+                                <Input
+                                    placeholder="Search services..."
+                                    value={globalFilter}
+                                    onChange={(e) => setGlobalFilter(e.target.value)}
+                                    className="max-w-sm"
+                                />
+                                <Button
+                                    variant={hasActiveFilters ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Filter className="h-4 w-4" />
+                                    Filters
+                                    {hasActiveFilters && <span className="flex h-2 w-2 rounded-full bg-primary-foreground" />}
+                                    {showAdvancedFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                 </Button>
                             </div>
                         </div>
-                    )}
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="flex flex-col gap-4">
+                            {showAdvancedFilters && (
+                                <div className="flex items-end justify-between gap-4 border-t pt-2 pb-4">
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-700">Service Type</label>
+                                            <select
+                                                value={appliedFilters.type}
+                                                onChange={(e) => handleTypeFilterChange(e.target.value)}
+                                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                                            >
+                                                <option value="">All Types</option>
+                                                <option value="1943913918">🌐 Internet</option>
+                                                <option value="102647257">📞 Voice</option>
+                                                <option value="1207609455">📦 Combo</option>
+                                            </select>
+                                        </div>
 
-                    {/* Active Filters Badges */}
-                    {hasActiveFilters && !showAdvancedFilters && (
-                        <div className="flex flex-wrap gap-2 border-t pt-3">
-                            {appliedFilters.type && (
-                                <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
-                                    Type:{' '}
-                                    {appliedFilters.type === '1943913918' ? 'Internet' : appliedFilters.type === '102647257' ? 'Voice' : 'Combo'}
-                                    <button
-                                        onClick={() => {
-                                            setTypeFilter('');
-                                            setAppliedFilters((prev) => ({ ...prev, type: '' }));
-                                        }}
-                                        className="ml-1 rounded-full hover:bg-primary/20"
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </button>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-700">Status</label>
+                                            <select
+                                                value={appliedFilters.status}
+                                                onChange={(e) => handleStatusFilterChange(e.target.value)}
+                                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                                            >
+                                                <option value="">All Status</option>
+                                                {Object.values(ServiceProvisionStatus).map((s, i) => (
+                                                    <option key={i} value={s.label.toLowerCase()}>
+                                                        {s.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {hasActiveFilters && (
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={handleClearFilters}
+                                                className="flex items-center gap-2 text-red-500"
+                                            >
+                                                Clear
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                            {appliedFilters.status && (
-                                <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
-                                    Status: {appliedFilters.status.charAt(0).toUpperCase() + appliedFilters.status.slice(1)}
-                                    <button
-                                        onClick={() => {
-                                            setStatusFilter('');
-                                            setAppliedFilters((prev) => ({ ...prev, status: '' }));
-                                        }}
-                                        className="ml-1 rounded-full hover:bg-primary/20"
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </button>
+
+                            {hasActiveFilters && !showAdvancedFilters && (
+                                <div className="flex flex-wrap gap-2">
+                                    {appliedFilters.type && (
+                                        <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+                                            Type:{' '}
+                                            {appliedFilters.type === '1943913918'
+                                                ? 'Internet'
+                                                : appliedFilters.type === '102647257'
+                                                  ? 'Voice'
+                                                  : 'Combo'}
+                                            <button onClick={() => handleTypeFilterChange('')} className="ml-1 rounded-full hover:bg-primary/20">
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                    )}
+                                    {appliedFilters.status && (
+                                        <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+                                            Status: {appliedFilters.status.charAt(0).toUpperCase() + appliedFilters.status.slice(1)}
+                                            <button onClick={() => handleStatusFilterChange('')} className="ml-1 rounded-full hover:bg-primary/20">
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
-                    )}
-                </div>
-                <ServiceList globalFilter={globalFilter} typeFilter={appliedFilters.type} statusFilter={appliedFilters.status} />
+
+                        <ServiceList globalFilter={globalFilter} typeFilter={appliedFilters.type} statusFilter={appliedFilters.status} />
+                    </CardContent>
+                </Card>
             </div>
         </MainLayout>
     );

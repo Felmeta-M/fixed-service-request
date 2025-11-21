@@ -29,7 +29,7 @@
 // }
 // export function AppSidebar({ currentStep = 0, mode = 'list' }: AppSidebarProps) {
 //     const { url } = usePage();
-//     const displayMode = mode === 'create' || url.includes('/services/new') ? 'create' : 'list';
+//     const displayMode = mode === 'create' || url.includes('//services/create') ? 'create' : 'list';
 
 //     if (displayMode === 'create') {
 //         const steps = createServiceSteps.map((step, index) => ({
@@ -95,7 +95,7 @@
 //     return <Sidebar className="mt-14">{/* Existing list sidebar here */}</Sidebar>;
 // }
 
-import { LayoutDashboard, Wifi } from 'lucide-react';
+import { LayoutDashboard, RadioTower } from 'lucide-react';
 
 import {
     Sidebar,
@@ -116,15 +116,15 @@ import { NavUser } from './nav-user';
 // Menu items.
 const items = [
     {
-        title: 'Dashboard',
-        url: '/dashboard',
-        icon: LayoutDashboard,
-    },
-    {
         title: 'Services',
         url: '/services',
-        icon: Wifi,
+        icon: RadioTower,
     },
+    // {
+    //     title: 'Services',
+    //     url: '/services',
+    //     icon: Wifi,
+    // },
 ];
 
 export function AppSidebar() {

@@ -215,7 +215,7 @@ export default function Create() {
 
         try {
             // Step 1: Create customer
-            const response = await axios.post('http://localhost:8000/api/v1/customer/create', apiData);
+            const response = await axios.post('http://localhost:3000/api/v1/customer/create', apiData);
 
             if (response.data.success) {
                 const customer = response.data.data?.original?.data || response.data.data;

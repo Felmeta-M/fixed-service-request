@@ -107,7 +107,7 @@ export const Header = () => {
 
                                 {/* Login Button */}
                                 <Link href="/otp/phone">
-                                    <Button className="flex items-center space-x-2 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white hover:opacity-90">
+                                    <Button className="flex items-center space-x-2 bg-primary text-white hover:opacity-90">
                                         <LogIn className="h-4 w-4" />
                                         <span>Login</span>
                                     </Button>

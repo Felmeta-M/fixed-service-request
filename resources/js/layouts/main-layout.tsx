@@ -24,7 +24,7 @@ export default function MainLayout({ children }: ServicesLayoutProps) {
                 <div className="flex items-center justify-between bg-white pb-4">
                     <div className="flex items-center">
                         <SidebarTrigger />
-                        <div className="ml-4">
+                        <div className="ml-1">
                             <h1 className="text-xl font-semibold text-gray-900 capitalize">{header}</h1>
                         </div>
                     </div>

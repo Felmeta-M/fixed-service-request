@@ -9,6 +9,10 @@ use App\Http\Controllers\OtpAuthController;
 use App\Http\Controllers\SupportRequestController;
 use Inertia\Inertia;
 
+// Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name('services');
+// Route::get('//services/create', action: fn() => Inertia::render('/services/create'))->name('services.new');
+// Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
 
 Route::get('/login', fn() => Inertia::render('Login'))->name('login');
 
@@ -51,8 +55,19 @@ Route::middleware('guest:otp')->group(function () {
 Route::middleware(['otp.auth'])->group(function () {
     // Main service page (landing page after login)
     Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name('services');
-    Route::get('/services/new', action: fn() => Inertia::render('Services/new'))->name('services.new');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/services/create', action: fn() => Inertia::render('Services/Create'))->name('services.create');
+    // Route::get('/payment/summary', fn() => Inertia::render('Subscriber/PaymentSummary'))->name('payment.summary');
+    Route::get('/payment/summary', function (Request $request) {
+        return Inertia::render('Subscriber/PaymentSummary', [
+            // 'survey_id' => $request->query('survey_id'),
+            // 'subscriber_data' => $request->query('subscriber_data'),
+            // 'service_number' => $request->query('service_number'),
+            // 'fee_data' => $request->query('fee_data'),
+            // 'customer_data' => $request->query('customer_data'),
+            // 'survey_data' => $request->query('survey_data'),
+        ]);
+    })->name('payment.summary');
+    // Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     // Route::get('/survey-requests', fn() => Inertia::render('SurveyRequests/Index'))->name('survey.requests.dashboard');
     Route::get('/support-request', [SupportRequestController::class, 'index'])->name('support.request');
     Route::post('/logout', [OtpAuthController::class, 'logout'])->name('logout');

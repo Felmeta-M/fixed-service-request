@@ -832,7 +832,7 @@
 // }
 
 // async function createSurvey(data: any) {
-//     const res = await fetch('http://localhost:8000/api/survey/create', {
+//     const res = await fetch('http://localhost:3000/api/survey/create', {
 //         method: 'POST',
 //         headers: { 'Content-Type': 'application/json' },
 //         body: JSON.stringify(data),

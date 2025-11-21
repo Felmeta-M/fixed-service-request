@@ -243,7 +243,7 @@ return [
 
     'telebirr' => [
         'base_url' => env('TELEBIRR_BASE_URL', 'https://developerportal.ethiotelebirr.et:38443/apiaccess/payment/gateway'),
-        'web_base_url' => env('WEB_TELEBIRR_BASE_URL', 'https://developerportal.ethiotelebirr.et:38443/payment/web/h5/paygate?'),
+        'web_base_url' => env('WEB_TELEBIRR_BASE_URL', 'https://developerportal.ethiotelebirr.et:38443/payment/web/paygate?'),
         'fabric_app_id' => env('TELEBIRR_APP_ID', 'REDACTED_APP_KEY'),
         'app_secret' => env('TELEBIRR_APP_SECRET', 'REDACTED_SECRET'),
         'merchant_app_id' => env('TELEBIRR_MERCHANT_APP_ID', 'REDACTED_MERCHANT_APP_ID'),
@@ -264,15 +264,15 @@ return [
     ],
 
     'esignet' => [
-        'client_id'              => env('FAYDA_CLIENT_ID'),
-        'redirect_uri'           => env('FAYDA_REDIRECT_URI'),
+        'client_id' => env('FAYDA_CLIENT_ID'),
+        'redirect_uri' => env('FAYDA_REDIRECT_URI'),
         'authorization_endpoint' => env('FAYDA_AUTH_URL'),
-        'token_endpoint'         => env('FAYDA_TOKEN_URL'),
-        'userinfo_endpoint'      => env('FAYDA_USERINFO_URL'),
-        'client_assertion_type'  => env('FAYDA_ASSERTION_TYPE'),
-        'private_key'            => env('FAYDA_PRIVATE_KEY'),
-        'expiration_time'        => env('EXPIRATION_TIME', 15),
-        'algorithm'              => env('ALGORITHM', 'RS256'),
+        'token_endpoint' => env('FAYDA_TOKEN_URL'),
+        'userinfo_endpoint' => env('FAYDA_USERINFO_URL'),
+        'client_assertion_type' => env('FAYDA_ASSERTION_TYPE'),
+        'private_key' => env('FAYDA_PRIVATE_KEY'),
+        'expiration_time' => env('EXPIRATION_TIME', 15),
+        'algorithm' => env('ALGORITHM', 'RS256'),
     ],
 
 ];

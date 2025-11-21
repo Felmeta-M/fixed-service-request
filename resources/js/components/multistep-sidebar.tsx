@@ -1,7 +1,7 @@
-
 'use client';
 
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel } from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader } from '@/components/ui/sidebar';
+import logo from '@/images/ethio_logo_full.png';
 import { usePage } from '@inertiajs/react';
 import { CheckCircle, FileText, MapPin, Wifi } from 'lucide-react';
 
@@ -30,7 +30,7 @@ interface AppSidebarProps {
 }
 export function MultistepSidebar({ currentStep = 0, mode = 'list' }: AppSidebarProps) {
     const { url } = usePage();
-    const displayMode = mode === 'create' || url.includes('/services/new') ? 'create' : 'list';
+    const displayMode = mode === 'create' || url.includes('//services/create') ? 'create' : 'list';
 
     if (displayMode === 'create') {
         const steps = createServiceSteps.map((step, index) => ({
@@ -39,10 +39,19 @@ export function MultistepSidebar({ currentStep = 0, mode = 'list' }: AppSidebarP
         }));
 
         return (
-            <Sidebar className="mt-16">
+            <Sidebar>
+                <SidebarHeader>
+                    <div className="flex">
+                        <img src={logo} alt="Company Logo" className="h-12 w-auto" />
+                    </div>
+                </SidebarHeader>
                 <SidebarContent>
                     <SidebarGroup>
-                        <SidebarGroupLabel className="mb-4 text-lg font-semibold">Service Setup Progress</SidebarGroupLabel>
+                        <SidebarGroupLabel className="text-md mb-4 font-bold">Service Setup Progress</SidebarGroupLabel>
+                        {/* <SidebarGroupLabel className="text-md mb-4 font-bold">
+                            <LayoutDashboard className="mr-8 h-4 w-4" />
+                            <Link href="/dashboard">Dashboard</Link>
+                        </SidebarGroupLabel> */}
                         <SidebarGroupContent>
                             <ol role="list" className="relative">
                                 {steps.map((step, idx) => {

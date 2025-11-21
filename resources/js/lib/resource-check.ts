@@ -122,7 +122,7 @@ export const checkResourceAvailability = async (
 
         console.log('Resource check request data:', requestData);
 
-        const response = await axios.post<ResourceCheckResponse>('http://localhost:8000/api/v1/resource-check', requestData, {
+        const response = await axios.post<ResourceCheckResponse>('http://localhost:3000/api/v1/resource-check', requestData, {
             timeout: 10000,
             headers: {
                 'Content-Type': 'application/json',

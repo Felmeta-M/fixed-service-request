@@ -28,6 +28,7 @@ class OtpAuthController extends Controller
     public function sendOneTimePassword(Request $request)
     {
         try {
+            \Log::info('Sending OTP to phone: ' . $request->phone);
             $request->validate([
                 'phone' => 'required|string',
             ]);
@@ -42,6 +43,7 @@ class OtpAuthController extends Controller
             }
 
             $otpCode = rand(100000, 999999);
+            \Log::info('Generated OTP code: ' . $otpCode);
 
             Otp::updateOrCreate(
                 ['phone' => $phone],
@@ -50,9 +52,11 @@ class OtpAuthController extends Controller
                     'expires_at' => now()->addMinutes(10),
                 ]
             );
+            \Log::info("OTP stored for {$phone}: {$otpCode}");
 
             // Try sending SMS
             $this->sendSmsOnly($phone, $otpCode);
+            \Log::info("OTP sent to {$phone}: {$otpCode}");
 
             // Success → redirect to OTP verify form
             return redirect()
@@ -68,8 +72,11 @@ class OtpAuthController extends Controller
 
     public function showVerifyForm()
     {
+        \Log::info('Showing OTP verify form for phone: ' . session('phone'));
         $phone = session('phone');
-        return inertia('Auth/VerifyOtp', ['phone' => $phone]);
+        return Inertia::render('Auth/VerifyOtp', [
+            'phone' => $phone,
+        ]);
     }
 
     public function verifyOneTimePassword(Request $request)
@@ -82,6 +89,11 @@ class OtpAuthController extends Controller
             return back()->withErrors(['code' => 'Invalid or expired OTP']);
         }
 
+
+        // Auth::guard('otp')->loginUsingId($otp->id);
+
+        // return redirect()->route('dashboard');
+
         $local = $this->localAuthService->handle($otp->phone);
 
         return $this->respondToLocalAuthResult($local);
@@ -90,6 +102,7 @@ class OtpAuthController extends Controller
     /** Handle result from LocalAuthService */
     private function respondToLocalAuthResult(array $result)
     {
+        \Log::info('Responding to local auth result: ' . json_encode($result));
         return match ($result['status']) {
 
             'under_age' =>
@@ -126,8 +139,10 @@ class OtpAuthController extends Controller
     /** Final login */
     private function finishLogin(array $data): RedirectResponse
     {
+        \Log::info('Finishing login for user data: ' . json_encode($data));
         $user = $this->localAuthService->resolveUserForAuth($data);
         Auth::guard('otp')->login($user);
+        \Log::info('User logged in via OTP: ' . $user->id);
 
         return redirect()->route('dashboard');
     }

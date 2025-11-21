@@ -583,11 +583,15 @@ export function OTPVerificationForm({ className, ...props }: React.ComponentProp
                                     </Button>
                                 ) : (
                                     <span className="text-muted-foreground">
-                                        Resend OTP in <span className="font-medium">{countdown}</span>s
+                                        Resend OTP in <span className="font-medium font-semibold text-primary">{countdown}</span>s
                                     </span>
                                 )}
 
-                                <Button variant="ghost" onClick={() => router.visit('/otp/phone')} className="p-0 text-sm hover:bg-transparent">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => router.visit('/otp/phone')}
+                                    className="px-2 py-1 text-sm hover:bg-transparent"
+                                >
                                     Change number
                                 </Button>
                             </div>
@@ -611,9 +615,9 @@ export function OTPVerificationForm({ className, ...props }: React.ComponentProp
                     </form>
 
                     {/* Phone Display */}
-                    <div className="mt-4 text-center text-sm text-muted-foreground">
+                    {/* <div className="mt-4 text-center text-sm text-muted-foreground">
                         OTP sent to <span className="font-medium">{phone}</span>
-                    </div>
+                    </div> */}
                 </CardContent>
             </Card>
         </div>

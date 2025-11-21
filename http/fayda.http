@@ -15,7 +15,7 @@
 ---
 
 ### STEP 1: Start OAuth Login (get authorization URL)
-GET http://localhost:8000/api/v1/fayda/auth/start
+GET http://localhost:3000/api/v1/fayda/auth/start
 Accept: application/json
 
 # Response Example:
@@ -36,7 +36,7 @@ Accept: application/json
 ### STEP 3: Exchange Authorization Code for Tokens
 # Replace {{code}} with code from browser redirect
 # Replace {{state}} with state returned in Step 1
-POST http://localhost:8000/api/v1/fayda/auth/callback
+POST http://localhost:3000/api/v1/fayda/auth/callback
 Content-Type: application/json
 
 {

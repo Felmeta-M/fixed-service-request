@@ -56,6 +56,7 @@ Route::middleware(['otp.auth'])->group(function () {
     // Main service page (landing page after login)
     Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name('services');
     Route::get('/services/create', action: fn() => Inertia::render('Services/Create'))->name('services.create');
+
     // Route::get('/payment/summary', fn() => Inertia::render('Subscriber/PaymentSummary'))->name('payment.summary');
     Route::get('/payment/summary', function (Request $request) {
         return Inertia::render('Subscriber/PaymentSummary', [

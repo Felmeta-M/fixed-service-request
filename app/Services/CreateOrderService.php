@@ -19,15 +19,14 @@ class CreateOrderService
     protected string $notifyUrl;
 
     public function __construct(
-        string                            $baseUrl,
-        string                            $webBaseUrl,
-        string                            $fabricAppId,
-        string                            $appSecret,
-        string                            $merchantAppId,
-        string                            $merchantCode,
+        string $baseUrl,
+        string $webBaseUrl,
+        string $fabricAppId,
+        string $appSecret,
+        string $merchantAppId,
+        string $merchantCode,
         protected readonly PaymentService $paymentService,
-    )
-    {
+    ) {
         $this->baseUrl = $baseUrl;
         $this->webBaseUrl = $webBaseUrl;
         $this->fabricAppId = $fabricAppId;
@@ -95,8 +94,8 @@ class CreateOrderService
         $merchant_order_id = TelebirrHelper::createMerchantOrderId();
         //TODO: insert into db
         $payment = [
-            'customer_code' => $data['customer_code'],
-            'customer_survey_order_id' => $data['title'],
+            'customer_code' => $data['customerCode'],
+            'customer_survey_order_id' => $data['customerSurveyOrderId'],
             'amount' => $data['amount'],
             'status' => FFDServiceProvisionStatus::Pending->value
         ];
@@ -104,9 +103,9 @@ class CreateOrderService
         $this->paymentService->create($payment);
 
         $request = [
-            'nonce_str' => (string)TelebirrHelper::createNonceStr(),
+            'nonce_str' => (string) TelebirrHelper::createNonceStr(),
             'method' => 'payment.preorder',
-            'timestamp' => (string)TelebirrHelper::createTimeStamp(),
+            'timestamp' => (string) TelebirrHelper::createTimeStamp(),
             'version' => '1.0',
             'biz_content' => [],
         ];
@@ -117,9 +116,9 @@ class CreateOrderService
             'trade_type' => 'Checkout',
             'appid' => $this->merchantAppId,
             'merch_code' => $this->merchantCode,
-            'merch_order_id' => (string)$merchant_order_id,
-            'title' => (string)$data['title'],
-            'total_amount' => (string)$data['amount'],
+            'merch_order_id' => (string) $merchant_order_id,
+            'title' => (string) $data['customer_survey_order_id'],
+            'total_amount' => (string) $data['amount'],
             'trans_currency' => 'ETB',
             'timeout_express' => '120m',
             'payee_identifier' => 'REDACTED_MERCHANT_CODE',
@@ -145,9 +144,9 @@ class CreateOrderService
         $maps = [
             'appid' => $this->merchantAppId,
             'merch_code' => $this->merchantCode,
-            'nonce_str' => (string)TelebirrHelper::createNonceStr(),
+            'nonce_str' => (string) TelebirrHelper::createNonceStr(),
             'prepay_id' => $prepayId,
-            'timestamp' => (string)TelebirrHelper::createTimeStamp(),
+            'timestamp' => (string) TelebirrHelper::createTimeStamp(),
             'sign_type' => 'SHA256WithRSA',
         ];
         $rawRequest = '';
@@ -160,7 +159,7 @@ class CreateOrderService
 
         $rawRequest = $this->webBaseUrl . $rawRequest . "&version=1.0&trade_type=Checkout";
 
-        return trim((string)$rawRequest);
+        return trim((string) $rawRequest);
 
         return $rawRequest;
     }

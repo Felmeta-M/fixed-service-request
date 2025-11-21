@@ -154,10 +154,9 @@ export default function CreateSubscriber() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    // title: 'Service Subscription Fee',
-                    title: surveyOrderId,
+                    customerSurveyOrderId: surveyOrderId,
+                    customerCode: customerData?.customer?.code || '',
                     amount: calculatedAmount,
-                    customer_code: customerData?.customer?.code || '',
                 }),
             });
 

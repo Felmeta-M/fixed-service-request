@@ -91,8 +91,8 @@ Route::prefix('v1')->group(function () {
 
     Route::post('create-order', [TelebirrController::class, 'createOrder'])
         ->name('create.order');
-    Route::post('payment/notify', [TelebirrController::class, 'paymentNotification'])
-        ->name('payment.notify');
+    // Route::post('payment/notify', [TelebirrController::class, 'paymentNotification'])
+    //     ->name('payment.notify');
 
-    Route::apiResource('payments', PaymentController::class)->only(['index', 'show']);
+    // Route::apiResource('payments', PaymentController::class)->only(['index', 'show']);
 });

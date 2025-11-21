@@ -18,20 +18,18 @@ class TelebirrController extends Controller
 {
 
     public function __construct(
-        protected readonly CreateOrderService  $createOrderService,
-        protected readonly PaymentService      $paymentService,
+        protected readonly CreateOrderService $createOrderService,
+        protected readonly PaymentService $paymentService,
         protected readonly RsaSignatureService $rsaSignatureService,
-    )
-    {
+    ) {
     }
 
     public function createOrder(Request $request)
     {
         try {
             $validated = $request->validate([
-                'customer_code' => 'required|string',
-                'customer_survey_order_id' => 'required|string',
-                'title' => 'required|string',
+                'customerCode' => 'required|string',
+                'customerSurveyOrderId' => 'required|string',
                 'amount' => 'required|numeric',
             ]);
 

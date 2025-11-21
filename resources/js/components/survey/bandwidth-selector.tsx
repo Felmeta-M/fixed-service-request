@@ -183,7 +183,11 @@ export function BandwidthSelector({
     error,
 }: BandwidthSelectorProps) {
     const [customerType, setCustomerType] = useState<'residential' | 'enterprise'>('residential');
-    const currentOptions = customerType === 'residential' ? residentialOptions : enterpriseOptions;
+
+    // Sort residential options in ascending order
+    const sortedResidentialOptions = [...residentialOptions].sort((a, b) => a.numericValue - b.numericValue);
+
+    const currentOptions = customerType === 'residential' ? sortedResidentialOptions : enterpriseOptions;
 
     const handleCustomerTypeChange = (type: 'residential' | 'enterprise') => {
         setCustomerType(type);
@@ -228,7 +232,6 @@ export function BandwidthSelector({
                     placeholder="Select bandwidth"
                     error={error}
                     loading={loading}
-                    className="rounded-lg border-gray-300 shadow-sm hover:border-gray-400"
                 />
             </div>
         </div>

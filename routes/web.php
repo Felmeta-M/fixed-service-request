@@ -10,9 +10,11 @@ use App\Http\Controllers\SupportRequestController;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 
-// Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name('services');
-// Route::get('//services/create', action: fn() => Inertia::render('/services/create'))->name('services.new');
+Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name('services');
+Route::get('//services/create', action: fn() => Inertia::render('/services/create'))->name('services.new');
 // Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+Route::get('/map', action: fn() => Inertia::render('ServiceRequest/Create'))->name('servicess');
 
 
 Route::get('/login', fn() => Inertia::render('Login'))->name('login');
@@ -55,8 +57,8 @@ Route::middleware('guest:otp')->group(function () {
 // OTP protected pages
 Route::middleware(['otp.auth'])->group(function () {
     // Main service page (landing page after login)
-    Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name('services');
-    Route::get('/services/create', action: fn() => Inertia::render('Services/Create'))->name('services.create');
+    // Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name('services');
+    // Route::get('/services/create', action: fn() => Inertia::render('Services/Create'))->name('services.create');
 
     // Route::get('/payment/summary', fn() => Inertia::render('Subscriber/PaymentSummary'))->name('payment.summary');
     // Route::get('/payment/summary', function (Request $request) {

@@ -115,7 +115,7 @@ class RsaSignatureService
         ];
 
         $biz = [
-            'notify_url' => route('payment.notify'),
+            'notify_url' => route('telebirr.notify'),
             'business_type' => 'BuyGoods',
             'trade_type' => 'Checkout',
             'appid' => 'REDACTED_MERCHANT_APP_ID',

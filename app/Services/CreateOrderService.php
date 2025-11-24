@@ -111,13 +111,13 @@ class CreateOrderService
         ];
 
         $biz = [
-            'notify_url' => route('payment.notify'),
+            'notify_url' => route('telebirr.notify'),
             'business_type' => 'BuyGoods',
             'trade_type' => 'Checkout',
             'appid' => $this->merchantAppId,
             'merch_code' => $this->merchantCode,
             'merch_order_id' => (string) $merchant_order_id,
-            'title' => (string) $data['customer_survey_order_id'],
+            'title' => (string) $data['customerSurveyOrderId'],
             'total_amount' => (string) $data['amount'],
             'trans_currency' => 'ETB',
             'timeout_express' => '120m',

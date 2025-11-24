@@ -43,7 +43,7 @@ export function useBandwidthOptions() {
     useEffect(() => {
         const fetchBandwidthOptions = async () => {
             try {
-                const response = await axios.get('http://localhost:3000/api/v1/bandwidth-options');
+                const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/bandwidth-options`);
 
                 if (response.data.success) {
                     const data: BandwidthOptionResponse = response.data.data[0];

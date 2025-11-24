@@ -16,7 +16,7 @@ export function useRegions() {
         const fetchRegions = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:3000/api/v1/locations/regions');
+                const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/locations/regions`);
                 console.log('response', response.data);
                 const formattedRegions = response.data.map((region: Region) => ({
                     label: region.name,
@@ -48,7 +48,7 @@ export function useZones(regionValue?: string) {
             try {
                 if (regionValue) {
                     setLoading(true);
-                    const response = await axios.get(`http://localhost:3000/api/v1/locations/zones/${regionValue}`);
+                    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/locations/zones/${regionValue}`);
                     const formattedZones = response.data.map((zone: Region) => ({
                         label: zone.name,
                         value: zone.id.toString(),
@@ -79,7 +79,7 @@ export function useWoredas(zoneValue?: string) {
             try {
                 if (zoneValue) {
                     setLoading(true);
-                    const response = await axios.get(`http://localhost:3000/api/v1/locations/weredas/${zoneValue}`);
+                    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/locations/weredas/${zoneValue}`);
                     const formattedWoredas = response.data.map((woreda: Region) => ({
                         label: woreda.name,
                         value: woreda.id.toString(),

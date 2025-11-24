@@ -16,7 +16,7 @@ export function useSurveyTypes() {
         const fetchSurveyTypes = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:3000/api/v1/survey-types');
+                const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/survey-types`);
                 console.log('response', response.data);
                 const formattedSurveyTypes = response.data.map((type: SurveyType) => ({
                     label: type.name,

@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Services\OneOffFeeService;
+use Illuminate\Http\Request;
 
 class OneOffFeeController extends Controller
 {
-    public function __construct(protected readonly OneOffFeeService $oneOffFeeService) {}
+    public function __construct(protected readonly OneOffFeeService $oneOffFeeService)
+    {
+    }
+
     public function calculateOneOffFee(Request $request)
     {
         // Validate JSON input
@@ -21,7 +24,7 @@ class OneOffFeeController extends Controller
             'customer.nationality' => 'required|integer',
             'customer.id_type' => 'required|integer',
             'sub_order.business_code' => 'required|string',
-            'sub_order.external_sequence' => 'required|string',
+            'sub_order.external_sequence' => 'nullable|string',
             'sub_order.service_number' => 'required|string',
             'sub_order.network_type' => 'required|integer',
             'sub_order.sub_type' => 'required|integer',

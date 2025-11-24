@@ -2,19 +2,13 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use SimpleXMLElement;
-use Illuminate\Support\Str;
+use RuntimeException;
+use Throwable;
 
 class OneOffFeeService extends BaseApiService
 {
     protected int $timeout = 10;
     protected int $rateLimit = 15;
-
-    protected function endpoint(): string
-    {
-        return config('services.one_off_fee.endpoint');
-    }
 
     public function calculateOneOffFee(array $data)
     {
@@ -23,9 +17,9 @@ class OneOffFeeService extends BaseApiService
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedXml = $this->parseResponseXml($xmlResponse);
             return ApiResponse::success($parsedXml);
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return ApiResponse::exception($e, 'One off fee xml request failed.');
         }
     }
@@ -38,6 +32,7 @@ class OneOffFeeService extends BaseApiService
         $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
         $credentials = config('services.one_off_fee');
+        $sequence = time();//sequence id $data['sub_order']['external_sequence']
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -73,7 +68,7 @@ class OneOffFeeService extends BaseApiService
                     <com:SubBusiOrder>
                         <com:BusinessCode>{$data['sub_order']['business_code']}</com:BusinessCode>
                         <com:SubscriberInfo>
-                            <com:ExternalSequnce>{$data['sub_order']['external_sequence']}</com:ExternalSequnce>
+                            <com:ExternalSequnce>{$sequence}</com:ExternalSequnce>
                             <com:ServiceNumber>{$data['sub_order']['service_number']}</com:ServiceNumber>
                             <com:NetworkType>{$data['sub_order']['network_type']}</com:NetworkType>
                             <com:SubType>{$data['sub_order']['sub_type']}</com:SubType>
@@ -133,33 +128,38 @@ XML;
             foreach ($feeChildren->TaxInfo as $tax) {
                 $taxChildren = $tax->children($namespaces['com']);
                 $taxes[] = [
-                    'code'  => (string) $taxChildren->TaxCode,
-                    'name'  => (string) $taxChildren->TaxName,
-                    'fee'   => (string) $taxChildren->TaxFee,
-                    'rate'  => (string) $taxChildren->TaxRate,
+                    'code' => (string)$taxChildren->TaxCode,
+                    'name' => (string)$taxChildren->TaxName,
+                    'fee' => (string)$taxChildren->TaxFee,
+                    'rate' => (string)$taxChildren->TaxRate,
                 ];
             }
 
             $extParams = [];
             foreach ($feeChildren->ExtParamList->ParameterInfo as $param) {
                 $paramChildren = $param->children($namespaces['com']);
-                $extParams[(string) $paramChildren->ParamName] = (string) $paramChildren->ParamValue;
+                $extParams[(string)$paramChildren->ParamName] = (string)$paramChildren->ParamValue;
             }
 
             $parsed['fees'][] = [
                 // 'item_code'      => (string) $feeChildren->FeeItemCode,
-                'item_name'      => (string) $feeChildren->FeeItemName,
+                'item_name' => (string)$feeChildren->FeeItemName,
                 // 'fee_type'       => (string) $feeChildren->FeeType,
                 // 'currency_id'    => (string) $feeChildren->CurrencyID,
-                'calculated_fee' => (string) $feeChildren->CaculatedFee,
-                'original_fee'   => (string) $feeChildren->OriginalFee,
-                'discount_fee'   => (string) $feeChildren->DiscountFee,
+                'calculated_fee' => (string)$feeChildren->CaculatedFee,
+                'original_fee' => (string)$feeChildren->OriginalFee,
+                'discount_fee' => (string)$feeChildren->DiscountFee,
                 // 'pay_type'       => (string) $feeChildren->PayType,
-                'taxes'          => $taxes,
+                'taxes' => $taxes,
                 // 'ext_params'     => $extParams,
             ];
         }
 
         return $parsed;
+    }
+
+    protected function endpoint(): string
+    {
+        return config('services.one_off_fee.endpoint');
     }
 }

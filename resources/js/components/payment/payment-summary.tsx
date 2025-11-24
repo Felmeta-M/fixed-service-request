@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { CreditCard, Package, Phone, Shield, User, Wifi } from 'lucide-react';
+import { CreditCard, Package, Phone, User, Wifi } from 'lucide-react';
 
 interface PaymentSummaryProps {
     surveyData: any;
@@ -29,6 +29,7 @@ export function PaymentSummary({
     onPaymentConfirm,
     loading = false,
 }: PaymentSummaryProps) {
+    console.log('🚀 ~ PaymentSummary ~ surveyData:', surveyData);
     console.log('🚀 ~ PaymentSummary ~ subscriberData:', subscriberData);
     // const serviceType = serviceTypeMap[surveyData.main_offer_id] || serviceTypeMap['1943913918'];
     const serviceType = serviceTypeMap['1943913918'] || serviceTypeMap['1943913918'];
@@ -130,7 +131,7 @@ export function PaymentSummary({
                                         value="New Connection"
                                         // badge={{ variant: 'default', text: 'New' }}
                                     />
-                                    <DetailItem label="Order ID" value={'20000455461249'} />
+                                    <DetailItem label="Order ID" value={surveyData.customer_survey_order_id} />
                                     {/* <DetailItem label="Status" value="Ready for Activation" badge={{ variant: 'success', text: 'Active' }} /> */}
                                     {/* <DetailItem label="Activation" value="Immediate after payment" icon={<Clock className="h-4 w-4" />} /> */}
                                 </div>
@@ -188,26 +189,22 @@ export function PaymentSummary({
                         </CardContent>
                     </Card>
 
-                    <div className="flex flex-col items-center gap-4 pt-4">
-                        <Button
-                            onClick={onPaymentConfirm}
-                            disabled={loading}
-                            className="w-full max-w-sm bg-primary text-lg font-semibold hover:opacity-90"
-                        >
+                    <div className="flex flex-col items-end gap-4 pt-4">
+                        <Button onClick={onPaymentConfirm} disabled={loading} className="w-fit bg-primary text-lg font-semibold hover:opacity-90">
                             {loading ? (
                                 <div className="flex items-center gap-2">
                                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                     Processing...
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-2">Pay Now</div>
+                                <div className="flex items-center gap-2">Pay with telebirr</div>
                             )}
                         </Button>
 
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                        {/* <div className="flex items-center gap-2 text-xs text-gray-500">
                             <Shield className="h-3 w-3" />
                             <span>Secure payment processed by Telebirr</span>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>

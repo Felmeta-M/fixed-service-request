@@ -1,7 +1,6 @@
 import { formatCoordinate, parseCoordinate } from '@/lib/coordinate-utils';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapPin } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { ProfessionalSearch } from './service/map-search';
 
@@ -271,19 +270,19 @@ const LocationMap: React.FC<LocationMapProps> = ({ onLocationSelect, initialLat 
             </div>
 
             {/* Selected Coordinates Display */}
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                <div className="flex items-start gap-3">
-                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                    <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Selected Location</p>
-                        {/* <p className="mt-1 text-sm text-gray-600">
+            {/* <div className="rounded-lg border border-gray-200 bg-gray-50 p-4"> */}
+            {/* <div className="flex items-start gap-3"> */}
+            {/* <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" /> */}
+            {/* <div className="flex-1"> */}
+            {/* <p className="text-sm font-medium text-gray-900">Selected Location</p> */}
+            {/* <p className="mt-1 text-sm text-gray-600">
                             Coordinates: {displayLat}, {displayLng}
                         </p> */}
-                        {address && <p className="mt-1 text-sm text-gray-600">Address: {address}</p>}
-                        {/* <p className="mt-1 text-xs text-green-600">✓ Formatted for API (6 decimal places)</p> */}
-                    </div>
-                </div>
-            </div>
+            {/* {address && <p className="mt-1 text-sm text-gray-600">Address: {address}</p>} */}
+            {/* <p className="mt-1 text-xs text-green-600">✓ Formatted for API (6 decimal places)</p> */}
+            {/* </div> */}
+            {/* </div> */}
+            {/* </div> */}
         </div>
     );
 };

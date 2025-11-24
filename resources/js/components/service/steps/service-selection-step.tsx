@@ -92,7 +92,6 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
             {/* Bandwidth Selection (Only for Broadband) */}
             {formData.serviceType === '1943913915' && !hasActiveSurvey && (
                 <div className="mt-6">
-                    {/* <h3 className="mb-4 text-lg font-semibold text-gray-900">Select Your Bandwidth</h3> */}
                     <BandwidthSelector
                         residentialOptions={residentialOptions}
                         enterpriseOptions={enterpriseOptions}

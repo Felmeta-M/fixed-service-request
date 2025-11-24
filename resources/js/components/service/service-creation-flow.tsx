@@ -34,9 +34,10 @@ interface ServiceFormData {
 interface ServiceCreationFlowProps {
     currentStep: number;
     onStepChange: (step: number) => void;
+    googleMapsApiKey: string; // Add this prop
 }
 
-export function ServiceCreationFlow({ currentStep, onStepChange }: ServiceCreationFlowProps) {
+export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKey }: ServiceCreationFlowProps) {
     const { auth } = usePage().props;
     const user = auth.user as User;
 
@@ -79,7 +80,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange }: ServiceCreati
         };
 
         loadUserData();
-    }, [user]); // Add user as dependency
+    }, [user]);
 
     const hasActiveSurvey = surveys.some((s) => ['waiting', 'approved'].includes(s.status?.toLowerCase()));
 
@@ -117,7 +118,13 @@ export function ServiceCreationFlow({ currentStep, onStepChange }: ServiceCreati
             case 0:
                 return <ServiceSelectionStep formData={formData} onUpdate={updateFormData} hasActiveSurvey={hasActiveSurvey} />;
             case 1:
-                return <LocationSetupStep formData={formData} onUpdate={updateFormData} />;
+                return (
+                    <LocationSetupStep
+                        formData={formData}
+                        onUpdate={updateFormData}
+                        googleMapsApiKey={googleMapsApiKey} // Pass the key here
+                    />
+                );
             case 2:
                 return <ReviewSubmitStep formData={formData} onBack={prevStep} />;
             default:

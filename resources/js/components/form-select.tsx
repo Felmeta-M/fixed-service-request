@@ -2,11 +2,12 @@ import { FormSelectProps } from '@/types';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
-export default function FormSelect({ label, id, value, onChange, options, placeholder, error, disabled, loading }: FormSelectProps) {
+export default function FormSelect({ label, id, value, onChange, options, placeholder, error, disabled, loading, labelRight }: FormSelectProps) {
     return (
         <div className="space-y-2">
             <Label htmlFor={id} className="font-medium text-gray-700">
                 {label}
+                {labelRight && <div className="inline-block">{labelRight}</div>}
             </Label>
             <Select value={value} onValueChange={onChange} disabled={disabled || loading}>
                 <SelectTrigger className={`${error ? 'border-red-300' : 'border-gray-300'} flex items-center justify-between`}>

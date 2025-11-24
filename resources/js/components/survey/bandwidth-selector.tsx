@@ -44,7 +44,9 @@ export function BandwidthSelector({
         <div className="flex flex-col space-y-6">
             {/* Customer Type Selector */}
             <div>
-                <Label className="mb-2 block text-sm font-medium text-gray-900">Customer Type *</Label>
+                <Label className="mb-2 block text-sm font-medium text-gray-900">
+                    Customer Type <span className="ml-1 text-red-500">*</span>
+                </Label>
                 <RadioGroup value={customerType} onValueChange={handleCustomerTypeChange} className="flex space-x-4">
                     <label className="flex items-center rounded-lg px-4 py-2 text-gray-900 transition hover:bg-gray-100">
                         <RadioGroupItem value="residential" className="mr-2 h-4 w-4" />
@@ -61,7 +63,8 @@ export function BandwidthSelector({
             <div className="max-w-72">
                 <FormSelect
                     id="bandwidth"
-                    label="Bandwidth *"
+                    label="Bandwidth"
+                    labelRight={<span className="text-red-500">*</span>}
                     value={selectedBandwidth}
                     onChange={handleBandwidthSelect}
                     options={currentOptions.map((option) => ({

@@ -10,14 +10,6 @@ use App\Http\Controllers\SupportRequestController;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 
-Route::get('/map', action: fn() => Inertia::render(
-    'ServiceRequest/Create',
-    [
-        'googleMapsApiKey' => config('services.google.google_api_key'),
-    ]
-))->name('servicess');
-
-
 Route::get('/login', fn() => Inertia::render('Login'))->name('login');
 
 // Route::get('/', fn() => Inertia::render('Login'))->name('login');
@@ -57,22 +49,15 @@ Route::middleware('guest:otp')->group(function () {
 
 // OTP protected pages
 Route::middleware(['otp.auth'])->group(function () {
-    // Main service page (landing page after login)
     Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name('services');
-    Route::get('/services/create', action: fn() => Inertia::render('Services/Create'))->name('services.create');
+    // Route::get('/services/create', action: fn() => Inertia::render('Services/Create'))->name('services.create');
+    // In your web.php
+    Route::get('/services/create', function () {
+        return Inertia::render('Services/Create', [
+            'googleMapsApiKey' => config('services.google.google_api_key'),
+        ]);
+    })->name('services.create');
 
-    // Route::get('/payment/summary', fn() => Inertia::render('Subscriber/PaymentSummary'))->name('payment.summary');
-    // Route::get('/payment/summary', function (Request $request) {
-    //     return Inertia::render('Subscriber/PaymentSummary', [
-    //         'survey_id' => $request->query('survey_id'),
-    //         'subscriber_data' => $request->query('subscriber_data'),
-    //         'service_number' => $request->query('service_number'),
-    //         'fee_data' => $request->query('fee_data'),
-    //         'customer_data' => $request->query('customer_data'),
-    //         'survey_data' => $request->query('survey_data'),
-    //         'is_fallback' => $request->query('is_fallback', false),
-    //     ]);
-    // })->name('payment.summary');
     Route::get('/payment/summary', function (Request $request) {
         return Inertia::render('Subscriber/PaymentSummary', [
             'survey_id' => $request->query('survey_id'),
@@ -91,13 +76,6 @@ Route::middleware(['otp.auth'])->group(function () {
     Route::get('/create-customer', fn() => Inertia::render('Customers/Create'))->name('customers.create');
 
     Route::get('/create-survey-requests', fn() => Inertia::render('SurveyRequests/Create'))->name('survey.create');
-    // Route::get('/survey-requests/create-subscriber/{id}', function ($id) {
-    //     return Inertia::render('Subscriber/Create', [
-    //         'surveyOrderId' => $id,
-    //         'customerCode' => request('customer_code'),
-    //         'offeringId' => request('offering_id'),
-    //     ]);
-    // })->name('subscriber.create');
 
     Route::get('/survey-requests/create-subscriber/{id}', function ($id) {
         return Inertia::render('Subscriber/Create', [
@@ -119,7 +97,6 @@ Route::middleware(['otp.auth'])->group(function () {
         return Inertia::render('Profile/Index');
     })->name('profile');
 
-    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
 
 Route::post('/telebirr/notify', [TelebirrController::class, 'notify'])->name('telebirr.notify');

@@ -1,7 +1,8 @@
 import LocationPicker from '@/components/LocationPicker';
 import { useState } from 'react';
 
-export default function Create({ googleMapsApiKey }) {
+export default function Create({ googleMapsApiKey }: any) {
+    console.log('🚀 ~ Create ~ googleMapsApiKey:', googleMapsApiKey);
     const [location, setLocation] = useState({ lat: null, lng: null });
 
     const handleSubmit = (e) => {

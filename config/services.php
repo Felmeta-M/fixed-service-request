@@ -276,6 +276,7 @@ return [
     ],
 
     'google' => [
+        'google_api_key' => env('GOOGLE_API_KEY'),
         'maps_server_key' => env('GOOGLE_MAPS_SERVER_KEY'),
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

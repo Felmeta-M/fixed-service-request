@@ -52,6 +52,8 @@ export default function Create() {
     const [resourceData, setResourceData] = useState<any>(null);
 
     const [hasValidLocation, setHasValidLocation] = useState(false);
+    const { checkResourceAvailability } = useResourceChecker();
+
 
     const { data, setData } = useForm<SurveyRequestFormValues>('createSurvey', {
         customer_code: '',
@@ -433,45 +435,43 @@ export default function Create() {
     };
 
     const checkResourceForLocation = async (lat: number, lng: number) => {
-        if (!data.contact_person || data.contact_person === 'Loading...') {
-            return;
+    if (!data.contact_person || data.contact_person === 'Loading...') {
+        return;
+    }
+
+    setCheckingResource(true);
+    setResourceAvailable(undefined);
+    setResourceMessage('');
+    setResourceData(null);
+
+    try {
+        const result = await checkResourceAvailability(
+            {
+                latitude: lat,
+                longitude: lng,
+            },
+            data.contact_person,   
+        );
+
+        setResourceAvailable(result.available);
+        setResourceMessage(result.message || '');
+        setResourceData(result.data);
+
+        if (!result.available) {
+            setError(result.message || 'Resource not available in this location');
+        } else {
+            setError('');
         }
+    } catch (error) {
+        setResourceAvailable(false);
+        setResourceMessage('Failed to check resource availability');
+        setError('Failed to check resource availability');
+        console.error('Resource check error:', error);
+    } finally {
+        setCheckingResource(false);
+    }
+};
 
-        setCheckingResource(true);
-        setResourceAvailable(undefined);
-        setResourceMessage('');
-        setResourceData(null);
-
-        try {
-            const result = await useResourceChecker(
-                {
-                    latitude: lat,
-                    longitude: lng,
-                },
-                data.contact_person,
-            );
-
-            setResourceAvailable(result.available);
-            setResourceMessage(result.message || '');
-            setResourceData(result.data);
-
-            if (result.data === null) {
-                setError('Resource not available');
-            }
-
-            if (!result.available) {
-                setError(result.message || 'Resource not available in this location');
-            } else {
-                setError('');
-            }
-        } catch (error) {
-            setResourceAvailable(false);
-            setResourceMessage('Failed to check resource availability');
-            console.error('Resource check error:', error);
-        } finally {
-            setCheckingResource(false);
-        }
-    };
 
     const validateForm = (): boolean => {
         const newErrors: Record<string, string> = {};

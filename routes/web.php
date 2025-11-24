@@ -14,7 +14,12 @@ Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name
 Route::get('//services/create', action: fn() => Inertia::render('/services/create'))->name('services.new');
 // Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-Route::get('/map', action: fn() => Inertia::render('ServiceRequest/Create'))->name('servicess');
+Route::get('/map', action: fn() => Inertia::render(
+    'ServiceRequest/Create',
+    [
+        'googleMapsApiKey' => config('services.google.google_api_key'),
+    ]
+))->name('servicess');
 
 
 Route::get('/login', fn() => Inertia::render('Login'))->name('login');

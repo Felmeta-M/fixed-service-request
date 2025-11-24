@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Enums\FFDServiceProvisionStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Payment;
 use App\Services\OneOffFeeService;
+use App\Services\PaymentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use RuntimeException;
 
 class OneOffFeeController extends Controller
 {
-    public function __construct(protected readonly OneOffFeeService $oneOffFeeService)
-    {
-    }
+    public function __construct(
+        protected readonly OneOffFeeService $oneOffFeeService,
+        protected readonly PaymentService $payment_service,
+    ) {}
 
     public function calculateOneOffFee(Request $request)
     {
@@ -31,6 +37,54 @@ class OneOffFeeController extends Controller
             'sub_order.offering_id' => 'required|integer',
         ]);
 
-        return $this->oneOffFeeService->calculateOneOffFee($validated);
+        $feeResult = $this->oneOffFeeService->calculateOneOffFee($validated);
+
+        if (!($feeResult['success'] ?? false)) {
+            throw new RuntimeException('Failed to calculate fees.');
+        }
+
+        $finalAmount = $this->computeTotalFeeAmount($feeResult['data']['fees']);
+
+        $this->createOrUpdatePayment(
+            $request->customer_survey_order_id,
+            $finalAmount
+        );
+
+        return $feeResult;
+    }
+
+    private function computeTotalFeeAmount(array $fees)
+    {
+        $total = 0;
+
+        foreach ($fees as $fee) {
+            $calculated = (int)$fee['calculated_fee'];
+            $discount   = (int)$fee['discount_fee'];
+            $taxAmount  = 0;
+
+            if (!empty($fee['taxes'])) {
+                foreach ($fee['taxes'] as $tax) {
+                    $taxAmount += (int)$tax['amount'];
+                }
+            }
+
+            $total += ($calculated - $discount + $taxAmount);
+        }
+
+        return $total / 10000;
+    }
+
+    private function createOrUpdatePayment($orderId, $amount)
+    {
+        $customer = Auth::guard('customer')->user();
+
+        return Payment::firstOrCreate(
+            ['customer_survey_order_id' => $orderId],
+            [
+                'customer_code' => $customer->customer_code,
+                'amount' => $amount,
+                'status' => FFDServiceProvisionStatus::Pending->value,
+            ]
+        );
     }
 }

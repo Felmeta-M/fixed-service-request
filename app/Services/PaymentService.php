@@ -19,9 +19,9 @@ class PaymentService
                 [
                     'customer_code' => $data['customer_code'],
                     'customer_survey_order_id' => $data['customer_survey_order_id'],
-                    'amount' => $data['amount'],
+                    'amount' => $data['amount'] ?? 0,
                     'payload' => $data['payload'] ?? [],
-                    'status' => $data['status'],
+                    'status' => $data['status'] ?? FFDServiceProvisionStatus::Pending->value,
                 ]
             );
         });

@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
 
@@ -43,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
                 ];
             }
         ]);
+
         RateLimiter::for('service_client', function (Request $request) {
             return Limit::perSecond(5, 3)->by($request->ip()) // 3 requests for every 5 seconds
                 ->response(function () {
@@ -51,5 +54,9 @@ class AppServiceProvider extends ServiceProvider
                     ], 429);
                 });
         });
+
+        if (app()->isProduction()) {
+            URL::forceScheme('https');
+        }
     }
 }

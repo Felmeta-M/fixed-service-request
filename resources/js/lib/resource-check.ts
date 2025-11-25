@@ -62,12 +62,7 @@ export const useResourceChecker = () => {
 
             console.log('Resource check request:', requestData);
 
-            const response = await axios.post<ResourceCheckResponse>(`${import.meta.env.VITE_API_BASE_URL}/resource-check`, requestData, {
-                timeout: 10000,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+            const response = await axios.post<ResourceCheckResponse>(`${import.meta.env.VITE_API_BASE_URL}/resource-check`, requestData);
 
             if (response.data.success && response.data.data) {
                 const resource = response.data.data;

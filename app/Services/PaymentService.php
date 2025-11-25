@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Payment;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PaymentService
@@ -25,6 +26,20 @@ class PaymentService
                 ]
             );
         });
+    }
+
+    public function createOrUpdatePayment(string $orderId, float $amount)
+    {
+        $customer = Auth::guard('customer')->user();
+
+        return Payment::firstOrCreate(
+            ['customer_survey_order_id' => $orderId],
+            [
+                'customer_code' => $customer->customer_code,
+                'amount' => $amount,
+                'status' => FFDServiceProvisionStatus::Pending->value,
+            ]
+        );
     }
 
     /**

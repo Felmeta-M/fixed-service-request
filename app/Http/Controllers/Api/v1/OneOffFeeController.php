@@ -40,12 +40,15 @@ class OneOffFeeController extends Controller
         $feeResult = $this->oneOffFeeService->calculateOneOffFee($validated);
 
         if (!($feeResult['success'] ?? false)) {
+            //TODO: check run time exection is approparate
             throw new RuntimeException('Failed to calculate fees.');
         }
 
         $finalAmount = $this->computeTotalFeeAmount($feeResult['data']['fees']);
 
-        $this->createOrUpdatePayment(
+        //cable cost
+        // $cableCost = calculate_cable_charge($cableLength, $cableType, $surveyStatus);
+        $this->payment_service->createOrUpdatePayment(
             $request->customer_survey_order_id,
             $finalAmount
         );
@@ -72,19 +75,5 @@ class OneOffFeeController extends Controller
         }
 
         return $total / 10000;
-    }
-
-    private function createOrUpdatePayment($orderId, $amount)
-    {
-        $customer = Auth::guard('customer')->user();
-
-        return Payment::firstOrCreate(
-            ['customer_survey_order_id' => $orderId],
-            [
-                'customer_code' => $customer->customer_code,
-                'amount' => $amount,
-                'status' => FFDServiceProvisionStatus::Pending->value,
-            ]
-        );
     }
 }

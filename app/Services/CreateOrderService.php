@@ -93,14 +93,21 @@ class CreateOrderService
     {
         $merchant_order_id = TelebirrHelper::createMerchantOrderId();
         //TODO: insert into db
-        $payment = [
-            'customer_code' => $data['customerCode'],
-            'customer_survey_order_id' => $data['customerSurveyOrderId'],
-            'amount' => $data['amount'],
-            'status' => FFDServiceProvisionStatus::Pending->value
-        ];
+        // $payment = [
+        //     'customer_code' => $data['customerCode'],
+        //     'customer_survey_order_id' => $data['customerSurveyOrderId'],
+        //     'amount' => $data['amount'],
+        //     'status' => FFDServiceProvisionStatus::Pending->value
+        // ];
 
-        $this->paymentService->create($payment);
+        // $this->paymentService->create($payment);
+
+        $payment = $this->paymentService->find($data['customerSurveyOrderId']);
+        if ($payment) {
+            throw new RuntimeException("Payment not found!");
+        }
+
+        $amount = $payment->amount;
 
         $request = [
             'nonce_str' => (string) TelebirrHelper::createNonceStr(),
@@ -118,7 +125,7 @@ class CreateOrderService
             'merch_code' => $this->merchantCode,
             'merch_order_id' => (string) $merchant_order_id,
             'title' => (string) $data['customerSurveyOrderId'],
-            'total_amount' => (string) $data['amount'],
+            'total_amount' => (string) $amount,
             'trans_currency' => 'ETB',
             'timeout_express' => '120m',
             'payee_identifier' => 'REDACTED_MERCHANT_CODE',

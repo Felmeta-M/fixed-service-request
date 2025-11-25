@@ -87,6 +87,7 @@ Route::prefix('v1')->group(function () {
     Route::post('release-number-service', [ReserveNumberServiceController::class, 'release']);
 
     Route::post('calc-one-off-fee', [OneOffFeeController::class, 'calculateOneOffFee']);
+    Route::post('one-off-fee', [OneOffFeeController::class, 'fee']);
 
 
     Route::post('create-order', [TelebirrController::class, 'createOrder'])

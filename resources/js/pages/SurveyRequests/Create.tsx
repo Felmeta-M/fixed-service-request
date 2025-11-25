@@ -435,42 +435,42 @@ export default function Create() {
     };
 
     const checkResourceForLocation = async (lat: number, lng: number) => {
-    if (!data.contact_person || data.contact_person === 'Loading...') {
-        return;
-    }
-
-    setCheckingResource(true);
-    setResourceAvailable(undefined);
-    setResourceMessage('');
-    setResourceData(null);
-
-    try {
-        const result = await checkResourceAvailability(
-            {
-                latitude: lat,
-                longitude: lng,
-            },
-            data.contact_person,   
-        );
-
-        setResourceAvailable(result.available);
-        setResourceMessage(result.message || '');
-        setResourceData(result.data);
-
-        if (!result.available) {
-            setError(result.message || 'Resource not available in this location');
-        } else {
-            setError('');
+        if (!data.contact_person || data.contact_person === 'Loading...') {
+            return;
         }
-    } catch (error) {
-        setResourceAvailable(false);
-        setResourceMessage('Failed to check resource availability');
-        setError('Failed to check resource availability');
-        console.error('Resource check error:', error);
-    } finally {
-        setCheckingResource(false);
-    }
-};
+
+        setCheckingResource(true);
+        setResourceAvailable(undefined);
+        setResourceMessage('');
+        setResourceData(null);
+
+        try {
+            const result = await checkResourceAvailability(
+                {
+                    latitude: lat,
+                    longitude: lng,
+                },
+                data.contact_person,
+            );
+
+            setResourceAvailable(result.available);
+            setResourceMessage(result.message || '');
+            setResourceData(result.data);
+
+            if (!result.available) {
+                setError(result.message || 'Resource not available in this location');
+            } else {
+                setError('');
+            }
+        } catch (error) {
+            setResourceAvailable(false);
+            setResourceMessage('Failed to check resource availability');
+            setError('Failed to check resource availability');
+            console.error('Resource check error:', error);
+        } finally {
+            setCheckingResource(false);
+        }
+    };
 
 
     const validateForm = (): boolean => {
@@ -556,7 +556,7 @@ export default function Create() {
             existingSurveys.push(newSurvey);
             localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
 
-            const response = await axios.post('http://localhost:3000/api/v1/survey/create', submitData);
+            const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/v1/survey/create`, submitData);
 
             if (response.data.success) {
                 const newSurvey = {
@@ -714,17 +714,15 @@ export default function Create() {
                                                 <div
                                                     key={service.id}
                                                     onClick={() => handleChange('main_offer_id', service.id)}
-                                                    className={`cursor-pointer rounded-xl border-2 p-4 text-left transition-all duration-200 hover:shadow-md ${
-                                                        isSelected
-                                                            ? 'border-primary bg-gradient-to-br from-primary/5 to-primary/10 shadow-md'
-                                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                                    }`}
+                                                    className={`cursor-pointer rounded-xl border-2 p-4 text-left transition-all duration-200 hover:shadow-md ${isSelected
+                                                        ? 'border-primary bg-gradient-to-br from-primary/5 to-primary/10 shadow-md'
+                                                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                                        }`}
                                                 >
                                                     <div className="flex items-start space-x-3">
                                                         <div
-                                                            className={`rounded-lg p-2 transition-colors ${
-                                                                isSelected ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
-                                                            }`}
+                                                            className={`rounded-lg p-2 transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
+                                                                }`}
                                                         >
                                                             <IconComponent className="h-5 w-5" />
                                                         </div>

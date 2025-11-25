@@ -118,7 +118,10 @@ XML;
 
         // Step 7: Log final parsed info
         // \Log::info('Number of resources parsed', $resources);
-        return $this->getShortestResource($resources);
+        $shortestResource =  $this->getShortestResource($resources);
+        // Store latest shortest resource in session
+        session(['latest_resource' => $shortestResource]);
+        return $shortestResource;
     }
 
 

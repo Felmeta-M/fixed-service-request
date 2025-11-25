@@ -1,7 +1,7 @@
 <?php
 
 if (!function_exists('calculate_cable_charge')) {
-    function calculate_cable_charge($cableLength, $cableType, $surveyStatus): float
+    function calculate_cable_charge($cableLength, $cableType, string|int $surveyStatus): float
     {
         $unitPrices = [
             '0' => 13,

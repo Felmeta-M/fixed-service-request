@@ -7,7 +7,7 @@ APP_DIR="/var/www"
 echo "🧹 Setting Laravel permissions in $APP_DIR..."
 
 # Fix ownership so Laravel (www-data) can write where needed
-chown -R www-data:www-data $APP_DIR/storage $APP_DIR/bootstrap/cache
+chown -R www-data:www-data $APP_DIR/storage $APP_DIR/bootstrap/cache $APP_DIR/public/build
 
 # Set appropriate permissions
 find $APP_DIR -type f -exec chmod 664 {} \;

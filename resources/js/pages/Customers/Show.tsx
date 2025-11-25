@@ -832,7 +832,7 @@
 // }
 
 // async function createSurvey(data: any) {
-//     const res = await fetch('http://localhost:3000/api/survey/create', {
+//     const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/survey/create`, {
 //         method: 'POST',
 //         headers: { 'Content-Type': 'application/json' },
 //         body: JSON.stringify(data),

@@ -215,7 +215,7 @@ export default function Create() {
 
         try {
             // Step 1: Create customer
-            const response = await axios.post('http://localhost:3000/api/v1/customer/create', apiData);
+            const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/v1/customer/create`, apiData);
 
             if (response.data.success) {
                 const customer = response.data.data?.original?.data || response.data.data;
@@ -380,9 +380,8 @@ export default function Create() {
             {[1, 2, 3, 4].map((stepNumber) => (
                 <div key={stepNumber} className="flex items-center">
                     <div
-                        className={`flex h-6 w-6 items-center justify-center rounded-full text-sm font-medium transition-all sm:h-10 sm:w-10 ${
-                            step >= stepNumber ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-500'
-                        } ${step === stepNumber ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
+                        className={`flex h-6 w-6 items-center justify-center rounded-full text-sm font-medium transition-all sm:h-10 sm:w-10 ${step >= stepNumber ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-500'
+                            } ${step === stepNumber ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
                     >
                         {step > stepNumber ? <CheckCircle className="h-5 w-5" /> : stepNumber}
                     </div>
@@ -468,9 +467,8 @@ export default function Create() {
                                     <Label htmlFor="customer_type">Customer Type *</Label>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div
-                                            className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-4 transition-all ${
-                                                data.customer_type === '1' ? 'border-green-500 bg-green-50 shadow-sm' : 'hover:bg-gray-50'
-                                            }`}
+                                            className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-4 transition-all ${data.customer_type === '1' ? 'border-green-500 bg-green-50 shadow-sm' : 'hover:bg-gray-50'
+                                                }`}
                                             onClick={() => {
                                                 setData('customer_type', '1');
                                                 setData('customer_category', '');
@@ -479,9 +477,8 @@ export default function Create() {
                                             }}
                                         >
                                             <div
-                                                className={`flex h-12 w-12 items-center justify-center rounded-full ${
-                                                    data.customer_type === '1' ? 'bg-green-100' : 'bg-gray-100'
-                                                }`}
+                                                className={`flex h-12 w-12 items-center justify-center rounded-full ${data.customer_type === '1' ? 'bg-green-100' : 'bg-gray-100'
+                                                    }`}
                                             >
                                                 <Home className={`h-6 w-6 ${data.customer_type === '1' ? 'text-green-600' : 'text-gray-600'}`} />
                                             </div>
@@ -493,14 +490,13 @@ export default function Create() {
                                                 name="customer_type"
                                                 value="residential"
                                                 checked={data.customer_type === '1'}
-                                                onChange={() => {}}
+                                                onChange={() => { }}
                                                 className="sr-only"
                                             />
                                         </div>
                                         <div
-                                            className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-4 transition-all ${
-                                                data.customer_type === '2' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'hover:bg-gray-50'
-                                            }`}
+                                            className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-4 transition-all ${data.customer_type === '2' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'hover:bg-gray-50'
+                                                }`}
                                             onClick={() => {
                                                 setData('customer_type', '2');
                                                 setData('customer_category', '');
@@ -509,9 +505,8 @@ export default function Create() {
                                             }}
                                         >
                                             <div
-                                                className={`flex h-12 w-12 items-center justify-center rounded-full ${
-                                                    data.customer_type === '2' ? 'bg-blue-100' : 'bg-gray-100'
-                                                }`}
+                                                className={`flex h-12 w-12 items-center justify-center rounded-full ${data.customer_type === '2' ? 'bg-blue-100' : 'bg-gray-100'
+                                                    }`}
                                             >
                                                 <Building className={`h-6 w-6 ${data.customer_type === '2' ? 'text-blue-600' : 'text-gray-600'}`} />
                                             </div>
@@ -523,7 +518,7 @@ export default function Create() {
                                                 name="customer_type"
                                                 value="enterprise"
                                                 checked={data.customer_type === '2'}
-                                                onChange={() => {}}
+                                                onChange={() => { }}
                                                 className="sr-only"
                                             />
                                         </div>
@@ -1094,9 +1089,8 @@ export default function Create() {
                             type="button"
                             onClick={submit}
                             disabled={processing || uploadingPhoto}
-                            className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${
-                                uploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
-                            }`}
+                            className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${uploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
+                                }`}
                         >
                             {uploadingPhoto ? (
                                 <>

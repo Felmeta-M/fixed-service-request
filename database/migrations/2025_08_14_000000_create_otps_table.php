@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->string('phone')->index();
             $table->string('code')->unique();
             $table->string('name')->nullable();
+            $table->string('customer_code')->nullable();
             $table->timestamp('expires_at');
             $table->timestamps();
         });

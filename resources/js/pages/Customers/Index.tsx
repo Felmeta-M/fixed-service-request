@@ -1,4 +1,3 @@
-import { CustomerTable } from '@/components/CustomerTable';
 import AppLayout from '@/layouts/app-layout';
 import { Pagination, PaginationLink, type BreadcrumbItem, type SharedData } from '@/types';
 import { Customer } from '@/types/customer';
@@ -15,7 +14,6 @@ export default function Index() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Customers" />
             <div className="p-4">
-                <CustomerTable data={customers.data} />
                 <div className="mt-4 flex space-x-2">
                     {customers.links.map((link: PaginationLink, index: number) =>
                         link.url ? (

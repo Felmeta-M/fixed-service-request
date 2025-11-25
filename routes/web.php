@@ -97,6 +97,15 @@ Route::middleware(['otp.auth'])->group(function () {
         return Inertia::render('Profile/Index');
     })->name('profile');
 
+    Route::get('/latest-resource', function () {
+        $latestResource = session('latest_resource', null);
+
+        if (!$latestResource) {
+            return response()->json(['message' => 'No resource available'], 404);
+        }
+
+        return response()->json($latestResource);
+    });
 });
 
 Route::post('/telebirr/notify', [TelebirrController::class, 'notify'])->name('telebirr.notify');

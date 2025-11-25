@@ -38,26 +38,29 @@ class OneOffFeeController extends Controller
         ]);
 
         $feeResult = $this->oneOffFeeService->calculateOneOffFee($validated);
-
-        if (!($feeResult['success'] ?? false)) {
+        $feeResultData = $feeResult->getData(true);
+        if (!($feeResultData['success'] ?? false)) {
             //TODO: check run time exection is approparate
             throw new RuntimeException('Failed to calculate fees.');
         }
 
-        $amount = (int) $this->computeTotalFeeAmount($feeResult['data']['fees']);
+        $amount = (int) $this->computeTotalFeeAmount($feeResultData['data']['fees']);
 
         //cable cost
         $latestResource = session('latest_resource', null);
         \Log::info('test...', [$latestResource]);
         //TODO: check throughly cable type and status
-        $cableCost = (int)calculate_cable_charge($latestResource['distance'], $latestResource['cable_type'], 2);
+        $cableCost = 0;
+        if ($latestResource) {
+            $cableCost = calculate_cable_charge($latestResource['distance'], $latestResource['cable_type'], 2);
+        }
         $finalAmount = $amount + $cableCost;
         $this->payment_service->createOrUpdatePayment(
             $request->customer_survey_order_id,
             $finalAmount
         );
 
-        return $feeResult;
+        return $feeResultData;
     }
 
     public function fee(Request $request)

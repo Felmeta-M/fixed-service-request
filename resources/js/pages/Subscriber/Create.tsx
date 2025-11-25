@@ -2,17 +2,69 @@ import AuthLayout from '@/layouts/AuthLayout';
 import { router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
+interface User {
+    id: number;
+    customer_code: string;
+    name: string;
+    phone: string;
+}
+
+interface FeeData {
+    fees: Array<{
+        item_name: string;
+        original_fee: string;
+        discount_fee: string;
+        taxes?: Array<{
+            name: string;
+            fee: string;
+        }>;
+    }>;
+    service_number?: string;
+}
+
 export default function CreateSubscriber() {
-    const { surveyOrderId, offeringId, available_numbers } = usePage().props;
+    const { surveyOrderId, offeringId, available_numbers, auth } = usePage().props;
+    const user = auth.user as User;
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [customerData, setCustomerData] = useState(null);
     const [surveyData, setSurveyData] = useState(null);
-    const [step, setStep] = useState('checkout'); // 'checkout', 'payment'
+    const [step, setStep] = useState('checkout');
     const [selectedNumber, setSelectedNumber] = useState('');
-    const [feeData, setFeeData] = useState(null);
+    const [feeData, setFeeData] = useState<FeeData | null>(null);
     const [calculatedAmount, setCalculatedAmount] = useState(0);
+    const [apiErrors, setApiErrors] = useState<{ [key: string]: string }>({});
+
+    // Enhanced error handling
+    const handleApiError = (result: any, context: string = '') => {
+        console.error(`API Error in ${context}:`, result);
+
+        let errorMessage = 'An unexpected error occurred. Please try again.';
+
+        if (result?.original?.success === false) {
+            errorMessage = result.original.message || 'Service subscription failed!';
+        } else if (result?.success === false) {
+            errorMessage = result.message || 'Operation failed!';
+        } else if (result?.errors) {
+            errorMessage = Object.values(result.errors).join(', ') || 'Validation failed!';
+        } else if (result?.message) {
+            errorMessage = result.message;
+        }
+
+        setError(errorMessage);
+        setApiErrors((prev) => ({
+            ...prev,
+            [context]: errorMessage,
+        }));
+
+        return true;
+    };
+
+    const clearErrors = () => {
+        setError('');
+        setApiErrors({});
+    };
 
     // Auto-assign the first available number on component mount
     useEffect(() => {
@@ -25,24 +77,15 @@ export default function CreateSubscriber() {
     }, [available_numbers]);
 
     useEffect(() => {
-        // Load data from localStorage
-        const customerDataString = localStorage.getItem('activeCustomer');
+        // Load survey data from localStorage if needed
         const surveyDataString = localStorage.getItem('customerSurveyData');
-
-        if (customerDataString) {
-            try {
-                setCustomerData(JSON.parse(customerDataString));
-            } catch (e) {
-                console.error('Error parsing customer data:', e);
-                setError('Invalid customer data format');
-            }
-        }
 
         if (surveyDataString) {
             try {
                 setSurveyData(JSON.parse(surveyDataString));
             } catch (e) {
                 console.error('Error parsing survey data:', e);
+                setError('Invalid survey data format');
             }
         }
     }, []);
@@ -52,6 +95,13 @@ export default function CreateSubscriber() {
             setError('Please select a service number');
             return;
         }
+
+        if (!user?.customer_code) {
+            setError('User customer code not found. Please log in again.');
+            return;
+        }
+
+        clearErrors();
 
         try {
             setLoading(true);
@@ -72,12 +122,9 @@ export default function CreateSubscriber() {
                     },
                     sub_order: {
                         business_code: 'CO015',
-                        // external_sequence: generateExternalSequence(),
-                        external_sequence: '759d462f068f4b9ebbb34aa3418869a8',
-                        // service_number: selectedNumber,
-                        service_number: '123457155',
-                        // offering_id: offeringId || surveyData?.offering_id || customerData?.ext_params?.PrimaryOfferId || '',
-                        offering_id: '1207609454',
+                        external_sequence: generateExternalSequence(),
+                        service_number: selectedNumber,
+                        offering_id: offeringId || surveyData?.offering_id || '',
                         network_type: 4,
                         sub_type: 0,
                     },
@@ -86,31 +133,30 @@ export default function CreateSubscriber() {
 
             const result = await response.json();
 
+            // Check for API errors first
+            if (result?.original?.success === false || result?.success === false) {
+                handleApiError(result, 'fee_calculation');
+                return; // Prevent moving forward
+            }
+
             if (result.success && result.data?.fees) {
                 setFeeData(result.data);
                 const totalAmount = calculateTotalAmount(result.data.fees);
                 setCalculatedAmount(totalAmount);
                 setStep('payment');
-            } else {
-                setError('Failed to calculate fees');
-                // set fake fee data for rolling back
-                setFeeData({
-                    fees: [
-                        {
-                            item_name: 'Fallback Fee',
-                            original_fee: 10000,
-                            discount_fee: 0,
-                            taxes: [],
-                        },
-                    ],
+                setSuccess('Fees calculated successfully');
+
+                // Clear any previous fee calculation errors
+                setApiErrors((prev) => {
+                    const newErrors = { ...prev };
+                    delete newErrors.fee_calculation;
+                    return newErrors;
                 });
-                // setFeeData([{ original_fee: 10000, discount_fee: 0, taxes: [] }]);
-                setCalculatedAmount(1);
-                setStep('payment');
+            } else {
+                throw new Error('Failed to calculate fees');
             }
-        } catch (err) {
-            console.error('Calculate fee error:', err);
-            setError('Failed to calculate fees');
+        } catch (err: any) {
+            handleApiError({ message: err.message || 'Failed to calculate fees' }, 'fee_calculation');
         } finally {
             setLoading(false);
         }
@@ -124,17 +170,13 @@ export default function CreateSubscriber() {
         });
     };
 
-    const calculateTotalAmount = (fees) => {
+    const calculateTotalAmount = (fees: FeeData['fees']) => {
         let total = 0;
 
         fees.forEach((fee) => {
-            // Add original fee (divide by 10000 as per requirement)
             total += parseInt(fee.original_fee) / 10000;
-
-            // Subtract discount
             total -= parseInt(fee.discount_fee) / 10000;
 
-            // Add taxes if any
             if (fee.taxes && fee.taxes.length > 0) {
                 fee.taxes.forEach((tax) => {
                     total += parseInt(tax.fee) / 10000;
@@ -146,6 +188,18 @@ export default function CreateSubscriber() {
     };
 
     const handlePayment = async () => {
+        clearErrors();
+
+        if (!user?.customer_code) {
+            setError('User customer code not found. Please log in again.');
+            return;
+        }
+
+        if (calculatedAmount <= 0) {
+            setError('Invalid payment amount. Please try calculating fees again.');
+            return;
+        }
+
         try {
             setLoading(true);
             const response = await fetch('/api/v1/create-order', {
@@ -155,91 +209,48 @@ export default function CreateSubscriber() {
                 },
                 body: JSON.stringify({
                     customerSurveyOrderId: surveyOrderId,
-                    customerCode: customerData?.customer?.code || '',
+                    customerCode: user.customer_code,
                     amount: calculatedAmount,
                 }),
             });
 
             const result = await response.json();
 
-            if (result.success && result.rawRequest) {
-                // Redirect to Telebirr payment page
-                window.location.href = result.rawRequest;
-            } else {
-                setError('Failed to create payment order');
+            // Check for API errors first
+            if (result?.original?.success === false || result?.success === false) {
+                handleApiError(result, 'payment_creation');
+                return; // Prevent redirect on error
             }
-        } catch (err) {
-            console.error('Payment error:', err);
-            setError('Failed to process payment');
+
+            if (result.success && result.rawRequest) {
+                setSuccess('Payment order created successfully. Redirecting...');
+                // Small delay to show success message before redirect
+                setTimeout(() => {
+                    window.location.href = result.rawRequest;
+                }, 1000);
+            } else {
+                throw new Error('Failed to create payment order');
+            }
+        } catch (err: any) {
+            handleApiError({ message: err.message || 'Failed to process payment' }, 'payment_creation');
         } finally {
             setLoading(false);
         }
     };
 
-    const getAddressInfo = () => {
-        if (!customerData?.addresses || customerData.addresses.length === 0) {
-            return {
-                region: '',
-                city: '',
-                zone: '',
-                wereda: '',
-                kebele: '',
-                house_no: '',
-            };
-        }
-        const address = customerData.addresses[0];
-        return {
-            region: address.address1 || '',
-            city: address.address2 || '',
-            zone: address.address3 || '',
-            wereda: address.address4 || '',
-            kebele: address.address5 || '',
-            house_no: address.address6 || '',
-        };
-    };
-
-    const getContactInfo = () => {
-        if (!customerData?.contacts || customerData.contacts.length === 0) {
-            return {
-                name1: '',
-                name2: '',
-                mobile: '',
-            };
-        }
-        const contact = customerData.contacts[0];
-        return {
-            name1: contact.name1 || '',
-            name2: contact.name2 || '',
-            mobile: contact.mobile || '',
-        };
-    };
-
-    const getCustomerInfo = () => {
-        if (!customerData?.customer) {
-            return {
-                first_name: '',
-                middle_name: '',
-                last_name: '',
-                enterprise_name: '',
-            };
-        }
-        const customer = customerData.customer;
-        return {
-            first_name: customer.first_name || '',
-            middle_name: customer.middle_name || '',
-            last_name: customer.last_name || '',
-            enterprise_name: customer.enterprise_name || customer.first_name || '',
-        };
-    };
-
     // Get service type name based on offering ID
-    const getServiceTypeName = (offeringId) => {
-        const serviceTypes = {
+    const getServiceTypeName = (offeringId: string) => {
+        const serviceTypes: { [key: string]: string } = {
             '1943913915': 'Fixed Broadband',
             '1207609454': 'Fixed Voice',
             '102647257': 'Combo Services',
         };
         return serviceTypes[offeringId] || 'Fixed Broadband';
+    };
+
+    // Check if we can proceed to next step (no critical errors)
+    const canProceedToPayment = () => {
+        return !apiErrors.fee_calculation && calculatedAmount > 0 && feeData && user?.customer_code;
     };
 
     return (
@@ -257,21 +268,37 @@ export default function CreateSubscriber() {
                                 {step === 'checkout' && 'Complete your service activation'}
                                 {step === 'payment' && 'Review and complete your payment'}
                             </p>
+                            {/* User Info in Header */}
+                            <div className="text-primary-200 mt-2 flex items-center text-sm">
+                                <span>
+                                    Customer: {user?.name} ({user?.customer_code})
+                                </span>
+                            </div>
                         </div>
 
                         {/* Content */}
                         <div className="p-6">
-                            {error && (
+                            {/* Error Display */}
+                            {(error || Object.keys(apiErrors).length > 0) && (
                                 <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
-                                    <div className="flex items-center">
-                                        <svg className="mr-3 h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <div className="flex items-start">
+                                        <svg className="mt-0.5 mr-3 h-5 w-5 flex-shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                                             <path
                                                 fillRule="evenodd"
                                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                                                 clipRule="evenodd"
                                             />
                                         </svg>
-                                        <span className="text-red-800">{error}</span>
+                                        <div className="flex-1">
+                                            <span className="font-medium text-red-800">{error || 'Please fix the following errors:'}</span>
+                                            {Object.keys(apiErrors).length > 0 && (
+                                                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-red-700">
+                                                    {Object.entries(apiErrors).map(([key, value]) => (
+                                                        <li key={key}>{value}</li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -279,20 +306,30 @@ export default function CreateSubscriber() {
                             {success && (
                                 <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
                                     <div className="flex items-center">
-                                        <svg className="mr-3 h-5 w-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg className="mr-3 h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                                             <path
                                                 fillRule="evenodd"
                                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                                 clipRule="evenodd"
                                             />
                                         </svg>
-                                        <span className="text-primary">{success}</span>
+                                        <span className="text-green-800">{success}</span>
                                     </div>
                                 </div>
                             )}
 
                             {step === 'checkout' && (
                                 <>
+                                    {/* Customer Information Card */}
+                                    <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                                        <h2 className="mb-4 text-xl font-semibold text-gray-900">Customer Information</h2>
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                            <InfoField label="Customer Name" value={user?.name} />
+                                            <InfoField label="Phone Number" value={user?.phone} />
+                                            <InfoField label="Customer Code" value={user?.customer_code} highlight={true} />
+                                        </div>
+                                    </div>
+
                                     {/* Service Information Card */}
                                     <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                                         <h2 className="mb-6 text-xl font-semibold text-gray-900">Service Information</h2>
@@ -300,7 +337,6 @@ export default function CreateSubscriber() {
                                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                             <InfoField label="Order Number" value={surveyOrderId} />
                                             <InfoField label="Service" value="Fixed Broadband" />
-                                            {/* {getServiceTypeName(offeringId)} /> */}
                                             <InfoField label="Service Type" value="New Connection" />
                                             <InfoField label="Assigned Service Number" value={selectedNumber || 'Loading...'} highlight={true} />
                                         </div>
@@ -319,6 +355,22 @@ export default function CreateSubscriber() {
                                                 </div>
                                             </div>
                                         )}
+
+                                        {/* Show fee calculation error specifically */}
+                                        {apiErrors.fee_calculation && (
+                                            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+                                                <div className="flex items-center">
+                                                    <svg className="mr-2 h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                                            clipRule="evenodd"
+                                                        />
+                                                    </svg>
+                                                    <span className="text-red-700">{apiErrors.fee_calculation}</span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="flex justify-end space-x-4 border-t border-gray-200 pt-6">
@@ -331,7 +383,7 @@ export default function CreateSubscriber() {
                                         </button>
                                         <button
                                             onClick={calculateOneOffFee}
-                                            disabled={loading || !selectedNumber}
+                                            disabled={loading || !selectedNumber || !!apiErrors.fee_calculation || !user?.customer_code}
                                             className="rounded-lg bg-primary px-8 py-3 font-medium text-white transition-colors hover:bg-primary/90 focus:ring-2 focus:ring-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {loading ? (
@@ -366,6 +418,22 @@ export default function CreateSubscriber() {
                                 <>
                                     <div className="mb-8">
                                         <h2 className="mb-6 text-xl font-semibold text-gray-900">Payment Summary</h2>
+
+                                        {/* Customer Summary Card */}
+                                        <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h3 className="font-semibold text-gray-700">Customer</h3>
+                                                    <p className="text-gray-900">
+                                                        {user?.name} ({user?.customer_code})
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm text-gray-600">Phone</p>
+                                                    <p className="font-medium text-gray-900">{user?.phone}</p>
+                                                </div>
+                                            </div>
+                                        </div>
 
                                         {/* Service Summary Card */}
                                         <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-6">
@@ -413,11 +481,30 @@ export default function CreateSubscriber() {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {/* Payment creation error */}
+                                        {apiErrors.payment_creation && (
+                                            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+                                                <div className="flex items-center">
+                                                    <svg className="mr-2 h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                                            clipRule="evenodd"
+                                                        />
+                                                    </svg>
+                                                    <span className="text-red-700">{apiErrors.payment_creation}</span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="flex justify-end space-x-4 border-t border-gray-200 pt-6">
                                         <button
-                                            onClick={() => setStep('checkout')}
+                                            onClick={() => {
+                                                clearErrors();
+                                                setStep('checkout');
+                                            }}
                                             className="rounded-lg border border-gray-300 px-8 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-primary focus:outline-none"
                                             disabled={loading}
                                         >
@@ -425,7 +512,7 @@ export default function CreateSubscriber() {
                                         </button>
                                         <button
                                             onClick={handlePayment}
-                                            disabled={loading}
+                                            disabled={loading || !!apiErrors.payment_creation || !canProceedToPayment()}
                                             className="rounded-lg bg-primary px-8 py-3 font-medium text-white transition-colors hover:opacity-90 focus:ring-2 focus:ring-green-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {loading ? (

@@ -28,9 +28,9 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [error, setError] = useState('');
     const [customerData, setCustomerData] = useState<any>(null);
-    console.log('🚀 ~ SurveyActions ~ customerData:', customerData);
     const [showErrorDialog, setShowErrorDialog] = useState(false);
     const [openDetailModal, setOpenDetailModal] = useState(false);
+    const [apiErrors, setApiErrors] = useState<{ [key: string]: string }>({});
 
     // ⬇️ Get authenticated user from Inertia props
     const { auth }: any = usePage().props;
@@ -43,14 +43,49 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         }
     }, [auth]);
 
+    // Enhanced error handling function
+    const handleApiError = (result: any, context: string = '') => {
+        console.error(`API Error in ${context}:`, result);
+
+        let errorMessage = 'An unexpected error occurred. Please try again.';
+
+        // Handle different error response structures
+        if (result?.original?.success === false) {
+            errorMessage = result.original.message || 'Service subscription failed!';
+        } else if (result?.success === false) {
+            errorMessage = result.message || 'Operation failed!';
+        } else if (result?.errors) {
+            errorMessage = Object.values(result.errors).join(', ') || 'Validation failed!';
+        } else if (result?.message) {
+            errorMessage = result.message;
+        }
+
+        setError(errorMessage);
+        setApiErrors((prev) => ({
+            ...prev,
+            [context]: errorMessage,
+        }));
+        setShowErrorDialog(true);
+
+        return errorMessage;
+    };
+
+    const clearErrors = () => {
+        setError('');
+        setApiErrors({});
+        setShowErrorDialog(false);
+    };
+
     const handleCancel = async (cancellationReason?: string) => {
         if (!cancellationReason) {
-            alert('Please provide a reason for cancellation.');
+            setError('Please provide a reason for cancellation.');
+            setShowErrorDialog(true);
             return;
         }
 
         setLoading(true);
         onUpdatingChange(true);
+        clearErrors();
 
         try {
             const response = await fetch('/api/v1/cancel-survey-order', {
@@ -70,10 +105,10 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             if (response.ok && result.success) {
                 onActionComplete();
             } else {
-                alert(result.message || 'Failed to cancel survey order');
+                handleApiError(result, 'cancellation');
             }
-        } catch (err) {
-            alert('Failed to cancel survey order');
+        } catch (err: any) {
+            handleApiError(err, 'cancellation_network');
         } finally {
             setLoading(false);
             onUpdatingChange(false);
@@ -84,6 +119,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const handleDelete = async () => {
         setLoading(true);
         onUpdatingChange(true);
+        clearErrors();
+
         try {
             const response = await fetch('/api/v1/survey-requests/delete', {
                 method: 'DELETE',
@@ -101,10 +138,10 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             if (result.success) {
                 onActionComplete();
             } else {
-                alert(result.message || 'Failed to delete survey order');
+                handleApiError(result, 'deletion');
             }
-        } catch (err) {
-            alert('Failed to delete survey order');
+        } catch (err: any) {
+            handleApiError(err, 'deletion_network');
         } finally {
             setLoading(false);
             onUpdatingChange(false);
@@ -147,8 +184,17 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
         const result = await response.json();
 
-        if (result.success) return result;
-        throw new Error(result.message || 'Subscriber creation failed');
+        // Check for subscription creation errors
+        if (result?.data?.original?.success === false) {
+            const errorMsg = result.data.original.message || 'Subscriber creation failed';
+            throw new Error(errorMsg);
+        }
+
+        if (!result.success) {
+            throw new Error(result.message || 'Subscriber creation failed');
+        }
+
+        return result;
     };
 
     const fetchAvailableNumbers = async () => {
@@ -164,6 +210,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         });
 
         const result = await response.json();
+
         if (Array.isArray(result) && result.length > 0) return result;
 
         throw new Error('No available numbers found');
@@ -185,13 +232,9 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 },
                 sub_order: {
                     business_code: 'CO015',
-                    // external_sequence: generateExternalSequence(),
-                    external_sequence: '759d462f068f4b9ebbb34aa3418869a8',
-
+                    external_sequence: generateExternalSequence(),
                     service_number: serviceNumber,
-                    // service_number: '123457155',
-                    // offering_id: survey.main_offer_id || '1207609454',
-                    offering_id: '1207609454',
+                    offering_id: survey.main_offer_id || '1207609454',
                     network_type: 4,
                     sub_type: 0,
                 },
@@ -200,7 +243,14 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
         const result = await response.json();
 
+        // Check for fee calculation errors
+        if (result?.original?.success === false || result?.success === false) {
+            const errorMsg = result.original?.message || result.message || 'Failed to calculate fees';
+            throw new Error(errorMsg);
+        }
+
         if (result.success && result.data?.fees) return result.data;
+
         throw new Error('Failed to calculate fees');
     };
 
@@ -212,7 +262,6 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         });
     };
 
-    console.log('🚀 ~ handlePayNow ~ customerData:', customerData);
     const handlePayNow = async () => {
         if (!customerData) {
             setError('No customer data found. Please complete the survey first.');
@@ -220,27 +269,37 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             return;
         }
 
+        if (!customerData.customer_code) {
+            setError('Customer code not found. Please ensure your profile is complete.');
+            setShowErrorDialog(true);
+            return;
+        }
+
         setLoading(true);
         onUpdatingChange(true);
-        setError('');
-        console.log('🚀 ~ handlePayNow ~ customerData:', customerData);
+        clearErrors();
 
         try {
+            // Step 1: Create subscriber
             const subscriberResult = await createSubscriber();
-            console.log('🚀 ~ handlePayNow ~ subscriberResult:', subscriberResult);
+            console.log('Subscriber created:', subscriberResult);
+
+            // Step 2: Fetch available numbers
             const availableNumbers = await fetchAvailableNumbers();
-            console.log('🚀 ~ handlePayNow ~ availableNumbers:', availableNumbers);
+            console.log('Available numbers:', availableNumbers);
+
             const serviceNumber = availableNumbers[0]?.ServiceNumber;
-            console.log('🚀 ~ handlePayNow ~ serviceNumber:', serviceNumber);
+            if (!serviceNumber) {
+                throw new Error('No service numbers available at the moment. Please try again later.');
+            }
 
-            if (!serviceNumber) throw new Error('No service numbers available');
-
+            // Step 3: Calculate fees
             const feeData = await calculateServiceFees(subscriberResult.data.subscriber_id, serviceNumber);
-            console.log('🚀 ~ handlePayNow ~ feeData:', feeData);
+            console.log('Fee data calculated:', feeData);
+
             feeData.service_number = serviceNumber;
 
-            console.log('paynow survey order id ', survey.customer_survey_order_id);
-
+            // All steps completed successfully - proceed to payment summary
             router.visit(route('payment.summary'), {
                 method: 'get',
                 data: {
@@ -253,8 +312,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 },
             });
         } catch (err: any) {
-            setError(err.message || 'Failed to setup payment. Please try again.');
-            setShowErrorDialog(true);
+            const errorMessage = err.message || 'Failed to setup payment. Please try again.';
+            handleApiError({ message: errorMessage }, 'payment_setup');
         } finally {
             setLoading(false);
             onUpdatingChange(false);
@@ -262,8 +321,11 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     };
 
     const handleContinueWithFallback = () => {
-        setShowErrorDialog(false);
-        setError('');
+        if (!customerData) {
+            setError('Cannot continue without customer data.');
+            setShowErrorDialog(true);
+            return;
+        }
 
         const fallbackSubscriber = {
             subscriber_id: `dev_${Date.now()}`,
@@ -290,11 +352,11 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         router.visit(
             route('payment.summary', {
                 survey_id: survey.customer_survey_order_id,
-                subscriber_data: fallbackSubscriber,
+                subscriber_data: JSON.stringify(fallbackSubscriber),
                 service_number: fallbackFeeData.service_number,
-                fee_data: fallbackFeeData,
-                customer_data: customerData,
-                survey_data: survey,
+                fee_data: JSON.stringify(fallbackFeeData),
+                customer_data: JSON.stringify(customerData),
+                survey_data: JSON.stringify(survey),
                 is_fallback: true,
             }),
         );
@@ -386,25 +448,31 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 )}
             </div>
 
-            {showErrorDialog && (
-                <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                                    <X className="h-5 w-5 text-red-600" />
-                                </div>
-                                <AlertDialogTitle>Payment Setup Error</AlertDialogTitle>
+            {/* Error Dialog */}
+            <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                                <X className="h-5 w-5 text-red-600" />
                             </div>
-                            <AlertDialogDescription>{error || 'Failed to setup payment.'}</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setShowErrorDialog(false)}>Close</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleContinueWithFallback}>Continue Anyway</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            )}
+                            <AlertDialogTitle>Payment Setup Error</AlertDialogTitle>
+                        </div>
+                        <AlertDialogDescription>
+                            {error || 'Failed to setup payment. Please try again.'}
+                            {apiErrors.payment_setup && (
+                                <div className="mt-2 text-sm">
+                                    <strong>Details:</strong> {apiErrors.payment_setup}
+                                </div>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={clearErrors}>Close</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleContinueWithFallback}>Continue Anyway</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <CancelConfirmationDialog
                 open={openCancelDialog}

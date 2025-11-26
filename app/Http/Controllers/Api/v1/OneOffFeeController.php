@@ -41,7 +41,8 @@ class OneOffFeeController extends Controller
         $feeResultData = $feeResult->getData(true);
         if (!($feeResultData['success'] ?? false)) {
             //TODO: check run time exection is approparate
-            throw new RuntimeException('Failed to calculate fees.');
+            // throw new RuntimeException('Failed to calculate fees.');
+            return $feeResult;
         }
 
         $amount = (int) $this->computeTotalFeeAmount($feeResultData['data']['fees']);

@@ -20,16 +20,15 @@ export default function ServicesLayout({ children, isCreatingService = false, cu
                 <div className="flex items-center justify-between bg-white pb-4">
                     <div className="flex items-center">
                         <SidebarTrigger />
-                        <div className="ml-4">
+                        <Link href="/services">
+                            <Button variant="ghost" className="flex items-center">
+                                <ArrowLeft className="h-4 w-4" />
+                            </Button>
+                        </Link>
+                        <div className="">
                             <h1 className="text-xl font-semibold text-gray-900">Create new service</h1>
                         </div>
                     </div>
-                    <Link href="/services">
-                        <Button variant="ghost" className="flex items-center gap-2">
-                            <ArrowLeft className="h-4 w-4" />
-                            Services
-                        </Button>
-                    </Link>
                 </div>
                 <div>{children}</div>
             </main>

@@ -19,7 +19,7 @@ export const Header = () => {
                 <div className="flex h-16 items-center justify-between">
                     <div className="flex items-center space-x-3">
                         <div className="flex items-center space-x-3">
-                            <img src={logo} alt="EthioTelecom Logo" className="h-12 w-full transition-all duration-200" />
+                            <img src={logo} alt="EthioTelecom Logo" className="h-12 w-full" />
                         </div>
                     </div>
 

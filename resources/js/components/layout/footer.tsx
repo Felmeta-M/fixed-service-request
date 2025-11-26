@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
-import { Facebook, Instagram, Mail, MapPin, Network, Phone, Twitter, Youtube } from 'lucide-react';
+import { Facebook, Instagram, Mail, MapPin, Phone, Twitter, Youtube } from 'lucide-react';
+import logo from '../../images/ethio_logo_full.png';
 
 export const Footer = () => {
     const currentYear = new Date().getFullYear();
@@ -66,12 +67,8 @@ export const Footer = () => {
                 <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
                     <div className="xl:col-span-2">
                         <div className="mb-6 flex items-center space-x-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-cyan-800">
-                                <Network className="h-6 w-6 text-white" />
-                            </div>
-                            <div>
-                                <h3 className="text-2xl font-bold">EthioTelecom</h3>
-                                <p className="text-gray-400">Fixed Line Services</p>
+                            <div className="flex items-center space-x-3 rounded-lg bg-white">
+                                <img src={logo} alt="EthioTelecom Logo" className="h-12 w-full transition-all duration-200" />
                             </div>
                         </div>
                         <p className="mb-6 max-w-md text-lg text-gray-400">

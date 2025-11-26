@@ -48,6 +48,7 @@ export function GoogleLocationMap({
     const markerRef = useRef<google.maps.Marker | null>(null);
     const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
     const animationRef = useRef<number | null>(null);
+    const hasInitialized = useRef(false);
 
     // Sync animation state with parent
     useEffect(() => {
@@ -57,13 +58,24 @@ export function GoogleLocationMap({
     }, [internalAnimating, onAnimationStateChange]);
 
     // Initialize map
-    const onLoad = useCallback((map: google.maps.Map) => {
-        setMap(map);
-        setIsLoading(false);
+    const onLoad = useCallback(
+        (map: google.maps.Map) => {
+            setMap(map);
+            setIsLoading(false);
 
-        // Create info window once
-        infoWindowRef.current = new google.maps.InfoWindow();
-    }, []);
+            // Create info window once
+            infoWindowRef.current = new google.maps.InfoWindow();
+
+            // If we have a selected location, center the map on it
+            if (selectedLocation && !hasInitialized.current) {
+                hasInitialized.current = true;
+                map.setCenter({ lat: selectedLocation.lat, lng: selectedLocation.lng });
+                map.setZoom(16);
+                updateMarkerPosition(selectedLocation.lat, selectedLocation.lng);
+            }
+        },
+        [selectedLocation],
+    );
 
     const onUnmount = useCallback(() => {
         // Clean up animations
@@ -79,6 +91,7 @@ export function GoogleLocationMap({
             infoWindowRef.current.close();
         }
         setMap(null);
+        hasInitialized.current = false;
     }, []);
 
     // Smooth pan to location with animation
@@ -210,16 +223,19 @@ export function GoogleLocationMap({
 
         // Add click listener for info window
         markerRef.current.addListener('click', () => {
-            if (infoWindowRef.current && selectedLocation) {
-                infoWindowRef.current.setContent(`
-                    <div class="p-2 max-w-xs">
-                        <strong class="text-sm font-semibold">Selected Location</strong><br>
-                        <span class="text-xs">Lat: ${formatCoordinate(selectedLocation.lat)}</span><br>
-                        <span class="text-xs">Lng: ${formatCoordinate(selectedLocation.lng)}</span><br>
-                        <span class="text-xs text-gray-600">${selectedLocation.address}</span>
-                    </div>
-                `);
-                infoWindowRef.current.open(map, markerRef.current);
+            if (infoWindowRef.current && markerRef.current) {
+                const position = markerRef.current.getPosition();
+                if (position) {
+                    infoWindowRef.current.setContent(`
+                        <div class="p-2 max-w-xs">
+                            <strong class="text-sm font-semibold">Selected Location</strong><br>
+                            <span class="text-xs">Lat: ${formatCoordinate(position.lat())}</span><br>
+                            <span class="text-xs">Lng: ${formatCoordinate(position.lng())}</span><br>
+                            <span class="text-xs text-gray-600">${selectedLocation?.address || 'Click to select location'}</span>
+                        </div>
+                    `);
+                    infoWindowRef.current.open(map, markerRef.current);
+                }
             }
         });
     };
@@ -252,18 +268,6 @@ export function GoogleLocationMap({
         }
     }, [map, selectedLocation, smoothPanTo, internalAnimating]);
 
-    // Initial center setup - smooth on first load
-    useEffect(() => {
-        if (map && selectedLocation && !internalAnimating) {
-            // Use setTimeout to ensure map is fully loaded before animation
-            const timer = setTimeout(() => {
-                smoothPanTo(selectedLocation.lat, selectedLocation.lng, 16);
-            }, 300);
-
-            return () => clearTimeout(timer);
-        }
-    }, [map]); // Only run when map loads
-
     const handleSearch = async () => {
         if (searchQuery.trim() && !internalAnimating) {
             onAddressSearch(searchQuery);
@@ -279,6 +283,17 @@ export function GoogleLocationMap({
 
     // Use external animation state if provided, otherwise use internal
     const isCurrentlyAnimating = isAnimating !== undefined ? isAnimating : internalAnimating;
+
+    // Calculate initial center - prioritize selectedLocation over initialLat/initialLng
+    const getInitialCenter = () => {
+        if (selectedLocation) {
+            return { lat: selectedLocation.lat, lng: selectedLocation.lng };
+        }
+        if (initialLat !== 9.0192 || initialLng !== 38.7525) {
+            return { lat: initialLat, lng: initialLng };
+        }
+        return defaultCenter;
+    };
 
     return (
         <div className="space-y-4">
@@ -341,7 +356,7 @@ export function GoogleLocationMap({
                 >
                     <GoogleMap
                         mapContainerStyle={mapContainerStyle}
-                        center={selectedLocation ? { lat: selectedLocation.lat, lng: selectedLocation.lng } : defaultCenter}
+                        center={getInitialCenter()}
                         zoom={15}
                         onLoad={onLoad}
                         onUnmount={onUnmount}

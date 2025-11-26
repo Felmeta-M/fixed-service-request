@@ -221,6 +221,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                customer_survey_order_id: String(survey.customer_survey_order_id),
                 business_code: 'CO064',
                 customer: {
                     type: 1,

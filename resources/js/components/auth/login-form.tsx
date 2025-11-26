@@ -1,8 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from '@/components/ui/field';
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import logo from '@/images/national_id_logo.png';
 import { cn } from '@/lib/utils';
 import { router } from '@inertiajs/react';
 import { Loader2, Phone } from 'lucide-react';
@@ -20,14 +19,15 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
 
         const validationErrors: string[] = [];
 
-        if (!phoneNumber) {
+        if (!phoneNumber.trim()) {
             validationErrors.push('Please enter your mobile number');
         }
 
-        const ethioRegex = /^(9\d{8})$/;
-        const cleanPhone = phoneNumber.replace(/^0/, '');
-        if (!ethioRegex.test(cleanPhone)) {
-            validationErrors.push('Please enter a valid Ethio Telecom number');
+        // Accepts: +2519XXXXXXXX, 2519XXXXXXXX, 09XXXXXXXX, 9XXXXXXXX
+        const ethioRegex = /^(?:\+251|251|0)?9\d{8}$/;
+
+        if (!ethioRegex.test(phoneNumber.trim())) {
+            validationErrors.push('Please enter a valid Ethiopian mobile number');
         }
 
         if (validationErrors.length > 0) {
@@ -36,9 +36,18 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
             return;
         }
 
+        // ---- Normalize to 2519XXXXXXXX ----
+        let normalized = phoneNumber.trim().replace(/^\+/, '');
+
+        if (normalized.startsWith('0')) {
+            normalized = '251' + normalized.slice(1); // 09... → 2519...
+        } else if (/^9/.test(normalized)) {
+            normalized = '251' + normalized; // 9... → 2519...
+        }
+
         router.post(
             '/otp/send',
-            { phone: cleanPhone },
+            { phone: normalized },
             {
                 onError: (backendErrors: any) => {
                     const backendErrorMessages: string[] = [];
@@ -62,7 +71,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
             <Card>
                 <CardHeader className="text-center">
                     <CardTitle className="text-xl">Welcome</CardTitle>
-                    <CardDescription>Sign in with your phone number or National ID</CardDescription>
+                    <CardDescription>Sign in with your phone number </CardDescription>
+                    {/* <CardDescription>or National ID</CardDescription> */}
                 </CardHeader>
                 <CardContent>
                     <FieldGroup>
@@ -107,7 +117,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                             <FieldDescription className="w-[80%]">Enter your Ethio Telecom number to receive an OTP</FieldDescription>
                         </Field>
 
-                        <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">Or continue with</FieldSeparator>
+                        {/* <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">Or continue with</FieldSeparator>
 
                         <Field>
                             <Button
@@ -119,7 +129,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                                 <img src={logo} alt="National ID Logo" className="h-5 w-5" />
                                 Login with National ID
                             </Button>
-                        </Field>
+                        </Field> */}
                     </FieldGroup>
                 </CardContent>
             </Card>

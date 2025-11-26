@@ -8,9 +8,9 @@ import telebirrLogo from '../images/telebirr-logo.png';
 
 export default function HomePage() {
     const { auth } = usePage().props;
-    if (auth?.user) {
-        window.location.href = route('services');
-    }
+    // if (auth?.user) {
+    //     window.location.href = route('services');
+    // }
     const features = [
         {
             icon: MapPin,
@@ -89,7 +89,7 @@ export default function HomePage() {
             <div className="min-h-screen">
                 {/* Hero Section */}
                 <section className="relative overflow-hidden px-4 py-20 sm:px-6 lg:px-8">
-                    <div className="absolute inset-0 mx-auto max-w-screen-2xl rounded-3xl bg-white" />
+                    <div className="absolute inset-0 mx-auto max-w-screen-2xl rounded-3xl" />
                     <div className="relative mx-auto max-w-4xl text-center">
                         <Badge variant="outline" className="mb-4 border px-4 text-sm font-semibold text-primary">
                             Online Service Provisioning Platform
@@ -105,7 +105,7 @@ export default function HomePage() {
                             <Link href={route('otp.phone')}>
                                 <Button
                                     size="lg"
-                                    className="bg-primary px-8 py-3 text-lg text-white shadow-lg transition-all duration-200 hover:from-cyan-600 hover:to-cyan-800 hover:shadow-xl"
+                                    className="bg-primary px-8 py-3 text-lg text-white shadow-lg transition-all duration-200 hover:shadow-xl"
                                 >
                                     <MapPin className="mr-3 h-5 w-5" />
                                     Get Started Now
@@ -113,11 +113,7 @@ export default function HomePage() {
                                 </Button>
                             </Link>
                             <Link href="#services">
-                                <Button
-                                    size="lg"
-                                    variant="outline"
-                                    className="border-2 border-gray-300 px-8 py-3 text-lg transition-all duration-200"
-                                >
+                                <Button size="lg" variant="outline" className="px-8 py-3 text-lg transition-all duration-200">
                                     Explore Services
                                 </Button>
                             </Link>
@@ -146,7 +142,7 @@ export default function HomePage() {
                 <section id="services" className="bg-white px-4 py-20 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-screen-2xl">
                         <div className="mb-16 text-center">
-                            <Badge variant="outline" className="mb-4 border-emerald-200 bg-emerald-50 px-4 py-1 text-emerald-600">
+                            <Badge variant="outline" className="mb-4 px-4 py-1 text-primary">
                                 Our Services
                             </Badge>
                             <h2 className="mb-4 text-4xl font-bold text-gray-900">Comprehensive Fixed Line Solutions</h2>
@@ -194,7 +190,7 @@ export default function HomePage() {
                 <section className="bg-gradient-to-br from-slate-50 to-blue-50 px-4 py-20 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-screen-2xl">
                         <div className="mb-16 text-center">
-                            <Badge variant="outline" className="mb-4 border-emerald-200 bg-emerald-50 px-4 py-1 text-emerald-600">
+                            <Badge variant="outline" className="mb-4py-1 text-primary">
                                 Why Choose Us
                             </Badge>
                             <h2 className="mb-4 text-4xl font-bold text-gray-900">Experience the Difference</h2>
@@ -230,7 +226,7 @@ export default function HomePage() {
                 <section className="bg-white px-4 py-20 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-screen-2xl">
                         <div className="mb-16 text-center">
-                            <Badge variant="outline" className="mb-4 border-amber-200 bg-amber-50 px-4 py-1 text-amber-600">
+                            <Badge variant="outline" className="mb-4 px-4 py-1 text-amber-600">
                                 Customer Stories
                             </Badge>
                             <h2 className="mb-4 text-4xl font-bold text-gray-900">What Our Customers Say</h2>
@@ -266,37 +262,24 @@ export default function HomePage() {
 
                 {/* CTA Section */}
                 <section className="px-4 py-20 sm:px-6 lg:px-8">
-                    <div className="mx-auto max-w-4xl text-center">
-                        <div className="rounded-3xl bg-gradient-to-r from-emerald-600 to-cyan-600 p-12 text-white shadow-2xl">
+                    <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
+                        <div className="rounded-3xl bg-white px-8 py-12 shadow-lg">
                             <h2 className="mb-4 text-4xl font-bold">Ready to Get Started?</h2>
-                            <p className="mx-auto mb-8 max-w-2xl text-xl text-emerald-100">
+                            <p className="mx-auto mb-8 max-w-2xl text-xl text-gray-400">
                                 Join thousands of satisfied customers who manage their fixed line services online
                             </p>
-                            <div className="flex flex-col justify-center gap-4 sm:flex-row">
-                                <Link href={route('otp.phone')}>
-                                    <Button
-                                        size="lg"
-                                        className="bg-white px-8 py-3 text-lg font-semibold text-cyan-600 shadow-lg transition-all duration-200 hover:bg-gray-100 hover:shadow-xl"
-                                    >
-                                        <MapPin className="mr-3 h-5 w-5" />
-                                        Check Coverage & Start
-                                    </Button>
-                                </Link>
-                                <Link href="#services">
-                                    <Button
-                                        size="lg"
-                                        variant="outline"
-                                        className="border-2 border-white px-8 py-3 text-lg text-cyan-600 transition-all duration-200 hover:bg-white hover:text-cyan-700"
-                                    >
-                                        Learn More First
-                                    </Button>
-                                </Link>
-                            </div>
+                            <Link href={route('otp.phone')}>
+                                <Button
+                                    size="lg"
+                                    className="bg-primary px-8 py-3 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:opacity-90 hover:shadow-xl"
+                                >
+                                    <MapPin className="mr-3 h-5 w-5" />
+                                    Check Coverage & Start
+                                </Button>
+                            </Link>
                         </div>
                     </div>
                 </section>
-
-                {/* <Footer /> */}
             </div>
         </GuestLayout>
     );

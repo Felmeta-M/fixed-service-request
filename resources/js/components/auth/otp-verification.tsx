@@ -168,17 +168,16 @@ export function OTPVerificationForm({ className, ...props }: React.ComponentProp
                                     </Button>
                                 ) : (
                                     <span className="text-muted-foreground">
-                                        Resend OTP in <span className="font-semibold text-primary">{countdown}</span>s
+                                        Resend OTP in <span className="font-semibold text-destructive">{countdown}</span> s
                                     </span>
                                 )}
-
-                                <Button
-                                    variant="outline"
-                                    onClick={() => router.visit('/otp/phone')}
-                                    className="px-2 py-1 text-sm hover:bg-transparent"
+                                <button
+                                    type="button"
+                                    onClick={() => router.visit(route('otp.phone'))}
+                                    className="cursor-pointer text-sm font-medium text-primary hover:underline"
                                 >
                                     Change number
-                                </Button>
+                                </button>
                             </div>
 
                             <Field>

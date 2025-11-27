@@ -14,6 +14,19 @@ services:
     networks:
       - app_net
 
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: ffd_scheduler
+    command: php artisan schedule:work
+    volumes:
+      - ./:/var/www
+    depends_on:
+      - app
+    networks:
+      - app_net
+
   nginx:
     image: nginx:alpine
     container_name: ffd_nginx

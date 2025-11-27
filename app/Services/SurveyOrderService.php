@@ -128,4 +128,9 @@ XML;
 
         return 0;
     }
+
+    public function find($customerSurveyOrderId)
+    {
+        return SurveyRequest::query()->where('customer_survey_order_id', $customerSurveyOrderId)->first();
+    }
 }

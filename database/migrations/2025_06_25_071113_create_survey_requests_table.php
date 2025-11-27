@@ -16,7 +16,7 @@ return new class extends Migration {
             $table->bigInteger('customer_code')->index();
             $table->bigInteger('customer_survey_order_id')->unique();
             $table->string('main_offer_id');
-            $table->string('service_number')->unique();
+            $table->string('service_number')->nullable()->unique();
             $table->string('survey_type'); //new or change
             $table->string('telecom_region');
             $table->string('oper_type');
@@ -25,13 +25,13 @@ return new class extends Migration {
             $table->string('contact_person');
             $table->string('contact_no');
             $table->string('contact_email');
-            $table->string('sec_contact_person');
-            $table->string('sec_contact_no');
-            $table->string('sec_contact_email');
-            $table->string('status');
-            $table->text('cancel_reason');
-            $table->bigInteger('completed_date');
-            $table->dateTime('subscribed_at');
+            $table->string('sec_contact_person')->nullable();
+            $table->string('sec_contact_no')->nullable();
+            $table->string('sec_contact_email')->nullable();
+            $table->string('status')->nullable();
+            $table->text('cancel_reason')->nullable();
+            $table->bigInteger('completed_date')->nullable();
+            $table->dateTime('subscribed_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

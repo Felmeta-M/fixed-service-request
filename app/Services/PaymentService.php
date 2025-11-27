@@ -30,16 +30,18 @@ class PaymentService
 
     public function createOrUpdatePayment(string $orderId, float $amount)
     {
-        $customer = Auth::guard('customer')->user();
+        $customer = Auth::guard('otp')->user();
 
-        return Payment::firstOrCreate(
-            ['customer_survey_order_id' => $orderId],
-            [
-                'customer_code' => $customer->customer_code,
-                'amount' => $amount,
-                'status' => FFDServiceProvisionStatus::Pending->value,
-            ]
-        );
+        if ($customer) {
+            return Payment::firstOrCreate(
+                ['customer_survey_order_id' => $orderId],
+                [
+                    'customer_code' => $customer->customer_code,
+                    'amount' => $amount,
+                    'status' => FFDServiceProvisionStatus::Pending->value,
+                ]
+            );
+        }
     }
 
     /**

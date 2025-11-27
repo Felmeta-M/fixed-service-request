@@ -26,7 +26,7 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
 # 3️⃣ Install NPM dependencies and build Vite assets
-RUN npm install && npm run build
+RUN npm install --force && npm run build --force
 
 # Supervisor config & entrypoint
 COPY docker/php/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -34,4 +34,4 @@ COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

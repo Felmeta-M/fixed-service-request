@@ -5,25 +5,13 @@ services:
       dockerfile: docker/php/Dockerfile
     container_name: ffd_app
     restart: always
-    volumes:
-      - ./:/var/www
-      - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini
+    env_file:
+      - .env
     depends_on:
-      - postgres
-      - redis
-    networks:
-      - app_net
-
-  scheduler:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: ffd_scheduler
-    command: php artisan schedule:work
-    volumes:
-      - ./:/var/www
-    depends_on:
-      - app
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - app_net
 
@@ -53,14 +41,25 @@ services:
       POSTGRES_PASSWORD: secret
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sa -d ffd"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks:
       - app_net
 
   redis:
     image: redis:alpine
     container_name: ffd_redis
+    restart: always
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks:
       - app_net
 

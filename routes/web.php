@@ -109,3 +109,15 @@ Route::middleware(['otp.auth'])->group(function () {
 });
 
 Route::post('/telebirr/notify', [TelebirrController::class, 'notify'])->name('telebirr.notify');
+
+// Route::get('/health', function () {
+//     return response()->json([
+//         'status' => 'healthy',
+//         'timestamp' => now(),
+//         'services' => [
+//             'database' => DB::connection()->getPdo() ? 'connected' : 'disconnected',
+//             'redis' => app('redis')->connection()->ping() ? 'connected' : 'disconnected',
+//             'queue' => 'unknown' // You can add queue health checks
+//         ]
+//     ]);
+// });

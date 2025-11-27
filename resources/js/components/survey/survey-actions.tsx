@@ -32,7 +32,6 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const [openDetailModal, setOpenDetailModal] = useState(false);
     const [apiErrors, setApiErrors] = useState<{ [key: string]: string }>({});
 
-    // ⬇️ Get authenticated user from Inertia props
     const { auth }: any = usePage().props;
 
     useEffect(() => {
@@ -43,13 +42,11 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         }
     }, [auth]);
 
-    // Enhanced error handling function
     const handleApiError = (result: any, context: string = '') => {
         console.error(`API Error in ${context}:`, result);
 
         let errorMessage = 'An unexpected error occurred. Please try again.';
 
-        // Handle different error response structures
         if (result?.original?.success === false) {
             errorMessage = result.original.message || 'Service subscription failed!';
         } else if (result?.success === false) {
@@ -184,11 +181,10 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
         const result = await response.json();
 
-        // Check for subscription creation errors
-        if (result?.data?.original?.success === false) {
-            const errorMsg = result.data.original.message || 'Subscriber creation failed';
-            throw new Error(errorMsg);
-        }
+        // if (result?.data?.original?.success === false) {
+        //     const errorMsg = result.data.original.message || 'Subscriber creation failed';
+        //     throw new Error(errorMsg);
+        // }
 
         if (!result.success) {
             throw new Error(result.message || 'Subscriber creation failed');
@@ -216,7 +212,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         throw new Error('No available numbers found');
     };
 
-    const calculateServiceFees = async (subscriberId: string, serviceNumber: string) => {
+    const calculateServiceFees = async (serviceNumber: string) => {
         const response = await fetch('/api/v1/calc-one-off-fee', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -244,15 +240,12 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
         const result = await response.json();
 
-        // Check for fee calculation errors
-        if (result?.original?.success === false || result?.success === false) {
-            const errorMsg = result.original?.message || result.message || 'Failed to calculate fees';
+        if (!result.success) {
+            const errorMsg = result.message || 'Failed to calculate fees';
             throw new Error(errorMsg);
         }
 
-        if (result.success && result.data?.fees) return result.data;
-
-        throw new Error('Failed to calculate fees');
+        return result.data;
     };
 
     const generateExternalSequence = () => {
@@ -294,11 +287,9 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 throw new Error('No service numbers available at the moment. Please try again later.');
             }
 
-            // Step 3: Calculate fees
-            const feeData = await calculateServiceFees(subscriberResult.data.subscriber_id, serviceNumber);
-            console.log('Fee data calculated:', feeData);
-
-            feeData.service_number = serviceNumber;
+            // Step 3: Calculate fees via backend (this now includes payment creation)
+            const feeData = await calculateServiceFees(serviceNumber);
+            console.log('Fee data calculated with payment record:', feeData);
 
             // All steps completed successfully - proceed to payment summary
             router.visit(route('payment.summary'), {
@@ -310,6 +301,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                     fee_data: JSON.stringify(feeData),
                     customer_data: JSON.stringify(customerData),
                     survey_data: JSON.stringify(survey),
+                    payment_record: JSON.stringify(feeData.payment_record),
                 },
             });
         } catch (err: any) {
@@ -319,48 +311,6 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             setLoading(false);
             onUpdatingChange(false);
         }
-    };
-
-    const handleContinueWithFallback = () => {
-        if (!customerData) {
-            setError('Cannot continue without customer data.');
-            setShowErrorDialog(true);
-            return;
-        }
-
-        const fallbackSubscriber = {
-            subscriber_id: `dev_${Date.now()}`,
-            customer_code: survey.customer_code,
-            first_name: 'Test',
-            last_name: 'User',
-            service_type: survey.service_type || 'Internet',
-            status: 'active',
-            created_at: new Date().toISOString(),
-        };
-
-        const fallbackFeeData = {
-            fees: [
-                {
-                    item_name: 'Service Activation Fee',
-                    original_fee: '1000000',
-                    discount_fee: '0',
-                    taxes: [{ name: 'VAT (15%)', fee: '150000' }],
-                },
-            ],
-            service_number: '251123456789',
-        };
-
-        router.visit(
-            route('payment.summary', {
-                survey_id: survey.customer_survey_order_id,
-                subscriber_data: JSON.stringify(fallbackSubscriber),
-                service_number: fallbackFeeData.service_number,
-                fee_data: JSON.stringify(fallbackFeeData),
-                customer_data: JSON.stringify(customerData),
-                survey_data: JSON.stringify(survey),
-                is_fallback: true,
-            }),
-        );
     };
 
     const getAddressInfo = () => {
@@ -470,7 +420,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={clearErrors}>Close</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleContinueWithFallback}>Continue Anyway</AlertDialogAction>
+                        <AlertDialogAction onClick={() => window.location.reload()}>Try Again</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

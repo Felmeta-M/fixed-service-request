@@ -1,24 +1,25 @@
 import SurveyTable from '@/components/survey-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useSurveyList } from '@/hooks/use-survey-list';
 import { Link } from '@inertiajs/react';
 import { AlertCircle, FileText } from 'lucide-react';
 import { useEffect } from 'react';
-
 interface ServiceListProps {
+    surveys: any[];
+    loading: boolean;
+    error: string | null;
+    onSurveyUpdate: () => void;
     globalFilter: string;
     typeFilter: string;
     statusFilter: string;
 }
 
-export function ServiceList({ globalFilter, typeFilter, statusFilter }: ServiceListProps) {
-    const { surveys, loading, error, fetchSurveys, refetch, hasMore, loadMore, total } = useSurveyList();
+export function ServiceList({ surveys, loading, error, onSurveyUpdate, globalFilter, typeFilter, statusFilter }: ServiceListProps) {
     console.log('🚀 ~ ServiceList ~ error:', error);
     console.log('🚀 ~ ServiceList ~ surveys:', surveys);
 
     useEffect(() => {
-        fetchSurveys();
+        onSurveyUpdate();
     }, []);
 
     if (loading) {
@@ -69,7 +70,7 @@ export function ServiceList({ globalFilter, typeFilter, statusFilter }: ServiceL
             <SurveyTable
                 surveys={surveys}
                 loading={loading}
-                onSurveyUpdate={refetch}
+                onSurveyUpdate={onSurveyUpdate}
                 globalFilter={globalFilter}
                 typeFilter={typeFilter}
                 statusFilter={statusFilter}

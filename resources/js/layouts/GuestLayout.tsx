@@ -1,8 +1,8 @@
 import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
-import { Link } from '@inertiajs/react';
-import { LogIn, Menu, X } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { LayoutDashboard, LogIn, LogOut, Menu, X } from 'lucide-react';
 import React, { useState } from 'react';
 import logo from '../images/ethio_logo_full.png';
 
@@ -11,6 +11,7 @@ type Props = {
 };
 
 export default function GuestLayout({ children }: Props) {
+    const { auth } = usePage().props;
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     return (
         <div className="mx-auto bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -39,19 +40,35 @@ export default function GuestLayout({ children }: Props) {
                                         <option value="so">Af Somali</option>
                                     </select> */}
                                 </nav>
-
-                                {/* Login Button */}
-                                <Link href="/otp/phone">
-                                    <Button className="flex items-center space-x-2 bg-primary text-white hover:opacity-90">
-                                        <LogIn className="h-4 w-4" />
-                                        <span>Login</span>
-                                    </Button>
-                                </Link>
+                                {auth?.user ? (
+                                    <div className="flex items-center space-x-4">
+                                        <Link
+                                            href={route('services')}
+                                            className="flex items-center gap-2 font-medium text-muted-foreground transition-colors duration-200 hover:text-accent-foreground"
+                                        >
+                                            <LayoutDashboard className="h-4 w-4" />
+                                            <span>Dashboard</span>
+                                        </Link>
+                                        <Link href={route('logout')} method="post" as="button">
+                                            <Button variant="outline" type="submit">
+                                                <LogOut className="h-4 w-4" />
+                                                <span>Log out </span>
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    // If NOT logged in
+                                    <Link href="/otp/phone">
+                                        <Button className="flex items-center space-x-2 bg-primary text-white hover:opacity-90">
+                                            <LogIn className="h-4 w-4" />
+                                            <span>Login</span>
+                                        </Button>
+                                    </Link>
+                                )}
                             </div>
                             {/* )} */}
                         </div>
 
-                        {/* Mobile Menu Button */}
                         <div className="flex md:hidden">
                             <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
                                 {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -59,30 +76,56 @@ export default function GuestLayout({ children }: Props) {
                         </div>
                     </div>
                 </div>
-
-                {/* Mobile Menu */}
                 {isMobileMenuOpen && (
                     <div className="border-t bg-white/95 backdrop-blur md:hidden">
                         <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
-                            {/* {activeCustomer ? ( */}
-                            <></>
-                            <>
-                                <Link
-                                    href="#services"
-                                    className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    Services
-                                </Link>
+                            <Link
+                                href="#services"
+                                className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                Services
+                            </Link>
 
-                                <Link href="/otp/phone" className="block pt-3" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <Button className="flex w-full items-center justify-center space-x-2 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white hover:opacity-90">
-                                        <LogIn className="h-4 w-4" />
-                                        <span>Login to Account</span>
-                                    </Button>
-                                </Link>
-                            </>
-                            {/* )} */}
+                            {auth?.user ? (
+                                <>
+                                    {/* Dashboard */}
+                                    <Link
+                                        href={route('services')}
+                                        className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <LayoutDashboard className="h-4 w-4" />
+                                            <span>Dashboard</span>
+                                        </div>
+                                    </Link>
+
+                                    {/* Logout */}
+                                    <Link
+                                        href={route('logout')}
+                                        method="post"
+                                        as="button"
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="w-full"
+                                    >
+                                        <Button variant="outline" className="flex w-full items-center justify-center gap-2">
+                                            <LogOut className="h-4 w-4" />
+                                            <span>Logout</span>
+                                        </Button>
+                                    </Link>
+                                </>
+                            ) : (
+                                <>
+                                    {/* Login */}
+                                    <Link href="/otp/phone" className="block pt-3" onClick={() => setIsMobileMenuOpen(false)}>
+                                        <Button className="br-primary flex w-full items-center justify-center space-x-2 text-white hover:opacity-90">
+                                            <LogIn className="h-4 w-4" />
+                                            <span>Login</span>
+                                        </Button>
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}

@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { CreditCard, Package, Phone, User, Wifi } from 'lucide-react';
+import { Clock, CreditCard, MapPin, Package, Phone, Shield, User, Wifi } from 'lucide-react';
 
 interface PaymentSummaryProps {
     surveyData: any;
@@ -29,20 +29,15 @@ export function PaymentSummary({
     onPaymentConfirm,
     loading = false,
 }: PaymentSummaryProps) {
-    console.log('🚀 ~ PaymentSummary ~ surveyData:', surveyData);
-    console.log('🚀 ~ PaymentSummary ~ subscriberData:', subscriberData);
-    // const serviceType = serviceTypeMap[surveyData.main_offer_id] || serviceTypeMap['1943913918'];
-    const serviceType = serviceTypeMap['1943913918'] || serviceTypeMap['1943913918'];
+    console.log('🚀 ~ PaymentSummary ~ feeData:', feeData);
 
+    const serviceType = serviceTypeMap[surveyData.main_offer_id] || serviceTypeMap['1943913918'];
     const ServiceIcon = serviceType.icon;
 
-    const totalAmount =
-        feeData?.fees?.reduce((total, fee) => {
-            const feeAmount = parseInt(fee.original_fee) / 10000;
-            const discount = parseInt(fee.discount_fee) / 10000;
-            const taxAmount = fee.taxes?.reduce((taxTotal, tax) => taxTotal + parseInt(tax.fee) / 10000, 0) || 0;
-            return total + feeAmount - discount + taxAmount;
-        }, 0) || 0;
+    // Use backend-calculated total amount (includes cable costs and proper calculations)
+    const totalAmount = feeData?.total_amount || 0;
+    const baseAmount = feeData?.base_amount || 0;
+    const cableCost = feeData?.cable_cost || 0;
 
     const getCustomerInfo = () => {
         if (!customerData) return { name: 'N/A', phone: 'N/A' };
@@ -67,7 +62,6 @@ export function PaymentSummary({
     };
 
     const customerInfo = getCustomerInfo();
-    console.log('🚀 ~ PaymentSummary ~ customerInfo:', customerInfo);
     const addressInfo = getAddressInfo();
 
     return (
@@ -80,10 +74,11 @@ export function PaymentSummary({
                 </div>
 
                 <div className="space-y-6">
+                    {/* Customer Information Card */}
                     <Card className="border-none shadow-none">
                         <CardHeader className="pb-2">
                             <div className="flex items-center gap-3">
-                                <div className="rounded-lg p-2">
+                                <div className="rounded-lg bg-primary/10 p-2">
                                     <User className="h-6 w-6 text-primary" />
                                 </div>
                                 <div>
@@ -98,19 +93,19 @@ export function PaymentSummary({
                                 <DetailItem label="Phone Number" value={customerInfo.phone} />
                                 <DetailItem label="Email" value={customerInfo.email} />
                                 <DetailItem label="Customer Code" value={customerInfo?.customer_code || 'N/A'} />
-                                {/* <DetailItem label="Customer Code" value={subscriberData?.customer_code || 'N/A'} /> */}
                             </div>
-                            {/* <div className="pt-2">
+                            <div className="pt-2">
                                 <DetailItem label="Installation Address" value={addressInfo} icon={<MapPin className="h-4 w-4" />} fullWidth />
-                            </div> */}
+                            </div>
                         </CardContent>
                     </Card>
 
+                    {/* Service Details Card */}
                     <Card className="border-none shadow-none">
                         <CardHeader className="pb-2">
                             <div className="flex items-center gap-3">
-                                <div className="rounded-lg p-2">
-                                    <ServiceIcon className={`h-6 w-6 ${serviceType.color}`} />
+                                <div className={`rounded-lg bg-primary/10 p-2 ${serviceType.color}`}>
+                                    <ServiceIcon className="h-6 w-6" />
                                 </div>
                                 <div>
                                     <CardTitle className="text-xl">Service Details</CardTitle>
@@ -123,26 +118,21 @@ export function PaymentSummary({
                                 <div className="space-y-3">
                                     <DetailItem label="Service Type" value={serviceType.label} icon={<ServiceIcon className="h-4 w-4" />} />
                                     <DetailItem label="Service Number" value={serviceNumber} />
-                                    {/* <DetailItem label="Order ID" value={surveyData.customer_survey_order_id} /> */}
                                 </div>
                                 <div className="space-y-3">
-                                    <DetailItem
-                                        label="Subscription Type"
-                                        value="New Connection"
-                                        // badge={{ variant: 'default', text: 'New' }}
-                                    />
+                                    <DetailItem label="Subscription Type" value="New Connection" badge={{ variant: 'default', text: 'New' }} />
                                     <DetailItem label="Order ID" value={surveyData.customer_survey_order_id} />
-                                    {/* <DetailItem label="Status" value="Ready for Activation" badge={{ variant: 'success', text: 'Active' }} /> */}
-                                    {/* <DetailItem label="Activation" value="Immediate after payment" icon={<Clock className="h-4 w-4" />} /> */}
+                                    <DetailItem label="Activation" value="Immediate after payment" icon={<Clock className="h-4 w-4" />} />
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
+                    {/* Payment Summary Card */}
                     <Card className="border-none shadow-none">
                         <CardHeader className="pb-4">
                             <div className="flex items-center gap-3">
-                                <div className="rounded-lg p-2">
+                                <div className="rounded-lg bg-primary/10 p-2">
                                     <CreditCard className="h-6 w-6 text-primary" />
                                 </div>
                                 <div>
@@ -153,58 +143,93 @@ export function PaymentSummary({
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
+                                {/* Service Fees */}
                                 {feeData?.fees?.map((fee, index) => (
                                     <div key={index} className="space-y-2">
                                         <div className="flex items-start justify-between">
                                             <div>
                                                 <span className="font-medium text-gray-900">{fee.item_name}</span>
-                                                <p className="text-sm text-gray-500">One-time activation fee</p>
+                                                <p className="text-sm text-gray-500">Service fee</p>
                                             </div>
-                                            <span className="font-semibold text-gray-900">{parseInt(fee.original_fee) / 10000} ETB</span>
+                                            <span className="font-semibold text-gray-900">{parseInt(fee.calculated_fee) / 10000} ETB</span>
                                         </div>
 
                                         {parseInt(fee.discount_fee) > 0 && (
                                             <div className="ml-4 flex justify-between text-sm">
-                                                <span className="text-primary">Discount</span>
-                                                <span className="text-primary">-{parseInt(fee.discount_fee) / 10000} ETB</span>
+                                                <span className="text-green-600">Discount</span>
+                                                <span className="text-green-600">-{parseInt(fee.discount_fee) / 10000} ETB</span>
                                             </div>
                                         )}
 
                                         {fee.taxes?.map((tax, taxIndex) => (
                                             <div key={taxIndex} className="ml-4 flex justify-between text-sm">
                                                 <span className="text-gray-500">+ {tax.name}</span>
-                                                <span className="text-gray-500">{parseInt(tax.fee) / 10000} ETB</span>
+                                                <span className="text-gray-500">{parseInt(tax.amount) / 10000} ETB</span>
                                             </div>
                                         ))}
                                     </div>
                                 ))}
 
+                                {/* Cable Cost (if applicable) */}
+                                {cableCost > 0 && (
+                                    <div className="space-y-2 pt-2">
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <span className="font-medium text-gray-900">Cable Installation</span>
+                                                <p className="text-sm text-gray-500">Physical cable installation cost</p>
+                                            </div>
+                                            <span className="font-semibold text-gray-900">{cableCost} ETB</span>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <Separator />
 
-                                <div className="flex items-center justify-between pt-2">
-                                    <span className="text-lg font-bold text-gray-900">Total Amount</span>
-                                    <span className="text-2xl font-bold text-primary">{totalAmount} ETB</span>
+                                {/* Total Amount */}
+                                <div className="space-y-2 pt-2">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-lg font-bold text-gray-900">Total Amount</span>
+                                        <span className="text-2xl font-bold text-primary">{totalAmount} ETB</span>
+                                    </div>
+
+                                    {/* Breakdown summary */}
+                                    <div className="flex justify-between text-sm text-gray-500">
+                                        <span>Includes:</span>
+                                        <span>
+                                            Service fees: {baseAmount} ETB
+                                            {cableCost > 0 ? ` + Cable: ${cableCost} ETB` : ''}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
+                    {/* Payment Action */}
                     <div className="flex flex-col items-end gap-4 pt-4">
-                        <Button onClick={onPaymentConfirm} disabled={loading} className="w-fit bg-primary text-lg font-semibold hover:opacity-90">
+                        <Button
+                            onClick={onPaymentConfirm}
+                            disabled={loading}
+                            className="w-fit bg-primary px-8 text-lg font-semibold hover:opacity-90"
+                            size="lg"
+                        >
                             {loading ? (
                                 <div className="flex items-center gap-2">
                                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                     Processing...
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-2">Pay with telebirr</div>
+                                <div className="flex items-center gap-2">
+                                    <CreditCard className="h-5 w-5" />
+                                    Pay {totalAmount} ETB with Telebirr
+                                </div>
                             )}
                         </Button>
 
-                        {/* <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
                             <Shield className="h-3 w-3" />
                             <span>Secure payment processed by Telebirr</span>
-                        </div> */}
+                        </div>
                     </div>
                 </div>
             </div>

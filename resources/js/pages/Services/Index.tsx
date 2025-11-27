@@ -247,7 +247,7 @@ export default function CustomerDashboard() {
 
     return (
         <MainLayout>
-            <div className="w-full space-y-6">
+            <div className="w-full overflow-x-auto space-y-6">
                 {/* Header Section */}
                 <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                     <div className="">
@@ -403,10 +403,18 @@ export default function CustomerDashboard() {
                                 </div>
                             )}
                         </div>
-
-                        <ServiceList globalFilter={globalFilter} typeFilter={appliedFilters.type} statusFilter={appliedFilters.status} />
                     </CardContent>
                 </Card>
+                {/* <ServiceList globalFilter={globalFilter} typeFilter={appliedFilters.type} statusFilter={appliedFilters.status} /> */}
+                <ServiceList
+                    globalFilter={globalFilter}
+                    typeFilter={appliedFilters.type}
+                    statusFilter={appliedFilters.status}
+                    surveys={surveys}
+                    loading={loading}
+                    error={error}
+                    onSurveyUpdate={refetch}
+                />
             </div>
         </MainLayout>
     );

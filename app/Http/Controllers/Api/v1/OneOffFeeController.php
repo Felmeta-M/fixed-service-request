@@ -7,12 +7,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Services\OneOffFeeService;
 use App\Services\PaymentService;
+use App\Traits\CableChargeTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use RuntimeException;
 
 class OneOffFeeController extends Controller
 {
+    use CableChargeTrait;
+
     public function __construct(
         protected readonly OneOffFeeService $oneOffFeeService,
         protected readonly PaymentService $payment_service,
@@ -53,7 +56,11 @@ class OneOffFeeController extends Controller
         //TODO: check throughly cable type and status
         $cableCost = 0;
         if ($latestResource) {
-            $cableCost = calculate_cable_charge($latestResource['distance'], $latestResource['cable_type'], 2);
+            $charge = $this->calculateCableCharge(
+                $latestResource['distance'],
+                $latestResource['cable_type'],
+                2
+            );
         }
         $finalAmount = $amount + $cableCost;
         $this->payment_service->createOrUpdatePayment(

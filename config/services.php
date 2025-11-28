@@ -249,7 +249,7 @@ return [
         'merchant_app_id' => env('TELEBIRR_MERCHANT_APP_ID', 'REDACTED_MERCHANT_APP_ID'),
         'merchant_code' => env('TELEBIRR_MERCHANT_CODE', 'REDACTED_MERCHANT_CODE'),
         "private_key" => env('TELEBIRR_PRIVATE_KEY', ''),
-        'notify_url' => env("NOTIFY_URL", 'https://onlinefixedservices.ethiotelecom.et/api/v1/payment/notify')
+        'notify_url' => env("NOTIFY_URL", 'https://fixedservices.ethiotelecom.et/api/v1/payment/notify')
     ],
 
     'fayda' => [

@@ -10,15 +10,7 @@ class Payment extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'customer_code',
-        'customer_survey_order_id',
-        'reference_number',
-        'transaction_number',
-        'amount',
-        'payload',
-        'status',
-    ];
+    protected $guarded = ['id'];
 
     protected $casts = [
         'payload' => 'array',

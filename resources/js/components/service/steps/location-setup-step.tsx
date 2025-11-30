@@ -376,7 +376,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
     return (
         <div className="space-y-6">
             {/* Map Section */}
-            <div className="space-y-4">
+            <div className="space-y-2">
                 <div className="h-full rounded-lg">
                     <GoogleLocationMap
                         onLocationSelect={handleLocationSelect}
@@ -390,121 +390,10 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                     />
                 </div>
 
-                {/* Selected Location Display - Editable */}
-                {/* {(hasValidLocation || currentLocation) && (
-                    <Card className="transition-all duration-300">
-                        <CardContent className="pt-6">
-                            <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                    <div className="mb-3 flex items-center gap-2">
-                                        <MapPin className="h-4 w-4 text-primary" />
-                                        <h4 className="font-semibold text-gray-900">
-                                            {locationLoading ? 'Detecting Location...' : 'Selected Location'}
-                                        </h4>
-                                        <div className="flex items-center space-x-2">
-                                            {isGeocoding && <Loader2 className="h-3 w-3 animate-spin text-blue-600" />}
-                                            {isMapAnimating && <div className="h-2 w-2 animate-pulse rounded-full bg-purple-600" />}
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                        <div>
-                                            <p className="mb-1 text-sm font-medium text-gray-700">Coordinates</p>
-                                            <p className="text-sm text-gray-600">
-                                                Lat: {(mapLocation?.lat || formData.latitude).toFixed(6)}, Lng:{' '}
-                                                {(mapLocation?.lng || formData.longitude).toFixed(6)}
-                                            </p>
-                                        </div>
-
-                                        <div>
-                                            <p className="mb-1 text-sm font-medium text-gray-700">Address</p> */}
-                {/* {isEditingAddress ? (
-                                                <div className="flex gap-2"> */}
-                {/* <Input
-                                                        value={manualAddress}
-                                                        onChange={(e) => setManualAddress(e.target.value)}
-                                                        placeholder="Enter full address"
-                                                        className="flex-1"
-                                                    /> */}
-                {/* <Button onClick={handleManualAddressUpdate} disabled={locationLoading} size="sm">
-                                                        {locationLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Update'}
-                                                    </Button>
-                                                    <Button variant="outline" onClick={() => setIsEditingAddress(false)} size="sm">
-                                                        Cancel
-                                                    </Button> */}
-                {/* </div>
-                                            ) : ( */}
-                {/* <div className="flex items-center gap-2">
-                                                <p className="flex-1 text-sm text-gray-700">{mapLocation?.address || formData.address}</p> */}
-                {/* <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => setIsEditingAddress(true)}
-                                                        className="h-8 w-8 p-0"
-                                                    >
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button> */}
-                {/* </div> */}
-                {/* )} */}
-                {/* </div> */}
-                {/* </div> */}
-
-                {/* Manual Coordinate Input */}
-                {/* <div className="mt-4 border-t pt-4">
-                                        <p className="mb-2 text-sm font-medium text-gray-700">Manual Coordinates</p>
-                                        <FieldGroup>
-                                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                                <Field>
-                                                    <FieldLabel htmlFor="latitude">Latitude</FieldLabel>
-                                                    <Input
-                                                        id="latitude"
-                                                        type="number"
-                                                        step="any"
-                                                        placeholder="9.007428"
-                                                        required
-                                                        value={manualLat}
-                                                        onChange={(e) => setManualLat(e.target.value)}
-                                                    />
-                                                </Field>
-                                                <Field>
-                                                    <FieldLabel htmlFor="longitude">Longitude</FieldLabel>
-                                                    <Input
-                                                        id="longitude"
-                                                        type="number"
-                                                        step="any"
-                                                        placeholder="38.733708"
-                                                        required
-                                                        value={manualLng}
-                                                        onChange={(e) => setManualLng(e.target.value)}
-                                                    />
-                                                </Field>
-                                                <div className="flex items-end">
-                                                    <Button
-                                                        onClick={handleManualCoordinateSubmit}
-                                                        disabled={isGeocoding}
-                                                        className="w-full hover:opacity-90"
-                                                    >
-                                                        {isGeocoding ? (
-                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                        ) : (
-                                                            <Navigation className="mr-2 h-4 w-4" />
-                                                        )}
-                                                        {isGeocoding ? 'Updating...' : 'Update Coordinates'}
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </FieldGroup>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )} */}
-
                 {/* Selected Location Card */}
                 {(hasValidLocation || currentLocation) && (
-                    <Card className="transition-all duration-300">
-                        <CardContent className="pt-6">
+                    <Card className="border-none pr-0 pl-0 shadow-none transition-all duration-300">
+                        <CardContent className="border-none pr-0 pl-0 shadow-none">
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                     {/* Title */}
@@ -545,6 +434,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                                                             setManualLat(e.target.value);
                                                             setShowUpdateBtn(true);
                                                         }}
+                                                        className="focus:ring-1 focus:ring-primary"
                                                     />
                                                 </Field>
 
@@ -560,6 +450,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                                                             setManualLng(e.target.value);
                                                             setShowUpdateBtn(true);
                                                         }}
+                                                        className="focus:ring-1 focus:ring-primary"
                                                     />
                                                 </Field>
 
@@ -583,73 +474,13 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                                             </div>
                                         </FieldGroup>
 
-                                        <div>
+                                        <div className="pt-4">
                                             <p className="mb-1 text-sm font-medium text-gray-700">Address</p>
                                             <div className="flex items-center gap-2">
                                                 <p className="flex-1 text-sm text-gray-700">{mapLocation?.address || formData.address}</p>
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Manual Coordinate Input */}
-                                    {/* <div className="mt-4 border-t pt-4">
-                                        <p className="mb-2 text-sm font-medium text-gray-700">Manual Coordinates 
-                                            
-                                        </p>
-
-
-                                        <FieldGroup>
-                                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                                <Field>
-                                                    <FieldLabel htmlFor="manualLat">Latitude</FieldLabel>
-                                                    <Input
-                                                        id="manualLat"
-                                                        type="number"
-                                                        step="any"
-                                                        placeholder="9.007428"
-                                                        value={manualLat}
-                                                        onChange={(e) => {
-                                                            setManualLat(e.target.value);
-                                                            setShowUpdateBtn(true);
-                                                        }}
-                                                    />
-                                                </Field>
-
-                                                <Field>
-                                                    <FieldLabel htmlFor="manualLng">Longitude</FieldLabel>
-                                                    <Input
-                                                        id="manualLng"
-                                                        type="number"
-                                                        step="any"
-                                                        placeholder="38.733708"
-                                                        value={manualLng}
-                                                        onChange={(e) => {
-                                                            setManualLng(e.target.value);
-                                                            setShowUpdateBtn(true);
-                                                        }}
-                                                    />
-                                                </Field> */}
-
-                                    {/* Show update button only when user changes something */}
-                                    {/* {showUpdateBtn && (
-                                                    <div className="flex items-end">
-                                                        <Button
-                                                            onClick={handleManualCoordinateSubmit}
-                                                            disabled={isGeocoding}
-                                                            className="w-full hover:opacity-90"
-                                                        >
-                                                            {isGeocoding ? (
-                                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                            ) : (
-                                                                <Navigation className="mr-2 h-4 w-4" />
-                                                            )}
-                                                            {isGeocoding ? 'Updating...' : 'Update Coordinates'}
-                                                        </Button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </FieldGroup>
-                                    </div> */}
                                 </div>
                             </div>
                         </CardContent>
@@ -676,7 +507,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
             )}
 
             {formData.resourceAvailable === true && (
-                <Alert className="border-green-200 bg-green-50">
+                <Alert className="border-green-200">
                     <CheckCircle className="h-4 w-4 text-green-600" />
                     <AlertDescription className="text-green-800">
                         <div className="flex items-center justify-between">
@@ -691,11 +522,11 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
             )}
 
             {formData.resourceAvailable === false && (
-                <Alert className="border-orange-200 bg-orange-50">
-                    <AlertDescription className="text-orange-800">
+                <Alert variant="destructive">
+                    <AlertDescription>
                         <div className="flex items-center justify-between">
                             <span className="font-semibold">Resource not available</span>
-                            <Badge variant="outline" className="ml-2 text-orange-800">
+                            <Badge variant="outline" className="ml-2 text-orange-600">
                                 Service Limited
                             </Badge>
                         </div>

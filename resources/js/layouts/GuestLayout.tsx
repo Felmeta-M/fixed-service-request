@@ -15,13 +15,15 @@ export default function GuestLayout({ children }: Props) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     return (
         <div className="mx-auto bg-gradient-to-br from-blue-50 to-indigo-100">
-            <header className="w-fullborder-b sticky top-0 z-50 mx-auto bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/60">
-                <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-2">
+            <header className="sticky top-0 z-50 mx-auto w-full border-b bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/60">
+                <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 items-center justify-between">
                         {/* Logo Section */}
                         <div className="flex items-center space-x-3">
                             <div className="flex items-center space-x-3">
-                                <img src={logo} alt="EthioTelecom Logo" className="h-12 w-full transition-all duration-200" />
+                                <Link href={route('home')} className="cursor-pointer">
+                                    <img src={logo} alt="Ethio Telecom Logo" className="h-12 w-full transition-all duration-200" />
+                                </Link>
                             </div>
                         </div>
 
@@ -58,8 +60,8 @@ export default function GuestLayout({ children }: Props) {
                                     </div>
                                 ) : (
                                     // If NOT logged in
-                                    <Link href="/otp/phone">
-                                        <Button className="flex items-center space-x-2 bg-primary text-white hover:opacity-90">
+                                    <Link href={route('otp.phone')} className="cursor-pointer">
+                                        <Button className="flex cursor-pointer items-center space-x-2 bg-primary text-white hover:opacity-90">
                                             <LogIn className="h-4 w-4" />
                                             <span>Login</span>
                                         </Button>
@@ -118,7 +120,7 @@ export default function GuestLayout({ children }: Props) {
                             ) : (
                                 <>
                                     {/* Login */}
-                                    <Link href="/otp/phone" className="block pt-3" onClick={() => setIsMobileMenuOpen(false)}>
+                                    <Link href={route('otp.phone')} className="block cursor-pointer pt-3" onClick={() => setIsMobileMenuOpen(false)}>
                                         <Button className="br-primary flex w-full items-center justify-center space-x-2 text-white hover:opacity-90">
                                             <LogIn className="h-4 w-4" />
                                             <span>Login</span>

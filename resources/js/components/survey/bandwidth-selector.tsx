@@ -60,7 +60,7 @@ export function BandwidthSelector({
             </div>
 
             {/* Bandwidth Selector */}
-            <div className="max-w-72">
+            <div className="w-full sm:max-w-72">
                 <FormSelect
                     id="bandwidth"
                     label="Bandwidth"

@@ -51,7 +51,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
 
     return (
         <div className="w-full space-y-6">
-            <div className="grid grid-cols-1 gap-y-6 md:grid-cols-2 md:gap-x-4 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 gap-y-4 sm:grid-cols-2 md:gap-x-4 lg:grid-cols-3">
                 {serviceTypes.map((service) => {
                     const Icon = service.icon;
                     const isSelected = formData.serviceType === service.id;

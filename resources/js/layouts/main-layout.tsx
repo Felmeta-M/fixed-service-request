@@ -1,34 +1,52 @@
 import { AppSidebar } from '@/components/app-sidebar';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SiteHeader } from '@/components/site-header';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { usePage } from '@inertiajs/react';
+import { FileText, MapPin, Wifi } from 'lucide-react';
 import { ReactNode } from 'react';
 
-interface ServicesLayoutProps {
+interface MainLayoutProps {
     children: ReactNode;
+    currentStep?: number;
 }
 
 const getHeader = (url: string) => {
     return url.split('/')[1].toLowerCase();
 };
 
-export default function MainLayout({ children }: ServicesLayoutProps) {
+const createServiceSteps = [
+    { name: 'Service Selection', icon: Wifi },
+    { name: 'Location Setup', icon: MapPin },
+    { name: 'Review & Submit', icon: FileText },
+];
+
+export default function MainLayout({ children, currentStep = 0 }: MainLayoutProps) {
     const page = usePage();
-    const header = getHeader(page.url);
+    const headerSegment = getHeader(page.url);
+
+    const isServiceCreation = page.url.startsWith('/services/create');
 
     return (
-        <SidebarProvider>
-            <AppSidebar />
-            <main className="flex-1 p-6">
-                <div className="flex items-center justify-between bg-white pb-4">
-                    <div className="flex items-center">
-                        <SidebarTrigger />
-                        <div className="ml-1">
-                            <h1 className="text-xl font-semibold text-gray-900 capitalize">{header}</h1>
-                        </div>
-                    </div>
+        <SidebarProvider
+            style={
+                {
+                    '--sidebar-width': 'calc(var(--spacing) * 72)',
+                    '--header-height': 'calc(var(--spacing) * 12)',
+                } as React.CSSProperties
+            }
+        >
+            <AppSidebar currentStep={currentStep} mode={isServiceCreation ? 'create' : 'list'} />
+            <SidebarInset>
+                <SiteHeader
+                    title={isServiceCreation ? 'Create new service' : headerSegment}
+                    isServiceCreation={isServiceCreation}
+                    currentStep={currentStep}
+                    steps={createServiceSteps}
+                />
+                <div className="flex flex-1 flex-col">
+                    <div>{children}</div>
                 </div>
-                <div className="">{children}</div>
-            </main>
+            </SidebarInset>
         </SidebarProvider>
     );
 }

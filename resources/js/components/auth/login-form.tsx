@@ -77,8 +77,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                 <CardContent>
                     <FieldGroup>
                         <Field>
-                            <FieldLabel htmlFor="phone">Mobile Number</FieldLabel>
                             <form onSubmit={handlePhoneLogin}>
+                                <FieldLabel htmlFor="phone">Mobile Number</FieldLabel>
                                 <div className="mb-3 flex gap-1">
                                     <div className="flex w-12 items-center justify-center rounded-sm border bg-muted text-sm font-medium">+251</div>
                                     <Input
@@ -114,7 +114,9 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                                     )}
                                 </Button>
                             </form>
-                            <FieldDescription className="w-[80%]">Enter your Ethio Telecom number to receive an OTP</FieldDescription>
+                            <FieldDescription className="w-[80%] text-center text-sm/6 text-muted-foreground">
+                                Enter your Ethio Telecom number to receive an OTP
+                            </FieldDescription>
                         </Field>
 
                         {/* <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">Or continue with</FieldSeparator>

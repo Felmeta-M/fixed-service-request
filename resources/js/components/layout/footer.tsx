@@ -120,8 +120,8 @@ export const Footer = () => {
                 </div>
             </div>
 
-            <div className="border-t border-gray-800">
-                <div className="max-w-8xl mx-auto px-4 py-8 sm:px-6 lg:px-2">
+            <div className="mx-auto max-w-screen-2xl border-t border-gray-800">
+                <div className="mx-auto px-4 py-8 sm:px-6 lg:px-2">
                     <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
                         <div className="text-center md:text-left">
                             <p className="text-sm text-gray-400">

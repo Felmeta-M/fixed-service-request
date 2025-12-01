@@ -145,7 +145,7 @@ export function OTPVerificationForm({ className, ...props }: React.ComponentProp
                                             onChange={(e) => handleOtpChange(index, e.target.value)}
                                             onKeyDown={(e) => handleKeyDown(index, e)}
                                             onPaste={handlePaste}
-                                            className="h-12 w-12 text-center text-lg font-semibold"
+                                            className="h-12 w-12 text-center text-lg font-semibold focus:border-primary focus:ring-0"
                                             autoFocus={index === 0}
                                         />
                                     ))}

@@ -227,7 +227,7 @@ export default function CustomerDashboard() {
     if (error) {
         return (
             <MainLayout>
-                <div className="w-full space-y-6">
+                <div className="w-full space-y-6 px-4 lg:px-6">
                     <Card>
                         <CardContent className="p-6">
                             <div className="flex items-center space-x-3 text-red-600">
@@ -247,7 +247,7 @@ export default function CustomerDashboard() {
 
     return (
         <MainLayout>
-            <div className="w-full overflow-x-auto space-y-6">
+            <div className="w-full space-y-6 px-4 lg:px-6">
                 {/* Header Section */}
                 <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                     <div className="">

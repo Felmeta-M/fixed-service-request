@@ -296,7 +296,7 @@ export function GoogleLocationMap({
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-2">
             {/* Search Bar */}
             <ProfessionalSearch
                 searchQuery={searchQuery}

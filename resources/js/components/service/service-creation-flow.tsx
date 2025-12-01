@@ -182,16 +182,22 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
     return (
         <Card className="border-0 shadow-none">
-            <CardHeader className="bg-white pr-0 pl-0">
+            <CardHeader className="bg-white pr-2 pl-2">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-2xl font-bold text-gray-900">{stepTitles[currentStep].title}</CardTitle>
-                        <CardDescription className="mt-1 text-gray-600">{stepTitles[currentStep].description}</CardDescription>
+                        <CardTitle className="text-lg font-bold text-gray-900 lg:text-xl">{stepTitles[currentStep].title}</CardTitle>
+                        <CardDescription className="text-sm text-gray-500 lg:text-base">{stepTitles[currentStep].description}</CardDescription>
+                    </div>
+
+                    {/* Desktop step indicator */}
+                    <div className="hidden items-center space-x-4 sm:flex">
+                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                            <span>Step {currentStep + 1} of 3</span>
+                        </div>
                     </div>
                 </div>
             </CardHeader>
-
-            <CardContent className="pr-0 pl-0">
+            <CardContent className="pr-2 pl-2">
                 {renderStepContent()}
 
                 {/* Resource Error Display */}
@@ -203,7 +209,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
                 {/* Navigation Buttons */}
                 {currentStep < 2 && (
-                    <div className="mt-8 flex justify-between pt-6">
+                    <div className="mt-2 flex justify-between pt-2">
                         <Button variant="outline" onClick={prevStep} disabled={currentStep === 0} className="flex items-center space-x-2">
                             <ArrowLeft className="h-4 w-4" />
                             Back

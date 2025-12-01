@@ -35,7 +35,6 @@ class SurveyOrderService extends BaseApiService
         $credentials = config('services.survey');
         $transactionId = uniqid();
         $contactNo = substr($data['contact_no'], -9);
-
         $bandwidth = $this->parseBandwidth($data['bandwidth']);
         if (!$bandwidth) {
             throw new \InvalidArgumentException('Bandwidth cannot be empty');
@@ -114,19 +113,19 @@ XML;
         ]);
     }
 
-    protected function parseBandwidth(string $value): int
+    protected function parseBandwidth(string|int $value): int
     {
         $value = strtolower(trim($value));
 
         if (preg_match('/^(\d+)m$/', $value, $matches)) {
-            return (int) $matches[1];
-        }
-
-        if (preg_match('/^(\d+)gbps$/', $value, $matches)) {
             return (int) $matches[1] * 1024;
         }
 
-        return 0;
+        if (preg_match('/^(\d+)gbps$/', $value, $matches)) {
+            return (int) $matches[1] * 1024 * 1024;
+        }
+
+        return $value;
     }
 
     public function find($customerSurveyOrderId)

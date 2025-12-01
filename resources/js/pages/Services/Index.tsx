@@ -385,8 +385,8 @@ export default function CustomerDashboard() {
                                             {appliedFilters.type === '1943913918'
                                                 ? 'Internet'
                                                 : appliedFilters.type === '102647257'
-                                                  ? 'Voice'
-                                                  : 'Combo'}
+                                                    ? 'Voice'
+                                                    : 'Combo'}
                                             <button onClick={() => handleTypeFilterChange('')} className="ml-1 rounded-full hover:bg-primary/20">
                                                 <X className="h-3 w-3" />
                                             </button>

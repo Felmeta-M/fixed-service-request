@@ -34,13 +34,13 @@ export default function GuestLayout({ children }: Props) {
                                         Services
                                     </Link>
 
-                                    {/* <select className="rounded-md border px-2 py-1 text-sm">
+                                    <select className="rounded-md border px-2 py-1 text-sm">
                                         <option value="en">English</option>
                                         <option value="am">አማርኛ</option>
                                         <option value="or">Afaan Oromoo</option>
                                         <option value="ti">ትግርኛ</option>
                                         <option value="so">Af Somali</option>
-                                    </select> */}
+                                    </select>
                                 </nav>
                                 {auth?.user ? (
                                     <div className="flex items-center space-x-4">

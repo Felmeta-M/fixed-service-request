@@ -2,9 +2,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSurveyList } from '@/hooks/use-survey-list';
 import MainLayout from '@/layouts/main-layout';
+import { usePage } from '@inertiajs/react';
 import { BarChart3, Package, Phone, RefreshCw, TrendingUp, Users, Wifi } from 'lucide-react';
 import { useMemo } from 'react';
-import { usePage } from '@inertiajs/react';
 
 // Mock chart components - replace with actual chart library
 const ServiceStatusChart = ({ data }: { data: any[] }) => (
@@ -135,12 +135,12 @@ export default function Dashboard() {
                         <Card>
                             <CardHeader className="pb-2">
                                 <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                                    <TrendingUp className="h-4 w-4 text-green-600" />
+                                    <TrendingUp className="h-4 w-4 text-primary" />
                                     Active Services
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold text-green-600">{stats.completed + stats.subscribed}</div>
+                                <div className="text-2xl font-bold text-primary">{stats.completed + stats.subscribed}</div>
                                 <p className="text-xs text-gray-600">Ready or subscribed</p>
                             </CardContent>
                         </Card>

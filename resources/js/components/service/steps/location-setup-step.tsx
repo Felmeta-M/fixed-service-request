@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { parseCoordinate } from '@/lib/coordinate-utils';
-import { CheckCircle, Loader2, Locate, MapPin, Navigation } from 'lucide-react';
+import { CheckCircle, Loader2, MapPin, Navigation } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GoogleLocationMap } from '../google-location-map';
 
@@ -488,12 +488,12 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                 )}
 
                 {/* Refresh Location Button */}
-                <div className="flex justify-center">
+                {/* <div className="flex justify-center">
                     <Button onClick={handleRefreshLocation} disabled={locationLoading} variant="outline" className="flex items-center gap-2">
                         {locationLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Locate className="h-4 w-4" />}
                         {locationLoading ? 'Getting Location...' : 'Refresh My Location'}
                     </Button>
-                </div>
+                </div> */}
             </div>
 
             {/* Status Indicators */}

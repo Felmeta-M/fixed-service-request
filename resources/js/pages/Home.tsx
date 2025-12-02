@@ -20,7 +20,7 @@ export default function HomePage() {
         },
         {
             image: telebirrLogo,
-            title: 'Telebirr Payment',
+            title: 'telebirr Payment',
             description: 'Secure and convenient payment processing through Telebirr integration',
             color: 'green',
         },
@@ -95,7 +95,7 @@ export default function HomePage() {
                             Online Service Provisioning Platform
                         </Badge>
                         <h1 className="mb-6 text-5xl leading-tight font-bold text-gray-900">
-                            Manage Your <span className="bg-primary bg-clip-text text-transparent">Fixed Line Services</span> Online
+                            Manage Your <span className="bg-primary bg-clip-text text-transparent">Fixed Services</span> Online
                         </h1>
                         <p className="mx-auto mb-8 max-w-2xl text-xl leading-relaxed text-gray-600">
                             Request new services, manage existing connections, and handle service changes without visiting our service centers. Fast,
@@ -107,9 +107,9 @@ export default function HomePage() {
                                     size="lg"
                                     className="bg-primary px-8 py-3 text-lg text-white shadow-lg transition-all duration-200 hover:shadow-xl"
                                 >
-                                    <MapPin className="mr-3 h-5 w-5" />
+                                    {/* <MapPin className="mr-3 h-5 w-5" /> */}
                                     Get Started Now
-                                    <ArrowRight className="ml-2 h-5 w-5" />
+                                    <ArrowRight className="text-medium ml-2 h-5 w-5" />
                                 </Button>
                             </Link>
                             <Link href="#services">

@@ -117,54 +117,54 @@ export function useSurveyList(): UseSurveyListReturn {
         [user],
     );
 
-    const loadMore = useCallback(async (): Promise<void> => {
-        if (!hasMore || loading) return;
+    const loadMore = useCallback(
+        async (filters?: { search?: string; status?: string }): Promise<void> => {
+            if (!hasMore || loading) return;
+            setLoading(true);
 
-        setLoading(true);
+            try {
+                const customerCode = user?.customer_code;
+                if (!customerCode) throw new Error('No customer code available');
 
-        try {
-            const customerCode = user?.customer_code;
-            if (!customerCode) throw new Error('No customer code available');
+                const nextPage = currentPage + 1;
 
-            const nextPage = currentPage + 1;
+                const params = new URLSearchParams({
+                    customer_code: customerCode,
+                    page: nextPage.toString(),
+                    per_page: '12',
+                });
 
-            const params = new URLSearchParams({
-                customer_code: customerCode,
-                page: nextPage.toString(),
-                per_page: '12',
-            });
+                if (filters?.search) params.append('search', filters.search);
+                if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
 
-            const res = await fetch(`/api/v1/survey-requests?${params.toString()}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                },
-            });
+                const res = await fetch(`/api/v1/survey-requests?${params.toString()}`);
+                const json: ApiResponse = await res.json();
 
-            const json: ApiResponse = await res.json();
-            const newData = json.data || [];
-
-            // Append
-            setSurveys((prev) => [...prev, ...newData]);
-            setCurrentPage(nextPage);
-
-            if (json.meta) {
-                setHasMore(json.meta.current_page < json.meta.last_page);
-            } else {
-                setHasMore(false);
+                const newData = json.data || [];
+                setSurveys((prev) => [...prev, ...newData]);
+                setCurrentPage(nextPage);
+                setHasMore(json.meta ? json.meta.current_page < json.meta.last_page : false);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to load more surveys');
+            } finally {
+                setLoading(false);
             }
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Failed to load more surveys';
-            setError(message);
-        } finally {
-            setLoading(false);
-        }
-    }, [currentPage, hasMore, loading, user]);
+        },
+        [currentPage, hasMore, loading, user],
+    );
 
     const refetch = useCallback(async (): Promise<void> => {
         await fetchSurveys();
     }, [fetchSurveys]);
+
+    if (!user?.customer_code) {
+        setError('User not authenticated or no customer code');
+        setSurveys([]);
+        setHasMore(false);
+        setTotal(0);
+        setLoading(false);
+        return [] as unknown as UseSurveyListReturn;
+    }
 
     return {
         surveys,

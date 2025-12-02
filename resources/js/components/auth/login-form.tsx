@@ -1,11 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { router } from '@inertiajs/react';
 import { Loader2, Phone } from 'lucide-react';
 import { useState } from 'react';
+import logo from '../../images/national_id_logo.png';
 
 export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -115,11 +116,11 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                                 </Button>
                             </form>
                             <FieldDescription className="w-[80%] text-center text-sm/6 text-muted-foreground">
-                                Enter your Ethio Telecom number to receive an OTP
+                                Enter your Ethio telecom number to receive an OTP
                             </FieldDescription>
                         </Field>
 
-                        {/* <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">Or continue with</FieldSeparator>
+                        <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">Or continue with</FieldSeparator>
 
                         <Field>
                             <Button
@@ -131,7 +132,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                                 <img src={logo} alt="National ID Logo" className="h-5 w-5" />
                                 Login with National ID
                             </Button>
-                        </Field> */}
+                        </Field>
                     </FieldGroup>
                 </CardContent>
             </Card>

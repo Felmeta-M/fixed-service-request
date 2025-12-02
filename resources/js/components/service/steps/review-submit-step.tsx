@@ -209,7 +209,7 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
                     Back
                 </Button>
 
-                <Button onClick={handleSubmit} disabled={submitting || !formData.resourceAvailable} className="bg-green-600 hover:bg-green-700">
+                <Button onClick={handleSubmit} disabled={submitting || !formData.resourceAvailable} className="bg-primary hover:bg-primary/80">
                     {submitting ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

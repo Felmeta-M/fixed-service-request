@@ -12,7 +12,7 @@ use Inertia\Inertia;
 class EsignetController extends Controller
 {
     public function __construct(
-        protected EsignetService   $esignet,
+        protected EsignetService   $esignetService,
         protected LocalAuthService $localAuthService
     )
     {
@@ -21,65 +21,119 @@ class EsignetController extends Controller
     /** Starts ESIGNET login */
     public function redirectToEsignet()
     {
-        $result = $this->esignet->buildAuthorizationUrl();
+        $result = $this->esignetService->buildAuthorizationUrl();
 
         if ($result['status'] !== 'ok') {
+            logger()->error('Esignet Auth URL generation failed', [
+                'error' => $result['message']
+            ]);
+
+            return Inertia::render('ErrorPage', [
+                'message' => 'We are unable to start the login process at the moment. Please try again later.'
+            ]);
+        }
+
+        // Save PKCE + state
+        session()->put('esignet', [
+            'state' => $result['state'],
+            'code_verifier' => $result['code_verifier'],
+        ]);
+
+        logger()->info('Esignet session created', [
+            'state' => $result['state'],
+            'code_verifier' => $result['code_verifier'],
+        ]);
+
+
+        return redirect()->away($result['auth_url']);
+    }
+
+
+    public function handleEsignetCallback(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => 'required|string',
+            'state' => 'required|string',
+        ]);
+
+        $temp = session('esignet');
+
+        if (!$temp) {
+            logger()->warning('Esignet session missing on callback');
+
+            return Inertia::render('ErrorPage', [
+                'message' => 'Your login session has expired. Please start the login again.'
+            ]);
+        }
+
+        if ($validated['state'] !== $temp['state']) {
+            logger()->error('Esignet state mismatch', [
+                'expected' => $temp['state'],
+                'received' => $validated['state']
+            ]);
+
+            return Inertia::render('ErrorPage', [
+                'message' => 'Security verification failed. Please try logging in again.'
+            ]);
+        }
+
+        $token = $this->esignetService->exchangeCodeForToken(
+            $validated['code'],
+            $temp['code_verifier']
+        );
+
+        if ($token['status'] !== 'ok') {
+            logger()->error('Esignet token exchange failed', [
+                'error' => $token['message']
+            ]);
+
+            return Inertia::render('ErrorPage', [
+                'message' => 'We were unable to verify your login request. Please try again.'
+            ]);
+        }
+
+        session()->forget('esignet');
+
+        $result = $this->esignetService->getUserInfo($token['token']['access_token']);
+
+        if ($result['status'] !== 'ok') {
+            logger()->error('Esignet user info fetch failed', [
+                'error' => $result['message']
+            ]);
+
             return Inertia::render('ErrorPage', [
                 'message' => $result['message']
             ]);
         }
 
-        session([
-            'esign_state' => $result['state'],
-            'esign_code_verifier' => $result['code_verifier'],
-        ]);
+        $esignetUser = $result['customer'];
+        $data = [
+            'name' => $esignetUser['name'],
+            'phone_number' => $esignetUser->phone_number,
+            'email' => $esignetUser->email,
+            'customer_code' => $esignetUser?->verified_at ? $esignetUser->customer_code : null,
+        ];
 
-        return redirect()->away($result['auth_url']);
+        $otp = $this->localAuthService->resolveUserForAuth($data);
+
+        Auth::guard('otp')->login($otp);
+
+        session()->forget(['esign_state', 'esign_code_verifier']);
+
+        if ($esignetUser?->verified_at) {
+            return redirect()->route('services');
+        }
+        return redirect()->route('customer.create')->with([
+            'error' => 'Your profile is incomplete. Please update it.',
+            'prefill' => $result['data'] ?? [],
+        ]);
     }
 
-    /** Callback handler */
-    public function handleEsignetCallback(Request $request)
-    {
-        $request->validate([
-            'code' => 'required|string',
-            'state' => 'required|string',
-        ]);
-
-        if ($request->state !== session('esign_state')) {
-            return Inertia::render('ErrorPage', [
-                'message' => 'Invalid login session (state mismatch).'
-            ]);
-        }
-
-        $verifier = session('esign_code_verifier');
-
-        // 1. Exchange token
-        $token = $this->esignet->exchangeCodeForToken($request->code, $verifier);
-        if ($token['status'] !== 'ok') {
-            return Inertia::render('ErrorPage', [
-                'message' => $token['message']
-            ]);
-        }
-
-        // 2. Fetch user info
-        $user = $this->esignet->getUserInfo($token['token']['access_token']);
-        if ($user['status'] !== 'ok') {
-            return Inertia::render('ErrorPage', [
-                'message' => $user['message']
-            ]);
-        }
-
-        // 3. Local auth validation + CRM sync
-        $local = $this->localAuthService->handle($user['phone']);
-
-        return $this->respondToLocalAuthResult($local);
-    }
 
     /** Handle result from LocalAuthService */
     private function respondToLocalAuthResult(array $result)
     {
         return match ($result['status']) {
-
             'under_age' =>
             Inertia::render('ErrorPage', [
                 'message' => 'You must be 18 or older to use this service.'
@@ -109,16 +163,5 @@ class EsignetController extends Controller
                 'message' => 'Unknown authentication error.'
             ]),
         };
-    }
-
-    /** Final login */
-    private function finishLogin(array $data)
-    {
-        $user = $this->localAuthService->resolveUserForAuth($data);
-        Auth::guard('otp')->login($user);
-
-        session()->forget(['esign_state', 'esign_code_verifier']);
-
-        return redirect()->route('dashboard');
     }
 }

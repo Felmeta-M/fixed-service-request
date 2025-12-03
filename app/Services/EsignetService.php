@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use phpseclib3\Crypt\RSA;
+use RuntimeException;
 use Throwable;
 
 class EsignetService
@@ -17,7 +19,7 @@ class EsignetService
     protected string $tokenEndpoint;
     protected string $userinfoEndpoint;
     protected string $clientAssertionType;
-    protected string $privateKeyJson;
+    protected string $privateKey;
     protected int $expirationTime;
     protected string $algorithm;
 
@@ -114,9 +116,7 @@ class EsignetService
     protected function generateClientAssertion(): string
     {
         $key = $this->loadPrivateKey();
-
         $now = time();
-
         $header = ['alg' => $this->algorithm, 'typ' => 'JWT'];
         $payload = [
             'iss' => $this->clientId,
@@ -135,12 +135,31 @@ class EsignetService
         return "{$h}.{$p}." . $b64($key->sign("$h.$p"));
     }
 
-    /** Load JWK Private Key */
     protected function loadPrivateKey(): RSA
     {
-        $json = base64_decode($this->privateKeyJson);
-        return RSA::loadPrivateKey($json, 'JWK')->withPadding(RSA::SIGNATURE_PKCS1);
+        try {
+            // Step 1. base64 decode
+            $decoded = base64_decode($this->privateKey, true);
+
+            if ($decoded === false) {
+                logger()->error('Private key base64 decode failed');
+                throw new RuntimeException('Private key base64 decode failed');
+            }
+
+            // Step 2. try load RSA key from JWK
+            return RSA::loadPrivateKey($decoded, 'JWK')->withPadding(RSA::SIGNATURE_PKCS1);
+
+        } catch (Throwable $e) {
+            logger()->error('Failed to load private key', [
+                'exception' => $e->getMessage(),
+                'type' => get_class($e),
+                // never log the full key!
+                'key_length' => strlen($this->privateKey ?? '')
+            ]);
+            throw new RuntimeException('Unable to load private key. Please check configuration.');
+        }
     }
+
 
     /** Get User Info */
     public function getUserInfo(string $accessToken): array
@@ -158,19 +177,32 @@ class EsignetService
             if (empty($payload)) {
                 return ['status' => 'error', 'message' => 'Invalid user info payload'];
             }
-
             // Extract phone number
             $raw = $payload['phone_number'] ?? null;
             $digits = preg_replace('/\D/', '', $raw);
             $phone = substr($digits, -9);
 
             if (!$phone) {
-                return ['status' => 'error', 'message' => 'User phone number missing'];
+                return [
+                    'status' => 'error',
+                    'message' => 'User phone number missing',
+                ];
             }
+
+            $result = $this->createOrUpdateCustomerBySub($payload);
+
+            if ($result['status'] !== 'ok') {
+                return [
+                    'status' => 'error',
+                    'message' => 'Failed to process your account. Please try again.'
+                ];
+            }
+
+            $customer = $result['customer'];
 
             return [
                 'status' => 'ok',
-                'phone' => $phone, // normalized ET format
+                'customer' => $customer,
             ];
 
         } catch (Throwable $e) {
@@ -189,4 +221,72 @@ class EsignetService
             return [];
         }
     }
+
+    public function createOrUpdateCustomerBySub(array $payload)
+    {
+        try {
+            // Normalize fields
+            $sub = $payload['sub'] ?? null;
+            if (!$sub) {
+                logger()->error('Missing sub in payload');
+                throw new Exception('Invalid user payload (missing sub).');
+            }
+
+            $name = $payload['name'] ?? null;
+            $phoneNumber = $payload['phone_number'] ?? null;
+            $gender = $payload['gender'] ?? null;
+            $nationality = $payload['nationality'] ?? null;
+            $picture = $payload['picture'] ?? null;
+
+            $birthdate = null;
+            if (!empty($payload['birthdate'])) {
+                $birthdate = date('Y-m-d', strtotime(str_replace('/', '-', $payload['birthdate'])));
+            }
+
+            $address = $payload['address'] ?? null;
+            $customer = Customer::where('sub', $sub)->first();
+            if ($customer) {
+                logger()->info('Customer found, updating', ['sub' => $sub]);
+            } else {
+                logger()->info('Customer not found, creating new', ['sub' => $sub]);
+                $customer = new Customer();
+                $customer->sub = $sub;
+            }
+
+            $customer->name = $name;
+            $customer->phone_number = $phoneNumber;
+            $customer->gender = $gender;
+            $customer->nationality = $nationality;
+            $customer->birthdate = $birthdate;
+            $customer->picture = $picture;
+
+            $customer->address = $address ? json_encode($address) : null;
+
+            $customer->save();
+            $customer->refresh();
+
+            logger()->info('Customer synced successfully', [
+                'customer_id' => $customer->id,
+                'sub' => $customer->sub
+            ]);
+
+            return [
+                'status' => 'ok',
+                'customer' => $customer
+            ];
+
+        } catch (Throwable $e) {
+            logger()->error('Customer sync failed', [
+                'exception' => $e->getMessage(),
+                'payload' => $payload
+            ]);
+
+            return [
+                'status' => 'error',
+                'message' => 'Failed to sync customer.',
+            ];
+        }
+    }
+
+
 }

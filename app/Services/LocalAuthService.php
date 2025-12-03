@@ -17,9 +17,9 @@ class LocalAuthService
     /**
      * Main entry point – returns structured business results
      */
-    public function handle(?string $phone): array
+    public function handle(string|int $phoneNumber): array
     {
-        $data = $this->extractUserInfo($phone);
+        $data = $this->extractUserInfo($phoneNumber);
 
         if (empty($data)) {
             return ['status' => 'not_found'];
@@ -43,9 +43,9 @@ class LocalAuthService
     /**
      * Extracts CRM data for the provided phone number
      */
-    private function extractUserInfo(?string $phone): array
+    private function extractUserInfo(string $phoneNumber): array
     {
-        if (!$phone || !preg_match('/^(09|9|\+2519)/', $phone)) {
+        if (!$phoneNumber || !preg_match('/^(09|9|\+2519)/', $phoneNumber)) {
             return [];
         }
         $response = $this->queryCustomerByService->getCustomer('123555754');
@@ -66,7 +66,7 @@ class LocalAuthService
                 ? "{$customer['first_name']} {$customer['last_name']}"
                 : null,
             'email' => $customer['email'] ?? null,
-            'phone' => $phone,
+            'phone' => $customer['phone'] ?? null,
             'age' => $this->calculateAge($customer['dob'] ?? null),
         ];
     }
@@ -115,13 +115,11 @@ class LocalAuthService
      */
     public function resolveUserForAuth(array $data): Otp
     {
-        logger('customer data', [$data]);
         return Otp::updateOrCreate(
-            ['phone' => $data['phone']],
+            ['phone_number' => $data['phone_number']],
             [
                 'customer_code' => $data['customer_code'],
                 'name' => $data['name'],
-                'phone' => $data['phone'],
             ]
         );
 

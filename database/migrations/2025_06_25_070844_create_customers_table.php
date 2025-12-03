@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -30,18 +29,10 @@ return new class extends Migration
             $table->string('income')->nullable();
             $table->string('primary_language')->nullable();
             $table->string('picture')->nullable();
-
-            // Address Info
             $table->json('address')->nullable();
-
-            // Contact Info
             $table->json('contact')->nullable();
-
-            // Contact Person List
             $table->json('contact_persons')->nullable();
-
             $table->timestamps();
-
             $table->SoftDeletes();
         });
     }

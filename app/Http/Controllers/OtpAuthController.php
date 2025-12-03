@@ -4,19 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\Otp;
 use App\Services\LocalAuthService;
+use App\Services\QueryCustomerByServiceNumberService;
 use App\Traits\InteractsWithSMSGateway;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Log;
 use Throwable;
 
 class OtpAuthController extends Controller
 {
     use InteractsWithSMSGateway;
 
-    public function __construct(protected LocalAuthService $localAuthService)
+    public function __construct(
+        protected QueryCustomerByServiceNumberService $queryCustomerByService,
+        protected LocalAuthService                    $localAuthService
+    )
     {
     }
 
@@ -28,13 +33,11 @@ class OtpAuthController extends Controller
     public function sendOneTimePassword(Request $request)
     {
         try {
-            \Log::info('Sending OTP to phone: ' . $request->phone);
             $request->validate([
                 'phone' => 'required|string',
             ]);
-            $phone = substr($request->phone, -9);
-
-            if (!preg_match('/^(?:\+2519|2519|09|9)\d{8}$/', $phone)) {
+            $phoneNumber = substr($request->get('phone'), -9);
+            if (!preg_match('/^(?:\+2519|2519|09|9)\d{8}$/', $phoneNumber)) {
                 return response()->json([
                     'errors' => [
                         'phone' => ['Phone number must be Ethio Telecom.'],
@@ -43,26 +46,25 @@ class OtpAuthController extends Controller
             }
 
             $otpCode = rand(100000, 999999);
-            \Log::info('Generated OTP code: ' . $otpCode);
+            Log::info('Generated OTP code: ' . $otpCode);
 
             Otp::updateOrCreate(
-                ['phone' => $phone],
+                ['phone_number' => $phoneNumber],
                 [
                     'code' => $otpCode,
                     'expires_at' => now()->addMinutes(10),
                 ]
             );
-            \Log::info("OTP stored for {$phone}: {$otpCode}");
+            Log::info("OTP stored for {$phoneNumber}: {$otpCode}");
 
             // Try sending SMS
-            $this->sendSmsOnly($phone, $otpCode);
-            \Log::info("OTP sent to {$phone}: {$otpCode}");
-
-            // Success → redirect to OTP verify form
+            $this->sendSmsOnly($phoneNumber, $otpCode);
+            Log::info("OTP sent to {$phoneNumber}: {$otpCode}");
             return redirect()
                 ->route('otp.verify.form')
-                ->with('phone', $request->phone);
+                ->with('phone', $request->get('phone'));
         } catch (Throwable $e) {
+            Log::error('message: ' . $e->getMessage() . ' Line: ' . $e->getLine());
             return redirect()
                 ->back()
                 ->withInput()
@@ -72,7 +74,6 @@ class OtpAuthController extends Controller
 
     public function showVerifyForm()
     {
-        \Log::info('Showing OTP verify form for phone: ' . session('phone'));
         $phone = session('phone');
         return Inertia::render('Auth/VerifyOtp', [
             'phone' => $phone,
@@ -82,69 +83,43 @@ class OtpAuthController extends Controller
     public function verifyOneTimePassword(Request $request)
     {
         $otp = Otp::where('code', $request->code)
-            ->where('expires_at', '>', Carbon::now())
+            ->where('expires_at', '>=', Carbon::now())
             ->first();
 
         if (!$otp) {
             return back()->withErrors(['code' => 'Invalid or expired OTP']);
         }
 
+        $crmCustomer = $this->queryCustomer($otp->phone);
+//        logger($crmCustomer);
+        $data = [
+            'name' => $crmCustomer['name'] ?? 'test...',
+            'phone_number' => $crmCustomer->phone_number ?? $otp->phone_number,
+            'email' => $crmCustomer->email ?? 'test@example.com',
+            'customer_code' => $crmCustomer->customer_code ?? '124426'
+        ];
 
-        // Auth::guard('otp')->loginUsingId($otp->id);
-
-        // return redirect()->route('dashboard');
-
-        $local = $this->localAuthService->handle($otp->phone);
-
-        return $this->respondToLocalAuthResult($local);
-    }
-
-    /** Handle result from LocalAuthService */
-    private function respondToLocalAuthResult(array $result)
-    {
-        \Log::info('Responding to local auth result: ' . json_encode($result));
-        return match ($result['status']) {
-
-            'under_age' =>
-            Inertia::render('ErrorPage', [
-                'message' => 'You must be 18 or older to use this service.'
-            ]),
-
-            'invalid_phone' =>
-            redirect()->route('customer.create')->with([
-                'error' => 'Phone number must be Ethio Telecom (09 or +2519).',
-                'prefill' => $result['data'] ?? [],
-            ]),
-
-            'incomplete' =>
-            redirect()->route('customer.create')->with([
-                'error' => 'Your profile is incomplete. Please update it.',
-                'prefill' => $result['data'] ?? [],
-            ]),
-
-            'not_found' =>
-            redirect()->route('customer.create')->with([
-                'error' => 'Your phone number could not be found in our system.',
-            ]),
-
-            'ok' => $this->finishLogin($result['data']),
-
-            default =>
-            Inertia::render('ErrorPage', [
-                'message' => 'Unknown authentication error.'
-            ]),
-        };
-    }
-
-    /** Final login */
-    private function finishLogin(array $data): RedirectResponse
-    {
-        \Log::info('Finishing login for user data: ' . json_encode($data));
         $user = $this->localAuthService->resolveUserForAuth($data);
         Auth::guard('otp')->login($user);
-        \Log::info('User logged in via OTP: ' . $user->id);
 
         return redirect()->route('services');
+    }
+
+    protected function queryCustomer($phoneNumber)
+    {
+        if (!$phoneNumber || !preg_match('/^(09|9|\+2519)/', $phoneNumber)) {
+            return [];
+        }
+        $response = $this->queryCustomerByService->getCustomer('123555754');
+        $response = json_decode($response->getContent(), true);
+        if (
+            empty($response['success']) ||
+            empty($response['data']['customer'])
+        ) {
+            return [];
+        }
+
+        return $response['data']['customer'];
     }
 
     public function logout(Request $request): RedirectResponse

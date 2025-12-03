@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerRequest;
+use App\Models\Customer;
 use App\Models\CustomerCategory;
 use App\Models\CustomerSubcategory;
 use App\Models\CustomerType;
@@ -15,10 +16,13 @@ use Illuminate\Http\Request;
 class CustomerController extends Controller
 {
     public function __construct(
-        protected readonly CustomerService $customerService,
+        protected readonly CustomerService                     $customerService,
         protected readonly QueryCustomerByServiceNumberService $queryCustomerByServiceNumberService,
-        protected readonly QueryCustomerByCodeService $queryCustomerByCodeService,
-    ) {}
+        protected readonly QueryCustomerByCodeService          $queryCustomerByCodeService,
+    )
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -26,6 +30,7 @@ class CustomerController extends Controller
     {
         //
     }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -37,9 +42,9 @@ class CustomerController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request)
     {
-        //
+        return Customer::query()->where('phone_number', $request->get('phone_number'))->first();
     }
 
     /**

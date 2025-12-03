@@ -9,7 +9,6 @@ use App\Http\Controllers\Api\v1\EcafController;
 use App\Http\Controllers\Api\v1\LocationController;
 use App\Http\Controllers\Api\v1\OccupationController;
 use App\Http\Controllers\Api\v1\OneOffFeeController;
-use App\Http\Controllers\Api\v1\PaymentController;
 use App\Http\Controllers\Api\v1\PrimaryOfferingController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderSummaryController;
@@ -23,6 +22,7 @@ use App\Http\Controllers\Api\v1\TelebirrController;
 use App\Http\Middleware\AuthenticateServiceClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 
 Route::prefix('v1')->group(function () {
     Route::middleware(['throttle:service_client'])->group(function () {
@@ -46,6 +46,7 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::prefix('customer')->group(function () {
+        Route::get('/', [CustomerController::class, 'show']);
         Route::post('/create', [CustomerController::class, 'store']);
         Route::post('/ecaf', [EcafController::class, 'upload']);
         Route::post('/query-by-service-number', [CustomerController::class, 'getCustomerByServiceNumber']);
@@ -92,8 +93,4 @@ Route::prefix('v1')->group(function () {
 
     Route::post('create-order', [TelebirrController::class, 'createOrder'])
         ->name('create.order');
-    // Route::post('payment/notify', [TelebirrController::class, 'paymentNotification'])
-    //     ->name('payment.notify');
-
-    // Route::apiResource('payments', PaymentController::class)->only(['index', 'show']);
 });

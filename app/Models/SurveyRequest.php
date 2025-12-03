@@ -12,6 +12,7 @@ class SurveyRequest extends Model
     use SoftDeletes;
 
     protected $fillable = [
+        'sub',
         'customer_id',
         'customer_code',
         'customer_survey_order_id',

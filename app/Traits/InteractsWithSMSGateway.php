@@ -19,6 +19,7 @@ trait InteractsWithSMSGateway
 
         $smsEndPoint = config('ffd.sms_end_point');
         $url = "{$smsEndPoint}{$encodedPhoneNumber}&message={$encodedMessage}";
+
         return self::sendRequest($url);
     }
 

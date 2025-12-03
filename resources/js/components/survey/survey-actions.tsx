@@ -239,6 +239,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         });
 
         const result = await response.json();
+        console.log('🚀 ~ calculateServiceFees ~ result:', result);
 
         if (!result.success) {
             const errorMsg = result.message || 'Failed to calculate fees';

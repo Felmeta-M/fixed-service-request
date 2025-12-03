@@ -6,23 +6,7 @@ import { useSurveyList } from '@/hooks/use-survey-list';
 import MainLayout from '@/layouts/main-layout';
 import { ServiceProvisionStatus } from '@/lib/status-map';
 import { Link, usePage } from '@inertiajs/react';
-import {
-    Activity,
-    AlertCircle,
-    BarChart3,
-    Box,
-    CheckCircle2,
-    ChevronDown,
-    ChevronUp,
-    Clock,
-    Filter,
-    Phone,
-    Plus,
-    TrendingUp,
-    Users,
-    Wifi,
-    X,
-} from 'lucide-react';
+import { AlertCircle, BarChart3, Box, CheckCircle2, ChevronDown, ChevronUp, Clock, Filter, Phone, Plus, TrendingUp, Wifi, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const typeMap = {
@@ -53,13 +37,6 @@ const STATUS_CATEGORIES = {
     COMPLETED: [4, 5, 9, 13], // Failed, Survey Completed, Cancelled, Refund
     SUSPENDED: [2], // Suspended
 } as const;
-
-const quickActions = [
-    { label: 'New Service Request', icon: Plus, href: '//services/create', color: 'bg-blue-500' },
-    { label: 'View Bills', icon: BarChart3, href: '/billing', color: 'bg-green-500' },
-    { label: 'Support Center', icon: Users, href: '/support', color: 'bg-purple-500' },
-    { label: 'Network Status', icon: Activity, href: '/status', color: 'bg-orange-500' },
-];
 
 export default function CustomerDashboard() {
     const [globalFilter, setGlobalFilter] = useState('');
@@ -213,8 +190,8 @@ export default function CustomerDashboard() {
                         </div>
                         {trend && (
                             <div className="mt-3 flex items-center text-xs">
-                                <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
-                                <span className="text-green-500">{trend}</span>
+                                <TrendingUp className="mr-1 h-3 w-3 text-primary" />
+                                <span className="text-primary">{trend}</span>
                                 <span className="ml-1 text-muted-foreground">from last month</span>
                             </div>
                         )}
@@ -385,8 +362,8 @@ export default function CustomerDashboard() {
                                             {appliedFilters.type === '1943913918'
                                                 ? 'Internet'
                                                 : appliedFilters.type === '102647257'
-                                                    ? 'Voice'
-                                                    : 'Combo'}
+                                                  ? 'Voice'
+                                                  : 'Combo'}
                                             <button onClick={() => handleTypeFilterChange('')} className="ml-1 rounded-full hover:bg-primary/20">
                                                 <X className="h-3 w-3" />
                                             </button>

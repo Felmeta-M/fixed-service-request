@@ -8,13 +8,24 @@ import { useOccupations } from '@/hooks/use-occupations';
 import { useRegions, useWoredas, useZones } from '@/hooks/use-regions';
 import GuestLayout from '@/layouts/GuestLayout';
 import { CustomerFormValues, customerSchema } from '@/types/customer';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { ArrowLeft, ArrowRight, Building, CheckCircle, FileText, Home, MapPin, Phone, Upload, User } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+// Add this interface for page props
+interface PageProps {
+    prefillData?: any;
+    customerId?: number;
+    photoBase64?: string;
+}
+
 export default function Create() {
+    // Get props from Inertia
+    const { props } = usePage<PageProps>();
+    const { prefillData, customerId, photoBase64 } = props;
+
     const { occupations, loading, error: occupationError } = useOccupations();
     const [step, setStep] = useState(1);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -65,49 +76,209 @@ export default function Create() {
     // Get NID data from session storage or local storage
     const [nidData, setNidData] = useState<any>(null);
 
+    // useEffect(() => {
+
+    //     // Try to get NID data from various sources
+    //     const sessionData = sessionStorage.getItem('activeCustomer');
+    //     const localData = localStorage.getItem('kycData');
+
+    //     if (sessionData) {
+    //         try {
+    //             const parsed = JSON.parse(sessionData);
+    //             setNidData(parsed);
+    //             // Pre-fill form with NID data
+    //             if (parsed.nid_identity) {
+    //                 const identity = parsed.nid_identity;
+    //                 setData({
+    //                     ...data,
+    //                     first_name: identity.name?.eng?.split(' ')[0] || '',
+    //                     last_name: identity.name?.eng?.split(' ').slice(1).join(' ') || '',
+    //                     gender:
+    //                         identity.gender?.eng?.toLowerCase() === 'male' ? '1' : identity.gender?.eng?.toLowerCase() === 'female' ? '2' : undefined,
+    //                     date_of_birth: identity.dob ? formatDobForInput(identity.dob) : '',
+    //                     identification_type: '2', // National ID
+    //                     identification_number: parsed.service_number || '',
+    //                 });
+
+    //                 if (identity.phone) {
+    //                     setData('contact', {
+    //                         ...data.contact,
+    //                         mobile_no: identity.phone,
+    //                         notification_mode: '1', // SMS
+    //                     });
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             console.error('Error parsing NID data:', error);
+    //         }
+    //     } else if (localData) {
+    //         try {
+    //             const parsed = JSON.parse(localData);
+    //             setNidData(parsed);
+    //         } catch (error) {
+    //             console.error('Error parsing local KYC data:', error);
+    //         }
+    //     }
+    // }, []);
+
+    // Update the useEffect in Create component
+    // In Create.tsx - Simplified useEffect
+    // useEffect(() => {
+    //     const fetchCustomerData = async () => {
+    //         try {
+    //             // Get customer ID from session
+    //             const customerId = sessionStorage.getItem('pending_customer_id');
+
+    //             if (customerId) {
+    //                 // Fetch customer data from local database via API
+    //                 const response = await axios.get(`/api/customer/${customerId}/local-data`);
+    //                 const customerData = response.data;
+
+    //                 // Pre-fill form with ALL data from local DB
+    //                 setData({
+    //                     ...data,
+    //                     // Personal Info
+    //                     first_name: customerData.first_name || '',
+    //                     middle_name: customerData.middle_name || '',
+    //                     last_name: customerData.last_name || '',
+    //                     title: customerData.title || undefined,
+    //                     gender: customerData.gender || undefined,
+    //                     nationality: customerData.nationality || '',
+    //                     date_of_birth: customerData.date_of_birth ? formatDobForInput(customerData.date_of_birth) : '',
+    //                     place_of_birth: customerData.place_of_birth || '',
+
+    //                     // Identification
+    //                     identification_type: customerData.identification_type || '2',
+    //                     identification_number: customerData.identification_number || '',
+
+    //                     // Contact Info
+    //                     contact: {
+    //                         notification_mode: customerData.contact?.notification_mode || '',
+    //                         mobile_no: customerData.phone || customerData.contact?.mobile_no || '',
+    //                         office_no: customerData.contact?.office_no || '',
+    //                         email: customerData.email || customerData.contact?.email || '',
+    //                         home_no: customerData.contact?.home_no || '',
+    //                         fax_no: customerData.contact?.fax_no || '',
+    //                     },
+
+    //                     // Address
+    //                     address: customerData.address || {
+    //                         region: '',
+    //                         zone: '',
+    //                         woreda: '',
+    //                         city: '',
+    //                         street_name: '',
+    //                         kebele: '',
+    //                         house_no: '',
+    //                     },
+
+    //                     // Professional Info
+    //                     occupation: customerData.occupation || undefined,
+    //                     education: customerData.education || undefined,
+    //                     religion: customerData.religion || undefined,
+    //                     income: customerData.income || undefined,
+    //                     primary_language: customerData.primary_language || '',
+
+    //                     // Customer Type
+    //                     customer_type: customerData.customer_type || undefined,
+    //                     customer_category: customerData.customer_category || undefined,
+    //                     customer_subcategory: customerData.customer_subcategory || undefined,
+    //                     customer_level: '2',
+
+    //                     // Contact Persons
+    //                     contact_person: customerData.contact_person || [],
+    //                 });
+
+    //                 // Store photo base64 for later ECAF upload
+    //                 if (customerData.photo_base64) {
+    //                     localStorage.setItem('customer_photo_base64', customerData.photo_base64);
+    //                 }
+    //             }
+    //         } catch (error) {
+    //             console.error('Error fetching customer data:', error);
+    //             toast.error('Failed to load customer data');
+    //         }
+    //     };
+
+    //     fetchCustomerData();
+    // }, []);
+    // In Create.tsx - Simplified useEffect
     useEffect(() => {
-        // Try to get NID data from various sources
-        const sessionData = sessionStorage.getItem('activeCustomer');
-        const localData = localStorage.getItem('kycData');
+        console.log('🚀 ~ Inertia props:', { prefillData, customerId, photoBase64 });
 
-        if (sessionData) {
+        const fetchCustomerData = async () => {
             try {
-                const parsed = JSON.parse(sessionData);
-                setNidData(parsed);
-                // Pre-fill form with NID data
-                if (parsed.nid_identity) {
-                    const identity = parsed.nid_identity;
-                    setData({
-                        ...data,
-                        first_name: identity.name?.eng?.split(' ')[0] || '',
-                        last_name: identity.name?.eng?.split(' ').slice(1).join(' ') || '',
-                        gender:
-                            identity.gender?.eng?.toLowerCase() === 'male' ? '1' : identity.gender?.eng?.toLowerCase() === 'female' ? '2' : undefined,
-                        date_of_birth: identity.dob ? formatDobForInput(identity.dob) : '',
-                        identification_type: '2', // National ID
-                        identification_number: parsed.service_number || '',
-                    });
+                // If we have prefill data from props, use it
+                if (prefillData) {
+                    setData((prev) => ({
+                        ...prev,
+                        first_name: prefillData.first_name,
+                        middle_name: prefillData.middle_name,
+                        last_name: prefillData.last_name,
+                        title: prefillData.title || undefined,
+                        // gender: prefillData.gender || undefined,
+                        // gender: prefillData.gender === "Male" ? "1" : "2",
+                        // nationality: prefillData.nationality || '',
+                        // nationality:  prefillData.nationality === "Ethiopia" ? "1231" : "1000",
 
-                    if (identity.phone) {
-                        setData('contact', {
-                            ...data.contact,
-                            mobile_no: identity.phone,
-                            notification_mode: '1', // SMS
-                        });
+                        gender: prefillData.gender?.toLowerCase() === 'male' ? '1' : '2',
+
+                        nationality:
+                            prefillData.nationality?.toLowerCase() === 'ethiopia' || prefillData.nationality?.toLowerCase() === 'ethiopian'
+                                ? '1231'
+                                : '1000',
+                        // date_of_birth: prefillData.date_of_birth ? formatDobForInput(prefillData.date_of_birth) : '',
+                        date_of_birth: prefillData.date_of_birth ? formatDobForInput(prefillData.date_of_birth) : '',
+                        place_of_birth: prefillData.place_of_birth || '',
+
+                        identification_type: prefillData.identification_type || '2',
+                        identification_number: prefillData.identification_number || '',
+
+                        contact: {
+                            ...prev.contact,
+                            ...prefillData.contact,
+                        },
+
+                        address: {
+                            ...prev.address,
+                            ...prefillData.address,
+                        },
+
+                        occupation: prefillData.occupation || undefined,
+                        education: prefillData.education || undefined,
+                        religion: prefillData.religion || undefined,
+                        income: prefillData.income || undefined,
+                        primary_language: prefillData.primary_language || '',
+
+                        customer_type: prefillData.customer_type,
+                        customer_category: prefillData.customer_category,
+                        customer_subcategory: prefillData.customer_subcategory,
+
+                        contact_person: prefillData.contact_person || [],
+                    }));
+
+                    if (photoBase64) {
+                        localStorage.setItem('customer_photo_base64', photoBase64);
                     }
                 }
+                // If we have customerId but no prefillData, fetch from API
+                else if (customerId) {
+                    console.log('Fetching data for customer ID:', customerId);
+                    const response = await axios.get(`/api/customer/${customerId}`);
+
+                    // if (response.data.success) {
+                    //     // const customerData = response.data.data;
+                    //     // ... pre-fill form as before ...
+                    // }
+                }
             } catch (error) {
-                console.error('Error parsing NID data:', error);
+                console.error('Error fetching customer data:', error);
+                toast.error('Failed to load customer data');
             }
-        } else if (localData) {
-            try {
-                const parsed = JSON.parse(localData);
-                setNidData(parsed);
-            } catch (error) {
-                console.error('Error parsing local KYC data:', error);
-            }
-        }
-    }, []);
+        };
+
+        fetchCustomerData();
+    }, [prefillData, customerId, photoBase64, setData]); // Add dependencies
 
     const { types, loading: typesLoading, error: typesError } = useCustomerTypes();
     const { categories, loading: categoriesLoading, error: categoriesError } = useCustomerCategories(data.customer_type);
@@ -131,202 +302,406 @@ export default function Create() {
     const updateContactPerson = (i: number, field: string, val: string) =>
         setContactPersons((prev) => prev.map((p, idx) => (idx === i ? { ...p, [field]: val } : p)));
 
-    // Helper function to format date of birth for input field
+    // // Helper function to format date of birth for input field
+    // const formatDobForInput = (dobString: string) => {
+    //     if (!dobString) return '';
+    //     // Format YYYYMMDD to YYYY-MM-DD
+    //     const year = dobString.substring(0, 4);
+    //     const month = dobString.substring(4, 6);
+    //     const day = dobString.substring(6, 8);
+    //     return `${year}-${month}-${day}`;
+    // };
     const formatDobForInput = (dobString: string) => {
-        if (!dobString) return '';
-        // Format YYYYMMDD to YYYY-MM-DD
+    if (!dobString) return '';
+
+    // If already in YYYY-MM-DD, return as-is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dobString)) {
+        return dobString;
+    }
+
+    // If in YYYYMMDD, convert to YYYY-MM-DD
+    if (/^\d{8}$/.test(dobString)) {
         const year = dobString.substring(0, 4);
         const month = dobString.substring(4, 6);
         const day = dobString.substring(6, 8);
         return `${year}-${month}-${day}`;
-    };
+    }
+
+    // Fallback: try to parse any other format
+    const date = new Date(dobString);
+    if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+    }
+
+    return '';
+};
 
     // Function to upload photo to ECAF
-    const uploadPhotoToEcaf = async (customerData: any, transactionId: string) => {
-        try {
-            setUploadingPhoto(true);
+    // const uploadPhotoToEcaf = async (customerData: any, transactionId: string) => {
+    //     try {
+    //         setUploadingPhoto(true);
 
-            // Get the photo from NID data
-            const photoBase64 = nidData?.nid_identity?.photo_base64 || nidData?.identity?.photo_base64;
+    //         // Get the photo from NID data
+    //         const photoBase64 = nidData?.nid_identity?.photo_base64 || nidData?.identity?.photo_base64;
 
-            if (!photoBase64) {
-                console.warn('No photo found in NID data');
-                return { success: false, message: 'No photo available from National ID' };
-            }
+    //         if (!photoBase64) {
+    //             console.warn('No photo found in NID data');
+    //             return { success: false, message: 'No photo available from National ID' };
+    //         }
 
-            // Prepare ECAF upload data
-            const ecafData = {
-                cust_code: customerData.customer_code || customerData.customer_id,
-                first_name: data.first_name,
-                last_name: data.last_name,
-                other_name: data.middle_name || '',
-                transaction_id: transactionId,
-                photo: photoBase64, // Use the base64 photo from NID
-            };
+    //         // Prepare ECAF upload data
+    //         const ecafData = {
+    //             cust_code: customerData.customer_code || customerData.customer_id,
+    //             first_name: data.first_name,
+    //             last_name: data.last_name,
+    //             other_name: data.middle_name || '',
+    //             transaction_id: transactionId,
+    //             photo: photoBase64, // Use the base64 photo from NID
+    //         };
 
-            console.log('Uploading photo to ECAF:', {
-                cust_code: ecafData.cust_code,
-                transaction_id: ecafData.transaction_id,
-                has_photo: !!photoBase64,
-            });
+    //         console.log('Uploading photo to ECAF:', {
+    //             cust_code: ecafData.cust_code,
+    //             transaction_id: ecafData.transaction_id,
+    //             has_photo: !!photoBase64,
+    //         });
 
-            const response = await axios.post('/api/v1/ecaf-upload', ecafData);
+    //         const response = await axios.post('/api/v1/ecaf-upload', ecafData);
 
-            if (response.data.status === 'success') {
-                console.log('ECAF upload successful:', response.data);
-                return { success: true, data: response.data };
-            } else {
-                console.error('ECAF upload failed:', response.data);
-                return { success: false, message: response.data.message || 'ECAF upload failed' };
-            }
-        } catch (error: any) {
-            console.error('ECAF upload error:', error);
-            return {
-                success: false,
-                message: error.response?.data?.message || 'Failed to upload photo to ECAF',
-            };
-        } finally {
-            setUploadingPhoto(false);
-        }
-    };
+    //         if (response.data.status === 'success') {
+    //             console.log('ECAF upload successful:', response.data);
+    //             return { success: true, data: response.data };
+    //         } else {
+    //             console.error('ECAF upload failed:', response.data);
+    //             return { success: false, message: response.data.message || 'ECAF upload failed' };
+    //         }
+    //     } catch (error: any) {
+    //         console.error('ECAF upload error:', error);
+    //         return {
+    //             success: false,
+    //             message: error.response?.data?.message || 'Failed to upload photo to ECAF',
+    //         };
+    //     } finally {
+    //         setUploadingPhoto(false);
+    //     }
+    // };
 
+    // const submit: FormEventHandler = async (e) => {
+    //     e.preventDefault();
+    //     setFormErrors({});
+    //     const result = customerSchema.safeParse(data);
+
+    //     if (!result.success) {
+    //         const fieldErrors: Record<string, string> = {};
+    //         for (const [key, val] of Object.entries(result.error.flatten().fieldErrors)) {
+    //             if (val && val.length > 0) fieldErrors[key] = val[0];
+    //         }
+    //         result.error.errors.forEach((err) => {
+    //             const path = err.path.join('.');
+    //             fieldErrors[path] = err.message;
+    //         });
+    //         setFormErrors(fieldErrors);
+    //         return;
+    //     }
+
+    //     const apiData = {
+    //         ...result.data,
+    //         date_of_birth: result.data.date_of_birth ? result.data.date_of_birth.replace(/-/g, '') : null,
+    //     };
+
+    //     try {
+    //         // Step 1: Create customer
+    //         const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/customer/create`, apiData);
+
+    //         if (response.data.success) {
+    //             const customer = response.data.data?.original?.data || response.data.data;
+    //             setCreatedCustomerData(customer);
+    //             setCustomerCreated(true);
+
+    //             // Step 2: Upload photo to ECAF if we have NID data with photo
+    //             if (nidData && (nidData.nid_identity?.photo_base64 || nidData.identity?.photo_base64)) {
+    //                 const transactionId = customer.transaction_id || `txn_${Date.now()}`;
+
+    //                 toast.info('Uploading customer photo...', {
+    //                     position: 'top-right',
+    //                     className: 'bg-blue-50 text-blue-800 border-blue-100',
+    //                 });
+
+    //                 const uploadResult = await uploadPhotoToEcaf(customer, transactionId);
+
+    //                 if (uploadResult.success) {
+    //                     toast.success('Customer created and photo uploaded successfully!', {
+    //                         position: 'top-right',
+    //                         className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
+    //                     });
+    //                 } else {
+    //                     toast.warning(`Customer created but photo upload failed: ${uploadResult.message}`, {
+    //                         position: 'top-right',
+    //                         className: 'bg-yellow-50 text-yellow-800 border-yellow-100',
+    //                     });
+    //                 }
+    //             } else {
+    //                 toast.success('Customer created successfully!', {
+    //                     position: 'top-right',
+    //                     className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
+    //                 });
+    //             }
+
+    //             // Step 3: Redirect to dashboard
+    //             const phone = customer?.contact?.mobile_no || data?.contact?.mobile_no || customer?.mobile_no;
+    //             if (phone) {
+    //                 localStorage.setItem(
+    //                     'auth',
+    //                     JSON.stringify({
+    //                         phone,
+    //                         authenticated: true,
+    //                     }),
+    //                 );
+
+    //                 // Add a small delay to show success message
+    //                 setTimeout(() => {
+    //                     router.get(
+    //                         route('dashboard'),
+    //                         {
+    //                             phone: phone,
+    //                         },
+    //                         {
+    //                             preserveState: false,
+    //                         },
+    //                     );
+    //                 }, 2000);
+    //             } else {
+    //                 toast.error('Customer created but phone number not found', {
+    //                     position: 'top-right',
+    //                     className: 'bg-yellow-50 text-yellow-800 border-yellow-100',
+    //                 });
+    //             }
+    //         } else {
+    //             const { ret_code, ret_msg } = response.data;
+    //             const errorMessage = ret_msg?.split('@')[0].trim();
+
+    //             if (ret_code === '1251046016' && ret_msg.includes('Age')) {
+    //                 setFormErrors({
+    //                     date_of_birth: errorMessage,
+    //                 });
+    //             } else {
+    //                 toast.error(errorMessage, {
+    //                     position: 'top-right',
+    //                     className: 'bg-red-50 text-red-800 border-red-100',
+    //                 });
+    //             }
+    //         }
+    //     } catch (error) {
+    //         if (axios.isAxiosError(error)) {
+    //             if (error.response?.status === 422) {
+    //                 const errors = error.response.data.errors || {};
+    //                 const formattedErrors: Record<string, string> = {};
+
+    //                 Object.entries(errors).forEach(([key, value]) => {
+    //                     formattedErrors[key] = Array.isArray(value) ? value[0] : value;
+    //                     if (key.includes('.')) {
+    //                         formattedErrors[key] = Array.isArray(value) ? value[0] : value;
+    //                     }
+    //                 });
+
+    //                 setFormErrors(formattedErrors);
+    //             } else if (error.response?.data) {
+    //                 const { ret_msg } = error.response.data;
+    //                 const errorMessage = ret_msg?.split('@')[0].trim() || 'Failed to create customer.';
+    //                 toast.error(errorMessage, {
+    //                     position: 'top-right',
+    //                     className: 'bg-red-50 text-red-800 border-red-100',
+    //                 });
+    //             }
+    //         } else {
+    //             toast.error('An unexpected error occurred', {
+    //                 position: 'top-right',
+    //                 className: 'bg-red-50 text-red-800 border-red-100',
+    //             });
+    //             console.error('Error', error);
+    //         }
+    //     }
+    // };
+
+    // const submit: FormEventHandler = async (e) => {
+    //     e.preventDefault();
+    //     setFormErrors({});
+
+    //     const result = customerSchema.safeParse(data);
+    //     if (!result.success) {
+    //         // Handle validation errors...
+    //         return;
+    //     }
+
+    //     try {
+    //         // Get customer ID from session
+    //         const customerId = sessionStorage.getItem('pending_customer_id');
+
+    //         // Step 1: Create customer in CRM
+    //         const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/customer/create`, {
+    //             ...result.data,
+    //             date_of_birth: result.data.date_of_birth ? result.data.date_of_birth.replace(/-/g, '') : null,
+    //             customer_id: customerId, // Pass local customer ID
+    //         });
+
+    //         if (response.data.success) {
+    //             const customer = response.data.data?.original?.data || response.data.data;
+    //             setCreatedCustomerData(customer);
+    //             setCustomerCreated(true);
+
+    //             // Step 2: Upload photo from local database
+    //             const photoBase64 = localStorage.getItem('customer_photo_base64');
+    //             if (photoBase64) {
+    //                 await uploadPhotoToEcaf(customer, photoBase64);
+    //             }
+
+    //             // Step 3: Clear session and redirect
+    //             sessionStorage.removeItem('pending_customer_id');
+    //             localStorage.removeItem('customer_photo_base64');
+
+    //             setTimeout(() => {
+    //                 router.get(route('dashboard'));
+    //             }, 2000);
+    //         }
+    //     } catch (error) {
+    //         // Error handling...
+    //     }
+    // };
+    
     const submit: FormEventHandler = async (e) => {
-        e.preventDefault();
-        setFormErrors({});
-        const result = customerSchema.safeParse(data);
+    e.preventDefault();
+    setFormErrors({});
 
-        if (!result.success) {
-            const fieldErrors: Record<string, string> = {};
-            for (const [key, val] of Object.entries(result.error.flatten().fieldErrors)) {
-                if (val && val.length > 0) fieldErrors[key] = val[0];
+    const result = customerSchema.safeParse(data);
+    if (!result.success) {
+        // Handle validation errors
+        const fieldErrors: Record<string, string> = {};
+        for (const [key, val] of Object.entries(result.error.flatten().fieldErrors)) {
+            if (val && val.length > 0) fieldErrors[key] = val[0];
+        }
+        setFormErrors(fieldErrors);
+        return;
+    }
+
+    try {
+        // --- STEP 1: CREATE CUSTOMER ---
+        const response = await axios.post(
+            `${import.meta.env.VITE_API_BASE_URL}/customer/create`,
+            {
+                ...result.data,
+                date_of_birth: result.data.date_of_birth
+                    ? result.data.date_of_birth.replace(/-/g, "")
+                    : null,
             }
-            result.error.errors.forEach((err) => {
-                const path = err.path.join('.');
-                fieldErrors[path] = err.message;
-            });
-            setFormErrors(fieldErrors);
+        );
+
+        if (!response.data.success) {
+            toast.error("Customer creation failed");
             return;
         }
 
-        const apiData = {
-            ...result.data,
-            date_of_birth: result.data.date_of_birth ? result.data.date_of_birth.replace(/-/g, '') : null,
+        const customer =
+            response.data.data?.original?.data || response.data.data;
+        setCreatedCustomerData(customer);
+        setCustomerCreated(true);
+
+       // --- STEP 2: GET TRANSACTION ID ---
+const transactionId = customer.transaction_id || `txn_${Date.now()}`;
+
+// --- STEP 3: GET PHOTO FROM LOCAL STORAGE ---
+const base64Photo = localStorage.getItem("customer_photo_base64") || null;
+
+if (base64Photo) {
+    toast.info("Uploading customer photo...", {
+        position: "top-right",
+        className: "bg-blue-50 text-blue-800 border-blue-100",
+    });
+
+    const uploadResult = await uploadPhotoToEcaf(customer, transactionId, base64Photo);
+
+    if (uploadResult.success) {
+        toast.success("Customer created and photo uploaded successfully!", {
+            position: "top-right",
+            className: "bg-emerald-50 text-emerald-800 border-emerald-100",
+        });
+    } else {
+        toast.warning(`Customer created but photo upload failed: ${uploadResult.message}`, {
+            position: "top-right",
+            className: "bg-yellow-50 text-yellow-800 border-yellow-100",
+        });
+    }
+        } else {
+            toast.success("Customer created successfully!", {
+                position: "top-right",
+                className: "bg-emerald-50 text-emerald-800 border-emerald-100",
+            });
+        }
+
+        // --- STEP 4: CLEANUP AND REDIRECT ---
+        sessionStorage.removeItem("pending_customer_id");
+        localStorage.removeItem("customer_photo_base64");
+
+        setTimeout(() => {
+            router.get(route("services"));
+        }, 2000);
+    } catch (error) {
+        toast.error("An unexpected error occurred");
+        console.error(error);
+    }
+};
+
+    // // Updated photo upload function
+    // const uploadPhotoToEcaf = async (customerData: any, photoBase64: string, transactionId: string,) => {
+    //     try {
+    //         setUploadingPhoto(true);
+
+    //         const ecafData = {
+    //             cust_code: customerData.customer_code || customerData.customer_id,
+    //             first_name: data.first_name,
+    //             last_name: data.last_name,
+    //             other_name: data.middle_name || '',
+    //             transaction_id: transactionId
+    //             photo: photoBase64, 
+    //         };
+
+    //         await axios.post('/api/v1/ecaf-upload', ecafData);
+
+    //         toast.success('Photo uploaded successfully!');
+    //     } catch (error) {
+    //         toast.warning('Customer created but photo upload failed');
+    //     } finally {
+    //         setUploadingPhoto(false);
+    //     }
+    // };
+
+
+// --- Updated photo upload function ---
+const uploadPhotoToEcaf = async (
+    customerData: any,
+    transactionId: string,
+    photoBase64: string
+) => {
+    try {
+        setUploadingPhoto(true);
+
+        const ecafData = {
+            cust_code: customerData.customer_code || customerData.customer_id,
+            first_name: data.first_name,
+            last_name: data.last_name,
+            other_name: data.middle_name || '',
+            transaction_id: transactionId, // ✅ comma fixed
+            photo: photoBase64,            // ✅ base64 string
         };
 
-        try {
-            // Step 1: Create customer
-            const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/v1/customer/create`, apiData);
+        await axios.post('/api/v1/ecaf-upload', ecafData);
 
-            if (response.data.success) {
-                const customer = response.data.data?.original?.data || response.data.data;
-                setCreatedCustomerData(customer);
-                setCustomerCreated(true);
-
-                // Step 2: Upload photo to ECAF if we have NID data with photo
-                if (nidData && (nidData.nid_identity?.photo_base64 || nidData.identity?.photo_base64)) {
-                    const transactionId = customer.transaction_id || `txn_${Date.now()}`;
-
-                    toast.info('Uploading customer photo...', {
-                        position: 'top-right',
-                        className: 'bg-blue-50 text-blue-800 border-blue-100',
-                    });
-
-                    const uploadResult = await uploadPhotoToEcaf(customer, transactionId);
-
-                    if (uploadResult.success) {
-                        toast.success('Customer created and photo uploaded successfully!', {
-                            position: 'top-right',
-                            className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
-                        });
-                    } else {
-                        toast.warning(`Customer created but photo upload failed: ${uploadResult.message}`, {
-                            position: 'top-right',
-                            className: 'bg-yellow-50 text-yellow-800 border-yellow-100',
-                        });
-                    }
-                } else {
-                    toast.success('Customer created successfully!', {
-                        position: 'top-right',
-                        className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
-                    });
-                }
-
-                // Step 3: Redirect to dashboard
-                const phone = customer?.contact?.mobile_no || data?.contact?.mobile_no || customer?.mobile_no;
-                if (phone) {
-                    localStorage.setItem(
-                        'auth',
-                        JSON.stringify({
-                            phone,
-                            authenticated: true,
-                        }),
-                    );
-
-                    // Add a small delay to show success message
-                    setTimeout(() => {
-                        router.get(
-                            route('dashboard'),
-                            {
-                                phone: phone,
-                            },
-                            {
-                                preserveState: false,
-                            },
-                        );
-                    }, 2000);
-                } else {
-                    toast.error('Customer created but phone number not found', {
-                        position: 'top-right',
-                        className: 'bg-yellow-50 text-yellow-800 border-yellow-100',
-                    });
-                }
-            } else {
-                const { ret_code, ret_msg } = response.data;
-                const errorMessage = ret_msg?.split('@')[0].trim();
-
-                if (ret_code === '1251046016' && ret_msg.includes('Age')) {
-                    setFormErrors({
-                        date_of_birth: errorMessage,
-                    });
-                } else {
-                    toast.error(errorMessage, {
-                        position: 'top-right',
-                        className: 'bg-red-50 text-red-800 border-red-100',
-                    });
-                }
-            }
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                if (error.response?.status === 422) {
-                    const errors = error.response.data.errors || {};
-                    const formattedErrors: Record<string, string> = {};
-
-                    Object.entries(errors).forEach(([key, value]) => {
-                        formattedErrors[key] = Array.isArray(value) ? value[0] : value;
-                        if (key.includes('.')) {
-                            formattedErrors[key] = Array.isArray(value) ? value[0] : value;
-                        }
-                    });
-
-                    setFormErrors(formattedErrors);
-                } else if (error.response?.data) {
-                    const { ret_msg } = error.response.data;
-                    const errorMessage = ret_msg?.split('@')[0].trim() || 'Failed to create customer.';
-                    toast.error(errorMessage, {
-                        position: 'top-right',
-                        className: 'bg-red-50 text-red-800 border-red-100',
-                    });
-                }
-            } else {
-                toast.error('An unexpected error occurred', {
-                    position: 'top-right',
-                    className: 'bg-red-50 text-red-800 border-red-100',
-                });
-                console.error('Error', error);
-            }
-        }
-    };
-
+        return { success: true };
+    } catch (error: any) {
+        console.error("ECAF upload error:", error);
+        return { success: false, message: error?.message || 'Upload failed' };
+    } finally {
+        setUploadingPhoto(false);
+    }
+};
     const handleInputChange = (field: string, value: string) => {
         setData(field, value);
         setFormErrors((prev) => {
@@ -380,8 +755,9 @@ export default function Create() {
             {[1, 2, 3, 4].map((stepNumber) => (
                 <div key={stepNumber} className="flex items-center">
                     <div
-                        className={`flex h-6 w-6 items-center justify-center rounded-full text-sm font-medium transition-all sm:h-10 sm:w-10 ${step >= stepNumber ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-500'
-                            } ${step === stepNumber ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
+                        className={`flex h-6 w-6 items-center justify-center rounded-full text-sm font-medium transition-all sm:h-10 sm:w-10 ${
+                            step >= stepNumber ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-500'
+                        } ${step === stepNumber ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
                     >
                         {step > stepNumber ? <CheckCircle className="h-5 w-5" /> : stepNumber}
                     </div>
@@ -467,8 +843,9 @@ export default function Create() {
                                     <Label htmlFor="customer_type">Customer Type *</Label>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div
-                                            className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-4 transition-all ${data.customer_type === '1' ? 'border-green-500 bg-green-50 shadow-sm' : 'hover:bg-gray-50'
-                                                }`}
+                                            className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-4 transition-all ${
+                                                data.customer_type === '1' ? 'border-green-500 bg-green-50 shadow-sm' : 'hover:bg-gray-50'
+                                            }`}
                                             onClick={() => {
                                                 setData('customer_type', '1');
                                                 setData('customer_category', '');
@@ -477,8 +854,9 @@ export default function Create() {
                                             }}
                                         >
                                             <div
-                                                className={`flex h-12 w-12 items-center justify-center rounded-full ${data.customer_type === '1' ? 'bg-green-100' : 'bg-gray-100'
-                                                    }`}
+                                                className={`flex h-12 w-12 items-center justify-center rounded-full ${
+                                                    data.customer_type === '1' ? 'bg-green-100' : 'bg-gray-100'
+                                                }`}
                                             >
                                                 <Home className={`h-6 w-6 ${data.customer_type === '1' ? 'text-green-600' : 'text-gray-600'}`} />
                                             </div>
@@ -490,13 +868,14 @@ export default function Create() {
                                                 name="customer_type"
                                                 value="residential"
                                                 checked={data.customer_type === '1'}
-                                                onChange={() => { }}
+                                                onChange={() => {}}
                                                 className="sr-only"
                                             />
                                         </div>
                                         <div
-                                            className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-4 transition-all ${data.customer_type === '2' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'hover:bg-gray-50'
-                                                }`}
+                                            className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-4 transition-all ${
+                                                data.customer_type === '2' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'hover:bg-gray-50'
+                                            }`}
                                             onClick={() => {
                                                 setData('customer_type', '2');
                                                 setData('customer_category', '');
@@ -505,8 +884,9 @@ export default function Create() {
                                             }}
                                         >
                                             <div
-                                                className={`flex h-12 w-12 items-center justify-center rounded-full ${data.customer_type === '2' ? 'bg-blue-100' : 'bg-gray-100'
-                                                    }`}
+                                                className={`flex h-12 w-12 items-center justify-center rounded-full ${
+                                                    data.customer_type === '2' ? 'bg-blue-100' : 'bg-gray-100'
+                                                }`}
                                             >
                                                 <Building className={`h-6 w-6 ${data.customer_type === '2' ? 'text-blue-600' : 'text-gray-600'}`} />
                                             </div>
@@ -518,7 +898,7 @@ export default function Create() {
                                                 name="customer_type"
                                                 value="enterprise"
                                                 checked={data.customer_type === '2'}
-                                                onChange={() => { }}
+                                                onChange={() => {}}
                                                 className="sr-only"
                                             />
                                         </div>
@@ -1089,8 +1469,9 @@ export default function Create() {
                             type="button"
                             onClick={submit}
                             disabled={processing || uploadingPhoto}
-                            className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${uploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
-                                }`}
+                            className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${
+                                uploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
+                            }`}
                         >
                             {uploadingPhoto ? (
                                 <>

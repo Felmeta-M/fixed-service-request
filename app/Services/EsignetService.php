@@ -236,6 +236,8 @@ class EsignetService
             $phoneNumber = $payload['phone_number'] ?? null;
             $gender = $payload['gender'] ?? null;
             $nationality = $payload['nationality'] ?? null;
+            $identification_type = 2; //national id
+            $identification_number = $payload['sub'] ?? null;
             $picture = $payload['picture'] ?? null;
 
             $birthdate = null;
@@ -257,6 +259,8 @@ class EsignetService
             $customer->phone_number = $phoneNumber;
             $customer->gender = $gender;
             $customer->nationality = $nationality;
+            $customer->identification_type = $identification_type;
+            $customer->identification_number = $identification_number;
             $customer->birthdate = $birthdate;
             $customer->picture = $picture;
 

@@ -3,16 +3,18 @@
 namespace App\Services;
 
 
+use App\Models\Customer;
+use Exception;
+use InvalidArgumentException;
+use Log;
+use RuntimeException;
+use Throwable;
+
 class CustomerService extends BaseApiService
 {
     protected int $timeout = 10;
     protected int $rateLimit = 15;
     protected string $transactionId;
-
-    protected function endpoint(): string
-    {
-        return config('services.customer.create_endpoint');
-    }
 
     public function createCustomer(array $data)
     {
@@ -21,9 +23,9 @@ class CustomerService extends BaseApiService
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedXml = $this->parseResponse($xmlResponse);
             return ApiResponse::success($parsedXml);
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return ApiResponse::exception($e, 'Customer create failed.');
         }
     }
@@ -34,12 +36,12 @@ class CustomerService extends BaseApiService
         $processTime = now()->format('YmdHis');
         $this->transactionId = uniqid();
         if (!$this->transactionId) {
-            throw new \InvalidArgumentException('Transaction id cannot empty');
+            throw new InvalidArgumentException('Transaction id cannot empty');
         }
 
         return <<<XML
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
-    xmlns:ser="http://oss.huawei.com/webservice/bss/services" 
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:ser="http://oss.huawei.com/webservice/bss/services"
     xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
     <soapenv:Header/>
     <soapenv:Body>
@@ -87,7 +89,7 @@ XML;
         <com:Religion>{$data['religion']}</com:Religion>
         <com:Income>{$data['income']}</com:Income>
         <com:PrimaryLanguage>{$data['primary_language']}</com:PrimaryLanguage>
-    
+
         <com:CustomerAddressInfo>
             <com:EthioZoneOrRegion>{$data['address']['region']}</com:EthioZoneOrRegion>
             <com:AdministrativeRegionOrCity>{$data['address']['city']}</com:AdministrativeRegionOrCity>
@@ -96,7 +98,7 @@ XML;
             <com:Kebele>{$data['address']['kebele']}</com:Kebele>
             <com:HouseNo>{$data['address']['house_no']}</com:HouseNo>
         </com:CustomerAddressInfo>
-    
+
         <com:CustomerContactInfo>
             <com:NotificationMode>{$data['contact']['notification_mode']}</com:NotificationMode>
             <com:Email>{$data['contact']['email']}</com:Email>
@@ -105,7 +107,7 @@ XML;
             <com:MobileNo>{$data['contact']['mobile_no']}</com:MobileNo>
             <com:FaxNo>{$data['contact']['fax_no']}</com:FaxNo>
         </com:CustomerContactInfo>
-    
+
         <com:CustomerContactPersonInfoList>
             <com:ContactPersonInfo>
                 <com:FirstName>{$data['contact_person'][0]['first_name']}</com:FirstName>
@@ -136,20 +138,47 @@ XML;
 
         $bodyData = $response->children($namespaces['ser'])->CreateNewCustomerRespBody;
         $customerData = $bodyData->children($namespaces['com']);
-        $retCode = (string) $headerData->RetCode;
-        $retMsg  = (string) $headerData->RetMsg;
+        $retCode = (string)$headerData->RetCode;
+        $retMsg = (string)$headerData->RetMsg;
 
         if ($retCode !== '0') {
             return ApiResponse::error("Create customer profile failed: {$retMsg}");
         }
 
         return ApiResponse::success([
-            'response_time' => (string) $headerData->ResponseTime ?? '',
-            'ret_code'      => $retCode,
-            'ret_msg'       => $retMsg,
-            'customer_id'   => (string) $customerData->CustomerId ?? '',
-            'customer_code' => (string) $customerData->CustomerCode ?? '',
-            'transaction_id' =>  $this->transactionId,
+            'response_time' => (string)$headerData->ResponseTime ?? '',
+            'ret_code' => $retCode,
+            'ret_msg' => $retMsg,
+            'customer_id' => (string)$customerData->CustomerId ?? '',
+            'customer_code' => (string)$customerData->CustomerCode ?? '',
+            'transaction_id' => $this->transactionId,
         ]);
+    }
+
+    public function getLocalCustomerData($customerSubId): ?Customer
+    {
+        try {
+            $customer = Customer::query()->where('sub', $customerSubId)->first();
+
+            if (!$customer) {
+                Log::warning('No local customer found for pre-filling', [
+                    'customer_id' => $customerSubId
+                ]);
+                return null;
+            }
+            return $customer;
+
+        } catch (Exception $e) {
+            Log::error('Error getting local customer data', [
+                'customer_id' => $customerSubId,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
+
+    protected function endpoint(): string
+    {
+        return config('services.customer.create_endpoint');
     }
 }

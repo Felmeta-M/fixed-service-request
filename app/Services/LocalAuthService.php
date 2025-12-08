@@ -118,6 +118,7 @@ class LocalAuthService
         return Otp::updateOrCreate(
             ['phone_number' => $data['phone_number']],
             [
+                'customer_sub_id' => $data['customer_sub_id'],
                 'customer_code' => $data['customer_code'],
                 'name' => $data['name'],
             ]

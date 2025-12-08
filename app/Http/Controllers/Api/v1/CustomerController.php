@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerRequest;
-use App\Models\Customer;
+use App\Http\Resources\CustomerResource;
 use App\Models\CustomerCategory;
 use App\Models\CustomerSubcategory;
 use App\Models\CustomerType;
 use App\Services\CustomerService;
 use App\Services\QueryCustomerByCodeService;
 use App\Services\QueryCustomerByServiceNumberService;
+use Exception;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -44,8 +46,29 @@ class CustomerController extends Controller
      */
     public function show(Request $request)
     {
-        return Customer::query()->where('phone_number', $request->get('phone_number'))->first();
+        try {
+            $customerSubId = $this->customerService->getLocalCustomerData($request->customer_sub_id);
+
+            if (!$customerSubId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Customer sub ID not found'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => new CustomerResource($customerSubId)
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching customer data'
+            ], 500);
+        }
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -87,7 +110,7 @@ class CustomerController extends Controller
 
     public function types()
     {
-        return CustomerType::all(['id', 'code', 'name', 'api_value']);
+        return CustomerType::all(['id', 'name', 'api_value']);
     }
 
     public function categories(Request $request)

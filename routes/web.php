@@ -3,12 +3,10 @@
 use App\Http\Controllers\Api\v1\EsignetController;
 use App\Http\Controllers\Api\v1\NidController;
 use App\Http\Controllers\Api\v1\TelebirrController;
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OtpAuthController;
 use App\Http\Controllers\SupportRequestController;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 Route::get('/login', fn() => Inertia::render('Login'))->name('login');
 
@@ -29,8 +27,7 @@ Route::get('/auth/error', function () {
 })->name('auth.error');
 
 
-Route::get('/customers', [CustomerController::class, 'create'])
-    ->name('customer.create');
+//Route::get('/customers', [CustomerController::class, 'create'])->name('customer.create');
 
 // NID routes in web.php with session support
 Route::prefix('api/v1')->middleware('web')->group(function () {
@@ -44,7 +41,6 @@ Route::middleware('guest:otp')->group(function () {
     Route::post('/otp/send', [OtpAuthController::class, 'sendOneTimePassword'])->name('otp.send');
     Route::get('/otp/verify', [OtpAuthController::class, 'showVerifyForm'])->name('otp.verify.form');
     Route::post('/otp/verify', [OtpAuthController::class, 'verifyOneTimePassword'])->name('otp.verify');
-    Route::get('/create-customer', fn() => Inertia::render('Customers/Create'))->name('customers.create');
 });
 
 // OTP protected pages

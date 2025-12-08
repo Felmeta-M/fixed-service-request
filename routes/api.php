@@ -41,8 +41,8 @@ Route::prefix('v1')->group(function () {
 
     Route::prefix('locations')->group(function () {
         Route::get('/regions', [LocationController::class, 'regions']);
-        Route::get('/zones/{regionId}', [LocationController::class, 'zones']);
-        Route::get('/weredas/{zoneId}', [LocationController::class, 'weredas']);
+        Route::get('/zones/{regionId}', [LocationController::class, 'zones'])->where('regionId', '[0-9]+');
+        Route::get('/weredas/{zoneId}', [LocationController::class, 'weredas'])->where('zoneId', '[0-9]+');
     });
 
     Route::prefix('customer')->group(function () {

@@ -100,6 +100,7 @@ class OtpAuthController extends Controller
         ];
 
         $user = $this->localAuthService->resolveUserForAuth($data);
+
         Auth::guard('otp')->login($user);
 
         return redirect()->route('services');

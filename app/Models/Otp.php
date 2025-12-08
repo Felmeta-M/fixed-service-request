@@ -14,13 +14,8 @@ class Otp extends Authenticatable
 
     protected $table = 'otps';
 
-    protected $fillable = [
-        'customer_code',
-        'phone_number',
-        'code',
-        'name',
-        'expires_at',
-    ];
+    protected $fillable = ['name', 'phone_number', 'customer_sub_id', 'customer_code', 'code', 'expiry_date'];
+
 
     protected $dates = [
         'expires_at',

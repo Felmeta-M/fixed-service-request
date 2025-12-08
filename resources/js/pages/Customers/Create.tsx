@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useCustomerCategories, useCustomerSubcategories, useCustomerTypes } from '@/hooks/use-customer-types';
 import { useOccupations } from '@/hooks/use-occupations';
 import { useRegions, useWoredas, useZones } from '@/hooks/use-regions';
+import AuthLayout from '@/layouts/AuthLayout';
 import GuestLayout from '@/layouts/GuestLayout';
 import { CustomerFormValues, customerSchema } from '@/types/customer';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
@@ -22,9 +23,10 @@ interface PageProps {
 }
 
 export default function Create() {
-    // Get props from Inertia
+    const { auth } = usePage().props;
+    const { user } = auth;
     const { props } = usePage<PageProps>();
-    const { prefillData, customerId, photoBase64 } = props;
+    const { prefillData, photoBase64 } = props;
 
     const { occupations, loading, error: occupationError } = useOccupations();
     const [step, setStep] = useState(1);
@@ -76,209 +78,79 @@ export default function Create() {
     // Get NID data from session storage or local storage
     const [nidData, setNidData] = useState<any>(null);
 
-    // useEffect(() => {
-
-    //     // Try to get NID data from various sources
-    //     const sessionData = sessionStorage.getItem('activeCustomer');
-    //     const localData = localStorage.getItem('kycData');
-
-    //     if (sessionData) {
-    //         try {
-    //             const parsed = JSON.parse(sessionData);
-    //             setNidData(parsed);
-    //             // Pre-fill form with NID data
-    //             if (parsed.nid_identity) {
-    //                 const identity = parsed.nid_identity;
-    //                 setData({
-    //                     ...data,
-    //                     first_name: identity.name?.eng?.split(' ')[0] || '',
-    //                     last_name: identity.name?.eng?.split(' ').slice(1).join(' ') || '',
-    //                     gender:
-    //                         identity.gender?.eng?.toLowerCase() === 'male' ? '1' : identity.gender?.eng?.toLowerCase() === 'female' ? '2' : undefined,
-    //                     date_of_birth: identity.dob ? formatDobForInput(identity.dob) : '',
-    //                     identification_type: '2', // National ID
-    //                     identification_number: parsed.service_number || '',
-    //                 });
-
-    //                 if (identity.phone) {
-    //                     setData('contact', {
-    //                         ...data.contact,
-    //                         mobile_no: identity.phone,
-    //                         notification_mode: '1', // SMS
-    //                     });
-    //                 }
-    //             }
-    //         } catch (error) {
-    //             console.error('Error parsing NID data:', error);
-    //         }
-    //     } else if (localData) {
-    //         try {
-    //             const parsed = JSON.parse(localData);
-    //             setNidData(parsed);
-    //         } catch (error) {
-    //             console.error('Error parsing local KYC data:', error);
-    //         }
-    //     }
-    // }, []);
-
-    // Update the useEffect in Create component
-    // In Create.tsx - Simplified useEffect
-    // useEffect(() => {
-    //     const fetchCustomerData = async () => {
-    //         try {
-    //             // Get customer ID from session
-    //             const customerId = sessionStorage.getItem('pending_customer_id');
-
-    //             if (customerId) {
-    //                 // Fetch customer data from local database via API
-    //                 const response = await axios.get(`/api/customer/${customerId}/local-data`);
-    //                 const customerData = response.data;
-
-    //                 // Pre-fill form with ALL data from local DB
-    //                 setData({
-    //                     ...data,
-    //                     // Personal Info
-    //                     first_name: customerData.first_name || '',
-    //                     middle_name: customerData.middle_name || '',
-    //                     last_name: customerData.last_name || '',
-    //                     title: customerData.title || undefined,
-    //                     gender: customerData.gender || undefined,
-    //                     nationality: customerData.nationality || '',
-    //                     date_of_birth: customerData.date_of_birth ? formatDobForInput(customerData.date_of_birth) : '',
-    //                     place_of_birth: customerData.place_of_birth || '',
-
-    //                     // Identification
-    //                     identification_type: customerData.identification_type || '2',
-    //                     identification_number: customerData.identification_number || '',
-
-    //                     // Contact Info
-    //                     contact: {
-    //                         notification_mode: customerData.contact?.notification_mode || '',
-    //                         mobile_no: customerData.phone || customerData.contact?.mobile_no || '',
-    //                         office_no: customerData.contact?.office_no || '',
-    //                         email: customerData.email || customerData.contact?.email || '',
-    //                         home_no: customerData.contact?.home_no || '',
-    //                         fax_no: customerData.contact?.fax_no || '',
-    //                     },
-
-    //                     // Address
-    //                     address: customerData.address || {
-    //                         region: '',
-    //                         zone: '',
-    //                         woreda: '',
-    //                         city: '',
-    //                         street_name: '',
-    //                         kebele: '',
-    //                         house_no: '',
-    //                     },
-
-    //                     // Professional Info
-    //                     occupation: customerData.occupation || undefined,
-    //                     education: customerData.education || undefined,
-    //                     religion: customerData.religion || undefined,
-    //                     income: customerData.income || undefined,
-    //                     primary_language: customerData.primary_language || '',
-
-    //                     // Customer Type
-    //                     customer_type: customerData.customer_type || undefined,
-    //                     customer_category: customerData.customer_category || undefined,
-    //                     customer_subcategory: customerData.customer_subcategory || undefined,
-    //                     customer_level: '2',
-
-    //                     // Contact Persons
-    //                     contact_person: customerData.contact_person || [],
-    //                 });
-
-    //                 // Store photo base64 for later ECAF upload
-    //                 if (customerData.photo_base64) {
-    //                     localStorage.setItem('customer_photo_base64', customerData.photo_base64);
-    //                 }
-    //             }
-    //         } catch (error) {
-    //             console.error('Error fetching customer data:', error);
-    //             toast.error('Failed to load customer data');
-    //         }
-    //     };
-
-    //     fetchCustomerData();
-    // }, []);
-    // In Create.tsx - Simplified useEffect
     useEffect(() => {
-        console.log('🚀 ~ Inertia props:', { prefillData, customerId, photoBase64 });
-
         const fetchCustomerData = async () => {
             try {
-                // If we have prefill data from props, use it
                 if (prefillData) {
                     setData((prev) => ({
                         ...prev,
-                        first_name: prefillData.first_name,
-                        middle_name: prefillData.middle_name,
-                        last_name: prefillData.last_name,
-                        title: prefillData.title || undefined,
-                        // gender: prefillData.gender || undefined,
-                        // gender: prefillData.gender === "Male" ? "1" : "2",
-                        // nationality: prefillData.nationality || '',
-                        // nationality:  prefillData.nationality === "Ethiopia" ? "1231" : "1000",
-
+                        first_name: prefillData.first_name || '',
+                        middle_name: prefillData.middle_name || '',
+                        last_name: prefillData.last_name || '',
+                        title: prefillData.title || '',
                         gender: prefillData.gender?.toLowerCase() === 'male' ? '1' : '2',
-
-                        nationality:
-                            prefillData.nationality?.toLowerCase() === 'ethiopia' || prefillData.nationality?.toLowerCase() === 'ethiopian'
-                                ? '1231'
-                                : '1000',
-                        // date_of_birth: prefillData.date_of_birth ? formatDobForInput(prefillData.date_of_birth) : '',
-                        date_of_birth: prefillData.date_of_birth ? formatDobForInput(prefillData.date_of_birth) : '',
+                        nationality: prefillData.nationality?.toLowerCase() === 'ethiopia' ? '1231' : '1000',
+                        date_of_birth: prefillData.date_of_birth,
                         place_of_birth: prefillData.place_of_birth || '',
-
                         identification_type: prefillData.identification_type || '2',
                         identification_number: prefillData.identification_number || '',
-
                         contact: {
                             ...prev.contact,
-                            ...prefillData.contact,
+                            ...(prefillData.contact || {}),
                         },
-
                         address: {
                             ...prev.address,
-                            ...prefillData.address,
+                            ...(prefillData.address || {}),
                         },
-
-                        occupation: prefillData.occupation || undefined,
-                        education: prefillData.education || undefined,
-                        religion: prefillData.religion || undefined,
-                        income: prefillData.income || undefined,
+                        occupation: prefillData.occupation || '',
+                        education: prefillData.education || '',
+                        religion: prefillData.religion || '',
+                        income: prefillData.income || '',
                         primary_language: prefillData.primary_language || '',
-
-                        customer_type: prefillData.customer_type,
-                        customer_category: prefillData.customer_category,
-                        customer_subcategory: prefillData.customer_subcategory,
-
+                        customer_type: prefillData.customer_type || '',
+                        customer_category: prefillData.customer_category || '',
+                        customer_subcategory: prefillData.customer_subcategory || '',
                         contact_person: prefillData.contact_person || [],
                     }));
-
                     if (photoBase64) {
                         localStorage.setItem('customer_photo_base64', photoBase64);
                     }
-                }
-                // If we have customerId but no prefillData, fetch from API
-                else if (customerId) {
-                    console.log('Fetching data for customer ID:', customerId);
-                    const response = await axios.get(`/api/customer/${customerId}`);
+                } else {
+                    const response = await axios.get('/api/v1/customer', {
+                        params: { customer_sub_id: user.customer_sub_id },
+                    });
+                    if (response.data?.success && response.data?.data) {
+                        const customer = response.data.data;
+                        const transform = {
+                            gender: customer.gender?.toLowerCase() === 'male' ? '1' : '2',
+                            nationality: customer.nationality?.toLowerCase() === 'ethiopia' ? '1231' : '1000',
+                        };
+                        setData((prev) => ({
+                            ...prev,
+                            ...customer,
+                            ...transform,
+                            contact: {
+                                ...prev.contact,
+                                ...(customer.contact || {}),
+                            },
+                            address: {
+                                ...prev.address,
+                                ...(customer.address || {}),
+                            },
+                        }));
 
-                    // if (response.data.success) {
-                    //     // const customerData = response.data.data;
-                    //     // ... pre-fill form as before ...
-                    // }
+                        if (customer.photo_base64) {
+                            localStorage.setItem('customer_photo_base64', customer.photo_base64);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching customer data:', error);
-                toast.error('Failed to load customer data');
             }
         };
 
         fetchCustomerData();
-    }, [prefillData, customerId, photoBase64, setData]); // Add dependencies
+    }, [prefillData, photoBase64, setData, user.customer_sub_id]);
 
     const { types, loading: typesLoading, error: typesError } = useCustomerTypes();
     const { categories, loading: categoriesLoading, error: categoriesError } = useCustomerCategories(data.customer_type);
@@ -302,406 +174,104 @@ export default function Create() {
     const updateContactPerson = (i: number, field: string, val: string) =>
         setContactPersons((prev) => prev.map((p, idx) => (idx === i ? { ...p, [field]: val } : p)));
 
-    // // Helper function to format date of birth for input field
-    // const formatDobForInput = (dobString: string) => {
-    //     if (!dobString) return '';
-    //     // Format YYYYMMDD to YYYY-MM-DD
-    //     const year = dobString.substring(0, 4);
-    //     const month = dobString.substring(4, 6);
-    //     const day = dobString.substring(6, 8);
-    //     return `${year}-${month}-${day}`;
-    // };
-    const formatDobForInput = (dobString: string) => {
-    if (!dobString) return '';
-
-    // If already in YYYY-MM-DD, return as-is
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dobString)) {
-        return dobString;
-    }
-
-    // If in YYYYMMDD, convert to YYYY-MM-DD
-    if (/^\d{8}$/.test(dobString)) {
-        const year = dobString.substring(0, 4);
-        const month = dobString.substring(4, 6);
-        const day = dobString.substring(6, 8);
-        return `${year}-${month}-${day}`;
-    }
-
-    // Fallback: try to parse any other format
-    const date = new Date(dobString);
-    if (!isNaN(date.getTime())) {
-        return date.toISOString().split('T')[0];
-    }
-
-    return '';
-};
-
-    // Function to upload photo to ECAF
-    // const uploadPhotoToEcaf = async (customerData: any, transactionId: string) => {
-    //     try {
-    //         setUploadingPhoto(true);
-
-    //         // Get the photo from NID data
-    //         const photoBase64 = nidData?.nid_identity?.photo_base64 || nidData?.identity?.photo_base64;
-
-    //         if (!photoBase64) {
-    //             console.warn('No photo found in NID data');
-    //             return { success: false, message: 'No photo available from National ID' };
-    //         }
-
-    //         // Prepare ECAF upload data
-    //         const ecafData = {
-    //             cust_code: customerData.customer_code || customerData.customer_id,
-    //             first_name: data.first_name,
-    //             last_name: data.last_name,
-    //             other_name: data.middle_name || '',
-    //             transaction_id: transactionId,
-    //             photo: photoBase64, // Use the base64 photo from NID
-    //         };
-
-    //         console.log('Uploading photo to ECAF:', {
-    //             cust_code: ecafData.cust_code,
-    //             transaction_id: ecafData.transaction_id,
-    //             has_photo: !!photoBase64,
-    //         });
-
-    //         const response = await axios.post('/api/v1/ecaf-upload', ecafData);
-
-    //         if (response.data.status === 'success') {
-    //             console.log('ECAF upload successful:', response.data);
-    //             return { success: true, data: response.data };
-    //         } else {
-    //             console.error('ECAF upload failed:', response.data);
-    //             return { success: false, message: response.data.message || 'ECAF upload failed' };
-    //         }
-    //     } catch (error: any) {
-    //         console.error('ECAF upload error:', error);
-    //         return {
-    //             success: false,
-    //             message: error.response?.data?.message || 'Failed to upload photo to ECAF',
-    //         };
-    //     } finally {
-    //         setUploadingPhoto(false);
-    //     }
-    // };
-
-    // const submit: FormEventHandler = async (e) => {
-    //     e.preventDefault();
-    //     setFormErrors({});
-    //     const result = customerSchema.safeParse(data);
-
-    //     if (!result.success) {
-    //         const fieldErrors: Record<string, string> = {};
-    //         for (const [key, val] of Object.entries(result.error.flatten().fieldErrors)) {
-    //             if (val && val.length > 0) fieldErrors[key] = val[0];
-    //         }
-    //         result.error.errors.forEach((err) => {
-    //             const path = err.path.join('.');
-    //             fieldErrors[path] = err.message;
-    //         });
-    //         setFormErrors(fieldErrors);
-    //         return;
-    //     }
-
-    //     const apiData = {
-    //         ...result.data,
-    //         date_of_birth: result.data.date_of_birth ? result.data.date_of_birth.replace(/-/g, '') : null,
-    //     };
-
-    //     try {
-    //         // Step 1: Create customer
-    //         const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/customer/create`, apiData);
-
-    //         if (response.data.success) {
-    //             const customer = response.data.data?.original?.data || response.data.data;
-    //             setCreatedCustomerData(customer);
-    //             setCustomerCreated(true);
-
-    //             // Step 2: Upload photo to ECAF if we have NID data with photo
-    //             if (nidData && (nidData.nid_identity?.photo_base64 || nidData.identity?.photo_base64)) {
-    //                 const transactionId = customer.transaction_id || `txn_${Date.now()}`;
-
-    //                 toast.info('Uploading customer photo...', {
-    //                     position: 'top-right',
-    //                     className: 'bg-blue-50 text-blue-800 border-blue-100',
-    //                 });
-
-    //                 const uploadResult = await uploadPhotoToEcaf(customer, transactionId);
-
-    //                 if (uploadResult.success) {
-    //                     toast.success('Customer created and photo uploaded successfully!', {
-    //                         position: 'top-right',
-    //                         className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
-    //                     });
-    //                 } else {
-    //                     toast.warning(`Customer created but photo upload failed: ${uploadResult.message}`, {
-    //                         position: 'top-right',
-    //                         className: 'bg-yellow-50 text-yellow-800 border-yellow-100',
-    //                     });
-    //                 }
-    //             } else {
-    //                 toast.success('Customer created successfully!', {
-    //                     position: 'top-right',
-    //                     className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
-    //                 });
-    //             }
-
-    //             // Step 3: Redirect to dashboard
-    //             const phone = customer?.contact?.mobile_no || data?.contact?.mobile_no || customer?.mobile_no;
-    //             if (phone) {
-    //                 localStorage.setItem(
-    //                     'auth',
-    //                     JSON.stringify({
-    //                         phone,
-    //                         authenticated: true,
-    //                     }),
-    //                 );
-
-    //                 // Add a small delay to show success message
-    //                 setTimeout(() => {
-    //                     router.get(
-    //                         route('dashboard'),
-    //                         {
-    //                             phone: phone,
-    //                         },
-    //                         {
-    //                             preserveState: false,
-    //                         },
-    //                     );
-    //                 }, 2000);
-    //             } else {
-    //                 toast.error('Customer created but phone number not found', {
-    //                     position: 'top-right',
-    //                     className: 'bg-yellow-50 text-yellow-800 border-yellow-100',
-    //                 });
-    //             }
-    //         } else {
-    //             const { ret_code, ret_msg } = response.data;
-    //             const errorMessage = ret_msg?.split('@')[0].trim();
-
-    //             if (ret_code === '1251046016' && ret_msg.includes('Age')) {
-    //                 setFormErrors({
-    //                     date_of_birth: errorMessage,
-    //                 });
-    //             } else {
-    //                 toast.error(errorMessage, {
-    //                     position: 'top-right',
-    //                     className: 'bg-red-50 text-red-800 border-red-100',
-    //                 });
-    //             }
-    //         }
-    //     } catch (error) {
-    //         if (axios.isAxiosError(error)) {
-    //             if (error.response?.status === 422) {
-    //                 const errors = error.response.data.errors || {};
-    //                 const formattedErrors: Record<string, string> = {};
-
-    //                 Object.entries(errors).forEach(([key, value]) => {
-    //                     formattedErrors[key] = Array.isArray(value) ? value[0] : value;
-    //                     if (key.includes('.')) {
-    //                         formattedErrors[key] = Array.isArray(value) ? value[0] : value;
-    //                     }
-    //                 });
-
-    //                 setFormErrors(formattedErrors);
-    //             } else if (error.response?.data) {
-    //                 const { ret_msg } = error.response.data;
-    //                 const errorMessage = ret_msg?.split('@')[0].trim() || 'Failed to create customer.';
-    //                 toast.error(errorMessage, {
-    //                     position: 'top-right',
-    //                     className: 'bg-red-50 text-red-800 border-red-100',
-    //                 });
-    //             }
-    //         } else {
-    //             toast.error('An unexpected error occurred', {
-    //                 position: 'top-right',
-    //                 className: 'bg-red-50 text-red-800 border-red-100',
-    //             });
-    //             console.error('Error', error);
-    //         }
-    //     }
-    // };
-
-    // const submit: FormEventHandler = async (e) => {
-    //     e.preventDefault();
-    //     setFormErrors({});
-
-    //     const result = customerSchema.safeParse(data);
-    //     if (!result.success) {
-    //         // Handle validation errors...
-    //         return;
-    //     }
-
-    //     try {
-    //         // Get customer ID from session
-    //         const customerId = sessionStorage.getItem('pending_customer_id');
-
-    //         // Step 1: Create customer in CRM
-    //         const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/customer/create`, {
-    //             ...result.data,
-    //             date_of_birth: result.data.date_of_birth ? result.data.date_of_birth.replace(/-/g, '') : null,
-    //             customer_id: customerId, // Pass local customer ID
-    //         });
-
-    //         if (response.data.success) {
-    //             const customer = response.data.data?.original?.data || response.data.data;
-    //             setCreatedCustomerData(customer);
-    //             setCustomerCreated(true);
-
-    //             // Step 2: Upload photo from local database
-    //             const photoBase64 = localStorage.getItem('customer_photo_base64');
-    //             if (photoBase64) {
-    //                 await uploadPhotoToEcaf(customer, photoBase64);
-    //             }
-
-    //             // Step 3: Clear session and redirect
-    //             sessionStorage.removeItem('pending_customer_id');
-    //             localStorage.removeItem('customer_photo_base64');
-
-    //             setTimeout(() => {
-    //                 router.get(route('dashboard'));
-    //             }, 2000);
-    //         }
-    //     } catch (error) {
-    //         // Error handling...
-    //     }
-    // };
-    
     const submit: FormEventHandler = async (e) => {
-    e.preventDefault();
-    setFormErrors({});
+        e.preventDefault();
+        setFormErrors({});
 
-    const result = customerSchema.safeParse(data);
-    if (!result.success) {
-        // Handle validation errors
-        const fieldErrors: Record<string, string> = {};
-        for (const [key, val] of Object.entries(result.error.flatten().fieldErrors)) {
-            if (val && val.length > 0) fieldErrors[key] = val[0];
-        }
-        setFormErrors(fieldErrors);
-        return;
-    }
-
-    try {
-        // --- STEP 1: CREATE CUSTOMER ---
-        const response = await axios.post(
-            `${import.meta.env.VITE_API_BASE_URL}/customer/create`,
-            {
-                ...result.data,
-                date_of_birth: result.data.date_of_birth
-                    ? result.data.date_of_birth.replace(/-/g, "")
-                    : null,
+        const result = customerSchema.safeParse(data);
+        if (!result.success) {
+            // Handle validation errors
+            const fieldErrors: Record<string, string> = {};
+            for (const [key, val] of Object.entries(result.error.flatten().fieldErrors)) {
+                if (val && val.length > 0) fieldErrors[key] = val[0];
             }
-        );
-
-        if (!response.data.success) {
-            toast.error("Customer creation failed");
+            setFormErrors(fieldErrors);
             return;
         }
 
-        const customer =
-            response.data.data?.original?.data || response.data.data;
-        setCreatedCustomerData(customer);
-        setCustomerCreated(true);
-
-       // --- STEP 2: GET TRANSACTION ID ---
-const transactionId = customer.transaction_id || `txn_${Date.now()}`;
-
-// --- STEP 3: GET PHOTO FROM LOCAL STORAGE ---
-const base64Photo = localStorage.getItem("customer_photo_base64") || null;
-
-if (base64Photo) {
-    toast.info("Uploading customer photo...", {
-        position: "top-right",
-        className: "bg-blue-50 text-blue-800 border-blue-100",
-    });
-
-    const uploadResult = await uploadPhotoToEcaf(customer, transactionId, base64Photo);
-
-    if (uploadResult.success) {
-        toast.success("Customer created and photo uploaded successfully!", {
-            position: "top-right",
-            className: "bg-emerald-50 text-emerald-800 border-emerald-100",
-        });
-    } else {
-        toast.warning(`Customer created but photo upload failed: ${uploadResult.message}`, {
-            position: "top-right",
-            className: "bg-yellow-50 text-yellow-800 border-yellow-100",
-        });
-    }
-        } else {
-            toast.success("Customer created successfully!", {
-                position: "top-right",
-                className: "bg-emerald-50 text-emerald-800 border-emerald-100",
+        try {
+            // --- STEP 1: CREATE CUSTOMER ---
+            const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/customer/create`, {
+                ...result.data,
+                date_of_birth: result.data.date_of_birth ? result.data.date_of_birth.replace(/-/g, '') : null,
             });
+
+            if (!response.data.success) {
+                toast.error('Customer creation failed');
+                return;
+            }
+
+            const customer = response.data.data?.original?.data || response.data.data;
+            setCreatedCustomerData(customer);
+            setCustomerCreated(true);
+
+            // --- STEP 2: GET TRANSACTION ID ---
+            const transactionId = customer.transaction_id || `txn_${Date.now()}`;
+
+            // --- STEP 3: GET PHOTO FROM LOCAL STORAGE ---
+            const base64Photo = localStorage.getItem('customer_photo_base64') || null;
+
+            if (base64Photo) {
+                toast.info('Uploading customer photo...', {
+                    position: 'top-right',
+                    className: 'bg-blue-50 text-blue-800 border-blue-100',
+                });
+
+                const uploadResult = await uploadPhotoToEcaf(customer, transactionId, base64Photo);
+
+                if (uploadResult.success) {
+                    toast.success('Customer created and photo uploaded successfully!', {
+                        position: 'top-right',
+                        className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
+                    });
+                } else {
+                    toast.warning(`Customer created but photo upload failed: ${uploadResult.message}`, {
+                        position: 'top-right',
+                        className: 'bg-yellow-50 text-yellow-800 border-yellow-100',
+                    });
+                }
+            } else {
+                toast.success('Customer created successfully!', {
+                    position: 'top-right',
+                    className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
+                });
+            }
+
+            // --- STEP 4: CLEANUP AND REDIRECT ---
+            sessionStorage.removeItem('pending_customer_id');
+            localStorage.removeItem('customer_photo_base64');
+
+            setTimeout(() => {
+                router.get(route('services'));
+            }, 2000);
+        } catch (error) {
+            toast.error('An unexpected error occurred');
+            console.error(error);
         }
+    };
+    const uploadPhotoToEcaf = async (customerData: any, transactionId: string, photoBase64: string) => {
+        try {
+            setUploadingPhoto(true);
 
-        // --- STEP 4: CLEANUP AND REDIRECT ---
-        sessionStorage.removeItem("pending_customer_id");
-        localStorage.removeItem("customer_photo_base64");
+            const ecafData = {
+                cust_code: customerData.customer_code || customerData.customer_id,
+                first_name: data.first_name,
+                last_name: data.last_name,
+                other_name: data.middle_name || '',
+                transaction_id: transactionId, // ✅ comma fixed
+                photo: photoBase64, // ✅ base64 string
+            };
 
-        setTimeout(() => {
-            router.get(route("services"));
-        }, 2000);
-    } catch (error) {
-        toast.error("An unexpected error occurred");
-        console.error(error);
-    }
-};
+            await axios.post('/api/v1/ecaf-upload', ecafData);
 
-    // // Updated photo upload function
-    // const uploadPhotoToEcaf = async (customerData: any, photoBase64: string, transactionId: string,) => {
-    //     try {
-    //         setUploadingPhoto(true);
-
-    //         const ecafData = {
-    //             cust_code: customerData.customer_code || customerData.customer_id,
-    //             first_name: data.first_name,
-    //             last_name: data.last_name,
-    //             other_name: data.middle_name || '',
-    //             transaction_id: transactionId
-    //             photo: photoBase64, 
-    //         };
-
-    //         await axios.post('/api/v1/ecaf-upload', ecafData);
-
-    //         toast.success('Photo uploaded successfully!');
-    //     } catch (error) {
-    //         toast.warning('Customer created but photo upload failed');
-    //     } finally {
-    //         setUploadingPhoto(false);
-    //     }
-    // };
-
-
-// --- Updated photo upload function ---
-const uploadPhotoToEcaf = async (
-    customerData: any,
-    transactionId: string,
-    photoBase64: string
-) => {
-    try {
-        setUploadingPhoto(true);
-
-        const ecafData = {
-            cust_code: customerData.customer_code || customerData.customer_id,
-            first_name: data.first_name,
-            last_name: data.last_name,
-            other_name: data.middle_name || '',
-            transaction_id: transactionId, // ✅ comma fixed
-            photo: photoBase64,            // ✅ base64 string
-        };
-
-        await axios.post('/api/v1/ecaf-upload', ecafData);
-
-        return { success: true };
-    } catch (error: any) {
-        console.error("ECAF upload error:", error);
-        return { success: false, message: error?.message || 'Upload failed' };
-    } finally {
-        setUploadingPhoto(false);
-    }
-};
+            return { success: true };
+        } catch (error: any) {
+            console.error('ECAF upload error:', error);
+            return { success: false, message: error?.message || 'Upload failed' };
+        } finally {
+            setUploadingPhoto(false);
+        }
+    };
     const handleInputChange = (field: string, value: string) => {
         setData(field, value);
         setFormErrors((prev) => {
@@ -785,7 +355,7 @@ const uploadPhotoToEcaf = async (
     }
 
     return (
-        <GuestLayout>
+        <AuthLayout>
             <Head title="Create Customer" />
 
             {/* Photo Upload Status */}
@@ -939,7 +509,7 @@ const uploadPhotoToEcaf = async (
                                 <FormSelect
                                     label="Title"
                                     id="title"
-                                    value={data.title || ''}
+                                    value={data.title || '1'}
                                     onChange={(value) => handleSelectChange('title', value)}
                                     options={[
                                         { label: 'Mr.', value: '1' },
@@ -994,7 +564,7 @@ const uploadPhotoToEcaf = async (
                                     type="date"
                                     value={data.date_of_birth}
                                     onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                                    placeholder="e.g. 19900101"
+                                    placeholder=""
                                     error={formErrors.date_of_birth}
                                 />
                                 <FormInput
@@ -1008,10 +578,10 @@ const uploadPhotoToEcaf = async (
                                 <FormSelect
                                     label="Nationality"
                                     id="nationality"
-                                    value={data.nationality || ''}
+                                    value={data.nationality || '1231'}
                                     onChange={(value) => handleSelectChange('nationality', value)}
                                     options={[
-                                        { label: 'Ethiopian', value: '1231' },
+                                        { label: 'Ethiopia', value: '1231' },
                                         { label: 'Other', value: '1000' },
                                     ]}
                                     placeholder="Select nationality"
@@ -1020,7 +590,7 @@ const uploadPhotoToEcaf = async (
                                 <FormSelect
                                     label="Primary Language"
                                     id="primary_language"
-                                    value={data.primary_language || ''}
+                                    value={data.primary_language || '2060'}
                                     onChange={(value) => handleSelectChange('primary_language', value)}
                                     options={[
                                         { label: 'English', value: '2002' },
@@ -1057,7 +627,7 @@ const uploadPhotoToEcaf = async (
                                     <FormSelect
                                         label="Identification Type"
                                         id="identification_type"
-                                        value={data.identification_type || ''}
+                                        value={data.identification_type || '2'}
                                         onChange={(value) => handleSelectChange('identification_type', value)}
                                         options={[
                                             { label: 'Passport', value: '1' },
@@ -1101,7 +671,7 @@ const uploadPhotoToEcaf = async (
                                     <FormSelect
                                         label="Notification Mode"
                                         id="contact.notification_mode"
-                                        value={data.contact?.notification_mode || ''}
+                                        value={data.contact?.notification_mode || '1'}
                                         onChange={(val) => handleNestedInputChange('contact', 'notification_mode', val)}
                                         options={[
                                             { label: 'SMS', value: '1' },
@@ -1488,6 +1058,6 @@ const uploadPhotoToEcaf = async (
                     )}
                 </div>
             </div>
-        </GuestLayout>
+        </AuthLayout>
     );
 }

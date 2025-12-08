@@ -86,7 +86,8 @@ class HandleInertiaRequests extends Middleware
 
         return [
             'id' => $user->id,
-            'customer_code' => $user->customer_code,
+            'customer_sub_id' => $user?->customer_sub_id,
+            'customer_code' => $user?->customer_code,
             'name' => $user->name,
             'phone' => $user->phone,
         ];

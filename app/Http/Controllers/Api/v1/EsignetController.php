@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CustomerResource;
+use App\Services\CustomerService;
 use App\Services\EsignetService;
 use App\Services\LocalAuthService;
 use Illuminate\Http\Request;
@@ -13,7 +15,8 @@ class EsignetController extends Controller
 {
     public function __construct(
         protected EsignetService   $esignetService,
-        protected LocalAuthService $localAuthService
+        protected LocalAuthService $localAuthService,
+        protected CustomerService  $customerService,
     )
     {
     }
@@ -112,20 +115,22 @@ class EsignetController extends Controller
             'phone_number' => $esignetUser->phone_number,
             'email' => $esignetUser->email,
             'customer_code' => $esignetUser?->verified_at ? $esignetUser->customer_code : null,
+            'customer_sub_id' => $esignetUser->sub,
         ];
 
-        $otp = $this->localAuthService->resolveUserForAuth($data);
+        $user = $this->localAuthService->resolveUserForAuth($data);
 
-        Auth::guard('otp')->login($otp);
+        Auth::guard('otp')->login($user);
 
         session()->forget(['esign_state', 'esign_code_verifier']);
 
         if ($esignetUser?->verified_at) {
             return redirect()->route('services');
         }
-        return redirect()->route('customer.create')->with([
+        
+        return redirect()->route('customers.create')->with([
             'error' => 'Your profile is incomplete. Please update it.',
-            'prefill' => $result['data'] ?? [],
+            'prefill' => new CustomerResource($this->customerService->getLocalCustomerData($user->customer_sub_id)),
         ]);
     }
 

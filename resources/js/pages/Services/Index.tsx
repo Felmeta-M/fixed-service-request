@@ -6,7 +6,21 @@ import { useSurveyList } from '@/hooks/use-survey-list';
 import MainLayout from '@/layouts/main-layout';
 import { ServiceProvisionStatus } from '@/lib/status-map';
 import { Link, usePage } from '@inertiajs/react';
-import { AlertCircle, BarChart3, Box, CheckCircle2, ChevronDown, ChevronUp, Clock, Filter, Phone, Plus, TrendingUp, Wifi, X } from 'lucide-react';
+import {
+    AlertCircle,
+    BarChart3,
+    Box,
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    Filter,
+    Phone,
+    Plus,
+    TrendingUp,
+    Wifi,
+    X
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const typeMap = {
@@ -49,6 +63,10 @@ export default function CustomerDashboard() {
     });
 
     const { auth } = usePage().props;
+
+    if (auth.user.customer_code) {
+        // return create customer page
+    }
 
     const { surveys, loading, error, fetchSurveys, refetch, hasMore, loadMore, total } = useSurveyList();
 

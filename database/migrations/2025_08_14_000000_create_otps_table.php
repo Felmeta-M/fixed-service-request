@@ -13,6 +13,7 @@ return new class extends Migration {
             $table->string('code')->unique()->nullable();
             $table->string('name')->nullable();
             $table->string('customer_code')->nullable();
+            $table->string('customer_sub_id')->nullable();
             $table->timestamp('expires_at');
             $table->timestamps();
         });

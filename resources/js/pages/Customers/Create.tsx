@@ -2,7 +2,6 @@ import FormInput from '@/components/form-input';
 import FormSelect from '@/components/form-select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { useCustomerCategories, useCustomerSubcategories, useCustomerTypes } from '@/hooks/use-customer-types';
 import { useOccupations } from '@/hooks/use-occupations';
 import { useRegions, useWoredas, useZones } from '@/hooks/use-regions';
@@ -11,7 +10,7 @@ import GuestLayout from '@/layouts/GuestLayout';
 import { CustomerFormValues, customerSchema } from '@/types/customer';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { ArrowLeft, ArrowRight, Building, CheckCircle, FileText, Home, MapPin, Phone, Upload, User } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building, CheckCircle, FileText, MapPin, Phone, Upload, User } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -185,11 +184,13 @@ export default function Create() {
                             ...prev,
                             ...customer,
                             ...transform,
+
                             contact: {
                                 ...prev.contact,
-                                notification_mode: customer.notification_mode || '1',
                                 ...(customer.contact || {}),
+                                notification_mode: customer.contact?.notification_mode || '1',
                             },
+
                             address: {
                                 ...prev.address,
                                 ...(customer.address || {}),
@@ -264,13 +265,18 @@ export default function Create() {
 
         try {
             // --- STEP 1: CREATE CUSTOMER ---
-            const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/customer/create`, {
-                headers: {
-                    Authorization: `Bearer ${auth.user.api_token}`,
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_BASE_URL}/customer/create`,
+                {
+                    ...result.data,
+                    date_of_birth: result.data.date_of_birth ? result.data.date_of_birth.replace(/-/g, '') : null,
                 },
-                ...result.data,
-                date_of_birth: result.data.date_of_birth ? result.data.date_of_birth.replace(/-/g, '') : null,
-            });
+                {
+                    headers: {
+                        Authorization: `Bearer ${auth.user.api_token}`,
+                    },
+                },
+            );
 
             if (!response.data.success) {
                 toast.error('Customer creation failed');
@@ -507,8 +513,8 @@ export default function Create() {
                         <CardContent className="space-y-6 p-6">
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 {/* Updated Customer Type */}
-                                <div className="space-y-2 md:col-span-2">
-                                    <Label htmlFor="customer_type">Customer Type *</Label>
+                                {/* <div className="space-y-2 md:col-span-2">
+                                    <Label htmlFor="customer_type">Customer Type</Label>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div
                                             className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-4 transition-all ${
@@ -573,11 +579,44 @@ export default function Create() {
                                     </div>
                                     {typesLoading && <p className="text-sm text-gray-500">Loading customer types...</p>}
                                     {formErrors.customer_type && <p className="text-sm font-medium text-destructive">{formErrors.customer_type}</p>}
+                                </div> */}
+                                <div className="space-y-2">
+                                    <FormSelect
+                                        label="Customer Type"
+                                        required
+                                        id="customer_type"
+                                        value={data.customer_type}
+                                        onChange={(val) => {
+                                            setData('customer_type', val);
+
+                                            // If Residential → auto-assign default category/subcategory
+                                            if (val === '1') {
+                                                setData('customer_category', '1');
+                                                setData('customer_subcategory', '1');
+                                            }
+
+                                            // If Enterprise → reset them
+                                            if (val === '2') {
+                                                setData('customer_category', '');
+                                                setData('customer_subcategory', '');
+                                            }
+
+                                            clearFieldError('customer_type');
+                                        }}
+                                        options={[
+                                            { label: 'Residential', value: '1' },
+                                            { label: 'Enterprise', value: '2' },
+                                        ]}
+                                        placeholder="Select customer type"
+                                        error={formErrors.customer_type}
+                                    />
                                 </div>
+
                                 {/* Customer Category and Subcategory */}
                                 <>
                                     <FormSelect
                                         label="Customer Category"
+                                        required
                                         id="customer_category"
                                         value={data.customer_category}
                                         onChange={(val) => {
@@ -592,6 +631,7 @@ export default function Create() {
                                     />
                                     <FormSelect
                                         label="Customer Subcategory"
+                                        required
                                         id="customer_subcategory"
                                         value={data.customer_subcategory}
                                         onChange={(val) => {
@@ -607,6 +647,7 @@ export default function Create() {
                                 <FormSelect
                                     label="Title"
                                     id="title"
+                                    required
                                     value={data.title || ''}
                                     onChange={(value) => handleSelectChange('title', value)}
                                     options={[
@@ -621,32 +662,36 @@ export default function Create() {
                                     error={formErrors.title}
                                 />
                                 <FormInput
-                                    label="First Name *"
+                                    label="First Name"
                                     id="first_name"
+                                    required
                                     value={data.first_name}
                                     onChange={(e) => handleInputChange('first_name', e.target.value)}
-                                    placeholder="Enter first name"
+                                    placeholder=""
                                     error={formErrors.first_name}
                                 />
                                 <FormInput
                                     label="Middle Name"
                                     id="middle_name"
+                                    required
                                     value={data.middle_name}
                                     onChange={(e) => handleInputChange('middle_name', e.target.value)}
-                                    placeholder="Enter middle name"
+                                    placeholder=""
                                     error={formErrors.middle_name}
                                 />
                                 <FormInput
-                                    label="Last Name *"
+                                    label="Last Name "
                                     id="last_name"
+                                    required
                                     value={data.last_name}
                                     onChange={(e) => handleInputChange('last_name', e.target.value)}
-                                    placeholder="Enter last name"
+                                    placeholder=""
                                     error={formErrors.last_name}
                                 />
                                 <FormSelect
                                     label="Gender"
                                     id="gender"
+                                    required
                                     value={data.gender || ''}
                                     onChange={(value) => handleSelectChange('gender', value)}
                                     options={[
@@ -659,6 +704,7 @@ export default function Create() {
                                 <FormInput
                                     label="Date of Birth"
                                     id="date_of_birth"
+                                    required
                                     type="date"
                                     value={data.date_of_birth}
                                     onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
@@ -668,26 +714,29 @@ export default function Create() {
                                 <FormInput
                                     label="Place of Birth"
                                     id="place_of_birth"
+                                    required
                                     value={data.place_of_birth}
                                     onChange={(e) => handleInputChange('place_of_birth', e.target.value)}
-                                    placeholder="Enter place of birth"
+                                    placeholder=""
                                     error={formErrors.place_of_birth}
                                 />
                                 <FormSelect
                                     label="Nationality"
                                     id="nationality"
+                                    required
                                     value={data.nationality || ''}
                                     onChange={(value) => handleSelectChange('nationality', value)}
                                     options={[
                                         { label: 'Ethiopia', value: '1231' },
                                         { label: 'Other', value: '1000' },
                                     ]}
-                                    placeholder="Select nationality"
+                                    placeholder=""
                                     error={formErrors.nationality}
                                 />
                                 <FormSelect
                                     label="Primary Language"
                                     id="primary_language"
+                                    required
                                     value={data.primary_language || ''}
                                     onChange={(value) => handleSelectChange('primary_language', value)}
                                     options={[
@@ -697,7 +746,7 @@ export default function Create() {
                                         { label: 'Tigrigna', value: '2062' },
                                         { label: 'Somali', value: '2063' },
                                     ]}
-                                    placeholder="Select primary language"
+                                    placeholder=""
                                     error={formErrors.primary_language}
                                 />
                             </div>
@@ -779,21 +828,21 @@ export default function Create() {
                                         error={formErrors['contact.notification_mode']}
                                     />
                                     <FormInput
-                                        label="Phone Number (start with 09)"
+                                        label="Phone Number"
                                         id="phone"
                                         value={data.contact?.mobile_no || ''}
                                         onChange={(e) => handleNestedInputChange('contact', 'mobile_no', e.target.value)}
                                         placeholder="Enter mobile number"
                                         error={formErrors['contact.mobile_no']}
                                     />
-                                    <FormInput
+                                    {/* <FormInput
                                         label="Office Number (length 9 to 20)"
                                         id="office"
                                         value={data.contact?.office_no || ''}
                                         onChange={(e) => handleNestedInputChange('contact', 'office_no', e.target.value)}
                                         placeholder="Enter office number"
                                         error={formErrors['contact.office_no']}
-                                    />
+                                    /> */}
                                     <FormInput
                                         label="Email Address"
                                         id="email"
@@ -803,7 +852,7 @@ export default function Create() {
                                         placeholder="Enter email address"
                                         error={formErrors['contact.email']}
                                     />
-                                    <FormInput
+                                    {/* <FormInput
                                         label="Home Number (length 9 to 20)"
                                         id="home"
                                         value={data.contact?.home_no || ''}
@@ -818,7 +867,7 @@ export default function Create() {
                                         onChange={(e) => handleNestedInputChange('contact', 'fax_no', e.target.value)}
                                         placeholder="Enter fax number"
                                         error={formErrors['contact.fax_no']}
-                                    />
+                                    /> */}
                                 </div>
                             </CardContent>
                         </Card>
@@ -844,6 +893,7 @@ export default function Create() {
                                 <FormSelect
                                     label="Region"
                                     id="address.region"
+                                    required
                                     value={data.address?.region}
                                     onChange={(val) => {
                                         setData('address', { ...data.address, region: val, zone: '', woreda: '' });
@@ -856,6 +906,7 @@ export default function Create() {
                                 <FormSelect
                                     label="Zone"
                                     id="address.zone"
+                                    required
                                     value={data.address?.zone}
                                     onChange={(val) => {
                                         setData('address', { ...data.address, zone: val, woreda: '' });
@@ -868,6 +919,7 @@ export default function Create() {
                                 <FormSelect
                                     label="Woreda"
                                     id="address.woreda"
+                                    required
                                     value={data.address?.woreda}
                                     onChange={(val) => {
                                         setData('address', { ...data.address, woreda: val });
@@ -877,28 +929,28 @@ export default function Create() {
                                     placeholder={data.address?.zone ? (loadingWoredas ? 'Loading woredas...' : 'Select woreda') : 'First select zone'}
                                     error={formErrors['address.woreda']}
                                 />
-                                <FormInput
+                                {/* <FormInput
                                     label="City (accepted value: 1-16)"
                                     id="address.city"
                                     value={data.address?.city}
                                     onChange={(e) => handleNestedInputChange('address', 'city', e.target.value)}
                                     placeholder="Enter city accepted value: 1-16"
                                     error={formErrors['address.city']}
-                                />
-                                <FormInput
+                                /> */}
+                                {/* <FormInput
                                     label="Street Name (optional)"
                                     id="address.street_name"
                                     value={data.address?.street_name}
                                     onChange={(e) => handleNestedInputChange('address', 'street_name', e.target.value)}
                                     placeholder="Enter street name"
                                     error={formErrors['address.street_name']}
-                                />
+                                /> */}
                                 <FormInput
                                     label="Kebele"
                                     id="address.kebele"
                                     value={data.address?.kebele}
                                     onChange={(e) => handleNestedInputChange('address', 'kebele', e.target.value)}
-                                    placeholder="Enter kebele"
+                                    placeholder=""
                                     error={formErrors['address.kebele']}
                                 />
                                 <FormInput
@@ -906,7 +958,7 @@ export default function Create() {
                                     id="address.house_no"
                                     value={data.address?.house_no}
                                     onChange={(e) => handleNestedInputChange('address', 'house_no', e.target.value)}
-                                    placeholder="Enter house number"
+                                    placeholder=""
                                     error={formErrors['address.house_no']}
                                 />
                             </div>
@@ -934,6 +986,7 @@ export default function Create() {
                                     <FormSelect
                                         label="Occupation"
                                         id="occupation"
+                                        required
                                         value={data.occupation}
                                         onChange={(value) => handleSelectChange('occupation', value)}
                                         options={occupations}
@@ -944,6 +997,7 @@ export default function Create() {
                                     <FormSelect
                                         label="Education"
                                         id="education"
+                                        required
                                         value={data.education || ''}
                                         onChange={(value) => handleSelectChange('education', value)}
                                         options={[
@@ -965,6 +1019,7 @@ export default function Create() {
                                     <FormSelect
                                         label="Religion"
                                         id="religion"
+                                        required
                                         value={data.religion || ''}
                                         onChange={(value) => handleSelectChange('religion', value)}
                                         options={[
@@ -981,6 +1036,7 @@ export default function Create() {
                                     <FormSelect
                                         label="Income Level"
                                         id="income"
+                                        required
                                         value={data.income}
                                         onChange={(value) => handleSelectChange('income', value)}
                                         options={[

@@ -1,14 +1,27 @@
 import { FormSelectProps } from '@/types';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-
-export default function FormSelect({ label, id, value, onChange, options, placeholder, error, disabled, loading, labelRight }: FormSelectProps) {
+export default function FormSelect({
+    label,
+    id,
+    required,
+    value,
+    onChange,
+    options,
+    placeholder,
+    error,
+    disabled,
+    loading,
+    labelRight,
+}: FormSelectProps & { required?: boolean }) {
     return (
         <div className="space-y-2">
             <Label htmlFor={id} className="font-medium text-gray-700">
                 {label}
+                {required && <span className=" text-red-500">*</span>}
                 {labelRight && <div className="inline-block">{labelRight}</div>}
             </Label>
+
             <Select value={value} onValueChange={onChange} disabled={disabled || loading}>
                 <SelectTrigger className={`${error ? 'border-red-300' : 'border-gray-300'} flex items-center justify-between`}>
                     {loading ? (
@@ -23,16 +36,18 @@ export default function FormSelect({ label, id, value, onChange, options, placeh
                         <SelectValue placeholder={placeholder} />
                     )}
                 </SelectTrigger>
+
                 {!loading && (
                     <SelectContent className="bg-white shadow-lg">
                         {options.map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value} className=" ">
+                            <SelectItem key={opt.value} value={opt.value}>
                                 {opt.label}
                             </SelectItem>
                         ))}
                     </SelectContent>
                 )}
             </Select>
+
             {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
     );

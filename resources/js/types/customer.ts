@@ -44,69 +44,6 @@ export const AccountStatuses = {
     ACTIVE: 'active',
     INACTIVE: 'inactive',
 } as const;
-
-// // Zod Schema for Customer
-// export const customerSchema = z.object({
-//     first_name: z.string().min(1, 'First name is required').max(255),
-//     middle_name: z.string().max(255).optional(),
-//     last_name: z.string().min(1, 'Last name is required').max(255),
-//     title: z.string().optional(),
-//     gender: z.string().optional(),
-//     nationality: z.string().max(100).optional(),
-//     identification_type: z.string().optional(),
-//     identification_number: z.string().max(100).optional(),
-//     date_of_birth: z
-//         .string()
-//         // .regex(/^\d{8}$/, 'Date must be in YYYYMMDD format')
-//         .optional(),
-//     place_of_birth: z.string().max(255).optional(),
-//     occupation: z.string().optional(),
-//     education: z.string().optional(),
-//     religion: z.string().optional(),
-//     income: z.string().optional(),
-//     primary_language: z.string().max(100).optional(),
-//     address: z
-//         .object({
-//             [AddressTypes.REGION]: z.string().max(128),
-//             [AddressTypes.ZONE]: z.string().max(128),
-//             [AddressTypes.WOREDA]: z.string().max(128),
-//             [AddressTypes.CITY]: z.string().max(128),
-//             [AddressTypes.STREET_NAME]: z.string().max(128).optional(),
-//             [AddressTypes.KEBELE]: z.string().max(128),
-//             [AddressTypes.HOUSE_NO]: z.string().max(128),
-//         })
-//         .partial(),
-//     contact: z
-//         .object({
-//             notification_mode: z.string().optional(),
-//             mobile_no: z.string().max(20).optional(),
-//             email: z.string().email().max(255).optional(),
-//             office_no: z.string().max(20).optional(),
-//             home_no: z.string().max(20).optional(),
-//             fax_no: z.string().max(20).optional(),
-//         })
-//         .optional(),
-//     contact_person: z
-//         .array(
-//             z.object({
-//                 first_name: z.string().max(255),
-//                 middle_name: z.string().max(255),
-//                 last_name: z.string().max(255),
-//                 title: z.string().optional(),
-//                 home_no: z.string().max(128).optional(),
-//                 office_no: z.string().max(128).optional(),
-//                 mobile_no: z.string().max(20),
-//                 fax_no: z.string().max(20).optional(),
-//             }),
-//         )
-//         .optional(),
-//     customer_type: z.string().optional(),
-//     customer_category: z.string().optional(),
-//     customer_subcategory: z.string().optional(),
-//     customer_level: z.string().optional(),
-// });
-
-// export type CustomerFormValues = z.infer<typeof customerSchema>;
 export interface Customer {
     id: number;
     first_name: string;
@@ -117,15 +54,15 @@ export interface Customer {
     nationality?: string;
     identification_type?: string;
     identification_number?: string;
-    date_of_birth?: string;
-    place_of_birth?: string;
-    occupation?: string;
-    education?: string;
-    religion?: string;
-    income?: string;
+    date_of_birth: string;
+    place_of_birth: string;
+    occupation: string;
+    education: string;
+    religion: string;
+    income: string;
     primary_language?: string;
     address?: Array<{
-        region?: string;
+        region: string;
         zone?: string;
         woreda?: string;
         city?: string;
@@ -143,10 +80,10 @@ export interface Customer {
     }>;
     contact_person?: Array<{
         title?: string;
-        first_name: string;
+        first_name?: string;
         middle_name?: string;
-        last_name: string;
-        mobile_no: string;
+        last_name?: string;
+        mobile_no?: string;
         office_no?: string;
         home_no?: string;
         fax_no?: string;
@@ -182,17 +119,17 @@ export const customerSchema = z.object({
     address: z
         .object({
             [AddressTypes.REGION]: z.string().min(1, 'Region is required').max(128),
-            [AddressTypes.ZONE]: z.string().min(1, 'Zone is required').max(128),
-            [AddressTypes.WOREDA]: z.string().min(1, 'Woreda is required').max(128),
-            [AddressTypes.CITY]: z.string().min(1, 'City is required').max(128),
+            [AddressTypes.ZONE]: z.string().optional(),
+            [AddressTypes.WOREDA]: z.string().optional(),
+            [AddressTypes.CITY]: z.string().optional(),
             [AddressTypes.STREET_NAME]: z.string().optional(),
-            [AddressTypes.KEBELE]: z.string().min(1, 'Kebele is required').max(128),
-            [AddressTypes.HOUSE_NO]: z.string().min(1, 'House number is required').max(128),
+            [AddressTypes.KEBELE]: z.string().optional(),
+            [AddressTypes.HOUSE_NO]: z.string().optional(),
         })
         .partial(),
     contact: z.object({
-        notification_mode: z.string().min(1, 'Notification mode is required'),
-        mobile_no: z.string().min(1, 'Mobile number is required'),
+        notification_mode: z.string().optional(),
+        mobile_no: z.string().optional(),
         email: z.string().email().optional(),
         office_no: z.string().optional(),
         home_no: z.string().optional(),
@@ -200,13 +137,13 @@ export const customerSchema = z.object({
     }),
     contact_person: z.array(
         z.object({
-            first_name: z.string().min(1, 'First name is required'),
-            middle_name: z.string().min(1, 'Middle name is required'),
-            last_name: z.string().min(1, 'Last name is required'),
-            title: z.string().min(1, 'Title is required'),
+            first_name: z.string().optional(),
+            middle_name: z.string().optional(),
+            last_name: z.string().optional(),
+            title: z.string().optional(),
             home_no: z.string().optional(),
             office_no: z.string().optional(),
-            mobile_no: z.string().min(1, 'Mobile number is required').max(20),
+            mobile_no: z.string().optional(),
             fax_no: z.string().optional(),
         }),
     ),
@@ -217,52 +154,3 @@ export const customerSchema = z.object({
 });
 
 export type CustomerFormValues = z.infer<typeof customerSchema>;
-// export interface Customer {
-//     id: number;
-//     first_name: string;
-//     middle_name: string;
-//     last_name: string;
-//     title: string;
-//     gender: string;
-//     nationality: string;
-//     identification_type: string;
-//     identification_number: string;
-//     date_of_birth: string;
-//     place_of_birth: string;
-//     occupation: string;
-//     education: string;
-//     religion: string;
-//     income: string;
-//     primary_language: string;
-//     address: Array<{
-//         region: string;
-//         zone: string;
-//         woreda: string;
-//         city: string;
-//         street_name: string;
-//         kebele: string;
-//         house_no: string;
-//     }>;
-//     contact: Array<{
-//         mobile_no: string;
-//         email: string;
-//         office_no: string;
-//         home_no: string;
-//         fax_no: string;
-//         notification_mode: string;
-//     }>;
-//     contact_person: Array<{
-//         title: string;
-//         first_name: string;
-//         middle_name: string;
-//         last_name: string;
-//         mobile_no: string;
-//         office_no: string;
-//         home_no: string;
-//         fax_no: string;
-//     }>;
-//     customer_type: string;
-//     customer_category: string;
-//     customer_subcategory: string;
-//     customer_level: string;
-// }

@@ -1,10 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { Field, FieldGroup } from '@/components/ui/field';
 import { cn } from '@/lib/utils';
 import { router } from '@inertiajs/react';
-import { Loader2, Phone } from 'lucide-react';
 import { useState } from 'react';
 import logo from '../../images/national_id_logo.png';
 
@@ -72,12 +70,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
             <Card>
                 <CardHeader className="text-center">
                     <CardTitle className="text-xl">Welcome</CardTitle>
-                    <CardDescription>Sign in with your phone number </CardDescription>
-                    {/* <CardDescription>or National ID</CardDescription> */}
+                    {/* <CardDescription>Sign in with your n number </CardDescription> */}
+                    <CardDescription>Sign in with your National ID</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <FieldGroup>
-                        <Field>
+                        {/* <Field>
                             <form onSubmit={handlePhoneLogin}>
                                 <FieldLabel htmlFor="phone">Mobile Number</FieldLabel>
                                 <div className="mb-3 flex gap-1">
@@ -118,9 +116,9 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                             <FieldDescription className="w-[80%] text-center text-sm/6 text-muted-foreground">
                                 Enter your Ethio telecom number to receive an OTP
                             </FieldDescription>
-                        </Field>
+                        </Field> */}
 
-                        <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">Or continue with</FieldSeparator>
+                        {/* <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">Or continue with</FieldSeparator> */}
 
                         <Field>
                             <Button

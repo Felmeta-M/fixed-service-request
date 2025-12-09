@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Otp;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use Log;
 use RuntimeException;
@@ -175,14 +176,16 @@ XML;
             'customer_code' => $customerCode,
         ]);
 
-        Customer::where('sub', $currentUser?->customer_sub_id)->update([
-            'code' => $customerCode,
-        ]);
+        DB::transaction(function () use ($currentUser, $customerCode) {
+            Customer::where('sub', $currentUser?->customer_sub_id)->update([
+                'code' => $customerCode,
+                'verified_at' => now(),
+            ]);
 
-        $otp = Otp::where('customer_sub_id', $currentUser?->customer_sub_id)
-            ->update([
+            Otp::where('customer_sub_id', $currentUser?->customer_sub_id)->update([
                 'customer_code' => $customerCode,
             ]);
+        });
 
         return ApiResponse::success([
             'response_time' => (string)$headerData->ResponseTime ?? '',

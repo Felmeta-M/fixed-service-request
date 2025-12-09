@@ -17,8 +17,7 @@ Route::get('/verification', fn() => Inertia::render('Verification'))->name('veri
 Route::get('/login/esignet', [EsignetController::class, 'redirectToEsignet'])
     ->name('esignet.login');
 
-Route::get('/callback', [EsignetController::class, 'handleEsignetCallback'])
-    ->name('esignet.callback');
+Route::get('/callback', [EsignetController::class, 'handleEsignetCallback'])->name('esignet.callback');
 
 Route::get('/auth/error', function () {
     return Inertia::render('Auth/Error', [

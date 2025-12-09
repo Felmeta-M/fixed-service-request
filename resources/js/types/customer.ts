@@ -127,17 +127,14 @@ export const customerSchema = z.object({
             [AddressTypes.HOUSE_NO]: z.string().optional(),
         })
         .partial(),
-    contact: z
-        .object({
-            notification_mode: z.string().nullable().optional(),
-            mobile_no: z.string().nullable().optional(),
-            email: z.string().email().nullable().optional(),
-            office_no: z.string().nullable().optional(),
-            home_no: z.string().nullable().optional(),
-            fax_no: z.string().nullable().optional(),
-        })
-        .nullable()
-        .optional(),
+    contact: z.object({
+        notification_mode: z.string().optional(),
+        mobile_no: z.number().optional(),
+        email: z.string().email().optional(),
+        office_no: z.string().optional(),
+        home_no: z.string().optional(),
+        fax_no: z.string().optional(),
+    }),
     contact_person: z.array(
         z.object({
             first_name: z.string().nullable().optional(),

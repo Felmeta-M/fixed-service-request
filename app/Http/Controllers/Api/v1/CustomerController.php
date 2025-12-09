@@ -119,7 +119,7 @@ class CustomerController extends Controller
         if (!$typeId) {
             return response()->json(['error' => 'type_id is required'], 400);
         }
-        return CustomerCategory::where('customer_type_id', $typeId)->get(['id', 'name', 'api_value']);
+        return CustomerCategory::where('customer_type_id', $typeId)->where('status', true)->get(['id', 'name', 'api_value']);
     }
 
     public function subcategories(Request $request)
@@ -128,6 +128,6 @@ class CustomerController extends Controller
         if (!$categoryId) {
             return response()->json(['error' => 'category_id is required'], 400);
         }
-        return CustomerSubcategory::where('customer_category_id', $categoryId)->get(['id', 'name', 'api_value']);
+        return CustomerSubcategory::where('customer_category_id', $categoryId)->where('status', true)->get(['id', 'name', 'api_value']);
     }
 }

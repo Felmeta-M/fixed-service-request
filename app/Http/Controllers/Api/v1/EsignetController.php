@@ -110,11 +110,12 @@ class EsignetController extends Controller
         }
 
         $esignetUser = $result['customer'];
+
         $data = [
             'name' => $esignetUser['name'],
             'phone_number' => $esignetUser->phone_number,
-            'email' => $esignetUser->email,
-            'customer_code' => $esignetUser?->verified_at ? $esignetUser->customer_code : null,
+            'email' => $esignetUser?->email,
+            'customer_code' => $esignetUser?->code ?? null,
             'customer_sub_id' => $esignetUser->sub,
         ];
 
@@ -127,7 +128,7 @@ class EsignetController extends Controller
         if ($esignetUser?->verified_at) {
             return redirect()->route('services');
         }
-        
+
         return redirect()->route('customers.create')->with([
             'error' => 'Your profile is incomplete. Please update it.',
             'prefill' => new CustomerResource($this->customerService->getLocalCustomerData($user->customer_sub_id)),

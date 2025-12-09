@@ -117,6 +117,7 @@ class LocalAuthService
      */
     public function resolveUserForAuth(array $data): Otp
     {
+        logger('opt', $data);
         $token = Str::random(60);
         return Otp::updateOrCreate(
             ['phone_number' => $data['phone_number']],

@@ -24,7 +24,7 @@ class CustomerService extends BaseApiService
         try {
             $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            $parsedXml = $this->parseResponse($xmlResponse);
+            $parsedXml = $this->parseResponse($xmlResponse, $data);
             return ApiResponse::success($parsedXml);
         } catch (RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
@@ -148,7 +148,7 @@ XML;
     XML;
     }
 
-    public function parseResponse(string $xml)
+    public function parseResponse(string $xml, array $data)
     {
         $xmlObject = simplexml_load_string($xml);
 
@@ -168,10 +168,10 @@ XML;
         if ($retCode !== '0') {
             return ApiResponse::error("Create customer profile failed: {$retMsg}");
         }
-        
+
         $customerCode = (string)$customerData->CustomerCode ?? '';
 
-        $customerResponse = DB::transaction(function () use ($customerCode) {
+        $customerResponse = DB::transaction(function () use ($customerCode, $data) {
             $currentUser = Auth::guard('api')->user();
 
             if (!$currentUser) {
@@ -182,6 +182,8 @@ XML;
             Customer::where('sub', $currentUser->customer_sub_id)
                 ->update([
                     'code' => $customerCode,
+                    'contact' => $data['contact'],
+                    'contact_persons' => $data['contact_person'],
                     'verified_at' => now(),
                 ]);
 

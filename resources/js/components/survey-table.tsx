@@ -9,20 +9,9 @@ import {
     getFilteredRowModel,
     getPaginationRowModel,
     getSortedRowModel,
-    useReactTable
+    useReactTable,
 } from '@tanstack/react-table';
-import {
-    ArrowUpDown,
-    Box,
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
-    FileText,
-    Phone,
-    RefreshCw,
-    Wifi
-} from 'lucide-react';
+import { ArrowUpDown, Box, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileText, Phone, RefreshCw, Wifi } from 'lucide-react';
 import * as React from 'react';
 import SurveyActions from './survey/survey-actions';
 

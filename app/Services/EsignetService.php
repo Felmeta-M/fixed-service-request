@@ -225,13 +225,11 @@ class EsignetService
     public function createOrUpdateCustomerBySub(array $payload)
     {
         try {
-            // Normalize fields
             $sub = $payload['sub'] ?? null;
             if (!$sub) {
                 logger()->error('Missing sub in payload');
                 throw new Exception('Invalid user payload (missing sub).');
             }
-
             $name = $payload['name'] ?? null;
             $phoneNumber = $payload['phone_number'] ?? null;
             $gender = $payload['gender'] ?? null;
@@ -239,12 +237,10 @@ class EsignetService
             $identification_type = 2; //national id
             $identification_number = $payload['sub'] ?? null;
             $picture = $payload['picture'] ?? null;
-
             $birthdate = null;
             if (!empty($payload['birthdate'])) {
                 $birthdate = date('Y-m-d', strtotime(str_replace('/', '-', $payload['birthdate'])));
             }
-
             $address = $payload['address'] ?? null;
             $customer = Customer::where('sub', $sub)->first();
             if ($customer) {
@@ -253,26 +249,18 @@ class EsignetService
                 logger()->info('Customer not found, creating new', ['sub' => $sub]);
                 $customer = new Customer();
                 $customer->sub = $sub;
+                $customer->name = $name;
+                $customer->phone_number = $phoneNumber;
+                $customer->gender = $gender;
+                $customer->nationality = $nationality;
+                $customer->identification_type = $identification_type;
+                $customer->identification_number = $identification_number;
+                $customer->birthdate = $birthdate;
+                $customer->picture = $picture;
+                $customer->address = $address ? json_encode($address) : null;
+                $customer->save();
+                $customer->refresh();
             }
-
-            $customer->name = $name;
-            $customer->phone_number = $phoneNumber;
-            $customer->gender = $gender;
-            $customer->nationality = $nationality;
-            $customer->identification_type = $identification_type;
-            $customer->identification_number = $identification_number;
-            $customer->birthdate = $birthdate;
-            $customer->picture = $picture;
-
-            $customer->address = $address ? json_encode($address) : null;
-
-            $customer->save();
-            $customer->refresh();
-
-            logger()->info('Customer synced successfully', [
-                'customer_id' => $customer->id,
-                'sub' => $customer->sub
-            ]);
 
             return [
                 'status' => 'ok',

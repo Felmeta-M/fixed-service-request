@@ -47,9 +47,7 @@ interface User {
 }
 
 export function useSurveyList(): UseSurveyListReturn {
-    const { auth } = usePage().props;
-    const user = auth.user as User;
-
+    const { user } = usePage().props.auth;
     const [surveys, setSurveys] = useState<Survey[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -85,6 +83,7 @@ export function useSurveyList(): UseSurveyListReturn {
                     headers: {
                         'Content-Type': 'application/json',
                         Accept: 'application/json',
+                        Authorization: `Bearer ${user.api_token}`,
                     },
                 });
 
@@ -137,7 +136,13 @@ export function useSurveyList(): UseSurveyListReturn {
                 if (filters?.search) params.append('search', filters.search);
                 if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
 
-                const res = await fetch(`/api/v1/survey-requests?${params.toString()}`);
+                const res = await fetch(`/api/v1/survey-requests?${params.toString()}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${user.api_token}`,
+                    },
+                });
                 const json: ApiResponse = await res.json();
 
                 const newData = json.data || [];

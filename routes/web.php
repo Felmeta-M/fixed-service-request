@@ -8,9 +8,7 @@ use App\Http\Controllers\SupportRequestController;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-Route::get('/login', fn() => Inertia::render('Login'))->name('login');
 
-// Route::get('/', fn() => Inertia::render('Login'))->name('login');
 Route::get('/', fn() => Inertia::render('Home'))->name('home');
 Route::get('/verification', fn() => Inertia::render('Verification'))->name('verification');
 
@@ -36,7 +34,7 @@ Route::prefix('api/v1')->middleware('web')->group(function () {
 
 // OTP guest pages
 Route::middleware('guest:otp')->group(function () {
-    Route::get('/otp/phone', [OtpAuthController::class, 'showPhoneForm'])->name('otp.phone');
+    Route::get('/login', [OtpAuthController::class, 'showPhoneForm'])->name('otp.phone');
     Route::post('/otp/send', [OtpAuthController::class, 'sendOneTimePassword'])->name('otp.send');
     Route::get('/otp/verify', [OtpAuthController::class, 'showVerifyForm'])->name('otp.verify.form');
     Route::post('/otp/verify', [OtpAuthController::class, 'verifyOneTimePassword'])->name('otp.verify');

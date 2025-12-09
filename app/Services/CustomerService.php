@@ -70,6 +70,27 @@ XML;
 
     protected function buildCustomerInfo(array $data): string
     {
+        $data['contact'] = array_merge([
+            'notification_mode' => '',
+            'email' => '',
+            'home_no' => '',
+            'office_no' => '',
+            'mobile_no' => '',
+            'fax_no' => '',
+        ], $data['contact'] ?? []);
+
+        // Ensure contact_person exists and contains index 0
+        $data['contact_person'][0] = array_merge([
+            'first_name' => '',
+            'middle_name' => '',
+            'last_name' => '',
+            'title' => '',
+            'home_no' => '',
+            'office_no' => '',
+            'mobile_no' => '',
+            'fax_no' => '',
+        ], $data['contact_person'][0] ?? []);
+
         return <<<XML
     <com:CustomerInfo>
         <com:CustomerType>{$data['customer_type']}</com:CustomerType>

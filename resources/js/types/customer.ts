@@ -71,7 +71,7 @@ export interface Customer {
         house_no?: string;
     }>;
     contact?: Array<{
-        mobile_no?: string;
+        mobile_no?: number;
         email?: string;
         office_no?: string;
         home_no?: string;
@@ -129,7 +129,7 @@ export const customerSchema = z.object({
         .partial(),
     contact: z.object({
         notification_mode: z.string().optional(),
-        mobile_no: z.string().optional(),
+        mobile_no: z.number().optional(),
         email: z.string().email().optional(),
         office_no: z.string().optional(),
         home_no: z.string().optional(),

@@ -90,6 +90,7 @@ class HandleInertiaRequests extends Middleware
             'customer_code' => $user?->customer_code,
             'name' => $user->name,
             'phone' => $user->phone_number,
+            'email' => $user->email,
             'api_token' => $user->api_token,
         ];
     }

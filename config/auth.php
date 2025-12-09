@@ -50,6 +50,7 @@ return [
             'driver' => 'session',
             'provider' => 'otps',
         ],
+        
         'api' => [
             'driver' => 'token',
             'provider' => 'otps',

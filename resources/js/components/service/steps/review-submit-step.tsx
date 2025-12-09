@@ -2,7 +2,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { CheckCircle, Loader2, Wifi } from 'lucide-react';
 import { useState } from 'react';
@@ -19,6 +19,7 @@ const serviceTypes = {
 };
 
 export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
+    const { user } = usePage().props.auth;
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
 
@@ -30,7 +31,7 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
 
         try {
             const submitData = {
-                customer_code: formData.customerCode || '828204303',
+                customer_code: user.customer_code.toString(),
                 survey_type: 'EIC08',
                 telecom_region: '104',
                 oper_type: 'A',
@@ -44,11 +45,10 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
                     longitude: formData.longitude,
                     address: formData.address || '',
                 },
-                // bandwidth: '2048M',
                 bandwidth: formData.bandwidth,
-                contact_person: formData.contactPerson || 'Customer',
-                contact_no: formData.contactNo || '0966778899',
-                contact_email: formData.contactEmail || 'customer@ethiotelecom.et',
+                contact_person: formData.contactPerson,
+                contact_no: formData.contactNo || user.phone_number,
+                contact_email: formData.contactEmail || user.email,
                 completed_date: new Date()
                     .toISOString()
                     .replace(/[-:T.Z]/g, '')
@@ -57,10 +57,14 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
                 customer_type: formData.customerType || 'residential',
             };
 
-            const response = await axios.post('/api/v1/survey/create', submitData);
+            const response = await axios.post('/api/v1/survey/create', submitData, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${user.api_token}`,
+                },
+            });
 
             if (response.data.success) {
-                // Store in localStorage
                 const newSurvey = {
                     id: response.data.survey_id || Date.now(),
                     type: serviceInfo.name,
@@ -107,10 +111,10 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
                                 <span className="text-sm text-gray-600">Customer Type</span>
                                 <p className="font-semibold capitalize">{formData.customerType || 'residential'}</p>
                             </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Main Offer ID</span>
-                                <p className="font-semibold">{formData.serviceType || '-'}</p>
-                            </div>
+                            {/*<div>*/}
+                            {/*    <span className="text-sm text-gray-600">Main Offer ID</span>*/}
+                            {/*    <p className="font-semibold">{formData.serviceType || '-'}</p>*/}
+                            {/*</div>*/}
                         </div>
                     </CardContent>
                 </Card>
@@ -120,14 +124,14 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
                     <CardContent>
                         <h3 className="mb-4 font-semibold text-gray-900">Location</h3>
                         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                            <div>
-                                <span className="text-sm text-gray-600">Latitude</span>
-                                <p className="font-mono font-semibold">{formData.latitude.toFixed(6)}</p>
-                            </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Longitude</span>
-                                <p className="font-mono font-semibold">{formData.longitude.toFixed(6)}</p>
-                            </div>
+                            {/*<div>*/}
+                            {/*    <span className="text-sm text-gray-600">Latitude</span>*/}
+                            {/*    <p className="font-mono font-semibold">{formData.latitude.toFixed(6)}</p>*/}
+                            {/*</div>*/}
+                            {/*<div>*/}
+                            {/*    <span className="text-sm text-gray-600">Longitude</span>*/}
+                            {/*    <p className="font-mono font-semibold">{formData.longitude.toFixed(6)}</p>*/}
+                            {/*</div>*/}
                             <div>
                                 <span className="text-sm text-gray-600">Resource</span>
                                 <p className="font-semibold">
@@ -138,7 +142,7 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
                             </div>
                             <div>
                                 <span className="text-sm text-gray-600">Address</span>
-                                <p className="font-semibold">{formData.address || '-'}</p>
+                                {/*<p className="font-semibold">{formData.address || '-'}</p>*/}
                             </div>
                         </div>
                     </CardContent>
@@ -161,41 +165,41 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
                                 <span className="text-sm text-gray-600">Email</span>
                                 <p className="font-semibold">{formData.contactEmail || '-'}</p>
                             </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Preferred</span>
-                                <p className="font-semibold">{formData.contactPreferred || '-'}</p>
-                            </div>
+                            {/*<div>*/}
+                            {/*    <span className="text-sm text-gray-600">Preferred</span>*/}
+                            {/*    <p className="font-semibold">{formData.contactPreferred || '-'}</p>*/}
+                            {/*</div>*/}
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
             {/* Resource Details */}
-            {formData.resourceData && (
-                <Card>
-                    <CardContent>
-                        <h3 className="mb-4 font-semibold text-gray-900">Resource Details</h3>
-                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                            <div>
-                                <span className="text-sm text-gray-600">Available Ports</span>
-                                <p className="font-semibold">{formData.resourceData.ava_port}</p>
-                            </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Distance</span>
-                                <p className="font-semibold">{formData.resourceData.distance}m</p>
-                            </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Node ID</span>
-                                <p className="font-semibold">{formData.resourceData.neid}</p>
-                            </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Technology</span>
-                                <p className="font-semibold">{formData.resourceData.cable_type_desc}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+            {/*{formData.resourceData && (*/}
+            {/*    <Card>*/}
+            {/*        <CardContent>*/}
+            {/*            <h3 className="mb-4 font-semibold text-gray-900">Resource Details</h3>*/}
+            {/*            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">*/}
+            {/*                <div>*/}
+            {/*                    <span className="text-sm text-gray-600">Available Ports</span>*/}
+            {/*                    <p className="font-semibold">{formData.resourceData.ava_port}</p>*/}
+            {/*                </div>*/}
+            {/*                <div>*/}
+            {/*                    <span className="text-sm text-gray-600">Distance</span>*/}
+            {/*                    <p className="font-semibold">{formData.resourceData.distance}m</p>*/}
+            {/*                </div>*/}
+            {/*                <div>*/}
+            {/*                    <span className="text-sm text-gray-600">Node ID</span>*/}
+            {/*                    <p className="font-semibold">{formData.resourceData.neid}</p>*/}
+            {/*                </div>*/}
+            {/*                <div>*/}
+            {/*                    <span className="text-sm text-gray-600">Technology</span>*/}
+            {/*                    <p className="font-semibold">{formData.resourceData.cable_type_desc}</p>*/}
+            {/*                </div>*/}
+            {/*            </div>*/}
+            {/*        </CardContent>*/}
+            {/*    </Card>*/}
+            {/*)}*/}
 
             {error && (
                 <Alert variant="destructive">

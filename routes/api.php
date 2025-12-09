@@ -47,7 +47,6 @@ Route::prefix('v1')->group(function () {
 
     Route::prefix('customer')->middleware(['auth:api'])
         ->group(function () {
-            // return auth()->user();
             Route::get('/', [CustomerController::class, 'show']);
             Route::get('/', [CustomerController::class, 'show']);
             Route::post('/create', [CustomerController::class, 'store']);

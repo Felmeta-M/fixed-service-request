@@ -167,7 +167,7 @@ export default function Create() {
                     const response = await axios.get('/api/v1/customer', {
                         params: { customer_sub_id: user.customer_sub_id },
                         headers: {
-                            Authorization: `Bearer ${auth.user.api_token}`,
+                            Authorization: `Bearer ${user.api_token}`,
                         },
                     });
                     if (response.data?.success && response.data?.data) {
@@ -273,7 +273,7 @@ export default function Create() {
                 },
                 {
                     headers: {
-                        Authorization: `Bearer ${auth.user.api_token}`,
+                        Authorization: `Bearer ${user.api_token}`,
                     },
                 },
             );
@@ -346,7 +346,7 @@ export default function Create() {
 
             const response = await axios.post('/api/v1/ecaf-upload', ecafData, {
                 headers: {
-                    Authorization: `Bearer ${auth.user.api_token}`,
+                    Authorization: `Bearer ${user.api_token}`,
                     'Content-Type': 'application/json',
                 },
             });

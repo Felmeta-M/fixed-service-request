@@ -168,24 +168,32 @@ XML;
         if ($retCode !== '0') {
             return ApiResponse::error("Create customer profile failed: {$retMsg}");
         }
+        
         $customerCode = (string)$customerData->CustomerCode ?? '';
-        $currentUser = Auth::guard('otp')->user();
 
-        Log::info('Updating local customer record with external customer code', [
-            'local_customer_sub_id' => $currentUser?->customer_sub_id,
-            'customer_code' => $customerCode,
-        ]);
+        $customerResponse = DB::transaction(function () use ($customerCode) {
+            $currentUser = Auth::guard('api')->user();
 
-        DB::transaction(function () use ($currentUser, $customerCode) {
-            Customer::where('sub', $currentUser?->customer_sub_id)->update([
-                'code' => $customerCode,
-                'verified_at' => now(),
-            ]);
+            if (!$currentUser) {
+                throw new Exception("Authenticated OTP user not found.");
+            }
 
-            Otp::where('customer_sub_id', $currentUser?->customer_sub_id)->update([
-                'customer_code' => $customerCode,
-            ]);
+            // Update customer
+            Customer::where('sub', $currentUser->customer_sub_id)
+                ->update([
+                    'code' => $customerCode,
+                    'verified_at' => now(),
+                ]);
+
+            // Update OTP
+            Otp::where('customer_sub_id', $currentUser->customer_sub_id)
+                ->update([
+                    'customer_code' => $customerCode,
+                ]);
+
+            return $currentUser;
         });
+
 
         return ApiResponse::success([
             'response_time' => (string)$headerData->ResponseTime ?? '',

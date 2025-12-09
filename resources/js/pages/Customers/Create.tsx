@@ -830,6 +830,7 @@ export default function Create() {
                                     <FormInput
                                         label="Phone Number"
                                         id="phone"
+                                        required
                                         value={data.contact?.mobile_no || ''}
                                         onChange={(e) => handleNestedInputChange('contact', 'mobile_no', e.target.value)}
                                         placeholder="Enter mobile number"
@@ -846,6 +847,7 @@ export default function Create() {
                                     <FormInput
                                         label="Email Address"
                                         id="email"
+                                        required
                                         type="email"
                                         value={data.contact?.email || ''}
                                         onChange={(e) => handleNestedInputChange('contact', 'email', e.target.value)}

@@ -89,7 +89,8 @@ class HandleInertiaRequests extends Middleware
             'customer_sub_id' => $user?->customer_sub_id,
             'customer_code' => $user?->customer_code,
             'name' => $user->name,
-            'phone' => $user->phone,
+            'phone' => $user->phone_number,
+            'api_token' => $user->api_token,
         ];
     }
 }

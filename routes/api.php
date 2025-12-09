@@ -45,16 +45,19 @@ Route::prefix('v1')->group(function () {
         Route::get('/weredas/{zoneId}', [LocationController::class, 'weredas'])->where('zoneId', '[0-9]+');
     });
 
-    Route::prefix('customer')->group(function () {
-        Route::get('/', [CustomerController::class, 'show']);
-        Route::post('/create', [CustomerController::class, 'store']);
-        Route::post('/ecaf', [EcafController::class, 'upload']);
-        Route::post('/query-by-service-number', [CustomerController::class, 'getCustomerByServiceNumber']);
-        Route::post('/query-by-customer-code', [CustomerController::class, 'getCustomerByCode']);
-        Route::get('/types', [CustomerController::class, 'types']);
-        Route::get('/categories', [CustomerController::class, 'categories']);
-        Route::get('/subcategories', [CustomerController::class, 'subcategories']);
-    });
+    Route::prefix('customer')->middleware(['auth:api'])
+        ->group(function () {
+            // return auth()->user();
+            Route::get('/', [CustomerController::class, 'show']);
+            Route::get('/', [CustomerController::class, 'show']);
+            Route::post('/create', [CustomerController::class, 'store']);
+            Route::post('/ecaf', [EcafController::class, 'upload']);
+            Route::post('/query-by-service-number', [CustomerController::class, 'getCustomerByServiceNumber']);
+            Route::post('/query-by-customer-code', [CustomerController::class, 'getCustomerByCode']);
+            Route::get('/types', [CustomerController::class, 'types']);
+            Route::get('/categories', [CustomerController::class, 'categories']);
+            Route::get('/subcategories', [CustomerController::class, 'subcategories']);
+        });
 
     Route::prefix('survey')->group(function () {
         Route::post('/create', [SurveyOrderController::class, 'store']);

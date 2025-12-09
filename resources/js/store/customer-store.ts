@@ -2,41 +2,38 @@ import { usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 export interface ActiveCustomerPayload {
-	customer: any | null;
-	contacts: any[];
-	addresses: any[];
-	subscribers: any[];
-	ext_params: Record<string, any>;
+    customer: any | null;
+    contacts: any[];
+    addresses: any[];
+    subscribers: any[];
+    ext_params: Record<string, any>;
 }
 
-const STORAGE_KEY = 'activeCustomer';
-
 export function useActiveCustomer() {
-	const page = usePage();
-	const serverCustomer = (page.props as any)?.customer as ActiveCustomerPayload | undefined;
-	const [activeCustomer, setActiveCustomer] = useState<ActiveCustomerPayload | null>(null);
+    const page = usePage();
+    console.log('🚀 ~ useActiveCustomer ~ page:', page);
+    const serverCustomer = (page.props as any)?.auth.user as ActiveCustomerPayload | undefined;
+    console.log('🚀 ~ useActiveCustomer ~ serverCustomer:', serverCustomer);
 
-	// Hydrate from server or localStorage
-	useEffect(() => {
-		if (serverCustomer) {
-			setActiveCustomer(serverCustomer);
-			try {
-				localStorage.setItem(STORAGE_KEY, JSON.stringify(serverCustomer));
-			} catch {}
-			return;
-		}
-		try {
-			const raw = localStorage.getItem(STORAGE_KEY);
-			if (raw) setActiveCustomer(JSON.parse(raw));
-		} catch {}
-	}, [serverCustomer]);
+    const [activeCustomer, setActiveCustomer] = useState<ActiveCustomerPayload | null>(null);
+    console.log('🚀 ~ useActiveCustomer ~ activeCustomer:', activeCustomer);
 
-	const clearActiveCustomer = () => {
-		setActiveCustomer(null);
-		try {
-			localStorage.removeItem(STORAGE_KEY);
-		} catch {}
-	};
+    // Hydrate only from server session data
+    useEffect(() => {
+        if (serverCustomer) {
+            setActiveCustomer(serverCustomer);
+            return;
+        }
 
-	return { activeCustomer, setActiveCustomer, clearActiveCustomer };
-} 
+        // If backend returns null → customer is cleared from session
+        setActiveCustomer(null);
+    }, [serverCustomer]);
+
+    const clearActiveCustomer = () => {
+        setActiveCustomer(null);
+        // No localStorage cleanup needed
+        // Backend should also clear session customer
+    };
+
+    return { activeCustomer, setActiveCustomer, clearActiveCustomer };
+}

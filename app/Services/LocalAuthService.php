@@ -115,12 +115,14 @@ class LocalAuthService
      */
     public function resolveUserForAuth(array $data): Otp
     {
+        $token = \Str::random(60);
         return Otp::updateOrCreate(
             ['phone_number' => $data['phone_number']],
             [
                 'customer_sub_id' => $data['customer_sub_id'],
                 'customer_code' => $data['customer_code'],
                 'name' => $data['name'],
+                'api_token' => $token,
             ]
         );
 

@@ -4,7 +4,9 @@ namespace App\Services;
 
 
 use App\Models\Customer;
+use App\Models\Otp;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use InvalidArgumentException;
 use Log;
 use RuntimeException;
@@ -94,7 +96,7 @@ XML;
             <com:EthioZoneOrRegion>{$data['address']['region']}</com:EthioZoneOrRegion>
             <com:AdministrativeRegionOrCity>{$data['address']['city']}</com:AdministrativeRegionOrCity>
             <com:SubcityOrZone>{$data['address']['zone']}</com:SubcityOrZone>
-            <com:WeredaOrTown>{$data['address']['wereda']}</com:WeredaOrTown>
+            <com:WeredaOrTown>{$data['address']['woreda']}</com:WeredaOrTown>
             <com:Kebele>{$data['address']['kebele']}</com:Kebele>
             <com:HouseNo>{$data['address']['house_no']}</com:HouseNo>
         </com:CustomerAddressInfo>
@@ -138,19 +140,34 @@ XML;
 
         $bodyData = $response->children($namespaces['ser'])->CreateNewCustomerRespBody;
         $customerData = $bodyData->children($namespaces['com']);
-        $retCode = (string)$headerData->RetCode;
-        $retMsg = (string)$headerData->RetMsg;
+        $retCode = (string) $headerData->RetCode;
+        $retMsg = (string) $headerData->RetMsg;
 
         if ($retCode !== '0') {
             return ApiResponse::error("Create customer profile failed: {$retMsg}");
         }
+        $customerCode = (string) $customerData->CustomerCode ?? '';
+        $currentUser = Auth::guard('otp')->user();
+
+        Log::info('Updating local customer record with external customer code', [
+            'local_customer_sub_id' => $currentUser->customer_sub_id,
+            'external_customer_code' => $customerCode,
+        ]);
+
+        Customer::where('sub', $currentUser->customer_sub_id)->update([
+            'customer_code' => $customerCode,
+        ]);
+
+        $otp = Otp::where('customer_sub_id', $currentUser->customer_sub_id)->updte([
+            'customer_code' => $customerCode,
+        ]);
 
         return ApiResponse::success([
-            'response_time' => (string)$headerData->ResponseTime ?? '',
+            'response_time' => (string) $headerData->ResponseTime ?? '',
             'ret_code' => $retCode,
             'ret_msg' => $retMsg,
-            'customer_id' => (string)$customerData->CustomerId ?? '',
-            'customer_code' => (string)$customerData->CustomerCode ?? '',
+            'customer_id' => (string) $customerData->CustomerId ?? '',
+            'customer_code' => $customerCode,
             'transaction_id' => $this->transactionId,
         ]);
     }

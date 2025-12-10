@@ -675,7 +675,7 @@ export default function Create() {
                                     label="Place of Birth"
                                     id="place_of_birth"
                                     required
-                                    focus
+                                    autoFocus
                                     value={data.place_of_birth}
                                     onChange={(e) => handleInputChange('place_of_birth', e.target.value)}
                                     placeholder=""

@@ -129,7 +129,7 @@ export const customerSchema = z.object({
         .partial(),
     contact: z.object({
         notification_mode: z.string().optional(),
-        mobile_no: z.number().optional(),
+        mobile_no: z.string().optional(),
         email: z.string().email().optional(),
         office_no: z.string().optional(),
         home_no: z.string().optional(),

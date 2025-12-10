@@ -10,24 +10,15 @@ import GuestLayout from '@/layouts/GuestLayout';
 import { CustomerFormValues, customerSchema } from '@/types/customer';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { ArrowLeft, ArrowRight, Building, CheckCircle, FileText, MapPin, Phone, Upload, User } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building, CheckCircle, FileText, MapPin, Phone, User } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-
-// Add this interface for page props
-interface PageProps {
-    prefillData?: any;
-    customerId?: number;
-    photoBase64?: string;
-}
 
 export default function Create() {
     const { auth } = usePage().props;
     console.log('🚀 ~ Create ~ auth:', auth);
     const { user } = auth;
     console.log('authenticated user', user);
-    const { props } = usePage<PageProps>();
-    const { prefillData, photoBase64 } = props;
 
     const { occupations, loading, error: occupationError } = useOccupations();
     const [step, setStep] = useState(1);
@@ -36,9 +27,9 @@ export default function Create() {
     const [customerCreated, setCustomerCreated] = useState(false);
     const [createdCustomerData, setCreatedCustomerData] = useState<any>(null);
 
-    // Check if data is from National ID
-    const [isNidData, setIsNidData] = useState(false);
-    const [editableFields, setEditableFields] = useState<Record<string, boolean>>({});
+    // Track which fields should be read-only (from API prefill)
+    const [readOnlyFields, setReadOnlyFields] = useState<Set<string>>(new Set());
+    const [isLoadingPrefill, setIsLoadingPrefill] = useState(true);
 
     const { data, setData, processing } = useForm<CustomerFormValues>('createCustomer', {
         first_name: '',
@@ -80,149 +71,124 @@ export default function Create() {
         customer_level: '2',
     });
 
-    // Get NID data from session storage or local storage
-    const [nidData, setNidData] = useState<any>(null);
+    // Define fields that should be read-only when pre-filled from API
+    // These are typically identity fields that shouldn't be changed
+    const API_READONLY_FIELDS = [
+        'first_name',
+        'middle_name',
+        'last_name',
+        'gender',
+        'date_of_birth',
+        // 'place_of_birth',
+        // 'identification_number',
+        'nationality',
+        'identification_type',
+        'contact.notification_mode',
+        'contact.mobile_no',
+    ];
 
-    // Initialize editable fields based on NID data
+    // Load data from API only
     useEffect(() => {
-        if (prefillData) {
-            const fromNid = prefillData.source === 'nid' || prefillData.from_national_id;
-            setIsNidData(fromNid);
-
-            // Define which fields should be non-editable when from NID
-            const nidFields = [
-                'first_name',
-                'middle_name',
-                'last_name',
-                'gender',
-                'date_of_birth',
-                'place_of_birth',
-                'identification_number',
-                'nationality',
-            ];
-
-            const editableMap: Record<string, boolean> = {};
-
-            // All fields are editable by default
-            Object.keys(data).forEach((key) => {
-                editableMap[key] = true;
-            });
-
-            // If from NID, mark specific fields as non-editable
-            if (fromNid) {
-                nidFields.forEach((field) => {
-                    editableMap[field] = false;
-                });
-            }
-
-            setEditableFields(editableMap);
-        }
-    }, [prefillData]);
-
-    useEffect(() => {
-        const fetchCustomerData = async () => {
+        const loadDataFromApi = async () => {
             try {
-                if (prefillData) {
-                    setData((prev) => ({
-                        ...prev,
-                        first_name: prefillData.first_name || '',
-                        middle_name: prefillData.middle_name || '',
-                        last_name: prefillData.last_name || '',
-                        title: prefillData.title || '',
-                        gender: prefillData.gender?.toLowerCase() === 'male' ? '1' : '2',
-                        nationality: prefillData.nationality?.toLowerCase() === 'ethiopia' ? '1231' : '1000',
-                        date_of_birth: prefillData.date_of_birth,
-                        place_of_birth: prefillData.place_of_birth || '',
-                        identification_type: prefillData.identification_type || '2',
-                        identification_number: prefillData.identification_number || '',
-                        contact: {
-                            ...prev.contact,
-                            ...(prefillData.contact || {}),
-                        },
-                        address: {
-                            ...prev.address,
-                            ...(prefillData.address || {}),
-                        },
-                        occupation: prefillData.occupation || '',
-                        education: prefillData.education || '',
-                        religion: prefillData.religion || '',
-                        income: prefillData.income || '',
-                        primary_language: prefillData.primary_language || '2060',
-                        customer_type: prefillData.customer_type || '',
-                        customer_category: prefillData.customer_category || '',
-                        customer_subcategory: prefillData.customer_subcategory || '',
-                        contact_person: prefillData.contact_person || [],
-                    }));
-                    // Set default customer category and subcategory based on customer type
-                    if (!prefillData.customer_category && prefillData.customer_type === '1') {
-                        // Residential type - set default category
-                        setTimeout(() => {
-                            setData('customer_category', '1'); // Assuming '1' is Residential category
-                        }, 100);
-                    }
-                    if (photoBase64) {
-                        localStorage.setItem('customer_photo_base64', photoBase64);
-                    }
-                } else {
+                setIsLoadingPrefill(true);
+
+                // Only load data if user has customer_sub_id
+                if (user?.customer_sub_id) {
+                    console.log('Loading customer data from API for customer_sub_id:', user.customer_sub_id);
+
                     const response = await axios.get('/api/v1/customer', {
                         params: { customer_sub_id: user.customer_sub_id },
                         headers: {
                             Authorization: `Bearer ${user.api_token}`,
                         },
                     });
+
                     if (response.data?.success && response.data?.data) {
                         const customer = response.data.data;
+                        console.log('Customer data loaded from API:', customer);
+
+                        // Set read-only fields
+                        setReadOnlyFields(new Set(API_READONLY_FIELDS));
+
+                        // Transform API data to match form structure
                         const transform = {
-                            gender: customer.gender?.toLowerCase() === 'male' ? '1' : '2',
-                            nationality: customer.nationality?.toLowerCase() === 'ethiopia' ? '1231' : '1000',
+                            first_name: customer.first_name || '',
+                            middle_name: customer.middle_name || '',
+                            last_name: customer.last_name || '',
                             title: customer.title || '1',
+                            gender: customer.gender?.toLowerCase() === 'male' ? '1' : customer.gender?.toLowerCase() === 'female' ? '2' : undefined,
+                            nationality: customer.nationality?.toLowerCase() === 'ethiopia' ? '1231' : '1000',
+                            date_of_birth: customer.date_of_birth || '',
+                            place_of_birth: customer.place_of_birth || '',
+                            identification_type: customer.identification_type || '2',
+                            identification_number: customer.identification_number || '',
+                            occupation: customer.occupation || '',
+                            education: customer.education || '',
+                            religion: customer.religion || '',
+                            income: customer.income || '',
                             primary_language: customer.primary_language || '2060',
-                            notification_mode: customer.notification_mode || '1',
                             customer_type: customer.customer_type || '1',
-                        };
-                        setData((prev) => ({
-                            ...prev,
-                            ...customer,
-                            ...transform,
-
+                            customer_category: customer.customer_category || '1',
+                            customer_subcategory: customer.customer_subcategory || '1',
                             contact: {
-                                ...prev.contact,
-                                ...(customer.contact || {}),
-                                notification_mode: customer.contact?.notification_mode || '1',
+                                notification_mode: customer.contact?.notification_mode || customer.notification_mode || '1',
+                                mobile_no: customer.contact?.mobile_no || customer.mobile_no || '',
+                                office_no: customer.contact?.office_no || customer.office_no || '',
+                                email: customer.contact?.email || customer.email || '',
+                                home_no: customer.contact?.home_no || customer.home_no || '',
+                                fax_no: customer.contact?.fax_no || customer.fax_no || '',
                             },
-
                             address: {
-                                ...prev.address,
-                                ...(customer.address || {}),
+                                region: customer.address?.region || customer.region || '',
+                                zone: customer.address?.zone || customer.zone || '',
+                                woreda: customer.address?.woreda || customer.woreda || '',
+                                city: customer.address?.city || customer.city || '',
+                                street_name: customer.address?.street_name || customer.street_name || '',
+                                kebele: customer.address?.kebele || customer.kebele || '',
+                                house_no: customer.address?.house_no || customer.house_no || '',
                             },
-                        }));
+                            contact_person: customer.contact_person || [],
+                            customer_level: customer.customer_level || '2',
+                        };
 
+                        // Set all data at once
+                        setData(transform);
+
+                        // Handle photo
                         if (customer.photo_base64) {
                             localStorage.setItem('customer_photo_base64', customer.photo_base64);
                         }
+
+                        console.log('Form initialized with API data');
+                    } else {
+                        console.log('No customer data found from API');
                     }
+                } else {
+                    console.log('No customer_sub_id found, starting with empty form');
                 }
             } catch (error) {
-                console.error('Error fetching customer data:', error);
+                console.error('Error loading data from API:', error);
+                toast.error('Failed to load existing customer data');
+            } finally {
+                setIsLoadingPrefill(false);
             }
         };
 
-        fetchCustomerData();
-    }, [prefillData, photoBase64, setData, user.customer_sub_id]);
+        loadDataFromApi();
+    }, [user?.customer_sub_id, user?.api_token, setData]);
 
     // Set default customer category when customer_type is residential
     useEffect(() => {
         if (data.customer_type === '1' && !data.customer_category) {
-            // Set default residential category
-            setData('customer_category', '1'); // Assuming '1' is Residential category
+            setData('customer_category', '1');
         }
     }, [data.customer_type, data.customer_category, setData]);
 
     // Set default customer subcategory when customer_category is residential
     useEffect(() => {
         if (data.customer_category === '1' && !data.customer_subcategory) {
-            // Set default residential subcategory
-            setData('customer_subcategory', '1'); // Assuming '1' is Residential subcategory
+            setData('customer_subcategory', '1');
         }
     }, [data.customer_category, data.customer_subcategory, setData]);
 
@@ -234,19 +200,34 @@ export default function Create() {
     const { zones: zoneOptions, loading: loadingZones } = useZones(data.address?.region);
     const { woredas: woredaOptions, loading: loadingWoredas } = useWoredas(data.address?.zone);
 
-    const [contactPersons, setContactPersons] = useState(data.contact_person || []);
-    useEffect(() => {
-        setData('contact_person', contactPersons);
-    }, [contactPersons, setData]);
+    // Contact person state - only one contact person
+    const [contactPerson, setContactPerson] = useState(
+        data.contact_person && data.contact_person.length > 0
+            ? data.contact_person[0] // Take the first contact person if exists
+            : {
+                  first_name: '',
+                  middle_name: '',
+                  last_name: '',
+                  title: undefined,
+                  mobile_no: '',
+                  office_no: '',
+                  home_no: '',
+                  fax_no: '',
+              },
+    );
 
-    const addContactPerson = () =>
-        setContactPersons((prev) => [
-            ...prev,
-            { first_name: '', middle_name: '', last_name: '', title: undefined, mobile_no: '', office_no: '', home_no: '', fax_no: '' },
-        ]);
-    const removeContactPerson = (i: number) => setContactPersons((prev) => prev.filter((_, idx) => idx !== i));
-    const updateContactPerson = (i: number, field: string, val: string) =>
-        setContactPersons((prev) => prev.map((p, idx) => (idx === i ? { ...p, [field]: val } : p)));
+    // Update contact person
+    const updateContactPerson = (field: string, val: string) => setContactPerson((prev) => ({ ...prev, [field]: val }));
+
+    // Sync contact person with form data
+    useEffect(() => {
+        setData('contact_person', [contactPerson]); // Wrap in array for API
+    }, [contactPerson, setData]);
+
+    // Check if a field is read-only
+    const isFieldReadOnly = (fieldName: string): boolean => {
+        return readOnlyFields.has(fieldName);
+    };
 
     const submit: FormEventHandler = async (e) => {
         e.preventDefault();
@@ -254,7 +235,6 @@ export default function Create() {
 
         const result = customerSchema.safeParse(data);
         if (!result.success) {
-            // Handle validation errors
             const fieldErrors: Record<string, string> = {};
             for (const [key, val] of Object.entries(result.error.flatten().fieldErrors)) {
                 if (val && val.length > 0) fieldErrors[key] = val[0];
@@ -331,6 +311,7 @@ export default function Create() {
             console.error(error);
         }
     };
+
     const uploadPhotoToEcaf = async (customerData: any, transactionId: string, photoBase64: string) => {
         try {
             setUploadingPhoto(true);
@@ -363,18 +344,12 @@ export default function Create() {
             setUploadingPhoto(false);
         }
     };
-    // const handleInputChange = (field: string, value: string) => {
-    //     setData(field, value);
-    //     setFormErrors((prev) => {
-    //         const newErrors = { ...prev };
-    //         delete newErrors[field];
-    //         return newErrors;
-    //     });
-    // };
+
+    // Enhanced change handlers that prevent editing of read-only fields
     const handleInputChange = (field: string, value: string) => {
-        // Check if field is editable
-        if (isNidData && editableFields[field] === false) {
-            return; // Don't allow changes for non-editable fields
+        if (isFieldReadOnly(field)) {
+            toast.warning('This field is pre-filled from existing data and cannot be edited.');
+            return;
         }
 
         setData(field, value);
@@ -386,6 +361,12 @@ export default function Create() {
     };
 
     const handleNestedInputChange = (parent: string, field: string, value: string) => {
+        const fullFieldName = `${parent}.${field}`;
+        if (isFieldReadOnly(fullFieldName)) {
+            toast.warning('This field is pre-filled from existing data and cannot be edited.');
+            return;
+        }
+
         setData(parent, {
             ...data[parent],
             [field]: value,
@@ -400,6 +381,11 @@ export default function Create() {
     };
 
     const handleSelectChange = (field: string, value: string) => {
+        if (isFieldReadOnly(field)) {
+            toast.warning('This field is pre-filled from existing data and cannot be edited.');
+            return;
+        }
+
         setData(field, value);
         setFormErrors((prev) => {
             const newErrors = { ...prev };
@@ -425,21 +411,39 @@ export default function Create() {
     };
 
     const renderStepIndicator = () => (
-        <div className="mb-6 flex items-center justify-center space-x-0 sm:space-x-4">
+        <div className="mb-6 flex items-center justify-center space-x-0">
             {[1, 2, 3, 4].map((stepNumber) => (
                 <div key={stepNumber} className="flex items-center">
                     <div
-                        className={`flex h-6 w-6 items-center justify-center rounded-full text-sm font-medium transition-all sm:h-10 sm:w-10 ${
+                        className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all sm:h-10 sm:w-10 ${
                             step >= stepNumber ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-500'
-                        } ${step === stepNumber ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
+                        } ${step === stepNumber ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                     >
                         {step > stepNumber ? <CheckCircle className="h-5 w-5" /> : stepNumber}
                     </div>
-                    {stepNumber < 4 && <div className={`mx-2 h-1 w-16 transition-all ${step > stepNumber ? 'bg-primary' : 'bg-gray-200'}`} />}
+                    {stepNumber < 4 && <div className={`h-0.5 w-16 transition-all ${step > stepNumber ? 'bg-primary' : 'bg-gray-200'}`} />}
                 </div>
             ))}
         </div>
     );
+
+    // Show loading state when loading prefill data
+    if (isLoadingPrefill) {
+        return (
+            <AuthLayout>
+                <Head title="Create Customer" />
+                <div className="flex min-h-screen items-center justify-center">
+                    <Card className="w-full max-w-md">
+                        <CardContent className="flex flex-col items-center space-y-4 p-6 text-center">
+                            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
+                            {/* <h2 className="text-xl font-semibold">Loading Customer Data</h2> */}
+                            <p className="text-gray-600">Please wait while we load your existing information...</p>
+                        </CardContent>
+                    </Card>
+                </div>
+            </AuthLayout>
+        );
+    }
 
     // Show loading state when uploading photo
     if (uploadingPhoto) {
@@ -450,7 +454,7 @@ export default function Create() {
                         <CardContent className="flex flex-col items-center space-y-4 p-6 text-center">
                             <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
                             <h2 className="text-xl font-semibold">Uploading Customer Photo</h2>
-                            <p className="text-gray-600">Please wait while we upload the photo from your National ID...</p>
+                            <p className="text-gray-600">Please wait while we upload the photo...</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -458,26 +462,12 @@ export default function Create() {
         );
     }
 
+    // Check if we have any pre-filled data
+    const hasPrefilledData = readOnlyFields.size > 0;
+
     return (
         <AuthLayout>
             <Head title="Create Customer" />
-
-            {/* Photo Upload Status */}
-            {nidData && (nidData.nid_identity?.photo_base64 || nidData.identity?.photo_base64) && (
-                <div className="mx-auto max-w-4xl px-4 pb-4 sm:px-6">
-                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                        <div className="flex items-center gap-3">
-                            <Upload className="h-5 w-5 text-blue-600" />
-                            <div>
-                                <p className="font-medium text-blue-800">National ID Photo Available</p>
-                                <p className="text-sm text-blue-600">
-                                    Your photo from National ID verification will be automatically uploaded after customer creation.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {Object.keys(formErrors).length > 0 && (
                 <div className="mx-auto max-w-4xl px-4 pb-4 sm:px-6">
@@ -492,94 +482,29 @@ export default function Create() {
                 <div className="rounded-b-lg p-4 shadow-sm">
                     <h1 className="text-2xl font-bold text-gray-900">Create New Customer</h1>
                     <p className="text-md mt-1 text-gray-600">Fill in the customer details step by step</p>
+                    {!hasPrefilledData && <p className="mt-2 text-sm text-gray-500">Starting with a new customer record.</p>}
                 </div>
 
                 {renderStepIndicator()}
 
                 {/* 1: Personal Information */}
                 {step === 1 && (
-                    <Card className="border border-gray-200 shadow-sm">
-                        <CardHeader className="bg-gray-50">
+                    <Card className="">
+                        <CardHeader className="">
                             <CardTitle className="flex items-center gap-3 text-gray-800">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-primary">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
                                     <User className="h-5 w-5" />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-semibold">Personal Information</h2>
-                                    <CardDescription className="text-gray-400">Basic personal details of the customer</CardDescription>
+                                    <h2 className="text-xl">Personal Information</h2>
+                                    <CardDescription className="text-gray-500">
+                                        {hasPrefilledData ? 'Identity details and additional information' : 'Basic personal details of the customer'}
+                                    </CardDescription>
                                 </div>
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6 p-6">
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                {/* Updated Customer Type */}
-                                {/* <div className="space-y-2 md:col-span-2">
-                                    <Label htmlFor="customer_type">Customer Type</Label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div
-                                            className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-4 transition-all ${
-                                                data.customer_type === '1' ? 'border-green-500 bg-green-50 shadow-sm' : 'hover:bg-gray-50'
-                                            }`}
-                                            onClick={() => {
-                                                setData('customer_type', '1');
-                                                setData('customer_category', '1');
-                                                setData('customer_subcategory', '1');
-                                                clearFieldError('customer_type');
-                                            }}
-                                        >
-                                            <div
-                                                className={`flex h-12 w-12 items-center justify-center rounded-full ${
-                                                    data.customer_type === '1' ? 'bg-green-100' : 'bg-gray-100'
-                                                }`}
-                                            >
-                                                <Home className={`h-6 w-6 ${data.customer_type === '1' ? 'text-green-600' : 'text-gray-600'}`} />
-                                            </div>
-                                            <span className="font-medium">Residential</span>
-                                            <span className="text-center text-xs text-gray-500">For home and personal use</span>
-                                            <input
-                                                type="radio"
-                                                id="residential"
-                                                name="customer_type"
-                                                value="residential"
-                                                checked={data.customer_type === '1'}
-                                                onChange={() => {}}
-                                                className="sr-only"
-                                            />
-                                        </div>
-                                        <div
-                                            className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-4 transition-all ${
-                                                data.customer_type === '2' ? 'border-blue-500 bg-blue-50 shadow-sm' : 'hover:bg-gray-50'
-                                            }`}
-                                            onClick={() => {
-                                                setData('customer_type', '2');
-                                                setData('customer_category', '');
-                                                setData('customer_subcategory', '');
-                                                clearFieldError('customer_type');
-                                            }}
-                                        >
-                                            <div
-                                                className={`flex h-12 w-12 items-center justify-center rounded-full ${
-                                                    data.customer_type === '2' ? 'bg-blue-100' : 'bg-gray-100'
-                                                }`}
-                                            >
-                                                <Building className={`h-6 w-6 ${data.customer_type === '2' ? 'text-blue-600' : 'text-gray-600'}`} />
-                                            </div>
-                                            <span className="font-medium">Enterprise</span>
-                                            <span className="text-center text-xs text-gray-500">For business and organizations</span>
-                                            <input
-                                                type="radio"
-                                                id="enterprise"
-                                                name="customer_type"
-                                                value="enterprise"
-                                                checked={data.customer_type === '2'}
-                                                onChange={() => {}}
-                                                className="sr-only"
-                                            />
-                                        </div>
-                                    </div>
-                                    {typesLoading && <p className="text-sm text-gray-500">Loading customer types...</p>}
-                                    {formErrors.customer_type && <p className="text-sm font-medium text-destructive">{formErrors.customer_type}</p>}
-                                </div> */}
                                 <div className="space-y-2">
                                     <FormSelect
                                         label="Customer Type"
@@ -588,19 +513,14 @@ export default function Create() {
                                         value={data.customer_type}
                                         onChange={(val) => {
                                             setData('customer_type', val);
-
-                                            // If Residential → auto-assign default category/subcategory
                                             if (val === '1') {
                                                 setData('customer_category', '1');
                                                 setData('customer_subcategory', '1');
                                             }
-
-                                            // If Enterprise → reset them
                                             if (val === '2') {
                                                 setData('customer_category', '');
                                                 setData('customer_subcategory', '');
                                             }
-
                                             clearFieldError('customer_type');
                                         }}
                                         options={[
@@ -609,6 +529,7 @@ export default function Create() {
                                         ]}
                                         placeholder="Select customer type"
                                         error={formErrors.customer_type}
+                                        disabled={isFieldReadOnly('customer_type')}
                                     />
                                 </div>
 
@@ -628,6 +549,7 @@ export default function Create() {
                                         placeholder="Select category"
                                         error={formErrors.customer_category || categoriesError}
                                         loading={categoriesLoading}
+                                        disabled={isFieldReadOnly('customer_category')}
                                     />
                                     <FormSelect
                                         label="Customer Subcategory"
@@ -642,6 +564,7 @@ export default function Create() {
                                         placeholder="Select subcategory"
                                         error={formErrors.customer_subcategory || subcategoriesError}
                                         loading={subcategoriesLoading}
+                                        disabled={isFieldReadOnly('customer_subcategory')}
                                     />
                                 </>
                                 <FormSelect
@@ -660,6 +583,7 @@ export default function Create() {
                                     ]}
                                     placeholder="Select title"
                                     error={formErrors.title}
+                                    disabled={isFieldReadOnly('title')}
                                 />
                                 <FormInput
                                     label="First Name"
@@ -669,6 +593,7 @@ export default function Create() {
                                     onChange={(e) => handleInputChange('first_name', e.target.value)}
                                     placeholder=""
                                     error={formErrors.first_name}
+                                    readOnly={isFieldReadOnly('first_name')}
                                 />
                                 <FormInput
                                     label="Middle Name"
@@ -678,6 +603,7 @@ export default function Create() {
                                     onChange={(e) => handleInputChange('middle_name', e.target.value)}
                                     placeholder=""
                                     error={formErrors.middle_name}
+                                    readOnly={isFieldReadOnly('middle_name')}
                                 />
                                 <FormInput
                                     label="Last Name "
@@ -687,6 +613,7 @@ export default function Create() {
                                     onChange={(e) => handleInputChange('last_name', e.target.value)}
                                     placeholder=""
                                     error={formErrors.last_name}
+                                    readOnly={isFieldReadOnly('last_name')}
                                 />
                                 <FormSelect
                                     label="Gender"
@@ -700,6 +627,7 @@ export default function Create() {
                                     ]}
                                     placeholder="Select gender"
                                     error={formErrors.gender}
+                                    disabled={isFieldReadOnly('gender')}
                                 />
                                 <FormInput
                                     label="Date of Birth"
@@ -710,15 +638,7 @@ export default function Create() {
                                     onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
                                     placeholder=""
                                     error={formErrors.date_of_birth}
-                                />
-                                <FormInput
-                                    label="Place of Birth"
-                                    id="place_of_birth"
-                                    required
-                                    value={data.place_of_birth}
-                                    onChange={(e) => handleInputChange('place_of_birth', e.target.value)}
-                                    placeholder=""
-                                    error={formErrors.place_of_birth}
+                                    readOnly={isFieldReadOnly('date_of_birth')}
                                 />
                                 <FormSelect
                                     label="Nationality"
@@ -732,6 +652,7 @@ export default function Create() {
                                     ]}
                                     placeholder=""
                                     error={formErrors.nationality}
+                                    disabled={isFieldReadOnly('nationality')}
                                 />
                                 <FormSelect
                                     label="Primary Language"
@@ -748,6 +669,18 @@ export default function Create() {
                                     ]}
                                     placeholder=""
                                     error={formErrors.primary_language}
+                                    disabled={isFieldReadOnly('primary_language')}
+                                />
+                                <FormInput
+                                    label="Place of Birth"
+                                    id="place_of_birth"
+                                    required
+                                    focus
+                                    value={data.place_of_birth}
+                                    onChange={(e) => handleInputChange('place_of_birth', e.target.value)}
+                                    placeholder=""
+                                    error={formErrors.place_of_birth}
+                                    readOnly={isFieldReadOnly('place_of_birth')}
                                 />
                             </div>
                         </CardContent>
@@ -757,15 +690,15 @@ export default function Create() {
                 {/* 2: Identification */}
                 {step === 2 && (
                     <div className="space-y-6">
-                        <Card className="border border-gray-200 shadow-sm">
-                            <CardHeader className="rounded-t-lg border-b bg-gray-50">
+                        <Card className="">
+                            <CardHeader className="">
                                 <CardTitle className="flex items-center gap-3 text-gray-800">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-primary">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
                                         <FileText className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-semibold">Identification</h2>
-                                        <CardDescription className="text-gray-600">Identification documents and numbers</CardDescription>
+                                        <h2 className="text-xl">Identification</h2>
+                                        <CardDescription className="text-gray-500">Identification documents and numbers</CardDescription>
                                     </div>
                                 </CardTitle>
                             </CardHeader>
@@ -776,19 +709,10 @@ export default function Create() {
                                         id="identification_type"
                                         value={data.identification_type || ''}
                                         onChange={(value) => handleSelectChange('identification_type', value)}
-                                        options={[
-                                            // { label: 'Passport', value: '1' },
-                                            { label: 'National ID', value: '2' },
-                                            // { label: 'Driver License', value: '3' },
-                                            // { label: 'Student Id', value: '4' },
-                                            // { label: 'TIN No', value: '5' },
-                                            // { label: 'Other', value: '6' },
-                                            // { label: 'House Number', value: '7' },
-                                            // { label: 'Corporate Letter', value: '8' },
-                                            // { label: 'Kebele ID', value: '9' },
-                                        ]}
+                                        options={[{ label: 'National ID', value: '2' }]}
                                         placeholder="Select ID type"
                                         error={formErrors.identification_type}
+                                        disabled={isFieldReadOnly('identification_type')}
                                     />
                                     <FormInput
                                         label="Identification Number"
@@ -797,19 +721,20 @@ export default function Create() {
                                         onChange={(e) => handleInputChange('identification_number', e.target.value)}
                                         placeholder="Enter ID number"
                                         error={formErrors.identification_number}
+                                        readOnly={isFieldReadOnly('identification_number')}
                                     />
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className="border border-gray-200 shadow-sm">
-                            <CardHeader className="rounded-t-lg border-b bg-gray-50">
+                        <Card className="">
+                            <CardHeader className="">
                                 <CardTitle className="flex items-center gap-3 text-gray-800">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-primary">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
                                         <Phone className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-semibold">Contact Information</h2>
-                                        <CardDescription className="text-gray-600">Phone numbers and email addresses</CardDescription>
+                                        <h2 className="text-xl">Contact Information</h2>
+                                        <CardDescription className="text-gray-500">Phone numbers and email addresses</CardDescription>
                                     </div>
                                 </CardTitle>
                             </CardHeader>
@@ -826,6 +751,7 @@ export default function Create() {
                                         ]}
                                         placeholder="Select notification mode"
                                         error={formErrors['contact.notification_mode']}
+                                        disabled={isFieldReadOnly('contact.notification_mode')}
                                     />
                                     <FormInput
                                         label="Phone Number"
@@ -835,15 +761,8 @@ export default function Create() {
                                         onChange={(e) => handleNestedInputChange('contact', 'mobile_no', e.target.value)}
                                         placeholder="Enter mobile number"
                                         error={formErrors['contact.mobile_no']}
+                                        readOnly={isFieldReadOnly('contact.mobile_no')}
                                     />
-                                    {/* <FormInput
-                                        label="Office Number (length 9 to 20)"
-                                        id="office"
-                                        value={data.contact?.office_no || ''}
-                                        onChange={(e) => handleNestedInputChange('contact', 'office_no', e.target.value)}
-                                        placeholder="Enter office number"
-                                        error={formErrors['contact.office_no']}
-                                    /> */}
                                     <FormInput
                                         label="Email Address"
                                         id="email"
@@ -851,25 +770,10 @@ export default function Create() {
                                         type="email"
                                         value={data.contact?.email || ''}
                                         onChange={(e) => handleNestedInputChange('contact', 'email', e.target.value)}
-                                        placeholder="Enter email address"
+                                        placeholder=""
                                         error={formErrors['contact.email']}
+                                        readOnly={isFieldReadOnly('contact.email')}
                                     />
-                                    {/* <FormInput
-                                        label="Home Number (length 9 to 20)"
-                                        id="home"
-                                        value={data.contact?.home_no || ''}
-                                        onChange={(e) => handleNestedInputChange('contact', 'home_no', e.target.value)}
-                                        placeholder="Enter home number"
-                                        error={formErrors['contact.home_no']}
-                                    />
-                                    <FormInput
-                                        label="Fax Number (length 9 to 20)"
-                                        id="fax_no"
-                                        value={data.contact?.fax_no || ''}
-                                        onChange={(e) => handleNestedInputChange('contact', 'fax_no', e.target.value)}
-                                        placeholder="Enter fax number"
-                                        error={formErrors['contact.fax_no']}
-                                    /> */}
                                 </div>
                             </CardContent>
                         </Card>
@@ -878,15 +782,15 @@ export default function Create() {
 
                 {/* 3: Address */}
                 {step === 3 && (
-                    <Card className="border border-gray-200 shadow-sm">
-                        <CardHeader className="rounded-t-lg border-b bg-gray-50">
+                    <Card className="">
+                        <CardHeader className="">
                             <CardTitle className="flex items-center gap-3 text-gray-800">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-primary">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
                                     <MapPin className="h-5 w-5" />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-semibold">Address</h2>
-                                    <CardDescription className="text-gray-600">Current residential address</CardDescription>
+                                    <h2 className="text-xl">Address</h2>
+                                    <CardDescription className="text-gray-500">Current residential address</CardDescription>
                                 </div>
                             </CardTitle>
                         </CardHeader>
@@ -904,6 +808,7 @@ export default function Create() {
                                     options={regionOptions}
                                     placeholder={loadingRegions ? 'Loading regions...' : 'Select region'}
                                     error={formErrors['address.region']}
+                                    disabled={isFieldReadOnly('address.region')}
                                 />
                                 <FormSelect
                                     label="Zone"
@@ -917,6 +822,7 @@ export default function Create() {
                                     options={data.address?.region ? zoneOptions : []}
                                     placeholder={data.address?.region ? (loadingZones ? 'Loading zones...' : 'Select zone') : 'First select region'}
                                     error={formErrors['address.zone']}
+                                    disabled={isFieldReadOnly('address.zone')}
                                 />
                                 <FormSelect
                                     label="Woreda"
@@ -930,23 +836,8 @@ export default function Create() {
                                     options={data.address?.zone ? woredaOptions : []}
                                     placeholder={data.address?.zone ? (loadingWoredas ? 'Loading woredas...' : 'Select woreda') : 'First select zone'}
                                     error={formErrors['address.woreda']}
+                                    disabled={isFieldReadOnly('address.woreda')}
                                 />
-                                {/* <FormInput
-                                    label="City (accepted value: 1-16)"
-                                    id="address.city"
-                                    value={data.address?.city}
-                                    onChange={(e) => handleNestedInputChange('address', 'city', e.target.value)}
-                                    placeholder="Enter city accepted value: 1-16"
-                                    error={formErrors['address.city']}
-                                /> */}
-                                {/* <FormInput
-                                    label="Street Name (optional)"
-                                    id="address.street_name"
-                                    value={data.address?.street_name}
-                                    onChange={(e) => handleNestedInputChange('address', 'street_name', e.target.value)}
-                                    placeholder="Enter street name"
-                                    error={formErrors['address.street_name']}
-                                /> */}
                                 <FormInput
                                     label="Kebele"
                                     id="address.kebele"
@@ -954,6 +845,7 @@ export default function Create() {
                                     onChange={(e) => handleNestedInputChange('address', 'kebele', e.target.value)}
                                     placeholder=""
                                     error={formErrors['address.kebele']}
+                                    readOnly={isFieldReadOnly('address.kebele')}
                                 />
                                 <FormInput
                                     label="House Number"
@@ -962,24 +854,24 @@ export default function Create() {
                                     onChange={(e) => handleNestedInputChange('address', 'house_no', e.target.value)}
                                     placeholder=""
                                     error={formErrors['address.house_no']}
+                                    readOnly={isFieldReadOnly('address.house_no')}
                                 />
                             </div>
                         </CardContent>
                     </Card>
                 )}
-
                 {/* 4: Professional Information */}
                 {step === 4 && (
                     <div className="space-y-6">
-                        <Card className="border border-gray-200 shadow-sm">
-                            <CardHeader className="rounded-t-lg border-b bg-gray-50">
+                        <Card className="">
+                            <CardHeader className="">
                                 <CardTitle className="flex items-center gap-3 text-gray-800">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-primary">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
                                         <Building className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-semibold">Professional Information</h2>
-                                        <CardDescription className="text-gray-600">Work and educational background</CardDescription>
+                                        <h2 className="text-xl">Professional Information</h2>
+                                        <CardDescription className="text-gray-500">Work and educational background</CardDescription>
                                     </div>
                                 </CardTitle>
                             </CardHeader>
@@ -994,7 +886,7 @@ export default function Create() {
                                         options={occupations}
                                         placeholder={loading ? 'Loading occupations...' : 'Select occupation'}
                                         error={formErrors.occupation || (occupationError ? occupationError : undefined)}
-                                        disabled={loading}
+                                        disabled={loading || isFieldReadOnly('occupation')}
                                     />
                                     <FormSelect
                                         label="Education"
@@ -1017,6 +909,7 @@ export default function Create() {
                                         ]}
                                         placeholder="Select education level"
                                         error={formErrors.education}
+                                        disabled={isFieldReadOnly('education')}
                                     />
                                     <FormSelect
                                         label="Religion"
@@ -1034,6 +927,7 @@ export default function Create() {
                                         ]}
                                         placeholder="Select religion"
                                         error={formErrors.religion}
+                                        disabled={isFieldReadOnly('religion')}
                                     />
                                     <FormSelect
                                         label="Income Level"
@@ -1052,118 +946,100 @@ export default function Create() {
                                         ]}
                                         placeholder="Select income level"
                                         error={formErrors.income}
+                                        disabled={isFieldReadOnly('income')}
                                     />
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className="border border-gray-200 shadow-sm">
-                            <CardHeader className="rounded-t-lg border-b bg-gray-50">
+
+                        {/* Contact Person - Single */}
+                        <Card className="">
+                            <CardHeader className="">
                                 <CardTitle className="flex items-center gap-3 text-gray-800">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-primary">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
                                         <User className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-semibold">Contact Person</h2>
-                                        <CardDescription className="text-gray-600">Emergency or alternate contact</CardDescription>
+                                        <h2 className="text-xl">Contact Person</h2>
+                                        <CardDescription className="text-gray-500">Emergency or alternate contact (Optional)</CardDescription>
                                     </div>
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-6 p-6">
-                                {contactPersons.map((person, i) => (
-                                    <div key={i} className="space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-                                        <div className="flex items-center justify-between">
-                                            <h4 className="text-lg font-medium text-gray-800">Contact Person</h4>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => removeContactPerson(i)}
-                                                className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                                            >
-                                                Remove
-                                            </Button>
-                                        </div>
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                            <FormSelect
-                                                label="Title"
-                                                id={`title_${i}`}
-                                                value={person.title}
-                                                onChange={(value) => updateContactPerson(i, 'title', value)}
-                                                options={[
-                                                    { label: 'Mr.', value: '1' },
-                                                    { label: 'Mrs.', value: '2' },
-                                                    { label: 'Ms.', value: '3' },
-                                                    { label: 'Engineer', value: '6' },
-                                                    { label: 'Professor', value: '5' },
-                                                    { label: 'Doctor', value: '4' },
-                                                ]}
-                                                placeholder="Select title"
-                                                error={formErrors.title}
-                                            />
-                                            <FormInput
-                                                label="First Name"
-                                                id={`first_name_${i}`}
-                                                value={person.first_name}
-                                                onChange={(e) => updateContactPerson(i, 'first_name', e.target.value)}
-                                                placeholder="Enter first name"
-                                            />
-                                            <FormInput
-                                                label="Middle Name"
-                                                id={`middle_name_${i}`}
-                                                value={person.middle_name}
-                                                onChange={(e) => updateContactPerson(i, 'middle_name', e.target.value)}
-                                                placeholder="Enter middle name"
-                                            />
-                                            <FormInput
-                                                label="Last Name"
-                                                id={`last_name_${i}`}
-                                                value={person.last_name}
-                                                onChange={(e) => updateContactPerson(i, 'last_name', e.target.value)}
-                                                placeholder="Enter last name"
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                            <FormInput
-                                                label="Mobile No"
-                                                id={`mobile_no_${i}`}
-                                                value={person.mobile_no}
-                                                onChange={(e) => updateContactPerson(i, 'mobile_no', e.target.value)}
-                                                placeholder="Enter mobile number"
-                                            />
-                                            <FormInput
-                                                label="Home No"
-                                                id={`home_no_${i}`}
-                                                value={person.home_no}
-                                                onChange={(e) => updateContactPerson(i, 'home_no', e.target.value)}
-                                                placeholder="Enter home number"
-                                            />
-                                            <FormInput
-                                                label="Office No"
-                                                id={`office_no_${i}`}
-                                                value={person.office_no}
-                                                onChange={(e) => updateContactPerson(i, 'office_no', e.target.value)}
-                                                placeholder="Enter office number"
-                                            />
-                                            <FormInput
-                                                label="Fax No"
-                                                id={`fax_no_${i}`}
-                                                value={person.fax_no}
-                                                onChange={(e) => updateContactPerson(i, 'fax_no', e.target.value)}
-                                                placeholder="Enter fax number"
-                                            />
-                                        </div>
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <FormSelect
+                                            label="Title"
+                                            id="contact_person_title"
+                                            value={contactPerson.title || ''}
+                                            onChange={(val) => updateContactPerson('title', val)}
+                                            options={[
+                                                { label: 'Mr.', value: '1' },
+                                                { label: 'Mrs.', value: '2' },
+                                                { label: 'Ms.', value: '3' },
+                                                { label: 'Engineer', value: '6' },
+                                                { label: 'Professor', value: '5' },
+                                                { label: 'Doctor', value: '4' },
+                                            ]}
+                                            placeholder="Select title"
+                                        />
+                                        <FormInput
+                                            label="First Name"
+                                            id="contact_person_first_name"
+                                            value={contactPerson.first_name}
+                                            onChange={(e) => updateContactPerson('first_name', e.target.value)}
+                                            placeholder="Enter first name"
+                                        />
+                                        <FormInput
+                                            label="Middle Name"
+                                            id="contact_person_middle_name"
+                                            value={contactPerson.middle_name}
+                                            onChange={(e) => updateContactPerson('middle_name', e.target.value)}
+                                            placeholder="Enter middle name"
+                                        />
+                                        <FormInput
+                                            label="Last Name"
+                                            id="contact_person_last_name"
+                                            value={contactPerson.last_name}
+                                            onChange={(e) => updateContactPerson('last_name', e.target.value)}
+                                            placeholder="Enter last name"
+                                        />
                                     </div>
-                                ))}
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <FormInput
+                                            label="Mobile Number"
+                                            id="contact_person_mobile_no"
+                                            value={contactPerson.mobile_no}
+                                            onChange={(e) => updateContactPerson('mobile_no', e.target.value)}
+                                            placeholder="Enter mobile number"
+                                        />
+                                        {/* <FormInput
+                                            label="Home Number"
+                                            id="contact_person_home_no"
+                                            value={contactPerson.home_no}
+                                            onChange={(e) => updateContactPerson('home_no', e.target.value)}
+                                            placeholder="Enter home number"
+                                        />
+                                        <FormInput
+                                            label="Office Number"
+                                            id="contact_person_office_no"
+                                            value={contactPerson.office_no}
+                                            onChange={(e) => updateContactPerson('office_no', e.target.value)}
+                                            placeholder="Enter office number"
+                                        />
+                                        <FormInput
+                                            label="Fax Number"
+                                            id="contact_person_fax_no"
+                                            value={contactPerson.fax_no}
+                                            onChange={(e) => updateContactPerson('fax_no', e.target.value)}
+                                            placeholder="Enter fax number"
+                                        /> */}
+                                    </div>
+                                </div>
 
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={addContactPerson}
-                                    disabled={contactPersons.length > 0}
-                                    className="w-full border-dashed border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    + Add Contact Person
-                                </Button>
+                                {/* <p className="text-sm text-gray-500">
+                                    This contact person information is optional and can be used for emergency contacts.
+                                </p> */}
                             </CardContent>
                         </Card>
                     </div>

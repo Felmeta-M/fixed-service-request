@@ -4,10 +4,9 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SurveyOrderFormRequest;
+use App\Models\Customer;
 use App\Models\SurveyRequest;
 use Inertia\Inertia;
-use App\Models\Customer;
-use Illuminate\Http\Request;
 
 class SurveyRequestController extends Controller
 {
@@ -18,14 +17,7 @@ class SurveyRequestController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        return Inertia::render('SurveyRequests/Create', [
-            'customers' => Customer::select('id', 'first_name', 'last_name')->get(),
-        ]);
-    }
-
-    public function store(SurveyRequest $request)
+    public function store(SurveyOrderFormRequest $request)
     {
         $data = $request->validated();
         $data['customer_survey_order_id'] = $this->generateUniqueRequestNumber();
@@ -33,6 +25,22 @@ class SurveyRequestController extends Controller
         SurveyRequest::create($data);
 
         return redirect()->route('survey-requests.index')->with('success', 'Survey request created.');
+    }
+
+    private function generateUniqueRequestNumber(): string
+    {
+        do {
+            $number = 'SURV-' . rand(100000, 999999);
+        } while (SurveyRequest::where('customer_survey_order_id', $number)->exists());
+
+        return $number;
+    }
+
+    public function create()
+    {
+        return Inertia::render('SurveyRequests/Create', [
+            'customers' => Customer::select('id', 'first_name', 'last_name')->get(),
+        ]);
     }
 
     public function show(SurveyRequest $surveyRequest)
@@ -62,14 +70,5 @@ class SurveyRequestController extends Controller
         $surveyRequest->delete();
 
         return redirect()->route('survey-requests.index')->with('success', 'Survey request deleted.');
-    }
-
-    private function generateUniqueRequestNumber(): string
-    {
-        do {
-            $number = 'SURV-' . rand(100000, 999999);
-        } while (SurveyRequest::where('customer_survey_order_id', $number)->exists());
-
-        return $number;
     }
 }

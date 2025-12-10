@@ -86,6 +86,8 @@ return [
         'access_password' => env('SURVEY_BSS_ACCESS_PASSWORD'),
         'channel_id' => env('SURVEY_BSS_CHANNEL_ID'),
         'technical_channel_id' => env('SURVEY_TECHNICAL_CHANNEL_ID'),
+        'language' => env('SURVEY_BSS_LANGUAGE'),
+        'tenant_id' => env('SURVEY_TENANT_ID'),
     ],
 
     'query_survey' => [

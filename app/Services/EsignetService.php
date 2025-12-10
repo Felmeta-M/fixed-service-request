@@ -52,6 +52,18 @@ class EsignetService
             ), '=');
 
             $state = bin2hex(random_bytes(16));
+            $claims = [
+                'userinfo' => [
+                    'name' => ['essential' => true],
+                    'phone_number' => ['essential' => true],
+                    'email' => ['essential' => true],
+                    'picture' => ['essential' => true],
+                    'gender' => ['essential' => true],
+                    'birthdate' => ['essential' => true],
+                    'address' => ['essential' => true],
+                    'sub' => ['essential' => true],
+                ]
+            ];
 
             return [
                 'status' => 'ok',
@@ -63,6 +75,8 @@ class EsignetService
                         'code_challenge' => $challenge,
                         'code_challenge_method' => 'S256',
                         'state' => $state,
+                        'claims' => $claims
+
                     ]),
                 'code_verifier' => $verifier,
                 'state' => $state,

@@ -26,9 +26,9 @@ class SubscriptionService extends BaseApiService
    {
       try {
          $xmlPayload = $this->buildRequestXml($data);
-         // Log::info($xmlPayload);
+         Log::info($xmlPayload);
          $xmlResponse = $this->executeRequest($xmlPayload);
-         // Log::info($xmlResponse);
+         Log::info($xmlResponse);
          $parsedXml = $this->parseResponseXml($data, $xmlResponse);
          return ApiResponse::success($parsedXml);
       } catch (\RuntimeException $e) {

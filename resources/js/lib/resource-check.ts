@@ -60,9 +60,17 @@ export const useResourceChecker = () => {
                 combo_flag: '0',
             };
 
-            console.log('Resource check request:', requestData);
+            // console.log('Resource check request:', requestData);
 
-            const response = await axios.post<ResourceCheckResponse>(`${import.meta.env.VITE_API_BASE_URL}/resource-check`, requestData);
+            const response = await axios.post<ResourceCheckResponse>(`${import.meta.env.VITE_API_BASE_URL}/resource-check`, requestData,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${user.api_token}`,
+                    },
+                }
+            );
 
             if (response.data.success && response.data.data) {
                 const resource = response.data.data;

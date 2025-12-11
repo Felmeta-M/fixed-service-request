@@ -34,6 +34,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
     const { user } = usePage().props.auth;
 
+    const { main_offer_id } = survey
+
     useEffect(() => {
         if (user) {
             setCustomerData(user);
@@ -148,7 +150,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         }
     };
 
-    const createSubscriber = async () => {
+    const handleSubscribe = async () => {
         const addressInfo = getAddressInfo();
         const contactInfo = getContactInfo();
         const customerInfo = getCustomerInfo();
@@ -186,11 +188,6 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         });
 
         const result = await response.json();
-
-        // if (result?.data?.original?.success === false) {
-        //     const errorMsg = result.data.original.message || 'Subscriber creation failed';
-        //     throw new Error(errorMsg);
-        // }
 
         if (!result.success) {
             throw new Error(result.message || 'Subscriber creation failed');
@@ -399,18 +396,32 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
     const ACTION_RULES = {
         3: { canCancel: true, canPay: false },
-        5: { canCancel: true, canPay: true },
+        5: { canCancel: true, canPay: true },  // canPay depends on main_offer_id now
         9: { canCancel: false, canPay: false },
     };
 
     const rules = ACTION_RULES[status] || {};
-    const { canPay, canCancel } = rules;
+
+    let { canPay, canCancel } = rules;
+
+    // 🔥 Extra constraint: canPay only if main offer matches
+    if (canPay) {
+        canPay = main_offer_id !== "1457567289";
+    }
+
+    const canSubscribe = !canPay;
 
     return (
         <>
             <div className="flex items-center justify-end gap-2">
-                {canPay && (
-                    <Button onClick={handlePayNow} disabled={loading} className="gap-1 bg-primary px-4 text-white" size="sm">
+
+                {canPay ? (
+                    <Button
+                        onClick={handlePayNow}
+                        disabled={loading}
+                        className="gap-1 bg-primary px-4 text-white"
+                        size="sm"
+                    >
                         {loading ? (
                             <>
                                 <div className="h-3 w-3 animate-spin rounded-full border-b-2 border-white"></div>
@@ -420,14 +431,32 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                             <>Pay</>
                         )}
                     </Button>
+                ) : (
+                    <Button
+                        onClick={handleSubscribe}
+                        disabled={loading}
+                        className="gap-1 bg-primary px-2 text-white"
+                        size="sm"
+                    >
+                        Subscribe
+                    </Button>
                 )}
 
                 {canCancel && (
-                    <Button variant="outline" size="sm" onClick={() => setOpenCancelDialog(true)} disabled={loading} className="gap-1 px-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setOpenCancelDialog(true)}
+                        disabled={loading}
+                        className="gap-1 px-2"
+                    >
                         Cancel
                     </Button>
                 )}
+
             </div>
+
+
 
             {/* Error Dialog */}
             <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>

@@ -8,6 +8,7 @@ import { parseCoordinate } from '@/lib/coordinate-utils';
 import { CheckCircle, Loader2, MapPin, Navigation } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GoogleLocationMap } from '../google-location-map';
+import { usePage } from '@inertiajs/react';
 
 interface LocationSetupStepProps {
     formData: any;
@@ -16,6 +17,7 @@ interface LocationSetupStepProps {
 }
 
 export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: LocationSetupStepProps) {
+    const { user } = usePage().props.auth
     const [locationLoading, setLocationLoading] = useState(true);
     const [locationError, setLocationError] = useState('');
     const [isGeocoding, setIsGeocoding] = useState(false);

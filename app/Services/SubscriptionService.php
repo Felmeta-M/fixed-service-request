@@ -163,20 +163,31 @@ XML;
          return ApiResponse::error('Service subscription failed!');
       }
 
-      $numberService = $this->getAvailableNumberServices();
-      if (!$numberService) {
-         return ApiResponse::error('Unable to reserve number service');
+      // Fetch the survey request record
+      $surveyRequest = SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])->first();
+
+      if (!$surveyRequest) {
+         return ApiResponse::error('Survey request not found');
       }
 
-      SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])
-         ->first()?->update([
+      // 1. If service number already exists in DB → reuse it
+      if ($surveyRequest->service_number) {
+         $numberService = $surveyRequest->service_number;
+      } else {
+         // 2. If not existing → get new service number
+         $numberService = $this->getAvailableNumberServices();
+
+         if (!$numberService) {
+            return ApiResponse::error('Unable to reserve number service');
+         }
+         // 3. Save new service number to DB
+         $surveyRequest->update([
             'service_number' => $numberService,
             'status' => FFDServiceProvisionStatus::Subscribed->value,
             'subscribed_at' => now(),
-            //TODO: 'completed_date' => ??? it has to be updated based on they survey result
+            // TODO: update completed_date based on survey result
          ]);
-
-      $responseMsg['number_service'] = $numberService;
+      }
 
       return ApiResponse::success([
          'success'   => true,

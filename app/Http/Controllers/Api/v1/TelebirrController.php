@@ -27,7 +27,7 @@ class TelebirrController extends Controller
     {
         try {
             $validated = $request->validate([
-                'customerSurveyOrderId' => 'required',
+                'customerSurveyOrderId' => 'required|exists:survey_requests,customer_survey_order_id',
             ]);
 
             $rawRequest = $this->createOrderService->createOrder($validated);

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Payment;
+use App\Models\SurveyRequest;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -29,20 +30,31 @@ class PaymentService
         });
     }
 
-    public function createOrUpdatePayment(string $orderId, string $service_number, float $amount)
+    public function createOrUpdatePayment(string $customer_survey_order_id, string $service_number, float $amount)
     {
         $customer = Auth::guard('api')->user();
-        if ($customer) {
-            return Payment::firstOrCreate(
-                ['customer_survey_order_id' => $orderId],
+        if (!$customer) return;
+
+        DB::transaction(function () use ($customer_survey_order_id, $service_number, $amount, $customer) {
+            // Update service number only if needed
+            DB::table('survey_requests')
+                ->where('customer_survey_order_id', $customer_survey_order_id)
+                ->where('service_number', '!=', $service_number)
+                ->update(['service_number' => $service_number]);
+
+            // Payment upsert
+            DB::table('payments')->updateOrInsert(
+                ['customer_survey_order_id' => $customer_survey_order_id],
                 [
                     'service_number' => $service_number,
-                    'customer_code' => $customer->customer_code,
-                    'amount' => $amount,
-                    'status' => FFDServiceProvisionStatus::Pending->value,
+                    'customer_code'  => $customer->customer_code,
+                    'amount'         => $amount,
+                    'status'         => FFDServiceProvisionStatus::Pending->value,
+                    'updated_at'     => now(),
+                    'created_at'     => now(),
                 ]
             );
-        }
+        });
     }
 
     /**

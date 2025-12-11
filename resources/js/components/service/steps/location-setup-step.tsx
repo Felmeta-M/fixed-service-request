@@ -214,7 +214,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
 
             const data = await response.json();
 
-            if (data.status === 'OK' && data.results.length > 0) {
+            if (data.status === 'OK' && data?.results?.length > 0) {
                 const location = data.results[0].geometry.location;
                 return {
                     lat: location.lat,
@@ -367,10 +367,10 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
         currentLocation ||
         (hasValidLocation
             ? {
-                  lat: formData.latitude,
-                  lng: formData.longitude,
-                  address: formData.address,
-              }
+                lat: formData.latitude,
+                lng: formData.longitude,
+                address: formData.address,
+            }
             : null);
 
     return (
@@ -506,20 +506,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                 </Alert>
             )}
 
-            {formData.resourceAvailable === true && (
-                <Alert className="border-green-200">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-800">
-                        <div className="flex items-center justify-between">
-                            <span className="font-semibold">Resource available</span>
-                            <Badge variant="outline" className="ml-2 text-green-800">
-                                Ready to proceed
-                            </Badge>
-                        </div>
-                        <p className="mt-1">Your selected location has the necessary infrastructure.</p>
-                    </AlertDescription>
-                </Alert>
-            )}
+
 
             {formData.resourceAvailable === false && (
                 <Alert variant="destructive">
@@ -530,18 +517,15 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                                 Service Limited
                             </Badge>
                         </div>
-                        <p className="mt-1">
-                            {formData.resourceMessage || 'Service not available in this location. Please try a different location.'}
-                        </p>
                     </AlertDescription>
                 </Alert>
             )}
 
-            {locationError && (
+            {/* {locationError && (
                 <Alert variant="destructive">
                     <AlertDescription>{locationError}</AlertDescription>
                 </Alert>
-            )}
+            )} */}
         </div>
     );
 }

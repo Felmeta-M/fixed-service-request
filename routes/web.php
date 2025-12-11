@@ -2,10 +2,15 @@
 
 use App\Http\Controllers\Api\v1\EsignetController;
 use App\Http\Controllers\Api\v1\NidController;
+use App\Http\Controllers\Api\v1\PaymentController;
 use App\Http\Controllers\Api\v1\TelebirrController;
 use App\Http\Controllers\OtpAuthController;
 use App\Http\Controllers\SupportRequestController;
+use App\Http\Resources\PaymentResource;
+use App\Models\Payment;
+use App\Models\SurveyRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 
@@ -52,14 +57,18 @@ Route::middleware(['otp.auth'])->group(function () {
     })->name('services.create');
 
     Route::get('/payment/summary', function (Request $request) {
+        $payment_details = new PaymentResource(Payment::query()->where('customer_survey_order_id', $request->query('customerSurveyOrderId'))->latest()->first());
+        $survey_details = SurveyRequest::query()->where('customer_survey_order_id', $request->query('customerSurveyOrderId'))->latest()
+            ->first(['customer_type', 'survey_type', 'main_offer_id', 'bandwidth']);
         return Inertia::render('Subscriber/PaymentSummary', [
-            'survey_id' => $request->query('survey_id'),
-            'subscriber_data' => json_decode($request->query('subscriber_data')),
-            'service_number' => $request->query('service_number'),
-            'fee_data' => json_decode($request->query('fee_data')),
-            'customer_data' => json_decode($request->query('customer_data')),
-            'survey_data' => json_decode($request->query('survey_data')),
-            'is_fallback' => filter_var($request->query('is_fallback', false), FILTER_VALIDATE_BOOLEAN),
+            'payment_details' => $payment_details,
+            'survey_details' => $survey_details,
+            // 'subscriber_data' => json_decode($request->query('subscriber_data')),
+
+            // 'fee_data' => json_decode($request->query('fee_data')),
+            // 'customer_data' => json_decode($request->query('customer_data')),
+            // 'survey_data' => json_decode($request->query('survey_data')),
+            // 'is_fallback' => filter_var($request->query('is_fallback', false), FILTER_VALIDATE_BOOLEAN),
         ]);
     })->name('payment.summary');
     // Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

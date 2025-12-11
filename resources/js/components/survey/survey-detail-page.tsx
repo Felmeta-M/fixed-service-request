@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 
 const typeMap = {
-    '1943913915': {
+    '1457567289': {
         label: 'Internet',
         text: 'text-blue-700',
         bg: 'bg-white',
@@ -39,7 +39,7 @@ const typeMap = {
         description: 'Internet Service',
         border: 'border-blue-200',
     },
-    '102647257': {
+    '1207609454': {
         label: 'Voice',
         text: 'text-purple-700',
         bg: 'bg-white',
@@ -48,7 +48,7 @@ const typeMap = {
         description: 'Voice/Telephony Service',
         border: 'border-purple-200',
     },
-    '1207609455': {
+    '180427974': {
         label: 'Combo',
         text: 'text-green-700',
         bg: 'bg-white',

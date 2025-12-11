@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Throwable;
 
@@ -14,7 +15,9 @@ class OneOffFeeService extends BaseApiService
     {
         try {
             $xmlPayload = $this->buildRequestXml($data);
+            // Log::info($xmlPayload);
             $xmlResponse = $this->executeRequest($xmlPayload);
+            // Log::info($xmlResponse);
             $parsedXml = $this->parseResponseXml($xmlResponse);
             return ApiResponse::success($parsedXml);
         } catch (RuntimeException $e) {
@@ -32,7 +35,7 @@ class OneOffFeeService extends BaseApiService
         $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
         $credentials = config('services.one_off_fee');
-        $sequence = time();//sequence id $data['sub_order']['external_sequence']
+        $sequence = time(); //sequence id $data['sub_order']['external_sequence']
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"

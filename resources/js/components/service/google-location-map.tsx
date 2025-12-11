@@ -367,6 +367,7 @@ export function GoogleLocationMap({
                             fullscreenControl: true,
                             zoomControl: true,
                             gestureHandling: 'greedy',
+                            // mapTypeId: 'satellite',
                             styles: [
                                 {
                                     featureType: 'poi',

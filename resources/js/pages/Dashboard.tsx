@@ -54,11 +54,11 @@ export default function Dashboard() {
 
         const serviceTypeCounts = surveys.reduce(
             (acc, survey) => {
-                const type = survey.main_offer_id?.includes('1943913915')
+                const type = survey.main_offer_id?.includes('1457567289')
                     ? 'broadband'
                     : survey.main_offer_id?.includes('1207609454')
-                      ? 'voice'
-                      : 'combo';
+                        ? 'voice'
+                        : 'combo';
                 acc[type] = (acc[type] || 0) + 1;
                 return acc;
             },

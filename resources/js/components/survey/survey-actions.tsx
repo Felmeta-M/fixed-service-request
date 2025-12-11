@@ -32,15 +32,15 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const [openDetailModal, setOpenDetailModal] = useState(false);
     const [apiErrors, setApiErrors] = useState<{ [key: string]: string }>({});
 
-    const { auth }: any = usePage().props;
+    const { user } = usePage().props.auth;
 
     useEffect(() => {
-        if (auth?.user) {
-            setCustomerData(auth.user);
+        if (user) {
+            setCustomerData(user);
         } else {
             setCustomerData(null);
         }
-    }, [auth]);
+    }, [user]);
 
     const handleApiError = (result: any, context: string = '') => {
         console.error(`API Error in ${context}:`, result);
@@ -90,6 +90,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
+                    Authorization: `Bearer ${user.api_token}`,
                 },
                 body: JSON.stringify({
                     customer_survey_order_id: String(survey.customer_survey_order_id),
@@ -123,6 +124,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
+                    Authorization: `Bearer ${user.api_token}`,
                 },
                 body: JSON.stringify({
                     customer_code: survey.customer_code,
@@ -175,7 +177,11 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
         const response = await fetch('/api/v1/services/subscription', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${user.api_token}`,
+
+            },
             body: JSON.stringify(payload),
         });
 
@@ -196,7 +202,10 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const fetchAvailableNumbers = async () => {
         const response = await fetch('/api/v1/avaiable-number', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${user.api_token}`,
+            },
             body: JSON.stringify({
                 pay_mode: '1',
                 tele_type: '4',
@@ -215,7 +224,11 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const calculateServiceFees = async (serviceNumber: string) => {
         const response = await fetch('/api/v1/calc-one-off-fee', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${user.api_token}`,
+
+            },
             body: JSON.stringify({
                 customer_survey_order_id: String(survey.customer_survey_order_id),
                 business_code: 'CO064',
@@ -239,7 +252,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         });
 
         const result = await response.json();
-        console.log('🚀 ~ calculateServiceFees ~ result:', result);
+        // console.log('🚀 ~ calculateServiceFees ~ result:', result);
 
         if (!result.success) {
             const errorMsg = result.message || 'Failed to calculate fees';
@@ -275,13 +288,11 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         clearErrors();
 
         try {
-            // Step 1: Create subscriber
-            const subscriberResult = await createSubscriber();
-            console.log('Subscriber created:', subscriberResult);
+
 
             // Step 2: Fetch available numbers
             const availableNumbers = await fetchAvailableNumbers();
-            console.log('Available numbers:', availableNumbers);
+            // console.log('Available numbers:', availableNumbers);
 
             const serviceNumber = availableNumbers[0]?.ServiceNumber;
             if (!serviceNumber) {
@@ -290,21 +301,39 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
             // Step 3: Calculate fees via backend (this now includes payment creation)
             const feeData = await calculateServiceFees(serviceNumber);
-            console.log('Fee data calculated with payment record:', feeData);
+            // console.log('Fee data calculated with payment record:', feeData);
+
+            // Step 1: Create subscriber
+            // const subscriberResult = await createSubscriber();
+            // console.log('Subscriber created:', subscriberResult);
 
             // All steps completed successfully - proceed to payment summary
+
+            // console.log('routing to paymentwith:',
+            //     {
+            //         survey_id: survey.customer_survey_order_id,
+            //         subscriber_data: "", // JSON.stringify(subscriberResult.data),
+            //         service_number: serviceNumber,
+            //         fee_data: JSON.stringify(feeData),
+            //         customer_data: JSON.stringify(customerData),
+            //         survey_data: JSON.stringify(survey),
+            //         payment_record: JSON.stringify(feeData.payment_record),
+            //     }
+            // )
             router.visit(route('payment.summary'), {
                 method: 'get',
                 data: {
-                    survey_id: survey.customer_survey_order_id,
-                    subscriber_data: JSON.stringify(subscriberResult.data),
-                    service_number: serviceNumber,
-                    fee_data: JSON.stringify(feeData),
-                    customer_data: JSON.stringify(customerData),
-                    survey_data: JSON.stringify(survey),
-                    payment_record: JSON.stringify(feeData.payment_record),
+                    customerSurveyOrderId: survey.customer_survey_order_id,
+                    serviceNumber: serviceNumber,
+                    // fee_data: JSON.stringify(feeData),
+                    // customer_data: JSON.stringify(customerData),
+                    // survey_data: JSON.stringify(survey),
+                    // payment_record: JSON.stringify(feeData.payment_record),
                 },
+                preserveState: false,
+                preserveScroll: false,
             });
+
         } catch (err: any) {
             const errorMessage = err.message || 'Failed to setup payment. Please try again.';
             handleApiError({ message: errorMessage }, 'payment_setup');

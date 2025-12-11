@@ -15,6 +15,7 @@ enum FFDServiceProvisionStatus: int
     case Pending    = 10;
     case Paid       = 11;
     case Refund     = 13;
+    case Subscribed = 14;
 
     public function label(): string
     {
@@ -30,6 +31,7 @@ enum FFDServiceProvisionStatus: int
             self::Pending    => 'Pending',
             self::Paid       => 'Paid',
             self::Refund     => 'Refund',
+            self::Subscribed => 'Subscribed',
         };
     }
 

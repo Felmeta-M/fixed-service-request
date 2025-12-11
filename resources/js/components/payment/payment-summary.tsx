@@ -2,67 +2,147 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { usePage } from '@inertiajs/react';
 import { Clock, CreditCard, MapPin, Package, Phone, Shield, User, Wifi } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-interface PaymentSummaryProps {
-    surveyData: any;
-    subscriberData: any;
-    serviceNumber: string;
-    feeData: any;
-    customerData: any;
-    onPaymentConfirm: () => void;
-    loading?: boolean;
-}
+// interface PaymentSummaryProps {
+//     customerSurveyOrderId: string;
+//     surveyData: any;
+//     subscriberData: any;
+//     serviceNumber: string;
+//     feeData: any;
+//     customerData: any;
+//     onPaymentConfirm: () => void;
+//     loading?: boolean;
+// }
 
 const serviceTypeMap = {
     '1943913918': { label: 'Internet Service', icon: Wifi, color: 'text-blue-600' },
-    '102647257': { label: 'Voice Service', icon: Phone, color: 'text-purple-600' },
-    '1207609455': { label: 'Combo Service', icon: Package, color: 'text-green-600' },
+    '1207609454': { label: 'Voice Service', icon: Phone, color: 'text-purple-600' },
+    '180427974': { label: 'Combo Service', icon: Package, color: 'text-green-600' },
 };
 
 export function PaymentSummary({
-    surveyData,
-    subscriberData,
-    serviceNumber,
-    feeData,
-    customerData,
-    onPaymentConfirm,
-    loading = false,
-}: PaymentSummaryProps) {
-    console.log('🚀 ~ PaymentSummary ~ feeData:', feeData);
+    paymentDetails,
+    surveyDetails,
+}: any) {
+    const { user } = usePage().props.auth;
 
-    const serviceType = serviceTypeMap[surveyData.main_offer_id] || serviceTypeMap['1943913918'];
+    const [loading, setLoading] = useState(false)
+
+    const { main_offer_id } = surveyDetails
+
+    const serviceType = serviceTypeMap[main_offer_id]
+
     const ServiceIcon = serviceType.icon;
 
-    // Use backend-calculated total amount (includes cable costs and proper calculations)
-    const totalAmount = feeData?.total_amount || 0;
-    const baseAmount = feeData?.base_amount || 0;
-    const cableCost = feeData?.cable_cost || 0;
+    const { customer_survey_order_id, service_number, amount } = paymentDetails.data ?? 0;
+    const totalAmount = Number(amount).toFixed(2);
+    const baseAmount = 0;
+    const cableCost = 0;
 
-    const getCustomerInfo = () => {
-        if (!customerData) return { name: 'N/A', phone: 'N/A' };
+    // const getCustomerInfo = () => {
+    //     if (!customerData) return { name: 'N/A', phone: 'N/A' };
 
-        const customer = customerData;
-        const contact = customerData.phone;
-        const customer_code = customerData.customer_code;
+    //     const customer = customerData;
+    //     const contact = customerData.phone;
+    //     const customer_code = customerData.customer_code;
 
-        return {
-            name: `${customer.name || ''} ${customer.name || ''} ${customer.name || ''}`.trim(),
-            phone: contact || 'N/A',
-            email: contact?.email || 'N/A',
-            customer_code: customer_code || 'N/A',
-        };
+    //     return {
+    //         name: `${customer.name || ''} ${customer.name || ''} ${customer.name || ''}`.trim(),
+    //         phone: contact || 'N/A',
+    //         email: contact?.email || 'N/A',
+    //         customer_code: customer_code || 'N/A',
+    //     };
+    // };
+
+    // const getAddressInfo = () => {
+    //     if (!customerData?.addresses?.[0]) return 'N/A';
+
+    //     const address = customerData.addresses[0];
+    //     return `${address.address1 || ''} ${address.address2 || ''} ${address.address3 || ''} ${address.address4 || ''}`.trim();
+    // };
+
+    // const customerInfo = getCustomerInfo();
+    // const addressInfo = getAddressInfo();
+
+    // useEffect(() => {
+    //     if (customerSurveyOrderId) {
+    //         handleFetchPayment()
+    //     }
+    // }, [customerSurveyOrderId]);
+
+
+    // const handleFetchPayment = async () => {
+    //     setLoading(true);
+
+    //     try {
+    //         const response = await fetch('/api/v1/payment', {
+    //             method: 'GET',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 Authorization: `Bearer ${user.api_token}`,
+
+    //             },
+    //             body: JSON.stringify({
+    //                 customerSurveyOrderId,
+    //             }),
+    //         });
+
+    //         const result = await response.json();
+    //         console.log(result);
+    //         if (result.success && result.rawRequest) {
+    //             window.location.href = result.rawRequest;
+    //         } else {
+    //             throw new Error(result.message || 'Failed to create payment order');
+    //         }
+    //     } catch (error) {
+    //         console.error('Payment error:', error);
+    //         alert('Failed to process payment. Please try again.');
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+    // const handleFetchPayment = async () => {
+
+    // };
+
+    const onPaymentConfirm = async () => {
+        setLoading(true);
+
+        try {
+            const response = await fetch('/api/v1/create-order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${user.api_token}`,
+                },
+                body: JSON.stringify({
+                    customerSurveyOrderId: customer_survey_order_id,
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (result.success && result.rawRequest) {
+                window.location.href = result.rawRequest;
+            } else {
+                throw new Error(result.message || 'Failed to create payment order');
+            }
+        } catch (error) {
+            console.error('Payment error:', error);
+            alert('Failed to process payment. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const getAddressInfo = () => {
-        if (!customerData?.addresses?.[0]) return 'N/A';
-
-        const address = customerData.addresses[0];
-        return `${address.address1 || ''} ${address.address2 || ''} ${address.address3 || ''} ${address.address4 || ''}`.trim();
-    };
-
-    const customerInfo = getCustomerInfo();
-    const addressInfo = getAddressInfo();
 
     return (
         <div className="min-h-screen py-6">
@@ -89,18 +169,18 @@ export function PaymentSummary({
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                <DetailItem label="Full Name" value={customerInfo.name} />
-                                <DetailItem label="Phone Number" value={customerInfo.phone} />
-                                <DetailItem label="Email" value={customerInfo.email} />
-                                <DetailItem label="Customer Code" value={customerInfo?.customer_code || 'N/A'} />
+                                <DetailItem label="Full Name" value={user.name} />
+                                <DetailItem label="Phone Number" value={user.phone} />
+                                {/* <DetailItem label="Email" value={user.email} /> */}
                             </div>
-                            <div className="pt-2">
+                            {/* <div className="pt-2">
                                 <DetailItem label="Installation Address" value={addressInfo} icon={<MapPin className="h-4 w-4" />} fullWidth />
-                            </div>
+                            </div> */}
                         </CardContent>
                     </Card>
 
                     {/* Service Details Card */}
+
                     <Card className="border-none shadow-none">
                         <CardHeader className="pb-2">
                             <div className="flex items-center gap-3">
@@ -117,12 +197,11 @@ export function PaymentSummary({
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div className="space-y-3">
                                     <DetailItem label="Service Type" value={serviceType.label} icon={<ServiceIcon className="h-4 w-4" />} />
-                                    <DetailItem label="Service Number" value={serviceNumber} />
+                                    <DetailItem label="Service Number" value={service_number} />
                                 </div>
                                 <div className="space-y-3">
                                     <DetailItem label="Subscription Type" value="New Connection" badge={{ variant: 'default', text: 'New' }} />
-                                    <DetailItem label="Order ID" value={surveyData.customer_survey_order_id} />
-                                    <DetailItem label="Activation" value="Immediate after payment" icon={<Clock className="h-4 w-4" />} />
+                                    <DetailItem label="Service request number" value={customer_survey_order_id} />
                                 </div>
                             </div>
                         </CardContent>
@@ -144,7 +223,7 @@ export function PaymentSummary({
                         <CardContent>
                             <div className="space-y-4">
                                 {/* Service Fees */}
-                                {feeData?.fees?.map((fee, index) => (
+                                {/* {feeData?.fees?.map((fee, index) => (
                                     <div key={index} className="space-y-2">
                                         <div className="flex items-start justify-between">
                                             <div>
@@ -168,7 +247,7 @@ export function PaymentSummary({
                                             </div>
                                         ))}
                                     </div>
-                                ))}
+                                ))} */}
 
                                 {/* Cable Cost (if applicable) */}
                                 {cableCost > 0 && (
@@ -225,11 +304,6 @@ export function PaymentSummary({
                                 </div>
                             )}
                         </Button>
-
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <Shield className="h-3 w-3" />
-                            <span>Secure payment processed by Telebirr</span>
-                        </div>
                     </div>
                 </div>
             </div>

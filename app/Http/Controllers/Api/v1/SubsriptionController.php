@@ -27,7 +27,7 @@ class SubsriptionController extends Controller
         return $this->subscriptionService->createNewSubscriber($storeSubscriptionRequest->validated());
     }
 
-    /**
+    /** 
      * Display the specified resource.
      */
     public function show(string $id)

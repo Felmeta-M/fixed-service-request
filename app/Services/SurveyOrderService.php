@@ -17,8 +17,9 @@ class SurveyOrderService extends BaseApiService
     {
         try {
             $xmlPayload = $this->buildRequestXml($data);
+            // logger('xml response: ' . $xmlPayload);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            logger('xml response: ' . $xmlResponse);
+            // logger('xml response: ' . $xmlResponse);
             $parsedXml = $this->parseResponseXml($data, $xmlResponse);
             return ApiResponse::success($parsedXml);
         } catch (RuntimeException $e) {
@@ -41,7 +42,14 @@ class SurveyOrderService extends BaseApiService
         $bandwidth = $data['bandwidth'] ? $this->parseBandwidth($data['bandwidth']) : "";
         $completedDate = date('YmdHis');
 
-        $data['main_offer_id'] = 1457567289;// voice 1207609454; //
+        //TODO: shall be replaced by fronted values
+        // $data['main_offer_id'] = 1207609454; // voice 1207609454; //data 1457567289
+        // $data['sub_main_offer_id'] = 180427974; //combo
+
+        //  <com:SubSurveyinfoList>
+        //     <com:MainOfferId>{$data['sub_main_offer_id']}</com:MainOfferId>
+        // </com:SubSurveyinfoList> 
+
         $data['sec_contact_person'] = "";
         $data['sec_contact_no'] = "";
         $data['sec_contact_email'] = "";
@@ -136,53 +144,53 @@ class SurveyOrderService extends BaseApiService
 XML;
     }
 
-//    private function buildRequestXml(array $data): string
-//    {
-//        $credentials = config('services.survey');
-//        $transactionId = uniqid();
-//        $contactNo = substr($data['contact_no'], -9);
-//        $bandwidth = $this->parseBandwidth($data['bandwidth']);
-//        if (!$bandwidth) {
-//            throw new InvalidArgumentException('Bandwidth cannot be empty');
-//        }
-//
-//        return <<<XML
-//<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
-//   <soapenv:Header/>
-//   <soapenv:Body>
-//      <ser:HandleSurveyOrderReqMsg>
-//         <ser:RequestHeader>
-//            <com:Version>1</com:Version>
-//            <com:TransactionId>{$transactionId}</com:TransactionId>
-//            <com:ChannelId>{$credentials['channel_id']}</com:ChannelId>
-//            <com:TechnicalChannelId>{$credentials['technical_channel_id']}</com:TechnicalChannelId>
-//            <com:AccessUser>{$credentials['access_user']}</com:AccessUser>
-//            <com:AccessPwd>{$credentials['access_password']}</com:AccessPwd>
-//         </ser:RequestHeader>
-//         <ser:HandleSurveyOrderReqBody>
-//            <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
-//            <com:SurveyType>{$data['survey_type']}</com:SurveyType>
-//            <com:TelecomRegion>{$data['telecom_region']}</com:TelecomRegion>
-//            <com:OperType>{$data['oper_type']}</com:OperType>
-//            <com:MainOfferId>{$data['main_offer_id']}</com:MainOfferId>
-//            <com:SurveyAddressInfo>
-//               <com:AdministrativeRegionOrCity>{$data['survey_address_info']['region_city']}</com:AdministrativeRegionOrCity>
-//               <com:SubcityOrZone>{$data['survey_address_info']['subcity_zone']}</com:SubcityOrZone>
-//               <com:WeredaOrTown>{$data['survey_address_info']['wereda_town']}</com:WeredaOrTown>
-//               <com:Kebele>{$data['survey_address_info']['kebele']}</com:Kebele>
-//            </com:SurveyAddressInfo>
-//            <com:bandwidth>{$bandwidth}</com:bandwidth>
-//            <com:ContactPerson>{$data['contact_person']}</com:ContactPerson>
-//            <com:ContactNo>{$contactNo}</com:ContactNo>
-//            <com:ContactEmail>{$data['contact_email']}</com:ContactEmail>
-//            <com:CompletedDate>{$data['completed_date']}</com:CompletedDate>
-//            <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
-//         </ser:HandleSurveyOrderReqBody>
-//      </ser:HandleSurveyOrderReqMsg>
-//   </soapenv:Body>
-//</soapenv:Envelope>
-//XML;
-//    }
+    //    private function buildRequestXml(array $data): string
+    //    {
+    //        $credentials = config('services.survey');
+    //        $transactionId = uniqid();
+    //        $contactNo = substr($data['contact_no'], -9);
+    //        $bandwidth = $this->parseBandwidth($data['bandwidth']);
+    //        if (!$bandwidth) {
+    //            throw new InvalidArgumentException('Bandwidth cannot be empty');
+    //        }
+    //
+    //        return <<<XML
+    //<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
+    //   <soapenv:Header/>
+    //   <soapenv:Body>
+    //      <ser:HandleSurveyOrderReqMsg>
+    //         <ser:RequestHeader>
+    //            <com:Version>1</com:Version>
+    //            <com:TransactionId>{$transactionId}</com:TransactionId>
+    //            <com:ChannelId>{$credentials['channel_id']}</com:ChannelId>
+    //            <com:TechnicalChannelId>{$credentials['technical_channel_id']}</com:TechnicalChannelId>
+    //            <com:AccessUser>{$credentials['access_user']}</com:AccessUser>
+    //            <com:AccessPwd>{$credentials['access_password']}</com:AccessPwd>
+    //         </ser:RequestHeader>
+    //         <ser:HandleSurveyOrderReqBody>
+    //            <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
+    //            <com:SurveyType>{$data['survey_type']}</com:SurveyType>
+    //            <com:TelecomRegion>{$data['telecom_region']}</com:TelecomRegion>
+    //            <com:OperType>{$data['oper_type']}</com:OperType>
+    //            <com:MainOfferId>{$data['main_offer_id']}</com:MainOfferId>
+    //            <com:SurveyAddressInfo>
+    //               <com:AdministrativeRegionOrCity>{$data['survey_address_info']['region_city']}</com:AdministrativeRegionOrCity>
+    //               <com:SubcityOrZone>{$data['survey_address_info']['subcity_zone']}</com:SubcityOrZone>
+    //               <com:WeredaOrTown>{$data['survey_address_info']['wereda_town']}</com:WeredaOrTown>
+    //               <com:Kebele>{$data['survey_address_info']['kebele']}</com:Kebele>
+    //            </com:SurveyAddressInfo>
+    //            <com:bandwidth>{$bandwidth}</com:bandwidth>
+    //            <com:ContactPerson>{$data['contact_person']}</com:ContactPerson>
+    //            <com:ContactNo>{$contactNo}</com:ContactNo>
+    //            <com:ContactEmail>{$data['contact_email']}</com:ContactEmail>
+    //            <com:CompletedDate>{$data['completed_date']}</com:CompletedDate>
+    //            <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
+    //         </ser:HandleSurveyOrderReqBody>
+    //      </ser:HandleSurveyOrderReqMsg>
+    //   </soapenv:Body>
+    //</soapenv:Envelope>
+    //XML;
+    //    }
 
     protected function parseBandwidth(string|int $value): int
     {

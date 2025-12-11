@@ -66,11 +66,12 @@ type FormInputProps = {
 
 type FormSelectProps = {
     label: string;
-    id: string;
-    value: string | undefined;
-    onChange: (value: string) => void;
-    options: Option[];
+    id?: string;
+    value?: string | undefined;
+    onChange?: (value: string) => void;
+    options?: Option[];
     placeholder?: string;
+    labelRight?: string;
     error?: string;
     disabled?: boolean;
     loading?: boolean;

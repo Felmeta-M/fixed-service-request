@@ -1,5 +1,3 @@
-import FormInput from '@/components/form-input';
-import FormSelect from '@/components/form-select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCustomerCategories, useCustomerSubcategories, useCustomerTypes } from '@/hooks/use-customer-types';
@@ -10,15 +8,143 @@ import GuestLayout from '@/layouts/GuestLayout';
 import { CustomerFormValues, customerSchema } from '@/types/customer';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { ArrowLeft, ArrowRight, Building, CheckCircle, FileText, MapPin, Phone, User } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building, CheckCircle, FileIcon, FileText, MapPin, MapPinIcon, Phone, PhoneIcon, User, UserIcon } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { FormSelectProps } from '@/types';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
+
+export function FormSelect({
+    label,
+    id,
+    required,
+    value,
+    onChange,
+    options,
+    placeholder,
+    error,
+    disabled,
+    loading,
+    labelRight,
+}: FormSelectProps & { required?: boolean }) {
+    return (
+        <div className="space-y-2">
+            <Label htmlFor={id} className="font-medium text-gray-700">
+                {label}
+                {required && <span className=" text-red-500">*</span>}
+                {labelRight && <div className="inline-block">{labelRight}</div>}
+            </Label>
+
+            <Select value={value} onValueChange={onChange} disabled={disabled || loading}>
+                <SelectTrigger className={`${error ? 'border-red-300' : 'border-gray-300'} flex items-center justify-between`}>
+                    {loading ? (
+                        <div className="flex items-center space-x-2">
+                            <svg className="h-4 w-4 animate-spin text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                            </svg>
+                            <span className="text-sm text-gray-500">Loading...</span>
+                        </div>
+                    ) : (
+                        <SelectValue placeholder={placeholder} />
+                    )}
+                </SelectTrigger>
+
+                {!loading && (
+                    <SelectContent className="bg-white shadow-lg">
+                        {options.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                )}
+            </Select>
+
+            {error && <p className="text-sm text-red-500">{error}</p>}
+        </div>
+    );
+}
+
+export interface FormInputProps {
+    label: string;
+    id: string;
+    value?: string | number | null;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    placeholder?: string;
+    error?: string;
+    type?: React.HTMLInputTypeAttribute;
+    required?: boolean;
+    readOnly?: boolean;
+    disabled?: boolean;
+}
+
+export function FormInput({
+    label,
+    id,
+    value,
+    onChange,
+    placeholder = "",
+    error,
+    type = "text",
+    required = false,
+    readOnly = false,
+    disabled = false,
+}: FormInputProps) {
+    const safeValue = value ?? "";
+    console.log({
+        label,
+        id,
+        value,
+        onChange,
+        placeholder,
+        error,
+        type,
+        required,
+        readOnly,
+        disabled,
+    })
+    return (
+        <div className="space-y-2">
+            <Label htmlFor={id} className="font-medium text-gray-700">
+                {label}
+                {required && <span className="text-red-500">*</span>}
+            </Label>
+            <input
+                type={type}
+                className={
+                    cn("flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        , `${error
+                            ? "border-red-300 focus:ring-red-200"
+                            : "border-gray-300 focus:ring-green-200"
+                        } focus:ring-2 focus:outline-none`)}
+                id={id}
+                value={safeValue}
+                onChange={onChange}
+                placeholder={placeholder}
+                readOnly={readOnly}
+                disabled={disabled}
+            // className={`${error
+            //     ? "border-red-300 focus:ring-red-200"
+            //     : "border-gray-300 focus:ring-green-200"
+            //     } focus:ring-2 focus:outline-none`}
+            />
+
+            {/*        {error && <p className="text-sm text-red-500">{error}</p>} */}
+        </div>
+    );
+}
+
+
+
+
 
 export default function Create() {
     const { auth } = usePage().props;
-    console.log('🚀 ~ Create ~ auth:', auth);
     const { user } = auth;
-    console.log('authenticated user', user);
 
     const { occupations, loading, error: occupationError } = useOccupations();
     const [step, setStep] = useState(1);
@@ -27,7 +153,7 @@ export default function Create() {
     const [customerCreated, setCustomerCreated] = useState(false);
     const [createdCustomerData, setCreatedCustomerData] = useState<any>(null);
 
-    // Track which fields should be read-only (from API prefill)
+
     const [readOnlyFields, setReadOnlyFields] = useState<Set<string>>(new Set());
     const [isLoadingPrefill, setIsLoadingPrefill] = useState(true);
 
@@ -71,8 +197,6 @@ export default function Create() {
         customer_level: '2',
     });
 
-    // Define fields that should be read-only when pre-filled from API
-    // These are typically identity fields that shouldn't be changed
     const API_READONLY_FIELDS = [
         'first_name',
         'middle_name',
@@ -87,7 +211,6 @@ export default function Create() {
         'contact.mobile_no',
     ];
 
-    // Load data from API only
     useEffect(() => {
         const loadDataFromApi = async () => {
             try {
@@ -95,12 +218,12 @@ export default function Create() {
 
                 // Only load data if user has customer_sub_id
                 if (user?.customer_sub_id) {
-                    console.log('Loading customer data from API for customer_sub_id:', user.customer_sub_id);
+                    console.log('Loading customer data from API for customer_sub_id:', user?.customer_sub_id);
 
                     const response = await axios.get('/api/v1/customer', {
-                        params: { customer_sub_id: user.customer_sub_id },
+                        params: { customer_sub_id: user?.customer_sub_id },
                         headers: {
-                            Authorization: `Bearer ${user.api_token}`,
+                            Authorization: `Bearer ${user?.api_token}`,
                         },
                     });
 
@@ -118,7 +241,7 @@ export default function Create() {
                             last_name: customer.last_name || '',
                             title: customer.title || '1',
                             gender: customer.gender?.toLowerCase() === 'male' ? '1' : customer.gender?.toLowerCase() === 'female' ? '2' : undefined,
-                            nationality: customer.nationality?.toLowerCase() === 'ethiopia' ? '1231' : '1000',
+                            nationality: customer.nationality?.toLowerCase() === 'ethiopian' ? '1231' : '1000',
                             date_of_birth: customer.date_of_birth || '',
                             place_of_birth: customer.place_of_birth || '',
                             identification_type: customer.identification_type || '2',
@@ -205,15 +328,15 @@ export default function Create() {
         data.contact_person && data.contact_person.length > 0
             ? data.contact_person[0] // Take the first contact person if exists
             : {
-                  first_name: '',
-                  middle_name: '',
-                  last_name: '',
-                  title: undefined,
-                  mobile_no: '',
-                  office_no: '',
-                  home_no: '',
-                  fax_no: '',
-              },
+                first_name: '',
+                middle_name: '',
+                last_name: '',
+                title: undefined,
+                mobile_no: '',
+                office_no: '',
+                home_no: '',
+                fax_no: '',
+            },
     );
 
     // Update contact person
@@ -253,7 +376,7 @@ export default function Create() {
                 },
                 {
                     headers: {
-                        Authorization: `Bearer ${user.api_token}`,
+                        Authorization: `Bearer ${user?.api_token}`,
                     },
                 },
             );
@@ -415,9 +538,8 @@ export default function Create() {
             {[1, 2, 3, 4].map((stepNumber) => (
                 <div key={stepNumber} className="flex items-center">
                     <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all sm:h-10 sm:w-10 ${
-                            step >= stepNumber ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-500'
-                        } ${step === stepNumber ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                        className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all sm:h-10 sm:w-10 ${step >= stepNumber ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-500'
+                            } ${step === stepNumber ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                     >
                         {step > stepNumber ? <CheckCircle className="h-5 w-5" /> : stepNumber}
                     </div>
@@ -487,7 +609,6 @@ export default function Create() {
 
                 {renderStepIndicator()}
 
-                {/* 1: Personal Information */}
                 {step === 1 && (
                     <Card className="">
                         <CardHeader className="">
@@ -506,6 +627,7 @@ export default function Create() {
                         <CardContent className="space-y-6 p-6">
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
+
                                     <FormSelect
                                         label="Customer Type"
                                         required
@@ -531,15 +653,15 @@ export default function Create() {
                                         error={formErrors.customer_type}
                                         disabled={isFieldReadOnly('customer_type')}
                                     />
-                                </div>
 
-                                {/* Customer Category and Subcategory */}
+
+                                </div>
                                 <>
                                     <FormSelect
                                         label="Customer Category"
                                         required
                                         id="customer_category"
-                                        value={data.customer_category}
+                                        value={data?.customer_category}
                                         onChange={(val) => {
                                             setData('customer_category', val);
                                             setData('customer_subcategory', val === '1' ? '1' : '');
@@ -555,7 +677,7 @@ export default function Create() {
                                         label="Customer Subcategory"
                                         required
                                         id="customer_subcategory"
-                                        value={data.customer_subcategory}
+                                        value={data?.customer_subcategory}
                                         onChange={(val) => {
                                             setData('customer_subcategory', val);
                                             clearFieldError('customer_subcategory');
@@ -585,16 +707,19 @@ export default function Create() {
                                     error={formErrors.title}
                                     disabled={isFieldReadOnly('title')}
                                 />
+
                                 <FormInput
                                     label="First Name"
                                     id="first_name"
                                     required
-                                    value={data.first_name}
-                                    onChange={(e) => handleInputChange('first_name', e.target.value)}
-                                    placeholder=""
+                                    value={data.first_name ?? ""}
+                                    onChange={(e) => handleInputChange("first_name", e.target.value)}
+                                    placeholder="Enter first name"
                                     error={formErrors.first_name}
-                                    readOnly={isFieldReadOnly('first_name')}
+                                    readOnly={!!isFieldReadOnly("first_name")}
+                                    disabled={isFieldReadOnly('first_name')}
                                 />
+
                                 <FormInput
                                     label="Middle Name"
                                     id="middle_name"
@@ -647,7 +772,7 @@ export default function Create() {
                                     value={data.nationality || ''}
                                     onChange={(value) => handleSelectChange('nationality', value)}
                                     options={[
-                                        { label: 'Ethiopia', value: '1231' },
+                                        { label: 'Ethiopian', value: '1231' },
                                         { label: 'Other', value: '1000' },
                                     ]}
                                     placeholder=""
@@ -687,14 +812,14 @@ export default function Create() {
                     </Card>
                 )}
 
-                {/* 2: Identification */}
+
                 {step === 2 && (
                     <div className="space-y-6">
-                        <Card className="">
-                            <CardHeader className="">
+                        <Card>
+                            <CardHeader>
                                 <CardTitle className="flex items-center gap-3 text-gray-800">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
-                                        <FileText className="h-5 w-5" />
+                                        <FileIcon className="h-5 w-5" />
                                     </div>
                                     <div>
                                         <h2 className="text-xl">Identification</h2>
@@ -730,7 +855,7 @@ export default function Create() {
                             <CardHeader className="">
                                 <CardTitle className="flex items-center gap-3 text-gray-800">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
-                                        <Phone className="h-5 w-5" />
+                                        <PhoneIcon className="h-5 w-5" />
                                     </div>
                                     <div>
                                         <h2 className="text-xl">Contact Information</h2>
@@ -780,13 +905,13 @@ export default function Create() {
                     </div>
                 )}
 
-                {/* 3: Address */}
+
                 {step === 3 && (
                     <Card className="">
                         <CardHeader className="">
                             <CardTitle className="flex items-center gap-3 text-gray-800">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
-                                    <MapPin className="h-5 w-5" />
+                                    <MapPinIcon className="h-5 w-5" />
                                 </div>
                                 <div>
                                     <h2 className="text-xl">Address</h2>
@@ -860,7 +985,7 @@ export default function Create() {
                         </CardContent>
                     </Card>
                 )}
-                {/* 4: Professional Information */}
+
                 {step === 4 && (
                     <div className="space-y-6">
                         <Card className="">
@@ -952,12 +1077,11 @@ export default function Create() {
                             </CardContent>
                         </Card>
 
-                        {/* Contact Person - Single */}
                         <Card className="">
                             <CardHeader className="">
                                 <CardTitle className="flex items-center gap-3 text-gray-800">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
-                                        <User className="h-5 w-5" />
+                                        <UserIcon className="h-5 w-5" />
                                     </div>
                                     <div>
                                         <h2 className="text-xl">Contact Person</h2>
@@ -1013,7 +1137,7 @@ export default function Create() {
                                             onChange={(e) => updateContactPerson('mobile_no', e.target.value)}
                                             placeholder="Enter mobile number"
                                         />
-                                        {/* <FormInput
+                                        <FormInput
                                             label="Home Number"
                                             id="contact_person_home_no"
                                             value={contactPerson.home_no}
@@ -1033,18 +1157,13 @@ export default function Create() {
                                             value={contactPerson.fax_no}
                                             onChange={(e) => updateContactPerson('fax_no', e.target.value)}
                                             placeholder="Enter fax number"
-                                        /> */}
+                                        />
                                     </div>
                                 </div>
-
-                                {/* <p className="text-sm text-gray-500">
-                                    This contact person information is optional and can be used for emergency contacts.
-                                </p> */}
                             </CardContent>
                         </Card>
                     </div>
                 )}
-
                 <div className="flex justify-between rounded-lg bg-gray-50 p-4">
                     <Button
                         variant="outline"
@@ -1071,9 +1190,8 @@ export default function Create() {
                             type="button"
                             onClick={submit}
                             disabled={processing || uploadingPhoto}
-                            className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${
-                                uploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
-                            }`}
+                            className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${uploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
+                                }`}
                         >
                             {uploadingPhoto ? (
                                 <>

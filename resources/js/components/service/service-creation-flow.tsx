@@ -44,7 +44,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const user = auth.user as User;
 
     const [formData, setFormData] = useState<ServiceFormData>({
-        serviceType: '1943913915',
+        serviceType: '1457567289',
         bandwidth: '',
         customerType: '',
         latitude: 0,
@@ -151,7 +151,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const canProceedToNextStep = () => {
         switch (currentStep) {
             case 0: // Service Selection
-                return formData.serviceType && (!formData.serviceType.includes('1943913915') || formData.bandwidth);
+                return formData.serviceType && (!formData.serviceType.includes('1457567289') || formData.bandwidth);
             case 1: // Location Setup
                 return formData.latitude !== 0 && formData.longitude !== 0 && formData.address;
             case 2: // Review
@@ -201,11 +201,11 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 {renderStepContent()}
 
                 {/* Resource Error Display */}
-                {resourceError && currentStep === 1 && (
+                {/* {resourceError && currentStep === 1 && (
                     <Alert variant="destructive" className="mt-4">
                         <AlertDescription>{resourceError}</AlertDescription>
                     </Alert>
-                )}
+                )} */}
 
                 {/* Navigation Buttons */}
                 {currentStep < 2 && (

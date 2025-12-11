@@ -11,21 +11,21 @@ interface ServiceSelectionStepProps {
 
 const serviceTypes = [
     {
-        id: '1943913915',
+        value: '1457567289',
         name: 'Fixed Broadband',
         description: 'High-speed internet connection',
         icon: Wifi,
         color: 'blue',
     },
     {
-        id: '1207609454',
+        value: '1207609454',
         name: 'Fixed Voice',
         description: 'Reliable telephone service connectivity',
         icon: Phone,
         color: 'green',
     },
     {
-        id: '102647257',
+        value: '180427974',
         name: 'Combo Services',
         description: 'Bundle of internet and voice services',
         icon: Package,
@@ -54,21 +54,21 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
             <div className="grid grid-cols-1 gap-2 gap-y-4 sm:grid-cols-2 md:gap-x-4 lg:grid-cols-3">
                 {serviceTypes.map((service) => {
                     const Icon = service.icon;
-                    const isSelected = formData.serviceType === service.id;
+                    const isSelected = formData.serviceType === service.value;
 
                     return (
                         <label
-                            key={service.id}
-                            onClick={() => !hasActiveSurvey && handleServiceSelect(service.id)}
+                            key={service.value}
+                            onClick={() => !hasActiveSurvey && handleServiceSelect(service.value)}
                             className={`group relative flex cursor-pointer flex-col rounded-lg border bg-white p-5 transition ${hasActiveSurvey ? 'cursor-not-allowed border-gray-300 bg-gray-100 opacity-50' : ''} ${isSelected ? 'border-gray-300 ring-1 ring-primary' : 'border-gray-300 hover:border-gray-400 hover:shadow-md'} `}
                         >
                             {/* hidden input for accessibility */}
                             <input
                                 type="radio"
                                 name="serviceType"
-                                value={service.id}
+                                value={service.value}
                                 checked={isSelected}
-                                onChange={() => {}}
+                                onChange={() => { }}
                                 className="absolute inset-0 cursor-pointer opacity-0"
                                 disabled={hasActiveSurvey}
                             />
@@ -90,7 +90,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                 })}
             </div>
             {/* Bandwidth Selection (Only for Broadband) */}
-            {formData.serviceType === '1943913915' && !hasActiveSurvey && (
+            {formData.serviceType === '1457567289' && !hasActiveSurvey && (
                 <div className="mt-6">
                     <BandwidthSelector
                         residentialOptions={residentialOptions}

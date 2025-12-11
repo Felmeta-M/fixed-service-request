@@ -48,6 +48,7 @@ interface User {
 
 export function useSurveyList(): UseSurveyListReturn {
     const { user } = usePage().props.auth;
+    console.log(user);
     const [surveys, setSurveys] = useState<Survey[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

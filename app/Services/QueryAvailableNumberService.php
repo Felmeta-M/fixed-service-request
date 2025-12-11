@@ -7,9 +7,44 @@ class QueryAvailableNumberService extends BaseApiService
     protected int $timeout = 10;
     protected int $rateLimit = 15;
 
+    public function __construct(
+        protected readonly ReserveNumberService $reserveNumberService,
+    ) {}
+
     protected function endpoint(): string
     {
         return config('services.query_available_number.endpoint');
+    }
+
+    protected function getAvailableNumberServices(): string | bool
+    {
+        $data = [
+            "pay_mode" => "1",
+            "tele_type" => "4",
+            "need_query_by_dept" => false,
+            "res_cnt" => 10
+        ];
+
+        $numberList = $this->queryAvailableNumbers($data) ?? [];
+        if (empty($numberList)) {
+            return false;
+        }
+
+        $filtered = array_filter($numberList, fn($item) => $item['Level'] === "6");
+        if (empty($filtered)) {
+            return false;
+        }
+
+        $numberServices = array_column($filtered, 'ServiceNumber');
+
+        foreach ($numberServices as $numberService) {
+            $status = $this->reserveNumberService($numberService);
+            if ($status === true) {
+                return $numberService;
+            }
+        }
+
+        return false;
     }
 
     public function queryAvailableNumbers(array $data): array
@@ -19,6 +54,28 @@ class QueryAvailableNumberService extends BaseApiService
         $xmlResponse = $this->executeRequest($xmlPayload);
 
         return  $this->parseResponse($xmlResponse);
+    }
+
+    protected function reserveNumberService(string $numberService): bool
+    {
+        $data = [
+            'res_type_id' => 10,
+            'oper_type' => 1029,
+            'res_code' => $numberService,
+        ];
+
+        return $this->reserveNumberService->pick($data);
+    }
+
+    protected function releaseNumberService(string $numberService): bool
+    {
+        $data = [
+            'res_type_id' => 10,
+            'oper_type' => 1030,
+            'res_code' => $numberService,
+        ];
+
+        return $this->reserveNumberService->unpick($data);
     }
 
     /**

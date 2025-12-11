@@ -7,6 +7,7 @@ use App\Models\Payment;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PaymentService
 {
@@ -28,14 +29,14 @@ class PaymentService
         });
     }
 
-    public function createOrUpdatePayment(string $orderId, float $amount)
+    public function createOrUpdatePayment(string $orderId, string $service_number, float $amount)
     {
-        $customer = Auth::guard('otp')->user();
-
+        $customer = Auth::guard('api')->user();
         if ($customer) {
             return Payment::firstOrCreate(
                 ['customer_survey_order_id' => $orderId],
                 [
+                    'service_number' => $service_number,
                     'customer_code' => $customer->customer_code,
                     'amount' => $amount,
                     'status' => FFDServiceProvisionStatus::Pending->value,

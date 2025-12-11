@@ -15,6 +15,7 @@ class QueryCustomerByServiceNumberService extends BaseApiService
     public function getCustomer(string $serviceNumber): JsonResponse
     {
         try {
+            logger('serviceNumber', [$serviceNumber]);
             $xmlPayload  = $this->buildRequestXml($serviceNumber);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedXml   = $this->parseResponseXml($xmlResponse);

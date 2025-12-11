@@ -21,9 +21,7 @@ class OtpAuthController extends Controller
     public function __construct(
         protected QueryCustomerByServiceNumberService $queryCustomerByService,
         protected LocalAuthService                    $localAuthService
-    )
-    {
-    }
+    ) {}
 
     public function showPhoneForm()
     {
@@ -85,18 +83,18 @@ class OtpAuthController extends Controller
         $otp = Otp::where('code', $request->code)
             ->where('expires_at', '>=', Carbon::now())
             ->first();
-
+        Log::info($otp);
         if (!$otp) {
             return back()->withErrors(['code' => 'Invalid or expired OTP']);
         }
 
-        $crmCustomer = $this->queryCustomer($otp->phone);
-//        logger($crmCustomer);
+        $crmCustomer = $this->queryCustomer($otp?->phone_number);
+        Log::info('crmCustomer', [$crmCustomer['code']]);
         $data = [
-            'name' => $crmCustomer['name'] ?? 'test...',
-            'phone_number' => $crmCustomer->phone_number ?? $otp->phone_number,
-            'email' => $crmCustomer->email ?? 'test@example.com',
-            'customer_code' => $crmCustomer->customer_code ?? '124426'
+            'name' => $crmCustomer['first_name'] . '' . $crmCustomer['last_name'] ?? 'test...',
+            'phone_number' => $crmCustomer['phone_number'] ?? $otp->phone_number,
+            'email' => $crmCustomer['email'] ?? 'test@example.com',
+            'customer_code' => $crmCustomer['code'] ?? '124426'
         ];
 
         $user = $this->localAuthService->resolveUserForAuth($data);
@@ -106,12 +104,16 @@ class OtpAuthController extends Controller
         return redirect()->route('services');
     }
 
-    protected function queryCustomer($phoneNumber)
+    protected function queryCustomer(?string $phoneNumber)
     {
+
         if (!$phoneNumber || !preg_match('/^(09|9|\+2519)/', $phoneNumber)) {
             return [];
         }
+
         $response = $this->queryCustomerByService->getCustomer('123555754');
+        // Log::info('test', [$response]);
+
         $response = json_decode($response->getContent(), true);
         if (
             empty($response['success']) ||

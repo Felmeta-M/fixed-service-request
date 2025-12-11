@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\v1\EcafController;
 use App\Http\Controllers\Api\v1\LocationController;
 use App\Http\Controllers\Api\v1\OccupationController;
 use App\Http\Controllers\Api\v1\OneOffFeeController;
+use App\Http\Controllers\Api\v1\PaymentController;
 use App\Http\Controllers\Api\v1\PrimaryOfferingController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderController;
 use App\Http\Controllers\Api\v1\QuerySurveyOrderSummaryController;
@@ -25,6 +26,7 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::prefix('v1')->group(function () {
+
     Route::middleware(['throttle:service_client'])->group(function () {
         Route::post('/issue-token', [ServiceClientController::class, 'issueToken']);
         Route::get('/fetch-token', function (Request $request) {
@@ -45,9 +47,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/weredas/{zoneId}', [LocationController::class, 'weredas'])->where('zoneId', '[0-9]+');
     });
 
-    Route::prefix('customer')->middleware(['auth:api'])
-        ->group(function () {
-            Route::get('/', [CustomerController::class, 'show']);
+    Route::middleware(['auth:api'])->group(function () {
+
+        Route::prefix('customer')->group(function () {
             Route::get('/', [CustomerController::class, 'show']);
             Route::post('/create', [CustomerController::class, 'store']);
             Route::post('/ecaf', [EcafController::class, 'upload']);
@@ -58,41 +60,35 @@ Route::prefix('v1')->group(function () {
             Route::get('/subcategories', [CustomerController::class, 'subcategories']);
         });
 
-    Route::prefix('survey')->group(function () {
-        Route::post('/create', [SurveyOrderController::class, 'store']);
-        Route::post('/order', [QuerySurveyOrderController::class, 'querySurveyOrder']);
-        Route::post('/order-summary', [QuerySurveyOrderSummaryController::class, 'querySurveyOrderSummary']);
+        Route::prefix('survey')->group(function () {
+            Route::post('/create', [SurveyOrderController::class, 'store']);
+            Route::post('/order', [QuerySurveyOrderController::class, 'querySurveyOrder']);
+            Route::post('/order-summary', [QuerySurveyOrderSummaryController::class, 'querySurveyOrderSummary']);
+        });
+
+        Route::get('survey-requests', [SurveyOrderController::class, 'index']);
+        Route::get('survey-requests/show', [SurveyOrderController::class, 'show']);
+        Route::patch('survey-requests/update', [SurveyOrderController::class, 'update']);
+        Route::delete('survey-requests/delete', [SurveyOrderController::class, 'destroy']);
+
+        Route::prefix('services')->group(function () {
+            Route::post('/subscription', [SubsriptionController::class, 'store']);
+        });
+
+        Route::post('ecaf-upload', [EcafController::class, 'upload']);
+
+        Route::post('account-list', [AccountController::class, 'getAccount']);
+        Route::post('primary-offers', [PrimaryOfferingController::class, 'getPrimaryOffer']);
+        Route::post('avaiable-number', [AvailableNumberController::class, 'getAvaiableNumber']);
+        Route::post('cancel-survey-order', [CancelSurveyOrderController::class, 'cancel']);
+        Route::post('resource-check', [ResourceCheckController::class, 'check']);
+        Route::post('release-number-service', [ReserveNumberServiceController::class, 'release']);
+
+        Route::post('calc-one-off-fee', [OneOffFeeController::class, 'calculateOneOffFee']);
+        Route::post('one-off-fee', [OneOffFeeController::class, 'fee']);
+
+        Route::post('create-order', [TelebirrController::class, 'createOrder'])->name('create.order');
+
+        Route::get('payment', [PaymentController::class, 'myFee']);
     });
-
-
-    Route::get('survey-requests', [SurveyOrderController::class, 'index']);
-    Route::get('survey-requests/show', [SurveyOrderController::class, 'show']);
-    Route::patch('survey-requests/update', [SurveyOrderController::class, 'update']);
-    Route::delete('survey-requests/delete', [SurveyOrderController::class, 'destroy']);
-
-
-    Route::prefix('services')->group(function () {
-        Route::post('/subscription', [SubsriptionController::class, 'store']);
-    });
-
-    Route::post('ecaf-upload', [EcafController::class, 'upload']);
-
-    // Route::prefix('nid')->group(function () {
-    //     Route::post('otp', [NidController::class, 'getOtp']);
-    //     Route::post('kyc', [NidController::class, 'getKyc']);
-    // });
-
-    Route::post('account-list', [AccountController::class, 'getAccount']);
-    Route::post('primary-offers', [PrimaryOfferingController::class, 'getPrimaryOffer']);
-    Route::post('avaiable-number', [AvailableNumberController::class, 'getAvaiableNumber']);
-    Route::post('cancel-survey-order', [CancelSurveyOrderController::class, 'cancel']);
-    Route::post('resource-check', [ResourceCheckController::class, 'check']);
-    Route::post('release-number-service', [ReserveNumberServiceController::class, 'release']);
-
-    Route::post('calc-one-off-fee', [OneOffFeeController::class, 'calculateOneOffFee']);
-    Route::post('one-off-fee', [OneOffFeeController::class, 'fee']);
-
-
-    Route::post('create-order', [TelebirrController::class, 'createOrder'])
-        ->name('create.order');
 });

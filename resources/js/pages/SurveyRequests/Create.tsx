@@ -60,7 +60,7 @@ export default function Create() {
         survey_type: 'EIC08',
         telecom_region: '104',
         oper_type: 'A',
-        main_offer_id: '1943913915',
+        main_offer_id: '1457567289',
         survey_address_info: {
             region_city: '2',
             subcity_zone: '11',
@@ -81,7 +81,7 @@ export default function Create() {
 
     const serviceOptions = [
         {
-            id: '1943913915',
+            id: '1457567289',
             name: 'Fixed Broadband',
             description: 'High-speed internet connection',
             icon: Wifi,
@@ -94,7 +94,7 @@ export default function Create() {
             icon: Phone,
         },
         {
-            id: '102647257',
+            id: '1207609454',
             name: 'Combo Services',
             description: 'Bundle of internet and voice services (only for residential)',
             icon: Package,
@@ -584,7 +584,7 @@ export default function Create() {
 
     const getServiceIcon = (serviceType: string) => {
         switch (serviceType) {
-            case '1943913915':
+            case '1457567289':
                 return Wifi;
             case '1207609454':
                 return Phone;
@@ -597,7 +597,7 @@ export default function Create() {
 
     const getServiceName = (serviceType: string) => {
         switch (serviceType) {
-            case '1943913915':
+            case '1457567289':
                 return 'Fixed Broadband';
             case '1207609454':
                 return 'Fixed Voice';
@@ -751,7 +751,7 @@ export default function Create() {
                                     {formErrors.serviceType && <p className="mt-2 text-sm text-red-600">{formErrors.serviceType}</p>}
                                 </div>
 
-                                {data.main_offer_id === '1943913915' && (
+                                {data.main_offer_id === '1457567289' && (
                                     <BandwidthSelector
                                         residentialOptions={residentialOptions}
                                         enterpriseOptions={enterpriseOptions}

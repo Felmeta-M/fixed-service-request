@@ -24,7 +24,7 @@ interface FeeData {
 
 export default function CreateSubscriber() {
     const { surveyOrderId, offeringId, available_numbers, auth } = usePage().props;
-    const user = auth.user as User;
+    const { user } = usePage().props.auth
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -79,7 +79,7 @@ export default function CreateSubscriber() {
     useEffect(() => {
         // Load survey data from localStorage if needed
         const surveyDataString = localStorage.getItem('customerSurveyData');
-
+        console.log(surveyDataString);
         if (surveyDataString) {
             try {
                 setSurveyData(JSON.parse(surveyDataString));
@@ -109,6 +109,7 @@ export default function CreateSubscriber() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    Authorization: `Bearer ${user.api_token}`,
                 },
                 body: JSON.stringify({
                     business_code: 'CO064',
@@ -206,6 +207,7 @@ export default function CreateSubscriber() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    Authorization: `Bearer ${user.api_token}`,
                 },
                 body: JSON.stringify({
                     customerSurveyOrderId: surveyOrderId,
@@ -241,9 +243,9 @@ export default function CreateSubscriber() {
     // Get service type name based on offering ID
     const getServiceTypeName = (offeringId: string) => {
         const serviceTypes: { [key: string]: string } = {
-            '1943913915': 'Fixed Broadband',
+            '1457567289': 'Fixed Broadband',
             '1207609454': 'Fixed Voice',
-            '102647257': 'Combo Services',
+            '180427974': 'Combo Services',
         };
         return serviceTypes[offeringId] || 'Fixed Broadband';
     };

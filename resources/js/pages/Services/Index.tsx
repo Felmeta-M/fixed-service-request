@@ -11,8 +11,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 const typeMap = {
     '1943913918': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
-    '102647257': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
-    '1207609455': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
+    '1207609454': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
+    '180427974': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
 };
 
 interface DashboardStats {
@@ -64,7 +64,7 @@ export default function CustomerDashboard() {
 
     // Calculate dashboard stats from survey data
     const dashboardStats = useMemo((): DashboardStats => {
-        if (!surveys.length) {
+        if (!surveys?.length) {
             return {
                 totalServices: 0,
                 activeServices: 0,
@@ -73,25 +73,25 @@ export default function CustomerDashboard() {
             };
         }
 
-        const totalServices = surveys.length;
+        const totalServices = surveys?.length;
 
         // Active services: Processing, Waiting, Ready, Paid
         const activeServices = surveys.filter((survey) => {
             const statusNum = Number(survey.status);
             return STATUS_CATEGORIES.ACTIVE.includes(statusNum);
-        }).length;
+        })?.length;
 
         // Pending requests: Created, Pending Payment
         const pendingRequests = surveys.filter((survey) => {
             const statusNum = Number(survey.status);
             return STATUS_CATEGORIES.PENDING.includes(statusNum);
-        }).length;
+        })?.length;
 
         // Completed services: Failed, Survey Completed, Cancelled, Refund
         const completedServices = surveys.filter((survey) => {
             const statusNum = Number(survey.status);
             return STATUS_CATEGORIES.COMPLETED.includes(statusNum);
-        }).length;
+        })?.length;
 
         return {
             totalServices,
@@ -103,7 +103,7 @@ export default function CustomerDashboard() {
 
     // Generate recent activities from survey data
     const recentActivities = useMemo((): RecentActivity[] => {
-        if (!surveys.length) return [];
+        if (!surveys?.length) return [];
 
         return surveys
             .slice(0, 5) // Show only 5 most recent
@@ -321,8 +321,8 @@ export default function CustomerDashboard() {
                                             >
                                                 <option value="">All Types</option>
                                                 <option value="1943913918">🌐 Internet</option>
-                                                <option value="102647257">📞 Voice</option>
-                                                <option value="1207609455">📦 Combo</option>
+                                                <option value="1207609454">📞 Voice</option>
+                                                <option value="180427974">📦 Combo</option>
                                             </select>
                                         </div>
 
@@ -365,9 +365,9 @@ export default function CustomerDashboard() {
                                             Type:{' '}
                                             {appliedFilters.type === '1943913918'
                                                 ? 'Internet'
-                                                : appliedFilters.type === '102647257'
-                                                  ? 'Voice'
-                                                  : 'Combo'}
+                                                : appliedFilters.type === '1207609454'
+                                                    ? 'Voice'
+                                                    : 'Combo'}
                                             <button onClick={() => handleTypeFilterChange('')} className="ml-1 rounded-full hover:bg-primary/20">
                                                 <X className="h-3 w-3" />
                                             </button>

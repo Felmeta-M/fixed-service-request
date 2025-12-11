@@ -30,11 +30,11 @@ class Payment extends Model
 
     public function scopeRejected($query)
     {
-        return $query->where('status', FFDServiceProvisionStatus::Rejected->value);
+        return $query->where('status', FFDServiceProvisionStatus::Failed->value);
     }
 
     public function scopeCanceled($query)
     {
-        return $query->where('status', FFDServiceProvisionStatus::Canceled->value);
+        return $query->where('status', FFDServiceProvisionStatus::Cancelled->value);
     }
 }

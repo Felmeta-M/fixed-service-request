@@ -13,9 +13,9 @@ interface ReviewSubmitStepProps {
 }
 
 const serviceTypes = {
-    '1943913915': { name: 'Fixed Broadband', icon: Wifi, color: 'blue' },
+    '1457567289': { name: 'Fixed Broadband', icon: Wifi, color: 'blue' },
     '1207609454': { name: 'Fixed Voice', icon: Wifi, color: 'green' },
-    '102647257': { name: 'Combo Services', icon: Wifi, color: 'purple' },
+    '180427974': { name: 'Combo Services', icon: Wifi, color: 'purple' },
 };
 
 export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {

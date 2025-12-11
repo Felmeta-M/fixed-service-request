@@ -21,16 +21,13 @@ class TelebirrController extends Controller
         protected readonly CreateOrderService $createOrderService,
         protected readonly PaymentService $paymentService,
         protected readonly RsaSignatureService $rsaSignatureService,
-    ) {
-    }
+    ) {}
 
     public function createOrder(Request $request)
     {
         try {
             $validated = $request->validate([
-                'customerCode' => 'required|string',
-                'customerSurveyOrderId' => 'required|string',
-                'amount' => 'required|numeric',
+                'customerSurveyOrderId' => 'required',
             ]);
 
             $rawRequest = $this->createOrderService->createOrder($validated);
@@ -92,7 +89,6 @@ class TelebirrController extends Controller
                 ]);
 
             Log::info("Telebirr Payment Completed: Order " . $payment->merch_order_id);
-
         } else {
 
             $payment->update(['status' => 'failed']);
@@ -100,5 +96,4 @@ class TelebirrController extends Controller
             Log::warning("Telebirr Payment Failed: Order " . $payment->order_id);
         }
     }
-
 }

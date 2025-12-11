@@ -16,9 +16,9 @@ import * as React from 'react';
 import SurveyActions from './survey/survey-actions';
 
 const typeMap = {
-    '1943913915': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
-    '102647257': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
-    '1207609455': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
+    '1457567289': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
+    '1207609454': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
+    '180427974': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
 };
 
 interface SurveyTableProps {
@@ -44,14 +44,14 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
             const matchesStatus = statusFilter ? s.status.toLowerCase() === statusFilter.toLowerCase() : true;
             const matchesGlobal = globalFilter
                 ? s.customer_survey_order_id?.toString().includes(globalFilter) ||
-                  s.main_offer_id?.toString().includes(globalFilter) ||
-                  s.status?.toLowerCase().includes(globalFilter.toLowerCase())
+                s.main_offer_id?.toString().includes(globalFilter) ||
+                s.status?.toLowerCase().includes(globalFilter.toLowerCase())
                 : true;
             return matchesType && matchesStatus && matchesGlobal;
         });
     }, [surveys, typeFilter, statusFilter, globalFilter]);
 
-    const handleRowClick = (survey: any) => {};
+    const handleRowClick = (survey: any) => { };
 
     const columns = React.useMemo<ColumnDef<any>[]>(
         () => [

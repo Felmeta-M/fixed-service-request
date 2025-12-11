@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\SurveyRequest;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionService extends BaseApiService
 {
@@ -25,7 +26,9 @@ class SubscriptionService extends BaseApiService
    {
       try {
          $xmlPayload = $this->buildRequestXml($data);
+         // Log::info($xmlPayload);
          $xmlResponse = $this->executeRequest($xmlPayload);
+         // Log::info($xmlResponse);
          $parsedXml = $this->parseResponseXml($data, $xmlResponse);
          return ApiResponse::success($parsedXml);
       } catch (\RuntimeException $e) {
@@ -40,6 +43,11 @@ class SubscriptionService extends BaseApiService
       $transactionId = uniqid();
       $processTime   = now()->format('YmdHis');
       $config = config('services.subscriber');
+
+      $data['offering_id'] = 1457567289; // voice 1207609454; //
+      $data['zone'] = 17;
+      $data['region'] = 3;
+      $data['city'] = 3;
 
       return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/" xmlns:ser="http://oss.huawei.com/webservice/bss/services">

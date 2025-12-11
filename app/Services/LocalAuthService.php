@@ -12,9 +12,7 @@ class LocalAuthService
 {
     public function __construct(
         protected QueryCustomerByServiceNumberService $queryCustomerByService
-    )
-    {
-    }
+    ) {}
 
     /**
      * Main entry point – returns structured business results
@@ -122,12 +120,11 @@ class LocalAuthService
         return Otp::updateOrCreate(
             ['phone_number' => $data['phone_number']],
             [
-                'customer_sub_id' => $data['customer_sub_id'],
-                'customer_code' => $data['customer_code'],
-                'name' => $data['name'],
-                'api_token' => Hash::make($token),
+                'customer_sub_id' => $data['customer_sub_id'] ?? null,
+                'customer_code' => $data['customer_code'] ?? null,
+                'name' => $data['name'] ?? null,
+                'api_token' => Hash::make($token) ?? null,
             ]
         );
-
     }
 }

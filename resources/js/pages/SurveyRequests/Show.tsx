@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 export default function SurveyShowPage() {
     const { surveyId, auth } = usePage().props;
+    const { user } = usePage().props.auth
     const [survey, setSurvey] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -27,6 +28,7 @@ export default function SurveyShowPage() {
                 headers: {
                     Accept: 'application/json',
                     'Content-Type': 'application/json',
+                    Authorization: `Bearer ${user.api_token}`,
                 },
             });
 

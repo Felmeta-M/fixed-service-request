@@ -244,14 +244,14 @@ return [
     ],
 
     'telebirr' => [
-        'base_url' => env('TELEBIRR_BASE_URL', 'https://developerportal.ethiotelebirr.et:38443/apiaccess/payment/gateway'),
-        'web_base_url' => env('WEB_TELEBIRR_BASE_URL', 'https://developerportal.ethiotelebirr.et:38443/payment/web/paygate?'),
-        'fabric_app_id' => env('TELEBIRR_APP_ID', 'REDACTED_APP_KEY'),
-        'app_secret' => env('TELEBIRR_APP_SECRET', 'REDACTED_SECRET'),
-        'merchant_app_id' => env('TELEBIRR_MERCHANT_APP_ID', 'REDACTED_MERCHANT_APP_ID'),
-        'merchant_code' => env('TELEBIRR_MERCHANT_CODE', 'REDACTED_MERCHANT_CODE'),
-        "private_key" => env('TELEBIRR_PRIVATE_KEY', ''),
-        'notify_url' => env("NOTIFY_URL", 'https://fixedservices.ethiotelecom.et/api/v1/payment/notify')
+        'base_url' => env('TELEBIRR_BASE_URL'),
+        'web_base_url' => env('WEB_TELEBIRR_BASE_URL'),
+        'fabric_app_id' => env('TELEBIRR_APP_ID'),
+        'app_secret' => env('TELEBIRR_APP_SECRET'),
+        'merchant_app_id' => env('TELEBIRR_MERCHANT_APP_ID'),
+        'merchant_code' => env('TELEBIRR_MERCHANT_CODE'),
+        "private_key" => env('TELEBIRR_PRIVATE_KEY'),
+        'notify_url' => env("NOTIFY_URL")
     ],
 
     'fayda' => [

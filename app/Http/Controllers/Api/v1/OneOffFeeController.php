@@ -10,6 +10,7 @@ use App\Services\PaymentService;
 use App\Traits\CableChargeTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class OneOffFeeController extends Controller
@@ -65,6 +66,7 @@ class OneOffFeeController extends Controller
         $finalAmount = $amount + $cableCost;
         $this->payment_service->createOrUpdatePayment(
             $request->customer_survey_order_id,
+            $request->sub_order['service_number'],
             $finalAmount
         );
 

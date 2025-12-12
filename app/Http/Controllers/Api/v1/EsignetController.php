@@ -17,9 +17,7 @@ class EsignetController extends Controller
         protected EsignetService   $esignetService,
         protected LocalAuthService $localAuthService,
         protected CustomerService  $customerService,
-    )
-    {
-    }
+    ) {}
 
     /** Starts ESIGNET login */
     public function redirectToEsignet()
@@ -101,6 +99,7 @@ class EsignetController extends Controller
 
         if ($result['status'] !== 'ok') {
             logger()->error('Esignet user info fetch failed', [
+                'result' => $result,
                 'error' => $result['message']
             ]);
 

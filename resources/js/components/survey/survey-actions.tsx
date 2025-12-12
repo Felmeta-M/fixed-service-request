@@ -193,6 +193,10 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             throw new Error(result.message || 'Subscriber creation failed');
         }
 
+        onActionComplete()
+
+        //  window.location.reload();
+
         return result;
     };
 
@@ -409,11 +413,13 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         canPay = main_offer_id !== "1457567289";
     }
 
-    const canSubscribe = !canPay;
+    // const canSubscribe = !canPay;
+    const canSubscribe = !canPay && status !== 14;
+
 
     return (
         <>
-            <div className="flex items-center justify-end gap-2">
+            {/* <div className="flex items-center justify-end gap-2">
 
                 {canPay ? (
                     <Button
@@ -454,7 +460,50 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                     </Button>
                 )}
 
+            </div> */}
+            <div className="flex items-center justify-end gap-2">
+                {canPay && (
+                    <Button
+                        onClick={handlePayNow}
+                        disabled={loading}
+                        className="gap-1 bg-primary px-4 text-white"
+                        size="sm"
+                    >
+                        {loading ? (
+                            <>
+                                <div className="h-3 w-3 animate-spin rounded-full border-b-2 border-white"></div>
+                                Preparing...
+                            </>
+                        ) : (
+                            <>Pay</>
+                        )}
+                    </Button>
+                )}
+
+                {canSubscribe && (
+                    <Button
+                        onClick={handleSubscribe}
+                        disabled={loading}
+                        className="gap-1 bg-primary px-2 text-white"
+                        size="sm"
+                    >
+                        Subscribe
+                    </Button>
+                )}
+
+                {canCancel && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setOpenCancelDialog(true)}
+                        disabled={loading}
+                        className="gap-1 px-2"
+                    >
+                        Cancel
+                    </Button>
+                )}
             </div>
+
 
 
 

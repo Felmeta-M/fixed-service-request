@@ -13,7 +13,7 @@ abstract class BaseApiService
 {
     protected int $timeout = 15;
     protected int $maxRetries = 3;
-    protected int $rateLimit = 15;       // requests per decay window
+    protected int $rateLimit = 50;       // requests per decay window
     protected int $decaySeconds = 360;    // seconds for rate limit
 
     /**

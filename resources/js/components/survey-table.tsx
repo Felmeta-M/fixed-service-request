@@ -74,6 +74,26 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                 ),
             },
             {
+                accessorKey: 'service_number',
+                header: 'Service Number',
+                cell: ({ getValue }) => {
+                    const serviceNumber = getValue<string>() ?? null; // null-safe
+
+                    return (
+                        <div className="cursor-pointer">
+                            {/* <Badge
+                                variant="outline"
+                                className="flex items-center gap-1.5 bg-white"
+                            > */}
+                            <span className="text-xs font-medium">
+                                {serviceNumber || '—'}
+                            </span>
+                            {/* </Badge> */}
+                        </div>
+                    );
+                },
+            },
+            {
                 accessorKey: 'main_offer_id',
                 header: 'Service Type',
                 cell: ({ getValue, row }) => {
@@ -106,6 +126,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                         if (status === 5) return 'success';
                         if (status === 3) return 'warning';
                         if (status === 9) return 'destructive';
+                        if (status === 14) return 'success';
                         return 'default';
                     };
 

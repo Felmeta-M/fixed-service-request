@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\SurveyRequest;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class SubscriptionService extends BaseApiService
 {
@@ -22,13 +23,21 @@ class SubscriptionService extends BaseApiService
       return config('services.subscriber.endpoint');
    }
 
+   protected function generateSimpleEmail()
+   {
+      $prefix = Str::random(8);
+      $domain = '@qq.com';
+
+      return strtolower($prefix . '@' . $domain);
+   }
+
    public function createNewSubscriber(array $data)
    {
       try {
          $xmlPayload = $this->buildRequestXml($data);
-         Log::info($xmlPayload);
+         // Log::info($xmlPayload);
          $xmlResponse = $this->executeRequest($xmlPayload);
-         Log::info($xmlResponse);
+         // Log::info($xmlResponse);
          $parsedXml = $this->parseResponseXml($data, $xmlResponse);
          return ApiResponse::success($parsedXml);
       } catch (\RuntimeException $e) {
@@ -48,6 +57,8 @@ class SubscriptionService extends BaseApiService
       $data['zone'] = 17;
       $data['region'] = 3;
       $data['city'] = 3;
+
+      $email = $this->generateSimpleEmail();
 
       return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/" xmlns:ser="http://oss.huawei.com/webservice/bss/services">
@@ -113,6 +124,8 @@ class SubscriptionService extends BaseApiService
                      </com:NewPrimaryOffering>
                      <com:EffectiveMode>0</com:EffectiveMode>
                   </com:PrimaryOffering>
+                    <com:InternetAccount>{$email}</com:InternetAccount>
+                     <com:InternetPassword>REDACTED_PASSWORD</com:InternetPassword>
                   <com:SLAPriority>6</com:SLAPriority>
                   <com:CallCenterAccess>994</com:CallCenterAccess>
                </com:SubscriberInfo>
@@ -152,7 +165,7 @@ XML;
          return [
             'success'  => false,
             'ret_code' => null,
-            'ret_msg'  => 'Missing CreateNewSubscriberRspMsg',
+            'ret_msg'  => 'Missing Create New Subscriber Rsp Msg',
          ];
       }
       $responseHeader = $responseMsg->ResponseHeader->children($namespaces['com']) ?? null;
@@ -188,7 +201,7 @@ XML;
             // TODO: update completed_date based on survey result
          ]);
       }
-
+      Log::info($responseMsg);
       return ApiResponse::success([
          'success'   => true,
          'ret_code'  => $retCode,

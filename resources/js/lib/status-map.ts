@@ -10,4 +10,5 @@ export const ServiceProvisionStatus = {
     10: { label: 'Pending Payment', text: 'text-purple-700', bg: 'bg-purple-400' },
     11: { label: 'Paid', text: 'text-emerald-700', bg: 'bg-emerald-400' },
     13: { label: 'Refund', text: 'text-teal-700', bg: 'bg-teal-400' },
+    14: { label: 'Subscription Completed', text: 'text-green-700', bg: 'bg-green-400' },
 } as const;

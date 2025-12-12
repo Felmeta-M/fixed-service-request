@@ -34,7 +34,7 @@ interface RecentActivity {
 const STATUS_CATEGORIES = {
     ACTIVE: [1, 3, 6, 11], // Processing, Waiting, Ready, Paid
     PENDING: [0, 10], // Created, Pending Payment
-    COMPLETED: [4, 5, 9, 13], // Failed, Survey Completed, Cancelled, Refund
+    COMPLETED: [4, 5, 9, 13, 14], // Failed, Survey Completed, Cancelled, Refund, Subscription Completed
     SUSPENDED: [2], // Suspended
 } as const;
 

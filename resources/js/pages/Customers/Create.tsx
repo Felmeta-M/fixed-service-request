@@ -369,15 +369,15 @@ export default function Create() {
         data.contact_person && data.contact_person.length > 0
             ? data.contact_person[0]
             : {
-                  first_name: '',
-                  middle_name: '',
-                  last_name: '',
-                  title: undefined,
-                  mobile_no: '',
-                  office_no: '',
-                  home_no: '',
-                  fax_no: '',
-              },
+                first_name: '',
+                middle_name: '',
+                last_name: '',
+                title: undefined,
+                mobile_no: '',
+                office_no: '',
+                home_no: '',
+                fax_no: '',
+            },
     );
 
     // Update contact person
@@ -403,9 +403,9 @@ export default function Create() {
     };
 
     // Enhanced submit handler with comprehensive error handling
-    const submit: FormEventHandler = async (e) => {
+    const handleSubmit: FormEventHandler = async (e) => {
         e.preventDefault();
-
+        console.log('hiiiiii')
         // Clear previous errors
         setFormErrors({});
         setSubmissionState({
@@ -419,10 +419,13 @@ export default function Create() {
         const submissionToast = toast.loading('Validating form data...', {
             duration: Infinity,
         });
+        console.log("🚀 ~ submit ~ submissionToast:", submissionToast)
 
         try {
             // Step 1: Validate form data
             const result = customerSchema.safeParse(data);
+            console.log("🚀 ~ submit ~ result:", result)
+
             if (!result.success) {
                 const fieldErrors: Record<string, string> = {};
 
@@ -454,7 +457,7 @@ export default function Create() {
             toast.loading('Creating customer...', {
                 id: submissionToast,
             });
-
+            console.log("🚀 ~ submit ~ submissionToast:", submissionToast)
             // Step 2: Create customer
             const response = await axios.post(
                 `${import.meta.env.VITE_API_BASE_URL}/customer/create`,
@@ -757,9 +760,8 @@ export default function Create() {
             {[1, 2, 3, 4].map((stepNumber) => (
                 <div key={stepNumber} className="flex items-center">
                     <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all sm:h-10 sm:w-10 ${
-                            step >= stepNumber ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-500'
-                        } ${step === stepNumber ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                        className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all sm:h-10 sm:w-10 ${step >= stepNumber ? 'bg-primary text-white shadow-md' : 'bg-gray-100 text-gray-500'
+                            } ${step === stepNumber ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                     >
                         {step > stepNumber ? <CheckCircle className="h-5 w-5" /> : stepNumber}
                     </div>
@@ -1464,11 +1466,10 @@ export default function Create() {
                     ) : (
                         <Button
                             type="button"
-                            onClick={submit}
+                            onClick={handleSubmit}
                             disabled={submissionState.isSubmitting || submissionState.isUploadingPhoto}
-                            className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${
-                                submissionState.isSubmitting || submissionState.isUploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
-                            }`}
+                            className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${submissionState.isSubmitting || submissionState.isUploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
+                                }`}
                         >
                             {submissionState.isSubmitting || submissionState.isUploadingPhoto ? (
                                 <>

@@ -91,23 +91,19 @@ class CreateOrderService
      */
     protected function createRequestObject(array $data): array
     {
-        $merchant_order_id = TelebirrHelper::createMerchantOrderId();
-        //TODO: insert into db
-        // $payment = [
-        //     'customer_code' => $data['customerCode'],
-        //     'customer_survey_order_id' => $data['customerSurveyOrderId'],
-        //     'amount' => $data['amount'],
-        //     'status' => FFDServiceProvisionStatus::Pending->value
-        // ];
-
-        // $this->paymentService->create($payment);
+        $merchantOrderId = TelebirrHelper::createMerchantOrderId();
 
         $payment = $this->paymentService->find($data['customerSurveyOrderId']);
-        if ($payment) {
-            throw new RuntimeException("Payment not found!");
+
+        if ($payment->status === FFDServiceProvisionStatus::Paid->value) {
+            throw new RuntimeException("Your payment has already been processed. No further action is needed.");
         }
 
-        $amount = $payment->amount;
+        $amount = number_format((float) $payment->amount, 2, '.', '');
+
+        $payment->update([
+            'merch_order_id' => $merchantOrderId,
+        ]);
 
         $request = [
             'nonce_str' => (string) TelebirrHelper::createNonceStr(),
@@ -123,7 +119,7 @@ class CreateOrderService
             'trade_type' => 'Checkout',
             'appid' => $this->merchantAppId,
             'merch_code' => $this->merchantCode,
-            'merch_order_id' => (string) $merchant_order_id,
+            'merch_order_id' => (string) $merchantOrderId,
             'title' => (string) $data['customerSurveyOrderId'],
             'total_amount' => (string) $amount,
             'trans_currency' => 'ETB',
@@ -131,7 +127,7 @@ class CreateOrderService
             'payee_identifier' => 'REDACTED_MERCHANT_CODE',
             'payee_identifier_type' => '04',
             'payee_type' => '5000',
-            'redirect_url' => route('home')
+            'redirect_url' => route('services')
 
         ];
 

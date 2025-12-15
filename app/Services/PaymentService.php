@@ -60,9 +60,9 @@ class PaymentService
     /**
      * Retrieve a payment by ID or reference number.
      */
-    public function find(string|int $customer_survey_order_id): Payment
+    public function find(string|int $customerSurveyOrderId): Payment
     {
-        $payment = Payment::select(['customer_survey_order_id', 'amount'])->where('customer_survey_order_id', $customer_survey_order_id)->first();
+        $payment = Payment::query()->where('customer_survey_order_id', $customerSurveyOrderId)->first();
 
         if (!$payment) {
             throw new ModelNotFoundException('Payment not found.');

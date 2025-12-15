@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\v1;
 
-
 use App\Enums\FFDServiceProvisionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
@@ -11,12 +10,12 @@ use App\Services\CreateOrderService;
 use App\Services\PaymentService;
 use App\Services\RsaSignatureService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class TelebirrController extends Controller
 {
-
     public function __construct(
         protected readonly CreateOrderService $createOrderService,
         protected readonly PaymentService $paymentService,
@@ -37,63 +36,94 @@ class TelebirrController extends Controller
                 'rawRequest' => $rawRequest,
             ]);
         } catch (RuntimeException $e) {
+            Log::error('Telebirr Create Order Error', ['error' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Unable to create order',
             ], 500);
         }
     }
 
     public function notify(Request $request)
     {
-        // Log raw request for debugging (optional)
         Log::info('Telebirr Notification Received', $request->all());
 
-        // Validate required fields
         $data = $request->validate([
-            'merch_code' => 'required',
-            'merch_order_id' => 'required',
-            'payment_order_id' => 'required',
-            'total_amount' => 'required',
-            'trans_id' => 'required',
-            'trade_status' => 'required'
+            'merch_code'        => 'nullable',
+            'merch_order_id'   => 'nullable',
+            'payment_order_id' => 'nullable',
+            'total_amount'     => 'nullable',
+            'trans_id'         => 'nullable',
+            'trade_status'     => 'nullable',
+            // 'sign'           => 'nullable', // enable when signature verification is ready
         ]);
 
-        // Lookup the payment by your internal order ID
+        /**
+         * (Recommended)
+         * Verify Telebirr RSA signature here
+         */
+        // if (! $this->rsaSignatureService->verify($data)) {
+        //     Log::warning('Telebirr Invalid Signature', $data);
+        //     return response()->json(['success' => false], 403);
+        // }
+
         $payment = Payment::where('merch_order_id', $data['merch_order_id'])->first();
 
-        if (!$payment) {
-            Log::error("Telebirr Callback Error: Order not found: " . $data['merch_order_id']);
-            return; // no return json, just exit
-        }
-
-        // 🛑 Idempotency: Skip if already processed
-        if ($payment->status === 'paid') {
-            Log::info("Telebirr Duplicate Callback Ignored for order: " . $payment->merch_order_id);
-            return; // ignore duplicate hits
-        }
-
-        // Process payment
-        if ($data['trade_status'] === 'Completed') {
-            $payment->update([
-                'status' => 'paid',
-                'transaction_id' => $data['trans_id'],
-                'amount' => $data['total_amount'],
+        if (! $payment) {
+            Log::error('Telebirr Callback: Payment Not Found', [
+                'merch_order_id' => $data['merch_order_id'],
             ]);
 
-            // Update related survey order
-            SurveyRequest::query()
-                ->where('customer_survey_order_id', $payment->customer_survey_order_id)
-                ->update([
-                    'status' => FFDServiceProvisionStatus::Paid
+            // Always return 200 so Telebirr doesn’t retry forever
+            return response()->json(['success' => true]);
+        }
+
+        /**
+         * Idempotency guard
+         */
+        if ($payment->status === FFDServiceProvisionStatus::Paid) {
+            Log::info('Telebirr Duplicate Callback Ignored', [
+                'order' => $payment->merch_order_id,
+            ]);
+
+            return response()->json(['success' => true]);
+        }
+
+        DB::transaction(function () use ($payment, $data) {
+
+            if ($data['trade_status'] === 'Completed') {
+
+                $payment->update([
+                    'status'          => FFDServiceProvisionStatus::Paid,
+                    'transaction_id'  => $data['trans_id'],
+                    'amount'          => $data['total_amount'],
                 ]);
 
-            Log::info("Telebirr Payment Completed: Order " . $payment->merch_order_id);
-        } else {
+                SurveyRequest::where(
+                    'customer_survey_order_id',
+                    $payment->customer_survey_order_id
+                )->update([
+                    'status' => FFDServiceProvisionStatus::Paid,
+                ]);
 
-            $payment->update(['status' => 'failed']);
+                Log::info('Telebirr Payment Completed', [
+                    'order' => $payment->merch_order_id,
+                    'trans_id' => $data['trans_id'],
+                ]);
+            } else {
 
-            Log::warning("Telebirr Payment Failed: Order " . $payment->order_id);
-        }
+                $payment->update([
+                    'status' => FFDServiceProvisionStatus::Failed,
+                ]);
+
+                Log::warning('Telebirr Payment Failed', [
+                    'order' => $payment->merch_order_id,
+                    'status' => $data['trade_status'],
+                ]);
+            }
+        });
+
+        return response()->json(['success' => true]);
     }
 }

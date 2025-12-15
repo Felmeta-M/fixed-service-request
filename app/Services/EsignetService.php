@@ -275,7 +275,7 @@ class EsignetService
                 $customer = new Customer();
                 $customer->sub = $sub;
                 $customer->name = $name;
-                $customer->phone_number = $phoneNumber;
+                $customer->phone_number = substr($phoneNumber, -9);
                 $customer->gender = $gender;
                 $customer->nationality = $nationality;
                 $customer->identification_type = $identification_type;

@@ -43,7 +43,7 @@ class SurveyOrderService extends BaseApiService
         $completedDate = date('YmdHis');
 
         //TODO: shall be replaced by fronted values
-        // $data['main_offer_id'] = 1207609454; // voice 1207609454; //data 1457567289
+        $data['main_offer_id'] = 1457567289; // voice 1207609454; //data 1457567289
         // $data['sub_main_offer_id'] = 180427974; //combo
 
         //  <com:SubSurveyinfoList>

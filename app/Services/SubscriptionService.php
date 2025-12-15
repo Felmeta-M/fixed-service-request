@@ -138,7 +138,7 @@ class SubscriptionService extends BaseApiService
 XML;
    }
 
-   private function parseResponseXml(array $data, string $xml)
+   protected function parseResponseXml(array $data, string $xml)
    {
       $parsed = simplexml_load_string($xml);
 
@@ -160,14 +160,16 @@ XML;
             'ret_msg'  => 'Missing SOAP Body',
          ];
       }
+
       $responseMsg = $body->children($namespaces['ser'])->CreateNewSubscriberRspMsg ?? null;
       if ($responseMsg === null) {
          return [
             'success'  => false,
             'ret_code' => null,
-            'ret_msg'  => 'Missing Create New Subscriber Rsp Msg',
+            'ret_msg'  => 'Missing CreateNewSubscriberRspMsg',
          ];
       }
+
       $responseHeader = $responseMsg->ResponseHeader->children($namespaces['com']) ?? null;
       $retCode = (string) ($responseHeader->RetCode ?? '');
       $retMsg  = (string) ($responseHeader->RetMsg ?? '');
@@ -183,30 +185,36 @@ XML;
          return ApiResponse::error('Survey request not found');
       }
 
-      // 1. If service number already exists in DB → reuse it
-      if ($surveyRequest->service_number) {
-         $numberService = $surveyRequest->service_number;
-      } else {
-         // 2. If not existing → get new service number
-         $numberService = $this->getAvailableNumberServices();
+      // Navigate to ExtParamList -> ParameterInfo
+      $extParams = $responseMsg->ExtParamList->children($namespaces['com'] ?? null);
+      $serviceNumber = null;
 
-         if (!$numberService) {
-            return ApiResponse::error('Unable to reserve number service');
+      if ($extParams && isset($extParams->ParameterInfo)) {
+         foreach ($extParams->ParameterInfo as $paramInfo) {
+            $paramInfo = $paramInfo->children($namespaces['com'] ?? null);
+            if ((string) $paramInfo->ParamName === 'FBBNUMBER') {
+               $serviceNumber = trim((string) $paramInfo->ParamValue);
+               break;
+            }
          }
-         // 3. Save new service number to DB
-         $surveyRequest->update([
-            'service_number' => $numberService,
-            'status' => FFDServiceProvisionStatus::Subscribed->value,
-            'subscribed_at' => now(),
-            // TODO: update completed_date based on survey result
-         ]);
       }
 
+      if (!$serviceNumber) {
+         return ApiResponse::error('Service number not found in response');
+      }
+
+      // Update the survey request with service number
+      $surveyRequest->update([
+         'service_number' => $serviceNumber,
+         'status'         => FFDServiceProvisionStatus::Subscribed->value,
+         'subscribed_at'  => now(),
+      ]);
+
       return ApiResponse::success([
-         'success'   => true,
-         'ret_code'  => $retCode,
-         'ret_msg'   => $retMsg,
-         'body'      => $responseMsg,
+         'success'      => true,
+         'ret_code'     => $retCode,
+         'ret_msg'      => $retMsg,
+         'service_number' => $serviceNumber,
       ]);
    }
 

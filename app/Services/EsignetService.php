@@ -34,7 +34,6 @@ class EsignetService
                     $this->{$property} = $value;
                 }
             }
-
         } catch (Throwable $e) {
             Log::error('EsignetService::__construct failed', ['error' => $e->getMessage()]);
             throw $e;
@@ -45,52 +44,67 @@ class EsignetService
     public function buildAuthorizationUrl(): array
     {
         try {
+            // Generate PKCE verifier & challenge
             $verifier = bin2hex(random_bytes(32));
             $challenge = rtrim(strtr(
                 base64_encode(hash('sha256', $verifier, true)),
-                '+/', '-_'
+                '+/',
+                '-_'
             ), '=');
 
+            // Generate state
             $state = bin2hex(random_bytes(16));
+
+            // Define mandatory claims (disable user selection)
             $claims = [
                 'userinfo' => [
-                    'name' => ['essential' => true],
+                    'name'         => ['essential' => true],
                     'phone_number' => ['essential' => true],
-                    'email' => ['essential' => true],
-                    'picture' => ['essential' => true],
-                    'gender' => ['essential' => true],
-                    'birthdate' => ['essential' => true],
-                    'address' => ['essential' => true],
+                    'email'        => ['essential' => true],
+                    'picture'      => ['essential' => true],
+                    'gender'       => ['essential' => true],
+                    'birthdate'    => ['essential' => true],
+                    'address'      => ['essential' => true],
+                    'nationality'  => ['essential' => true],
+                ],
+                'id_token' => [
                     'sub' => ['essential' => true],
-                ]
+                ],
             ];
 
-            return [
-                'status' => 'ok',
-                'auth_url' => $this->authorizationEndpoint . '?' . http_build_query([
-                        'response_type' => 'code',
-                        'client_id' => $this->clientId,
-                        'redirect_uri' => $this->redirectUri,
-                        'scope' => 'openid profile email',
-                        'code_challenge' => $challenge,
-                        'code_challenge_method' => 'S256',
-                        'state' => $state,
-                        'claims' => $claims
+            // IMPORTANT: Encode claims only once (JSON only)
+            $encodedClaims = json_encode($claims, JSON_UNESCAPED_SLASHES);
 
-                    ]),
+            // Build authorization URL
+            $authUrl = $this->authorizationEndpoint . '?' . http_build_query([
+                'response_type'         => 'code',
+                'client_id'             => $this->clientId,
+                'redirect_uri'          => $this->redirectUri,
+                'scope'                 => 'openid profile email',
+                'code_challenge'        => $challenge,
+                'code_challenge_method' => 'S256',
+                'state'                 => $state,
+                'claims'                => $encodedClaims,
+            ]);
+
+            return [
+                'status'        => 'ok',
+                'auth_url'      => $authUrl,
                 'code_verifier' => $verifier,
-                'state' => $state,
+                'state'         => $state,
             ];
-
         } catch (Throwable $e) {
-            Log::error('Error building authorization URL', ['error' => $e->getMessage()]);
+            Log::error('Error building authorization URL', [
+                'error' => $e->getMessage(),
+            ]);
 
             return [
-                'status' => 'error',
+                'status'  => 'error',
                 'message' => 'Unable to build authorization URL.',
             ];
         }
     }
+
 
     /** Exchange code for token */
     public function exchangeCodeForToken(string $code, string $verifier): array
@@ -119,7 +133,6 @@ class EsignetService
             }
 
             return ['status' => 'ok', 'token' => $json];
-
         } catch (Throwable $e) {
             Log::error('Error exchanging token', ['error' => $e->getMessage()]);
             return ['status' => 'error', 'message' => 'Token request failed.'];
@@ -162,7 +175,6 @@ class EsignetService
 
             // Step 2. try load RSA key from JWK
             return RSA::loadPrivateKey($decoded, 'JWK')->withPadding(RSA::SIGNATURE_PKCS1);
-
         } catch (Throwable $e) {
             logger()->error('Failed to load private key', [
                 'exception' => $e->getMessage(),
@@ -218,7 +230,6 @@ class EsignetService
                 'status' => 'ok',
                 'customer' => $customer,
             ];
-
         } catch (Throwable $e) {
             Log::error('Exception fetching user info', ['error' => $e->getMessage()]);
             return ['status' => 'error', 'message' => 'Error fetching user info'];
@@ -280,7 +291,6 @@ class EsignetService
                 'status' => 'ok',
                 'customer' => $customer
             ];
-
         } catch (Throwable $e) {
             logger()->error('Customer sync failed', [
                 'exception' => $e->getMessage(),
@@ -293,6 +303,4 @@ class EsignetService
             ];
         }
     }
-
-
 }

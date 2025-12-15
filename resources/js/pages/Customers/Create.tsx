@@ -1,21 +1,38 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCustomerCategories, useCustomerSubcategories, useCustomerTypes } from '@/hooks/use-customer-types';
 import { useOccupations } from '@/hooks/use-occupations';
 import { useRegions, useWoredas, useZones } from '@/hooks/use-regions';
 import AuthLayout from '@/layouts/AuthLayout';
-import GuestLayout from '@/layouts/GuestLayout';
+import { cn } from '@/lib/utils';
+import { FormSelectProps } from '@/types';
 import { CustomerFormValues, customerSchema } from '@/types/customer';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import axios from 'axios';
-import { ArrowLeft, ArrowRight, Building, CheckCircle, FileIcon, FileText, MapPin, MapPinIcon, Phone, PhoneIcon, User, UserIcon } from 'lucide-react';
+import axios, { AxiosError } from 'axios';
+import { ArrowLeft, ArrowRight, Building, CheckCircle, FileIcon, MapPinIcon, PhoneIcon, User } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { FormSelectProps } from '@/types';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+
+// Error types for better error handling
+type ApiError = {
+    message: string;
+    errors?: Record<string, string[]>;
+    status?: number;
+};
+
+type SubmissionState = {
+    isSubmitting: boolean;
+    isUploadingPhoto: boolean;
+    error: ApiError | null;
+    success: boolean;
+};
+
+type FieldError = {
+    field: string;
+    message: string;
+};
 
 export function FormSelect({
     label,
@@ -34,7 +51,7 @@ export function FormSelect({
         <div className="space-y-2">
             <Label htmlFor={id} className="font-medium text-gray-700">
                 {label}
-                {required && <span className=" text-red-500">*</span>}
+                {required && <span className="text-red-500">*</span>}
                 {labelRight && <div className="inline-block">{labelRight}</div>}
             </Label>
 
@@ -55,7 +72,7 @@ export function FormSelect({
 
                 {!loading && (
                     <SelectContent className="bg-white shadow-lg">
-                        {options.map((opt) => (
+                        {options?.map((opt) => (
                             <SelectItem key={opt.value} value={opt.value}>
                                 {opt.label}
                             </SelectItem>
@@ -74,6 +91,7 @@ export interface FormInputProps {
     id: string;
     value?: string | number | null;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    autoFocus?: boolean;
     placeholder?: string;
     error?: string;
     type?: React.HTMLInputTypeAttribute;
@@ -87,26 +105,15 @@ export function FormInput({
     id,
     value,
     onChange,
-    placeholder = "",
+    autoFocus,
+    placeholder = '',
     error,
-    type = "text",
+    type = 'text',
     required = false,
     readOnly = false,
     disabled = false,
 }: FormInputProps) {
-    const safeValue = value ?? "";
-    console.log({
-        label,
-        id,
-        value,
-        onChange,
-        placeholder,
-        error,
-        type,
-        required,
-        readOnly,
-        disabled,
-    })
+    const safeValue = value ?? '';
     return (
         <div className="space-y-2">
             <Label htmlFor={id} className="font-medium text-gray-700">
@@ -115,44 +122,73 @@ export function FormInput({
             </Label>
             <input
                 type={type}
-                className={
-                    cn("flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        , `${error
-                            ? "border-red-300 focus:ring-red-200"
-                            : "border-gray-300 focus:ring-green-200"
-                        } focus:ring-2 focus:outline-none`)}
+                className={cn(
+                    'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
+                    `${error ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-primary'} focus:border-2 focus:border-primary focus:outline-none`,
+                )}
                 id={id}
                 value={safeValue}
                 onChange={onChange}
+                autoFocus={autoFocus}
                 placeholder={placeholder}
                 readOnly={readOnly}
                 disabled={disabled}
-            // className={`${error
-            //     ? "border-red-300 focus:ring-red-200"
-            //     : "border-gray-300 focus:ring-green-200"
-            //     } focus:ring-2 focus:outline-none`}
             />
 
-            {/*        {error && <p className="text-sm text-red-500">{error}</p>} */}
+            {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
     );
 }
 
+// Utility function to handle API errors
+const handleApiError = (error: unknown): ApiError => {
+    if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<{
+            message?: string;
+            errors?: Record<string, string[]>;
+            success?: boolean;
+        }>;
 
+        return {
+            message: axiosError.response?.data?.message || axiosError.message || 'An API error occurred',
+            errors: axiosError.response?.data?.errors,
+            status: axiosError.response?.status,
+        };
+    }
 
+    if (error instanceof Error) {
+        return {
+            message: error.message,
+        };
+    }
 
+    return {
+        message: 'An unexpected error occurred',
+    };
+};
+
+// Parse Zod errors into field-specific errors
+const parseZodErrors = (zodError: z.ZodError): FieldError[] => {
+    return zodError.issues.map((issue) => ({
+        field: issue.path.join('.'),
+        message: issue.message,
+    }));
+};
 
 export default function Create() {
     const { auth } = usePage().props;
     const { user } = auth;
 
-    const { occupations, loading, error: occupationError } = useOccupations();
+    const { occupations, loading: occupationsLoading, error: occupationError } = useOccupations();
     const [step, setStep] = useState(1);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-    const [uploadingPhoto, setUploadingPhoto] = useState(false);
-    const [customerCreated, setCustomerCreated] = useState(false);
+    const [submissionState, setSubmissionState] = useState<SubmissionState>({
+        isSubmitting: false,
+        isUploadingPhoto: false,
+        error: null,
+        success: false,
+    });
     const [createdCustomerData, setCreatedCustomerData] = useState<any>(null);
-
 
     const [readOnlyFields, setReadOnlyFields] = useState<Set<string>>(new Set());
     const [isLoadingPrefill, setIsLoadingPrefill] = useState(true);
@@ -203,38 +239,39 @@ export default function Create() {
         'last_name',
         'gender',
         'date_of_birth',
-        // 'place_of_birth',
-        // 'identification_number',
         'nationality',
         'identification_type',
         'contact.notification_mode',
         'contact.mobile_no',
     ];
 
+    // Enhanced prefill data loading with better error handling
     useEffect(() => {
         const loadDataFromApi = async () => {
             try {
                 setIsLoadingPrefill(true);
+                setSubmissionState((prev) => ({ ...prev, error: null }));
 
-                // Only load data if user has customer_sub_id
                 if (user?.customer_sub_id) {
-                    console.log('Loading customer data from API for customer_sub_id:', user?.customer_sub_id);
-
                     const response = await axios.get('/api/v1/customer', {
                         params: { customer_sub_id: user?.customer_sub_id },
                         headers: {
                             Authorization: `Bearer ${user?.api_token}`,
                         },
+                        timeout: 10000, // 10 second timeout
                     });
 
                     if (response.data?.success && response.data?.data) {
                         const customer = response.data.data;
-                        console.log('Customer data loaded from API:', customer);
 
-                        // Set read-only fields
+                        // Show success toast for prefill
+                        toast.success('Customer data loaded successfully', {
+                            description: 'Some fields are pre-filled from existing data',
+                            duration: 3000,
+                        });
+
                         setReadOnlyFields(new Set(API_READONLY_FIELDS));
 
-                        // Transform API data to match form structure
                         const transform = {
                             first_name: customer.first_name || '',
                             middle_name: customer.middle_name || '',
@@ -263,10 +300,10 @@ export default function Create() {
                                 fax_no: customer.contact?.fax_no || customer.fax_no || '',
                             },
                             address: {
-                                region: customer.address?.region || customer.region || '',
-                                zone: customer.address?.zone || customer.zone || '',
-                                woreda: customer.address?.woreda || customer.woreda || '',
-                                city: customer.address?.city || customer.city || '',
+                                region: customer.address?.regionne || customer.regionn || '',
+                                zone: customer.address?.zonee || customer.zonee || '',
+                                woreda: customer.address?.woredaa || customer.woredaa || '',
+                                city: customer.address?.cityy || customer.cityy || '',
                                 street_name: customer.address?.street_name || customer.street_name || '',
                                 kebele: customer.address?.kebele || customer.kebele || '',
                                 house_no: customer.address?.house_no || customer.house_no || '',
@@ -275,24 +312,28 @@ export default function Create() {
                             customer_level: customer.customer_level || '2',
                         };
 
-                        // Set all data at once
                         setData(transform);
 
-                        // Handle photo
                         if (customer.photo_base64) {
                             localStorage.setItem('customer_photo_base64', customer.photo_base64);
                         }
-
-                        console.log('Form initialized with API data');
                     } else {
-                        console.log('No customer data found from API');
+                        toast.info('Starting with new customer form', {
+                            description: 'No existing customer data found',
+                            duration: 3000,
+                        });
                     }
-                } else {
-                    console.log('No customer_sub_id found, starting with empty form');
                 }
             } catch (error) {
-                console.error('Error loading data from API:', error);
-                toast.error('Failed to load existing customer data');
+                const apiError = handleApiError(error);
+                console.error('Error loading data from API:', apiError);
+
+                toast.error('Failed to load customer data', {
+                    description: apiError.message,
+                    duration: 5000,
+                });
+
+                setSubmissionState((prev) => ({ ...prev, error: apiError }));
             } finally {
                 setIsLoadingPrefill(false);
             }
@@ -326,7 +367,7 @@ export default function Create() {
     // Contact person state - only one contact person
     const [contactPerson, setContactPerson] = useState(
         data.contact_person && data.contact_person.length > 0
-            ? data.contact_person[0] // Take the first contact person if exists
+            ? data.contact_person[0]
             : {
                 first_name: '',
                 middle_name: '',
@@ -340,11 +381,20 @@ export default function Create() {
     );
 
     // Update contact person
-    const updateContactPerson = (field: string, val: string) => setContactPerson((prev) => ({ ...prev, [field]: val }));
+    const updateContactPerson = (field: string, val: string) => {
+        const errorKey = `contact_person.0.${field}`;
+        setContactPerson((prev) => ({ ...prev, [field]: val }));
+        setFormErrors((prev) => {
+            const next = { ...prev };
+            delete next[errorKey];
+            delete next.contact_person;
+            return next;
+        });
+    };
 
     // Sync contact person with form data
     useEffect(() => {
-        setData('contact_person', [contactPerson]); // Wrap in array for API
+        setData('contact_person', [contactPerson]);
     }, [contactPerson, setData]);
 
     // Check if a field is read-only
@@ -352,22 +402,63 @@ export default function Create() {
         return readOnlyFields.has(fieldName);
     };
 
-    const submit: FormEventHandler = async (e) => {
+    // Enhanced submit handler with comprehensive error handling
+    const handleSubmit: FormEventHandler = async (e) => {
         e.preventDefault();
+        console.log('hiiiiii')
+        // Clear previous errors
         setFormErrors({});
+        setSubmissionState({
+            isSubmitting: true,
+            isUploadingPhoto: false,
+            error: null,
+            success: false,
+        });
 
-        const result = customerSchema.safeParse(data);
-        if (!result.success) {
-            const fieldErrors: Record<string, string> = {};
-            for (const [key, val] of Object.entries(result.error.flatten().fieldErrors)) {
-                if (val && val.length > 0) fieldErrors[key] = val[0];
-            }
-            setFormErrors(fieldErrors);
-            return;
-        }
+        // Start toast for submission
+        const submissionToast = toast.loading('Validating form data...', {
+            duration: Infinity,
+        });
+        console.log("🚀 ~ submit ~ submissionToast:", submissionToast)
 
         try {
-            // --- STEP 1: CREATE CUSTOMER ---
+            // Step 1: Validate form data
+            const result = customerSchema.safeParse(data);
+            console.log("🚀 ~ submit ~ result:", result)
+
+            if (!result.success) {
+                const fieldErrors: Record<string, string> = {};
+
+                for (const issue of result.error.issues) {
+                    const key = issue.path.join('.');
+                    if (key) {
+                        if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+                    } else {
+                        if (!fieldErrors._form) fieldErrors._form = issue.message;
+                    }
+                }
+
+                setFormErrors(fieldErrors);
+
+                toast.error('Form validation failed', {
+                    id: submissionToast,
+                    description: 'Please check all required fields',
+                    duration: 5000,
+                });
+
+                setSubmissionState((prev) => ({
+                    ...prev,
+                    isSubmitting: false,
+                }));
+                return;
+            }
+
+            // Update toast to show creation in progress
+            toast.loading('Creating customer...', {
+                id: submissionToast,
+            });
+            console.log("🚀 ~ submit ~ submissionToast:", submissionToast)
+            // Step 2: Create customer
             const response = await axios.post(
                 `${import.meta.env.VITE_API_BASE_URL}/customer/create`,
                 {
@@ -377,74 +468,135 @@ export default function Create() {
                 {
                     headers: {
                         Authorization: `Bearer ${user?.api_token}`,
+                        'Content-Type': 'application/json',
                     },
+                    // timeout: 30000, // 30 second timeout for customer creation
                 },
             );
 
             if (!response.data.success) {
-                toast.error('Customer creation failed');
-                return;
+                throw new Error(response.data.message || 'Customer creation failed');
             }
 
             const customer = response.data.data?.original?.data || response.data.data;
             setCreatedCustomerData(customer);
-            setCustomerCreated(true);
 
-            // --- STEP 2: GET TRANSACTION ID ---
-            const transactionId = customer.transaction_id || `txn_${Date.now()}`;
+            // Update toast to show success
+            toast.success('Customer created successfully!', {
+                id: submissionToast,
+                description: 'Now processing photo upload...',
+                duration: 3000,
+            });
 
-            // --- STEP 3: GET PHOTO FROM LOCAL STORAGE ---
-            const base64Photo = localStorage.getItem('customer_photo_base64') || null;
-
+            // Step 3: Upload photo if exists
+            const base64Photo = localStorage.getItem('customer_photo_base64');
             if (base64Photo) {
-                toast.info('Uploading customer photo...', {
-                    position: 'top-right',
-                    className: 'bg-blue-50 text-blue-800 border-blue-100',
+                setSubmissionState((prev) => ({
+                    ...prev,
+                    isUploadingPhoto: true,
+                }));
+
+                const photoToast = toast.loading('Uploading customer photo...', {
+                    description: 'Please wait',
+                    duration: Infinity,
                 });
 
-                const uploadResult = await uploadPhotoToEcaf(customer, transactionId, base64Photo);
+                try {
+                    const uploadResult = await uploadPhotoToEcaf(customer, base64Photo);
 
-                if (uploadResult.success) {
-                    toast.success('Customer created and photo uploaded successfully!', {
-                        position: 'top-right',
-                        className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
+                    if (uploadResult.success) {
+                        toast.success('Photo uploaded successfully!', {
+                            id: photoToast,
+                            duration: 3000,
+                        });
+                    } else {
+                        toast.warning('Customer created but photo upload failed', {
+                            id: photoToast,
+                            description: uploadResult.message,
+                            duration: 5000,
+                        });
+                    }
+                } catch (photoError) {
+                    const apiError = handleApiError(photoError);
+                    toast.error('Photo upload failed', {
+                        id: photoToast,
+                        description: apiError.message,
+                        duration: 5000,
                     });
-                } else {
-                    toast.warning(`Customer created but photo upload failed: ${uploadResult.message}`, {
-                        position: 'top-right',
-                        className: 'bg-yellow-50 text-yellow-800 border-yellow-100',
-                    });
+                } finally {
+                    setSubmissionState((prev) => ({
+                        ...prev,
+                        isUploadingPhoto: false,
+                    }));
                 }
-            } else {
-                toast.success('Customer created successfully!', {
-                    position: 'top-right',
-                    className: 'bg-emerald-50 text-emerald-800 border-emerald-100',
-                });
             }
 
-            // --- STEP 4: CLEANUP AND REDIRECT ---
+            // Step 4: Final success state
+            setSubmissionState({
+                isSubmitting: false,
+                isUploadingPhoto: false,
+                error: null,
+                success: true,
+            });
+
+            // Show final success message
+            toast.success('Customer setup completed!', {
+                description: 'Redirecting to services page...',
+                duration: 3000,
+            });
+
+            // Cleanup and redirect
             sessionStorage.removeItem('pending_customer_id');
             localStorage.removeItem('customer_photo_base64');
 
+            // Redirect after a brief delay to show success message
             setTimeout(() => {
                 router.get(route('services'));
             }, 2000);
         } catch (error) {
-            toast.error('An unexpected error occurred');
-            console.error(error);
+            const apiError = handleApiError(error);
+
+            // Handle API validation errors
+            if (apiError.errors) {
+                const fieldErrors: Record<string, string> = {};
+                Object.entries(apiError.errors).forEach(([field, messages]) => {
+                    fieldErrors[field] = messages[0]; // Take first error message
+                });
+                setFormErrors(fieldErrors);
+            }
+
+            // Update submission state
+            setSubmissionState({
+                isSubmitting: false,
+                isUploadingPhoto: false,
+                error: apiError,
+                success: false,
+            });
+
+            // Show error toast
+            toast.error('Failed to create customer', {
+                id: submissionToast,
+                description: apiError.message,
+                duration: 10000,
+                action: {
+                    label: 'Retry',
+                    onClick: () => submit(e),
+                },
+            });
+
+            // Scroll to top to show errors
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
 
-    const uploadPhotoToEcaf = async (customerData: any, transactionId: string, photoBase64: string) => {
+    const uploadPhotoToEcaf = async (customerData: any, photoBase64: string) => {
         try {
-            setUploadingPhoto(true);
-
             const ecafData = {
                 cust_code: customerData.customer_code || customerData.customer_id,
                 first_name: data.first_name,
                 last_name: data.last_name,
                 other_name: data.middle_name || '',
-                transaction_id: transactionId,
+                transaction_id: customerData.transaction_id || `txn_${Date.now()}`,
                 photo: photoBase64,
             };
 
@@ -453,25 +605,33 @@ export default function Create() {
                     Authorization: `Bearer ${user.api_token}`,
                     'Content-Type': 'application/json',
                 },
+                timeout: 60000, // 60 second timeout for photo upload
             });
 
             if (response.data?.status === 'success' || response.data?.success) {
                 return { success: true, data: response.data };
             }
 
-            return { success: false, message: response.data?.message || 'ECAF upload failed' };
+            return {
+                success: false,
+                message: response.data?.message || 'ECAF upload failed',
+            };
         } catch (error: any) {
-            console.error('ECAF upload error:', error);
-            return { success: false, message: error?.message || 'Upload failed' };
-        } finally {
-            setUploadingPhoto(false);
+            const apiError = handleApiError(error);
+            return {
+                success: false,
+                message: apiError.message || 'Upload failed',
+            };
         }
     };
 
-    // Enhanced change handlers that prevent editing of read-only fields
+    // Enhanced change handlers
     const handleInputChange = (field: string, value: string) => {
         if (isFieldReadOnly(field)) {
-            toast.warning('This field is pre-filled from existing data and cannot be edited.');
+            toast.warning('Field cannot be edited', {
+                description: 'This field is pre-filled from existing data',
+                duration: 3000,
+            });
             return;
         }
 
@@ -486,7 +646,10 @@ export default function Create() {
     const handleNestedInputChange = (parent: string, field: string, value: string) => {
         const fullFieldName = `${parent}.${field}`;
         if (isFieldReadOnly(fullFieldName)) {
-            toast.warning('This field is pre-filled from existing data and cannot be edited.');
+            toast.warning('Field cannot be edited', {
+                description: 'This field is pre-filled from existing data',
+                duration: 3000,
+            });
             return;
         }
 
@@ -505,7 +668,10 @@ export default function Create() {
 
     const handleSelectChange = (field: string, value: string) => {
         if (isFieldReadOnly(field)) {
-            toast.warning('This field is pre-filled from existing data and cannot be edited.');
+            toast.warning('Field cannot be edited', {
+                description: 'This field is pre-filled from existing data',
+                duration: 3000,
+            });
             return;
         }
 
@@ -526,11 +692,67 @@ export default function Create() {
     };
 
     const handleNext = () => {
+        // Validate current step before proceeding
+        const currentStepErrors = validateCurrentStep();
+        if (Object.keys(currentStepErrors).length > 0) {
+            setFormErrors(currentStepErrors);
+
+            // Scroll to first error
+            setTimeout(() => {
+                const firstErrorField = Object.keys(currentStepErrors)[0];
+                const element = document.getElementById(firstErrorField);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    element.focus();
+                }
+            }, 100);
+
+            toast.error('Please fix errors before proceeding', {
+                duration: 3000,
+            });
+            return;
+        }
+
         if (step < 4) setStep(step + 1);
     };
 
     const handleBack = () => {
         if (step > 1) setStep(step - 1);
+    };
+
+    // Validation function for each step
+    const validateCurrentStep = (): Record<string, string> => {
+        const errors: Record<string, string> = {};
+
+        switch (step) {
+            case 1:
+                if (!data.first_name) errors.first_name = 'First name is required';
+                if (!data.last_name) errors.last_name = 'Last name is required';
+                if (!data.gender) errors.gender = 'Gender is required';
+                if (!data.date_of_birth) errors.date_of_birth = 'Date of birth is required';
+                if (!data.place_of_birth) errors.place_of_birth = 'Place of birth is required';
+
+                break;
+            case 2:
+                if (!data.contact?.mobile_no) errors['contact.mobile_no'] = 'Phone number is required';
+                if (!data.contact?.email) errors['contact.email'] = 'Email is required';
+                else if (!/\S+@\S+\.\S+/.test(data.contact.email)) {
+                    errors['contact.email'] = 'Email is invalid';
+                }
+                break;
+            case 3:
+                if (!data.address?.region) errors['address.region'] = 'Region is required';
+                if (!data.address?.zone) errors['address.zone'] = 'Zone is required';
+                if (!data.address?.woreda) errors['address.woreda'] = 'Woreda is required';
+                break;
+            case 4:
+                if (!data.occupation) errors.occupation = 'Occupation is required';
+                if (!data.education) errors.education = 'Education level is required';
+                // if (!contactPerson.mobile_no) errors['contact_person.mobile_no'] = 'Contact person mobile number is required';
+                break;
+        }
+
+        return errors;
     };
 
     const renderStepIndicator = () => (
@@ -549,6 +771,83 @@ export default function Create() {
         </div>
     );
 
+    // Error summary component
+    const renderErrorSummary = () => {
+        if (!submissionState.error && Object.keys(formErrors).length === 0) return null;
+
+        const errorMessages: string[] = [];
+
+        if (submissionState.error?.message) {
+            errorMessages.push(submissionState.error.message);
+        }
+
+        return (
+            <>
+                {submissionState.error && (
+                    <Card className="border-red-200 shadow-none">
+                        <CardContent className="">
+                            <div className="flex items-start">
+                                <div className="mr-3 text-red-500">
+                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
+                                </div>
+                                <div className="flex-1">
+                                    {/* <h3 className="font-medium text-red-800">{Object.keys(formErrors).length > 0 ? 'Form Errors' : 'Submission Error'}</h3> */}
+                                    {submissionState.error?.message && <h3 className="font-medium text-red-800">{'Submission Error'}</h3>}
+                                    <ul className="mt-2 list-disc space-y-1 pl-5">
+                                        {/* {Object.entries(formErrors).map(([field, message]) => (
+                                    <li key={field} className="text-sm text-red-700">
+                                        {message}
+                                    </li>
+                                ))} */}
+                                        {errorMessages.map((message, index) => (
+                                            <li key={`error-${index}`} className="text-sm text-red-700">
+                                                {message}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+            </>
+        );
+    };
+
+    // Success state component
+    const renderSuccessState = () => {
+        if (!submissionState.success || !createdCustomerData) return null;
+
+        return (
+            <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
+                <Card className="mx-4 w-full max-w-md">
+                    <CardContent className="text-center">
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full">
+                            <CheckCircle className="h-8 w-8 text-primary" />
+                        </div>
+                        <h3 className="mb-2 text-xl font-semibold text-gray-900">Customer Created Successfully!</h3>
+                        <p className="mb-4 text-gray-600">
+                            Customer ID:{' '}
+                            <span className="font-mono font-semibold">{createdCustomerData.customer_code || createdCustomerData.customer_id}</span>
+                        </p>
+                        <p className="mb-6 text-gray-600">Redirecting to services page...</p>
+                        <div className="flex justify-center">
+                            <div className="h-2 w-24 rounded-full bg-gray-200">
+                                <div className="h-full animate-pulse rounded-full bg-primary"></div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    };
+
     // Show loading state when loading prefill data
     if (isLoadingPrefill) {
         return (
@@ -558,29 +857,12 @@ export default function Create() {
                     <Card className="w-full max-w-md">
                         <CardContent className="flex flex-col items-center space-y-4 p-6 text-center">
                             <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
-                            {/* <h2 className="text-xl font-semibold">Loading Customer Data</h2> */}
+                            <h2 className="text-xl font-semibold">Loading Customer Data</h2>
                             <p className="text-gray-600">Please wait while we load your existing information...</p>
                         </CardContent>
                     </Card>
                 </div>
             </AuthLayout>
-        );
-    }
-
-    // Show loading state when uploading photo
-    if (uploadingPhoto) {
-        return (
-            <GuestLayout>
-                <div className="flex min-h-screen items-center justify-center">
-                    <Card className="w-full max-w-md">
-                        <CardContent className="flex flex-col items-center space-y-4 p-6 text-center">
-                            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
-                            <h2 className="text-xl font-semibold">Uploading Customer Photo</h2>
-                            <p className="text-gray-600">Please wait while we upload the photo...</p>
-                        </CardContent>
-                    </Card>
-                </div>
-            </GuestLayout>
         );
     }
 
@@ -590,24 +872,31 @@ export default function Create() {
     return (
         <AuthLayout>
             <Head title="Create Customer" />
-
-            {Object.keys(formErrors).length > 0 && (
-                <div className="mx-auto max-w-4xl px-4 pb-4 sm:px-6">
-                    <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                        <h3 className="font-medium text-red-800">Validation Errors</h3>
-                        <pre className="text-sm text-red-600">{JSON.stringify(formErrors, null, 2)}</pre>
-                    </div>
-                </div>
-            )}
-
             <div className="mx-auto max-w-4xl space-y-6 px-4 pb-10 sm:px-6">
+                {/* Success Overlay */}
+                {renderSuccessState()}
+
                 <div className="rounded-b-lg p-4 shadow-sm">
                     <h1 className="text-2xl font-bold text-gray-900">Create New Customer</h1>
                     <p className="text-md mt-1 text-gray-600">Fill in the customer details step by step</p>
-                    {!hasPrefilledData && <p className="mt-2 text-sm text-gray-500">Starting with a new customer record.</p>}
+                    {/* {hasPrefilledData && (
+                        <div className="mt-2 flex items-center rounded-md bg-blue-50 p-2 text-sm text-blue-700">
+                            <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    fillRule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                    clipRule="evenodd"
+                                />
+                            </svg>
+                            Some fields are pre-filled from existing data and cannot be edited
+                        </div>
+                    )} */}
                 </div>
 
                 {renderStepIndicator()}
+
+                {/* Error Summary */}
+                {renderErrorSummary()}
 
                 {step === 1 && (
                     <Card className="">
@@ -627,7 +916,6 @@ export default function Create() {
                         <CardContent className="space-y-6 p-6">
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
-
                                     <FormSelect
                                         label="Customer Type"
                                         required
@@ -653,8 +941,6 @@ export default function Create() {
                                         error={formErrors.customer_type}
                                         disabled={isFieldReadOnly('customer_type')}
                                     />
-
-
                                 </div>
                                 <>
                                     <FormSelect
@@ -712,11 +998,11 @@ export default function Create() {
                                     label="First Name"
                                     id="first_name"
                                     required
-                                    value={data.first_name ?? ""}
-                                    onChange={(e) => handleInputChange("first_name", e.target.value)}
+                                    value={data.first_name ?? ''}
+                                    onChange={(e) => handleInputChange('first_name', e.target.value)}
                                     placeholder="Enter first name"
                                     error={formErrors.first_name}
-                                    readOnly={!!isFieldReadOnly("first_name")}
+                                    readOnly={!!isFieldReadOnly('first_name')}
                                     disabled={isFieldReadOnly('first_name')}
                                 />
 
@@ -729,6 +1015,7 @@ export default function Create() {
                                     placeholder=""
                                     error={formErrors.middle_name}
                                     readOnly={isFieldReadOnly('middle_name')}
+                                    disabled={isFieldReadOnly('middle_name')}
                                 />
                                 <FormInput
                                     label="Last Name "
@@ -739,6 +1026,7 @@ export default function Create() {
                                     placeholder=""
                                     error={formErrors.last_name}
                                     readOnly={isFieldReadOnly('last_name')}
+                                    disabled={isFieldReadOnly('last_name')}
                                 />
                                 <FormSelect
                                     label="Gender"
@@ -764,6 +1052,7 @@ export default function Create() {
                                     placeholder=""
                                     error={formErrors.date_of_birth}
                                     readOnly={isFieldReadOnly('date_of_birth')}
+                                    disabled={isFieldReadOnly('date_of_birth')}
                                 />
                                 <FormSelect
                                     label="Nationality"
@@ -811,7 +1100,6 @@ export default function Create() {
                         </CardContent>
                     </Card>
                 )}
-
 
                 {step === 2 && (
                     <div className="space-y-6">
@@ -892,6 +1180,7 @@ export default function Create() {
                                         label="Email Address"
                                         id="email"
                                         required
+                                        autoFocus
                                         type="email"
                                         value={data.contact?.email || ''}
                                         onChange={(e) => handleNestedInputChange('contact', 'email', e.target.value)}
@@ -904,7 +1193,6 @@ export default function Create() {
                         </Card>
                     </div>
                 )}
-
 
                 {step === 3 && (
                     <Card className="">
@@ -1009,9 +1297,9 @@ export default function Create() {
                                         value={data.occupation}
                                         onChange={(value) => handleSelectChange('occupation', value)}
                                         options={occupations}
-                                        placeholder={loading ? 'Loading occupations...' : 'Select occupation'}
+                                        placeholder={occupationsLoading ? 'Loading occupations...' : 'Select occupation'}
                                         error={formErrors.occupation || (occupationError ? occupationError : undefined)}
-                                        disabled={loading || isFieldReadOnly('occupation')}
+                                        disabled={occupationsLoading || isFieldReadOnly('occupation')}
                                     />
                                     <FormSelect
                                         label="Education"
@@ -1077,7 +1365,7 @@ export default function Create() {
                             </CardContent>
                         </Card>
 
-                        <Card className="">
+                        {/* <Card className="">
                             <CardHeader className="">
                                 <CardTitle className="flex items-center gap-3 text-gray-800">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
@@ -1094,6 +1382,7 @@ export default function Create() {
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                         <FormSelect
                                             label="Title"
+                                            required
                                             id="contact_person_title"
                                             value={contactPerson.title || ''}
                                             onChange={(val) => updateContactPerson('title', val)}
@@ -1106,69 +1395,58 @@ export default function Create() {
                                                 { label: 'Doctor', value: '4' },
                                             ]}
                                             placeholder="Select title"
+                                            error={formErrors['contact_person.0.title']}
                                         />
                                         <FormInput
                                             label="First Name"
+                                            required
                                             id="contact_person_first_name"
                                             value={contactPerson.first_name}
                                             onChange={(e) => updateContactPerson('first_name', e.target.value)}
                                             placeholder="Enter first name"
+                                            error={formErrors['contact_person.0.first_name']}
                                         />
                                         <FormInput
                                             label="Middle Name"
+                                            required
                                             id="contact_person_middle_name"
                                             value={contactPerson.middle_name}
                                             onChange={(e) => updateContactPerson('middle_name', e.target.value)}
                                             placeholder="Enter middle name"
+                                            error={formErrors['contact_person.0.middle_name']}
                                         />
                                         <FormInput
                                             label="Last Name"
+                                            required
                                             id="contact_person_last_name"
                                             value={contactPerson.last_name}
                                             onChange={(e) => updateContactPerson('last_name', e.target.value)}
                                             placeholder="Enter last name"
+                                            error={formErrors['contact_person.0.last_name']}
                                         />
                                     </div>
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                         <FormInput
                                             label="Mobile Number"
+                                            required
                                             id="contact_person_mobile_no"
                                             value={contactPerson.mobile_no}
                                             onChange={(e) => updateContactPerson('mobile_no', e.target.value)}
                                             placeholder="Enter mobile number"
-                                        />
-                                        <FormInput
-                                            label="Home Number"
-                                            id="contact_person_home_no"
-                                            value={contactPerson.home_no}
-                                            onChange={(e) => updateContactPerson('home_no', e.target.value)}
-                                            placeholder="Enter home number"
-                                        />
-                                        <FormInput
-                                            label="Office Number"
-                                            id="contact_person_office_no"
-                                            value={contactPerson.office_no}
-                                            onChange={(e) => updateContactPerson('office_no', e.target.value)}
-                                            placeholder="Enter office number"
-                                        />
-                                        <FormInput
-                                            label="Fax Number"
-                                            id="contact_person_fax_no"
-                                            value={contactPerson.fax_no}
-                                            onChange={(e) => updateContactPerson('fax_no', e.target.value)}
-                                            placeholder="Enter fax number"
+                                            error={formErrors['contact_person.0.mobile_no']}
                                         />
                                     </div>
                                 </div>
                             </CardContent>
-                        </Card>
+                        </Card> */}
                     </div>
                 )}
+
                 <div className="flex justify-between rounded-lg bg-gray-50 p-4">
                     <Button
                         variant="outline"
                         onClick={handleBack}
-                        disabled={step === 1}
+                        disabled={step === 1 || submissionState.isSubmitting || submissionState.isUploadingPhoto}
                         className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                     >
                         <ArrowLeft className="h-4 w-4" />
@@ -1179,8 +1457,8 @@ export default function Create() {
                         <Button
                             type="button"
                             onClick={handleNext}
-                            disabled={step === 1 && (!data.first_name || !data.last_name)}
-                            className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md`}
+                            disabled={submissionState.isSubmitting || submissionState.isUploadingPhoto}
+                            className="flex items-center gap-2 text-white shadow-sm hover:shadow-md"
                         >
                             Next
                             <ArrowRight className="h-4 w-4" />
@@ -1188,19 +1466,19 @@ export default function Create() {
                     ) : (
                         <Button
                             type="button"
-                            onClick={submit}
-                            disabled={processing || uploadingPhoto}
-                            className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${uploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
+                            onClick={handleSubmit}
+                            disabled={submissionState.isSubmitting || submissionState.isUploadingPhoto}
+                            className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${submissionState.isSubmitting || submissionState.isUploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
                                 }`}
                         >
-                            {uploadingPhoto ? (
+                            {submissionState.isSubmitting || submissionState.isUploadingPhoto ? (
                                 <>
                                     <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
-                                    Creating...
+                                    {submissionState.isUploadingPhoto ? 'Uploading Photo...' : 'Creating Customer...'}
                                 </>
                             ) : (
                                 <>
-                                    Submit Customer
+                                    Submit
                                     <CheckCircle className="h-4 w-4" />
                                 </>
                             )}

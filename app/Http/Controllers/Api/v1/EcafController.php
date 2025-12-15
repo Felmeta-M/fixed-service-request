@@ -17,10 +17,10 @@ class EcafController extends Controller
         try {
             // ✅ Validate request
             $validated = $request->validate([
-                'cust_code'      => 'required|string',
-                'first_name'     => 'required|string',
-                'last_name'     => 'required|string',
-                'other_name'    => 'required|string',
+                // 'cust_code'      => 'required|nullable',
+                // 'first_name'     => 'required|nullable',
+                // 'last_name'     => 'required|nullable',
+                // 'other_name'    => 'required|nullable',
                 'transaction_id'    => 'required|string',
                 'photo'      => 'required|string',
                 // 'images'         => 'required|array',

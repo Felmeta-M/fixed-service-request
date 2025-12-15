@@ -163,7 +163,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                             type="button"
                             className="flex w-full justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
                         >
-                            {/* <img src={logo} alt="ID" className="mr-2 h-5 w-5" /> */}
+                            <img src={logo} alt="ID" className="mr-2 h-5 w-5" />
                             Login with National ID
                         </button>
                     </div>

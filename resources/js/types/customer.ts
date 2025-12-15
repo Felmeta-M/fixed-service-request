@@ -83,7 +83,7 @@ export interface Customer {
         first_name?: string;
         middle_name?: string;
         last_name?: string;
-        mobile_no?: string;
+        mobile_no?: number;
         office_no?: string;
         home_no?: string;
         fax_no?: string;
@@ -129,7 +129,7 @@ export const customerSchema = z.object({
         .partial(),
     contact: z.object({
         notification_mode: z.string().optional(),
-        mobile_no: z.string().optional(),
+        mobile_no: z.number().optional(),
         email: z.string().email().optional(),
         office_no: z.string().optional(),
         home_no: z.string().optional(),
@@ -137,17 +137,17 @@ export const customerSchema = z.object({
     }),
     contact_person: z.array(
         z.object({
-            first_name: z.string().nullable().optional(),
-            middle_name: z.string().nullable().optional(),
-            last_name: z.string().nullable().optional(),
-            title: z.string().nullable().optional(),
-            home_no: z.string().nullable().optional(),
+            title: z.string().min(1, 'Contact person title is required'),
+            first_name: z.string().min(1, 'Contact person first name is required'),
+            middle_name: z.string().min(1, 'Contact person middle name is required'),
+            last_name: z.string().min(1, 'Contact person last name is required'),
+            mobile_no: z.number().min(1, 'Contact person mobile number is required'),
             office_no: z.string().nullable().optional(),
-            mobile_no: z.string().nullable().optional(),
+            home_no: z.string().nullable().optional(),
             fax_no: z.string().nullable().optional(),
         }),
-    ).nullable()
-        .optional(),
+    ),
+    // .min(1, 'At least one contact person is required'),
     customer_type: z.string().min(1, 'Customer type is required'),
     customer_category: z.string().min(1, 'Category is required'),
     customer_subcategory: z.string().min(1, 'Subcategory is required'),

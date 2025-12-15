@@ -171,7 +171,7 @@ XML;
       $responseHeader = $responseMsg->ResponseHeader->children($namespaces['com']) ?? null;
       $retCode = (string) ($responseHeader->RetCode ?? '');
       $retMsg  = (string) ($responseHeader->RetMsg ?? '');
-
+      Log::info($retMsg);
       if ($retCode !== '0') {
          return ApiResponse::error('Service subscription failed!');
       }

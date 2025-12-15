@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 
@@ -33,6 +34,14 @@ class EcafService extends BaseApiService
     {
         $credentials = config('services.ecaf');
 
+        $customer = Customer::current();
+        \Log::info($customer);
+        $custCode = $customer->code;
+        $nameParts = explode(' ', trim($customer->name ?? ''));
+        $firstName  = $nameParts[0] ?? null;
+        $middleName = $nameParts[1] ?? null;
+        $lastName   = $nameParts[2] ?? null;
+
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ecaf="http://ecaf4kiosk.ecaf.inpsur.com/">
    <soapenv:Header/>
@@ -45,10 +54,10 @@ class EcafService extends BaseApiService
             <TRANSACTION_ID>{$data['transaction_id']}</TRANSACTION_ID>
             <CHANNEL_ID>{$credentials['channel_id']}</CHANNEL_ID>
             <CUST_TYPE>{$credentials['cust_type']}</CUST_TYPE>
-            <CUST_CODE>{$data['cust_code']}</CUST_CODE>
-            <CUST_FIRST_NAME>{$data['first_name']}</CUST_FIRST_NAME>
-            <CUST_OTHER_NAME>{$data['other_name']}</CUST_OTHER_NAME>
-            <CUST_LAST_NAME>{$data['last_name']}</CUST_LAST_NAME>
+            <CUST_CODE>{$custCode}</CUST_CODE>
+            <CUST_FIRST_NAME>{$firstName}</CUST_FIRST_NAME>
+            <CUST_OTHER_NAME>{$middleName}</CUST_OTHER_NAME>
+            <CUST_LAST_NAME>{$lastName}</CUST_LAST_NAME>
             <CALENDAR_TYPE>{$credentials['calendar_type']}</CALENDAR_TYPE>
             <ID_EXPIRY_DATE>{$credentials['id_expiry_date']}</ID_EXPIRY_DATE>
             <DOOR_TO_DOOR>false</DOOR_TO_DOOR>

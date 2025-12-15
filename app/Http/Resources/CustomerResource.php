@@ -39,29 +39,14 @@ class CustomerResource extends JsonResource
             'customer_subcategory' => $this->customer_subcategory,
 
             // Address
-            'address' => $this->address
-                ? json_decode($this->address, true)
-                : [
-                    'region' => '',
-                    'zone' => '',
-                    'woreda' => '',
-                    'city' => '',
-                    'street_name' => '',
-                    'kebele' => '',
-                    'house_no' => '',
-                ],
+            'address' => is_array($this->address)
+                ? $this->address
+                : [],
 
             // Contact
-            'contact' => $this->contact
-                ? json_decode($this->contact, true)
-                : [
-                    'notification_mode' => '',
-                    'mobile_no' => $this->phone_number,
-                    'office_no' => '',
-                    'email' => $this->email,
-                    'home_no' => '',
-                    'fax_no' => '',
-                ],
+            'contact' => is_array($this->contact)
+                ? $this->contact
+                : [],
 
             // Contact persons
             'contact_person' => is_array($this->contact_persons)

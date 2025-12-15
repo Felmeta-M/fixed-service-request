@@ -35,7 +35,8 @@ class EcafService extends BaseApiService
         $credentials = config('services.ecaf');
 
         $customer = Customer::current();
-        \Log::info($customer);
+        //TODO: check weather customer info fetched based on current logged in user
+        logger('check weather customer info fetched based on current logged in user', [$customer]);
         $custCode = $customer->code;
         $nameParts = explode(' ', trim($customer->name ?? ''));
         $firstName  = $nameParts[0] ?? null;

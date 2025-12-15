@@ -35,9 +35,8 @@ class SubscriptionService extends BaseApiService
    {
       try {
          $xmlPayload = $this->buildRequestXml($data);
-         // Log::info($xmlPayload);
          $xmlResponse = $this->executeRequest($xmlPayload);
-         // Log::info($xmlResponse);
+         Log::info($xmlResponse);
          $parsedXml = $this->parseResponseXml($data, $xmlResponse);
          return ApiResponse::success($parsedXml);
       } catch (\RuntimeException $e) {
@@ -153,6 +152,7 @@ XML;
 
       $namespaces = $parsed->getNamespaces(true);
       $body = $parsed->children($namespaces['soapenv'])->Body ?? null;
+
       if ($body === null) {
          return [
             'success'  => false,
@@ -171,7 +171,7 @@ XML;
       $responseHeader = $responseMsg->ResponseHeader->children($namespaces['com']) ?? null;
       $retCode = (string) ($responseHeader->RetCode ?? '');
       $retMsg  = (string) ($responseHeader->RetMsg ?? '');
-      Log::info($retMsg);
+
       if ($retCode !== '0') {
          return ApiResponse::error('Service subscription failed!');
       }
@@ -201,7 +201,7 @@ XML;
             // TODO: update completed_date based on survey result
          ]);
       }
-      Log::info($responseMsg);
+
       return ApiResponse::success([
          'success'   => true,
          'ret_code'  => $retCode,

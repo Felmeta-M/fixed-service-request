@@ -28,7 +28,7 @@ enum FFDServiceProvisionStatus: int
             self::Completed  => 'Completed',
             self::Ready      => 'Ready',
             self::Cancelled  => 'Cancelled',
-            self::Pending    => 'Pending',
+            self::Pending    => 'Pending for payment',
             self::Paid       => 'Paid',
             self::Refund     => 'Refund',
             self::Subscribed => 'Subscribed',

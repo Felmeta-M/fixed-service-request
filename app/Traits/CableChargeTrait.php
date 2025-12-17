@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use Illuminate\Support\Facades\Log;
+
 trait CableChargeTrait
 {
     /**
@@ -28,7 +30,7 @@ trait CableChargeTrait
         $cableLength = (float) $cableLength;
         $unitPrice = $unitPrices[$cableType] ?? 0;
 
-        if (in_array($surveyStatus, ['1', '2'])) {
+        if (in_array($surveyStatus, ["5"])) {
             if ($cableLength <= 500) {
                 return 0.0;
             }

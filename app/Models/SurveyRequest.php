@@ -11,33 +11,7 @@ class SurveyRequest extends Model
     use HasFactory;
     use SoftDeletes;
 
-    protected $fillable = [
-        'sub',
-        'customer_id',
-        'customer_code',
-        'customer_survey_order_id',
-        'main_offer_id',
-        'service_number',
-        'survey_type',
-        'telecom_region',
-        'oper_type',
-        'customer_type',
-        'bandwidth',
-        'contact_person',
-        'contact_no',
-        'contact_email',
-        'sec_contact_person',
-        'sec_contact_no',
-        'sec_contact_email',
-        'cancel_reason',
-        'status',
-        'completed_date',
-        'subscribed_at',
-        'cable_length',
-        'cable_type',
-        'lat',
-        'long',
-    ];
+    protected $guarded = ['id'];
 
     protected $dates = ['completed_date'];
 

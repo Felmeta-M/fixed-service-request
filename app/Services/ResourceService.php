@@ -19,7 +19,7 @@ class ResourceService extends BaseApiService
         try {
             $xmlPayload = $this->buildRequestXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            // \Log::info($xmlResponse);
+            \Log::info($xmlResponse);
             $parsedXml = $this->parseResponseXml($xmlResponse, $data);
             return ApiResponse::success($parsedXml);
         } catch (\RuntimeException $e) {

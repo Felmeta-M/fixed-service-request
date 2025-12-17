@@ -9,6 +9,7 @@ use App\Models\SurveyRequest;
 use App\Services\OneOffFeeService;
 use App\Services\PaymentService;
 use App\Traits\CableChargeTrait;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -51,35 +52,31 @@ class OneOffFeeController extends Controller
             return $feeResult;
         }
 
-        $totalFee = (int) $this->computeTotalFeeAmount($feeData['data']['fees']);
+        $oneOffFee = (int) $this->computeTotalFeeAmount($feeData['data']['fees']);
 
         // Retrieve survey request
         $surveyRequest = SurveyRequest::query()
             ->where('customer_survey_order_id', $request->customer_survey_order_id)
             ->first();
 
-        $cableCharge = 0;
-        if ($surveyRequest) {
-            $cableCharge = $this->calculateCableCharge(
-                $surveyRequest->distance,
-                $surveyRequest->cable_type,
-                2
-            );
-
-            if ($cableCharge) {
-                $surveyRequest->update(['cable_charge' => $cableCharge]);
-            }
+        if (!$surveyRequest) {
+            throw new Exception('Survey request not found');
         }
 
+        $cableCharge = $this->calculateCableCharge($surveyRequest->cable_length, $surveyRequest->cable_type, $surveyRequest->status);
+
         // Final amount including cable charge
-        $finalAmount = $totalFee + $cableCharge;
+        $totalAmount = $oneOffFee + $cableCharge;
 
         // Create or update payment
-        $this->payment_service->createOrUpdatePayment(
-            $request->customer_survey_order_id,
-            $request->sub_order['service_number'],
-            $finalAmount
-        );
+        $data = [
+            'customer_survey_order_id' => $request->customer_survey_order_id,
+            'service_number' => $surveyRequest->service_number,
+            'amount' => $totalAmount,
+            'labor_material_transport_cost' =>  $cableCharge,
+        ];
+
+        $this->payment_service->createOrUpdatePayment($data);
 
         return $feeData;
     }

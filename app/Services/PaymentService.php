@@ -30,25 +30,26 @@ class PaymentService
         });
     }
 
-    public function createOrUpdatePayment(string $customer_survey_order_id, string $service_number, float $amount)
+    public function createOrUpdatePayment(array $data)
     {
         $customer = Auth::guard('api')->user();
         if (!$customer) return;
 
-        DB::transaction(function () use ($customer_survey_order_id, $service_number, $amount, $customer) {
-            // Update service number only if needed
-            DB::table('survey_requests')
-                ->where('customer_survey_order_id', $customer_survey_order_id)
-                ->where('service_number', '!=', $service_number)
-                ->update(['service_number' => $service_number]);
+        DB::transaction(function () use ($data, $customer) {
 
-            // Payment upsert
+            DB::table('survey_requests')
+                ->where('customer_survey_order_id', $data['customer_survey_order_id'])
+                ->update([
+                    'cable_charge' => $data['labor_material_transport_cost'],
+                ]);
+
             DB::table('payments')->updateOrInsert(
-                ['customer_survey_order_id' => $customer_survey_order_id],
+                ['customer_survey_order_id' => $data['customer_survey_order_id']],
                 [
-                    'service_number' => $service_number,
+                    'service_number' => $data['service_number'],
                     'customer_code'  => $customer->customer_code,
-                    'amount'         => $amount,
+                    'amount'         => $data['amount'],
+                    'cable_charge' => $data['labor_material_transport_cost'],
                     'status'         => FFDServiceProvisionStatus::Pending->value,
                     'updated_at'     => now(),
                     'created_at'     => now(),

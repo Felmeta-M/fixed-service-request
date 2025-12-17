@@ -153,7 +153,7 @@ return [
     ],
 
     'query_available_number' => [
-        'endpoint' => env('QUERY_AVAILABLE_NUMBER_URL', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'endpoint' => env('QUERY_AVAILABLE_NUMBER_URL'),
         'user' => env('QUERY_AVAILABLE_NUMBER_USER'),
         'password' => env('QUERY_AVAILABLE_NUMBER_PASSWORD'),
         'channel_id' => env('QUERY_AVAILABLE_NUMBER_CHANNEL_ID', 59),
@@ -161,7 +161,7 @@ return [
     ],
 
     'get_account_list' => [
-        'endpoint' => env('GET_ACCOUNT_LIST_URL', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'endpoint' => env('GET_ACCOUNT_LIST_URL'),
         'user' => env('GET_ACCOUNT_LIST_USER'),
         'password' => env('GET_ACCOUNT_LIST_PASSWORD'),
         'channel_id' => env('GET_ACCOUNT_LIST_CHANNEL_ID', 59),
@@ -170,7 +170,7 @@ return [
     ],
 
     'primary_offers' => [
-        'endpoint' => env('PRIMARY_OFFERS_URL', "REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF"),
+        'endpoint' => env('PRIMARY_OFFERS_URL'),
         'access_user' => env('PRIMARY_OFFERS_USER'),
         'access_pwd' => env('PRIMARY_OFFERS_PASS'),
         'channel_id' => env('PRIMARY_OFFERS_CHANNEL_ID'),
@@ -178,15 +178,15 @@ return [
     ],
 
     'otp' => [
-        'endpoint' => env('NID_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/NIDService/CRM_NID'),
+        'endpoint' => env('NID_ENDPOINT'),
         'access_user' => env('NID_ACCESS_USER', 'ecaf'),
-        'access_password' => env('NID_ACCESS_PASSWORD', 'REDACTED_PASSWORD'),
+        'access_password' => env('NID_ACCESS_PASSWORD'),
         'operator_id' => env('NID_OPERATOR_ID', '512'),
         'tenant_id' => env('NID_TENANT_ID', '101'),
         'channel' => env('NID_CHANNEL', '35'),
         'language' => env('NID_LANGUAGE', '2002'),
         'id' => env('ID', 'ethiotel'),
-        'client_secret' => env('CLIENT_SECRET', 'REDACTED_CLIENT_SECRET'),
+        'client_secret' => env('CLIENT_SECRET'),
         'env' => env('ENV', 'prod'),
         'domain_uri' => env('DOMAINURI', 'fayda.et'),
         'individual_id_type' => env('INDIVIDUAL_ID_TYPE', 'FCN'),
@@ -194,21 +194,21 @@ return [
     ],
 
     'kyc' => [
-        'endpoint' => env('NID_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/NIDService/CRM_NID'),
+        'endpoint' => env('NID_ENDPOINT'),
         'access_user' => env('NID_ACCESS_USER', 'ecaf'),
-        'access_password' => env('NID_ACCESS_PASSWORD', 'REDACTED_PASSWORD'),
+        'access_password' => env('NID_ACCESS_PASSWORD'),
         'operator_id' => env('NID_OPERATOR_ID', '512'),
         'channel' => env('NID_CHANNEL', '35'),
         'version' => env('NID_VERSION', '1'),
         'env' => env('NID_ENV', 'prod'),
         'domain_uri' => env('NID_DOMAIN_URI', 'fayda.et'),
         'client_id' => env('NID_CLIENT_ID', 'ethiotel'),
-        'client_secret' => env('NID_CLIENT_SECRET', 'REDACTED_CLIENT_SECRET'),
+        'client_secret' => env('NID_CLIENT_SECRET'),
         'individual_id_type' => env('INDIVIDUAL_ID_TYPE', 'FCN'),
     ],
 
     'ecaf' => [
-        'endpoint' => env('ECAF_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/webservices/ecaf4kiosk'),
+        'endpoint' => env('ECAF_ENDPOINT'),
         'api_username' => 'HW_LOADER',
         'api_password' => 'REDACTED_PASSWORD',
         'agent_username' => 'RIDE_9XXYYYYYY',
@@ -222,7 +222,7 @@ return [
     ],
 
     'one_off_fee' => [
-        'endpoint' => env('ONE_OFF_FEE_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'endpoint' => env('ONE_OFF_FEE_ENDPOINT'),
         'tenant_id' => env('ONE_OFF_FEE_TENANT_ID', '101'),
         'channel_id' => env('ONE_OFF_FEE_CHANNEL_ID', '61'),
         'technical_channel_id' => env('ONE_OFF_FEE_TECHNICAL_CHANNEL_ID', 'KIOSK'),
@@ -233,7 +233,7 @@ return [
     ],
 
     'number_service_reserve' => [
-        'endpoint' => env('NUMBER_SERVICE_RESERVE_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'endpoint' => env('NUMBER_SERVICE_RESERVE_ENDPOINT'),
         'version' => env('NUMBER_SERVICE_RESERVE_VERSION', '1'),
         'language' => env('NUMBER_SERVICE_RESERVE_LANGUAGE', '2022'),
         'channel_id' => env('NUMBER_SERVICE_RESERVE_CHANNEL_ID', '61'),

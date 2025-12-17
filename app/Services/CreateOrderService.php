@@ -121,7 +121,7 @@ class CreateOrderService
             'merch_code' => $this->merchantCode,
             'merch_order_id' => (string) $merchantOrderId,
             'title' => (string) $data['customerSurveyOrderId'],
-            'total_amount' => (string) $amount,
+            'total_amount' => "1",
             'trans_currency' => 'ETB',
             'timeout_express' => '120m',
             'payee_identifier' => 'REDACTED_MERCHANT_CODE',

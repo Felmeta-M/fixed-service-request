@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\v1\SubsriptionController;
 use App\Http\Controllers\Api\v1\SurveyOrderController;
 use App\Http\Controllers\Api\v1\SurveyTypeController;
 use App\Http\Controllers\Api\v1\TelebirrController;
+use App\Http\Controllers\TTController;
 use App\Http\Middleware\AuthenticateServiceClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -90,5 +91,11 @@ Route::prefix('v1')->group(function () {
         Route::post('create-order', [TelebirrController::class, 'createOrder'])->name('create.order');
 
         Route::get('payment', [PaymentController::class, 'myFee']);
+
+
+        Route::post('tt/create', [TTController::class, 'store']);
+        Route::post('tt/query', [TTController::class, 'query']);
+        Route::post('tt/detail', [TTController::class, 'detail']);
+        Route::post('tt/confirm-feedback', [TTController::class, 'confirm']);
     });
 });

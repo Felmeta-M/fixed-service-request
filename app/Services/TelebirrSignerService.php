@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
 use phpseclib3\Crypt\PublicKeyLoader;
 use RuntimeException;
 
@@ -12,7 +13,7 @@ class TelebirrSignerService
 
     public function __construct()
     {
-        $this->privateKey = file_get_contents(config('telebirr.private_key_path'));  //config('services.telebirr.private_key');
+        $this->privateKey =  config('services.telebirr.private_key'); // file_get_contents(config('telebirr.private_key')); 
         $this->excludeFields = config('telebirr.exclude_fields');
     }
 

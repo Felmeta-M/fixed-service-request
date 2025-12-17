@@ -40,10 +40,10 @@ class EsignetController extends Controller
             'code_verifier' => $result['code_verifier'],
         ]);
 
-        logger()->info('Esignet session created', [
-            'state' => $result['state'],
-            'code_verifier' => $result['code_verifier'],
-        ]);
+        // logger()->info('Esignet session created', [
+        //     'state' => $result['state'],
+        //     'code_verifier' => $result['code_verifier'],
+        // ]);
 
 
         return redirect()->away($result['auth_url']);

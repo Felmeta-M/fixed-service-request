@@ -20,6 +20,7 @@ class PaymentResource extends JsonResource
             'customer_code'   => $this->customer_code,
             'service_number' => $this->service_number,
             'amount'          => $this->amount,
+            'cable_charge'     => $this->cable_charge,
             'status'          => $this->status->label(),
             // 'payload'         => $this->payload,
             'created_at'      => $this->created_at,

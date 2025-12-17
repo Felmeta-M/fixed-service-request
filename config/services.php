@@ -61,18 +61,18 @@ return [
         'channel_id' => env('CUSTOMER_CHANNEL_ID', '61'),
         'technical_channel_id' => env('CUSTOMER_TECH_CHANNEL_ID', '51'),
         'tenant_id' => env('CUSTOMER_TENANT_ID', '101'),
-        'create_endpoint' => env('CUSTOMER_CREATE_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
-        'query_endpoint' => env('CUSTOMER_QUERY_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/SELFCARE/OrderQueryETCtz'),
+        'create_endpoint' => env('CUSTOMER_CREATE_ENDPOINT'),
+        'query_endpoint' => env('CUSTOMER_QUERY_ENDPOINT'),
     ],
 
     'query_customer' => [
-        'endpoint' => env('QUERY_CUSTOMER_URL', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'endpoint' => env('QUERY_CUSTOMER_URL'),
         'user' => env('QUERY_CUSTOMER_USER'),
         'password' => env('QUERY_CUSTOMER_PASS'),
     ],
 
     'query_customer_by_service_number' => [
-        'endpoint' => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_CUSTOMER_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'endpoint' => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_CUSTOMER_ENDPOINT'),
         'language' => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_LANGUAGE'),
         'channel_id' => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_CHANNEL_ID'),
         'technical_channel_id' => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_TECH_CHANNEL_ID'),
@@ -81,7 +81,7 @@ return [
     ],
 
     'survey' => [
-        'endpoint' => env('SURVEY_BSS_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'endpoint' => env('SURVEY_BSS_ENDPOINT'),
         'access_user' => env('SURVEY_BSS_ACCESS_USER'),
         'access_password' => env('SURVEY_BSS_ACCESS_PASSWORD'),
         'channel_id' => env('SURVEY_BSS_CHANNEL_ID'),
@@ -91,15 +91,15 @@ return [
     ],
 
     'query_survey' => [
-        'endpoint' => env('QUERY_SURVEY_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
-        'channel_id' => env('QUERY_SURVEY_CHANNEL_ID', '61'),
-        'technical_channel_id' => env('QUERY_SURVEY_TECHNICAL_CHANNEL_ID', '51'),
-        'access_user' => env('QUERY_SURVEY_ACCESS_USER', 'kiosk'),
-        'access_pwd' => env('QUERY_SURVEY_ACCESS_PWD', 'REDACTED_PASSWORD'),
+        'endpoint' => env('QUERY_SURVEY_ENDPOINT'),
+        'channel_id' => env('QUERY_SURVEY_CHANNEL_ID'),
+        'technical_channel_id' => env('QUERY_SURVEY_TECHNICAL_CHANNEL_ID'),
+        'access_user' => env('QUERY_SURVEY_ACCESS_USER'),
+        'access_pwd' => env('QUERY_SURVEY_ACCESS_PWD'),
     ],
 
     'cancel_survey' => [
-        'endpoint' => env('CANCEL_SURVEY_ENDPOINT', "REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF"),
+        'endpoint' => env('CANCEL_SURVEY_ENDPOINT'),
         'channel_id' => env('CANCEL_SURVEY_CHANNEL_ID', '59'),
         'tech_channel_id' => env('CANCEL_SURVEY_TECH_CHANNEL_ID', '35'),
         'access_user' => env('CANCEL_SURVEY_USER', 'ecaf'),
@@ -107,15 +107,15 @@ return [
     ],
 
     'query_survey_summery' => [
-        'endpoint' => env('QUERY_SURVEY_SUMMERY_SOAP_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
-        'channel_id' => env('QUERY_SURVEY_SUMMERY_CHANNEL_ID', '61'),
-        'technical_channel_id' => env('QUERY_SURVEY_SUMMERY_TECHNICAL_CHANNEL_ID', '51'),
-        'access_user' => env('QUERY_SURVEY_SUMMERY_ACCESS_USER', 'kiosk'),
-        'access_pwd' => env('QUERY_SURVEY_SUMMERY_ACCESS_PWD', 'REDACTED_PASSWORD'),
+        'endpoint' => env('QUERY_SURVEY_SUMMERY_SOAP_ENDPOINT'),
+        'channel_id' => env('QUERY_SURVEY_SUMMERY_CHANNEL_ID'),
+        'technical_channel_id' => env('QUERY_SURVEY_SUMMERY_TECHNICAL_CHANNEL_ID'),
+        'access_user' => env('QUERY_SURVEY_SUMMERY_ACCESS_USER'),
+        'access_pwd' => env('QUERY_SURVEY_SUMMERY_ACCESS_PWD'),
     ],
 
     'subscriber' => [
-        'endpoint' => env('SUBSCRIBER_BSS_ENDPOINT', "REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF"),
+        'endpoint' => env('SUBSCRIBER_BSS_ENDPOINT'),
         'access_user' => env('SUBSCRIBER_BSS_USERNAME'),
         'access_pwd' => env('SUBSCRIBER_BSS_PASSWORD'),
         'operator_id' => env('SUBSCRIBER_BSS_OPERATOR_ID'),
@@ -125,7 +125,7 @@ return [
     ],
 
     'check_resource' => [
-        'endpoint' => env('CHECK_RESOURCE_ENDPOINT', 'http://REDACTED_INTERNAL_IP:8000/axis2/services/OrderService'),
+        'endpoint' => env('CHECK_RESOURCE_ENDPOINT'),
         'access_user' => env('CHECK_RESOURCE_ACCESS_USER'),
         'access_pwd' => env('CHECK_RESOURCE_ACCESS_PASSWORD'),
         'channel_id' => env('CHECK_RESOURCE_CHANNEL_ID'),
@@ -282,6 +282,13 @@ return [
         'maps_server_key' => env('GOOGLE_MAPS_SERVER_KEY'),
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+    ],
+
+    'tt' => [
+        'endpoint' => env('ETHIOSPM_ENDPOINT'),
+        'timeout' => 30,
+        'username' => env('ETHIOSPM_USERNAME'),
+        'password' => env('ETHIOSPM_PASSWORD'),
     ],
 
 

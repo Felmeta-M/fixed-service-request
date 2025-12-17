@@ -74,6 +74,7 @@ class EsignetService
 
             // IMPORTANT: Encode claims only once (JSON only)
             $encodedClaims = json_encode($claims, JSON_UNESCAPED_SLASHES);
+            $acrValues = 'mosip:idp:acr:generated-code';
 
             // Build authorization URL
             $authUrl = $this->authorizationEndpoint . '?' . http_build_query([
@@ -85,6 +86,7 @@ class EsignetService
                 'code_challenge_method' => 'S256',
                 'state'                 => $state,
                 'claims'                => $encodedClaims,
+                'acr_values'            => $acrValues,
             ]);
 
             return [

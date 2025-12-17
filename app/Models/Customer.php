@@ -29,6 +29,7 @@ class Customer extends Authenticatable
         return self::select([
             'sub',
             'code',
+            'title',
             'name',
             'phone_number',
             'title',

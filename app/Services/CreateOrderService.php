@@ -48,9 +48,7 @@ class CreateOrderService
     {
         // 1️⃣ Get Fabric token
         $tokenService = app(FabricTokenService::class);
-
         $fabricToken = $tokenService->applyFabricToken();
-
         // 2️⃣ Send create order request
         $prepay_id = $this->requestCreateOrder($fabricToken, $data);
 

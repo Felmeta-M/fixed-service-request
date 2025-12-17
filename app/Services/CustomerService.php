@@ -181,6 +181,7 @@ XML;
             // Update customer
             Customer::where('sub', $currentUser->customer_sub_id)
                 ->update([
+                    'title' => $data['title'],
                     'code' => $customerCode,
                     'contact' => $data['contact'],
                     'contact_persons' => $data['contact_person'],

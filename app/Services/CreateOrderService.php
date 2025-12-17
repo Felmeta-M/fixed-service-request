@@ -152,10 +152,12 @@ class CreateOrderService
             'timestamp' => (string) TelebirrHelper::createTimeStamp(),
             'sign_type' => 'SHA256WithRSA',
         ];
+
         $rawRequest = '';
         foreach ($maps as $map => $m) {
             $rawRequest .= $map . '=' . $m . "&";
         }
+
         $sign = app(TelebirrSignerService::class)->sign($maps);
 
         $rawRequest = $rawRequest . 'sign=' . $sign;

@@ -112,7 +112,7 @@ class EsignetController extends Controller
 
         $data = [
             'name' => $esignetUser['name'],
-            'phone_number' => $esignetUser->phone_number,
+            'phone_number' => substr($esignetUser->phone_number, -9),
             'email' => $esignetUser?->email,
             'customer_code' => $esignetUser?->code ?? null,
             'customer_sub_id' => $esignetUser->sub,

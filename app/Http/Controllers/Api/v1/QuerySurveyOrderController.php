@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
-use App\Services\QuerySurveyOrderService;
+use App\Services\QueryDataSurveyOrderService;
 use Illuminate\Http\Request;
 
 
 class QuerySurveyOrderController extends Controller
 {
 
-    public function __construct(protected readonly QuerySurveyOrderService $querySurveyOrderService) {}
+    public function __construct(protected readonly QueryDataSurveyOrderService $queryDataSurveyOrderService) {}
 
     public function querySurveyOrder(Request $request)
     {
@@ -18,7 +18,7 @@ class QuerySurveyOrderController extends Controller
             'customer_survey_order_id' => 'required|string',
         ]);
 
-        $data = $this->querySurveyOrderService->querySurveyOrderDetail(
+        $data = $this->queryDataSurveyOrderService->querySurveyOrderDetail(
             $request->input('customer_survey_order_id')
         );
 

@@ -13,8 +13,6 @@ class PaymentController extends Controller
 {
     public function myFee(Request $request)
     {
-        Log::info($request->user());
-
         $data = $request->validate([
             'customer_survey_order_id' => ['required']
         ]);

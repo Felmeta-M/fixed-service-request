@@ -15,6 +15,8 @@ class Customer extends Authenticatable
 
     protected $guarded = ['id'];
 
+    protected $appends = ['address_string'];
+
     protected $casts = [
         'address' => 'array',
         'contact' => 'array',
@@ -28,7 +30,7 @@ class Customer extends Authenticatable
             'sub',
             'code',
             'name',
-            'phone',
+            'phone_number',
             'title',
             'gender',
             'nationality',
@@ -45,8 +47,28 @@ class Customer extends Authenticatable
             'address',
             'contact',
             'contact_persons',
+            'region',
+            'city',
+            'wereda',
+            'zone',
+            'kebele',
+            'house_no'
         ])
             ->where('sub', Auth::guard('api')->user()->customer_sub_id)
             ->first();
+    }
+
+    public function getAddressStringAttribute(): string
+    {
+        $rawAddress = $this->addres;
+
+        if (is_array($rawAddress)) {
+            return collect($rawAddress)
+                ->filter()
+                ->map(fn($value, $key) => ucfirst($key) . ': ' . trim($value))
+                ->implode(', ');
+        }
+
+        return (string) $rawAddress;
     }
 }

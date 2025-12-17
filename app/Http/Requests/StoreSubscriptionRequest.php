@@ -27,7 +27,7 @@ class StoreSubscriptionRequest extends FormRequest
             'city'             => ['required', 'string', 'max:255'],
             'zone'             => ['required', 'string', 'max:255'],
             'wereda'           => ['required', 'string', 'max:255'],
-            'kebele'           => ['required', 'string', 'max:255'],
+            'kebele'         => ['nullable', 'string', 'max:255'],
             'house_no'         => ['nullable', 'string', 'max:255'],
             'sms_no'           => ['nullable', 'string', 'max:50'],
             'completed_date'   => 'nullable|date',

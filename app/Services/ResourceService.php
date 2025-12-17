@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
+
 class ResourceService extends BaseApiService
 {
     protected int $timeout = 10;
@@ -17,7 +19,8 @@ class ResourceService extends BaseApiService
         try {
             $xmlPayload = $this->buildRequestXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            $parsedXml = $this->parseResponseXml($xmlResponse);
+            // \Log::info($xmlResponse);
+            $parsedXml = $this->parseResponseXml($xmlResponse, $data);
             return ApiResponse::success($parsedXml);
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
@@ -30,7 +33,28 @@ class ResourceService extends BaseApiService
     {
         $transactionId = uniqid();
         $processTime   = now()->format('YmdHis');
-        $credentials = config('services.check_resource');
+        $credentials   = config('services.check_resource');
+
+        $customer = Customer::current();
+
+        $defaults = [
+            'prod_spec_code' => 'C_P_UFBI_E',
+            'number_line'    => '1',
+            'acc_nbr'        => '-1',
+            'event_code'     => '101',
+            'radius'         => '200',
+            'combo_flag'     => '0',
+
+            'cust_id'        => $customer->code,
+            'cust_name'      => $customer->name,
+            'cust_addr' => $customer->address_string,
+
+        ];
+
+        $data = array_merge($defaults, $data);
+
+        $custAddr = htmlspecialchars($data['cust_addr'], ENT_XML1 | ENT_QUOTES, 'UTF-8');
+        $custName = htmlspecialchars($data['cust_name'], ENT_XML1 | ENT_QUOTES, 'UTF-8');
 
         return <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
@@ -44,13 +68,13 @@ class ResourceService extends BaseApiService
     </soapenv:Header>
     <soapenv:Body>
         <typ:resourceCheck xmlns:typ="http://oss.zsmart.ztesoft.com/om/webservice/types/">
-           <PROD_SPEC_CODE>{$data['prod_spec_code']}</PROD_SPEC_CODE>
+            <PROD_SPEC_CODE>{$data['prod_spec_code']}</PROD_SPEC_CODE>
             <NUMBER_LINE>{$data['number_line']}</NUMBER_LINE>
             <ACC_NBR>{$data['acc_nbr']}</ACC_NBR>
             <EVENT_CODE>{$data['event_code']}</EVENT_CODE>
             <CUST_ID>{$data['cust_id']}</CUST_ID>
-            <CUST_NAME>{$data['cust_name']}</CUST_NAME>
-            <CUST_ADDR>{$data['cust_addr']}</CUST_ADDR>
+            <CUST_NAME>{$custName}</CUST_NAME>
+            <CUST_ADDR>{$custAddr}</CUST_ADDR>
             <LONGITUDE>{$data['longitude']}</LONGITUDE>
             <LATITUDE>{$data['latitude']}</LATITUDE>
             <STAFF_CODE>{$credentials['staff_code']}</STAFF_CODE>
@@ -66,7 +90,8 @@ XML;
     }
 
 
-    private function parseResponseXml(string $xml)
+
+    private function parseResponseXml(string $xml, array $data)
     {
         libxml_use_internal_errors(true);
         $parsed = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
@@ -106,8 +131,8 @@ XML;
                     'neid' => (string)$res->NEID,
                     'nename' => (string)$res->NENAME,
                     'typeid' => (string)$res->TYPEID,
-                    'longitude' => (string)$res->LONGITUDE,
-                    'latitude' => (string)$res->LATITUDE,
+                    'longitude' => (string)$data['longitude'],
+                    'latitude' => (string)$data['latitude'],
                     'cable_type' => (string)$res->CABLETYPE,
                     'cable_type_desc' => (string)$res->CABLETYPEDESC,
                 ];
@@ -120,7 +145,7 @@ XML;
         // \Log::info('Number of resources parsed', $resources);
         $shortestResource =  $this->getShortestResource($resources);
         // Store latest shortest resource in session
-        session(['latest_resource' => $shortestResource]);
+        // session(['latest_resource' => $shortestResource]);
         return $shortestResource;
     }
 

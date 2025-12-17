@@ -3,7 +3,7 @@
 namespace App\Services;
 
 
-class QuerySurveyOrderService extends BaseApiService
+class QueryDataSurveyOrderService extends BaseApiService
 {
     protected int $timeout = 10;
     protected int $rateLimit = 15;

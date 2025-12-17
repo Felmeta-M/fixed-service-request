@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
+
 class QueryAvailableNumberService extends BaseApiService
 {
     protected int $timeout = 10;
@@ -21,7 +23,7 @@ class QueryAvailableNumberService extends BaseApiService
         $data = [
             "pay_mode" => "1",
             "tele_type" => "4",
-            "need_query_by_dept" => false,
+            "need_query_by_dept" => false, //TODO: location area shall be given nad dept shall be true
             "res_cnt" => 10
         ];
 
@@ -88,7 +90,7 @@ class QueryAvailableNumberService extends BaseApiService
         $accessPwd = config('services.query_available_number.password');
         $channelId = config('services.query_available_number.channel_id');
         $techChannelId = config('services.query_available_number.tech_channel_id');
-        $needQueryByDeptStr = $data['need_query_by_dept'] ? 'true' : 'false';
+        $needQueryByDeptStr = $data['need_query_by_dept'] ? 'true' : 'true'; //Todo: change to 'false' 
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">

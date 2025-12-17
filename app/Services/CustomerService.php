@@ -184,6 +184,12 @@ XML;
                     'code' => $customerCode,
                     'contact' => $data['contact'],
                     'contact_persons' => $data['contact_person'],
+                    'region' => $data['address']['region'],
+                    'city' => $data['address']['city'],
+                    'wereda' => $data['address']['woreda'],
+                    'zone' => $data['address']['zone'],
+                    'kebele' => $data['address']['kebele'],
+                    'house_no' => $data['address']['house_no'],
                     'verified_at' => now(),
                 ]);
 
@@ -219,7 +225,6 @@ XML;
                 return null;
             }
             return $customer;
-
         } catch (Exception $e) {
             Log::error('Error getting local customer data', [
                 'customer_id' => $customerSubId,

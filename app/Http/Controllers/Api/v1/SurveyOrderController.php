@@ -6,12 +6,24 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SurveyOrderFormRequest;
 use App\Http\Resources\SurveyRequestResource;
 use App\Models\SurveyRequest;
-use App\Services\SurveyOrderService;
+use App\Services\ComboSurveyOrderService;
+use App\Services\ResourceService;
+use App\Services\DataSurveyOrderService;
+use App\Services\FixedVoiceSurveyOrderService;
+use App\Services\Survey\SurveyServiceFactory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class SurveyOrderController extends Controller
 {
-    public function __construct(protected readonly SurveyOrderService $surveyOrderService) {}
+    // public function __construct(
+    //     protected readonly DataSurveyOrderService $surveyOrderService,
+    //     protected readonly ResourceService $resourceService
+    // ) {}
+
+    public function __construct(
+        protected SurveyServiceFactory $factory
+    ) {}
 
     /**
      * Display a listing of the resource.
@@ -37,10 +49,52 @@ class SurveyOrderController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(SurveyOrderFormRequest $surveyRequest)
+    public function store(SurveyOrderFormRequest $request)
     {
-        return $this->surveyOrderService->createSurveyOrder($surveyRequest->validated());
+        // $validated = $surveyRequest->validated();
+        // // Perform resource check
+        // $resourceResponse = $this->resourceService->check([
+        //     'bandwidth' => $validated['bandwidth'],
+        //     'longitude' => $validated['survey_address_info']['longitude'],
+        //     'latitude'  => $validated['survey_address_info']['latitude'],
+        // ]);
+        // $resourceCheck = $resourceResponse->getData(true)['data'] ?? null;
+        // if (!$resourceCheck) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Resource check failed. Cannot create survey order.'
+        //     ], 422);
+        // }
+        // // Determine service based on main_offer_id
+        // switch ($validated['main_offer_id']) {
+        //     case 1457567289: // Fixed Data
+        //         $surveyService = new DataSurveyOrderService();
+        //         break;
+
+        //     case 1207609454: // Fixed Voice
+        //         $surveyService = new FixedVoiceSurveyOrderService();
+        //         break;
+
+        //     case 180427974: // Fixed Combo
+        //         $surveyService = new ComboSurveyOrderService();
+        //         break;
+
+        //     default:
+        //         return response()->json([
+        //             'success' => false,
+        //             'message' => 'Invalid main_offer_id.'
+        //         ], 422);
+        // }
+        // return $surveyService->createSurveyOrder($validated, $resourceCheck);
+
+        $data = $request->validated();
+
+        $service = $this->factory->make($data['main_offer_id']);
+
+        return $service->create($data);
     }
+
+
 
     /**
      * Display the specified resource.

@@ -33,6 +33,10 @@ class SurveyRequest extends Model
         'status',
         'completed_date',
         'subscribed_at',
+        'cable_length',
+        'cable_type',
+        'lat',
+        'long',
     ];
 
     protected $dates = ['completed_date'];

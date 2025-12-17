@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Models\SurveyRequest;
 use App\Services\OneOffFeeService;
 use App\Services\PaymentService;
 use App\Traits\CableChargeTrait;
@@ -41,37 +42,48 @@ class OneOffFeeController extends Controller
             'sub_order.offering_id' => 'required|integer',
         ]);
 
+        // Calculate one-off fee
         $feeResult = $this->oneOffFeeService->calculateOneOffFee($validated);
-        $feeResultData = $feeResult->getData(true);
-        if (!($feeResultData['success'] ?? false)) {
-            //TODO: check run time exection is approparate
-            // throw new RuntimeException('Failed to calculate fees.');
+        $feeData = $feeResult->getData(true);
+
+        if (!($feeData['success'] ?? false)) {
+            // Return the fee result if calculation fails
             return $feeResult;
         }
 
-        $amount = (int) $this->computeTotalFeeAmount($feeResultData['data']['fees']);
+        $totalFee = (int) $this->computeTotalFeeAmount($feeData['data']['fees']);
 
-        //cable cost
-        $latestResource = session('latest_resource', null);
-        \Log::info('test...', [$latestResource]);
-        //TODO: check throughly cable type and status
-        $cableCost = 0;
-        if ($latestResource) {
-            $charge = $this->calculateCableCharge(
-                $latestResource['distance'],
-                $latestResource['cable_type'],
+        // Retrieve survey request
+        $surveyRequest = SurveyRequest::query()
+            ->where('customer_survey_order_id', $request->customer_survey_order_id)
+            ->first();
+
+        $cableCharge = 0;
+        if ($surveyRequest) {
+            $cableCharge = $this->calculateCableCharge(
+                $surveyRequest->distance,
+                $surveyRequest->cable_type,
                 2
             );
+
+            if ($cableCharge) {
+                $surveyRequest->update(['cable_charge' => $cableCharge]);
+            }
         }
-        $finalAmount = $amount + $cableCost;
+
+        // Final amount including cable charge
+        $finalAmount = $totalFee + $cableCharge;
+
+        // Create or update payment
         $this->payment_service->createOrUpdatePayment(
             $request->customer_survey_order_id,
             $request->sub_order['service_number'],
             $finalAmount
         );
 
-        return $feeResultData;
+        return $feeData;
     }
+
 
     public function fee(Request $request)
     {

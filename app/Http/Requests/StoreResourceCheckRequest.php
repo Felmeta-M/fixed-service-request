@@ -21,11 +21,19 @@ class StoreResourceCheckRequest extends FormRequest
             'cust_id' => 'nullable|string',
             'cust_name' => 'required|string',
             'cust_addr' => 'required|string',
-            'longitude' => 'required|numeric',
-            'latitude' => 'required|numeric',
+            'longitude' => 'numeric|between:33.0,48.2',
+            'latitude' => 'numeric|between:3.4,14.9',
             'combo_flag' => 'nullable',
             'bandwidth' => 'nullable',
             'radius' => 'required',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'lat.between'  => 'Latitude must be within the boundaries of Ethiopia.',
+            'long.between' => 'Longitude must be within the boundaries of Ethiopia.',
         ];
     }
 }

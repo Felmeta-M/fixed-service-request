@@ -22,10 +22,9 @@ class TTController extends Controller
         protected readonly ConfirmFeedbackService $confirmFeedbackService
     ) {}
 
-    public function store(CreateTTRequest $request): JsonResponse
+    public function store(CreateTTRequest $request)
     {
         $data = $request->validated();
-
         try {
             $result = $this->createTTService->createTT($data);
             return $result;
@@ -38,7 +37,7 @@ class TTController extends Controller
         }
     }
 
-    public function query(QueryTTRequest $request): JsonResponse
+    public function query(QueryTTRequest $request)
     {
         $data = $request->validated();
         try {
@@ -53,7 +52,7 @@ class TTController extends Controller
         }
     }
 
-    public function detail(QueryTTDetailRequest $request): JsonResponse
+    public function detail(QueryTTDetailRequest $request)
     {
         $data = $request->validated();
         try {
@@ -68,7 +67,7 @@ class TTController extends Controller
         }
     }
 
-    public function confirm(ConfirmFeedbackRequest $request): JsonResponse
+    public function confirm(ConfirmFeedbackRequest $request)
     {
         $data = $request->validated();
         try {

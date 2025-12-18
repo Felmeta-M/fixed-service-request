@@ -6,10 +6,7 @@ use App\Models\Customer;
 use App\Models\TroubleTicket;
 use App\Services\ApiResponse;
 use App\Services\BaseApiService;
-use Illuminate\Support\Facades\Log;
 use RuntimeException;
-
-use function Symfony\Component\Clock\now;
 
 class CreateTTService extends BaseApiService
 {

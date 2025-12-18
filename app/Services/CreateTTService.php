@@ -23,6 +23,7 @@ class CreateTTService extends BaseApiService
     public function createTT(array $data)
     {
         try {
+            $data['trouble_title'] = "Fixed Services Provisioning System Complaint";
             $xmlPayload  = $this->buildRequestXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
             // Log::info($xmlResponse);
@@ -170,8 +171,6 @@ class CreateTTService extends BaseApiService
         ];
 
         $data = array_merge($defaults, $data);
-
-        $data['trouble_title'] = "Fixed Services Provisioning System Complaint";
 
         return <<<XML
 <soapenv:Envelope 

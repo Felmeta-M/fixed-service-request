@@ -5,10 +5,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { parseCoordinate } from '@/lib/coordinate-utils';
-import { CheckCircle, Loader2, MapPin, Navigation } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
+import { Loader2, MapPin, Navigation } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GoogleLocationMap } from '../google-location-map';
-import { usePage } from '@inertiajs/react';
 
 interface LocationSetupStepProps {
     formData: any;
@@ -17,7 +17,7 @@ interface LocationSetupStepProps {
 }
 
 export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: LocationSetupStepProps) {
-    const { user } = usePage().props.auth
+    const { user } = usePage().props.auth;
     const [locationLoading, setLocationLoading] = useState(true);
     const [locationError, setLocationError] = useState('');
     const [isGeocoding, setIsGeocoding] = useState(false);
@@ -369,14 +369,14 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
         currentLocation ||
         (hasValidLocation
             ? {
-                lat: formData.latitude,
-                lng: formData.longitude,
-                address: formData.address,
-            }
+                  lat: formData.latitude,
+                  lng: formData.longitude,
+                  address: formData.address,
+              }
             : null);
 
     return (
-        <div className="space-y-6">
+        <div className="min-w-sm space-y-6 md:min-w-3xl">
             {/* Map Section */}
             <div className="space-y-2">
                 <div className="h-full rounded-lg">
@@ -507,8 +507,6 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                     </AlertDescription>
                 </Alert>
             )}
-
-
 
             {formData.resourceAvailable === false && (
                 <Alert variant="destructive">

@@ -13,7 +13,7 @@ import {
 import logo from '@/images/ethio_logo_full.png';
 import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
-import { CheckCircle, FileText, MapPin, RadioTower, Wifi } from 'lucide-react';
+import { CheckCircle, FileText, MapPin, RadioTower, ShieldQuestionIcon, Wifi } from 'lucide-react';
 import { NavUser } from './nav-user';
 
 const items = [
@@ -22,21 +22,27 @@ const items = [
         url: '/services',
         icon: RadioTower,
     },
+    {
+        title: 'Complaints',
+        url: '/complaints',
+        icon: ShieldQuestionIcon,
+    },
 ];
 
 interface AppSidebarProps {
     currentStep?: number;
     mode?: 'list' | 'create';
+    steps?: Array<{ name: string; icon: any }>;
     props?: React.ComponentProps<typeof Sidebar>;
 }
 
-const createServiceSteps = [
-    { name: 'Service Selection', icon: Wifi },
-    { name: 'Location Setup', icon: MapPin },
+const defaultCreateServiceSteps = [
+    { name: 'Service Information', icon: Wifi },
+    { name: 'Location Information', icon: MapPin },
     { name: 'Review & Submit', icon: FileText },
 ];
 
-export function AppSidebar({ currentStep = 0, mode = 'list', ...props }: AppSidebarProps) {
+export function AppSidebar({ currentStep = 0, mode = 'list', steps = defaultCreateServiceSteps, ...props }: AppSidebarProps) {
     const { url } = usePage();
 
     const isCurrentPath = (itemUrl: string) => {
@@ -60,7 +66,7 @@ export function AppSidebar({ currentStep = 0, mode = 'list', ...props }: AppSide
                         {/* <SidebarGroupLabel className="text-md mb-4 font-bold text-gray-900">Service Setup Progress</SidebarGroupLabel> */}
                         <SidebarGroupContent>
                             <ol role="list" className="relative space-y-10 pt-2">
-                                {createServiceSteps.map((step, idx) => {
+                                {steps.map((step, idx) => {
                                     const status = idx < currentStep ? 'complete' : idx === currentStep ? 'current' : 'upcoming';
                                     const isCompleted = status === 'complete';
                                     const isCurrent = status === 'current';
@@ -69,7 +75,7 @@ export function AppSidebar({ currentStep = 0, mode = 'list', ...props }: AppSide
                                     return (
                                         <li key={step.name} className="relative">
                                             {/* Connecting line */}
-                                            {idx < createServiceSteps.length - 1 && (
+                                            {idx < steps.length - 1 && (
                                                 <div
                                                     className={cn(
                                                         'absolute top-11 left-7 h-10 w-0.5 -translate-y-1',

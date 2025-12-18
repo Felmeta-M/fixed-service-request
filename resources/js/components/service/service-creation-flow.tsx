@@ -5,7 +5,7 @@ import { useResourceChecker } from '@/lib/resource-check';
 import { usePage } from '@inertiajs/react';
 import { ArrowLeft, ChevronRight, FileText, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Alert, AlertDescription } from '../ui/alert';
+import { CustomerCreationStep } from './steps/customer-creation-step';
 import { LocationSetupStep } from './steps/location-setup-step';
 import { ReviewSubmitStep } from './steps/review-submit-step';
 import { ServiceSelectionStep } from './steps/service-selection-step';
@@ -31,15 +31,17 @@ interface ServiceFormData {
     resourceAvailable?: boolean;
     resourceData?: any;
     bandwidthNumericValue?: number;
+    resourceMessage?: string;
 }
 
 interface ServiceCreationFlowProps {
     currentStep: number;
     onStepChange: (step: number) => void;
     googleMapsApiKey: string;
+    isNewCustomer?: boolean;
 }
 
-export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKey }: ServiceCreationFlowProps) {
+export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKey, isNewCustomer = false }: ServiceCreationFlowProps) {
     const { auth } = usePage().props;
     const user = auth.user as User;
 
@@ -57,6 +59,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
     const [checkingResource, setCheckingResource] = useState(false);
     const [resourceError, setResourceError] = useState('');
+    const [createdSurvey, setCreatedSurvey] = useState<any>(null);
     const { surveys } = useSurveyList();
     const { checkResourceAvailability } = useResourceChecker();
 
@@ -87,7 +90,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         loadUserData();
     }, [user]);
 
-    const hasActiveSurvey = surveys.some((s) => ['waiting', 'approved'].includes(s.status?.toLowerCase()));
+    const hasActiveSurvey = surveys?.some((s) => ['waiting', 'approved'].includes(s.status?.toLowerCase()));
 
     const updateFormData = (newData: Partial<ServiceFormData>) => {
         setFormData((prev) => ({ ...prev, ...newData }));
@@ -97,8 +100,17 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         }
     };
 
+    const getAdjustedStep = () => {
+        if (isNewCustomer) {
+            return currentStep - 1;
+        }
+        return currentStep;
+    };
+
+    const adjustedStep = getAdjustedStep();
+
     const checkResourceAndProceed = async () => {
-        if (currentStep !== 1) {
+        if (adjustedStep !== 1) {
             nextStep();
             return;
         }
@@ -137,7 +149,8 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     };
 
     const nextStep = () => {
-        if (currentStep < 2) {
+        const maxSteps = isNewCustomer ? 4 : 3;
+        if (currentStep < maxSteps) {
             onStepChange(currentStep + 1);
         }
     };
@@ -149,7 +162,9 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     };
 
     const canProceedToNextStep = () => {
-        switch (currentStep) {
+        if (isNewCustomer && currentStep === 0) return false; // Handled by CustomerCreationStep
+
+        switch (adjustedStep) {
             case 0: // Service Selection
                 return formData.serviceType && (!formData.serviceType.includes('1457567289') || formData.bandwidth);
             case 1: // Location Setup
@@ -162,7 +177,11 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     };
 
     const renderStepContent = () => {
-        switch (currentStep) {
+        if (isNewCustomer && currentStep === 0) {
+            return <CustomerCreationStep onNext={() => onStepChange(1)} />;
+        }
+
+        switch (adjustedStep) {
             case 0:
                 return <ServiceSelectionStep formData={formData} onUpdate={updateFormData} hasActiveSurvey={hasActiveSurvey} />;
             case 1:
@@ -175,24 +194,32 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     };
 
     const stepTitles = [
-        { title: 'Service Selection', description: 'Choose your service type and configuration' },
-        { title: 'Location Setup', description: 'Select installation location and check availability' },
+        ...(isNewCustomer ? [{ title: 'Customer Profile', description: 'Create your customer profile' }] : []),
+        { title: 'Service Information', description: 'Choose your service type and configuration' },
+        { title: 'Location Information', description: 'Select installation location and check availability' },
         { title: 'Review & Submit', description: 'Verify details and submit your request' },
     ];
+
+    const totalSteps = stepTitles.length;
+    const isLastStep = currentStep === totalSteps - 1;
+    // Hide navigation for CustomerCreation (0 if new) and Review (2 adjusted)
+    const showNavigation = !(isNewCustomer && currentStep === 0) && adjustedStep < 2;
 
     return (
         <Card className="border-0 shadow-none">
             <CardHeader className="bg-white pr-2 pl-2">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-lg font-bold text-gray-900 lg:text-xl">{stepTitles[currentStep].title}</CardTitle>
-                        <CardDescription className="text-sm text-gray-500 lg:text-base">{stepTitles[currentStep].description}</CardDescription>
+                        <CardTitle className="text-lg font-bold text-gray-900 lg:text-xl">{stepTitles[currentStep]?.title}</CardTitle>
+                        <CardDescription className="text-sm text-gray-500 lg:text-base">{stepTitles[currentStep]?.description}</CardDescription>
                     </div>
 
                     {/* Desktop step indicator */}
                     <div className="hidden items-center space-x-4 sm:flex">
                         <div className="flex items-center space-x-2 text-sm text-gray-500">
-                            <span>Step {currentStep + 1} of 3</span>
+                            <span>
+                                Step {currentStep + 1} of {totalSteps}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -200,15 +227,8 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             <CardContent className="pr-2 pl-2">
                 {renderStepContent()}
 
-                {/* Resource Error Display */}
-                {/* {resourceError && currentStep === 1 && (
-                    <Alert variant="destructive" className="mt-4">
-                        <AlertDescription>{resourceError}</AlertDescription>
-                    </Alert>
-                )} */}
-
                 {/* Navigation Buttons */}
-                {currentStep < 2 && (
+                {showNavigation && !isLastStep && (
                     <div className="mt-2 flex justify-between pt-2">
                         <Button variant="outline" onClick={prevStep} disabled={currentStep === 0} className="flex items-center space-x-2">
                             <ArrowLeft className="h-4 w-4" />
@@ -227,7 +247,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                                 </>
                             ) : (
                                 <>
-                                    {currentStep === 1 ? 'Next' : 'Next'}
+                                    Next
                                     <ChevronRight className="h-4 w-4" />
                                 </>
                             )}
@@ -235,7 +255,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                     </div>
                 )}
 
-                {hasActiveSurvey && currentStep === 0 && (
+                {hasActiveSurvey && adjustedStep === 0 && (
                     <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
                         <div className="flex items-center">
                             <FileText className="mr-3 h-5 w-5 text-primary" />

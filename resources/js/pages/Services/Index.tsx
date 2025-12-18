@@ -1,6 +1,6 @@
 import { ServiceList } from '@/components/service/service-list';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useSurveyList } from '@/hooks/use-survey-list';
 import MainLayout from '@/layouts/main-layout';
@@ -167,8 +167,8 @@ export default function CustomerDashboard() {
     }
 
     const StatCard = ({ title, value, description, icon: Icon, trend, color, loading: isLoading }: any) => (
-        <Card>
-            <CardContent className="pr-4 pl-4">
+        <Card className="overflow-hidden pt-3 pb-3">
+            <CardContent className="pt-0 pr-4 pb-0 pl-4">
                 {isLoading ? (
                     <div className="flex items-center justify-between">
                         <div className="flex-1 space-y-2">
@@ -228,19 +228,13 @@ export default function CustomerDashboard() {
 
     return (
         <MainLayout>
-            <div className="w-full space-y-6 px-4 lg:px-6">
+            <div className="w-full space-y-6 px-4 py-2 lg:px-6">
                 {/* Header Section */}
                 <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                     <div className="">
-                        <h1 className="text-2xl font-bold tracking-tight">Welcome {firstName}</h1>
-                        <p className="text-muted-foreground">{loading ? 'Loading your services...' : `Managing ${total} service requests.`}</p>
+                        <h1 className="text-2xl font-bold tracking-tight">Services</h1>
+                        <p className="text-muted-foreground">{loading ? 'Loading your services...' : `Managing your service requests.`}</p>
                     </div>
-                    <Link href="/services/create">
-                        <Button>
-                            <Plus className="h-4 w-4" />
-                            New Service
-                        </Button>
-                    </Link>
                 </div>
 
                 {/* Stats Grid */}
@@ -279,8 +273,8 @@ export default function CustomerDashboard() {
                     />
                 </div>
 
-                <Card className="border-0 pl-0 shadow-none">
-                    <CardHeader className="p-0">
+                <div className="border-0 pl-0 shadow-none">
+                    <div className="p-0">
                         <div className="flex flex-col justify-between lg:flex-row lg:items-center">
                             <div>
                                 <CardTitle>Your Services</CardTitle>
@@ -291,7 +285,7 @@ export default function CustomerDashboard() {
                                     placeholder="Search services..."
                                     value={globalFilter}
                                     onChange={(e) => setGlobalFilter(e.target.value)}
-                                    className="max-w-sm"
+                                    className="h-8 max-w-sm text-sm"
                                 />
                                 <Button
                                     variant={hasActiveFilters ? 'default' : 'outline'}
@@ -304,9 +298,23 @@ export default function CustomerDashboard() {
                                     {hasActiveFilters && <span className="flex h-2 w-2 rounded-full bg-primary-foreground" />}
                                     {showAdvancedFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                 </Button>
+                                <div className="flex gap-1">
+                                    {/* <Link href="/tickets/create">
+                                        <Button>
+                                            <Plus className="h-4 w-4" />
+                                            Create Ticket
+                                        </Button>
+                                    </Link> */}
+                                    <Link href="/services/create">
+                                        <Button size="sm">
+                                            <Plus className="h-4 w-4" />
+                                            New Service
+                                        </Button>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
-                    </CardHeader>
+                    </div>
                     <CardContent className="p-0">
                         <div className="flex flex-col gap-4">
                             {showAdvancedFilters && (
@@ -366,8 +374,8 @@ export default function CustomerDashboard() {
                                             {appliedFilters.type === '1943913918'
                                                 ? 'Internet'
                                                 : appliedFilters.type === '1207609454'
-                                                    ? 'Voice'
-                                                    : 'Combo'}
+                                                  ? 'Voice'
+                                                  : 'Combo'}
                                             <button onClick={() => handleTypeFilterChange('')} className="ml-1 rounded-full hover:bg-primary/20">
                                                 <X className="h-3 w-3" />
                                             </button>
@@ -385,7 +393,7 @@ export default function CustomerDashboard() {
                             )}
                         </div>
                     </CardContent>
-                </Card>
+                </div>
                 {/* <ServiceList globalFilter={globalFilter} typeFilter={appliedFilters.type} statusFilter={appliedFilters.status} /> */}
                 <ServiceList
                     globalFilter={globalFilter}

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use App\Models\TroubleTicket;
 use App\Services\ApiResponse;
 use App\Services\BaseApiService;
 use Illuminate\Support\Facades\Log;
@@ -28,7 +29,7 @@ class CreateTTService extends BaseApiService
             $xmlPayload  = $this->buildRequestXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
             // Log::info($xmlResponse);
-            $parsed = $this->parseResponseXml($xmlResponse);
+            $parsed = $this->parseResponseXml($xmlResponse, $data);
             return $parsed;
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
@@ -238,8 +239,10 @@ XML;
      * @return array
      * @throws RuntimeException
      */
-    public function parseResponseXml(string $xml, bool $throwOnFailure = false)
+    public function parseResponseXml(string $xml, array $payload)
     {
+        $customer = Customer::current();
+
         libxml_use_internal_errors(true);
 
         $parsed = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
@@ -249,30 +252,54 @@ XML;
         $parsed->registerXPathNamespace('ns1', $namespaces['ns1'] ?? '');
 
         $responseNodes = $parsed->xpath('//soapenv:Body/ns1:createTTResponse');
-
         if (empty($responseNodes)) {
             throw new RuntimeException('Invalid SOAP response: createTTResponse node missing.');
         }
 
         $response = $responseNodes[0];
 
-        $resultCode = (string) ($response->resultCode ?? '');
-        $description = (string) ($response->desc ?? '');
-        $ttSerialNo = (string) ($response->ttSerialNo ?? '');
+        $resultCode   = (string) ($response->resultCode ?? '');
+        $description  = (string) ($response->desc ?? '');
+        $ttSerialNo   = (string) ($response->ttSerialNo ?? '');
 
         $success = $resultCode === '0';
 
-        if ($throwOnFailure && !$success) {
-            throw new RuntimeException("TT creation failed: $description");
+        /**
+         * ❗ DO NOT persist if TT creation failed
+         */
+        if (!$success || empty($ttSerialNo) || $ttSerialNo === '-1') {
+            return ApiResponse::error($description ?: 'TT creation failed.', 422);
         }
 
-        $data = [
-            'success' => $success,
-            // 'result_code'  => $resultCode,
-            'message'  => $description,
-            'tt_serial_no' => $success ? $ttSerialNo : null,
-        ];
+        /**
+         * ❗ Ensure customer is authenticated / resolved
+         */
+        // if (!$customer || empty($customer->code)) {
+        //     throw new RuntimeException('Customer context missing for TT creation.');
+        // }
 
-        return ApiResponse::success($data);
+        /**
+         * ✅ Create or update ticket safely
+         */
+        $ticket = TroubleTicket::updateOrCreate(
+            ['tt_serial_no' => $ttSerialNo],
+            [
+                'customer_code'  => '828300808', // $customer->code,
+                'access_number'  => $payload['access_number'],
+                'contact_person' => $payload['contact_person'],
+                'mobile_no'      => $payload['mobile_no'],
+                'trouble_title'  => $payload['trouble_title'],
+                'trouble_reason' => $payload['trouble_reason'],
+                'tt_description' => $payload['tt_description'],
+                'status'         => 'in_progress',
+            ]
+        );
+
+        return ApiResponse::success([
+            'success'       => true,
+            'message'       => $description,
+            'tt_serial_no'  => $ttSerialNo,
+            'ticket_id'     => $ticket->id,
+        ]);
     }
 }

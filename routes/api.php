@@ -94,6 +94,7 @@ Route::prefix('v1')->group(function () {
         Route::get('payment', [PaymentController::class, 'myFee']);
     });
 
+    Route::get('/trouble-tickets/{tt_serial_no}', [TTController::class, 'show']);
     Route::post('tt/create', [TTController::class, 'store']);
     Route::post('tt/query', [TTController::class, 'query']);
     Route::post('tt/detail', [TTController::class, 'detail']);

@@ -7,11 +7,13 @@ use App\Http\Requests\CreateTTRequest;
 use App\Http\Requests\QueryTTRequest;
 use App\Http\Requests\QueryTTDetailRequest;
 use App\Http\Requests\ConfirmFeedbackRequest;
+use App\Models\TroubleTicket;
 use App\Services\CreateTTService;
 use App\Services\QueryTTService;
 use App\Services\QueryTTDetailService;
 use App\Services\ConfirmFeedbackService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class TTController extends Controller
 {
@@ -21,6 +23,48 @@ class TTController extends Controller
         protected readonly QueryTTDetailService $queryTTDetailService,
         protected readonly ConfirmFeedbackService $confirmFeedbackService
     ) {}
+
+    public function index(Request $request)
+    {
+        $query = TroubleTicket::query();
+
+        if ($request->filled('access_number')) {
+            $query->where('access_number', $request->access_number);
+        }
+
+        if ($request->filled('mobile_no')) {
+            $query->where('mobile_no', $request->mobile_no);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $query->latest()->paginate(10),
+        ]);
+    }
+
+    /**
+     * Show single ticket by TT number
+     */
+    public function show(string $tt_serial_no)
+    {
+        $ticket = TroubleTicket::where('tt_serial_no', $tt_serial_no)->first();
+
+        if (!$ticket) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Trouble Ticket not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $ticket,
+        ]);
+    }
 
     public function store(CreateTTRequest $request)
     {

@@ -14,10 +14,11 @@ class CreateTTRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'access_number' => 'required|string',
             'account_number' => 'nullable|string',
+            'access_number' => 'required|string',
             'contact_person' => 'required|string',
             'mobile_no' => 'required|string',
+            'trouble_title' => 'required|string',
             'trouble_reason' => 'required|string',
             'tt_description' => 'required|string',
             'occurrence_date' => 'nullable|date',

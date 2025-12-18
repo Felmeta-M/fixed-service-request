@@ -122,7 +122,7 @@ class CreateOrderService
             'total_amount' => "1",
             'trans_currency' => 'ETB',
             'timeout_express' => '120m',
-            'payee_identifier' => 'REDACTED_MERCHANT_CODE',
+            'payee_identifier' => $this->merchantCode,
             'payee_identifier_type' => '04',
             'payee_type' => '5000',
             'redirect_url' => route('services')

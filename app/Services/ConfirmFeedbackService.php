@@ -4,13 +4,14 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 
-class ConfirmFeedbackService
+class ConfirmFeedbackService extends BaseApiService
 {
-    protected string $endpoint;
+    protected int $timeout = 15;
+    protected int $rateLimit = 50;
 
-    public function __construct()
+    protected function endpoint(): string
     {
-        $this->endpoint = config('services.ethio_spm.endpoint');
+        return config('services.tt.endpoint');
     }
 
     public function confirmFeedback(array $data): array

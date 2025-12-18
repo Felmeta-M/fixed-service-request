@@ -285,10 +285,19 @@ return [
     ],
 
     'tt' => [
-        'endpoint' => env('ETHIOSPM_ENDPOINT'),
+        'endpoint' => env('TT_ENDPOINT'),
         'timeout' => 30,
-        'username' => env('ETHIOSPM_USERNAME'),
-        'password' => env('ETHIOSPM_PASSWORD'),
+        'username' => env('TT_USERNAME'),
+        'password' => env('TT_PASSWORD'),
+    ],
+
+    'get_combining' => [
+        'endpoint' => env('GET_COMBINING_ENDPOINT'),
+        'user'     => env('GET_COMBINING_USER'),
+        'password' => env('GET_COMBINING_PASSWORD'),
+        'tenant'   => env('GET_COMBINING_TENANT', '101'),
+        'channel'  => env('GET_COMBINING_CHANNEL', '59'),
+        'tech_channel' => env('GET_COMBINING_TECH_CHANNEL', '35'),
     ],
 
 

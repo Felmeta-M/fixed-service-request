@@ -4,13 +4,14 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 
-class QueryTTDetailService
+class QueryTTDetailService extends BaseApiService
 {
-    protected string $endpoint;
+    protected int $timeout = 15;
+    protected int $rateLimit = 50;
 
-    public function __construct()
+    protected function endpoint(): string
     {
-        $this->endpoint = config('services.endpoint');
+        return config('services.tt.endpoint');
     }
 
     public function queryTTDetail(array $data): array

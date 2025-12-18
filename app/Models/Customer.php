@@ -55,7 +55,7 @@ class Customer extends Authenticatable
             'kebele',
             'house_no'
         ])
-            ->where('sub', Auth::guard('api')->user()->customer_sub_id)
+            ->where('sub', Auth::guard('api')->user()?->customer_sub_id)
             ->first();
     }
 

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api\v1;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateTTRequest;
 use App\Http\Requests\QueryTTRequest;
 use App\Http\Requests\QueryTTDetailRequest;
@@ -24,6 +25,7 @@ class TTController extends Controller
     public function store(CreateTTRequest $request): JsonResponse
     {
         $data = $request->validated();
+
         try {
             $result = $this->createTTService->createTT($data);
             return response()->json(['success' => true, 'data' => $result]);

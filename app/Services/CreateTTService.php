@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Services\ApiResponse;
 use App\Services\BaseApiService;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 
 use function Symfony\Component\Clock\now;
 
@@ -25,12 +26,10 @@ class CreateTTService extends BaseApiService
     {
         try {
             $xmlPayload  = $this->buildRequestXml($data);
-            // \Log::info($xmlPayload);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            // \Log::info($xmlResponse);
+            // Log::info($xmlResponse);
             $parsed = $this->parseResponseXml($xmlResponse);
-
-            return ApiResponse::success($parsed);
+            return $parsed;
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
         } catch (\Throwable $e) {
@@ -231,27 +230,49 @@ class CreateTTService extends BaseApiService
 </soapenv:Envelope> 
 XML;
     }
-
-    protected function parseResponseXml(string $xml): array
+    /**
+     * Parse SOAP response for createTT API
+     *
+     * @param string $xml
+     * @param bool $throwOnFailure Whether to throw exception if TT creation fails
+     * @return array
+     * @throws RuntimeException
+     */
+    public function parseResponseXml(string $xml, bool $throwOnFailure = false)
     {
         libxml_use_internal_errors(true);
 
         $parsed = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
+
         $namespaces = $parsed->getNamespaces(true);
+        $parsed->registerXPathNamespace('soapenv', $namespaces['soapenv'] ?? '');
+        $parsed->registerXPathNamespace('ns1', $namespaces['ns1'] ?? '');
 
-        $parsed->registerXPathNamespace('soapenv', $namespaces['soapenv']);
-        $parsed->registerXPathNamespace('ns1', $namespaces['ns1']);
+        $responseNodes = $parsed->xpath('//soapenv:Body/ns1:createTTResponse');
 
-        $response = $parsed->xpath('//soapenv:Body/ns1:createTTResponse')[0] ?? null;
-
-        if (!$response) {
-            throw new \RuntimeException('Invalid SOAP response');
+        if (empty($responseNodes)) {
+            throw new RuntimeException('Invalid SOAP response: createTTResponse node missing.');
         }
 
-        return [
-            'result_code' => (string) $response->resultCode,
-            'description' => (string) $response->desc,
-            'tt_serial_no' => (string) $response->ttSerialNo,
+        $response = $responseNodes[0];
+
+        $resultCode = (string) ($response->resultCode ?? '');
+        $description = (string) ($response->desc ?? '');
+        $ttSerialNo = (string) ($response->ttSerialNo ?? '');
+
+        $success = $resultCode === '0';
+
+        if ($throwOnFailure && !$success) {
+            throw new RuntimeException("TT creation failed: $description");
+        }
+
+        $data = [
+            'success' => $success,
+            // 'result_code'  => $resultCode,
+            'message'  => $description,
+            'tt_serial_no' => $success ? $ttSerialNo : null,
         ];
+
+        return ApiResponse::success($data);
     }
 }

@@ -28,7 +28,7 @@ class TTController extends Controller
 
         try {
             $result = $this->createTTService->createTT($data);
-            return response()->json(['success' => true, 'data' => $result]);
+            return $result;
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
@@ -43,7 +43,7 @@ class TTController extends Controller
         $data = $request->validated();
         try {
             $result = $this->queryTTService->queryTT($data);
-            return response()->json(['success' => true, 'data' => $result]);
+            return $result;
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
@@ -58,7 +58,7 @@ class TTController extends Controller
         $data = $request->validated();
         try {
             $result = $this->queryTTDetailService->queryTTDetail($data);
-            return response()->json(['success' => true, 'data' => $result]);
+            return $result;
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
@@ -73,7 +73,7 @@ class TTController extends Controller
         $data = $request->validated();
         try {
             $result = $this->confirmFeedbackService->confirmFeedback($data);
-            return response()->json(['success' => true, 'data' => $result]);
+            return $result;
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,

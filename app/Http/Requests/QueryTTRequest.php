@@ -15,7 +15,6 @@ class QueryTTRequest extends FormRequest
     {
         return [
             'access_number' => 'required|string|max:50',
-            'requestor' => 'sometimes|integer', // fallback default is 1
         ];
     }
 }

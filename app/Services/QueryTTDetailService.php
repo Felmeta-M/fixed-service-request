@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class QueryTTDetailService extends BaseApiService
 {
@@ -14,18 +15,19 @@ class QueryTTDetailService extends BaseApiService
         return config('services.tt.endpoint');
     }
 
-    public function queryTTDetail(array $data): array
+    public function queryTTDetail(array $data)
     {
         $xml = $this->buildRequestXml($data);
         $responseXml = $this->executeRequest($xml);
-        return $this->parseResponseXml($responseXml);
+        $parsed = $this->parseQueryTTDetailXml($responseXml);
+        return $parsed;
     }
 
     protected function buildRequestXml(array $data): string
     {
         $requestor = $data['requestor'] ?? 1;
         $searchType = $data['search_type'] ?? 1;
-        $searchValue = $data['search_value'];
+        $searchValue = $data['search'];
 
         return <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
@@ -42,47 +44,50 @@ class QueryTTDetailService extends BaseApiService
 XML;
     }
 
-    protected function executeRequest(string $xml): string
-    {
-        $response = Http::withHeaders([
-            'Content-Type' => 'text/xml; charset=utf-8',
-        ])->timeout(10)
-            ->post($this->endpoint, $xml);
-
-        if ($response->failed()) {
-            throw new \RuntimeException('SOAP request failed: ' . $response->body());
-        }
-
-        return $response->body();
-    }
-
-    protected function parseResponseXml(string $xml): array
+    public function parseQueryTTDetailXml(string $xml, bool $throwOnFailure = false)
     {
         libxml_use_internal_errors(true);
-        $parsed = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
-        $namespaces = $parsed->getNamespaces(true);
 
+        $parsed = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
+
+        $namespaces = $parsed->getNamespaces(true);
         $parsed->registerXPathNamespace('soapenv', $namespaces['soapenv'] ?? '');
         $parsed->registerXPathNamespace('ns1', $namespaces['ns1'] ?? '');
 
-        $responses = $parsed->xpath('//soapenv:Body/ns1:queryTTDetailResponse');
-        if (empty($responses)) {
-            throw new \Exception('queryTTDetailResponse not found in SOAP response');
+        // Handle SOAP Fault
+        $faultNodes = $parsed->xpath('//soapenv:Body/soapenv:Fault');
+        if (!empty($faultNodes)) {
+            $fault = $faultNodes[0];
+            $message = (string) ($fault->faultstring ?? 'Unknown SOAP Fault');
+            if ($throwOnFailure) {
+                throw new RuntimeException("SOAP Fault: $message");
+            }
+            return ApiResponse::error($message, 500);
         }
 
-        $response = $responses[0];
+        $responseNodes = $parsed->xpath('//soapenv:Body/ns1:queryTTDetailResponse');
+        if (empty($responseNodes)) {
+            $msg = 'queryTTDetailResponse node missing in SOAP response';
+            if ($throwOnFailure) {
+                throw new RuntimeException($msg);
+            }
+            return ApiResponse::error($msg, 500);
+        }
+
+        $response = $responseNodes[0];
 
         // Basic TT info
         $ttData = [];
         foreach ($response as $key => $value) {
-            if ($key !== 'activityList' && $key !== 'ttResult') {
+            if (!in_array($key, ['activityList', 'ttResult'])) {
                 $ttData[$key] = (string) $value;
             }
         }
 
         // TT Result
-        $ttData['result_code'] = (string) ($response->ttResult->resultCode ?? '');
-        $ttData['desc'] = (string) ($response->ttResult->desc ?? '');
+        $resultCode = (string) ($response->ttResult->resultCode ?? '1');
+        $desc = (string) ($response->ttResult->desc ?? 'Unknown error');
+        $success = $resultCode === '0';
 
         // Activities
         $activities = [];
@@ -100,6 +105,17 @@ XML;
         }
         $ttData['activities'] = $activities;
 
-        return $ttData;
+        $data = array_merge([
+            'success' => $success,
+            'result_code' => $resultCode,
+            'desc' => $desc,
+        ], $ttData);
+
+        // Optionally throw exception
+        if ($throwOnFailure && !$success) {
+            throw new RuntimeException("Query TT Detail failed: $desc");
+        }
+
+        return ApiResponse::success($data);
     }
 }

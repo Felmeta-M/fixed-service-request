@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class ConfirmFeedbackService extends BaseApiService
 {
@@ -14,11 +15,12 @@ class ConfirmFeedbackService extends BaseApiService
         return config('services.tt.endpoint');
     }
 
-    public function confirmFeedback(array $data): array
+    public function confirmFeedback(array $data)
     {
         $xml = $this->buildRequestXml($data);
         $responseXml = $this->executeRequest($xml);
-        return $this->parseResponseXml($responseXml);
+        $parsed = $this->parseConfirmFeedbackXml($responseXml);
+        return $parsed;
     }
 
     protected function buildRequestXml(array $data): string
@@ -26,10 +28,9 @@ class ConfirmFeedbackService extends BaseApiService
         $requestor = $data['requestor'] ?? 1;
         $ttNo = $data['tt_no'];
         $resultCode = $data['result_code'];
-        $desc = htmlspecialchars($data['desc'], ENT_XML1 | ENT_QUOTES, 'UTF-8');
+        $desc = $data['desc'];
 
         return <<<XML
-<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:eth="http://www.example.org/EthioSPMInterfaceSheet/">
     <soapenv:Header/>
     <soapenv:Body>
@@ -44,40 +45,42 @@ class ConfirmFeedbackService extends BaseApiService
 XML;
     }
 
-    protected function executeRequest(string $xml): string
-    {
-        $response = Http::withHeaders([
-            'Content-Type' => 'text/xml; charset=utf-8',
-        ])->timeout(10)
-            ->post($this->endpoint, $xml);
-
-        if ($response->failed()) {
-            throw new \RuntimeException('SOAP request failed: ' . $response->body());
-        }
-
-        return $response->body();
-    }
-
-    protected function parseResponseXml(string $xml): array
+    protected function parseConfirmFeedbackXml(string $xml, bool $throwOnFailure = false)
     {
         libxml_use_internal_errors(true);
-        $parsed = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
-        $namespaces = $parsed->getNamespaces(true);
 
+        $parsed = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
+
+        $namespaces = $parsed->getNamespaces(true);
         $parsed->registerXPathNamespace('soapenv', $namespaces['soapenv'] ?? '');
         $parsed->registerXPathNamespace('ns1', $namespaces['ns1'] ?? '');
 
-        $responses = $parsed->xpath('//soapenv:Body/ns1:confirmFeedbackResponse');
-        if (empty($responses)) {
-            throw new \Exception('confirmFeedbackResponse not found in SOAP response');
+        // Handle SOAP Fault
+        $faultNodes = $parsed->xpath('//soapenv:Body/soapenv:Fault');
+        if (!empty($faultNodes)) {
+            $fault = $faultNodes[0];
+            $message = (string) ($fault->faultstring ?? 'Unknown SOAP Fault');
+            return ApiResponse::error("SOAP Fault: $message", 500);
         }
 
-        $response = $responses[0];
+        // Find the response node
+        $responseNodes = $parsed->xpath('//soapenv:Body/ns1:confirmFeedbackResponse');
+        if (empty($responseNodes)) {
+            return ApiResponse::error('confirmFeedbackResponse node missing in SOAP response', 500);
+        }
 
-        return [
-            'requestor' => (string) $response->requestor,
-            'result_code' => (string) $response->resultCode,
-            'desc' => (string) $response->desc,
-        ];
+        $response = $responseNodes[0];
+
+        $resultCode = (string) ($response->resultCode ?? '');
+        $desc = (string) ($response->desc ?? '');
+        $requestor = (string) ($response->requestor ?? null);
+        $success = $resultCode === '0';
+
+        return ApiResponse::success([
+            'success' => $success,
+            'requestor' => $requestor,
+            'result_code' => $resultCode ?: null,
+            'desc' => $desc ?: '',
+        ]);
     }
 }

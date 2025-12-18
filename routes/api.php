@@ -92,13 +92,11 @@ Route::prefix('v1')->group(function () {
         Route::post('create-order', [TelebirrController::class, 'createOrder'])->name('create.order');
 
         Route::get('payment', [PaymentController::class, 'myFee']);
-
-
-        Route::post('tt/query', [TTController::class, 'query']);
-        Route::post('tt/detail', [TTController::class, 'detail']);
-        Route::post('tt/confirm-feedback', [TTController::class, 'confirm']);
     });
 
     Route::post('tt/create', [TTController::class, 'store']);
-    Route::get('get-combining', [GetCombiningController::class, 'show']);
+    Route::post('tt/query', [TTController::class, 'query']);
+    Route::post('tt/detail', [TTController::class, 'detail']);
+    Route::post('tt/confirm-feedback', [TTController::class, 'confirm']);
+    Route::get('subscriber-details', [GetCombiningController::class, 'show']);
 });

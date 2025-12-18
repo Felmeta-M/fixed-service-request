@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class QueryTTService extends BaseApiService
 {
@@ -14,11 +14,12 @@ class QueryTTService extends BaseApiService
         return config('services.tt.endpoint');
     }
 
-    public function queryTT(array $data): array
+    public function queryTT(array $data)
     {
         $xml = $this->buildRequestXml($data);
         $responseXml = $this->executeRequest($xml);
-        return $this->parseResponseXml($responseXml);
+        $parsed = $this->parseQueryTTResponseXml($responseXml);
+        return $parsed;
     }
 
     protected function buildRequestXml(array $data): string
@@ -40,38 +41,38 @@ class QueryTTService extends BaseApiService
 XML;
     }
 
-    protected function executeRequest(string $xml): string
-    {
-        $response = Http::withHeaders([
-            'Content-Type' => 'text/xml; charset=utf-8',
-        ])->timeout(10)
-            ->post($this->endpoint, $xml);
-
-        if ($response->failed()) {
-            throw new \RuntimeException('SOAP request failed: ' . $response->body());
-        }
-
-        return $response->body();
-    }
-
-    protected function parseResponseXml(string $xml): array
+    public function parseQueryTTResponseXml(string $xml, bool $throwOnFailure = false)
     {
         libxml_use_internal_errors(true);
-        $parsed = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
-        $namespaces = $parsed->getNamespaces(true);
 
+        $parsed = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
+
+        $namespaces = $parsed->getNamespaces(true);
         $parsed->registerXPathNamespace('soapenv', $namespaces['soapenv'] ?? '');
         $parsed->registerXPathNamespace('ns1', $namespaces['ns1'] ?? '');
 
-        $responses = $parsed->xpath('//soapenv:Body/ns1:queryTTResponse');
-        if (empty($responses)) {
-            throw new \Exception('queryTTResponse not found in SOAP response');
+        $responseNodes = $parsed->xpath('//soapenv:Body/ns1:queryTTResponse');
+        if (empty($responseNodes)) {
+            $data = [
+                'success' => false,
+                // 'result_code' => '1',
+                'message' => 'query TTR esponse node missing',
+                'tt_list' => [],
+            ];
+
+            if ($throwOnFailure) {
+                throw new RuntimeException($data['desc']);
+            }
+
+            return ApiResponse::success($data);
         }
 
-        $response = $responses[0];
-        $ttList = [];
+        $response = $responseNodes[0];
+        $resultCode = (string) ($response->resultCode ?? '1');
+        $desc = (string) ($response->desc ?? 'No data found');
 
-        if (isset($response->TTList->tt)) {
+        $ttList = [];
+        if (!empty($response->TTList->tt)) {
             foreach ($response->TTList->tt as $tt) {
                 $ttList[] = [
                     'tt_no' => (string) $tt->ttNo,
@@ -88,10 +89,19 @@ XML;
             }
         }
 
-        return [
-            'result_code' => (string) $response->resultCode,
-            'desc' => (string) $response->desc,
+        $success = $resultCode === '0';
+
+        if ($throwOnFailure && !$success) {
+            throw new RuntimeException("Query TT failed: $desc");
+        }
+
+        $data = [
+            'success' => $success,
+            // 'result_code' => $resultCode,
+            'message' => $desc,
             'tt_list' => $ttList,
         ];
+
+        return ApiResponse::success($data);
     }
 }

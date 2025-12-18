@@ -171,6 +171,8 @@ class CreateTTService extends BaseApiService
 
         $data = array_merge($defaults, $data);
 
+        $data['trouble_title'] = "Fixed Services Provisioning System Complaint";
+
         return <<<XML
 <soapenv:Envelope 
     xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"

@@ -50,7 +50,7 @@ class CreateTTRequest extends FormRequest
             'access_number'    => ['required'], //, 'regex:/^0(9)\d{8}$/'
             'contact_person'   => 'required|string',
             'mobile_no'        => 'required',
-            'trouble_title'    => 'required|string',
+            'trouble_title'    => 'nullable|string',
             'trouble_reason'   => 'required|string',
             'tt_description'   => 'required|string',
             'occurrence_date'  => 'nullable|date',

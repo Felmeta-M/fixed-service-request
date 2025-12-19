@@ -16,6 +16,10 @@ class SurveyRequest extends Model
     protected $dates = ['completed_date'];
 
 
+    protected $casts = [
+        'with_device' => 'boolean',
+    ];
+
     protected static function booted()
     {
         static::creating(function ($surveyRequest) {
@@ -40,5 +44,10 @@ class SurveyRequest extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class, 'customer_survey_order_id', 'customer_survey_order_id');
     }
 }

@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Services\ApiResponse;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
+use Illuminate\Support\Facades\Log;
 
 class VoiceSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
@@ -56,7 +57,8 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
         $data['house_no'] = $customer->kebele ?? $data['house_no'];
         $data['sms_no'] = $customer->phone_number ?? $data['sms_no'];
 
-        $this->serviceNumber = $this->getAvailableNumberServices();
+        $this->serviceNumber = $this->queryAvailableNumberService->getAvailableNumberServices();
+        Log::info('service number', ['service number' => $this->serviceNumber]);
 
         if (!$this->serviceNumber) {
             throw new \RuntimeException('Unable to reserve service number');
@@ -158,7 +160,7 @@ XML;
         if ((string) $hdr->RetCode !== '0') {
             // 🔴 release reserved number on failure
             if ($this->serviceNumber) {
-                $this->releaseNumberService($this->serviceNumber);
+                $this->queryAvailableNumberService->releaseNumberService($this->serviceNumber);
             }
 
             return ApiResponse::error((string) $hdr->RetMsg);
@@ -166,6 +168,7 @@ XML;
 
         $customerBusiOrderId = (string) $rsp->CustomerBusiOrderId;
 
+        // create survey order request and initia payment
         SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])
             ->update([
                 'service_number' => $this->serviceNumber,
@@ -177,59 +180,5 @@ XML;
             'customer_busi_order_id' => $customerBusiOrderId,
             'service_number' => $this->serviceNumber,
         ]);
-    }
-
-
-    protected function getAvailableNumberServices(): int | bool
-    {
-        $data = [
-            "pay_mode" => "1",
-            "tele_type" => "4",
-            "need_query_by_dept" => false,
-            "res_cnt" => 10
-        ];
-
-        $numberList = $this->queryAvailableNumberService->queryAvailableNumbers($data) ?? [];
-        if (empty($numberList)) {
-            return false;
-        }
-
-        $filtered = array_filter($numberList, fn($item) => $item['Level'] === "6");
-        if (empty($filtered)) {
-            return false;
-        }
-
-        $numberServices = array_column($filtered, 'ServiceNumber');
-
-        foreach ($numberServices as $numberService) {
-            // $status = $this->reserveNumberService($numberService);
-            // if ($status === true) {
-            return (int) $numberService;
-            // }
-        }
-
-        return false;
-    }
-
-    protected function reserveNumberService(string $numberService): bool
-    {
-        $data = [
-            'res_type_id' => 10,
-            'oper_type' => 1029,
-            'res_code' => $numberService,
-        ];
-
-        return $this->reserveNumberService->pick($data);
-    }
-
-    protected function releaseNumberService(string $numberService): bool
-    {
-        $data = [
-            'res_type_id' => 10,
-            'oper_type' => 1030,
-            'res_code' => $numberService,
-        ];
-
-        return $this->reserveNumberService->unpick($data);
     }
 }

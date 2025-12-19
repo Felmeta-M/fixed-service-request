@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
-    public function myFee(Request $request)
+    public function show(Request $request)
     {
         $data = $request->validate([
             'customer_survey_order_id' => ['required']

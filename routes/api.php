@@ -91,7 +91,7 @@ Route::prefix('v1')->group(function () {
 
         Route::post('create-order', [TelebirrController::class, 'createOrder'])->name('create.order');
 
-        Route::get('payment', [PaymentController::class, 'myFee']);
+        Route::get('payments/show', [PaymentController::class, 'show']);
     });
 
     Route::get('trouble-tickets', [TTController::class, 'index']);

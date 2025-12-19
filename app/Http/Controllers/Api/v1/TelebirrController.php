@@ -93,8 +93,10 @@ class TelebirrController extends Controller
             if ($data['trade_status'] === 'Completed') {
                 $payment->update([
                     'status'          => FFDServiceProvisionStatus::Paid,
-                    'transaction_id'  => $data['transId'],
+                    'trans_id'  => $data['transId'],
                     'amount'          => $data['total_amount'],
+                    'payment_order_id' => $data['payment_order_id'],
+                    'payload' => $data,
                 ]);
 
                 SurveyRequest::where(

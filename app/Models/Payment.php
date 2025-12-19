@@ -37,4 +37,9 @@ class Payment extends Model
     {
         return $query->where('status', FFDServiceProvisionStatus::Cancelled->value);
     }
+
+    public function survey_request()
+    {
+        return $this->belongsTo(SurveyRequest::class, 'customer_survey_order_id', 'customer_survey_order_id');
+    }
 }

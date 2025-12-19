@@ -35,7 +35,7 @@ class OneOffFeeService extends BaseApiService
         $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
         $credentials = config('services.one_off_fee');
-        $sequence = time(); //sequence id $data['sub_order']['external_sequence']
+        $sequence = uniqid(); //sequence id $data['sub_order']['external_sequence']
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"

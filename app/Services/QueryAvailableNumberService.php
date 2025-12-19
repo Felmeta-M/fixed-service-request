@@ -18,47 +18,42 @@ class QueryAvailableNumberService extends BaseApiService
         return config('services.query_available_number.endpoint');
     }
 
-    protected function getAvailableNumberServices(): string | bool
+    public function getAvailableNumberServices(?int $resCnt = 10, ?string $deptId = null): string|bool
     {
         $data = [
-            "pay_mode" => "1",
-            "tele_type" => "4",
-            "need_query_by_dept" => false, //TODO: location area shall be given nad dept shall be true
-            "res_cnt" => 10
+            'pay_mode' => '1',
+            'tele_type' => '4',
+            'need_query_by_dept' => true,
+            'res_cnt' => $resCnt,
+            'dept_id' => '1766044689199549668', //$deptId
         ];
 
-        $numberList = $this->queryAvailableNumbers($data) ?? [];
-        if (empty($numberList)) {
-            return false;
-        }
+        $numberList = $this->queryAvailableNumbers($data);
+        if (empty($numberList)) return false;
 
-        $filtered = array_filter($numberList, fn($item) => $item['Level'] === "6");
-        if (empty($filtered)) {
-            return false;
-        }
+        $filtered = array_filter($numberList, fn($item) => $item['Level'] === '6');
+        if (empty($filtered)) return false;
 
-        $numberServices = array_column($filtered, 'ServiceNumber');
-
-        foreach ($numberServices as $numberService) {
-            $status = $this->reserveNumberService($numberService);
-            if ($status === true) {
-                return $numberService;
-            }
+        foreach (array_column($filtered, 'ServiceNumber') as $numberService) {
+            // if ($this->reserveNumberService($numberService)) {
+            return $numberService;
+            // }
         }
 
         return false;
     }
 
+
+
     public function queryAvailableNumbers(array $data): array
     {
-
         $xmlPayload = $this->buildXml($data);
         $xmlResponse = $this->executeRequest($xmlPayload);
-
+        Log::info($xmlResponse);
         return  $this->parseResponse($xmlResponse);
     }
 
-    protected function reserveNumberService(string $numberService): bool
+    public function reserveNumberService(string $numberService): bool
     {
         $data = [
             'res_type_id' => 10,
@@ -69,7 +64,7 @@ class QueryAvailableNumberService extends BaseApiService
         return $this->reserveNumberService->pick($data);
     }
 
-    protected function releaseNumberService(string $numberService): bool
+    public function releaseNumberService(string $numberService): bool
     {
         $data = [
             'res_type_id' => 10,
@@ -80,17 +75,54 @@ class QueryAvailableNumberService extends BaseApiService
         return $this->reserveNumberService->unpick($data);
     }
 
-    /**
-     * Build SOAP XML for querying available numbers.
-     */
     protected function buildXml(array $data): string
     {
-        $transactionId = uniqid();
-        $accessUser = config('services.query_available_number.user');
-        $accessPwd = config('services.query_available_number.password');
-        $channelId = config('services.query_available_number.channel_id');
-        $techChannelId = config('services.query_available_number.tech_channel_id');
-        $needQueryByDeptStr = $data['need_query_by_dept'] ? 'true' : 'true'; //Todo: change to 'false' 
+        //         $transactionId = uniqid();
+        //         $processTime = now()->format('YmdHis');
+        //         $version = $data['version'] ?? '1';
+        //         $language = $data['language'] ?? '2003';
+        //         $tenantId = config('services.query_available_number.tenant_id');
+
+        //         $accessUser = config('services.query_available_number.user');
+        //         $accessPwd = config('services.query_available_number.password');
+        //         $channelId = config('services.query_available_number.channel_id');
+        //         $techChannelId = config('services.query_available_number.tech_channel_id');
+
+        //         $needQueryByDeptStr = $data['need_query_by_dept'] ? 'true' : 'false';
+        //         $deptId = '1766044689199549668'; //$data['dept_id'];
+
+        //         $additionalProperty = <<<XML
+        // <ser:AdditionalProperty>
+        //     <com:Code>dept_id</com:Code>
+        //     <com:Value>{$deptId}</com:Value>
+        // </ser:AdditionalProperty>
+        // XML;
+
+        //         return <<<XML
+        // <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
+        //    <soapenv:Header/>
+        //    <soapenv:Body>
+        //       <ser:QueryAvailableNumberReqMsg>
+        //          <ser:RequestHeader>
+        //             <com:Version>{$version}</com:Version>
+        //             <com:TransactionId>{$transactionId}</com:TransactionId>
+        //             <com:ProcessTime>{$processTime}</com:ProcessTime>
+        //             <com:Language>{$language}</com:Language>
+        //             <com:ChannelId>{$channelId}</com:ChannelId>
+        //             <com:TechnicalChannelId>{$techChannelId}</com:TechnicalChannelId>
+        //             <com:TenantId>{$tenantId}</com:TenantId>
+        //             <com:AccessUser>{$accessUser}</com:AccessUser>
+        //             <com:AccessPwd>{$accessPwd}</com:AccessPwd>
+        //          </ser:RequestHeader>
+        //          <ser:PayMode>{$data['pay_mode']}</ser:PayMode>
+        //          <ser:TeleType>{$data['tele_type']}</ser:TeleType>
+        //          <ser:ResCnt>{$data['res_cnt']}</ser:ResCnt>
+        //          <ser:NeedQueryByDept>{$needQueryByDeptStr}</ser:NeedQueryByDept>
+        //          {$additionalProperty}
+        //       </ser:QueryAvailableNumberReqMsg>
+        //    </soapenv:Body>
+        // </soapenv:Envelope>
+        // XML;
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
@@ -98,21 +130,36 @@ class QueryAvailableNumberService extends BaseApiService
    <soapenv:Body>
       <ser:QueryAvailableNumberReqMsg>
          <ser:RequestHeader>
-            <com:TransactionId>{$transactionId}</com:TransactionId>
-            <com:ChannelId>{$channelId}</com:ChannelId>
-            <com:TechnicalChannelId>{$techChannelId}</com:TechnicalChannelId>
-            <com:AccessUser>{$accessUser}</com:AccessUser>
-            <com:AccessPwd>{$accessPwd}</com:AccessPwd>
+            <!--Optional:-->
+            <com:Version>1</com:Version>
+            <com:TransactionId>0703582086</com:TransactionId>
+            <com:ProcessTime>20211215110502</com:ProcessTime>
+            <com:Language>2003</com:Language>
+            <com:ChannelId>35</com:ChannelId>
+            <com:TechnicalChannelId>51</com:TechnicalChannelId>
+            <com:TenantId>101</com:TenantId>
+            <com:AccessUser>ecaf</com:AccessUser>
+            <com:AccessPwd>REDACTED_PASSWORD</com:AccessPwd>
+       
          </ser:RequestHeader>
-         <ser:PayMode>{$data['pay_mode']}</ser:PayMode>
-         <ser:TeleType>{$data['tele_type']}</ser:TeleType>
-         <ser:ResCnt>{$data['res_cnt']}</ser:ResCnt>
-         <ser:NeedQueryByDept>{$needQueryByDeptStr}</ser:NeedQueryByDept>
+         <!--Optional:-->
+         <ser:PayMode>1</ser:PayMode>
+         <!--Optional:-->
+         <ser:TeleType>4</ser:TeleType>
+         <!--Optional:-->
+         <ser:NeedQueryByDept>false</ser:NeedQueryByDept>
+         <ser:ResCnt>100</ser:ResCnt>
+         <ser:AdditionalProperty>
+            <com:Code>dept_id</com:Code>
+            <com:Value>1766044689199549668</com:Value>
+         </ser:AdditionalProperty>
       </ser:QueryAvailableNumberReqMsg>
    </soapenv:Body>
 </soapenv:Envelope>
 XML;
     }
+
+
 
     /**
      * Parses the SOAP XML response and returns the available numbers as an array.

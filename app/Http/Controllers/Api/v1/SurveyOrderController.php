@@ -11,6 +11,7 @@ use App\Services\ResourceService;
 use App\Services\DataSurveyOrderService;
 use App\Services\FixedVoiceSurveyOrderService;
 use App\Services\Survey\SurveyServiceFactory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -30,7 +31,7 @@ class SurveyOrderController extends Controller
      */
     public function index(Request $request)
     {
-        $query = SurveyRequest::query();
+        $query = SurveyRequest::query()->with(['payment']);
 
         if (!$request->has('customer_code')) {
             return response()->json([
@@ -49,50 +50,22 @@ class SurveyOrderController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(SurveyOrderFormRequest $request)
+
+    public function store(SurveyOrderFormRequest $request): JsonResponse
     {
-        // $validated = $surveyRequest->validated();
-        // // Perform resource check
-        // $resourceResponse = $this->resourceService->check([
-        //     'bandwidth' => $validated['bandwidth'],
-        //     'longitude' => $validated['survey_address_info']['longitude'],
-        //     'latitude'  => $validated['survey_address_info']['latitude'],
-        // ]);
-        // $resourceCheck = $resourceResponse->getData(true)['data'] ?? null;
-        // if (!$resourceCheck) {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'Resource check failed. Cannot create survey order.'
-        //     ], 422);
-        // }
-        // // Determine service based on main_offer_id
-        // switch ($validated['main_offer_id']) {
-        //     case 1457567289: // Fixed Data
-        //         $surveyService = new DataSurveyOrderService();
-        //         break;
-
-        //     case 1207609454: // Fixed Voice
-        //         $surveyService = new FixedVoiceSurveyOrderService();
-        //         break;
-
-        //     case 180427974: // Fixed Combo
-        //         $surveyService = new ComboSurveyOrderService();
-        //         break;
-
-        //     default:
-        //         return response()->json([
-        //             'success' => false,
-        //             'message' => 'Invalid main_offer_id.'
-        //         ], 422);
-        // }
-        // return $surveyService->createSurveyOrder($validated, $resourceCheck);
-
         $data = $request->validated();
 
-        $service = $this->factory->make($data['main_offer_id']);
-
-        return $service->create($data);
+        try {
+            $service = $this->factory->make($data['main_offer_id']);
+            return  $service->create($data);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
     }
+
 
 
 
@@ -101,14 +74,9 @@ class SurveyOrderController extends Controller
      */
     public function show(Request $request)
     {
-        $customerCode = $request->input('customer_code');
         $orderId = $request->input('customer_survey_order_id');
 
-        $query = SurveyRequest::query();
-
-        if ($customerCode) {
-            $query->where('customer_code', $customerCode);
-        }
+        $query = SurveyRequest::query()->with(['payment']);
 
         if ($orderId) {
             $query->orWhere('customer_survey_order_id', $orderId);

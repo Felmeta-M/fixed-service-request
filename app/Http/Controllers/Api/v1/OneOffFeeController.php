@@ -105,7 +105,9 @@ class OneOffFeeController extends Controller
 
             if (!empty($fee['taxes'])) {
                 foreach ($fee['taxes'] as $tax) {
-                    $taxAmount += (int)$tax['amount'];
+                    if (!empty($tax)) {
+                        $taxAmount += (int)$tax['amount'] ?? 0;
+                    }
                 }
             }
 

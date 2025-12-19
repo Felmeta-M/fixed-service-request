@@ -19,7 +19,7 @@ class ResourceService extends BaseApiService
         try {
             $xmlPayload = $this->buildRequestXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            \Log::info($xmlResponse);
+            // \Log::info($xmlResponse);
             $parsedXml = $this->parseResponseXml($xmlResponse, $data);
             return ApiResponse::success($parsedXml);
         } catch (\RuntimeException $e) {
@@ -129,7 +129,7 @@ XML;
                     'distance' => (string)$res->DISTANCE,
                     'ava_port' => (string)$res->AVAPORT,
                     'neid' => (string)$res->NEID,
-                    'nename' => (string)$res->NENAME,
+                    'nename' => (string)$res->NENAME, //vendor 
                     'typeid' => (string)$res->TYPEID,
                     'longitude' => (string)$data['longitude'],
                     'latitude' => (string)$data['latitude'],

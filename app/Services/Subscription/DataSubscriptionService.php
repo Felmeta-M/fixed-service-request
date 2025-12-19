@@ -6,10 +6,13 @@ use App\Models\SurveyRequest;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Customer;
 use App\Services\ApiResponse;
+use App\Services\GetCombiningService;
 use Illuminate\Support\Facades\Log;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
+    public function __construct(protected readonly GetCombiningService $get_combining_service) {}
+
     protected function offeringId(): int
     {
         return 1457567289; // DATA
@@ -33,10 +36,30 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
         return $this->parseResponse($data, $response);
     }
 
+    public function getSubscriber(array $responseData): array
+    {
+        if (empty($responseData['success']) || $responseData['success'] !== true) {
+            throw new \RuntimeException('API call failed: ' . ($responseData['message'] ?? 'Unknown error'));
+        }
+
+        $subscriber = data_get($responseData, 'data');
+        // Log::info($subscriber);
+
+        if (empty($subscriber)) {
+            throw new \RuntimeException('Subscriber not found in API response.');
+        }
+
+        return $subscriber;
+    }
+
     protected function buildXml(array $data): string
     {
         $cfg = config('services.subscriber');
         $cfg['default_password'] = "REDACTED_PASSWORD";
+
+        $response = $this->get_combining_service->getByServiceNumber($data['access_number']);
+        $responseData = $response->getData(true);
+        $subscriber = $this->getSubscriber($responseData);
 
         $email = $this->generateEmail();
 
@@ -155,7 +178,6 @@ XML;
         foreach ($rsp->ExtParamList->children($ns['com'])->ParameterInfo as $p) {
             if ((string)$p->ParamName === 'FBBNUMBER') {
                 $serviceNo = (string)$p->ParamValue;
-
                 SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])
                     ->update([
                         'service_number' => $serviceNo,

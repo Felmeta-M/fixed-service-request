@@ -47,16 +47,14 @@ class TelebirrController extends Controller
 
     public function notify(Request $request)
     {
-        Log::info('Telebirr Notification Received', $request->all());
-
         $data = $request->validate([
             'merch_code'        => 'nullable',
             'merch_order_id'   => 'nullable',
             'payment_order_id' => 'nullable',
             'total_amount'     => 'nullable',
-            'trans_id'         => 'nullable',
+            'transId'         => 'nullable',
             'trade_status'     => 'nullable',
-            // 'sign'           => 'nullable', // enable when signature verification is ready
+            'sign'           => 'nullable', // enable when signature verification is ready
         ]);
 
         /**
@@ -70,7 +68,7 @@ class TelebirrController extends Controller
 
         $payment = Payment::where('merch_order_id', $data['merch_order_id'])->first();
 
-        if (! $payment) {
+        if (!$payment) {
             Log::error('Telebirr Callback: Payment Not Found', [
                 'merch_order_id' => $data['merch_order_id'],
             ]);
@@ -96,7 +94,7 @@ class TelebirrController extends Controller
 
                 $payment->update([
                     'status'          => FFDServiceProvisionStatus::Paid,
-                    'transaction_id'  => $data['trans_id'],
+                    'transaction_id'  => $data['transId'],
                     'amount'          => $data['total_amount'],
                 ]);
 
@@ -107,10 +105,10 @@ class TelebirrController extends Controller
                     'status' => FFDServiceProvisionStatus::Paid,
                 ]);
 
-                Log::info('Telebirr Payment Completed', [
-                    'order' => $payment->merch_order_id,
-                    'trans_id' => $data['trans_id'],
-                ]);
+                // Log::info('Telebirr Payment Completed', [
+                //     'order' => $payment->merch_order_id,
+                //     'trans_id' => $data['transId'],
+                // ]);
             } else {
 
                 $payment->update([

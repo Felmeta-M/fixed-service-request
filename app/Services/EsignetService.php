@@ -271,7 +271,7 @@ class EsignetService
             $address = $payload['address'] ?? null;
             $customer = Customer::where('sub', $sub)->first();
             if ($customer) {
-                logger()->info('Customer found, updating', ['sub' => $sub]);
+                // logger()->info('Customer found, updating', ['sub' => $sub]);
             } else {
                 logger()->info('Customer not found, creating new', ['sub' => $sub]);
                 $customer = new Customer();

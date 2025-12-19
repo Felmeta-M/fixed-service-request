@@ -77,15 +77,8 @@ class PaymentCalculatorService
             $taxAmount  = 0;
 
             foreach ($fee['taxes'] ?? [] as $tax) {
-                Log::info('Processing tax', ['tax' => $tax]);
                 $taxAmount += (int)($tax['fee'] ?? 0);
             }
-
-            Log::info('Fee calculation details', [
-                'calculated' => $calculated,
-                'discount'   => $discount,
-                'tax_amount' => $taxAmount,
-            ]);
 
             $total += ($calculated - $discount + $taxAmount);
         }

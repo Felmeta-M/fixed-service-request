@@ -48,8 +48,8 @@ class PaymentService
                 [
                     'service_number' => $data['service_number'],
                     'customer_code'  => $customer->customer_code,
-                    'total_amount'         => $data['total_amount'],
-                    'subscription_fee'     => $data['subscription_fee'] ?? 0,
+                    'total_amount'   => $data['total_amount'],
+                    'subscription_fee' => $data['subscription_fee'] ?? 0,
                     'cable_charge' => $data['cable_charge'] ?? 0,
                     'device_fee'        => $data['device_fee'] ?? 0,
                     'status'         => FFDServiceProvisionStatus::Pending->value,

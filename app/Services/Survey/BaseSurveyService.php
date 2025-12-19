@@ -5,8 +5,8 @@ namespace App\Services\Survey;
 use App\Services\BaseApiService;
 use App\Models\SurveyRequest;
 use App\Enums\FFDServiceProvisionStatus;
-use App\Services\PaymentCalculatorService;
-use App\Services\PaymentService;
+use App\Services\Payment\PaymentCalculatorService;
+use App\Services\Payment\PaymentService;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Services\ResourceService;
@@ -105,14 +105,15 @@ abstract class BaseSurveyService extends BaseApiService
 
             $calculator = app(PaymentCalculatorService::class);
             $fees = $calculator->calculateFees($survey, $requestData);
-
+            //TODO: device fee from one-off fee service
+            $deviceFee = $data['device_fee'] ?? 200; // Default device fee
             $this->payment_service->createOrUpdatePayment([
                 'customer_survey_order_id'       => $survey->customer_survey_order_id,
                 'service_number'                 => $survey->service_number,
                 'subscription_fee' => $fees['subscription_fee'],
                 'cable_charge'     => $fees['cable_charge'],
-                'device_fee'      => $data['device_fee'] ?? 200,
-                'total_amount'     => $fees['total_amount'],
+                'device_fee'      => $deviceFee,
+                'total_amount'     => $fees['total_amount'] + $deviceFee,
                 'cable_charge'  => $fees['cable_charge'],
             ]);
         });

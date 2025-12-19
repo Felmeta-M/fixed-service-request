@@ -16,12 +16,11 @@ class PaymentResource extends JsonResource
     {
         return [
             // 'customer_survey_order_id' => $this->customer_survey_order_id,
-            'total_amount'          => $this->amount,
-            'cable_charge'     => $this->cable_charge,
             'status'          => $this->status->label(),
             'cable_charge' => $this->cable_charge,
             'subscription_fee' => $this->subscription_fee,
             'device_price' => $this->device_fee,
+            'total_amount'          => $this->total_amount,
             // 'created_at' => $this->created_at?->format('Y-m-d'),
         ];
     }

@@ -61,6 +61,10 @@ abstract class BaseSurveyService extends BaseApiService
         array $data,
         array $resource
     ): void {
+
+        //payment table her
+        // if survey is data not one of fee calculation
+
         SurveyRequest::create([
             ...$data,
             'customer_survey_order_id' => $surveyOrderId,

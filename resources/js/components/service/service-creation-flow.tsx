@@ -2,8 +2,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSurveyList } from '@/hooks/use-survey-list';
 import { useResourceChecker } from '@/lib/resource-check';
-import { usePage } from '@inertiajs/react';
-import { ArrowLeft, ChevronRight, FileText, Loader2 } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { ArrowLeft, ChevronRight, FileText, Loader2, MoveLeftIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CustomerCreationStep } from './steps/customer-creation-step';
 import { LocationSetupStep } from './steps/location-setup-step';
@@ -210,6 +210,15 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             <CardHeader className="bg-white pr-2 pl-2">
                 <div className="flex items-center justify-between">
                     <div>
+                        <Link href={route("services")}>
+                            <Button
+                                variant="link"
+                                size="icon"
+                                className="h-10 w-10"
+                            >
+                                <MoveLeftIcon className="h-5 w-5" /> Back
+                            </Button>
+                        </Link>
                         <CardTitle className="text-lg font-bold text-gray-900 lg:text-xl">{stepTitles[currentStep]?.title}</CardTitle>
                         <CardDescription className="text-sm text-gray-500 lg:text-base">{stepTitles[currentStep]?.description}</CardDescription>
                     </div>

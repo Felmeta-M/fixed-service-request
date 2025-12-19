@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Helpers\TelebirrHelper;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log as FacadesLog;
 use Log;
 use RuntimeException;
 
@@ -49,9 +50,12 @@ class CreateOrderService
         // 1️⃣ Get Fabric token
         $tokenService = app(FabricTokenService::class);
         $fabricToken = $tokenService->applyFabricToken();
+        // send query order
+        // if ($this->isPaymentInitiated($data['customerSurveyOrderId'])) {
+        //     $order = $this->requestQueryOrder($data);
+        // }
         // 2️⃣ Send create order request
         $prepay_id = $this->requestCreateOrder($fabricToken, $data);
-
 
         // 3️⃣ Build rawRequest string for H5 page
         return $this->createRawRequest($prepay_id);
@@ -71,7 +75,9 @@ class CreateOrderService
             'X-APP-Key' => $this->fabricAppId,
             'Authorization' => $fabricToken,
         ])
-            ->withoutVerifying() // disables SSL verification (only for testing!)
+            ->withOptions([
+                'verify' => false, // app()->isProduction()
+            ])
             ->post($url, $payload); // convert JSON string to array
 
         if ($response->failed()) {
@@ -84,6 +90,33 @@ class CreateOrderService
         return $object->biz_content->prepay_id ?? null;
     }
 
+    protected function requestQueryOrder($fabricToken, array $data)
+    {
+        $url = $this->baseUrl . '/payment/v1/merchant/queryOrder';
+
+        $payload = self::createQueryObject($data);
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'X-APP-Key' => $this->fabricAppId,
+            'Authorization' => $fabricToken,
+        ])
+            ->withOptions([
+                'verify' => false, // app()->isProduction()
+            ])
+            ->post($url, $payload); // convert JSON string to array
+
+        if ($response->failed()) {
+            Log::error("HTTP error: {$response->status()} with response: " . $response->body());
+            throw new RuntimeException("Create order request failed.");
+        }
+
+        $object = $response->object();
+        Log::info($object);
+
+        // return $object ?? null;
+    }
+
     /**
      * Create request object for Fabric API
      */
@@ -93,7 +126,7 @@ class CreateOrderService
 
         $payment = $this->paymentService->find($data['customerSurveyOrderId']);
 
-        if ($payment->status === FFDServiceProvisionStatus::Paid->value) {
+        if ($payment->status === FFDServiceProvisionStatus::Paid) {
             throw new RuntimeException("Your payment has already been processed. No further action is needed.");
         }
 
@@ -125,8 +158,61 @@ class CreateOrderService
             'payee_identifier' => $this->merchantCode,
             'payee_identifier_type' => '04',
             'payee_type' => '5000',
-            'redirect_url' => route('services')
+            'redirect_url' => route('payment.success')
 
+        ];
+
+        $request['biz_content'] = $biz;
+        $request['sign_type'] = 'SHA256WithRSA';
+
+        $request['sign'] = app(TelebirrSignerService::class)->sign($request);
+
+        return $request;
+    }
+
+    protected function isPaymentInitiated(string $customerSurveyOrderId): bool
+    {
+        $payment = $this->paymentService->find($customerSurveyOrderId);
+
+        return !empty($payment?->merch_order_id);
+    }
+
+
+    protected function createQueryObject(array $data): array
+    {
+        $merchantOrderId = TelebirrHelper::createMerchantOrderId();
+
+        $payment = $this->paymentService->find($data['customerSurveyOrderId']);
+
+        if ($payment->status === FFDServiceProvisionStatus::Paid) {
+            throw new RuntimeException("Your payment has already been processed. No further action is needed.");
+        } {
+
+            // "timestamp": "1535166225",
+            // "nonce_str": "5K8264ILTKCH16CQ2502SI8ZNMTM67VS",
+            // "method": "payment.queryorder",
+            // "sign_type": "SHA256WithRSA",
+            // "sign": "iq33P+PJk1A+aArrb9cFQk1zAXTJ8gp3+1fuonRETw26Hbjo1DLy7ANgQsp0DaFOnKCGLCDDTpIohH7kypuOcxjWrkjdyULNl2rIQEseTKugFp4UozwmXXO8Bfv/eEP//S0IEUlq7Y0wrUQU82g+A8JwvZPIU5furEadJx/Bj17Pbsjp4oeteS0fxORH80JUNeRKVhDRYl6bKyAX7V8mZRZhGDFLrdYc/rHiSg9+nVh5v5vmtzJ9v6zhVEJkLB8G5AG9KvD4Mf1PXmsszh40JIyft5X2Abc54cIDgfmX8cYIPA6fE6ftHJcAM+Gk74YehMIvQw3d75rZX/k17JdKZQ==",
+            // "version": "1.0",
+            // "biz_content": {
+            //     "appid": "{{MerchantId}}",
+            //     "merch_code": "{{MerchantCode}}",
+            // 	"merch_order_id": "{{merch_order_id}}"
+            // }
+        }
+
+        $request = [
+            'nonce_str' => (string) TelebirrHelper::createNonceStr(),
+            'method' => 'payment.queryorder',
+            'timestamp' => (string) TelebirrHelper::createTimeStamp(),
+            'version' => '1.0',
+            'biz_content' => [],
+        ];
+
+        $biz = [
+            'appid' => $this->merchantAppId,
+            'merch_code' => $this->merchantCode,
+            'merch_order_id' => (string) $merchantOrderId
         ];
 
         $request['biz_content'] = $biz;

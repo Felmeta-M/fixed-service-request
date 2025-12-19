@@ -116,6 +116,14 @@ Route::middleware(['otp.auth'])->group(function () {
 
 Route::post('/telebirr/notify', [TelebirrController::class, 'notify'])->name('telebirr.notify');
 
+Route::get('/payment/success', function () {
+    return Inertia::render('PaymentSuccess', [
+        'amount' => '49.99',
+        'currency' => 'USD',
+        'reference' => 'PAY-123456',
+    ]);
+})->name('payment.success');
+
 // Route::get('/health', function () {
 //     return response()->json([
 //         'status' => 'healthy',

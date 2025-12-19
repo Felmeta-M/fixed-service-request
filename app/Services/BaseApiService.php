@@ -57,7 +57,7 @@ abstract class BaseApiService
             ->timeout($this->timeout)
             ->retry($this->maxRetries, 200, throw: false)
             ->withOptions([
-                'verify' => false, // dev only
+                'verify' => false, // app()->isProduction()
             ])
             ->withBody($xmlPayload, 'text/xml')
             ->post($this->endpoint());

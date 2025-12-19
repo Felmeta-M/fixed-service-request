@@ -49,8 +49,8 @@ export default function CreateComplaintPage() {
     } = useForm<ComplaintFormValues>({
         trouble_title: '',
         access_number: '',
-        contact_person: auth?.user?.name || '',
-        mobile_no: auth?.user?.phone || '',
+        contact_person: '',
+        mobile_no: '',
         trouble_reason: '',
         tt_description: '',
     });
@@ -62,6 +62,7 @@ export default function CreateComplaintPage() {
         clearErrors();
 
         const validation = complaintSchema.safeParse(data);
+        console.log("🚀 ~ handleSubmit ~ validation:", validation)
         if (!validation.success) {
             validation.error.errors.forEach((err) => {
                 const field = err.path[0] as keyof ComplaintFormValues;

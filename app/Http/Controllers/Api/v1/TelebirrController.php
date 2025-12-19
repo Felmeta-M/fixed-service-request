@@ -91,7 +91,6 @@ class TelebirrController extends Controller
         DB::transaction(function () use ($payment, $data) {
 
             if ($data['trade_status'] === 'Completed') {
-
                 $payment->update([
                     'status'          => FFDServiceProvisionStatus::Paid,
                     'transaction_id'  => $data['transId'],

@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\TroubleTicket;
 use App\Services\ApiResponse;
 use App\Services\BaseApiService;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class CreateTTService extends BaseApiService
@@ -26,7 +27,7 @@ class CreateTTService extends BaseApiService
             $data['trouble_title'] = "Fixed Services Provisioning System Complaint";
             $xmlPayload  = $this->buildRequestXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            // Log::info($xmlResponse);
+            Log::info($xmlResponse);
             $parsed = $this->parseResponseXml($xmlResponse, $data);
             return $parsed;
         } catch (\RuntimeException $e) {

@@ -46,7 +46,7 @@ export default function MainLayout({ children, currentStep = 0, isNewCustomer = 
                     steps={steps}
                 /> */}
                 <main className="flex flex-1 flex-col py-2">{children}</main>
-                 <Toaster />
+                <Toaster position="top-center" />
             </SidebarInset>
         </SidebarProvider>
     );

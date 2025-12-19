@@ -126,6 +126,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                         if (status === 5) return 'success';
                         if (status === 3) return 'warning';
                         if (status === 9) return 'destructive';
+                        if (status === 11) return 'success';
                         if (status === 14) return 'success';
                         return 'default';
                     };

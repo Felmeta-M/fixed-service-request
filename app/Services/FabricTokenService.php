@@ -34,7 +34,7 @@ class FabricTokenService
         ])
             ->timeout(30)
             ->withOptions([
-                'verify' => false, // dev only
+                'verify' => false, // app()->isProduction()
             ])
             ->post("{$this->baseUrl}/payment/v1/token", [
                 'appSecret' => $this->appSecret,

@@ -201,7 +201,7 @@ export function PaymentSummary({
                                 </div>
                                 <div className="space-y-3">
                                     <DetailItem label="Subscription Type" value="New Connection" badge={{ variant: 'default', text: 'New' }} />
-                                    <DetailItem label="Service request number" value={customer_survey_order_id} />
+                                    <DetailItem label="Order request number" value={customer_survey_order_id} />
                                 </div>
                             </div>
                         </CardContent>

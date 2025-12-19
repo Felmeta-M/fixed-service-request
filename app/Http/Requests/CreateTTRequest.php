@@ -13,18 +13,18 @@ class CreateTTRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if ($this->has('access_number')) {
-            $digits = preg_replace('/\D/', '', $this->access_number);
+        // if ($this->has('access_number')) {
+        //     $digits = preg_replace('/\D/', '', $this->access_number);
 
-            // Take last 9 digits
-            if (strlen($digits) >= 9) {
-                $digits = substr($digits, -9);
-            }
+        //     // Take last 9 digits
+        //     if (strlen($digits) >= 9) {
+        //         $digits = substr($digits, -9);
+        //     }
 
-            $this->merge([
-                'access_number' => $digits,
-            ]);
-        }
+        //     $this->merge([
+        //         'access_number' => $digits,
+        //     ]);
+        // }
 
         if ($this->has('mobile_no')) {
             $digits = preg_replace('/\D/', '', $this->mobile_no);

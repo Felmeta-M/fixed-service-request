@@ -22,7 +22,7 @@ class PaymentService
                 [
                     'customer_code' => $data['customer_code'],
                     'customer_survey_order_id' => $data['customer_survey_order_id'],
-                    'amount' => $data['amount'] ?? 0,
+                    'total_amount' => $data['total_amount'] ?? 0,
                     'payload' => $data['payload'] ?? [],
                     'status' => $data['status'] ?? FFDServiceProvisionStatus::Pending->value,
                 ]
@@ -48,7 +48,7 @@ class PaymentService
                 [
                     'service_number' => $data['service_number'],
                     'customer_code'  => $customer->customer_code,
-                    'amount'         => $data['amount'],
+                    'total_amount'         => $data['total_amount'],
                     'cable_charge' => $data['labor_material_transport_cost'],
                     'status'         => FFDServiceProvisionStatus::Pending->value,
                     'updated_at'     => now(),

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\SurveyRequest;
 use App\Services\OneOffFeeService;
+use App\Services\PaymentCalculatorService;
 use App\Services\PaymentService;
 use App\Traits\CableChargeTrait;
 use Exception;
@@ -26,7 +27,6 @@ class OneOffFeeController extends Controller
 
     public function calculateOneOffFee(Request $request)
     {
-        // Validate JSON input
         $validated = $request->validate([
             'business_code' => 'required|string',
             'customer.type' => 'required|integer',
@@ -41,42 +41,32 @@ class OneOffFeeController extends Controller
             'sub_order.network_type' => 'required|integer',
             'sub_order.sub_type' => 'required|integer',
             'sub_order.offering_id' => 'required|integer',
+            'customer_survey_order_id' => 'required|string',
         ]);
 
-        // Calculate one-off fee
         $feeResult = $this->oneOffFeeService->calculateOneOffFee($validated);
         $feeData = $feeResult->getData(true);
 
         if (!($feeData['success'] ?? false)) {
-            // Return the fee result if calculation fails
             return $feeResult;
         }
 
         $oneOffFee = (int) $this->computeTotalFeeAmount($feeData['data']['fees']);
 
-        // Retrieve survey request
-        $surveyRequest = SurveyRequest::query()
-            ->where('customer_survey_order_id', $request->customer_survey_order_id)
-            ->first();
+        $survey = SurveyRequest::where(
+            'customer_survey_order_id',
+            $validated['customer_survey_order_id']
+        )->firstOrFail();
 
-        if (!$surveyRequest) {
-            throw new Exception('Survey request not found');
-        }
+        $calculated = app(PaymentCalculatorService::class)
+            ->calculateForSurvey($survey, $oneOffFee);
 
-        $cableCharge = $this->calculateCableCharge($surveyRequest->cable_length, $surveyRequest->cable_type, $surveyRequest->status);
-
-        // Final amount including cable charge
-        $totalAmount = $oneOffFee + $cableCharge;
-
-        // Create or update payment
-        $data = [
-            'customer_survey_order_id' => $request->customer_survey_order_id,
-            'service_number' => $surveyRequest->service_number,
-            'amount' => $totalAmount,
-            'labor_material_transport_cost' =>  $cableCharge,
-        ];
-
-        $this->payment_service->createOrUpdatePayment($data);
+        $this->payment_service->createOrUpdatePayment([
+            'customer_survey_order_id' => $survey->customer_survey_order_id,
+            'service_number'           => $survey->service_number,
+            'total_amount'                   => $calculated['amount'],
+            'labor_material_transport_cost' => $calculated['cable_charge'],
+        ]);
 
         return $feeData;
     }
@@ -94,7 +84,7 @@ class OneOffFeeController extends Controller
     }
 
 
-    private function computeTotalFeeAmount(array $fees)
+    protected function computeTotalFeeAmount(array $fees)
     {
         $total = 0;
 

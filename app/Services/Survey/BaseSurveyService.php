@@ -5,13 +5,18 @@ namespace App\Services\Survey;
 use App\Services\BaseApiService;
 use App\Models\SurveyRequest;
 use App\Enums\FFDServiceProvisionStatus;
+use App\Services\PaymentCalculatorService;
+use App\Services\PaymentService;
 use App\Services\ResourceService;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 abstract class BaseSurveyService extends BaseApiService
 {
     protected int $timeout = 10;
     protected int $rateLimit = 15;
+
+    public function __construct(protected readonly PaymentService $payment_service) {}
 
     protected function endpoint(): string
     {
@@ -62,18 +67,48 @@ abstract class BaseSurveyService extends BaseApiService
         array $resource
     ): void {
 
-        //payment table her
-        // if survey is data not one of fee calculation
+        DB::transaction(function () use ($surveyOrderId, $data, $resource) {
 
-        SurveyRequest::create([
-            ...$data,
-            'customer_survey_order_id' => $surveyOrderId,
-            'status' => FFDServiceProvisionStatus::Completed->value,
-            'cable_length' => $resource['distance'] ?? null,
-            'cable_type'   => $resource['cable_type'] ?? null,
-            'lat'          => $resource['latitude'] ?? null,
-            'long'         => $resource['longitude'] ?? null,
-        ]);
+            $data = [
+                'business_code'               => 'CO064',
+                'customer_type'               => 1,
+                'customer_category'           => 1,
+                'customer_subcategory'        => 1,
+                'customer_level'              => 6,
+                'customer_nationality'        => 1231,
+                'customer_id_type'            => 2,
+                'sub_order_business_code'     => 'CO015',
+                'sub_order_external_sequence' => uniqid(),
+                'service_number'              => '123457155', // or $survey->service_number
+                'network_type'                => 4,
+                'sub_type'                    => 0,
+                'offering_id'                 => 1207609454,  // or $survey->main_offer_id
+                'cable_length'                => 0,           // default for test
+                'cable_type'                  => 0,           // default for test
+                'customer_survey_order_id'    => $surveyOrderId
+            ];
+
+
+            $survey = SurveyRequest::create([
+                ...$data,
+                'customer_survey_order_id' => $surveyOrderId,
+                'status' => FFDServiceProvisionStatus::Completed->value,
+                'cable_length' => $resource['distance'] ?? null,
+                'cable_type'   => $resource['cable_type'] ?? null,
+                'lat'          => $resource['latitude'] ?? null,
+                'long'         => $resource['longitude'] ?? null,
+            ]);
+
+            $calculator = app(PaymentCalculatorService::class);
+            $fees = $calculator->calculateFees($survey, $validatedRequestData ?? null);
+
+            $this->payment_service->createOrUpdatePayment([
+                'customer_survey_order_id'       => $survey->customer_survey_order_id,
+                'service_number'                 => $survey->service_number,
+                'total_amount'                         => $fees['total_amount'],
+                'labor_material_transport_cost'  => $fees['cable_charge'],
+            ]);
+        });
     }
 
     /** Service-specific hooks */

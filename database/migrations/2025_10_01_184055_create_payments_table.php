@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->bigInteger('merch_order_id')->nullable();
             $table->bigInteger('payment_order_id')->nullable();
             $table->bigInteger('trans_id')->nullable()->unique();
-            $table->decimal('amount', 12, 4);
+            $table->decimal('total_amount', 12, 4);
             $table->decimal('cable_charge', 12, 2);
             $table->enum('status', array_column(FFDServiceProvisionStatus::cases(), 'value'))
                 ->default(FFDServiceProvisionStatus::Pending->value);

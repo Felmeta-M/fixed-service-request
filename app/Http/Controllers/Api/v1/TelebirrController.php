@@ -94,7 +94,7 @@ class TelebirrController extends Controller
                 $payment->update([
                     'status'          => FFDServiceProvisionStatus::Paid,
                     'trans_id'  => $data['transId'],
-                    'amount'          => $data['total_amount'],
+                    'total_amount'          => $data['total_amount'],
                     'payment_order_id' => $data['payment_order_id'],
                     'payload' => $data,
                 ]);

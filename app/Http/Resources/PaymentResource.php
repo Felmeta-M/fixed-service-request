@@ -18,7 +18,7 @@ class PaymentResource extends JsonResource
             // 'customer_survey_order_id' => $this->customer_survey_order_id,
             'total_amount'          => $this->amount,
             'cable_charge'     => $this->cable_charge,
-            // 'status'          => $this->status->label(),
+            'status'          => $this->status->label(),
             'cable_charge' => $this->cable_charge,
             'subscription_fee' => $this->subscription_fee,
             'device_price' => $this->device_fee,

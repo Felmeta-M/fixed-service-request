@@ -13,8 +13,8 @@ interface SiteHeaderProps {
 }
 
 const createServiceSteps = [
-    { name: 'Service Selection', icon: Wifi },
-    { name: 'Location Setup', icon: MapPin },
+    { name: 'Service Information', icon: Wifi },
+    { name: 'Location Information', icon: MapPin },
     { name: 'Review & Submit', icon: FileText },
 ];
 

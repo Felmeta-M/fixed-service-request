@@ -68,7 +68,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                                 name="serviceType"
                                 value={service.value}
                                 checked={isSelected}
-                                onChange={() => { }}
+                                onChange={() => {}}
                                 className="absolute inset-0 cursor-pointer opacity-0"
                                 disabled={hasActiveSurvey}
                             />
@@ -90,7 +90,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                 })}
             </div>
             {/* Bandwidth Selection (Only for Broadband) */}
-            {formData.serviceType === '1457567289' && !hasActiveSurvey && (
+            {(formData.serviceType === '1457567289' || formData.serviceType === '180427974') && !hasActiveSurvey && (
                 <div className="mt-6">
                     <BandwidthSelector
                         residentialOptions={residentialOptions}

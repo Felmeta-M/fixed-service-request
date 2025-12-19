@@ -176,6 +176,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 .replace(/[-:T.Z]/g, '')
                 .slice(0, 14),
         };
+        console.log("🚀 ~ handleSubscribe ~ payload:", payload)
 
         const response = await fetch('/api/v1/services/subscription', {
             method: 'POST',

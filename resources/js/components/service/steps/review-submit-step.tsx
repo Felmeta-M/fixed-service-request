@@ -1,7 +1,9 @@
+import { PaymentSummary } from '@/components/payment/payment-summary';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { delay } from '@/lib/utils';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { CheckCircle, Loader2, Wifi } from 'lucide-react';
@@ -10,6 +12,7 @@ import { useState } from 'react';
 interface ReviewSubmitStepProps {
     formData: any;
     onBack: () => void;
+    onNext?: (survey: any) => void;
 }
 
 const serviceTypes = {
@@ -18,77 +21,257 @@ const serviceTypes = {
     '180427974': { name: 'Combo Services', icon: Wifi, color: 'purple' },
 };
 
-export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
+export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepProps) {
     const { user } = usePage().props.auth;
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [paymentDetails, setPaymentDetails] = useState<any>(null);
+    const [surveyData, setSurveyData] = useState<any>(null);
 
     const serviceInfo = serviceTypes[formData.serviceType as keyof typeof serviceTypes];
+    const isPaymentService = formData.serviceType !== '1457567289';
+
+    const generateExternalSequence = () => {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = (Math.random() * 16) | 0;
+            const v = c == 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+        });
+    };
+
+    const fetchAvailableNumbers = async () => {
+        const response = await fetch('/api/v1/avaiable-number', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${user.api_token}`,
+            },
+            body: JSON.stringify({
+                pay_mode: '1',
+                tele_type: '4',
+                need_query_by_dept: false,
+                res_cnt: 1,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (Array.isArray(result) && result.length > 0) return result;
+
+        throw new Error('No available numbers found');
+    };
+
+    const calculateServiceFees = async (serviceNumber: string, surveyId: string) => {
+        const response = await fetch('/api/v1/calc-one-off-fee', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${user.api_token}`,
+            },
+            body: JSON.stringify({
+                customer_survey_order_id: String(surveyId),
+                business_code: 'CO064',
+                customer: {
+                    type: 1,
+                    category: 1,
+                    subcategory: 1,
+                    level: 6,
+                    nationality: 1231,
+                    id_type: 2,
+                },
+                sub_order: {
+                    business_code: 'CO015',
+                    external_sequence: generateExternalSequence(),
+                    service_number: serviceNumber,
+                    offering_id: formData.serviceType || '1207609454',
+                    network_type: 4,
+                    sub_type: 0,
+                },
+            }),
+        });
+
+        const result = await response.json();
+        console.log('calc-one-off-fee result', result);
+
+        if (!result.success) {
+            const errorMsg = result.message || 'Failed to calculate fees';
+            throw new Error(errorMsg);
+        }
+
+        return result.data;
+    };
+
+    const handleSurveyRequest = async () => {
+        const submitData = {
+            customer_code: user.customer_code.toString(),
+            survey_type: 'EIC08',
+            telecom_region: '104',
+            oper_type: 'A',
+            main_offer_id: formData.serviceType,
+            survey_address_info: {
+                region_city: '2',
+                subcity_zone: '11',
+                wereda_town: '141',
+                kebele: '',
+                latitude: formData.latitude,
+                longitude: formData.longitude,
+                address: formData.address || '',
+            },
+            bandwidth: formData.bandwidth,
+            contact_person: formData.contactPerson,
+            contact_no: formData.contactNo || user.phone_number,
+            contact_email: formData.contactEmail || user.email,
+            completed_date: new Date()
+                .toISOString()
+                .replace(/[-:T.Z]/g, '')
+                .slice(0, 14),
+            external_operid: '512',
+            customer_type: formData.customerType || 'residential',
+        };
+        const response = await axios.post('/api/v1/survey/create', submitData, {
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${user.api_token}`,
+            },
+        });
+
+        const isSurveySuccess = response.data.success && response.data.data?.original?.success !== false;
+
+        if (!isSurveySuccess) {
+            const errorMsg = response.data.data?.original?.message || response.data.message || 'Failed to create service request';
+            throw new Error(errorMsg);
+        }
+
+        return response;
+    };
+    
+    const handleSubscribe = async (surveyId: string) => {
+        const [first_name, middle_name, last_name] = (user?.name ?? '').split(' ');
+
+        const payload = {
+            offering_id: formData.serviceType,
+            survey_order_id: surveyId,
+            customer_code: user.customer_code,
+            first_name,
+            middle_name,
+            last_name,
+            enterprise_name: user.enterprise_name ?? 'Test Enterprise',
+            region: 'Addis Ababa', //TODO: replaced by actual data
+            city: 'Addis Ababa',
+            zone: 'Central',
+            wereda: '01',
+            kebele: '01',
+            house_no: '123',
+            sms_no: "251911234567",
+            external_operid: '512', //Todo: figure it out
+            completed_date: new Date()
+                .toISOString()
+                .replace(/[-:T.Z]/g, '')
+                .slice(0, 14),
+        };
+        console.log("🚀 ~ handleSubscribe ~ payload:", payload)
+
+        const response = await axios.post('/api/v1/services/subscription', payload, {
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${user.api_token}`,
+            },
+        });
+
+        const result = response.data;
+        console.log('subscription result', result);
+
+        if (!result.success) {
+            throw new Error(result.message || 'Subscriber creation failed');
+        }
+
+        return result;
+    };
 
     const handleSubmit = async () => {
         setSubmitting(true);
         setError('');
 
         try {
-            const submitData = {
-                customer_code: user.customer_code.toString(),
-                survey_type: 'EIC08',
-                telecom_region: '104',
-                oper_type: 'A',
+            // 1. Create Survey
+            const response = await handleSurveyRequest();
+            console.log('🚀 ~ handleSubmit ~ response:', response);
+
+            const responseData = response.data.data;
+
+            const { customer_survey_order_id: surveyId } = responseData;
+
+            const newSurvey = {
+                id: surveyId,
+                type: serviceInfo?.name || 'Service Request',
+                status: 'waiting',
+                createdAt: new Date().toISOString(),
+                // customerCode,
                 main_offer_id: formData.serviceType,
-                survey_address_info: {
-                    region_city: '2',
-                    subcity_zone: '11',
-                    wereda_town: '141',
-                    kebele: '',
-                    latitude: formData.latitude,
-                    longitude: formData.longitude,
-                    address: formData.address || '',
-                },
-                bandwidth: formData.bandwidth,
-                contact_person: formData.contactPerson,
-                contact_no: formData.contactNo || user.phone_number,
-                contact_email: formData.contactEmail || user.email,
-                completed_date: new Date()
-                    .toISOString()
-                    .replace(/[-:T.Z]/g, '')
-                    .slice(0, 14),
-                external_operid: '512',
-                customer_type: formData.customerType || 'residential',
             };
 
-            const response = await axios.post('/api/v1/survey/create', submitData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user.api_token}`,
-                },
-            });
+            // Save to local storage
+            const existingSurveys = JSON.parse(localStorage.getItem('userSurveys') || '[]');
+            existingSurveys.push(newSurvey);
+            localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
 
-            if (response.data.success) {
-                const newSurvey = {
-                    id: response.data.survey_id || Date.now(),
-                    type: serviceInfo.name,
-                    status: 'waiting',
-                    createdAt: new Date().toISOString(),
-                    customerCode: submitData.customer_code,
-                    main_offer_id: formData.serviceType,
-                };
+            setSurveyData(newSurvey);
 
-                const existingSurveys = JSON.parse(localStorage.getItem('userSurveys') || '[]');
-                existingSurveys.push(newSurvey);
-                localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
+            // 2. Proceed to Subscription or Payment
+            if (isPaymentService) {
+                // Payment Flow
+                try {
+                    const availableNumbers = await fetchAvailableNumbers();
+                    const serviceNumber = availableNumbers[0]?.ServiceNumber;
+                    if (!serviceNumber) throw new Error('No service numbers available at the moment. Please try again later.');
 
-                // Redirect to services
-                router.visit('/services');
+                    const feeData = await calculateServiceFees(serviceNumber, surveyId);
+
+                    setPaymentDetails({
+                        data: feeData.payment_record,
+                        serviceNumber,
+                        feeData,
+                    });
+
+                    setSubmitting(false);
+                    return;
+                } catch (payErr: any) {
+                    console.error('Payment setup failed:', payErr);
+                    setError(payErr.message || 'Failed to setup payment. Please try again.');
+                    setSubmitting(false);
+                    return;
+                }
             } else {
-                setError(response.data.message || 'Failed to create service request');
+                // Subscription Flow
+                try {
+                    await delay(15000)
+                    await handleSubscribe(surveyId);
+
+                    router.visit('/services');
+                } catch (subError: any) {
+                    console.error('Subscription failed:', subError, subError?.response?.data);
+                    setError(
+                        subError.response?.data?.message ||
+                        subError.message ||
+                        'Survey created, but subscription failed. Please try again from the dashboard.',
+                    );
+                    setSubmitting(false);
+                }
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to submit service request');
-        } finally {
+            console.error('Submission error:', err);
+            setError(err.response?.data?.message || err.message || 'Failed to submit service request');
             setSubmitting(false);
         }
     };
+
+    if (paymentDetails) {
+        return (
+            <div className="space-y-6">
+                <PaymentSummary paymentDetails={paymentDetails} surveyDetails={surveyData} />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -217,12 +400,12 @@ export function ReviewSubmitStep({ formData, onBack }: ReviewSubmitStepProps) {
                     {submitting ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Submitting...
+                            Processing...
                         </>
                     ) : (
                         <>
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Submit
+                            {formData.serviceType === '1457567289' ? 'Subscribe' : 'Pay'}
                         </>
                     )}
                 </Button>

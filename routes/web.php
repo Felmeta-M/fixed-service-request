@@ -77,6 +77,10 @@ Route::middleware(['otp.auth'])->group(function () {
     Route::post('/logout', [OtpAuthController::class, 'logout'])->name('logout');
     Route::get('/create-customer', fn() => Inertia::render('Customers/Create'))->name('customers.create');
 
+    Route::get('/complaints', fn() => Inertia::render('Complaints/Index'))->name('complaints.index');
+    Route::get('/complaints/create', fn() => Inertia::render('Complaints/Create'))->name('complaints.create');
+
+
     Route::get('/create-survey-requests', fn() => Inertia::render('SurveyRequests/Create'))->name('survey.create');
 
     Route::get('/survey-requests/create-subscriber/{id}', function ($id) {

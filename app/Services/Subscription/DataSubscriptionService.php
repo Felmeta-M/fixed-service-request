@@ -54,18 +54,25 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
     protected function buildXml(array $data): string
     {
+        $email = $this->generateEmail();
+
         $cfg = config('services.subscriber');
         $cfg['default_password'] = "REDACTED_PASSWORD";
 
-        $response = $this->get_combining_service->getByServiceNumber($data['access_number']);
-        $responseData = $response->getData(true);
-        $subscriber = $this->getSubscriber($responseData);
-
-        $email = $this->generateEmail();
-
-        $customer = Customer::current();
+        // $response = $this->get_combining_service->getByServiceNumber($data['access_number']);
+        // $responseData = $response->getData(true);
+        // $subscriber = $this->getSubscriber($responseData);
+        // //TODO: to be replaced by frontend data
+        // $data['region'] = $subscriber['addresses'][0]['address1'];
+        // $data['city'] = $subscriber['addresses'][0]['address2'];
+        // $data['zone'] = $subscriber['addresses'][0]['address3'];
+        // $data['wereda'] = $subscriber['addresses'][0]['address4'];
+        // $data['kebele'] = $subscriber['addresses'][0]['address5'];
+        // $data['house_no'] = $subscriber['addresses'][0]['address6'];
+        // $data['sms_no'] = "";
 
         //TODO: to be replaced by frontend data
+        $customer = Customer::current();
         $data['region'] = $customer->region ??  30;
         $data['city'] = $customer->city ?? 1;
         $data['zone'] = $customer->zone ?? 6;
@@ -73,7 +80,6 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
         $data['kebele'] = $customer->kebele ?? $data['kebele'];
         $data['house_no'] = $customer->kebele ?? $data['house_no'];
         $data['sms_no'] = $customer->phone_number ?? $data['sms_no'];
-
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"

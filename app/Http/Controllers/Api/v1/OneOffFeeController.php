@@ -6,9 +6,9 @@ use App\Enums\FFDServiceProvisionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\SurveyRequest;
-use App\Services\OneOffFeeService;
+use App\Services\Payment\OneOffFeeService;
 use App\Services\PaymentCalculatorService;
-use App\Services\PaymentService;
+use App\Services\Payment\PaymentService;
 use App\Traits\CableChargeTrait;
 use Exception;
 use Illuminate\Http\Request;
@@ -27,48 +27,47 @@ class OneOffFeeController extends Controller
 
     public function calculateOneOffFee(Request $request)
     {
-        $validated = $request->validate([
-            'business_code' => 'required|string',
-            'customer.type' => 'required|integer',
-            'customer.category' => 'required|integer',
-            'customer.subcategory' => 'required|integer',
-            'customer.level' => 'required|integer',
-            'customer.nationality' => 'required|integer',
-            'customer.id_type' => 'required|integer',
-            'sub_order.business_code' => 'required|string',
-            'sub_order.external_sequence' => 'nullable|string',
-            'sub_order.service_number' => 'required|string',
-            'sub_order.network_type' => 'required|integer',
-            'sub_order.sub_type' => 'required|integer',
-            'sub_order.offering_id' => 'required|integer',
-            'customer_survey_order_id' => 'required|string',
-        ]);
+        // $validated = $request->validate([
+        //     'business_code' => 'required|string',
+        //     'customer.type' => 'required|integer',
+        //     'customer.category' => 'required|integer',
+        //     'customer.subcategory' => 'required|integer',
+        //     'customer.level' => 'required|integer',
+        //     'customer.nationality' => 'required|integer',
+        //     'customer.id_type' => 'required|integer',
+        //     'sub_order.business_code' => 'required|string',
+        //     'sub_order.external_sequence' => 'nullable|string',
+        //     'sub_order.service_number' => 'required|string',
+        //     'sub_order.network_type' => 'required|integer',
+        //     'sub_order.sub_type' => 'required|integer',
+        //     'sub_order.offering_id' => 'required|integer',
+        //     'customer_survey_order_id' => 'required|string',
+        // ]);
 
-        $feeResult = $this->oneOffFeeService->calculateOneOffFee($validated);
-        $feeData = $feeResult->getData(true);
+        // $feeResult = $this->oneOffFeeService->calculateOneOffFee($validated);
+        // $feeData = $feeResult->getData(true);
 
-        if (!($feeData['success'] ?? false)) {
-            return $feeResult;
-        }
+        // if (!($feeData['success'] ?? false)) {
+        //     return $feeResult;
+        // }
 
-        $oneOffFee = (int) $this->computeTotalFeeAmount($feeData['data']['fees']);
+        // $oneOffFee = (int) $this->computeTotalFeeAmount($feeData['data']['fees']);
 
-        $survey = SurveyRequest::where(
-            'customer_survey_order_id',
-            $validated['customer_survey_order_id']
-        )->firstOrFail();
+        // $survey = SurveyRequest::where(
+        //     'customer_survey_order_id',
+        //     $validated['customer_survey_order_id']
+        // )->firstOrFail();
 
-        $calculated = app(PaymentCalculatorService::class)
-            ->calculateForSurvey($survey, $oneOffFee);
+        // $calculated = app(PaymentCalculatorService::class)->calculateFees($survey, $oneOffFee);
 
-        $this->payment_service->createOrUpdatePayment([
-            'customer_survey_order_id' => $survey->customer_survey_order_id,
-            'service_number'           => $survey->service_number,
-            'total_amount'                   => $calculated['amount'],
-            'labor_material_transport_cost' => $calculated['cable_charge'],
-        ]);
+        // $this->payment_service->createOrUpdatePayment([
+        //     'customer_survey_order_id' => $survey->customer_survey_order_id,
+        //     'service_number'           => $survey->service_number,
+        //     'total_amount'                   => $calculated['amount'],
+        //     'labor_material_transport_cost' => $calculated['cable_charge'],
+        // ]);
 
-        return $feeData;
+        // return $feeData;
     }
 
 

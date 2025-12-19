@@ -1,7 +1,9 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Payment;
 
+use App\Services\ApiResponse;
+use App\Services\BaseApiService;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Throwable;
@@ -56,29 +58,29 @@ class OneOffFeeService extends BaseApiService
                 <com:AccessPwd>{$credentials['access_pwd']}</com:AccessPwd>
             </ser:RequestHeader>
             <ser:CalcOneOffFeeReqBody>
-                <com:BusinessCode>{$data['business_code']}</com:BusinessCode>
+                <com:BusinessCode>CO064</com:BusinessCode>
                 <com:CustomerBusiOrder>
                     <com:CustomerInfo>
-                        <com:CustomerType>{$data['customer']['type']}</com:CustomerType>
-                        <com:CustomerCategory>{$data['customer']['category']}</com:CustomerCategory>
-                        <com:CustomerSubcategory>{$data['customer']['subcategory']}</com:CustomerSubcategory>
-                        <com:CustomerLevel>{$data['customer']['level']}</com:CustomerLevel>
-                        <com:Nationality>{$data['customer']['nationality']}</com:Nationality>
-                        <com:IdentificationType>{$data['customer']['id_type']}</com:IdentificationType>
+                        <com:CustomerType>{$data['customer_type']}</com:CustomerType>
+                        <com:CustomerCategory>{$data['customer_category']}</com:CustomerCategory>
+                        <com:CustomerSubcategory>{$data['customer_subcategory']}</com:CustomerSubcategory>
+                        <com:CustomerLevel>{$data['customer_level']}</com:CustomerLevel>
+                        <com:Nationality>{$data['customer_nationality']}</com:Nationality>
+                        <com:IdentificationType>{$data['customer_id_type']}</com:IdentificationType>
                     </com:CustomerInfo>
                 </com:CustomerBusiOrder>
                 <com:SubBusiOrderList>
                     <com:SubBusiOrder>
-                        <com:BusinessCode>{$data['sub_order']['business_code']}</com:BusinessCode>
+                        <com:BusinessCode>CO015</com:BusinessCode>
                         <com:SubscriberInfo>
                             <com:ExternalSequnce>{$sequence}</com:ExternalSequnce>
-                            <com:ServiceNumber>{$data['sub_order']['service_number']}</com:ServiceNumber>
-                            <com:NetworkType>{$data['sub_order']['network_type']}</com:NetworkType>
-                            <com:SubType>{$data['sub_order']['sub_type']}</com:SubType>
+                            <com:ServiceNumber>{$data['service_number']}</com:ServiceNumber>
+                            <com:NetworkType>{$data['network_type']}</com:NetworkType>
+                            <com:SubType>{$data['sub_type']}</com:SubType>
                             <com:PrimaryOffering>
                                 <com:NewPrimaryOffering>
                                     <com:OfferingId>
-                                        <com:OfferingId>{$data['sub_order']['offering_id']}</com:OfferingId>
+                                        <com:OfferingId>{$data['offering_id']}</com:OfferingId>
                                     </com:OfferingId>
                                 </com:NewPrimaryOffering>
                                 <com:EffectiveMode>0</com:EffectiveMode>

@@ -57,12 +57,12 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
         $data['house_no'] = $customer->kebele ?? $data['house_no'];
         $data['sms_no'] = $customer->phone_number ?? $data['sms_no'];
 
-        $this->serviceNumber = $this->queryAvailableNumberService->getAvailableNumberServices();
-        Log::info('service number', ['service number' => $this->serviceNumber]);
+        // $this->serviceNumber = $this->queryAvailableNumberService->getAvailableNumberServices();
+        // Log::info('service number', ['service number' => $this->serviceNumber]);
 
-        if (!$this->serviceNumber) {
-            throw new \RuntimeException('Unable to reserve service number');
-        }
+        // if (!$this->serviceNumber) {
+        //     throw new \RuntimeException('Unable to reserve service number');
+        // }
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"

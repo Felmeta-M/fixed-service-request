@@ -4,6 +4,7 @@ namespace App\Services\Survey;
 
 use App\Models\Customer;
 use App\Services\ApiResponse;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
@@ -26,6 +27,14 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
         $completedDate = now()->format('YmdHis');
 
         $houseNo = $data['survey_address_info']['house_no'] ?? $customer->house_no;
+
+        $this->serviceNumber = $this->queryAvailableNumberService->getAvailableNumberServices();
+
+        if (!$this->serviceNumber) {
+            throw new \RuntimeException('Unable to reserve service number');
+        }
+
+        $data['service_number'] = $this->serviceNumber;
 
 
         return <<<XML

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Payment;
 
 class CableChargeService
 {
@@ -24,7 +24,7 @@ class CableChargeService
      * @param string|int $surveyStatus
      * @return float
      */
-    public function calculate(?float $cableLength, $cableType, string|int $surveyStatus): float
+    public function calculate(?float $cableLength, $cableType): float
     {
         if (empty($cableLength) || empty($cableType)) {
             return 0.0;
@@ -33,14 +33,10 @@ class CableChargeService
         $cableLength = (float) $cableLength;
         $unitPrice   = $this->unitPrices[(int)$cableType] ?? 0;
 
-        if ((string)$surveyStatus === '5') { // Only for completed surveys
-            if ($cableLength <= 500) {
-                return 0.0;
-            }
-
-            return round($unitPrice * ($cableLength - 500) * 1.3225, 2);
+        if ($cableLength <= 500) {
+            return 0.0;
         }
 
-        return 0.0;
+        return round($unitPrice * ($cableLength - 500) * 1.3225, 2) ?? 0.0;
     }
 }

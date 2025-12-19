@@ -7,7 +7,7 @@ use App\Models\SurveyRequest;
 use Illuminate\Http\JsonResponse;
 use RuntimeException;
 
-class CancelDataSurveyOrderService extends BaseApiService
+class CancelSurveyOrderService extends BaseApiService
 {
     protected int $timeout = 10;
     protected int $rateLimit = 15;

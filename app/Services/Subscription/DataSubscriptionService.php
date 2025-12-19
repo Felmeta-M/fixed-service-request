@@ -32,7 +32,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
     {
         $xml = $this->buildXml($data);
         $response = $this->executeRequest($xml);
-        Log::info($response);
+        // Log::info($response);
         return $this->parseResponse($data, $response);
     }
 

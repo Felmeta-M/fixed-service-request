@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Payment;
 
 use App\Enums\OfferId;
 use App\Models\SurveyRequest;
+use Illuminate\Support\Facades\Log;
 
 class PaymentCalculatorService
 {
@@ -76,14 +77,22 @@ class PaymentCalculatorService
             $taxAmount  = 0;
 
             foreach ($fee['taxes'] ?? [] as $tax) {
-                $taxAmount += (int)($tax['amount'] ?? 0);
+                Log::info('Processing tax', ['tax' => $tax]);
+                $taxAmount += (int)($tax['fee'] ?? 0);
             }
+
+            Log::info('Fee calculation details', [
+                'calculated' => $calculated,
+                'discount'   => $discount,
+                'tax_amount' => $taxAmount,
+            ]);
 
             $total += ($calculated - $discount + $taxAmount);
         }
 
         return (int)($total / 10000);
     }
+
 
     /**
      * Default fee if third-party fails or for Data services.
@@ -98,10 +107,6 @@ class PaymentCalculatorService
      */
     protected function calculateCableCharge(SurveyRequest $survey): float
     {
-        return $this->cableChargeService->calculate(
-            $survey->cable_length,
-            $survey->cable_type,
-            $survey->status
-        );
+        return $this->cableChargeService->calculate($survey->cable_charge, $survey->cable_type);
     }
 }

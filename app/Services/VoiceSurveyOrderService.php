@@ -8,7 +8,7 @@ use Illuminate\Http\JsonResponse;
 use RuntimeException;
 use Throwable;
 
-class FixedVoiceSurveyOrderService extends BaseApiService
+class VoiceSurveyOrderService extends BaseApiService
 {
     protected int $timeout = 10;
     protected int $rateLimit = 15;

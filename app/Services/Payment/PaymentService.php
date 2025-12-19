@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Payment;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Payment;
@@ -37,11 +37,11 @@ class PaymentService
 
         DB::transaction(function () use ($data, $customer) {
 
-            DB::table('survey_requests')
-                ->where('customer_survey_order_id', $data['customer_survey_order_id'])
-                ->update([
-                    'cable_charge' => $data['labor_material_transport_cost'],
-                ]);
+            // DB::table('survey_requests')
+            //     ->where('customer_survey_order_id', $data['customer_survey_order_id'])
+            //     ->update([
+            //         'cable_charge' => $data['cable_charge'],
+            //     ]);
 
             DB::table('payments')->updateOrInsert(
                 ['customer_survey_order_id' => $data['customer_survey_order_id']],
@@ -49,7 +49,9 @@ class PaymentService
                     'service_number' => $data['service_number'],
                     'customer_code'  => $customer->customer_code,
                     'total_amount'         => $data['total_amount'],
-                    'cable_charge' => $data['labor_material_transport_cost'],
+                    'subscription_fee'     => $data['subscription_fee'] ?? 0,
+                    'cable_charge' => $data['cable_charge'] ?? 0,
+                    'device_fee'        => $data['device_fee'] ?? 0,
                     'status'         => FFDServiceProvisionStatus::Pending->value,
                     'updated_at'     => now(),
                     'created_at'     => now(),

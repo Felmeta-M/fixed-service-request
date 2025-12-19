@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\SurveyRequest;
 use App\Services\CreateOrderService;
-use App\Services\PaymentService;
+use App\Services\Payment\PaymentService;
 use App\Services\RsaSignatureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

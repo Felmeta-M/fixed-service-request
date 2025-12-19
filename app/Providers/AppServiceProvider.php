@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Services\CreateOrderService;
-use App\Services\PaymentService;
+use App\Services\Payment\PaymentService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;

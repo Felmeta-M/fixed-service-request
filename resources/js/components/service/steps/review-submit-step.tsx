@@ -15,6 +15,8 @@ interface ReviewSubmitStepProps {
         withDevice?: boolean;
         latitude: number;
         longitude: number;
+        distance?: string;
+        cable_type?: string;
         address?: string;
         contactPerson?: string;
         contactNo?: string;
@@ -69,6 +71,8 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 latitude: formData.latitude,
                 longitude: formData.longitude,
                 address: formData.address || '',
+                distance: formData.distance,
+                cable_type: formData.cable_type,
             },
             with_device: formData.withDevice,
             completed_date: new Date()

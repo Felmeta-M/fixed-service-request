@@ -17,19 +17,30 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete }: Subscr
         api_token: string;
     };
 
+    type PaymentDetails = {
+        status?: string;
+        cable_charge?: string | number | null;
+        subscription_fee?: string | number | null;
+        device_price?: string | number | null;
+        total_amount?: string | number | null;
+        amount?: string | number | null;
+        customer_survey_order_id?: string;
+        service_number?: string | null;
+    };
+
+    type SurveyDetails = {
+        customer_survey_order_id?: string;
+        main_offer_id?: string;
+        service_number?: string | null;
+        cable_length?: string | number | null;
+        cable_type?: string | null;
+        lat?: string | number | null;
+        long?: string | number | null;
+        payment?: PaymentDetails | null;
+    };
+
     type SurveyApiResponse = {
-        data?: {
-            customer_survey_order_id?: string;
-            main_offer_id?: string;
-            service_number?: string | null;
-            payment?: {
-                status?: string;
-                cable_charge?: string | number | null;
-                subscription_fee?: string | number | null;
-                device_price?: string | number | null;
-                total_amount?: string | number | null;
-            } | null;
-        };
+        data?: SurveyDetails;
         message?: string;
     };
 
@@ -37,8 +48,8 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete }: Subscr
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [surveyDetails, setSurveyDetails] = useState<any>(null);
-    const [paymentDetails, setPaymentDetails] = useState<any>(null);
+    const [surveyDetails, setSurveyDetails] = useState<SurveyDetails | null>(null);
+    const [paymentDetails, setPaymentDetails] = useState<{ data: PaymentDetails } | null>(null);
 
     const fetchDetails = async () => {
         if (!surveyId) {

@@ -36,6 +36,8 @@ export const useResourceChecker = () => {
     const { auth } = usePage().props;
     const user = auth.user;
 
+    console.log('Using resource checker with user:', user);
+
     const checkResourceAvailability = async (
         coordinates: { latitude: number; longitude: number },
         customerName?: string,

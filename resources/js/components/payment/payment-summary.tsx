@@ -33,6 +33,8 @@ type SurveyDetails = {
     customer_survey_order_id?: string;
     main_offer_id?: string;
     service_number?: string | null;
+    cable_length?: string | number | null;
+    cable_type?: string | null;
 };
 
 type PaymentDetailsData = {
@@ -76,8 +78,16 @@ export function PaymentSummary({ paymentDetails, surveyDetails }: PaymentSummary
     const totalAmount = totalAmountNumber.toFixed(2);
     const isFree = totalAmountNumber <= 0;
 
-    const baseAmount = 0;
-    const cableCost = 0;
+    const toNumber = (value: unknown) => {
+        const num = typeof value === 'number' ? value : Number(value);
+        return Number.isFinite(num) ? num : 0;
+    };
+
+    const subscriptionFee = toNumber(payment?.subscription_fee);
+    const cableCharge = toNumber(payment?.cable_charge);
+    const devicePrice = toNumber(payment?.device_price);
+    const cableLengthRaw = surveyDetails?.cable_length;
+    const cableLength = cableLengthRaw === null || cableLengthRaw === undefined || cableLengthRaw === '' ? null : String(cableLengthRaw);
 
     // const getCustomerInfo = () => {
     //     if (!customerData) return { name: 'N/A', phone: 'N/A' };
@@ -352,14 +362,40 @@ export function PaymentSummary({ paymentDetails, surveyDetails }: PaymentSummary
                                 ))} */}
 
                                 {/* Cable Cost (if applicable) */}
-                                {cableCost > 0 && (
+                                {cableCharge > 0 && (
                                     <div className="space-y-2 pt-2">
                                         <div className="flex items-start justify-between">
                                             <div>
                                                 <span className="font-medium text-gray-900">Cable Installation</span>
-                                                <p className="text-sm text-gray-500">Physical cable installation cost</p>
+                                                <p className="text-sm text-gray-500">
+                                                    Physical cable installation cost{cableLength ? ` (Length: ${cableLength})` : ''}
+                                                </p>
                                             </div>
-                                            <span className="font-semibold text-gray-900">{cableCost} ETB</span>
+                                            <span className="font-semibold text-gray-900">{cableCharge.toFixed(2)} ETB</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {subscriptionFee > 0 && (
+                                    <div className="space-y-2 pt-2">
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <span className="font-medium text-gray-900">Subscription Fee</span>
+                                                <p className="text-sm text-gray-500">Service subscription charge</p>
+                                            </div>
+                                            <span className="font-semibold text-gray-900">{subscriptionFee.toFixed(2)} ETB</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {devicePrice > 0 && (
+                                    <div className="space-y-2 pt-2">
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <span className="font-medium text-gray-900">Device Price</span>
+                                                <p className="text-sm text-gray-500">Equipment cost</p>
+                                            </div>
+                                            <span className="font-semibold text-gray-900">{devicePrice.toFixed(2)} ETB</span>
                                         </div>
                                     </div>
                                 )}
@@ -377,8 +413,13 @@ export function PaymentSummary({ paymentDetails, surveyDetails }: PaymentSummary
                                     <div className="flex justify-between text-sm text-gray-500">
                                         <span>Includes:</span>
                                         <span>
-                                            Service fees: {baseAmount} ETB
-                                            {cableCost > 0 ? ` + Cable: ${cableCost} ETB` : ''}
+                                            {[
+                                                subscriptionFee > 0 ? `Subscription: ${subscriptionFee.toFixed(2)} ETB` : null,
+                                                cableCharge > 0 ? `Cable: ${cableCharge.toFixed(2)} ETB` : null,
+                                                devicePrice > 0 ? `Device: ${devicePrice.toFixed(2)} ETB` : null,
+                                            ]
+                                                .filter(Boolean)
+                                                .join(' + ') || 'No charges'}
                                         </span>
                                     </div>
                                 </div>

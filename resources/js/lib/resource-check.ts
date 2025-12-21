@@ -25,6 +25,7 @@ export interface ResourceCheckResponse {
         neid: string;
         nename: string;
         typeid: string;
+        // These fields are encrypted by the backend and must be forwarded as-is to survey create.
         longitude: string;
         latitude: string;
         cable_type: string;
@@ -41,7 +42,7 @@ export const useResourceChecker = () => {
     const checkResourceAvailability = async (
         coordinates: { latitude: number; longitude: number },
         customerName?: string,
-    ): Promise<{ available: boolean; message: string; data?: any }> => {
+    ): Promise<{ available: boolean; message: string; data?: ResourceCheckResponse['data'] }> => {
         try {
             const requestData: ResourceCheckRequest = {
                 prod_spec_code: 'C_P_UFBI_E',
@@ -64,7 +65,8 @@ export const useResourceChecker = () => {
 
             // console.log('Resource check request:', requestData);
 
-            const response = await axios.post<ResourceCheckResponse>(`${import.meta.env.VITE_API_BASE_URL}/resource-check`, requestData,
+            // Use the app API so we get the encrypted fields that survey-create expects.
+            const response = await axios.post<ResourceCheckResponse>(`/api/v1/resource-check`, requestData,
                 {
                     headers: {
                         'Content-Type': 'application/json',
@@ -77,13 +79,16 @@ export const useResourceChecker = () => {
             if (response.data.success && response.data.data) {
                 const resource = response.data.data;
                 const availablePorts = parseInt(resource.ava_port) || 0;
-                const distance = parseFloat(resource.distance) || 0;
 
-                const isAvailable = availablePorts > 0 && distance <= 200;
+                // `distance` is encrypted by the backend (Crypt::encryptString),
+                // and the SOAP call already receives `radius=200`, so we treat ports>0 as availability.
+                const isAvailable = availablePorts > 0;
 
                 return {
                     available: isAvailable,
-                    message: isAvailable ? `Resource available (${availablePorts} ports, ${distance}m away)` : 'No available resources in this area',
+                    message: isAvailable
+                        ? `Resource available (${availablePorts} ports)`
+                        : 'No available resources in this area',
                     data: resource,
                 };
             }

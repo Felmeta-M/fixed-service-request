@@ -33,7 +33,17 @@ interface ServiceFormData {
     contactNo: string;
     contactEmail: string;
     resourceAvailable?: boolean;
-    resourceData?: any;
+    resourceData?: {
+        distance: string;
+        ava_port: string;
+        neid: string;
+        nename: string;
+        typeid: string;
+        longitude: string;
+        latitude: string;
+        cable_type: string;
+        cable_type_desc: string;
+    };
     bandwidthNumericValue?: number;
     resourceMessage?: string;
 }
@@ -46,7 +56,7 @@ interface ServiceCreationFlowProps {
 }
 
 export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKey, isNewCustomer = false }: ServiceCreationFlowProps) {
-    const { auth } = usePage().props;
+    const { auth } = usePage<{ auth: { user: User } }>().props;
     const user = auth.user as User;
 
     const [formData, setFormData] = useState<ServiceFormData>({
@@ -66,7 +76,6 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     console.log("🚀 ~ ServiceCreationFlow ~ formData:", formData)
 
     const [checkingResource, setCheckingResource] = useState(false);
-    const [resourceError, setResourceError] = useState('');
     const [createdSurveyId, setCreatedSurveyId] = useState<string | null>(null);
     const { surveys } = useSurveyList();
     const { checkResourceAvailability } = useResourceChecker();
@@ -102,10 +111,6 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
     const updateFormData = (newData: Partial<ServiceFormData>) => {
         setFormData((prev) => ({ ...prev, ...newData }));
-        // Clear resource error when location changes
-        if (newData.latitude !== undefined || newData.longitude !== undefined) {
-            setResourceError('');
-        }
     };
 
     const getAdjustedStep = () => {
@@ -125,7 +130,6 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
         // Check resource availability for location step
         setCheckingResource(true);
-        setResourceError('');
 
         try {
             const result = await checkResourceAvailability(
@@ -138,18 +142,18 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 resourceData: result.data,
                 resourceMessage: result.message,
 
-                distance: result.data.distance,
-                cable_type: result.data.cable_type,
+                // Preserve exact encrypted fields for survey create.
+                distance: result.data?.distance ?? '',
+                cable_type: result.data?.cable_type ?? '',
             });
 
             if (result.available) {
                 nextStep();
             } else {
-                setResourceError(result.message || 'Service not available in this location. Please try a different location.');
+                // No UI surface here; Location step can use `formData.resourceMessage` if needed.
             }
         } catch (error) {
             console.error('Resource check error:', error);
-            setResourceError('Failed to check resource availability. Please try again.');
             updateFormData({
                 resourceAvailable: false,
                 resourceMessage: 'Resource check failed',

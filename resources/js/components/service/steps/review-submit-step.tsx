@@ -22,6 +22,17 @@ interface ReviewSubmitStepProps {
         contactNo?: string;
         contactEmail?: string;
         resourceAvailable?: boolean;
+        resourceData?: {
+            distance: string;
+            ava_port: string;
+            neid: string;
+            nename: string;
+            typeid: string;
+            longitude: string;
+            latitude: string;
+            cable_type: string;
+            cable_type_desc: string;
+        };
     };
     onBack: () => void;
     onNext?: (surveyId: string) => void;
@@ -52,6 +63,10 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
     const serviceInfo = serviceTypes[formData.serviceType as keyof typeof serviceTypes];
 
     const handleSurveyRequest = async () => {
+        // The backend expects encrypted resource fields (distance/cable_type/latitude/longitude)
+        // exactly as returned from `/api/v1/resource-check`.
+        const encryptedResource = formData.resourceData;
+
         const submitData = {
             customer_code: user.customer_code.toString(),
             customer_type: formData.customerType || 'residential',
@@ -68,11 +83,13 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 subcity_zone: '11',
                 wereda_town: '141',
                 kebele: '',
-                latitude: formData.latitude,
-                longitude: formData.longitude,
+                // Use encrypted values from resource-check (required by BaseSurveyService::decrypt)
+                latitude: encryptedResource?.latitude ?? String(formData.latitude),
+                longitude: encryptedResource?.longitude ?? String(formData.longitude),
                 address: formData.address || '',
-                distance: formData.distance,
-                cable_type: formData.cable_type,
+                // Forward exact encrypted resource-check data
+                distance: encryptedResource?.distance ?? formData.distance,
+                cable_type: encryptedResource?.cable_type ?? formData.cable_type,
             },
             with_device: formData.withDevice,
             completed_date: new Date()

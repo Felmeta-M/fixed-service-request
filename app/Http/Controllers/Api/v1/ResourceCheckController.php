@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Http\Resources\ResourceResource;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreResourceCheckRequest;
 use App\Services\ResourceService;
-use ResourceResource;
 
 class ResourceCheckController extends Controller
 {
@@ -25,7 +25,7 @@ class ResourceCheckController extends Controller
                 ], 404);
             }
 
-            return new ResourceResource($result);
+            return $result;
         } catch (\Exception $e) {
             \Log::error('Error in resource check: ' . $e->getMessage());
 

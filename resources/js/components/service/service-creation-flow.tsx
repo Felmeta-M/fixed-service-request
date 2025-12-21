@@ -26,6 +26,8 @@ interface ServiceFormData {
     withDevice: boolean;
     latitude: number;
     longitude: number;
+    distance: string;
+    cable_type: string;
     address: string;
     contactPerson: string;
     contactNo: string;
@@ -54,6 +56,8 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         withDevice: false,
         latitude: 0,
         longitude: 0,
+        distance: '',
+        cable_type: '',
         address: '',
         contactPerson: '',
         contactNo: '',
@@ -125,7 +129,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
         try {
             const result = await checkResourceAvailability(
-                { latitude: formData.latitude, longitude: formData.longitude },
+                { latitude: formData.latitude, longitude: formData.longitude},
                 formData.contactPerson || 'Customer',
             );
 
@@ -133,6 +137,9 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 resourceAvailable: result.available,
                 resourceData: result.data,
                 resourceMessage: result.message,
+
+                distance: result.data.distance,
+                cable_type: result.data.cable_type,
             });
 
             if (result.available) {

@@ -49,12 +49,11 @@ abstract class BaseSurveyService extends BaseApiService
         $resource = [
             'distance' => $data['survey_address_info']['distance'] ?? null,
             'cable_type' => $data['survey_address_info']['cable_type'] ?? null,
-            'longitude' => $data['survey_address_info']['longitude'],
-            'latitude'  => $data['survey_address_info']['latitude'],
-        ]; // $this->resourceCheck($data);
-        Log::info('before decyrpt resource found', ['resource' => $resource]);
+            'longitude' => $data['survey_address_info']['longitude'] ?? null,
+            'latitude'  => $data['survey_address_info']['latitude'] ?? null,
+        ];
+        // $this->resourceCheck($data);
         $resource = self::decrypt($resource);
-        Log::info('after decrypt resource found', ['resource' => $resource]);
         $xml = $this->buildXml($data, $resource);
         $response = $this->executeRequest($xml);
 
@@ -81,7 +80,7 @@ abstract class BaseSurveyService extends BaseApiService
     protected function persistSurvey(
         string $surveyOrderId,
         array $data,
-        array $resource
+        ?array $resource
     ): void {
 
         DB::transaction(function () use ($surveyOrderId, $data, $resource) {
@@ -136,7 +135,6 @@ abstract class BaseSurveyService extends BaseApiService
 
             foreach ($fieldsToDecrypt as $field) {
                 if (isset($data[$field]) && !is_null($data[$field])) {
-                    Log::info("Decrypting field: $field");
                     $decrypted[$field] = Crypt::decryptString($data[$field]);
                 }
             }

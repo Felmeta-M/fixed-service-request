@@ -87,7 +87,7 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
 XML;
     }
 
-    protected function parseResponse(array $data, string $xml, array $resource)
+    protected function parseResponse(array $data, string $xml, ?array $resource)
     {
         $parsed = simplexml_load_string($xml);
 

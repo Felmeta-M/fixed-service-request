@@ -224,10 +224,10 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                 </div>
                             </div>
                             <div className="mt-4 space-y-2">
-                                <div className="flex items-center gap-2 text-sm">
+                                {/* <div className="flex items-center gap-2 text-sm">
                                     <Calendar className="h-4 w-4 text-gray-400" />
                                     <span className="text-gray-600">Date: {formattedDate}</span>
-                                </div>
+                                </div> */}
                                 <div className="flex items-center gap-2 text-sm">
                                     <Hash className="h-4 w-4 text-gray-400" />
                                     <span className="text-gray-600">Order Id: {customer_survey_order_id || 'Pending'}</span>
@@ -249,7 +249,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {/* Customer Information */}
                         <Card className="border-none shadow-xs">
-                            <CardHeader className="pb-3">
+                            <CardHeader className="">
                                 <div className="flex items-center gap-2">
                                     <User className="h-5 w-5 text-gray-500" />
                                     <CardTitle className="text-lg">Customer Information</CardTitle>
@@ -281,7 +281,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
 
                         {/* Service Information */}
                         <Card className="border-none shadow-xs">
-                            <CardHeader className="pb-3">
+                            <CardHeader className="">
                                 <div className="flex items-center gap-2">
                                     <FileText className="h-5 w-5 text-gray-500" />
                                     <CardTitle className="text-lg">Service Details</CardTitle>
@@ -307,7 +307,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                     </div>
 
                     {/* Invoice Items Table */}
-                    <Card className="border-none shadow-xs">
+                    <Card className="border-none shadow-xs pt-2">
                         <CardHeader>
                             <CardTitle>Payment Details</CardTitle>
                             <CardDescription>Breakdown of charges and fees</CardDescription>
@@ -355,7 +355,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                             </div>
 
                             {/* Totals Section */}
-                            <div className="mt-2 space-y-3">
+                            <div className=" space-y-3">
                                 <Separator />
                                 <div className="flex justify-between">
                                     <span className="text-lg font-semibold text-gray-900">Total Amount</span>
@@ -394,7 +394,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
 
                     {/* Payment Action */}
                     <div ref={actionRef} />
-                    <Card className={`border-none shadow-xs ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
+                    <Card className={` pt-2 border-none shadow-xs ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
                         <CardContent className="py-2">
                             <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
                                 <div>

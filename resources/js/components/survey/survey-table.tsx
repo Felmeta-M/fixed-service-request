@@ -59,8 +59,8 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
             const matchesStatus = statusFilter ? status.toLowerCase() === statusFilter.toLowerCase() : true;
             const matchesGlobal = globalFilter
                 ? s.customer_survey_order_id?.toString().includes(globalFilter) ||
-                offerId.includes(globalFilter) ||
-                status.toLowerCase().includes(globalFilter.toLowerCase())
+                  offerId.includes(globalFilter) ||
+                  status.toLowerCase().includes(globalFilter.toLowerCase())
                 : true;
             return matchesType && matchesStatus && matchesGlobal;
         });
@@ -108,9 +108,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                                 variant="outline"
                                 className="flex items-center gap-1.5 bg-white"
                             > */}
-                            <span className="text-xs font-medium">
-                                {serviceNumber || '—'}
-                            </span>
+                            <span className="text-xs font-medium">{serviceNumber || '—'}</span>
                             {/* </Badge> */}
                         </div>
                     );
@@ -121,7 +119,12 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                 header: 'Service Type',
                 cell: ({ getValue }) => {
                     const id = getValue<string>() || '';
-                    const selected = typeMap[id as keyof typeof typeMap] || { label: 'Unknown', text: 'text-gray-700', bg: 'bg-gray-400', icon: FileText };
+                    const selected = typeMap[id as keyof typeof typeMap] || {
+                        label: 'Unknown',
+                        text: 'text-gray-700',
+                        bg: 'bg-gray-400',
+                        icon: FileText,
+                    };
                     const IconComponent = selected.icon;
 
                     return (
@@ -177,34 +180,22 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
 
                     return date.toLocaleString('en-US', {
                         year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true,
+                        month: 'short',
+                        day: 'numeric',
                     });
                 },
             },
             {
                 id: 'actions',
-                header: () => (
-                    <div className="flex justify-end px-2">
-                        Actions
-                    </div>
-                ),
+                header: () => <div className="flex justify-end px-2">Actions</div>,
                 cell: ({ row }) => {
                     const survey = row.original;
                     return (
-                        <div
-                            className="flex justify-end"
-                            onClick={(e) => e.stopPropagation()}
-                        >
+                        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
                             <SurveyActions
                                 survey={survey}
                                 onActionComplete={() => onSurveyUpdate?.()}
-                                onUpdatingChange={(isUpdating) =>
-                                    console.log('Updating:', isUpdating)
-                                }
+                                onUpdatingChange={(isUpdating) => console.log('Updating:', isUpdating)}
                             />
                         </div>
                     );

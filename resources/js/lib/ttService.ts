@@ -9,7 +9,7 @@ import {
   DisplayTT
 } from '@/types/tt';
 
-const API_BASE = 'https://fixedservices.ethiotelecom.et/api/v1';
+const API_BASE = 'https://localhost:3000/api/v1';
 
 export const ttService = {
   async queryExternalTTs(accessNumber: string): Promise<TTQueryResponse> {
@@ -57,7 +57,7 @@ export const ttService = {
   async getLocalTTs(params: LocalTTQueryParams): Promise<LocalTTResponse> {
     try {
       const queryString = new URLSearchParams();
-      
+
       if (params.access_number) queryString.append('access_number', params.access_number);
       if (params.mobile_no) queryString.append('mobile_no', params.mobile_no);
       if (params.status) queryString.append('status', params.status);
@@ -151,7 +151,7 @@ export const ttService = {
             trouble_title: localTT.trouble_title,
             accept_time: localTT.created_at,
             trouble_reason: localTT.trouble_reason,
-            deadline: '', 
+            deadline: '',
             status: localTT.status,
             created_at: localTT.created_at,
             local_data: localTT,
@@ -160,10 +160,10 @@ export const ttService = {
       }
 
       const externalResponse = await this.queryExternalTTs(accessNumber);
-      
-      if (externalResponse.success && 
-          externalResponse.data.success && 
-          externalResponse.data.tt_list.length > 0) {
+
+      if (externalResponse.success &&
+        externalResponse.data.success &&
+        externalResponse.data.tt_list.length > 0) {
         externalResponse.data.tt_list.forEach((externalTT) => {
           displayTTs.push({
             id: `external_${externalTT.tt_no}`,
@@ -186,7 +186,7 @@ export const ttService = {
       console.error('Combined search error:', error);
     }
 
-    return displayTTs.sort((a, b) => 
+    return displayTTs.sort((a, b) =>
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
   },
@@ -194,11 +194,11 @@ export const ttService = {
   async getUserLocalTTs(userId?: number, phone?: string): Promise<DisplayTT[]> {
     try {
       const params: LocalTTQueryParams = {};
-      
+
       if (phone) {
         params.mobile_no = phone;
       }
-      
+
       const response = await this.getLocalTTs(params);
 
       if (response.success) {

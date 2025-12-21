@@ -10,6 +10,7 @@ use App\Services\Payment\PaymentService;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Services\ResourceService;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -45,8 +46,9 @@ abstract class BaseSurveyService extends BaseApiService
     /** Same template method as Subscription */
     final public function create(array $data)
     {
-        $resource = $this->resourceCheck($data);
+        $resource = []; // $this->resourceCheck($data);
 
+        $data = self::decrypt($data);
         $xml = $this->buildXml($data, $resource);
         $response = $this->executeRequest($xml);
 
@@ -117,6 +119,27 @@ abstract class BaseSurveyService extends BaseApiService
                 'cable_charge'  => $fees['cable_charge'],
             ]);
         });
+    }
+
+    public static function decrypt(array $data): ?array
+    {
+        try {
+            $decrypted = $data;
+
+            // List of fields to decrypt
+            $fieldsToDecrypt = ['distance', 'cable_type', 'latitude', 'longitude'];
+
+            foreach ($fieldsToDecrypt as $field) {
+                if (isset($data[$field]) && !is_null($data[$field])) {
+                    $decrypted[$field] = Crypt::decryptString($data[$field]);
+                }
+            }
+
+            return $decrypted;
+        } catch (\Exception $e) {
+            Log::error('Decryption failed: ' . $e->getMessage());
+            return null; // Or throw a custom exception if you prefer
+        }
     }
 
     /** Service-specific hooks */

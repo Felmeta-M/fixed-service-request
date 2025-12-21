@@ -75,7 +75,7 @@ export default function CreateComplaintPage() {
 
         try {
             const response = await fetch(
-                'https://fixedservices.ethiotelecom.et/api/v1/tt/create',
+                'https://localhost:3000/api/v1/tt/create',
                 {
                     method: 'POST',
                     headers: {

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 
 class ResourceService extends BaseApiService
 {
@@ -149,11 +151,29 @@ XML;
         return $shortestResource;
     }
 
-
     public function getShortestResource(array $resources): ?array
     {
-        return collect($resources)
-            ->sortBy(fn($r) => $r['distance'])
-            ->first();
+        try {
+            $resource = collect($resources)
+                ->sortBy(fn($r) => $r['distance'])
+                ->first();
+
+            if (!$resource) {
+                return null;
+            }
+
+            // Encrypt sensitive fields
+            $resource['distance'] = Crypt::encryptString((string)$resource['distance']);
+            $resource['cable_type'] = Crypt::encryptString((string)$resource['cable_type']);
+            $resource['longitude'] = Crypt::encryptString((string)$resource['longitude']);
+            $resource['latitude'] = Crypt::encryptString((string)$resource['latitude']);
+
+
+            return $resource;
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            Log::error('Failed to process resource: ' . $e->getMessage());
+            return null; // Or throw custom exception if needed
+        }
     }
 }

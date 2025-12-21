@@ -16,6 +16,7 @@ import { CancelConfirmationDialog } from './cancel-confirmation-dialog';
 import DeleteConfirmationDialog from './delete-confirmation-dialog';
 import SurveyDetailModal from './survey-detail-modal';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { getServiceActionFlags } from '@/lib/service-action-rules';
 
 interface SurveyActionsProps {
     survey: any;
@@ -33,7 +34,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const [openDetailModal, setOpenDetailModal] = useState(false);
     const [apiErrors, setApiErrors] = useState<{ [key: string]: string }>({});
 
-    const { user } = usePage().props.auth;
+    const { user } = usePage<{ auth: { user: any } }>().props.auth;
 
     const { main_offer_id } = survey
 
@@ -410,23 +411,17 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     };
 
     const status = Number(survey.status);
+    const { canPay, canSubscribe, canCancel } = getServiceActionFlags({
+        status: survey.status,
+        mainOfferId: main_offer_id,
+    });
 
-    const ACTION_RULES = {
-        3: { canCancel: true, canPay: false },
-        5: { canCancel: true, canPay: true },  
-        9: { canCancel: false, canPay: false },
+    const navigateToDetails = (focus?: 'payment' | 'subscribe') => {
+        const id = survey?.customer_survey_order_id;
+        if (!id) return;
+        const q = focus ? `?focus=${focus}` : '';
+        router.visit(`/services/${id}${q}`);
     };
-
-    const rules = ACTION_RULES[status] || {};
-
-    let { canPay, canCancel } = rules;
-
-    if (canPay) {
-        canPay = main_offer_id !== "1457567289";
-    }
-
-    // const canSubscribe = !canPay;
-    const canSubscribe = !canPay && status !== 14;
 
 
     return (
@@ -434,7 +429,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             <div className="flex items-center justify-end gap-2">
                 {canPay && (
                     <Button
-                        onClick={handlePayNow}
+                        onClick={() => navigateToDetails('payment')}
                         disabled={loading}
                         className="gap-1 bg-primary px-4 text-white"
                         size="sm"
@@ -452,7 +447,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
                 {canSubscribe && (
                     <Button
-                        onClick={handleSubscribe}
+                        onClick={() => navigateToDetails('subscribe')}
                         disabled={loading}
                         className="gap-1 bg-primary px-2 text-white"
                         size="sm"

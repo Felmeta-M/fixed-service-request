@@ -58,6 +58,14 @@ export default function ServiceShowPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [customerSurveyOrderId]);
 
+    const focus = (() => {
+        const query = url.includes('?') ? url.split('?')[1] : '';
+        const params = new URLSearchParams(query);
+        const raw = params.get('focus');
+        if (raw === 'payment' || raw === 'subscribe') return raw;
+        return null;
+    })();
+
     const fetchDetails = async () => {
         try {
             setLoading(true);
@@ -145,7 +153,7 @@ export default function ServiceShowPage() {
 
     return (
         <MainLayout>
-            <PaymentSummary paymentDetails={paymentDetails} surveyDetails={surveyDetails} />
+            <PaymentSummary paymentDetails={paymentDetails} surveyDetails={surveyDetails} focus={focus ?? undefined} />
         </MainLayout>
     );
 }

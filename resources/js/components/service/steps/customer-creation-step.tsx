@@ -14,7 +14,6 @@ import { Building, CheckCircle, FileIcon, MapPinIcon, PhoneIcon, User } from 'lu
 import { FormEventHandler, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-// Error types for better error handling
 type ApiError = {
     message: string;
     errors?: Record<string, string[]>;

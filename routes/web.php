@@ -56,6 +56,12 @@ Route::middleware(['otp.auth'])->group(function () {
         ]);
     })->name('services.create');
 
+    Route::get('/services/{customerSurveyOrderId}', function (string $customerSurveyOrderId) {
+        return Inertia::render('Services/Show', [
+            'customerSurveyOrderId' => $customerSurveyOrderId,
+        ]);
+    })->name('services.show');
+
     Route::get('/payment/summary', function (Request $request) {
         $payment_details = new PaymentResource(Payment::query()->where('customer_survey_order_id', $request->query('customerSurveyOrderId'))->latest()->first());
         $survey_details = SurveyRequest::query()->where('customer_survey_order_id', $request->query('customerSurveyOrderId'))->latest()

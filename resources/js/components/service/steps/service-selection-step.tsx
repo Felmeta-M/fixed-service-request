@@ -1,4 +1,5 @@
 import { BandwidthSelector } from '@/components/survey/bandwidth-selector';
+import { DeviceOptionSelector } from '@/components/survey/device-option-selector';
 import { Card, CardContent } from '@/components/ui/card';
 import { useBandwidthOptions } from '@/hooks/use-bandwidth-options';
 import { AlertCircle, CheckCircle, Package, Phone, Wifi } from 'lucide-react';
@@ -68,7 +69,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                                 name="serviceType"
                                 value={service.value}
                                 checked={isSelected}
-                                onChange={() => {}}
+                                onChange={() => { }}
                                 className="absolute inset-0 cursor-pointer opacity-0"
                                 disabled={hasActiveSurvey}
                             />
@@ -101,6 +102,12 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                     />
                 </div>
             )}
+
+            <DeviceOptionSelector
+                value={formData.withDevice}
+                onChange={(val) => onUpdate({ withDevice: val })}
+            />
+
             {hasActiveSurvey && (
                 <Card className="bg-gray-50">
                     <CardContent className="p-4">

@@ -1,4 +1,4 @@
-import SurveyTable from '@/components/survey-table';
+import SurveyTable from '@/components/survey/survey-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from '@inertiajs/react';

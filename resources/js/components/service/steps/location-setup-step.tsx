@@ -25,20 +25,15 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
     const [isEditingAddress, setIsEditingAddress] = useState(false);
     const [manualAddress, setManualAddress] = useState('');
 
-    // Use refs to track manual coordinate inputs to prevent re-renders
     const [manualLat, setManualLat] = useState(formData.latitude || '');
     const [manualLng, setManualLng] = useState(formData.longitude || '');
     const [showUpdateBtn, setShowUpdateBtn] = useState(false);
 
-    // Use ref to track if initial location has been loaded
     const hasInitialLocationLoaded = useRef(false);
 
-    // Track current location separately for the map
     const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
 
-    // Get current location automatically on component mount - ONLY ONCE
     const getInitialLocation = useCallback(async () => {
-        // Prevent multiple calls
         if (hasInitialLocationLoaded.current) return;
         hasInitialLocationLoaded.current = true;
 
@@ -54,23 +49,20 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
 
             console.log('📍 Current location obtained:', { preciseLat, preciseLng });
 
-            // Get address using Google Geocoding API
             const address = await getGoogleAddressFromCoordinates(preciseLat, preciseLng);
             console.log('📫 Address obtained:', address);
 
-            // Set current location for the map
             setCurrentLocation({
                 lat: preciseLat,
                 lng: preciseLng,
                 address: address,
             });
 
-            // Update form data directly (no temporary location)
             onUpdate({
                 latitude: preciseLat,
                 longitude: preciseLng,
                 address: address,
-                resourceAvailable: undefined, // Clear previous resource check
+                resourceAvailable: undefined,
                 resourceData: undefined,
                 resourceMessage: '',
             });
@@ -80,50 +72,20 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
             setManualLng(preciseLng.toString());
         } catch (error) {
             console.error('❌ Auto-location failed:', error);
-            // Use a more accurate default location or show error to user
             const errorMessage = getGeolocationErrorMessage(error);
             setLocationError(errorMessage);
 
-            // Don't use fallback - let user manually select location
             setLocationLoading(false);
             hasInitialLocationLoaded.current = true;
-
-            // Or if you want to use fallback, uncomment below:
-            /*
-            const defaultLat = 9.024500; // More specific default
-            const defaultLng = 38.748500;
-            const address = await getGoogleAddressFromCoordinates(defaultLat, defaultLng);
-
-            setCurrentLocation({
-                lat: defaultLat,
-                lng: defaultLng,
-                address: address
-            });
-
-            onUpdate({
-                latitude: defaultLat,
-                longitude: defaultLng,
-                address: address,
-                resourceAvailable: undefined,
-                resourceData: undefined,
-                resourceMessage: '',
-            });
-            setManualAddress(address);
-            setManualLat(defaultLat.toString());
-            setManualLng(defaultLng.toString());
-            */
         } finally {
             setLocationLoading(false);
         }
     }, [googleMapsApiKey, onUpdate]);
 
-    // Only run once on component mount
     useEffect(() => {
-        // Only run if we don't already have a valid location
         if (!hasInitialLocationLoaded.current && (formData.latitude === 0 || formData.longitude === 0)) {
             getInitialLocation();
         } else {
-            // If we already have location data, use it
             if (formData.latitude && formData.longitude) {
                 setCurrentLocation({
                     lat: formData.latitude,
@@ -168,13 +130,12 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                 {
                     enableHighAccuracy: true,
                     timeout: 15000,
-                    maximumAge: 0, // Don't use cached position
+                    maximumAge: 0, 
                 },
             );
         });
     };
 
-    // Google Geocoding API for reverse geocoding
     const getGoogleAddressFromCoordinates = async (lat: number, lng: number): Promise<string> => {
         try {
             setIsGeocoding(true);
@@ -202,7 +163,6 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
         }
     };
 
-    // Google Places API for forward geocoding
     const getCoordinatesFromAddress = async (address: string): Promise<{ lat: number; lng: number; address: string } | null> => {
         try {
             setIsGeocoding(true);
@@ -236,19 +196,17 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
     const handleLocationSelect = async (lat: number, lng: number, address: string = '') => {
         const finalAddress = address || (await getGoogleAddressFromCoordinates(lat, lng));
 
-        // Update current location
         setCurrentLocation({
             lat: lat,
             lng: lng,
             address: finalAddress,
         });
 
-        // Update form data directly
         onUpdate({
             latitude: lat,
             longitude: lng,
             address: finalAddress,
-            resourceAvailable: undefined, // Clear previous resource check
+            resourceAvailable: undefined,
             resourceData: undefined,
             resourceMessage: '',
         });
@@ -300,8 +258,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
     const handleManualCoordinateSubmit = async () => {
         const lat = parseCoordinate(manualLat);
         const lng = parseCoordinate(manualLng);
-        setShowUpdateBtn(false); // hide after update
-        // onManualUpdate(manualLat, manualLng); // your update logic
+        setShowUpdateBtn(false); 
 
         if (!lat || !lng) {
             setLocationError('Please enter valid coordinates');
@@ -361,10 +318,8 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
         }
     };
 
-    // Check if we have a valid location selected
     const hasValidLocation = formData.latitude !== 0 && formData.longitude !== 0 && formData.address;
 
-    // Determine what to show on the map
     const mapLocation =
         currentLocation ||
         (hasValidLocation
@@ -377,7 +332,6 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
 
     return (
         <div className="min-w-sm space-y-6 md:min-w-3xl">
-            {/* Map Section */}
             <div className="space-y-2">
                 <div className="h-full rounded-lg">
                     <GoogleLocationMap
@@ -392,7 +346,6 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                     />
                 </div>
 
-                {/* Selected Location Card */}
                 {(hasValidLocation || currentLocation) && (
                     <Card className="border-none pr-0 pl-0 shadow-none transition-all duration-300">
                         <CardContent className="border-none pr-0 pl-0 shadow-none">
@@ -414,14 +367,6 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                                     </div>
 
                                     <div className="flex flex-col">
-                                        {/* Coordinates */}
-                                        {/* <div>
-                                            <p className="mb-1 text-sm font-medium text-gray-700">Coordinates</p>
-                                            <p className="text-sm text-gray-600">
-                                                Lat: {(mapLocation?.lat || formData.latitude).toFixed(6)}, Lng:{' '}
-                                                {(mapLocation?.lng || formData.longitude).toFixed(6)}
-                                            </p>
-                                        </div> */}
                                         <FieldGroup>
                                             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                                 <Field>
@@ -456,7 +401,6 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                                                     />
                                                 </Field>
 
-                                                {/* Show update button only when user changes something */}
                                                 {showUpdateBtn && (
                                                     <div className="flex items-end">
                                                         <Button
@@ -488,17 +432,8 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                         </CardContent>
                     </Card>
                 )}
-
-                {/* Refresh Location Button */}
-                {/* <div className="flex justify-center">
-                    <Button onClick={handleRefreshLocation} disabled={locationLoading} variant="outline" className="flex items-center gap-2">
-                        {locationLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Locate className="h-4 w-4" />}
-                        {locationLoading ? 'Getting Location...' : 'Refresh My Location'}
-                    </Button>
-                </div> */}
             </div>
 
-            {/* Status Indicators */}
             {locationLoading && (
                 <Alert className="border-blue-200 bg-blue-50">
                     <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
@@ -520,12 +455,6 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                     </AlertDescription>
                 </Alert>
             )}
-
-            {/* {locationError && (
-                <Alert variant="destructive">
-                    <AlertDescription>{locationError}</AlertDescription>
-                </Alert>
-            )} */}
         </div>
     );
 }

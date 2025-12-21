@@ -9,6 +9,7 @@ import { CustomerCreationStep } from './steps/customer-creation-step';
 import { LocationSetupStep } from './steps/location-setup-step';
 import { ReviewSubmitStep } from './steps/review-submit-step';
 import { ServiceSelectionStep } from './steps/service-selection-step';
+import { SubscriptionPaymentStep } from './steps/subscription-payment-step';
 
 interface User {
     id: number;
@@ -22,6 +23,7 @@ interface ServiceFormData {
     serviceType: string;
     bandwidth: string;
     customerType: string;
+    withDevice: boolean;
     latitude: number;
     longitude: number;
     address: string;
@@ -49,6 +51,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         serviceType: '1457567289',
         bandwidth: '',
         customerType: '',
+        withDevice: false,
         latitude: 0,
         longitude: 0,
         address: '',
@@ -56,10 +59,11 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         contactNo: '',
         contactEmail: '',
     });
+    console.log("🚀 ~ ServiceCreationFlow ~ formData:", formData)
 
     const [checkingResource, setCheckingResource] = useState(false);
     const [resourceError, setResourceError] = useState('');
-    const [createdSurvey, setCreatedSurvey] = useState<any>(null);
+    const [createdSurveyId, setCreatedSurveyId] = useState<string | null>(null);
     const { surveys } = useSurveyList();
     const { checkResourceAvailability } = useResourceChecker();
 
@@ -149,7 +153,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     };
 
     const nextStep = () => {
-        const maxSteps = isNewCustomer ? 4 : 3;
+        const maxSteps = isNewCustomer ? 5 : 4;
         if (currentStep < maxSteps) {
             onStepChange(currentStep + 1);
         }
@@ -187,7 +191,24 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             case 1:
                 return <LocationSetupStep formData={formData} onUpdate={updateFormData} googleMapsApiKey={googleMapsApiKey} />;
             case 2:
-                return <ReviewSubmitStep formData={formData} onBack={prevStep} />;
+                return (
+                    <ReviewSubmitStep
+                        formData={formData}
+                        onBack={prevStep}
+                        onNext={(surveyId: string) => {
+                            setCreatedSurveyId(surveyId);
+                            nextStep();
+                        }}
+                    />
+                );
+            case 3:
+                return (
+                    <SubscriptionPaymentStep
+                        surveyId={createdSurveyId}
+                        onBack={() => onStepChange(isNewCustomer ? 3 : 2)}
+                        onComplete={() => onStepChange(0)}
+                    />
+                );
             default:
                 return null;
         }
@@ -198,6 +219,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         { title: 'Service Information', description: 'Choose your service type and configuration' },
         { title: 'Location Information', description: 'Select installation location and check availability' },
         { title: 'Review & Submit', description: 'Verify details and submit your request' },
+        { title: 'Payment / Subscribe', description: 'Review charges and proceed to pay or subscribe' },
     ];
 
     const totalSteps = stepTitles.length;

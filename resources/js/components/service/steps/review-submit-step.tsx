@@ -1,18 +1,28 @@
-import { PaymentSummary } from '@/components/payment/payment-summary';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { delay } from '@/lib/utils';
-import { router, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { CheckCircle, Loader2, Wifi } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface ReviewSubmitStepProps {
-    formData: any;
+    formData: {
+        serviceType: string;
+        bandwidth?: string;
+        customerType?: string;
+        withDevice?: boolean;
+        latitude: number;
+        longitude: number;
+        address?: string;
+        contactPerson?: string;
+        contactNo?: string;
+        contactEmail?: string;
+        resourceAvailable?: boolean;
+    };
     onBack: () => void;
-    onNext?: (survey: any) => void;
+    onNext?: (surveyId: string) => void;
 }
 
 const serviceTypes = {
@@ -22,92 +32,35 @@ const serviceTypes = {
 };
 
 export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepProps) {
-    const { user } = usePage().props.auth;
+    type AuthUser = {
+        api_token: string;
+        customer_code: string | number;
+        name: string;
+        phone: string;
+        email?: string;
+        enterprise_name?: string;
+    };
+
+    const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
+    console.log('user:', user);
+    console.log('formData in ReviewSubmitStep:', formData);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
-    const [paymentDetails, setPaymentDetails] = useState<any>(null);
-    const [surveyData, setSurveyData] = useState<any>(null);
 
     const serviceInfo = serviceTypes[formData.serviceType as keyof typeof serviceTypes];
-    const isPaymentService = formData.serviceType !== '1457567289';
-
-    const generateExternalSequence = () => {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            const r = (Math.random() * 16) | 0;
-            const v = c == 'x' ? r : (r & 0x3) | 0x8;
-            return v.toString(16);
-        });
-    };
-
-    const fetchAvailableNumbers = async () => {
-        const response = await fetch('/api/v1/avaiable-number', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${user.api_token}`,
-            },
-            body: JSON.stringify({
-                pay_mode: '1',
-                tele_type: '4',
-                need_query_by_dept: false,
-                res_cnt: 1,
-            }),
-        });
-
-        const result = await response.json();
-
-        if (Array.isArray(result) && result.length > 0) return result;
-
-        throw new Error('No available numbers found');
-    };
-
-    const calculateServiceFees = async (serviceNumber: string, surveyId: string) => {
-        const response = await fetch('/api/v1/calc-one-off-fee', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${user.api_token}`,
-            },
-            body: JSON.stringify({
-                customer_survey_order_id: String(surveyId),
-                business_code: 'CO064',
-                customer: {
-                    type: 1,
-                    category: 1,
-                    subcategory: 1,
-                    level: 6,
-                    nationality: 1231,
-                    id_type: 2,
-                },
-                sub_order: {
-                    business_code: 'CO015',
-                    external_sequence: generateExternalSequence(),
-                    service_number: serviceNumber,
-                    offering_id: formData.serviceType || '1207609454',
-                    network_type: 4,
-                    sub_type: 0,
-                },
-            }),
-        });
-
-        const result = await response.json();
-        console.log('calc-one-off-fee result', result);
-
-        if (!result.success) {
-            const errorMsg = result.message || 'Failed to calculate fees';
-            throw new Error(errorMsg);
-        }
-
-        return result.data;
-    };
 
     const handleSurveyRequest = async () => {
         const submitData = {
             customer_code: user.customer_code.toString(),
+            customer_type: formData.customerType || 'residential',
             survey_type: 'EIC08',
             telecom_region: '104',
             oper_type: 'A',
             main_offer_id: formData.serviceType,
+            bandwidth: formData.bandwidth,
+            contact_person: formData.contactPerson || user.name,
+            contact_no: formData.contactNo || user.phone,
+            contact_email: formData.contactEmail || user.email || '',
             survey_address_info: {
                 region_city: '2',
                 subcity_zone: '11',
@@ -117,16 +70,12 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 longitude: formData.longitude,
                 address: formData.address || '',
             },
-            bandwidth: formData.bandwidth,
-            contact_person: formData.contactPerson,
-            contact_no: formData.contactNo || user.phone_number,
-            contact_email: formData.contactEmail || user.email,
+            with_device: formData.withDevice,
             completed_date: new Date()
                 .toISOString()
                 .replace(/[-:T.Z]/g, '')
                 .slice(0, 14),
             external_operid: '512',
-            customer_type: formData.customerType || 'residential',
         };
         const response = await axios.post('/api/v1/survey/create', submitData, {
             headers: {
@@ -144,53 +93,12 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
 
         return response;
     };
-    
-    const handleSubscribe = async (surveyId: string) => {
-        const [first_name, middle_name, last_name] = (user?.name ?? '').split(' ');
-
-        const payload = {
-            offering_id: formData.serviceType,
-            survey_order_id: surveyId,
-            customer_code: user.customer_code,
-            first_name,
-            middle_name,
-            last_name,
-            enterprise_name: user.enterprise_name ?? 'Test Enterprise',
-            region: 'Addis Ababa', //TODO: replaced by actual data
-            city: 'Addis Ababa',
-            zone: 'Central',
-            wereda: '01',
-            kebele: '01',
-            house_no: '123',
-            sms_no: "251911234567",
-            external_operid: '512', //Todo: figure it out
-            completed_date: new Date()
-                .toISOString()
-                .replace(/[-:T.Z]/g, '')
-                .slice(0, 14),
-        };
-        console.log("🚀 ~ handleSubscribe ~ payload:", payload)
-
-        const response = await axios.post('/api/v1/services/subscription', payload, {
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${user.api_token}`,
-            },
-        });
-
-        const result = response.data;
-        console.log('subscription result', result);
-
-        if (!result.success) {
-            throw new Error(result.message || 'Subscriber creation failed');
-        }
-
-        return result;
-    };
 
     const handleSubmit = async () => {
         setSubmitting(true);
         setError('');
+
+        const submissionToast = toast.loading('Creating service request...');
 
         try {
             // 1. Create Survey
@@ -198,15 +106,16 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
             console.log('🚀 ~ handleSubmit ~ response:', response);
 
             const responseData = response.data.data;
+            console.log("🚀 ~ handleSubmit ~ responseData:", responseData)
 
             const { customer_survey_order_id: surveyId } = responseData;
+            console.log("🚀 ~ handleSubmit ~ surveyId:", surveyId)
 
             const newSurvey = {
                 id: surveyId,
                 type: serviceInfo?.name || 'Service Request',
                 status: 'waiting',
                 createdAt: new Date().toISOString(),
-                // customerCode,
                 main_offer_id: formData.serviceType,
             };
 
@@ -215,63 +124,28 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
             existingSurveys.push(newSurvey);
             localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
 
-            setSurveyData(newSurvey);
+            toast.success('Service request created', { id: submissionToast });
 
-            // 2. Proceed to Subscription or Payment
-            if (isPaymentService) {
-                // Payment Flow
-                try {
-                    const availableNumbers = await fetchAvailableNumbers();
-                    const serviceNumber = availableNumbers[0]?.ServiceNumber;
-                    if (!serviceNumber) throw new Error('No service numbers available at the moment. Please try again later.');
-
-                    const feeData = await calculateServiceFees(serviceNumber, surveyId);
-
-                    setPaymentDetails({
-                        data: feeData.payment_record,
-                        serviceNumber,
-                        feeData,
-                    });
-
-                    setSubmitting(false);
-                    return;
-                } catch (payErr: any) {
-                    console.error('Payment setup failed:', payErr);
-                    setError(payErr.message || 'Failed to setup payment. Please try again.');
-                    setSubmitting(false);
-                    return;
-                }
-            } else {
-                // Subscription Flow
-                try {
-                    await delay(15000)
-                    await handleSubscribe(surveyId);
-
-                    router.visit('/services');
-                } catch (subError: any) {
-                    console.error('Subscription failed:', subError, subError?.response?.data);
-                    setError(
-                        subError.response?.data?.message ||
-                        subError.message ||
-                        'Survey created, but subscription failed. Please try again from the dashboard.',
-                    );
-                    setSubmitting(false);
-                }
-            }
-        } catch (err: any) {
+            onNext?.(String(surveyId));
+            return;
+        } catch (err: unknown) {
             console.error('Submission error:', err);
-            setError(err.response?.data?.message || err.message || 'Failed to submit service request');
+
+            const msg = axios.isAxiosError(err)
+                ? (typeof err.response?.data === 'object' && err.response?.data && 'message' in err.response.data
+                      ? (err.response.data as { message?: string }).message
+                      : undefined) || err.message
+                : err instanceof Error
+                  ? err.message
+                  : 'Failed to submit service request';
+
+            setError(msg);
+            toast.error(msg, { id: submissionToast });
+            return;
+        } finally {
             setSubmitting(false);
         }
     };
-
-    if (paymentDetails) {
-        return (
-            <div className="space-y-6">
-                <PaymentSummary paymentDetails={paymentDetails} surveyDetails={surveyData} />
-            </div>
-        );
-    }
 
     return (
         <div className="space-y-6">
@@ -294,6 +168,13 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                 <span className="text-sm text-gray-600">Customer Type</span>
                                 <p className="font-semibold capitalize">{formData.customerType || 'residential'}</p>
                             </div>
+                            <div>
+                                <span className="text-sm text-gray-600">Device</span>
+                                <p className="font-semibold">
+                                    {formData.withDevice ? "With Device" : "Without Device"}
+                                </p>
+                            </div>
+
                             {/*<div>*/}
                             {/*    <span className="text-sm text-gray-600">Main Offer ID</span>*/}
                             {/*    <p className="font-semibold">{formData.serviceType || '-'}</p>*/}
@@ -303,19 +184,19 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 </Card>
 
                 {/* Location Details (match Resource Details layout) */}
-                <Card>
+                {/* <Card>
                     <CardContent>
                         <h3 className="mb-4 font-semibold text-gray-900">Location</h3>
-                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                            {/*<div>*/}
-                            {/*    <span className="text-sm text-gray-600">Latitude</span>*/}
-                            {/*    <p className="font-mono font-semibold">{formData.latitude.toFixed(6)}</p>*/}
-                            {/*</div>*/}
-                            {/*<div>*/}
-                            {/*    <span className="text-sm text-gray-600">Longitude</span>*/}
-                            {/*    <p className="font-mono font-semibold">{formData.longitude.toFixed(6)}</p>*/}
-                            {/*</div>*/}
-                            <div>
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4"> */}
+                {/*<div>*/}
+                {/*    <span className="text-sm text-gray-600">Latitude</span>*/}
+                {/*    <p className="font-mono font-semibold">{formData.latitude.toFixed(6)}</p>*/}
+                {/*</div>*/}
+                {/*<div>*/}
+                {/*    <span className="text-sm text-gray-600">Longitude</span>*/}
+                {/*    <p className="font-mono font-semibold">{formData.longitude.toFixed(6)}</p>*/}
+                {/*</div>*/}
+                {/* <div>
                                 <span className="text-sm text-gray-600">Resource</span>
                                 <p className="font-semibold">
                                     <Badge className={formData.resourceAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
@@ -324,12 +205,12 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                 </p>
                             </div>
                             <div>
-                                <span className="text-sm text-gray-600">Address</span>
-                                {/*<p className="font-semibold">{formData.address || '-'}</p>*/}
-                            </div>
+                                <span className="text-sm text-gray-600">Address</span> */}
+                {/*<p className="font-semibold">{formData.address || '-'}</p>*/}
+                {/* </div>
                         </div>
                     </CardContent>
-                </Card>
+                </Card> */}
 
                 {/* Contact Details (match Resource Details layout) */}
                 <Card>
@@ -405,7 +286,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                     ) : (
                         <>
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            {formData.serviceType === '1457567289' ? 'Subscribe' : 'Pay'}
+                            Submit
                         </>
                     )}
                 </Button>

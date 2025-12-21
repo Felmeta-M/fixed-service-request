@@ -2,8 +2,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ServiceProvisionStatus } from '@/lib/status-map';
+import { router } from '@inertiajs/react';
 import {
     ColumnDef,
+    SortingState,
     flexRender,
     getCoreRowModel,
     getFilteredRowModel,
@@ -13,7 +15,7 @@ import {
 } from '@tanstack/react-table';
 import { ArrowUpDown, Box, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileText, Phone, RefreshCw, Wifi } from 'lucide-react';
 import * as React from 'react';
-import SurveyActions from './survey/survey-actions';
+import SurveyActions from './survey-actions';
 
 const typeMap = {
     '1457567289': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
@@ -22,7 +24,7 @@ const typeMap = {
 };
 
 interface SurveyTableProps {
-    surveys: any[];
+    surveys: SurveyRow[];
     loading?: boolean;
     onSurveyUpdate: () => void;
     globalFilter: string;
@@ -30,8 +32,18 @@ interface SurveyTableProps {
     statusFilter: string;
 }
 
+type SurveyRow = {
+    customer_survey_order_id?: string;
+    service_number?: string | null;
+    main_offer_id?: string;
+    status?: string;
+    created_at?: string;
+    updated_at?: string;
+    [key: string]: unknown;
+};
+
 export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFilter, typeFilter, statusFilter }: SurveyTableProps) {
-    const [sorting, setSorting] = React.useState([]);
+    const [sorting, setSorting] = React.useState<SortingState>([]);
     const [rowSelection, setRowSelection] = React.useState({});
     const [pagination, setPagination] = React.useState({
         pageIndex: 0,
@@ -40,20 +52,27 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
 
     const filteredSurveys = React.useMemo(() => {
         return surveys.filter((s) => {
-            const matchesType = typeFilter ? s.main_offer_id.includes(typeFilter) : true;
-            const matchesStatus = statusFilter ? s.status.toLowerCase() === statusFilter.toLowerCase() : true;
+            const offerId = String(s.main_offer_id ?? '');
+            const status = String(s.status ?? '');
+
+            const matchesType = typeFilter ? offerId.includes(typeFilter) : true;
+            const matchesStatus = statusFilter ? status.toLowerCase() === statusFilter.toLowerCase() : true;
             const matchesGlobal = globalFilter
                 ? s.customer_survey_order_id?.toString().includes(globalFilter) ||
-                s.main_offer_id?.toString().includes(globalFilter) ||
-                s.status?.toLowerCase().includes(globalFilter.toLowerCase())
+                offerId.includes(globalFilter) ||
+                status.toLowerCase().includes(globalFilter.toLowerCase())
                 : true;
             return matchesType && matchesStatus && matchesGlobal;
         });
     }, [surveys, typeFilter, statusFilter, globalFilter]);
 
-    const handleRowClick = (survey: any) => { };
+    const handleRowClick = (survey: SurveyRow) => {
+        const id = survey?.customer_survey_order_id;
+        if (!id) return;
+        router.visit(`/services/${id}`);
+    };
 
-    const columns = React.useMemo<ColumnDef<any>[]>(
+    const columns = React.useMemo<ColumnDef<SurveyRow>[]>(
         () => [
             {
                 accessorKey: 'customer_survey_order_id',
@@ -68,9 +87,13 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                     </Button>
                 ),
                 cell: (info) => (
-                    <div className="cursor-pointer text-sm font-medium hover:text-primary" onClick={() => handleRowClick(info.row.original)}>
-                        {info.getValue() ?? '-'}
-                    </div>
+                    <button
+                        type="button"
+                        className="text-sm font-medium text-gray-900 hover:text-primary hover:underline"
+                        onClick={() => handleRowClick(info.row.original)}
+                    >
+                        {String(info.getValue() ?? '-')}
+                    </button>
                 ),
             },
             {
@@ -80,7 +103,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                     const serviceNumber = getValue<string>() ?? null; // null-safe
 
                     return (
-                        <div className="cursor-pointer">
+                        <div>
                             {/* <Badge
                                 variant="outline"
                                 className="flex items-center gap-1.5 bg-white"
@@ -96,13 +119,13 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
             {
                 accessorKey: 'main_offer_id',
                 header: 'Service Type',
-                cell: ({ getValue, row }) => {
+                cell: ({ getValue }) => {
                     const id = getValue<string>() || '';
-                    const selected = typeMap[id] || { label: 'Unknown', text: 'text-gray-700', bg: 'bg-gray-400', icon: FileText };
+                    const selected = typeMap[id as keyof typeof typeMap] || { label: 'Unknown', text: 'text-gray-700', bg: 'bg-gray-400', icon: FileText };
                     const IconComponent = selected.icon;
 
                     return (
-                        <div onClick={() => handleRowClick(row.original)} className="cursor-pointer">
+                        <div>
                             <Badge variant="outline" className="flex items-center gap-1.5 bg-white">
                                 <IconComponent className={`h-3 w-3 ${selected.text}`} />
                                 <span className="text-xs font-medium">{selected.label}</span>
@@ -114,25 +137,26 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
             {
                 accessorKey: 'status',
                 header: 'Status',
-                cell: ({ getValue, row }) => {
+                cell: ({ getValue }) => {
                     const raw = Number(getValue());
-                    const mapped = ServiceProvisionStatus[raw] ?? {
+                    const mapped = ServiceProvisionStatus[raw as keyof typeof ServiceProvisionStatus] ?? {
                         label: 'Unknown',
                         text: 'text-gray-700',
                         bg: 'bg-gray-200',
                     };
 
                     const getStatusVariant = (status: number) => {
-                        if (status === 5) return 'success';
-                        if (status === 3) return 'warning';
+                        // Badge supports: default | secondary | destructive | outline
                         if (status === 9) return 'destructive';
+                        if (status === 3) return 'warning';
+                        if (status === 5) return 'success';
                         if (status === 11) return 'success';
                         if (status === 14) return 'success';
                         return 'default';
                     };
 
                     return (
-                        <div onClick={() => handleRowClick(row.original)} className="cursor-pointer">
+                        <div>
                             <Badge variant={getStatusVariant(raw)} className="flex items-center gap-2">
                                 <div className={`h-2 w-2 rounded-full ${mapped.bg}`} />
                                 <span className="text-xs">{mapped.label}</span>
@@ -144,38 +168,43 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
             {
                 accessorKey: 'created_at',
                 header: 'Created Date',
-                cell: ({ getValue, row }) => {
+                cell: ({ getValue }) => {
                     const raw = getValue<string>();
                     if (!raw) return '-';
 
                     const date = new Date(raw);
                     if (isNaN(date.getTime())) return raw;
 
-                    return (
-                        <div onClick={() => handleRowClick(row.original)} className="cursor-pointer">
-                            {date.toLocaleString('en-US', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: true,
-                            })}
-                        </div>
-                    );
+                    return date.toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true,
+                    });
                 },
             },
             {
                 id: 'actions',
-                header: 'Actions',
+                header: () => (
+                    <div className="flex justify-end px-2">
+                        Actions
+                    </div>
+                ),
                 cell: ({ row }) => {
                     const survey = row.original;
                     return (
-                        <div onClick={(e) => e.stopPropagation()}>
+                        <div
+                            className="flex justify-end"
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <SurveyActions
                                 survey={survey}
                                 onActionComplete={() => onSurveyUpdate?.()}
-                                onUpdatingChange={(isUpdating) => console.log('Updating:', isUpdating)}
+                                onUpdatingChange={(isUpdating) =>
+                                    console.log('Updating:', isUpdating)
+                                }
                             />
                         </div>
                     );
@@ -244,8 +273,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                                     <TableRow
                                         key={row.id}
                                         data-state={row.getIsSelected() && 'selected'}
-                                        className="cursor-pointer border-b border-gray-100 transition-colors hover:bg-gray-50/50"
-                                        onClick={() => handleRowClick(row.original)}
+                                        className="border-b border-gray-100 transition-colors hover:bg-gray-50/50"
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id} className="py-3">

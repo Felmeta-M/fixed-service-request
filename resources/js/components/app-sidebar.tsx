@@ -13,7 +13,7 @@ import {
 import logo from '@/images/ethio_logo_full.png';
 import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
-import { CheckCircle, FileText, MapPin, RadioTower, ShieldQuestionIcon, Wifi } from 'lucide-react';
+import { CheckCircle, CreditCard, FileText, MapPin, RadioTower, ShieldQuestionIcon, Wifi } from 'lucide-react';
 import { NavUser } from './nav-user';
 
 const items = [
@@ -40,7 +40,25 @@ const defaultCreateServiceSteps = [
     { name: 'Service Information', icon: Wifi },
     { name: 'Location Information', icon: MapPin },
     { name: 'Review & Submit', icon: FileText },
+    { name: 'Payment / Subscribe', icon: CreditCard },
 ];
+
+const getStepDescription = (stepName: string) => {
+    switch (stepName) {
+        case 'Customer Profile':
+            return 'Create or confirm your profile';
+        case 'Service Information':
+            return 'Choose service type and configuration';
+        case 'Location Information':
+            return 'Select location and check availability';
+        case 'Review & Submit':
+            return 'Verify details and submit request';
+        case 'Payment / Subscribe':
+            return 'Review charges and proceed';
+        default:
+            return '';
+    }
+};
 
 export function AppSidebar({ currentStep = 0, mode = 'list', steps = defaultCreateServiceSteps, ...props }: AppSidebarProps) {
     const { url } = usePage();
@@ -55,7 +73,7 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps = defaultCrea
         <Sidebar collapsible="offcanvas" {...props}>
             <SidebarHeader>
                 <div className="flex p-2">
-                    <Link href={route('home')} className="cursor-pointer">
+                    <Link href={route('services')} className="cursor-pointer">
                         <img src={logo} alt="Company Logo" className="h-10 w-auto" />
                     </Link>
                 </div>
@@ -124,9 +142,7 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps = defaultCrea
                                                             isCompleted ? 'text-primary/70' : isCurrent ? 'text-gray-500' : 'text-gray-400',
                                                         )}
                                                     >
-                                                        {idx === 0 && 'Choose service type and configuration'}
-                                                        {idx === 1 && 'Select location and check availability'}
-                                                        {idx === 2 && 'Verify details and submit request'}
+                                                        {getStepDescription(step.name)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -138,7 +154,7 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps = defaultCrea
                     </SidebarGroup>
                 ) : (
                     <SidebarGroup>
-                        <SidebarGroupLabel className="text-gray-700">Main</SidebarGroupLabel>
+                        {/* <SidebarGroupLabel className="text-gray-700">Main</SidebarGroupLabel> */}
                         <SidebarGroupContent>
                             <SidebarMenu>
                                 {items.map((item) => {

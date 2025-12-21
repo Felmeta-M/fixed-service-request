@@ -8,6 +8,8 @@ export default function CreateServicePage({ googleMapsApiKey }: { googleMapsApiK
     const { auth } = usePage().props;
     console.log("🚀 ~ CreateServicePage ~ auth:", auth)
     const isNewCustomer = !auth.user?.customer_code;
+    const { user } = auth;
+    console.log("🚀 ~ User :", user)
 
     return (
         <MainLayout currentStep={currentStep} isNewCustomer={isNewCustomer}>

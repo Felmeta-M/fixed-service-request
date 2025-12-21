@@ -60,7 +60,7 @@ export default function CustomerDashboard() {
 
     useEffect(() => {
         fetchSurveys();
-    }, []);
+    }, [fetchSurveys]);
 
     // Calculate dashboard stats from survey data
     const dashboardStats = useMemo((): DashboardStats => {
@@ -286,6 +286,7 @@ export default function CustomerDashboard() {
                                     value={globalFilter}
                                     onChange={(e) => setGlobalFilter(e.target.value)}
                                     className="h-8 max-w-sm text-sm"
+                                    size="sm"
                                 />
                                 <Button
                                     variant={hasActiveFilters ? 'default' : 'outline'}
@@ -374,8 +375,8 @@ export default function CustomerDashboard() {
                                             {appliedFilters.type === '1943913918'
                                                 ? 'Internet'
                                                 : appliedFilters.type === '1207609454'
-                                                  ? 'Voice'
-                                                  : 'Combo'}
+                                                    ? 'Voice'
+                                                    : 'Combo'}
                                             <button onClick={() => handleTypeFilterChange('')} className="ml-1 rounded-full hover:bg-primary/20">
                                                 <X className="h-3 w-3" />
                                             </button>

@@ -19,12 +19,12 @@ class QueryAvailableNumberService extends BaseApiService
         return config('services.query_available_number.endpoint');
     }
 
-    public function getAvailableNumberServices(?int $resCnt = 10000, ?string $deptId = null): string|bool
+    public function getAvailableNumberServices(?int $resCnt = 100, ?string $deptId = null): string|bool
     {
         $data = [
             'pay_mode' => '1',
             'tele_type' => '4',
-            'need_query_by_dept' => true,
+            'need_query_by_dept' => false,
             'res_cnt' => $resCnt,
             'dept_id' => '1766044689199549668',
         ];
@@ -40,10 +40,7 @@ class QueryAvailableNumberService extends BaseApiService
                 'oper_type' => 1029,
                 'res_code' => $numberService,
             ];
-            if ($this->reserveNumberService->pick($data)) {
-                Log::info('service numer', $data);
                 return $numberService;
-            }
         }
 
         return false;

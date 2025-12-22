@@ -49,6 +49,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
         $customer = Customer::current();
 
         // Override frontend data with customer defaults
+        //TODO: remove hardcoded values
         $data = array_merge($data, [
             'region'     => 1,
             'city'       => 1,
@@ -60,6 +61,10 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
         ]);
 
         $data['completed_date'] = now()->format('YmdHis');
+
+        $serviceNumber = SurveyRequest::query()
+            ->where('customer_survey_order_id', $data['survey_order_id'])
+            ->value('service_number');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -149,7 +154,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
             <com:SubBusiOrderlist>
                <com:BusinessCode>{$this->businessCode()}</com:BusinessCode>
                <com:SubscriberInfo>
-                  <com:ServiceNumber>{$this->serviceNumber}</com:ServiceNumber>
+                  <com:ServiceNumber>{$serviceNumber}</com:ServiceNumber>
                   <com:NetworkType>{$this->networkType()}</com:NetworkType>
                   <com:SubType>0</com:SubType>
                   <com:PrimaryOffering>

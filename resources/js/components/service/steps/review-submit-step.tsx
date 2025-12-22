@@ -246,10 +246,10 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                 <span className="text-sm text-gray-600">Phone</span>
                                 <p className="font-semibold">{formData.contactNo || '-'}</p>
                             </div>
-                            <div>
+                            {/* <div>
                                 <span className="text-sm text-gray-600">Email</span>
                                 <p className="font-semibold">{formData.contactEmail || '-'}</p>
-                            </div>
+                            </div> */}
                             {/*<div>*/}
                             {/*    <span className="text-sm text-gray-600">Preferred</span>*/}
                             {/*    <p className="font-semibold">{formData.contactPreferred || '-'}</p>*/}

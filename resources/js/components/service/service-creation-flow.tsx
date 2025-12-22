@@ -239,11 +239,11 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const showNavigation = !(isNewCustomer && currentStep === 0) && adjustedStep < 2;
 
     return (
-        <Card className="border-0 shadow-none">
-            <CardHeader className="bg-white pr-2 pl-2">
+            <div className="w-full space-y-6 px-4 py-2 lg:px-6">            
+            <div className="bg-white pb-0 pt-0">
                 <div className="flex items-center justify-between">
                     <div>
-                        <Link href={route("services")}>
+                        <Link href={route("services")} className='hidden sm:block'>
                             <Button
                                 variant="link"
                                 size="icon"
@@ -252,8 +252,8 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                                 <MoveLeftIcon className="h-5 w-5" /> Back
                             </Button>
                         </Link>
-                        <CardTitle className="text-lg font-bold text-gray-900 lg:text-xl">{stepTitles[currentStep]?.title}</CardTitle>
-                        <CardDescription className="text-sm text-gray-500 lg:text-base">{stepTitles[currentStep]?.description}</CardDescription>
+                        <div className="text-lg font-bold text-gray-900 lg:text-xl">{stepTitles[currentStep]?.title}</div>
+                        <div className="text-sm text-gray-500 lg:text-base">{stepTitles[currentStep]?.description}</div>
                     </div>
 
                     {/* Desktop step indicator */}
@@ -265,8 +265,8 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                         </div>
                     </div>
                 </div>
-            </CardHeader>
-            <CardContent className="pr-2 pl-2">
+            </div>
+            <div className=" ">
                 {renderStepContent()}
 
                 {/* Navigation Buttons */}
@@ -307,7 +307,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                         </div>
                     </div>
                 )}
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }

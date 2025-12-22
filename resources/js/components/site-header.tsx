@@ -27,9 +27,9 @@ export function SiteHeader({ title, isServiceCreation = false, currentStep = 0, 
 
     return (
         <>
-            <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
-                <div className="flex w-full items-center gap-1 px-2 lg:gap-2 lg:px-6">
-                    <SidebarTrigger className="-ml-1" />
+            <header className="flex h-(--header-height) px-2 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+                <div className="flex w-full items-center gap-1 lg:gap-2 lg:px-6">
+                    <SidebarTrigger />
 
                     {isServiceCreation && (
                         <Link href="/services">
@@ -42,18 +42,18 @@ export function SiteHeader({ title, isServiceCreation = false, currentStep = 0, 
                     <Separator orientation="vertical" className="data-[orientation=vertical]:h-4" />
                     <h1 className="hidden text-base font-medium capitalize md:block">{title}</h1>
 
-                    <div className="ml-auto flex items-center gap-2">
-                        <Button variant="ghost" size="sm" className="h-8 md:hidden" onClick={handleLogout}>
-                            <LogOut className="mr-2 h-4 w-4" />
-                            Log out
-                        </Button>
+                    <div className="ml-auto flex items-center gap-4">
                         {/* additional header buttons or actions */}
                         {/* Mobile title for service creation */}
-                        {isServiceCreation && (
-                            <h1 className="text-base font-medium capitalize md:hidden">
+                        {/* {isServiceCreation && (
+                            <h1 className="text-sm text-gray-500 font-medium capitalize md:hidden">
                                 Step {currentStep + 1} of {steps.length}
                             </h1>
-                        )}
+                        )} */}
+                         <Button variant="ghost" size="sm" className="h-8 md:hidden" onClick={handleLogout}>
+                            <LogOut className=" h-4 w-4" />
+                            Log out
+                        </Button>
                     </div>
                 </div>
             </header>

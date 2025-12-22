@@ -203,8 +203,8 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
     };
 
     return (
-        <div className="min-h-screen py-8">
-            <div className="mx-auto bg-white max-w-4xl px-4 sm:px-6 lg:px-8">
+        <div className="px-4">
+            <div className="mx-auto bg-white max-w-4xl">
                 {/* Invoice Header */}
                 {/* <div className="mb-4 rounded-lg bg-white p-4 shadow-xs"> */}
                     {/* <div className="flex flex-col justify-between md:flex-row md:items-start"> */}
@@ -241,14 +241,14 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                     {/* Customer & Service Information */}
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {/* Customer Information */}
-                        <Card className="border-none shadow-none pt-0">
-                            <CardHeader className="">
+                        <div className="border-none shadow-none pt-0">
+                            <div className="">
                                 <div className="flex items-center gap-2">
                                     <User className="h-5 w-5 text-gray-500" />
-                                    <CardTitle className="text-lg">Customer Information</CardTitle>
+                                    <div className="text-lg">Customer Information</div>
                                 </div>
-                            </CardHeader>
-                            <CardContent>
+                            </div>
+                            <div>
                                 <div className="space-y-3">
                                     <div>
                                         <p className="text-sm font-medium text-gray-500">Name</p>
@@ -269,18 +269,18 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                         <p className="font-mono text-gray-900">{user.customer_code}</p>
                                     </div> */}
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
                         {/* Service Information */}
-                        <Card className="border-none shadow-none pt-0">
-                            <CardHeader className="">
+                        <div className="border-none shadow-none pt-0">
+                            <div className="">
                                 <div className="flex items-center gap-2">
                                     <FileText className="h-5 w-5 text-gray-500" />
-                                    <CardTitle className="text-lg">Service Details</CardTitle>
+                                    <div className="text-lg">Service Details</div>
                                 </div>
-                            </CardHeader>
-                            <CardContent>
+                            </div>
+                            <div>
                                 <div className="space-y-4">
                                     <div>
                                         <p className="text-sm font-medium text-gray-500">Service Number</p>
@@ -295,52 +295,52 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                         <Badge variant="outline">New Connection</Badge>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Invoice Items Table */}
-                    <Card className="border-none shadow-none pt-0">
-                        <CardHeader>
-                            <CardTitle>Payment Details</CardTitle>
-                            <CardDescription>Breakdown of charges and fees</CardDescription>
-                        </CardHeader>
-                        <CardContent>
+                    <div className="border-none shadow-none pt-0">
+                        <div>
+                            <div>Payment Details</div>
+                            <div>Breakdown of charges and fees</div>
+                        </div>
+                        <div>
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
                                         <tr className="border-b border-gray-200">
-                                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">FEE </th>
-                                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">DESCRIPTION</th>
-                                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">AMOUNT</th>
+                                            <th className="px-2  py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">FEE </th>
+                                            <th className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">DESCRIPTION</th>
+                                            <th className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">AMOUNT</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
                                         {subscriptionFee > 0 && (
                                             <tr>
-                                                <td className="px-4 py-4 font-medium text-gray-900">Subscription</td>
-                                                <td className="px-4 py-4 text-sm text-gray-600">
+                                                <td className="px-4 py-4 text-xs sm:text-sm font-medium text-gray-900">Subscription</td>
+                                                <td className="px-4 py-4 text-xs sm:text-sm text-gray-600">
                                                     Service subscription fee
                                                 </td>
-                                                <td className="px-4 py-4 font-semibold text-gray-900">{subscriptionFee.toFixed(2)} ETB</td>
+                                                <td className="px-4 py-4 text-xs sm:text-sm font-semibold text-gray-900">{subscriptionFee.toFixed(2)} ETB</td>
                                             </tr>
                                         )}
                                         {cableCharge > 0 && (
                                             <tr>
-                                                <td className="px-4 py-4 font-medium text-gray-900">Cable Installation</td>
-                                                <td className="px-4 py-4 text-sm text-gray-600">
+                                                <td className="px-4 py-4 text-xs sm:text-sm font-medium text-gray-900">Cable Installation</td>
+                                                <td className="px-4 py-4 text-xs sm:text-sm text-gray-600">
                                                     Physical cable installation{cableLength ? ` (${cableLength} meters)` : ''}
                                                 </td>
-                                                <td className="px-4 py-4 font-semibold text-gray-900">{cableCharge.toFixed(2)} ETB</td>
+                                                <td className="px-4 py-4 text-xs sm:text-sm font-semibold text-gray-900">{cableCharge.toFixed(2)} ETB</td>
                                             </tr>
                                         )}
                                         {devicePrice > 0 && (
                                             <tr>
-                                                <td className="px-4 py-4 font-medium text-gray-900">Device</td>
-                                                <td className="px-4 py-4 text-sm text-gray-600">
+                                                <td className="px-4 py-4 text-xs sm:text-sm font-medium text-gray-900">Device</td>
+                                                <td className="px-4 py-4 text-xs sm:text-sm text-gray-600">
                                                     Required device and hardware
                                                 </td>
-                                                <td className="px-4 py-4 font-semibold text-gray-900">{devicePrice.toFixed(2)} ETB</td>
+                                                <td className="px-4 py-4 text-xs sm:text-sm font-semibold text-gray-900">{devicePrice.toFixed(2)} ETB</td>
                                             </tr>
                                         )}
                                     </tbody>
@@ -355,7 +355,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                     <span className="text-lg font-semibold text-gray-900">{totalAmount} ETB</span>
                                 </div>
                                 
-                                {!isFree && (
+                                {/* {!isFree && (
                                     <>
                                         <div className="flex justify-between text-sm text-gray-600">
                                             <span>Includes:</span>
@@ -366,7 +366,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                                     devicePrice > 0 && 'Device'
                                                 ].filter(Boolean).join(', ')}
                                             </span>
-                                        </div>
+                                        </div> */}
                                         {/* <div className="rounded-lg bg-primary/5 p-4">
                                             <div className="flex items-center justify-between">
                                                 <div>
@@ -379,17 +379,17 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                                 </div>
                                             </div>
                                         </div> */}
-                                    </>
-                                )}
+                                    {/* </>
+                                )} */}
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
 
                     {/* Payment Action */}
                     <div ref={actionRef} />
-                    <Card className={`pt-0 border-none shadow-none ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
-                        <CardContent className="py-2">
-                            <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+                    <div className={`pt-0 border-none shadow-none ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
+                        <div className="">
+                            <div className="flex flex-col-reverse items-center justify-between gap-4 sm:flex-row">
                                 {/* <div>
                                     <h3 className="font-semibold text-gray-900">Ready to proceed?</h3>
                                     <p className="text-sm text-gray-600">
@@ -405,6 +405,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                        </Button>
                                     </Link>
                                 </div>
+                                
                                 <div className="flex gap-3">
                                     {/* {canSubscribe && isFree ? ( */}
                                     {canSubscribe ? (
@@ -454,8 +455,8 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                     ) : null}
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

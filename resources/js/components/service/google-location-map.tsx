@@ -71,7 +71,6 @@ export function GoogleLocationMap({
                 hasInitialized.current = true;
                 map.setCenter({ lat: selectedLocation.lat, lng: selectedLocation.lng });
                 map.setZoom(16);
-                updateMarkerPosition(selectedLocation.lat, selectedLocation.lng);
             }
         },
         [selectedLocation],
@@ -149,48 +148,33 @@ export function GoogleLocationMap({
     );
 
     // Get address from coordinates using Google Geocoding API
-    const getAddressFromCoordinates = async (lat: number, lng: number): Promise<string> => {
-        try {
-            setIsGeocoding(true);
-            const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${googleMapsApiKey}`);
-            const data = await response.json();
+    const getAddressFromCoordinates = useCallback(
+        async (lat: number, lng: number): Promise<string> => {
+            try {
+                setIsGeocoding(true);
+                const response = await fetch(
+                    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${googleMapsApiKey}`,
+                );
+                const data = await response.json();
 
-            if (data.status === 'OK' && data.results.length > 0) {
-                return data.results[0].formatted_address;
+                if (data.status === 'OK' && data.results.length > 0) {
+                    return data.results[0].formatted_address;
+                }
+                return 'Location identified (address details limited)';
+            } catch (error) {
+                console.error('Google Geocoding error:', error);
+                return 'Address service temporarily unavailable';
+            } finally {
+                setIsGeocoding(false);
             }
-            return 'Location identified (address details limited)';
-        } catch (error) {
-            console.error('Google Geocoding error:', error);
-            return 'Address service temporarily unavailable';
-        } finally {
-            setIsGeocoding(false);
-        }
-    };
-
-    // Handle map click - smooth and optimized
-    const onMapClick = useCallback(
-        async (event: google.maps.MapMouseEvent) => {
-            if (!event.latLng || !map || internalAnimating) return;
-
-            const lat = event.latLng.lat();
-            const lng = event.latLng.lng();
-
-            // Smooth pan to clicked location
-            smoothPanTo(lat, lng, 16);
-
-            // Update marker position smoothly
-            updateMarkerPosition(lat, lng);
-
-            // Get address asynchronously
-            const address = await getAddressFromCoordinates(lat, lng);
-            onLocationSelect(lat, lng, address);
         },
-        [map, googleMapsApiKey, onLocationSelect, smoothPanTo, internalAnimating],
+        [googleMapsApiKey],
     );
 
     // Update marker position smoothly with bounce animation
-    const updateMarkerPosition = (lat: number, lng: number) => {
-        if (!map) return;
+    const updateMarkerPosition = useCallback(
+        (lat: number, lng: number) => {
+            if (!map) return;
 
         // Remove existing marker
         if (markerRef.current) {
@@ -238,7 +222,30 @@ export function GoogleLocationMap({
                 }
             }
         });
-    };
+        },
+        [getAddressFromCoordinates, internalAnimating, map, onLocationSelect, selectedLocation, smoothPanTo],
+    );
+
+    // Handle map click - smooth and optimized
+    const onMapClick = useCallback(
+        async (event: google.maps.MapMouseEvent) => {
+            if (!event.latLng || !map || internalAnimating) return;
+
+            const lat = event.latLng.lat();
+            const lng = event.latLng.lng();
+
+            // Smooth pan to clicked location
+            smoothPanTo(lat, lng, 16);
+
+            // Update marker position smoothly
+            updateMarkerPosition(lat, lng);
+
+            // Get address asynchronously
+            const address = await getAddressFromCoordinates(lat, lng);
+            onLocationSelect(lat, lng, address);
+        },
+        [getAddressFromCoordinates, internalAnimating, map, onLocationSelect, smoothPanTo, updateMarkerPosition],
+    );
 
     // Update marker when selectedLocation changes from parent (e.g., from search)
     useEffect(() => {
@@ -266,19 +273,40 @@ export function GoogleLocationMap({
             `);
             infoWindowRef.current.open(map, markerRef.current);
         }
-    }, [map, selectedLocation, smoothPanTo, internalAnimating]);
+    }, [map, selectedLocation, smoothPanTo, internalAnimating, updateMarkerPosition]);
 
     const handleSearch = async () => {
-        if (searchQuery.trim() && !internalAnimating) {
-            onAddressSearch(searchQuery);
-        }
-    };
+        const query = searchQuery.trim();
+        if (!query || internalAnimating) return;
 
-    const handleKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleSearch();
+        // Prefer Maps JS Geocoder when available (works well with browser-restricted keys).
+        if (map && typeof google !== 'undefined' && google.maps?.Geocoder) {
+            try {
+                setIsGeocoding(true);
+                const geocoder = new google.maps.Geocoder();
+
+                const results = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
+                    geocoder.geocode({ address: query }, (results, status) => {
+                        if (status === 'OK' && results && results.length > 0) {
+                            resolve(results);
+                            return;
+                        }
+                        reject(new Error(status));
+                    });
+                });
+
+                const first = results[0];
+                const location = first.geometry.location;
+                onLocationSelect(location.lat(), location.lng(), first.formatted_address);
+                return;
+            } catch {
+                // Fall back to the parent handler (which already reports errors in the UI).
+            } finally {
+                setIsGeocoding(false);
+            }
         }
+
+        onAddressSearch(query);
     };
 
     // Use external animation state if provided, otherwise use internal
@@ -302,7 +330,7 @@ export function GoogleLocationMap({
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
                 onSearch={handleSearch}
-                isLoading={isLoading || isGeocoding || isCurrentlyAnimating}
+                isLoading={isGeocoding || isCurrentlyAnimating}
                 placeholder="Search for an address, place, or landmark..."
             />
 

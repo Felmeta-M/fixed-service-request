@@ -20,27 +20,31 @@ export function ProfessionalSearch({
     placeholder = 'Search for an address, place, or landmark...',
     className = '',
 }: ProfessionalSearchProps) {
-    const handleKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            onSearch();
-        }
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+
+        if (isLoading) return;
+        if (!searchQuery.trim()) return;
+
+        onSearch();
     };
 
     return (
         <div className={`relative w-full ${className}`}>
             <div className="relative">
                 {/* Search Icon */}
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin text-gray-400" /> : <Search className="h-4 w-4 text-gray-400" />}
-                </div>
+                {/* <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <Search className="h-4 w-4 text-muted-foreground" />}
+                </div> */}
 
                 {/* Input Field */}
                 <Input
+                    type="search"
                     placeholder={placeholder}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={handleKeyPress}
+                    onKeyDown={handleKeyDown}
                     className="w-full py-2 pr-20 pl-10 focus:ring-1 focus:ring-primary"
                 />
 

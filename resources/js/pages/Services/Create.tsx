@@ -13,7 +13,7 @@ export default function CreateServicePage({ googleMapsApiKey }: { googleMapsApiK
 
     return (
         <MainLayout currentStep={currentStep} isNewCustomer={isNewCustomer}>
-            <div className="mx-auto max-w-4xl">
+            <div className="w-full mx-auto max-w-4xl">
                 <ServiceCreationFlow
                     currentStep={currentStep}
                     onStepChange={setCurrentStep}

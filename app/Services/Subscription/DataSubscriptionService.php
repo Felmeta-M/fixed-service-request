@@ -31,7 +31,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
     public function create(array $data)
     {
         $xml = $this->buildXml($data);
-        Log::info($xml);
+        Log::info('subscription request xml: ' . $xml  );
         $response = $this->executeRequest($xml);
         Log::info($response);
         return $this->parseResponse($data, $response);
@@ -66,10 +66,10 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
         $data['completed_date'] = now()->format('YmdHis');
 
         // Default/demo values (until frontend provides them)
-        $data += [
-            'region'       => 3,
+        $data = array_merge($data,  [
+            'region'       => 1,
             'city'         => 1,
-            'zone'         => 1,
+            'zone'         => 3,
             'wereda'       => 10,
             'kebele'       => 'Kebele',
             'house_no'     => '1234',
@@ -79,7 +79,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
             'email'        => 'ok@ok.com',
             'cpe_type'     => '2701DTU',
             'cpe_serial'   => '2',
-        ];
+        ]);
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"

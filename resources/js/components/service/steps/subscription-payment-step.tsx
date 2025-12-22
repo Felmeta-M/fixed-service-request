@@ -133,11 +133,6 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete }: Subscr
     return (
         <div className="space-y-6">
             <PaymentSummary paymentDetails={paymentDetails} surveyDetails={surveyDetails} />
-            <div className="flex justify-end">
-                <Button variant="outline" onClick={onComplete}>
-                    Done
-                </Button>
-            </div>
         </div>
     );
 }

@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { CheckCircle2, CreditCard, User, FileText, Phone, Mail, Calendar, Hash } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -213,42 +213,42 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
         <div className="min-h-screen py-8">
             <div className="mx-auto bg-white max-w-4xl px-4 sm:px-6 lg:px-8">
                 {/* Invoice Header */}
-                <div className="mb-4 rounded-lg bg-white p-4 shadow-xs">
-                    <div className="flex flex-col justify-between md:flex-row md:items-start">
-                        <div>
-                            <div className="mb-2 flex items-center gap-2">
+                {/* <div className="mb-4 rounded-lg bg-white p-4 shadow-xs"> */}
+                    {/* <div className="flex flex-col justify-between md:flex-row md:items-start"> */}
+                        {/* <div> */}
+                            {/* <div className="mb-2 flex items-center gap-2">
                             
                                 <div>
                                     <h1 className="text-2xl font-bold text-gray-900">Service and Payment Details</h1>
                                     <p className="text-sm text-gray-500">Order Summary & Payment Details</p>
                                 </div>
-                            </div>
-                            <div className="mt-4 space-y-2">
+                            </div> */}
+                            {/* <div className="mt-4 space-y-2"> */}
                                 {/* <div className="flex items-center gap-2 text-sm">
                                     <Calendar className="h-4 w-4 text-gray-400" />
                                     <span className="text-gray-600">Date: {formattedDate}</span>
                                 </div> */}
-                                <div className="flex items-center gap-2 text-sm">
+                                {/* <div className="flex items-center gap-2 text-sm">
                                     <Hash className="h-4 w-4 text-gray-400" />
                                     <span className="text-gray-600">Order Id: {customer_survey_order_id || 'Pending'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="mt-4 md:mt-0 md:text-right">
+                                </div> */}
+                            {/* </div> */}
+                        {/* </div> */}
+                        {/* <div className="mt-4 md:mt-0 md:text-right">
                             <Badge variant={isFree ? "outline" : "default"} className="mb-1">
                                 {isFree ? "No Payment Required" : "Payment Required"}
                             </Badge>
                             <div className="text-3xl font-bold text-primary">{totalAmount} ETB</div>
                             <p className="text-sm text-gray-500">Total Amount</p>
-                        </div>
-                    </div>
-                </div>
+                        </div> */}
+                    {/* </div> */}
+                {/* </div> */}
 
                 <div className="space-y-6">
                     {/* Customer & Service Information */}
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {/* Customer Information */}
-                        <Card className="border-none shadow-xs">
+                        <Card className="border-none shadow-none pt-0">
                             <CardHeader className="">
                                 <div className="flex items-center gap-2">
                                     <User className="h-5 w-5 text-gray-500" />
@@ -280,7 +280,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                         </Card>
 
                         {/* Service Information */}
-                        <Card className="border-none shadow-xs">
+                        <Card className="border-none shadow-none pt-0">
                             <CardHeader className="">
                                 <div className="flex items-center gap-2">
                                     <FileText className="h-5 w-5 text-gray-500" />
@@ -307,7 +307,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                     </div>
 
                     {/* Invoice Items Table */}
-                    <Card className="border-none shadow-xs pt-2">
+                    <Card className="border-none shadow-none pt-0">
                         <CardHeader>
                             <CardTitle>Payment Details</CardTitle>
                             <CardDescription>Breakdown of charges and fees</CardDescription>
@@ -394,16 +394,23 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
 
                     {/* Payment Action */}
                     <div ref={actionRef} />
-                    <Card className={` pt-2 border-none shadow-xs ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
+                    <Card className={`pt-0 border-none shadow-none ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
                         <CardContent className="py-2">
                             <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-                                <div>
+                                {/* <div>
                                     <h3 className="font-semibold text-gray-900">Ready to proceed?</h3>
                                     <p className="text-sm text-gray-600">
                                         {isFree 
                                             ? 'Click subscribe to activate your service at no cost'
                                             : 'Complete payment to activate your service'}
                                     </p>
+                                </div> */}
+                                <div>
+                                    <Link href="/services" className="text-sm text-gray-600 underline hover:text-gray-800">
+                                       <Button variant="outline" className="gap-2">
+                                        Cancel
+                                       </Button>
+                                    </Link>
                                 </div>
                                 <div className="flex gap-3">
                                     {canSubscribe && isFree ? (

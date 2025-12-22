@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('payments', function (Blueprint $table) {
+            $table->string('service_number')->nullable();
             $table->decimal('subscription_fee', 10, 2)->default(0)->after('total_amount')->comment('Subscription fee for the payment');
             $table->decimal('device_fee', 10, 2)->default(0)->after('subscription_fee')->comment('Device fee for the payment');
         });
@@ -23,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('payments', function (Blueprint $table) {
-            $table->dropColumn(['subscription_fee', 'device_fee']);
+            $table->dropColumn(['service_number', 'subscription_fee', 'device_fee']);
         });
     }
 };

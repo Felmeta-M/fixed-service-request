@@ -46,108 +46,137 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
     protected function buildXml(array $data): string
     {
         $cfg = config('services.subscriber');
-
         $customer = Customer::current();
 
-        //TODO: to be replaced by frontend data
-        $data['region'] = $customer->region ??  30;
-        $data['city'] = $customer->city ?? 1;
-        $data['zone'] = $customer->zone ?? 6;
-        $data['wereda'] = $customer->wereda ?? 90;
-        $data['kebele'] = $customer->kebele ?? $data['kebele'];
-        $data['house_no'] = $customer->kebele ?? $data['house_no'];
-        $data['sms_no'] = $customer->phone_number ?? $data['sms_no'];
+        // Override frontend data with customer defaults
+        $data = array_merge($data, [
+            'region'     => 1,
+            'city'       => 1,
+            'zone'       => 3,
+            'wereda'     => 10,
+            'kebele'     =>  'Kebele',
+            'house_no'   =>  '1234',
+            'sms_no'     => '12141231',
+        ]);
 
-        // $this->serviceNumber = $this->queryAvailableNumberService->getAvailableNumberServices();
-        // Log::info('service number', ['service number' => $this->serviceNumber]);
-
-        // if (!$this->serviceNumber) {
-        //     throw new \RuntimeException('Unable to reserve service number');
-        // }
+        $data['completed_date'] = now()->format('YmdHis');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                  xmlns:com="http://www.huawei.com/bss/soaif/interface/common/"
-                  xmlns:ser="http://oss.huawei.com/webservice/bss/services">
- <soapenv:Body>
-  <ser:CreateNewSubscriberReqMsg>
-   <ser:RequestHeader>
-    <com:Version>1</com:Version>
-    <com:TransactionId>{$this->transactionId()}</com:TransactionId>
-    <com:ProcessTime>{$this->processTime()}</com:ProcessTime>
-    <com:Language>2002</com:Language>
-    <com:ChannelId>{$cfg['channel_id']}</com:ChannelId>
-    <com:TechnicalChannelId>{$cfg['technical_channel_id']}</com:TechnicalChannelId>
-    <com:TenantId>{$cfg['tenant_id']}</com:TenantId>
-    <com:AccessUser>{$cfg['access_user']}</com:AccessUser>
-    <com:AccessPwd>{$cfg['access_pwd']}</com:AccessPwd>
-    <com:OperatorId>{$cfg['operator_id']}</com:OperatorId>
-   </ser:RequestHeader>
+                  xmlns:ser="http://oss.huawei.com/webservice/bss/services"
+                  xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ser:CreateNewSubscriberReqMsg>
+         <ser:RequestHeader>
+            <com:Version>1</com:Version>
+            <com:TransactionId>{$this->transactionId()}</com:TransactionId>
+            <com:SessionId>1</com:SessionId>
+            <com:ProcessTime>{$this->processTime()}</com:ProcessTime>
+            <com:ContactId>1</com:ContactId>
+            <com:Language>2002</com:Language>
+            <com:ChannelId>{$cfg['channel_id']}</com:ChannelId>
+            <com:TechnicalChannelId>{$cfg['technical_channel_id']}</com:TechnicalChannelId>
+            <com:TenantId>{$cfg['tenant_id']}</com:TenantId>
+            <com:AccessUser>{$cfg['access_user']}</com:AccessUser>
+            <com:AccessPwd>{$cfg['access_pwd']}</com:AccessPwd>
+            <com:AccessIP>1</com:AccessIP>
+            <com:OperatorId>{$cfg['access_user']}</com:OperatorId>
+            <com:OperatorPwd>{$cfg['access_pwd']}</com:OperatorPwd>
+            <com:TestFlag>1</com:TestFlag>
+            <com:AdditionalProperty>
+               <com:Code>1</com:Code>
+               <com:Value>1</com:Value>
+            </com:AdditionalProperty>
+         </ser:RequestHeader>
 
-   <ser:CreateNewSubscriberReqBody>
-    <com:CustomerBusiOrder>
-     <com:CustomerSurveyOrderId>{$data['survey_order_id']}</com:CustomerSurveyOrderId>
-     <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
+         <ser:CreateNewSubscriberReqBody>
+            <com:CustomerBusiOrder>
+               <com:CustomerSurveyOrderId>{$data['survey_order_id']}</com:CustomerSurveyOrderId>
+               <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
 
-     <com:AccountInfo>
-      <com:PaymentType>1</com:PaymentType>
-      <com:BillCycle>01</com:BillCycle>
-      <com:ethioZoneOrRegion>{$data['region']}</com:ethioZoneOrRegion>
-      <com:CollectionCenter>10163</com:CollectionCenter>
-      <com:Language>2002</com:Language>
-      <com:FirstName>{$data['first_name']}</com:FirstName>
-      <com:MiddleOrFatherName>{$data['middle_name']}</com:MiddleOrFatherName>
-      <com:LastName>{$data['last_name']}</com:LastName>
-      <com:EnterpriseCustomerName>{$data['enterprise_name']}</com:EnterpriseCustomerName>
-      <com:CreditClass>Excellent</com:CreditClass>
-      <com:AdministrativeRegionCity>{$data['city']}</com:AdministrativeRegionCity>
-      <com:SubcityZone>{$data['zone']}</com:SubcityZone>
-      <com:WeredaTown>{$data['wereda']}</com:WeredaTown>
-      <com:Kebele>{$data['kebele']}</com:Kebele>
-      <com:HouseNo>{$data['house_no']}</com:HouseNo>
-      <com:SMSNo>{$data['sms_no']}</com:SMSNo>
-      <com:PaymentMode>
-      <com:PaymentMode>CASH</com:PaymentMode>
-      </com:PaymentMode>
-      <com:ExtParamList>
-            <com:ParameterInfo>
-            <com:ParamName>paymentType</com:ParamName>
-            <com:ParamValue>0</com:ParamValue>
-            </com:ParameterInfo>
-     </com:ExtParamList>
-     </com:AccountInfo>
-    </com:CustomerBusiOrder>
-    <com:SubBusiOrderlist>
-     <com:BusinessCode>{$this->businessCode()}</com:BusinessCode>
-     <com:SubscriberInfo>
-      <com:ExternalSequnce>{$this->transactionId()}</com:ExternalSequnce>
-      <com:NetworkType>{$this->networkType()}</com:NetworkType>
-      <com:ServiceNumber>{$this->serviceNumber}</com:ServiceNumber>
-      <com:SubType>1</com:SubType>
-      <com:SubLanguage>2002</com:SubLanguage>
+               <com:CustomerInfo>
+                  <com:CustomerType>2</com:CustomerType>
+                  <com:CustomerCategory>5</com:CustomerCategory>
+                  <com:CustomerSubcategory>14</com:CustomerSubcategory>
+                  <com:CustomerLevel>2</com:CustomerLevel>
+                  <com:CustomerName>{$data['first_name']}</com:CustomerName>
+                  <com:BranchName>BranchName</com:BranchName>
+                  <com:Title>1</com:Title>
+                  <com:Nationality>1</com:Nationality>
+                  <com:IdentificationType>5</com:IdentificationType>
+                  <com:IdentificationNumber>2022112233</com:IdentificationNumber>
+                  <com:Gender>1</com:Gender>
+                  <com:DateofBirth>19660612</com:DateofBirth>
+                  <com:PrimaryLanguage>2002</com:PrimaryLanguage>
 
-      <com:PrimaryOffering>
-       <com:NewPrimaryOffering>
-        <com:OfferingId>
-         <com:OfferingId>{$this->offeringId()}</com:OfferingId>
-        </com:OfferingId>
-       </com:NewPrimaryOffering>
-       <com:EffectiveMode>0</com:EffectiveMode>
-      </com:PrimaryOffering>
+                  <com:CustomerAddressInfo>
+                     <com:EthioZoneOrRegion>{$data['region']}</com:EthioZoneOrRegion>
+                     <com:AdministrativeRegionOrCity>{$data['city']}</com:AdministrativeRegionOrCity>
+                     <com:SubcityOrZone>{$data['zone']}</com:SubcityOrZone>
+                     <com:WeredaOrTown>{$data['wereda']}</com:WeredaOrTown>
+                     <com:Kebele>{$data['kebele']}</com:Kebele>
+                     <com:HouseNo>{$data['house_no']}</com:HouseNo>
+                  </com:CustomerAddressInfo>
 
-      <com:SLAPriority>6</com:SLAPriority>
-      <com:CallCenterAccess>994</com:CallCenterAccess>
-     </com:SubscriberInfo>
-    </com:SubBusiOrderlist>
+                  <com:CustomerContactInfo>
+                     <com:NotificationMode>2</com:NotificationMode>
+                     <com:MobileNo>{$data['sms_no']}</com:MobileNo>
+                  </com:CustomerContactInfo>
+               </com:CustomerInfo>
 
-    <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
-    <com:InstallmentCompletedDate>{$data['completed_date']}</com:InstallmentCompletedDate>
-   </ser:CreateNewSubscriberReqBody>
-  </ser:CreateNewSubscriberReqMsg>
- </soapenv:Body>
+               <com:AccountInfo>
+                  <com:PaymentType>1</com:PaymentType>
+                  <com:BillCycle>01</com:BillCycle>
+                  <com:InitialCredit>100</com:InitialCredit>
+                  <com:ethioZoneOrRegion>{$data['region']}</com:ethioZoneOrRegion>
+                  <com:CollectionCenter>10172</com:CollectionCenter>
+                  <com:Language>2002</com:Language>
+                  <com:EnterpriseCustomerName>{$data['enterprise_name']}</com:EnterpriseCustomerName>
+                  <com:CreditClass>Excellent</com:CreditClass>
+                  <com:AdministrativeRegionCity>{$data['city']}</com:AdministrativeRegionCity>
+                  <com:SubcityZone>{$data['zone']}</com:SubcityZone>
+                  <com:WeredaTown>{$data['wereda']}</com:WeredaTown>
+                  <com:Kebele>{$data['kebele']}</com:Kebele>
+                  <com:HouseNo>{$data['house_no']}</com:HouseNo>
+                  <com:SMSNo>{$data['sms_no']}</com:SMSNo>
+                  <com:PaymentMode>
+                     <com:PaymentMode>CASH</com:PaymentMode>
+                  </com:PaymentMode>
+               </com:AccountInfo>
+            </com:CustomerBusiOrder>
+
+            <com:SubBusiOrderlist>
+               <com:BusinessCode>{$this->businessCode()}</com:BusinessCode>
+               <com:SubscriberInfo>
+                  <com:ServiceNumber>{$this->serviceNumber}</com:ServiceNumber>
+                  <com:NetworkType>{$this->networkType()}</com:NetworkType>
+                  <com:SubType>0</com:SubType>
+                  <com:PrimaryOffering>
+                     <com:NewPrimaryOffering>
+                        <com:OfferingId>
+                           <com:OfferingId>{$this->offeringId()}</com:OfferingId>
+                        </com:OfferingId>
+                     </com:NewPrimaryOffering>
+                  </com:PrimaryOffering>
+                  <com:SLAPriority>0</com:SLAPriority>
+                  <com:CallCenterAccess>980,894</com:CallCenterAccess>
+                  <com:SubLanguage>2002</com:SubLanguage>
+                  <com:IVRLanguage>2060</com:IVRLanguage>
+                  <com:GreenFlag>1</com:GreenFlag>
+               </com:SubscriberInfo>
+            </com:SubBusiOrderlist>
+
+            <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
+            <com:ExternalOperName>helloworld</com:ExternalOperName>
+            <com:InstallmentCompletedDate>{$data['completed_date']}</com:InstallmentCompletedDate>
+         </ser:CreateNewSubscriberReqBody>
+      </ser:CreateNewSubscriberReqMsg>
+   </soapenv:Body>
 </soapenv:Envelope>
 XML;
     }
+
 
     protected function parseResponse(array $data, string $xml)
     {

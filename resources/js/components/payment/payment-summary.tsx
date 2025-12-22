@@ -7,6 +7,8 @@ import { CheckCircle2, CreditCard, User, FileText, Phone, Mail, Calendar, Hash }
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getServiceActionFlags, type ServiceActionFocus } from '@/lib/service-action-rules';
+import logo from '../../images/telebirr-logo.png';
+
 
 // type BadgeVariant = 'default' | 'success' | 'destructive' | 'outline';
 
@@ -343,7 +345,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                         )}
                                         {devicePrice > 0 && (
                                             <tr>
-                                                <td className="px-4 py-4 font-medium text-gray-900">Equipment</td>
+                                                <td className="px-4 py-4 font-medium text-gray-900">Device</td>
                                                 <td className="px-4 py-4 text-sm text-gray-600">
                                                     Required device and hardware
                                                 </td>
@@ -370,11 +372,11 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                                 {[
                                                     subscriptionFee > 0 && 'Subscription',
                                                     cableCharge > 0 && 'Cable Installation',
-                                                    devicePrice > 0 && 'Equipment'
+                                                    devicePrice > 0 && 'Device'
                                                 ].filter(Boolean).join(', ')}
                                             </span>
                                         </div>
-                                        <div className="rounded-lg bg-primary/5 p-4">
+                                        {/* <div className="rounded-lg bg-primary/5 p-4">
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <p className="font-semibold text-gray-900">Total Amount Due</p>
@@ -385,7 +387,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                                     <p className="text-sm text-gray-500">Includes all applicable charges</p>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> */}
                                     </>
                                 )}
                             </div>
@@ -396,7 +398,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                     <div ref={actionRef} />
                     <Card className={`pt-0 border-none shadow-none ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
                         <CardContent className="py-2">
-                            <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+                            <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
                                 {/* <div>
                                     <h3 className="font-semibold text-gray-900">Ready to proceed?</h3>
                                     <p className="text-sm text-gray-600">
@@ -447,7 +449,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center gap-2">
-                                                    <CreditCard className="h-5 w-5" />
+                                                     {/* <img src={logo} alt="ID" className="mr-2 h-5 w-10" /> */}
                                                     Pay {totalAmount} ETB
                                                 </div>
                                             )}

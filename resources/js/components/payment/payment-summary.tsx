@@ -3,11 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Link, router, usePage } from '@inertiajs/react';
-import { CheckCircle2, CreditCard, User, FileText, Phone, Mail, Calendar, Hash } from 'lucide-react';
+import { CheckCircle2, User, FileText, Phone, Mail } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getServiceActionFlags, type ServiceActionFocus } from '@/lib/service-action-rules';
-import logo from '../../images/telebirr-logo.png';
 
 
 // type BadgeVariant = 'default' | 'success' | 'destructive' | 'outline';
@@ -104,14 +103,6 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
     const devicePrice = toNumber(payment?.device_price);
     const cableLengthRaw = surveyDetails?.cable_length;
     const cableLength = cableLengthRaw === null || cableLengthRaw === undefined || cableLengthRaw === '' ? null : String(cableLengthRaw);
-
-    // Format current date for invoice
-    const currentDate = new Date();
-    const formattedDate = currentDate.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
 
     const onPaymentConfirm = async () => {
         setLoading(true);
@@ -415,7 +406,8 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                     </Link>
                                 </div>
                                 <div className="flex gap-3">
-                                    {canSubscribe && isFree ? (
+                                    {/* {canSubscribe && isFree ? ( */}
+                                    {canSubscribe ? (
                                         <Button
                                             onClick={onSubscribeConfirm}
                                             disabled={loading || !customer_survey_order_id}
@@ -435,7 +427,8 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                         </Button>
                                     ) : null}
 
-                                    {canPay && !isFree ? (
+                                    {/* {canPay && !isFree ? ( */}
+                                    {canPay ? (
                                         <Button
                                             onClick={onPaymentConfirm}
                                             disabled={loading || !customer_survey_order_id}

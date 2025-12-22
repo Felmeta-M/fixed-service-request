@@ -56,7 +56,7 @@ abstract class BaseSurveyService extends BaseApiService
         $resource = self::decrypt($resource);
         $xml = $this->buildXml($data, $resource);
         $response = $this->executeRequest($xml);
-
+        Log::info($response);
         return $this->parseResponse($data, $response, $resource);
     }
 
@@ -87,6 +87,7 @@ abstract class BaseSurveyService extends BaseApiService
 
             $survey = SurveyRequest::create([
                 ...$data,
+                'with_device' => (bool)$data['with_device'],
                 'service_number' => $data['service_number'] ?? $this->serviceNumber,
                 'customer_survey_order_id' => $surveyOrderId,
                 'status' => FFDServiceProvisionStatus::Completed->value,
@@ -96,6 +97,8 @@ abstract class BaseSurveyService extends BaseApiService
                 'long'         => $resource['longitude'] ?? null,
             ]);
 
+            //reserve the number
+            // $this->reserveNumberService($data['service_number'] ?? $this->serviceNumber); 
 
             $requestData = [
                 'service_number' => $data['service_number'] ?? $this->serviceNumber,
@@ -119,7 +122,7 @@ abstract class BaseSurveyService extends BaseApiService
                 'service_number'                 => $survey->service_number,
                 'subscription_fee' => $fees['subscription_fee'],
                 'cable_charge'     => $fees['cable_charge'],
-                'device_fee'      => $deviceFee,
+                'device_fee'      => $survey->with_device ? 0 : $deviceFee,
                 'total_amount'     => $fees['total_amount'] + $deviceFee,
                 'cable_charge'  => $fees['cable_charge'],
             ]);

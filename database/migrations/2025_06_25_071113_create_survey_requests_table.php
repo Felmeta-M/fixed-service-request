@@ -21,10 +21,10 @@ return new class extends Migration {
             $table->string('telecom_region');
             $table->string('oper_type');
             $table->string('customer_type');
-            $table->string('bandwidth');
-            $table->string('contact_person');
-            $table->string('contact_no');
-            $table->string('contact_email');
+            $table->string('bandwidth')->nullable();
+            $table->string('contact_person')->nullable();
+            $table->string('contact_no')->nullable();
+            $table->string('contact_email')->nullable();
             $table->string('sec_contact_person')->nullable();
             $table->string('sec_contact_no')->nullable();
             $table->string('sec_contact_email')->nullable();

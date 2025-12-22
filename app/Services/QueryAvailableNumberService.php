@@ -18,7 +18,7 @@ class QueryAvailableNumberService extends BaseApiService
         return config('services.query_available_number.endpoint');
     }
 
-    public function getAvailableNumberServices(?int $resCnt = 10, ?string $deptId = null): string|bool
+    public function getAvailableNumberServices(?int $resCnt = 100, ?string $deptId = null): string|bool
     {
         $data = [
             'pay_mode' => '1',
@@ -35,9 +35,7 @@ class QueryAvailableNumberService extends BaseApiService
         if (empty($filtered)) return false;
 
         foreach (array_column($filtered, 'ServiceNumber') as $numberService) {
-            // if ($this->reserveNumberService($numberService)) {
             return $numberService;
-            // }
         }
 
         return false;

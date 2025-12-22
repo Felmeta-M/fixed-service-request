@@ -31,6 +31,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
     public function create(array $data)
     {
         $xml = $this->buildXml($data);
+        Log::info($xml);
         $response = $this->executeRequest($xml);
         Log::info($response);
         return $this->parseResponse($data, $response);
@@ -63,8 +64,6 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
         $data['customer_code'] = $customer->code;
         $data['completed_date'] = now()->addDays(30)->format('Y-m-d');
         $data['external_operid'] = uniqid();
-
-        Log::info('Building XML for Data Subscription', ['data' => $data]);
 
         // $response = $this->get_combining_service->getByServiceNumber($data['access_number']);
         // $responseData = $response->getData(true);
@@ -181,8 +180,12 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
         $rsp  = $body->children($ns['ser'])->CreateNewSubscriberRspMsg;
         $hdr  = $rsp->ResponseHeader->children($ns['com']);
 
-        if ((string)$hdr->RetCode !== '0') {
-            return ApiResponse::error((string)$hdr->RetMsg);
+        $retCode = (string)$hdr->RetCode;
+        $retMsg  = (string)$hdr->RetMsg;
+
+        // Real failure cases only
+        if ($retCode !== '0' && $retCode !== '-999') {
+            return ApiResponse::error($retMsg);
         }
 
         /** DATA returns FBBNUMBER */
@@ -196,6 +199,9 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                         'subscribed_at' => now(),
                     ]);
 
+                // $message = $retCode === '-999'
+                //     ? 'Duplicate request – previous success reused'
+                //     : 'Provisioned successfully';
                 return ApiResponse::success([
                     'service_number' => $serviceNo
                 ]);

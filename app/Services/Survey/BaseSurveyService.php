@@ -116,14 +116,15 @@ abstract class BaseSurveyService extends BaseApiService
             $calculator = app(PaymentCalculatorService::class);
             $fees = $calculator->calculateFees($survey, $requestData);
             //TODO: device fee from one-off fee service
-            $deviceFee = $data['device_fee'] ?? 200; // Default device fee
+            $deviceFee =  $survey->with_device ?  200 : 0;
+            $totalAmount = $fees['total_amount'] + $deviceFee;
             $this->payment_service->createOrUpdatePayment([
                 'customer_survey_order_id'       => $survey->customer_survey_order_id,
                 'service_number'                 => $survey->service_number,
                 'subscription_fee' => $fees['subscription_fee'],
                 'cable_charge'     => $fees['cable_charge'],
-                'device_fee'      => $survey->with_device ? 0 : $deviceFee,
-                'total_amount'     => $fees['total_amount'] + $deviceFee,
+                'device_fee'      => $deviceFee,
+                'total_amount'     => $totalAmount,
                 'cable_charge'  => $fees['cable_charge'],
             ]);
         });

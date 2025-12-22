@@ -19,51 +19,35 @@ class QueryAvailableNumberService extends BaseApiService
         return config('services.query_available_number.endpoint');
     }
 
-    public function getAvailableNumberServices(
-        ?int $resCnt = 10000,
-        ?string $deptId = null
-    ): string|bool {
+    public function getAvailableNumberServices(?int $resCnt = 10000, ?string $deptId = null): string|bool
+    {
         $data = [
             'pay_mode' => '1',
             'tele_type' => '4',
             'need_query_by_dept' => true,
             'res_cnt' => $resCnt,
-            'dept_id' => $deptId ?? '1766044689199549668',
+            'dept_id' => '1766044689199549668',
         ];
 
         $numberList = $this->queryAvailableNumbers($data);
-        if (empty($numberList)) {
-            return false;
-        }
+        if (empty($numberList)) return false;
 
-        // Extract only level 6 service numbers (single pass)
-        $serviceNumbers = [];
-        foreach ($numberList as $item) {
-            if (($item['Level'] ?? null) === '6' && !empty($item['ServiceNumber'])) {
-                $serviceNumbers[] = $item['ServiceNumber'];
-            }
-        }
-
-        if (empty($serviceNumbers)) {
-            return false;
-        }
-
-        // Fetch existing service numbers in ONE query
-        $existingMap = DB::table('survey_requests')
-            ->whereIn('service_number', $serviceNumbers)
-            ->pluck('service_number')
-            ->flip();
-
-        // Return first available number
-        foreach ($serviceNumbers as $numberService) {
-            if (!isset($existingMap[$numberService])) {
+        $filtered = array_filter($numberList, fn($item) => $item['Level'] === '6');
+        if (empty($filtered)) return false;
+        foreach (array_column($filtered, 'ServiceNumber') as $numberService) {
+            $data = [
+                'res_type_id' => 10,
+                'oper_type' => 1029,
+                'res_code' => $numberService,
+            ];
+            if ($this->reserveNumberService->pick($data)) {
+                Log::info('service numer', $data);
                 return $numberService;
             }
         }
 
         return false;
     }
-
 
 
     public function queryAvailableNumbers(array $data): array

@@ -46,13 +46,21 @@ export default function ServiceShowPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const query = url.includes('?') ? url.split('?')[1] : '';
+    const showSuccessToastsFromUrl = (rawUrl: string) => {
+        const query = rawUrl.includes('?') ? rawUrl.split('?')[1] : '';
         const params = new URLSearchParams(query);
 
         if (params.get('created') === '1') {
             toast.success('Service request created successfully');
         }
+
+        if (params.get('subscribed') === '1') {
+            toast.success('Subscription completed successfully');
+        }
+    };
+
+    useEffect(() => {
+        showSuccessToastsFromUrl(url);
 
         fetchDetails();
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -100,12 +108,7 @@ export default function ServiceShowPage() {
     };
 
     useEffect(() => {
-        const query = url.includes('?') ? url.split('?')[1] : '';
-        const params = new URLSearchParams(query);
-
-        if (params.get('created') === '1') {
-            toast.success('Service request created successfully');
-        }
+        showSuccessToastsFromUrl(url);
     }, [url]);
 
     if (loading) {

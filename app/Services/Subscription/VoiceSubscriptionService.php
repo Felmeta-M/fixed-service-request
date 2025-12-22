@@ -37,6 +37,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
     public function create(array $data)
     {
         $xml = $this->buildXml($data);
+        Log::info($xml);
         $response = $this->executeRequest($xml);
 
         return $this->parseResponse($data, $response);

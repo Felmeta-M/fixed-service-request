@@ -15,7 +15,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
     protected function offeringId(): int
     {
-        return 1457567289; // DATA
+        return 1457567289; // FBB OR DATA
     }
 
     protected function businessCode(): string
@@ -59,117 +59,158 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
         $email = $this->generateEmail();
 
         $cfg = config('services.subscriber');
-        $cfg['default_password'] = "REDACTED_PASSWORD";
+        $cfg['default_password'] = 'REDACTED_PASSWORD';
 
         $data['customer_code'] = $customer->code;
-        $data['completed_date'] = now()->addDays(30)->format('Y-m-d');
-        $data['external_operid'] = uniqid();
+        $data['external_operid'] = $data['external_operid'] ?? 512;
+        $data['completed_date'] = now()->format('YmdHis');
 
-        // $response = $this->get_combining_service->getByServiceNumber($data['access_number']);
-        // $responseData = $response->getData(true);
-        // $subscriber = $this->getSubscriber($responseData);
-        // //TODO: to be replaced by frontend data
-        // $data['region'] = $subscriber['addresses'][0]['address1'];
-        // $data['city'] = $subscriber['addresses'][0]['address2'];
-        // $data['zone'] = $subscriber['addresses'][0]['address3'];
-        // $data['wereda'] = $subscriber['addresses'][0]['address4'];
-        // $data['kebele'] = $subscriber['addresses'][0]['address5'];
-        // $data['house_no'] = $subscriber['addresses'][0]['address6'];
-        // $data['sms_no'] = "";
-
-        //TODO: to be replaced by frontend data
-        $data['region'] = 30;
-        $data['city'] = 6;
-        $data['zone'] = 6;
-        $data['wereda'] = 90;
-        $data['kebele'] =  'test';
-        $data['house_no'] = 'test';
-        $data['sms_no'] = '0986532147';
+        // Default/demo values (until frontend provides them)
+        $data += [
+            'region'       => 3,
+            'city'         => 1,
+            'zone'         => 1,
+            'wereda'       => 10,
+            'kebele'       => 'Kebele',
+            'house_no'     => '1234',
+            'street_name'  => 'StreetName',
+            'apartment'    => 'Apartment',
+            'sms_no'       => '12141231',
+            'email'        => 'ok@ok.com',
+            'cpe_type'     => '2701DTU',
+            'cpe_serial'   => '2',
+        ];
 
         return <<<XML
-        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                          xmlns:com="http://www.huawei.com/bss/soaif/interface/common/"
-                          xmlns:ser="http://oss.huawei.com/webservice/bss/services">
-         <soapenv:Body>
-          <ser:CreateNewSubscriberReqMsg>
-           <ser:RequestHeader>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:com="http://www.huawei.com/bss/soaif/interface/common/"
+                  xmlns:ser="http://oss.huawei.com/webservice/bss/services">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ser:CreateNewSubscriberReqMsg>
+         <ser:RequestHeader>
             <com:Version>1</com:Version>
             <com:TransactionId>{$this->transactionId()}</com:TransactionId>
+            <com:SessionId>1</com:SessionId>
             <com:ProcessTime>{$this->processTime()}</com:ProcessTime>
+            <com:ContactId>1</com:ContactId>
             <com:Language>2002</com:Language>
             <com:ChannelId>{$cfg['channel_id']}</com:ChannelId>
             <com:TechnicalChannelId>{$cfg['technical_channel_id']}</com:TechnicalChannelId>
             <com:TenantId>{$cfg['tenant_id']}</com:TenantId>
             <com:AccessUser>{$cfg['access_user']}</com:AccessUser>
             <com:AccessPwd>{$cfg['access_pwd']}</com:AccessPwd>
-            <com:OperatorId>{$cfg['operator_id']}</com:OperatorId>
-           </ser:RequestHeader>
+            <com:AccessIP>1</com:AccessIP>
+            <com:TestFlag>1</com:TestFlag>
+            <com:AdditionalProperty>
+               <com:Code>1</com:Code>
+               <com:Value>1</com:Value>
+            </com:AdditionalProperty>
+         </ser:RequestHeader>
 
-           <ser:CreateNewSubscriberReqBody>
+         <ser:CreateNewSubscriberReqBody>
             <com:CustomerBusiOrder>
-             <com:CustomerSurveyOrderId>{$data['survey_order_id']}</com:CustomerSurveyOrderId>
-             <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
-             <com:AccountInfo>
-              <com:PaymentType>1</com:PaymentType>
-              <com:BillCycle>01</com:BillCycle>
-              <com:ethioZoneOrRegion>{$data['region']}</com:ethioZoneOrRegion>
-              <com:CollectionCenter>10163</com:CollectionCenter>
-              <com:Language>2002</com:Language>
-              <com:FirstName>{$data['first_name']}</com:FirstName>
-              <com:MiddleOrFatherName>{$data['middle_name']}</com:MiddleOrFatherName>
-              <com:LastName>{$data['last_name']}</com:LastName>
-              <com:EnterpriseCustomerName>{$data['enterprise_name']}</com:EnterpriseCustomerName>
-              <com:CreditClass>Excellent</com:CreditClass>
-              <com:AdministrativeRegionCity>{$data['city']}</com:AdministrativeRegionCity>
-              <com:SubcityZone>{$data['zone']}</com:SubcityZone>
-              <com:WeredaTown>{$data['wereda']}</com:WeredaTown>
-              <com:Kebele>{$data['kebele']}</com:Kebele>
-              <com:HouseNo>{$data['house_no']}</com:HouseNo>
-              <com:SMSNo>{$data['sms_no']}</com:SMSNo>
-             <com:PaymentMode>
-              <com:PaymentMode>CASH</com:PaymentMode>
-              </com:PaymentMode>
-              <com:ExtParamList>
-                    <com:ParameterInfo>
-                    <com:ParamName>paymentType</com:ParamName>
-                    <com:ParamValue>0</com:ParamValue>
-                    </com:ParameterInfo>
-             </com:ExtParamList>
-             </com:AccountInfo>
+               <com:CustomerSurveyOrderId>{$data['survey_order_id']}</com:CustomerSurveyOrderId>
+               <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
+
+               <com:CustomerInfo>
+                  <com:CustomerType>2</com:CustomerType>
+                  <com:CustomerCategory>5</com:CustomerCategory>
+                  <com:CustomerSubcategory>14</com:CustomerSubcategory>
+                  <com:CustomerLevel>2</com:CustomerLevel>
+                  <com:CustomerName>{$data['first_name']}</com:CustomerName>
+                  <com:BranchName>BranchName</com:BranchName>
+                  <com:Title>1</com:Title>
+                  <com:Nationality>1</com:Nationality>
+                  <com:IdentificationType>5</com:IdentificationType>
+                  <com:IdentificationNumber>2022112233</com:IdentificationNumber>
+                  <com:Gender>1</com:Gender>
+                  <com:DateofBirth>19660612</com:DateofBirth>
+                  <com:PrimaryLanguage>2002</com:PrimaryLanguage>
+
+                  <com:CustomerAddressInfo>
+                     <com:EthioZoneOrRegion>{$data['region']}</com:EthioZoneOrRegion>
+                     <com:AdministrativeRegionOrCity>{$data['city']}</com:AdministrativeRegionOrCity>
+                     <com:SubcityOrZone>{$data['zone']}</com:SubcityOrZone>
+                     <com:WeredaOrTown>{$data['wereda']}</com:WeredaOrTown>
+                     <com:Kebele>{$data['kebele']}</com:Kebele>
+                     <com:HouseNo>{$data['house_no']}</com:HouseNo>
+                     <com:StreetName>{$data['street_name']}</com:StreetName>
+                     <com:Apartment>{$data['apartment']}</com:Apartment>
+                  </com:CustomerAddressInfo>
+
+                  <com:CustomerContactInfo>
+                     <com:NotificationMode>2</com:NotificationMode>
+                     <com:Email>{$data['email']}</com:Email>
+                     <com:MobileNo>{$data['sms_no']}</com:MobileNo>
+                  </com:CustomerContactInfo>
+               </com:CustomerInfo>
+
+               <com:AccountInfo>
+                  <com:PaymentType>1</com:PaymentType>
+                  <com:InitialCredit>100</com:InitialCredit>
+                  <com:ethioZoneOrRegion>{$data['region']}</com:ethioZoneOrRegion>
+                  <com:CollectionCenter>10172</com:CollectionCenter>
+                  <com:Language>2002</com:Language>
+                  <com:EnterpriseCustomerName>{$data['enterprise_name']}</com:EnterpriseCustomerName>
+                  <com:Title>1</com:Title>
+                  <com:CreditClass>Excellent</com:CreditClass>
+                  <com:GreenList>1</com:GreenList>
+                  <com:LateFeeFlag>1</com:LateFeeFlag>
+                  <com:AdministrativeRegionCity>{$data['city']}</com:AdministrativeRegionCity>
+                  <com:SubcityZone>{$data['zone']}</com:SubcityZone>
+                  <com:WeredaTown>{$data['wereda']}</com:WeredaTown>
+                  <com:Kebele>{$data['kebele']}</com:Kebele>
+                  <com:HouseNo>{$data['house_no']}</com:HouseNo>
+                  <com:StreetName>{$data['street_name']}</com:StreetName>
+                  <com:Apartment>{$data['apartment']}</com:Apartment>
+                  <com:SMSNo>{$data['sms_no']}</com:SMSNo>
+                  <com:Email>{$data['email']}</com:Email>
+                  <com:PaymentMode>
+                     <com:PaymentMode>CASH</com:PaymentMode>
+                  </com:PaymentMode>
+               </com:AccountInfo>
             </com:CustomerBusiOrder>
 
             <com:SubBusiOrderlist>
-             <com:BusinessCode>{$this->businessCode()}</com:BusinessCode>
-             <com:SubscriberInfo>
-              <com:ExternalSequnce>{$this->transactionId()}</com:ExternalSequnce>
-              <com:NetworkType>{$this->networkType()}</com:NetworkType>
-              <com:SubType>1</com:SubType>
-              <com:SubLanguage>2002</com:SubLanguage>
+               <com:BusinessCode>{$this->businessCode()}</com:BusinessCode>
+               <com:SubscriberInfo>
+                  <com:SubType>1</com:SubType>
 
-              <com:PrimaryOffering>
-               <com:NewPrimaryOffering>
-                <com:OfferingId>
-                 <com:OfferingId>{$this->offeringId()}</com:OfferingId>
-                </com:OfferingId>
-               </com:NewPrimaryOffering>
-               <com:EffectiveMode>0</com:EffectiveMode>
-              </com:PrimaryOffering>
+                  <com:PrimaryOffering>
+                     <com:NewPrimaryOffering>
+                        <com:OfferingId>
+                           <com:OfferingId>{$this->offeringId()}</com:OfferingId>
+                        </com:OfferingId>
+                        <com:InstanceProperty>
+                           <com:PropertyCode>50135</com:PropertyCode>
+                           <com:PropertyType>1</com:PropertyType>
+                           <com:Value>{$data['cpe_type']}</com:Value>
+                        </com:InstanceProperty>
+                        <com:InstanceProperty>
+                           <com:PropertyCode>50134</com:PropertyCode>
+                           <com:PropertyType>1</com:PropertyType>
+                           <com:Value>{$data['cpe_serial']}</com:Value>
+                        </com:InstanceProperty>
+                     </com:NewPrimaryOffering>
+                  </com:PrimaryOffering>
 
-              <com:InternetAccount>{$email}</com:InternetAccount>
-              <com:InternetPassword>{$cfg['default_password']}</com:InternetPassword>
-              <com:SLAPriority>6</com:SLAPriority>
-              <com:CallCenterAccess>994</com:CallCenterAccess>
-             </com:SubscriberInfo>
+                  <com:SLAPriority>6</com:SLAPriority>
+                  <com:InternetAccount>{$email}</com:InternetAccount>
+                  <com:InternetPassword>{$cfg['default_password']}</com:InternetPassword>
+                  <com:CallCenterAccess>994</com:CallCenterAccess>
+               </com:SubscriberInfo>
             </com:SubBusiOrderlist>
 
             <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
             <com:InstallmentCompletedDate>{$data['completed_date']}</com:InstallmentCompletedDate>
-           </ser:CreateNewSubscriberReqBody>
-          </ser:CreateNewSubscriberReqMsg>
-         </soapenv:Body>
-        </soapenv:Envelope>
-        XML;
+         </ser:CreateNewSubscriberReqBody>
+      </ser:CreateNewSubscriberReqMsg>
+   </soapenv:Body>
+</soapenv:Envelope>
+XML;
     }
+
 
     protected function parseResponse(array $data, string $xml)
     {

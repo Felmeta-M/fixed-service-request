@@ -23,7 +23,7 @@ class FabricTokenService
     /**
      * Apply for a Fabric token
      *
-     * @return array
+     * @return object
      * @throws RequestException
      */
     public function applyFabricToken()
@@ -46,7 +46,8 @@ class FabricTokenService
         }
 
         $object = $response->object();
+        // \Log::info('object', ['object' => $object]);
 
-        return $object->token;
+        return $object;
     }
 }

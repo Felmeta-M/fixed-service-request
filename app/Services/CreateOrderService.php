@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Helpers\TelebirrHelper;
 use App\Services\Payment\PaymentService;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log as FacadesLog;
 use Log;
@@ -50,13 +52,26 @@ class CreateOrderService
     {
         // 1️⃣ Get Fabric token
         $tokenService = app(FabricTokenService::class);
-        $fabricToken = $tokenService->applyFabricToken();
+
+        $fabricToken = Cache::get('fabricToken');
+        if (!$fabricToken) {
+            $fabricToken = $tokenService->applyFabricToken();
+            $expirationDate = Carbon::createFromFormat(
+                'YmdHis',
+                $fabricToken->expirationDate
+            );
+            Cache::put(
+                'fabricToken',
+                $fabricToken,
+                $expirationDate
+            );
+        }
         // send query order
         // if ($this->isPaymentInitiated($data['customerSurveyOrderId'])) {
         //     $order = $this->requestQueryOrder($data);
         // }
         // 2️⃣ Send create order request
-        $prepay_id = $this->requestCreateOrder($fabricToken, $data);
+        $prepay_id = $this->requestCreateOrder($fabricToken->token, $data);
 
         // 3️⃣ Build rawRequest string for H5 page
         return $this->createRawRequest($prepay_id);

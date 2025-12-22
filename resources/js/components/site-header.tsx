@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Link } from '@inertiajs/react';
-import { ArrowLeft, FileText, MapPin, Wifi } from 'lucide-react';
+import { Link, router } from '@inertiajs/react';
+import { ArrowLeft, FileText, LogOut, MapPin, Wifi } from 'lucide-react';
 import { MobileStepIndicator } from './mobile-step-indicator';
 
 interface SiteHeaderProps {
@@ -20,6 +20,10 @@ const createServiceSteps = [
 
 export function SiteHeader({ title, isServiceCreation = false, currentStep = 0, steps = createServiceSteps }: SiteHeaderProps) {
     const showMobileSteps = isServiceCreation;
+
+    const handleLogout = () => {
+        router.post(route('logout'));
+    };
 
     return (
         <>
@@ -39,6 +43,10 @@ export function SiteHeader({ title, isServiceCreation = false, currentStep = 0, 
                     <h1 className="hidden text-base font-medium capitalize md:block">{title}</h1>
 
                     <div className="ml-auto flex items-center gap-2">
+                        <Button variant="ghost" size="sm" className="h-8 md:hidden" onClick={handleLogout}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Log out
+                        </Button>
                         {/* additional header buttons or actions */}
                         {/* Mobile title for service creation */}
                         {isServiceCreation && (

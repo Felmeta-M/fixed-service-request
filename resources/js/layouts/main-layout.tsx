@@ -1,4 +1,5 @@
 import { AppSidebar } from '@/components/app-sidebar';
+import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { usePage } from '@inertiajs/react';
@@ -37,15 +38,17 @@ export default function MainLayout({ children, currentStep = 0, isNewCustomer = 
                     '--header-height': 'calc(var(--spacing) * 12)',
                 } as React.CSSProperties
             }
-        >
+            >
             <AppSidebar currentStep={currentStep} mode={isServiceCreation ? 'create' : 'list'} steps={steps} />
             <SidebarInset>
-                {/* <SiteHeader
+                <div className='sm:hidden'>
+                   <SiteHeader
                     title={isServiceCreation ? 'Create new service' : headerSegment}
                     isServiceCreation={isServiceCreation}
                     currentStep={currentStep}
                     steps={steps}
-                /> */}
+                />
+                </div>
                 <main className="flex flex-1 flex-col py-2">{children}</main>
                 <Toaster position="top-center" />
             </SidebarInset>

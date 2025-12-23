@@ -146,18 +146,16 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
         const t = toast.loading('Creating subscription...');
 
         try {
-            const nameParts = (user?.name ?? '').trim().split(/\s+/).filter(Boolean);
-            const first_name = nameParts[0] ?? '';
-            const middle_name = nameParts[1] ?? '';
-            const last_name = nameParts.slice(2).join(' ') ?? '';
+            // const nameParts = (user?.name ?? '').trim().split(/\s+/).filter(Boolean);
+            // const first_name = nameParts[0] ?? '';
+            // const middle_name = nameParts[1] ?? '';
+            // const last_name = nameParts.slice(2).join(' ') ?? '';
 
             const payload = {
                 offering_id: surveyDetails?.main_offer_id,
                 survey_order_id: customer_survey_order_id.toString(),
                 customer_code: user.customer_code,
-                first_name,
-                middle_name,
-                last_name,
+                name: user.name ?? '',
                 enterprise_name: user.enterprise_name ?? 'Test Enterprise',
                 region: '',
                 city: '',

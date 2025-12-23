@@ -213,9 +213,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             offering_id: survey.main_offer_id || survey.offering_id || customerData?.ext_params?.PrimaryOfferId || '',
             survey_order_id: String(survey.customer_survey_order_id),
             customer_code: String(survey.customer_code),
-            first_name: customerInfo.first_name,
-            middle_name: customerInfo.middle_name,
-            last_name: customerInfo.last_name,
+            name: customerInfo.name,
             enterprise_name: customerInfo.enterprise_name,
             region: addressInfo.region,
             city: addressInfo.city,
@@ -298,18 +296,20 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const getCustomerInfo = () => {
         if (!customerData) {
             return {
-                first_name: 'Test',
-                middle_name: '',
-                last_name: 'User',
-                enterprise_name: 'Test Enterprise',
+                name: '',
+                // first_name: '',
+                // middle_name: '',
+                // last_name: 'User',
+                enterprise_name: '',
             };
         }
         const customer = customerData;
         return {
-            first_name: customer.name || 'Test',
-            middle_name: customer.name || '',
-            last_name: customer.name || 'User',
-            enterprise_name: customer.enterprise_name || customer.first_name || 'Test Enterprise',
+            name: customer.name ?? '',
+            // first_name: customer.name || 'Test',
+            // middle_name: customer.name || '',
+            // last_name: customer.name || 'User',
+            enterprise_name: customer.enterprise_name || customer.first_name || '',
         };
     };
 

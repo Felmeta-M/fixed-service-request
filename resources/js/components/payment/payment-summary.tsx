@@ -203,7 +203,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
     };
 
     return (
-        <div className="px-0">
+        <div className="px-4">
             <div className="mx-auto bg-white max-w-4xl">
                 {/* Invoice Header */}
                 <div className="mb-2 rounded-lg bg-white pt-4 shadow-xs">

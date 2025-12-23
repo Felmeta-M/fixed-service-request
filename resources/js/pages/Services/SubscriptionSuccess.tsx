@@ -25,7 +25,7 @@ export default function SubscriptionSuccess() {
 
                 {/* Info Box */}
                 <div className="mt-8 rounded-lg bg-blue-50 p-4 flex gap-3 animate-fade-in-up">
-                    <Sparkles className="h-5 w-5 text-blue-500 mt-0.5 animate-pulse" />
+                    {/* <Sparkles className="h-5 w-5 text-blue-500 mt-0.5 animate-pulse" /> */}
                     <p className="text-sm text-blue-700">
                         You can view and manage your services anytime from the dashboard.
                     </p>

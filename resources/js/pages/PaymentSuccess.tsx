@@ -1,4 +1,6 @@
 import { Link } from "@inertiajs/react";
+import { CheckCircle, Sparkles, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface PaymentSuccessProps {
     amount: string;
@@ -12,60 +14,65 @@ export default function PaymentSuccess({
     reference,
 }: PaymentSuccessProps) {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 px-4">
-            <div className="bg-white shadow-xl rounded-2xl p-8 max-w-md w-full text-center">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-12">
+            <div className="max-w-md w-full bg-white p-10 rounded-2xl shadow-xl animate-fade-in-up">
 
-                {/* Success Icon */}
-                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
-                    <svg
-                        className="h-8 w-8 text-green-600"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M5 13l4 4L19 7"
-                        />
-                    </svg>
+                {/* Success Icon & Title */}
+                <div className="text-center">
+                    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full animate-pop">
+                        <CheckCircle className="h-10 w-10 text-primary" />
+                    </div>
+
+                    <h2 className="mt-6 text-2xl font-extrabold text-gray-900">
+                        Payment Successful
+                    </h2>
+
+                    <p className="mt-2 text-sm text-gray-600">
+                        Your payment has been successfully processed and confirmed.
+                    </p>
                 </div>
-
-                {/* Title */}
-                <h1 className="mt-4 text-2xl font-bold text-gray-800">
-                    Payment Successful 🎉
-                </h1>
-
-                {/* Message */}
-                <p className="mt-2 text-gray-600">
-                    Thank you for your payment! Your transaction was completed
-                    successfully.
-                </p>
 
                 {/* Payment Details */}
-                <div className="mt-4 text-sm text-gray-500 space-y-1">
-                    <p>
-                        <span className="font-medium text-gray-700">
-                            Amount:
-                        </span>{" "}
-                        {currency} {amount}
-                    </p>
-                    <p>
-                        <span className="font-medium text-gray-700">
-                            Reference:
-                        </span>{" "}
-                        {reference}
+                {/* <div className="mt-6 rounded-lg bg-gray-50 p-4 text-sm text-gray-700 space-y-2">
+                    <div className="flex justify-between">
+                        <span className="font-medium">Amount Paid</span>
+                        <span>
+                            {currency} {amount}
+                        </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                        <span className="font-medium">Transaction Reference</span>
+                        <span className="truncate max-w-[160px] text-right">
+                            {reference}
+                        </span>
+                    </div>
+                </div> */}
+
+                {/* Info Box */}
+                <div className="mt-6 rounded-lg bg-blue-50 p-4 flex gap-3 animate-fade-in-up">
+                    {/* <Sparkles className="h-5 w-5 text-blue-500 mt-0.5 animate-pulse" /> */}
+                    <p className="text-sm text-blue-700">
+                        You can review your payment history and manage services from the dashboard at any time.
                     </p>
                 </div>
 
-                {/* Action Button */}
-                <Link
-                    href={route("services")}
-                    className="inline-block mt-6 px-6 py-2.5 rounded-xl bg-green-600 text-white font-medium hover:bg-green-700 transition"
-                >
-                    Go to Dashboard
-                </Link>
+                {/* Actions */}
+                <div className="mt-8 flex flex-col gap-3">
+                    <Link href={route("services")} className="w-full group">
+                        <Button
+                            className="
+                                w-full flex items-center justify-center gap-2
+                                transition-all duration-200
+                                hover:scale-[1.03]
+                                active:scale-[0.97]
+                            "
+                        >
+                            Go to Dashboard
+                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                        </Button>
+                    </Link>
+                </div>
             </div>
         </div>
     );

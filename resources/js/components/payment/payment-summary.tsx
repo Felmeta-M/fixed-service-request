@@ -159,14 +159,14 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                 middle_name,
                 last_name,
                 enterprise_name: user.enterprise_name ?? 'Test Enterprise',
-                region: 'Addis Ababa',
-                city: 'Addis Ababa',
-                zone: 'Central',
-                wereda: '01',
-                kebele: '01',
-                house_no: '123',
-                sms_no: '251911234567',
-                external_operid: '512',
+                region: '',
+                city: '',
+                zone: '',
+                wereda: '',
+                kebele: '',
+                house_no: '',
+                sms_no: '',
+                external_operid: '',
                 completed_date: new Date()
                     .toISOString()
                     .replace(/[-:T.Z]/g, '')

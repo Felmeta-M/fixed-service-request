@@ -285,13 +285,13 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
     const getContactInfo = () => {
         if (!customerData?.contacts || customerData.contacts.length === 0) {
-            return { name1: 'Test', name2: 'User', mobile: '251911234567' };
+            return { name1: '', name2: '', mobile: '' };
         }
         const contact = customerData.contacts[0];
         return {
-            name1: contact.name1 || 'Test',
-            name2: contact.name2 || 'User',
-            mobile: contact.mobile || '251911234567',
+            name1: contact.name1 || '',
+            name2: contact.name2 || '',
+            mobile: contact.mobile || '',
         };
     };
 

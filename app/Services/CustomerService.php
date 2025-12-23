@@ -32,20 +32,77 @@ class CustomerService extends BaseApiService
             return ApiResponse::exception($e, 'Customer create failed.');
         }
     }
-
-    protected function buildXml(array $data): string
+    protected function buildXml(array $data = []): string
     {
+        $customer = Customer::current();
+        $name = explode(' ', $customer->name ?? '');
+
         $credentials = config('services.customer');
-        $processTime = now()->format('YmdHis');
+
+        $defaults = [
+            'customer_type' => '1',
+            'customer_category' => '1',
+            'customer_subcategory' => '1',
+            'customer_level' => '6',
+            'first_name' => $name[0] ?? 'Dream',
+            'middle_name' => $name[1] ?? 'MEE',
+            'last_name' => 'HEE',
+            'title' => '1',
+            'nationality' => '1231',
+            'identification_type' => '1',
+            'identification_number' => random_int(10000, 999999),
+            'gender' => '1',
+            'date_of_birth' => '19890705',
+            'place_of_birth' => 'CHANGSHA',
+            'occupation' => '15',
+            'education' => '2',
+            'religion' => '4',
+            'income' => '6',
+            'primary_language' => '2002',
+
+            'address' => [
+                'region' => '1',
+                'city' => '12',
+                'zone' => '89',
+                'woreda' => '1036',
+                'kebele' => 'WEF',
+                'house_no' => 'SER',
+            ],
+
+            'contact' => [
+                'notification_mode' => '1',
+                'email' => 'abc@123.com',
+                'home_no' => '0654789632',
+                'office_no' => '0258963256',
+                'mobile_no' => '0951852365',
+                'fax_no' => '0456987412',
+            ],
+
+            'contact_person' => [
+                [
+                    'first_name' => 'Junhua',
+                    'middle_name' => 'MEE',
+                    'last_name' => 'HEE',
+                    'title' => 'HEE',
+                    'home_no' => '0654789632',
+                    'office_no' => '0147852369',
+                    'mobile_no' => '0951852369',
+                    'fax_no' => '0741258963',
+                ]
+            ],
+        ];
+
+        //TODO: INTENTIONAL: defaults override input (testing mode)
+        $data = array_merge($data, $defaults);
+
+        // IDs & timestamps
         $this->transactionId = uniqid();
-        if (!$this->transactionId) {
-            throw new InvalidArgumentException('Transaction id cannot empty');
-        }
+        $processTime   = now()->format('YmdHis');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-    xmlns:ser="http://oss.huawei.com/webservice/bss/services"
-    xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
+                  xmlns:ser="http://oss.huawei.com/webservice/bss/services"
+                  xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
     <soapenv:Header/>
     <soapenv:Body>
         <ser:CreateNewCustomerReqMsg>
@@ -53,15 +110,65 @@ class CustomerService extends BaseApiService
                 <com:Version>1</com:Version>
                 <com:TransactionId>{$this->transactionId}</com:TransactionId>
                 <com:ProcessTime>{$processTime}</com:ProcessTime>
-                <com:Language>2022</com:Language>
                 <com:ChannelId>{$credentials['channel_id']}</com:ChannelId>
                 <com:TechnicalChannelId>{$credentials['technical_channel_id']}</com:TechnicalChannelId>
-                <com:TenantId>{$credentials['tenant_id']}</com:TenantId>
                 <com:AccessUser>{$credentials['access_user']}</com:AccessUser>
                 <com:AccessPwd>{$credentials['access_password']}</com:AccessPwd>
             </ser:RequestHeader>
+
             <ser:CreateNewCustomerReqBody>
-                {$this->buildCustomerInfo($data)}
+                <com:CustomerInfo>
+                    <com:CustomerType>{$data['customer_type']}</com:CustomerType>
+                    <com:CustomerCategory>{$data['customer_category']}</com:CustomerCategory>
+                    <com:CustomerSubcategory>{$data['customer_subcategory']}</com:CustomerSubcategory>
+                    <com:CustomerLevel>{$data['customer_level']}</com:CustomerLevel>
+                    <com:FirstName>{$data['first_name']}</com:FirstName>
+                    <com:MiddleName>{$data['middle_name']}</com:MiddleName>
+                    <com:LastName>{$data['last_name']}</com:LastName>
+                    <com:Title>{$data['title']}</com:Title>
+                    <com:Nationality>{$data['nationality']}</com:Nationality>
+                    <com:IdentificationType>{$data['identification_type']}</com:IdentificationType>
+                    <com:IdentificationNumber>{$data['identification_number']}</com:IdentificationNumber>
+                    <com:Gender>{$data['gender']}</com:Gender>
+                    <com:DateofBirth>{$data['date_of_birth']}</com:DateofBirth>
+                    <com:PlaceofBirth>{$data['place_of_birth']}</com:PlaceofBirth>
+                    <com:Occupation>{$data['occupation']}</com:Occupation>
+                    <com:Education>{$data['education']}</com:Education>
+                    <com:Religion>{$data['religion']}</com:Religion>
+                    <com:Income>{$data['income']}</com:Income>
+                    <com:PrimaryLanguage>{$data['primary_language']}</com:PrimaryLanguage>
+
+                    <com:CustomerAddressInfo>
+                        <com:EthioZoneOrRegion>{$data['address']['region']}</com:EthioZoneOrRegion>
+                        <com:AdministrativeRegionOrCity>{$data['address']['city']}</com:AdministrativeRegionOrCity>
+                        <com:SubcityOrZone>{$data['address']['zone']}</com:SubcityOrZone>
+                        <com:WeredaOrTown>{$data['address']['woreda']}</com:WeredaOrTown>
+                        <com:Kebele>{$data['address']['kebele']}</com:Kebele>
+                        <com:HouseNo>{$data['address']['house_no']}</com:HouseNo>
+                    </com:CustomerAddressInfo>
+
+                    <com:CustomerContactInfo>
+                        <com:NotificationMode>{$data['contact']['notification_mode']}</com:NotificationMode>
+                        <com:Email>{$data['contact']['email']}</com:Email>
+                        <com:HomeNo>{$data['contact']['home_no']}</com:HomeNo>
+                        <com:OfficeNo>{$data['contact']['office_no']}</com:OfficeNo>
+                        <com:MobileNo>{$data['contact']['mobile_no']}</com:MobileNo>
+                        <com:FaxNo>{$data['contact']['fax_no']}</com:FaxNo>
+                    </com:CustomerContactInfo>
+
+                    <com:CustomerContactPersonInfoList>
+                        <com:ContactPersonInfo>
+                            <com:FirstName>{$data['contact_person'][0]['first_name']}</com:FirstName>
+                            <com:MiddleName>{$data['contact_person'][0]['middle_name']}</com:MiddleName>
+                            <com:LastName>{$data['contact_person'][0]['last_name']}</com:LastName>
+                            <com:Title>{$data['contact_person'][0]['title']}</com:Title>
+                            <com:HomeNo>{$data['contact_person'][0]['home_no']}</com:HomeNo>
+                            <com:OfficeNo>{$data['contact_person'][0]['office_no']}</com:OfficeNo>
+                            <com:MobileNo>{$data['contact_person'][0]['mobile_no']}</com:MobileNo>
+                            <com:FaxNo>{$data['contact_person'][0]['fax_no']}</com:FaxNo>
+                        </com:ContactPersonInfo>
+                    </com:CustomerContactPersonInfoList>
+                </com:CustomerInfo>
             </ser:CreateNewCustomerReqBody>
         </ser:CreateNewCustomerReqMsg>
     </soapenv:Body>
@@ -69,84 +176,6 @@ class CustomerService extends BaseApiService
 XML;
     }
 
-    protected function buildCustomerInfo(array $data): string
-    {
-        $data['contact'] = array_merge([
-            'notification_mode' => '',
-            'email' => '',
-            'home_no' => '',
-            'office_no' => '',
-            'mobile_no' => '',
-            'fax_no' => '',
-        ], $data['contact'] ?? []);
-
-        // Ensure contact_person exists and contains index 0
-        $data['contact_person'][0] = array_merge([
-            'first_name' => '',
-            'middle_name' => '',
-            'last_name' => '',
-            'title' => '',
-            'home_no' => '',
-            'office_no' => '',
-            'mobile_no' => '',
-            'fax_no' => '',
-        ], $data['contact_person'][0] ?? []);
-
-        return <<<XML
-    <com:CustomerInfo>
-        <com:CustomerType>{$data['customer_type']}</com:CustomerType>
-        <com:CustomerCategory>{$data['customer_category']}</com:CustomerCategory>
-        <com:CustomerSubcategory>{$data['customer_subcategory']}</com:CustomerSubcategory>
-        <com:CustomerLevel>{$data['customer_level']}</com:CustomerLevel>
-        <com:FirstName>{$data['first_name']}</com:FirstName>
-        <com:MiddleName>{$data['middle_name']}</com:MiddleName>
-        <com:LastName>{$data['last_name']}</com:LastName>
-        <com:Title>{$data['title']}</com:Title>
-        <com:Nationality>{$data['nationality']}</com:Nationality>
-        <com:IdentificationType>{$data['identification_type']}</com:IdentificationType>
-        <com:IdentificationNumber>{$data['identification_number']}</com:IdentificationNumber>
-        <com:Gender>{$data['gender']}</com:Gender>
-        <com:DateofBirth>{$data['date_of_birth']}</com:DateofBirth>
-        <com:PlaceofBirth>{$data['place_of_birth']}</com:PlaceofBirth>
-        <com:Occupation>{$data['occupation']}</com:Occupation>
-        <com:Education>{$data['education']}</com:Education>
-        <com:Religion>{$data['religion']}</com:Religion>
-        <com:Income>{$data['income']}</com:Income>
-        <com:PrimaryLanguage>{$data['primary_language']}</com:PrimaryLanguage>
-
-        <com:CustomerAddressInfo>
-            <com:EthioZoneOrRegion>{$data['address']['region']}</com:EthioZoneOrRegion>
-            <com:AdministrativeRegionOrCity>{$data['address']['city']}</com:AdministrativeRegionOrCity>
-            <com:SubcityOrZone>{$data['address']['zone']}</com:SubcityOrZone>
-            <com:WeredaOrTown>{$data['address']['woreda']}</com:WeredaOrTown>
-            <com:Kebele>{$data['address']['kebele']}</com:Kebele>
-            <com:HouseNo>{$data['address']['house_no']}</com:HouseNo>
-        </com:CustomerAddressInfo>
-
-        <com:CustomerContactInfo>
-            <com:NotificationMode>{$data['contact']['notification_mode']}</com:NotificationMode>
-            <com:Email>{$data['contact']['email']}</com:Email>
-            <com:HomeNo>{$data['contact']['home_no']}</com:HomeNo>
-            <com:OfficeNo>{$data['contact']['office_no']}</com:OfficeNo>
-            <com:MobileNo>{$data['contact']['mobile_no']}</com:MobileNo>
-            <com:FaxNo>{$data['contact']['fax_no']}</com:FaxNo>
-        </com:CustomerContactInfo>
-
-        <com:CustomerContactPersonInfoList>
-            <com:ContactPersonInfo>
-                <com:FirstName>{$data['contact_person'][0]['first_name']}</com:FirstName>
-                <com:MiddleName>{$data['contact_person'][0]['middle_name']}</com:MiddleName>
-                <com:LastName>{$data['contact_person'][0]['last_name']}</com:LastName>
-                <com:Title>{$data['contact_person'][0]['title']}</com:Title>
-                <com:HomeNo>{$data['contact_person'][0]['home_no']}</com:HomeNo>
-                <com:OfficeNo>{$data['contact_person'][0]['office_no']}</com:OfficeNo>
-                <com:MobileNo>{$data['contact_person'][0]['mobile_no']}</com:MobileNo>
-                <com:FaxNo>{$data['contact_person'][0]['fax_no']}</com:FaxNo>
-            </com:ContactPersonInfo>
-        </com:CustomerContactPersonInfoList>
-    </com:CustomerInfo>
-    XML;
-    }
 
     public function parseResponse(string $xml, array $data)
     {

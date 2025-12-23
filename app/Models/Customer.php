@@ -72,4 +72,9 @@ class Customer extends Authenticatable
 
         return (string) $rawAddress;
     }
+
+    public function surveyRequest()
+    {
+        return $this->belongsTo(SurveyRequest::class, 'customer_code', 'code');
+    }
 }

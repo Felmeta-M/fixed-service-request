@@ -17,8 +17,8 @@ return new class extends Migration {
             $table->bigInteger('customer_survey_order_id')->unique();
             $table->bigInteger('merch_code')->nullable();
             $table->bigInteger('merch_order_id')->nullable();
-            $table->bigInteger('payment_order_id')->nullable();
-            $table->bigInteger('trans_id')->nullable()->unique();
+            $table->string('payment_order_id')->nullable();
+            $table->string('trans_id')->nullable()->unique();
             $table->decimal('total_amount', 12, 4);
             $table->decimal('cable_charge', 12, 2);
             $table->enum('status', array_column(FFDServiceProvisionStatus::cases(), 'value'))

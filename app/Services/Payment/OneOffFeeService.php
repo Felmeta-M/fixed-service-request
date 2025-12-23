@@ -19,7 +19,7 @@ class OneOffFeeService extends BaseApiService
             $xmlPayload = $this->buildRequestXml($data);
             // Log::info($xmlPayload);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            // Log::info($xmlResponse);
+            Log::info($xmlResponse);
             $parsedXml = $this->parseResponseXml($xmlResponse);
             return ApiResponse::success($parsedXml);
         } catch (RuntimeException $e) {

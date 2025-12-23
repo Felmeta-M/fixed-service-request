@@ -9,6 +9,7 @@ use App\Models\SurveyRequest;
 use App\Services\CreateOrderService;
 use App\Services\Payment\PaymentService;
 use App\Services\RsaSignatureService;
+use App\Services\Subscription\SubscriptionServiceFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +21,7 @@ class TelebirrController extends Controller
         protected readonly CreateOrderService $createOrderService,
         protected readonly PaymentService $paymentService,
         protected readonly RsaSignatureService $rsaSignatureService,
+        protected SubscriptionServiceFactory $factory
     ) {}
 
     public function createOrder(Request $request)
@@ -88,41 +90,93 @@ class TelebirrController extends Controller
             return response()->json(['success' => true]);
         }
 
-        DB::transaction(function () use ($payment, $data) {
+        $isCompleted = $data['trade_status'] === 'Completed';
 
-            if ($data['trade_status'] === 'Completed') {
-                $payment->update([
-                    'status'          => FFDServiceProvisionStatus::Paid,
-                    'trans_id'  => $data['transId'],
-                    'total_amount'          => $data['total_amount'],
-                    'payment_order_id' => $data['payment_order_id'],
-                    'payload' => $data,
-                ]);
+        DB::transaction(function () use ($payment, $data, $isCompleted) {
 
-                SurveyRequest::where(
-                    'customer_survey_order_id',
-                    $payment->customer_survey_order_id
-                )->update([
-                    'status' => FFDServiceProvisionStatus::Paid,
-                ]);
+            if ($isCompleted) {
+                DB::table('payments')
+                    ->where('id', $payment->id)
+                    ->update([
+                        'status'            => FFDServiceProvisionStatus::Paid,
+                        'trans_id'          => $data['transId'],
+                        'total_amount'      => $data['total_amount'],
+                        'payment_order_id'  => $data['payment_order_id'],
+                        'payload'           => json_encode($data),
+                        'updated_at'        => now(),
+                    ]);
 
-                // Log::info('Telebirr Payment Completed', [
-                //     'order' => $payment->merch_order_id,
-                //     'trans_id' => $data['transId'],
-                // ]);
+                DB::table('survey_requests')
+                    ->where('customer_survey_order_id', $payment->customer_survey_order_id)
+                    ->update([
+                        'status'     => FFDServiceProvisionStatus::Paid,
+                        'updated_at' => now(),
+                    ]);
             } else {
-
-                $payment->update([
-                    'status' => FFDServiceProvisionStatus::Failed,
-                ]);
-
-                Log::warning('Telebirr Payment Failed', [
-                    'order' => $payment->merch_order_id,
-                    'status' => $data['trade_status'],
-                ]);
+                DB::table('payments')
+                    ->where('id', $payment->id)
+                    ->update([
+                        'status'     => FFDServiceProvisionStatus::Failed,
+                        'updated_at' => now(),
+                    ]);
             }
         });
 
+        // 🚀 AFTER COMMIT (safe place for third-party calls)
+        if ($isCompleted) {
+            try {
+                $this->serviceSubscription($payment->customer_survey_order_id);
+            } catch (\Throwable $e) {
+                Log::error('Service subscription failed', [
+                    'order_id' => $payment->customer_survey_order_id,
+                    'error'    => $e->getMessage(),
+                ]);
+            }
+        }
+
+
+
         return response()->json(['success' => true]);
+    }
+
+    public function serviceSubscription(string $customerSurveyOrderId): bool
+    {
+        $record = DB::table('survey_requests as sr')
+            ->join('customers as c', 'c.code', '=', 'sr.customer_code')
+            ->where('sr.customer_survey_order_id', $customerSurveyOrderId)
+            ->orderByDesc('sr.id')
+            ->select([
+                'sr.customer_code',
+                'sr.main_offer_id',
+                'c.name',
+            ])
+            ->first();
+
+        if (!$record) {
+            Log::warning('Survey order or customer not found', [
+                'customer_survey_order_id' => $customerSurveyOrderId,
+            ]);
+            return false;
+        }
+
+        $data = [
+            'survey_order_id' => $customerSurveyOrderId,
+            'customer_code'   => $record->customer_code,
+            'name'   => trim($record->name),
+            'main_offer_id' => $record->main_offer_id,
+        ];
+
+        try {
+            $service = $this->factory->make($record->main_offer_id);
+            $service->create($data);
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Service subscription failed', [
+                'survey_order_id' => $customerSurveyOrderId,
+                'main_offer_id'     => $record->main_offer_id,
+                'error'           => $e->getMessage(),
+            ]);
+            return false;
+        }
     }
 }

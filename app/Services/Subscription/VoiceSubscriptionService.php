@@ -12,61 +12,83 @@ use Illuminate\Support\Facades\Log;
 
 class VoiceSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
-    protected ?string $serviceNumber = null;
+   protected ?string $serviceNumber = null;
 
-    public function __construct(
-        protected readonly QueryAvailableNumberService $queryAvailableNumberService,
-        protected readonly ReserveNumberService $reserveNumberService,
-    ) {}
+   public function __construct(
+      protected readonly QueryAvailableNumberService $queryAvailableNumberService,
+      protected readonly ReserveNumberService $reserveNumberService,
+   ) {}
 
-    protected function offeringId(): int
-    {
-        return 1207609454;
-    }
+   protected function offeringId(): int
+   {
+      return 1207609454;
+   }
 
-    protected function businessCode(): string
-    {
-        return 'CO015';
-    }
+   protected function businessCode(): string
+   {
+      return 'CO015';
+   }
 
-    protected function networkType(): int
-    {
-        return 4;
-    }
+   protected function networkType(): int
+   {
+      return 4;
+   }
 
-    public function create(array $data)
-    {
-        $xml = $this->buildXml($data);
-        Log::info($xml);
-        $response = $this->executeRequest($xml);
+   public function create(array $data)
+   {
+      $xml = $this->buildXml($data);
+      //   Log::info($xml);
+      $response = $this->executeRequest($xml);
 
-        return $this->parseResponse($data, $response);
-    }
+      return $this->parseResponse($data, $response);
+   }
 
-    protected function buildXml(array $data): string
-    {
-        $cfg = config('services.subscriber');
-        $customer = Customer::current();
+   protected function buildXml(array $data): string
+   {
+      $cfg = config('services.subscriber');
+      $customer = Customer::current();
 
-        // Override frontend data with customer defaults
-        //TODO: remove hardcoded values
-        $data = array_merge($data, [
-            'region'     => 1,
-            'city'       => 1,
-            'zone'       => 3,
-            'wereda'     => 10,
-            'kebele'     =>  'Kebele',
-            'house_no'   =>  '1234',
-            'sms_no'     => '12141231',
-        ]);
+      // Override frontend data with customer defaults
+      //TODO: remove hardcoded values
+      $data = array_merge($data, [
 
-        $data['completed_date'] = now()->format('YmdHis');
+         $data['name'] = $customer->name,
 
-        $serviceNumber = SurveyRequest::query()
-            ->where('customer_survey_order_id', $data['survey_order_id'])
-            ->value('service_number');
+         'region'     => 1,
+         'city'       => 1,
+         'zone'       => 3,
+         'wereda'     => 10,
+         'kebele'     =>  'Kebele',
+         'house_no'   =>  '1234',
+         'sms_no'     => '12141231',
 
-        return <<<XML
+         'enterprise_name'     => 'test',
+         'credit_class'        => 'Excellent',
+         'payment_mode'        => 'CASH',
+         'ext_payment_type'    => '0',
+
+         'business_code'       => 'CO015',
+         'external_sequence'   => uniqid(),
+         'network_type'        => '4',
+         'service_number'      => '123212533',
+         'sub_type'            => '1',
+         'sub_language'        => '2002',
+         'offering_id'         => '1207609454',
+         'effective_mode'      => '0',
+         'sla_priority'        => '6',
+         'call_center_access'  => '994',
+         'external_oper_id'        => '512',
+
+         'installment_date'        => now()->format('YmdHis'),
+      ]);
+
+
+
+      $serviceNumber = SurveyRequest::query()
+         ->where('customer_survey_order_id', $data['survey_order_id'])
+         ->value('service_number');
+
+      return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                   xmlns:ser="http://oss.huawei.com/webservice/bss/services"
                   xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
@@ -105,7 +127,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:CustomerCategory>5</com:CustomerCategory>
                   <com:CustomerSubcategory>14</com:CustomerSubcategory>
                   <com:CustomerLevel>2</com:CustomerLevel>
-                  <com:CustomerName>{$data['first_name']}</com:CustomerName>
+                  <com:CustomerName>{$data['name']}</com:CustomerName>
                   <com:BranchName>BranchName</com:BranchName>
                   <com:Title>1</com:Title>
                   <com:Nationality>1</com:Nationality>
@@ -146,7 +168,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:HouseNo>{$data['house_no']}</com:HouseNo>
                   <com:SMSNo>{$data['sms_no']}</com:SMSNo>
                   <com:PaymentMode>
-                     <com:PaymentMode>CASH</com:PaymentMode>
+                     <com:PaymentMode>{$data['payment_mode']}</com:PaymentMode>
                   </com:PaymentMode>
                </com:AccountInfo>
             </com:CustomerBusiOrder>
@@ -172,48 +194,47 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>
 
-            <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
+            <com:ExternalOperid>{$data['external_oper_id']}</com:ExternalOperid>
             <com:ExternalOperName>helloworld</com:ExternalOperName>
-            <com:InstallmentCompletedDate>{$data['completed_date']}</com:InstallmentCompletedDate>
+            <com:InstallmentCompletedDate>{$data['installment_date']}</com:InstallmentCompletedDate>
          </ser:CreateNewSubscriberReqBody>
       </ser:CreateNewSubscriberReqMsg>
    </soapenv:Body>
 </soapenv:Envelope>
 XML;
-    }
+   }
 
+   protected function parseResponse(array $data, string $xml)
+   {
+      $parsed = simplexml_load_string($xml);
+      $ns = $parsed->getNamespaces(true);
 
-    protected function parseResponse(array $data, string $xml)
-    {
-        $parsed = simplexml_load_string($xml);
-        $ns = $parsed->getNamespaces(true);
+      $body = $parsed->children($ns['soapenv'])->Body;
+      $rsp  = $body->children($ns['ser'])->CreateNewSubscriberRspMsg;
+      $hdr  = $rsp->ResponseHeader->children($ns['com']);
 
-        $body = $parsed->children($ns['soapenv'])->Body;
-        $rsp  = $body->children($ns['ser'])->CreateNewSubscriberRspMsg;
-        $hdr  = $rsp->ResponseHeader->children($ns['com']);
+      if ((string) $hdr->RetCode !== '0') {
+         // 🔴 release reserved number on failure
+         if ($this->serviceNumber) {
+            $this->queryAvailableNumberService->releaseNumberService($this->serviceNumber);
+         }
 
-        if ((string) $hdr->RetCode !== '0') {
-            // 🔴 release reserved number on failure
-            if ($this->serviceNumber) {
-                $this->queryAvailableNumberService->releaseNumberService($this->serviceNumber);
-            }
+         return ApiResponse::error((string) $hdr->RetMsg);
+      }
 
-            return ApiResponse::error((string) $hdr->RetMsg);
-        }
+      $customerBusiOrderId = (string) $rsp->CustomerBusiOrderId;
 
-        $customerBusiOrderId = (string) $rsp->CustomerBusiOrderId;
-
-        // create survey order request and initia payment
-        SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])
-            ->update([
-                'service_number' => $this->serviceNumber,
-                'status' => FFDServiceProvisionStatus::Subscribed->value,
-                'subscribed_at' => now(),
-            ]);
-
-        return ApiResponse::success([
-            'customer_busi_order_id' => $customerBusiOrderId,
+      // create survey order request and initia payment
+      SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])
+         ->update([
             'service_number' => $this->serviceNumber,
-        ]);
-    }
+            'status' => FFDServiceProvisionStatus::Subscribed->value,
+            'subscribed_at' => now(),
+         ]);
+
+      return ApiResponse::success([
+         'customer_busi_order_id' => $customerBusiOrderId,
+         'service_number' => $this->serviceNumber,
+      ]);
+   }
 }

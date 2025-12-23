@@ -19,6 +19,7 @@ class StoreSubscriptionRequest extends FormRequest
             'offering_id'      => ['required', 'string', 'max:255'],
             'survey_order_id'  => ['required', 'string', 'max:255'],
             'customer_code'    => ['required', 'string', 'max:255'],
+            'name'       => ['nullable', 'string', 'max:255'],
             'first_name'       => ['required', 'string', 'max:255'],
             'middle_name'     => ['required', 'string', 'max:255'],
             'last_name'        => ['required', 'string', 'max:255'],

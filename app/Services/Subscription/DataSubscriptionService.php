@@ -11,77 +11,99 @@ use Illuminate\Support\Facades\Log;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
-    public function __construct(protected readonly GetCombiningService $get_combining_service) {}
+   public function __construct(protected readonly GetCombiningService $get_combining_service) {}
 
-    protected function offeringId(): int
-    {
-        return 1457567289; // FBB OR DATA
-    }
+   protected function offeringId(): int
+   {
+      return 1457567289; // FBB OR DATA
+   }
 
-    protected function businessCode(): string
-    {
-        return 'CO015';
-    }
+   protected function businessCode(): string
+   {
+      return 'CO015';
+   }
 
-    protected function networkType(): int
-    {
-        return 3; // matches actual XML
-    }
+   protected function networkType(): int
+   {
+      return 3; // matches actual XML
+   }
 
-    public function create(array $data)
-    {
-        $xml = $this->buildXml($data);
-        Log::info('subscription request xml: ' . $xml  );
-        $response = $this->executeRequest($xml);
-        Log::info($response);
-        return $this->parseResponse($data, $response);
-    }
+   public function create(array $data)
+   {
+      $xml = $this->buildXml($data);
+      //   Log::info('subscription request xml: ' . $xml  );
+      $response = $this->executeRequest($xml);
+      //   Log::info($response);
+      return $this->parseResponse($data, $response);
+   }
 
-    public function getSubscriber(array $responseData): array
-    {
-        if (empty($responseData['success']) || $responseData['success'] !== true) {
-            throw new \RuntimeException('API call failed: ' . ($responseData['message'] ?? 'Unknown error'));
-        }
+   public function getSubscriber(array $responseData): array
+   {
+      if (empty($responseData['success']) || $responseData['success'] !== true) {
+         throw new \RuntimeException('API call failed: ' . ($responseData['message'] ?? 'Unknown error'));
+      }
 
-        $subscriber = data_get($responseData, 'data');
-        // Log::info($subscriber);
+      $subscriber = data_get($responseData, 'data');
+      // Log::info($subscriber);
 
-        if (empty($subscriber)) {
-            throw new \RuntimeException('Subscriber not found in API response.');
-        }
+      if (empty($subscriber)) {
+         throw new \RuntimeException('Subscriber not found in API response.');
+      }
 
-        return $subscriber;
-    }
+      return $subscriber;
+   }
 
-    protected function buildXml(array $data): string
-    {
-        $customer = Customer::current();
-        $email = $this->generateEmail();
+   protected function buildXml(array $data): string
+   {
+      $customer = Customer::current();
+      $email = $this->generateEmail();
 
-        $cfg = config('services.subscriber');
-        $cfg['default_password'] = 'REDACTED_PASSWORD';
+      $cfg = config('services.subscriber');
+      $cfg['default_password'] = 'REDACTED_PASSWORD';
 
-        $data['customer_code'] = $customer->code;
-        $data['external_operid'] = $data['external_operid'] ?? 512;
-        $data['completed_date'] = now()->format('YmdHis');
+      $data['customer_code'] = $customer->code;
+      $data['external_operid'] = $data['external_operid'] ?? 512;
+      $data['completed_date'] = now()->format('YmdHis');
 
-        // Default/demo values (until frontend provides them)
-        $data = array_merge($data,  [
-            'region'       => 1,
-            'city'         => 1,
-            'zone'         => 3,
-            'wereda'       => 10,
-            'kebele'       => 'Kebele',
-            'house_no'     => '1234',
-            'street_name'  => 'StreetName',
-            'apartment'    => 'Apartment',
-            'sms_no'       => '12141231',
-            'email'        => 'ok@ok.com',
-            'cpe_type'     => '2701DTU',
-            'cpe_serial'   => '2',
-        ]);
+      // Default/demo values (until frontend provides them)
+      $data = array_merge($data,  [
 
-        return <<<XML
+         $data['name'] = $customer->name,
+
+         'region'       => 1,
+         'city'         => 1,
+         'zone'         => 3,
+         'wereda'       => 10,
+         'kebele'       => 'Kebele',
+         'house_no'     => '1234',
+         'street_name'  => 'StreetName',
+         'apartment'    => 'Apartment',
+         'sms_no'       => '12141231',
+
+         'enterprise_name'   => 'tet',
+         'credit_class'      => 'Excellent',
+         'payment_mode'      => 'CASH',
+         'ext_payment_type'  => '0',
+
+         'business_code'       => 'CO015',
+         'external_sequence'   => uniqid(),
+         'network_type'        => '4',
+         'cpe_type'            => '2701DTU',
+         'cpe_serial'          => '1',
+         'sub_type'            => '1',
+         'sub_language'        => '2002',
+         'offering_id'         => '1457567289',
+         'effective_mode'      => '0',
+         'sla_priority'        => '6',
+         'internet_account'    => 'ghhur@qq.com',
+         'internet_password'   => 'REDACTED_PASSWORD',
+         'call_center_access'  => '994',
+
+         'external_oper_id'  => '512',
+         'installment_date'  => now()->format('YmdHis'),
+      ]);
+
+      return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                   xmlns:com="http://www.huawei.com/bss/soaif/interface/common/"
                   xmlns:ser="http://oss.huawei.com/webservice/bss/services">
@@ -118,7 +140,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                   <com:CustomerCategory>5</com:CustomerCategory>
                   <com:CustomerSubcategory>14</com:CustomerSubcategory>
                   <com:CustomerLevel>2</com:CustomerLevel>
-                  <com:CustomerName>{$data['first_name']}</com:CustomerName>
+                  <com:CustomerName>{$data['name']}</com:CustomerName>
                   <com:BranchName>BranchName</com:BranchName>
                   <com:Title>1</com:Title>
                   <com:Nationality>1</com:Nationality>
@@ -141,7 +163,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
                   <com:CustomerContactInfo>
                      <com:NotificationMode>2</com:NotificationMode>
-                     <com:Email>{$data['email']}</com:Email>
+                     <com:Email>{$email}</com:Email>
                      <com:MobileNo>{$data['sms_no']}</com:MobileNo>
                   </com:CustomerContactInfo>
                </com:CustomerInfo>
@@ -165,9 +187,9 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                   <com:StreetName>{$data['street_name']}</com:StreetName>
                   <com:Apartment>{$data['apartment']}</com:Apartment>
                   <com:SMSNo>{$data['sms_no']}</com:SMSNo>
-                  <com:Email>{$data['email']}</com:Email>
+                  <com:Email>{$email}</com:Email>
                   <com:PaymentMode>
-                     <com:PaymentMode>CASH</com:PaymentMode>
+                     <com:PaymentMode>{$data['payment_mode']}</com:PaymentMode>
                   </com:PaymentMode>
                </com:AccountInfo>
             </com:CustomerBusiOrder>
@@ -202,53 +224,53 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>
 
-            <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
-            <com:InstallmentCompletedDate>{$data['completed_date']}</com:InstallmentCompletedDate>
+            <com:ExternalOperid>{$data['external_oper_id']}</com:ExternalOperid>
+            <com:InstallmentCompletedDate>{$data['installment_date']}</com:InstallmentCompletedDate>
          </ser:CreateNewSubscriberReqBody>
       </ser:CreateNewSubscriberReqMsg>
    </soapenv:Body>
 </soapenv:Envelope>
 XML;
-    }
+   }
 
 
-    protected function parseResponse(array $data, string $xml)
-    {
-        $parsed = simplexml_load_string($xml);
-        $ns = $parsed->getNamespaces(true);
+   protected function parseResponse(array $data, string $xml)
+   {
+      $parsed = simplexml_load_string($xml);
+      $ns = $parsed->getNamespaces(true);
 
-        $body = $parsed->children($ns['soapenv'])->Body;
-        $rsp  = $body->children($ns['ser'])->CreateNewSubscriberRspMsg;
-        $hdr  = $rsp->ResponseHeader->children($ns['com']);
+      $body = $parsed->children($ns['soapenv'])->Body;
+      $rsp  = $body->children($ns['ser'])->CreateNewSubscriberRspMsg;
+      $hdr  = $rsp->ResponseHeader->children($ns['com']);
 
-        $retCode = (string)$hdr->RetCode;
-        $retMsg  = (string)$hdr->RetMsg;
+      $retCode = (string)$hdr->RetCode;
+      $retMsg  = (string)$hdr->RetMsg;
 
-        // Real failure cases only
-        if ($retCode !== '0' && $retCode !== '-999') {
-            return ApiResponse::error($retMsg);
-        }
+      // Real failure cases only
+      if ($retCode !== '0' && $retCode !== '-999') {
+         return ApiResponse::error($retMsg);
+      }
 
-        /** DATA returns FBBNUMBER */
-        foreach ($rsp->ExtParamList->children($ns['com'])->ParameterInfo as $p) {
-            if ((string)$p->ParamName === 'FBBNUMBER') {
-                $serviceNo = (string)$p->ParamValue;
-                SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])
-                    ->update([
-                        'service_number' => $serviceNo,
-                        'status' => FFDServiceProvisionStatus::Subscribed->value,
-                        'subscribed_at' => now(),
-                    ]);
+      /** DATA returns FBBNUMBER */
+      foreach ($rsp->ExtParamList->children($ns['com'])->ParameterInfo as $p) {
+         if ((string)$p->ParamName === 'FBBNUMBER') {
+            $serviceNo = (string)$p->ParamValue;
+            SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])
+               ->update([
+                  'service_number' => $serviceNo,
+                  'status' => FFDServiceProvisionStatus::Subscribed->value,
+                  'subscribed_at' => now(),
+               ]);
 
-                // $message = $retCode === '-999'
-                //     ? 'Duplicate request – previous success reused'
-                //     : 'Provisioned successfully';
-                return ApiResponse::success([
-                    'service_number' => $serviceNo
-                ]);
-            }
-        }
+            // $message = $retCode === '-999'
+            //     ? 'Duplicate request – previous success reused'
+            //     : 'Provisioned successfully';
+            return ApiResponse::success([
+               'service_number' => $serviceNo
+            ]);
+         }
+      }
 
-        return ApiResponse::error('Service number not returned');
-    }
+      return ApiResponse::error('Service number not returned');
+   }
 }

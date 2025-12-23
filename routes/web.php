@@ -48,6 +48,7 @@ Route::middleware('guest:otp')->group(function () {
 // OTP protected pages
 Route::middleware(['otp.auth'])->group(function () {
     Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name('services');
+    Route::get('/services/subscription-success', fn() => Inertia::render('Services/SubscriptionSuccess'))->name('services.subscription-success');
     // Route::get('/services/create', action: fn() => Inertia::render('Services/Create'))->name('services.create');
     // In your web.php
     Route::get('/services/create', function () {

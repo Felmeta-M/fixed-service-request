@@ -290,7 +290,7 @@ export default function ComplaintsIndex() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-6">
-          <TabsList>
+          {/* <TabsList>
             <TabsTrigger value="my-tickets" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               My Tickets ({pagination.total})
@@ -299,18 +299,18 @@ export default function ComplaintsIndex() {
               <Search className="h-4 w-4" />
               Search Tickets
             </TabsTrigger>
-          </TabsList>
+          </TabsList> */}
 
           <TabsContent value="my-tickets" className="space-y-6">
             {/* Controls and Filters */}
-            <Card>
-              <CardHeader className="pb-3">
+            <div className='border-none'>
+              <div className="">
                 <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                   <div>
-                    <CardTitle>My Trouble Tickets</CardTitle>
-                    <CardDescription>
+                    <div>My Compliant Tickets</div>
+                    <div className="text-sm text-muted-foreground">
                       All tickets created under your account. Showing page {pagination.current_page} of {pagination.last_page}
-                    </CardDescription>
+                    </div>
                   </div>
                   
                   <div className="flex items-center gap-2">
@@ -343,10 +343,10 @@ export default function ComplaintsIndex() {
                     </Button>
                   </div>
                 </div>
-              </CardHeader>
+              </div>
 
               {showFilters && (
-                <CardContent className="border-t pt-4">
+                <div className="border-t pt-4">
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Search</label>
@@ -391,12 +391,12 @@ export default function ComplaintsIndex() {
                       </div>
                     )}
                   </div>
-                </CardContent>
+                </div>
               )}
-            </Card>
+            </div>
 
             {/* Tickets Table */}
-            <Card>
+            <Card className='border-none'>
               <CardContent className="p-0">
                 {loading ? (
                   <div className="flex items-center justify-center py-12">

@@ -338,7 +338,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             // Refresh list state if the caller stays on the page; safe even if we navigate.
             onActionComplete();
 
-            router.visit(`/services/${id}?subscribed=1`);
+            router.visit('/services/subscription-success');
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Subscription failed';
             toast.error(msg, { id: t });

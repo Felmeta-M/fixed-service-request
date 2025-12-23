@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Link, router, usePage } from '@inertiajs/react';
-import { CheckCircle2, User, FileText, Phone, Mail } from 'lucide-react';
+import { CheckCircle2, User, FileText, Phone, Mail, Calendar, Hash } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getServiceActionFlags, type ServiceActionFocus } from '@/lib/service-action-rules';
@@ -193,7 +193,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
             }
 
             toast.success('Subscription created successfully!', { id: t });
-            router.visit('/services');
+            router.visit('/services/subscription-success');
         } catch (error) {
             console.error('Subscription error:', error);
             toast.error(error instanceof Error ? error.message : 'Subscription failed. Please try again.', { id: t });
@@ -203,19 +203,19 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
     };
 
     return (
-        <div className="px-4">
+        <div className="px-0">
             <div className="mx-auto bg-white max-w-4xl">
                 {/* Invoice Header */}
-                {/* <div className="mb-4 rounded-lg bg-white p-4 shadow-xs"> */}
-                    {/* <div className="flex flex-col justify-between md:flex-row md:items-start"> */}
-                        {/* <div> */}
-                            {/* <div className="mb-2 flex items-center gap-2">
+                <div className="mb-2 rounded-lg bg-white pt-4 shadow-xs">
+                    <div className="flex flex-col justify-between md:flex-row md:items-start">
+                        <div>
+                            <div className="mb-2 flex items-center gap-2">
                             
                                 <div>
-                                    <h1 className="text-2xl font-bold text-gray-900">Service and Payment Details</h1>
-                                    <p className="text-sm text-gray-500">Order Summary & Payment Details</p>
+                                    {/* <h1 className="text-2xl font-bold text-gray-900">Service and Payment Details</h1> */}
+                                    <p className="text-lg font-bold">Order Summary & Payment Details</p>
                                 </div>
-                            </div> */}
+                            </div>
                             {/* <div className="mt-4 space-y-2"> */}
                                 {/* <div className="flex items-center gap-2 text-sm">
                                     <Calendar className="h-4 w-4 text-gray-400" />
@@ -226,7 +226,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                     <span className="text-gray-600">Order Id: {customer_survey_order_id || 'Pending'}</span>
                                 </div> */}
                             {/* </div> */}
-                        {/* </div> */}
+                        </div>
                         {/* <div className="mt-4 md:mt-0 md:text-right">
                             <Badge variant={isFree ? "outline" : "default"} className="mb-1">
                                 {isFree ? "No Payment Required" : "Payment Required"}
@@ -234,8 +234,8 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                             <div className="text-3xl font-bold text-primary">{totalAmount} ETB</div>
                             <p className="text-sm text-gray-500">Total Amount</p>
                         </div> */}
-                    {/* </div> */}
-                {/* </div> */}
+                    </div>
+                </div>
 
                 <div className="space-y-6">
                     {/* Customer & Service Information */}

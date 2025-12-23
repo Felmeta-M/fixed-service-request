@@ -44,6 +44,8 @@ return [
 
     'national_id_secret_key' => env('NATIONAL_ID_SECRET_KEY', 'REDACTED_SECRET_KEY'),
 
+    'sms_end_point' => env('SMS_ENDPOINT', "REDACTED_INTERNAL_ENDPOINT/vas/index.php?receiver="),
+
     'soap' => [
         'endpoint' => env('SOAP_URL'),
         'version' => env('SOAP_VERSION', 1),

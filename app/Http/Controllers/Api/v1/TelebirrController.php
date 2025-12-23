@@ -10,6 +10,7 @@ use App\Services\CreateOrderService;
 use App\Services\Payment\PaymentService;
 use App\Services\RsaSignatureService;
 use App\Services\Subscription\SubscriptionServiceFactory;
+use App\Traits\InteractsWithSMSGateway;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +18,8 @@ use RuntimeException;
 
 class TelebirrController extends Controller
 {
+    use InteractsWithSMSGateway;
+
     public function __construct(
         protected readonly CreateOrderService $createOrderService,
         protected readonly PaymentService $paymentService,
@@ -149,6 +152,7 @@ class TelebirrController extends Controller
                 'sr.customer_code',
                 'sr.main_offer_id',
                 'c.name',
+                'c.phone_number',
             ])
             ->first();
 
@@ -167,13 +171,31 @@ class TelebirrController extends Controller
         ];
 
         try {
+            // Call the third-party subscription service
             $service = $this->factory->make($record->main_offer_id);
             $service->create($data);
+
+            // ✅ Send SMS to customer
+            if (!empty($record->phone_number)) {
+                try {
+                    $name = explode(" ", $record->name)[0];
+                    $phoneNumber = substr($record->phone_number, -9);
+                    $message = "Dear {$name}, your subscription has been successfully created!";
+                    $this->sendSmsOnly($phoneNumber, $message);
+                } catch (\Throwable $smsException) {
+                    Log::error('Failed to send subscription SMS', [
+                        'customer_code' => $record->customer_code,
+                        'sms_number'    => $record->phone_number,
+                        'error'         => $smsException->getMessage(),
+                    ]);
+                }
+            }
+
             return true;
         } catch (\Throwable $e) {
             Log::error('Service subscription failed', [
                 'survey_order_id' => $customerSurveyOrderId,
-                'main_offer_id'     => $record->main_offer_id,
+                'main_offer_id'   => $record->main_offer_id,
                 'error'           => $e->getMessage(),
             ]);
             return false;

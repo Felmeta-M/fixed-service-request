@@ -37,9 +37,9 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
    public function create(array $data)
    {
       $xml = $this->buildXml($data);
-      //   Log::info($xml);
+      // Log::info($xml);
       $response = $this->executeRequest($xml);
-
+      // Log::info($response);
       return $this->parseResponse($data, $response);
    }
 
@@ -51,9 +51,6 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
       // Override frontend data with customer defaults
       //TODO: remove hardcoded values
       $data = array_merge($data, [
-
-         $data['name'] = $customer->name,
-
          'region'     => 1,
          'city'       => 1,
          'zone'       => 3,
@@ -83,6 +80,8 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
       ]);
 
 
+      $data['customer_code'] = $customer->code;
+      $data['name'] =  $customer->name;
 
       $serviceNumber = SurveyRequest::query()
          ->where('customer_survey_order_id', $data['survey_order_id'])

@@ -17,7 +17,7 @@ trait InteractsWithSMSGateway
         $phone = substr($phone, -9);
         $encodedPhoneNumber = urlencode("251{$phone}");
 
-        $smsEndPoint = config('ffd.sms_end_point');
+        $smsEndPoint = config('services.sms_end_point');
         $url = "{$smsEndPoint}{$encodedPhoneNumber}&message={$encodedMessage}";
 
         return self::sendRequest($url);
@@ -47,7 +47,7 @@ trait InteractsWithSMSGateway
             $message = "Your verification code is {$otp}. It will expire in 5 minutes. Do not share this code with anyone.";
             $encodedMessage = urlencode("{$message}");
             $encodedPhoneNumber = urlencode("251{$phone}");
-            $smsEndPoint = config('ffd.sms_end_point');
+            $smsEndPoint = config('services.sms_end_point');
             $url = "{$smsEndPoint}{$encodedPhoneNumber}&message={$encodedMessage}";
 
             self::setOTP($phone, $otp);

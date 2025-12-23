@@ -31,9 +31,8 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
    public function create(array $data)
    {
       $xml = $this->buildXml($data);
-      //   Log::info('subscription request xml: ' . $xml  );
+      // Log::info($xml);
       $response = $this->executeRequest($xml);
-      //   Log::info($response);
       return $this->parseResponse($data, $response);
    }
 
@@ -67,9 +66,6 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
       // Default/demo values (until frontend provides them)
       $data = array_merge($data,  [
-
-         $data['name'] = $customer->name,
-
          'region'       => 1,
          'city'         => 1,
          'zone'         => 3,
@@ -102,6 +98,9 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          'external_oper_id'  => '512',
          'installment_date'  => now()->format('YmdHis'),
       ]);
+
+      $data['customer_code'] = $customer->code;
+      $data['name'] =  $customer->name;
 
       return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"

@@ -6,22 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SurveyOrderFormRequest;
 use App\Http\Resources\SurveyRequestResource;
 use App\Models\SurveyRequest;
-use App\Services\ComboSurveyOrderService;
-use App\Services\ResourceService;
-use App\Services\DataSurveyOrderService;
-use App\Services\FixedVoiceSurveyOrderService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 use App\Services\Survey\SurveyServiceFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class SurveyOrderController extends Controller
 {
-    // public function __construct(
-    //     protected readonly DataSurveyOrderService $surveyOrderService,
-    //     protected readonly ResourceService $resourceService
-    // ) {}
-
     public function __construct(
         protected SurveyServiceFactory $factory
     ) {}
@@ -50,24 +45,59 @@ class SurveyOrderController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-
     public function store(SurveyOrderFormRequest $request): JsonResponse
     {
-        $data = $request->validated();
-
         try {
+            $data = $request->validated();
+
             $service = $this->factory->make($data['main_offer_id']);
-            return  $service->create($data);
-        } catch (\RuntimeException $e) {
+
+            return $service->create($data);
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-            ], 422);
+                'message' => 'Please correct the highlighted errors.',
+                'errors'  => $e->errors(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The requested resource was not found.',
+            ], Response::HTTP_NOT_FOUND);
+        } catch (QueryException $e) {
+            $sqlState = $e->errorInfo[0] ?? null;
+
+            return match ($sqlState) {
+                // PostgreSQL unique violation
+                '23505' => response()->json([
+                    'success' => false,
+                    'message' => 'This record already exists.',
+                ], Response::HTTP_CONFLICT),
+
+                // Foreign key violation
+                '23503' => response()->json([
+                    'success' => false,
+                    'message' => 'This action is not allowed because related data exists.',
+                ], Response::HTTP_UNPROCESSABLE_ENTITY),
+
+                // Not null / check constraint
+                '23502', '23514' => response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or incomplete data provided.',
+                ], Response::HTTP_UNPROCESSABLE_ENTITY),
+
+                default => response()->json([
+                    'success' => false,
+                    'message' => 'Some of the information you entered is not valid. Please review your inputs and try again.',
+                ], Response::HTTP_INTERNAL_SERVER_ERROR),
+            };
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong. Please try again later.',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
-
-
 
     /**
      * Display the specified resource.

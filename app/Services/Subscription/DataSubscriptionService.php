@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Services\ApiResponse;
 use App\Services\GetCombiningService;
 use App\Traits\InteractsWithSMSGateway;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
@@ -33,10 +34,16 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
    public function create(array $data)
    {
-      $customer = Customer::current();
-      $data['sms_no'] = substr($data['sms_no'], -9); // substr($customer?->phone_number, -9) ?? $data['sms_no']; //sms_no shall be send from frontend
-      $data['customer_code'] = $customer?->code ?? $data['customer_code'];
-      $data['name'] = $customer?->name ?? $data['name'];
+      if (Auth::check()) {
+         $customer = Customer::current();
+         $data['sms_no'] = substr($customer?->phone_number, -9);
+         $data['customer_code'] = $customer?->code;
+         $data['name'] = $customer?->name;
+      } else {
+         $data['sms_no'] = substr($data['sms_no'], -9);
+         $data['customer_code'] =  $data['customer_code'];
+         $data['name'] =  $data['name'];
+      }
 
       $xml = $this->buildXml($data);
       // Log::info($xml);

@@ -82,26 +82,31 @@ abstract class BaseSurveyService extends BaseApiService
         array $data,
         ?array $resource
     ): void {
+        Log::info('Persisting survey with Order ID: ', ['service_number' => $data['service_number'] ?? $this->serviceNumber ?? null]);
 
         DB::transaction(function () use ($surveyOrderId, $data, $resource) {
-
             $survey = SurveyRequest::create([
                 ...$data,
                 'with_device' => (bool)$data['with_device'],
-                'service_number' => $data['service_number'] ?? $this->serviceNumber,
+                'service_number' => $data['service_number'] ?? $this->serviceNumber ?? null,
                 'customer_survey_order_id' => $surveyOrderId,
                 'status' => FFDServiceProvisionStatus::Completed->value,
                 'cable_length' => $resource['distance'] ?? null,
                 'cable_type'   => $resource['cable_type'] ?? null,
-                'lat'          => $resource['latitude'] ?? null,
-                'long'         => $resource['longitude'] ?? null,
+                $data['lat']  = isset($resource['latitude'])
+                    ? round((float) $resource['latitude'], 8)
+                    : null,
+
+                $data['long'] = isset($resource['longitude'])
+                    ? round((float) $resource['longitude'], 8)
+                    : null,
             ]);
 
             //reserve the number
             // $this->reserveNumberService($data['service_number'] ?? $this->serviceNumber); 
 
             $requestData = [
-                'service_number' => $data['service_number'] ?? $this->serviceNumber,
+                'service_number' => $data['service_number'] ?? $this->serviceNumber ?? null,
                 'offering_id' => $survey->main_offer_id,
                 'network_type' => 4, // Fixed network
                 'sub_type' => 0,

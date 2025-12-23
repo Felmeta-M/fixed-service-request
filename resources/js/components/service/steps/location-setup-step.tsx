@@ -280,6 +280,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
     };
 
     const handleAddressSearch = async (address: string) => {
+         console.log('🔍 Search triggered for:', address);
         setLocationLoading(true);
         setLocationError('');
 
@@ -420,12 +421,12 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                                             </div>
                                         </FieldGroup>
 
-                                        <div className="pt-4">
+                                        {/* <div className="pt-4">
                                             <p className="mb-1 text-sm font-medium text-gray-700">Address</p>
                                             <div className="flex items-center gap-2">
                                                 <p className="flex-1 text-sm text-gray-700">{mapLocation?.address || formData.address}</p>
                                             </div>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </div>
                             </div>

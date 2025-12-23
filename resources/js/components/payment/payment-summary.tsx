@@ -59,9 +59,9 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
 
     const amountRaw = payment?.amount ?? payment?.total_amount;
     const amount = Number(amountRaw);
-    const totalAmountNumber = Number.isFinite(amount) ? amount : 0;
-    const totalAmount = totalAmountNumber.toFixed(2);
-    const isFree = totalAmountNumber <= 0;
+    const totalAmountNumber = (amountRaw !== null && amountRaw !== undefined && Number.isFinite(amount)) ? amount : undefined;
+    const totalAmount = (totalAmountNumber ?? 0).toFixed(2);
+    const isFree = totalAmountNumber !== undefined && totalAmountNumber <= 0;
 
     const { canPay, canSubscribe } = getServiceActionFlags({
         status: surveyDetails?.status,

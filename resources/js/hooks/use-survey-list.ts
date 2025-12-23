@@ -14,6 +14,10 @@ interface Survey {
     main_offer_id?: string;
     service_type?: string;
     cancellation_reason?: string;
+    payment?: {
+        total_amount?: number | string;
+        status?: string;
+    };
 }
 
 interface UseSurveyListReturn {

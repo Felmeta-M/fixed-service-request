@@ -57,6 +57,10 @@ type Survey = {
     offering_id?: string;
     customer_code?: string | number;
     external_operid?: string;
+    payment?: {
+        total_amount?: number | string;
+        status?: string;
+    };
     [key: string]: unknown;
 };
 
@@ -312,6 +316,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const { canPay, canSubscribe, canCancel } = getServiceActionFlags({
         status: survey.status,
         mainOfferId: main_offer_id,
+        totalAmount: survey.payment?.total_amount ? Number(survey.payment.total_amount) : undefined,
     });
 
     const navigateToDetails = (focus?: 'payment' | 'subscribe') => {

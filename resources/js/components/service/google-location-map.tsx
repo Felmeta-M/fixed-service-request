@@ -30,6 +30,9 @@ const easeInOutCubic = (t: number): number => {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 };
 
+// Add this constant outside your component
+const LIBRARIES: ("places" | "drawing" | "geometry" | "localContext" | "visualization")[] = ['places'];
+
 export function GoogleLocationMap({
     onLocationSelect,
     onAddressSearch,
@@ -275,39 +278,79 @@ export function GoogleLocationMap({
         }
     }, [map, selectedLocation, smoothPanTo, internalAnimating, updateMarkerPosition]);
 
+    // const handleSearch = async () => {
+    //     const query = searchQuery.trim();
+    //     if (!query || internalAnimating) return;
+
+    //     // Prefer Maps JS Geocoder when available (works well with browser-restricted keys).
+    //     if (map && typeof google !== 'undefined' && google.maps?.Geocoder) {
+    //         try {
+    //             setIsGeocoding(true);
+    //             const geocoder = new google.maps.Geocoder();
+
+    //             const results = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
+    //                 geocoder.geocode({ address: query }, (results, status) => {
+    //                     if (status === 'OK' && results && results.length > 0) {
+    //                         resolve(results);
+    //                         return;
+    //                     }
+    //                     reject(new Error(status));
+    //                 });
+    //             });
+
+    //             const first = results[0];
+    //             const location = first.geometry.location;
+    //             onLocationSelect(location.lat(), location.lng(), first.formatted_address);
+    //             return;
+    //         } catch {
+    //             // Fall back to the parent handler (which already reports errors in the UI).
+    //         } finally {
+    //             setIsGeocoding(false);
+    //         }
+    //     }
+
+    //     onAddressSearch(query);
+    // };
     const handleSearch = async () => {
-        const query = searchQuery.trim();
-        if (!query || internalAnimating) return;
+    const query = searchQuery.trim();
+    if (!query || internalAnimating) return;
 
-        // Prefer Maps JS Geocoder when available (works well with browser-restricted keys).
-        if (map && typeof google !== 'undefined' && google.maps?.Geocoder) {
-            try {
-                setIsGeocoding(true);
-                const geocoder = new google.maps.Geocoder();
+    if (map && typeof google !== 'undefined' && google.maps?.Geocoder) {
+        try {
+            setIsGeocoding(true);
+            const geocoder = new google.maps.Geocoder();
 
-                const results = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
-                    geocoder.geocode({ address: query }, (results, status) => {
-                        if (status === 'OK' && results && results.length > 0) {
-                            resolve(results);
-                            return;
-                        }
-                        reject(new Error(status));
-                    });
+            const results = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
+                geocoder.geocode({ address: query }, (results, status) => {
+                    if (status === 'OK' && results && results.length > 0) {
+                        resolve(results);
+                        return;
+                    }
+                    reject(new Error(`Geocoding failed: ${status}`));
                 });
+            });
 
-                const first = results[0];
-                const location = first.geometry.location;
-                onLocationSelect(location.lat(), location.lng(), first.formatted_address);
-                return;
-            } catch {
-                // Fall back to the parent handler (which already reports errors in the UI).
-            } finally {
-                setIsGeocoding(false);
-            }
+            const first = results[0];
+            const location = first.geometry.location;
+            
+            // Call the parent handler with coordinates AND address
+            onLocationSelect(location.lat(), location.lng(), first.formatted_address);
+            
+            // Clear search query after successful search
+            setSearchQuery('');
+            
+        } catch (error) {
+            console.error('Geocoding failed:', error);
+            // Fall back to the parent handler for error display
+            onAddressSearch(query);
+        } finally {
+            setIsGeocoding(false);
         }
-
+    } else {
+        // Fallback to parent handler if Geocoder not available
         onAddressSearch(query);
-    };
+    }
+};
 
     // Use external animation state if provided, otherwise use internal
     const isCurrentlyAnimating = isAnimating !== undefined ? isAnimating : internalAnimating;
@@ -372,7 +415,8 @@ export function GoogleLocationMap({
 
                 <LoadScript
                     googleMapsApiKey={googleMapsApiKey}
-                    libraries={['places']}
+                    libraries={LIBRARIES}
+                    // libraries={['places']}
                     loadingElement={
                         <div className="flex h-96 w-full items-center justify-center bg-gray-100">
                             <div className="text-center">

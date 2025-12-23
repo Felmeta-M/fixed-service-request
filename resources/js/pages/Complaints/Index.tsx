@@ -68,7 +68,7 @@ export default function ComplaintsIndex() {
         mobile_no: auth.user.phone,
         page: page,
         per_page: 10,
-      });
+      }, auth.user.api_token);
 
       if (response.success) {
         const localTTs = response.data.data.map(tt => ({
@@ -111,7 +111,7 @@ export default function ComplaintsIndex() {
     setLoading(true);
     setActiveTab('search');
     try {
-      const results = await ttService.searchAllTTs(accessNumber);
+      const results = await ttService.searchAllTTs(accessNumber, auth.user.api_token);
       setTts(results);
       
       if (results.length === 0) {
@@ -136,13 +136,13 @@ export default function ComplaintsIndex() {
     try {
       if (tt.source === 'external') {
         // Use external API for external TTs
-        const response = await ttService.getTTDetail(tt.tt_no);
+        const response = await ttService.getTTDetail(tt.tt_no, auth.user.api_token);
         if (response.success && response.data) {
           setTtDetail(response.data);
         }
       } else {
         // Use local Laravel API for local TTs
-        const response = await ttService.getLocalTT(tt.tt_no);
+        const response = await ttService.getLocalTT(tt.tt_no, auth.user.api_token);
         if (response.success && response.data) {
           setTtDetail({
             ...response.data,

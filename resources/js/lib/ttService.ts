@@ -9,15 +9,16 @@ import {
   DisplayTT
 } from '@/types/tt';
 
-const API_BASE = 'https://localhost:3000/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 export const ttService = {
-  async queryExternalTTs(accessNumber: string): Promise<TTQueryResponse> {
+  async queryExternalTTs(accessNumber: string, token?: string): Promise<TTQueryResponse> {
     try {
       const response = await fetch(`${API_BASE}/tt/query`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ access_number: accessNumber } as TTQueryRequest),
       });
@@ -33,12 +34,13 @@ export const ttService = {
     }
   },
 
-  async getTTDetail(ttNumber: string): Promise<TTDetailResponse> {
+  async getTTDetail(ttNumber: string, token?: string): Promise<TTDetailResponse> {
     try {
       const response = await fetch(`${API_BASE}/tt/detail`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ search: ttNumber } as TTDetailRequest),
       });
@@ -54,7 +56,7 @@ export const ttService = {
     }
   },
 
-  async getLocalTTs(params: LocalTTQueryParams): Promise<LocalTTResponse> {
+  async getLocalTTs(params: LocalTTQueryParams, token?: string): Promise<LocalTTResponse> {
     try {
       const queryString = new URLSearchParams();
 
@@ -64,12 +66,13 @@ export const ttService = {
       if (params.page) queryString.append('page', params.page.toString());
       if (params.per_page) queryString.append('per_page', params.per_page.toString());
 
-      const response = await fetch(`${API_BASE}/trouble-tickets`, {
+      const response = await fetch(`${API_BASE}/trouble-tickets?${queryString.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         credentials: 'include',
       });
@@ -85,14 +88,15 @@ export const ttService = {
     }
   },
 
-  async getLocalTT(ttSerialNo: string): Promise<SingleTTResponse> {
+  async getLocalTT(ttSerialNo: string, token?: string): Promise<SingleTTResponse> {
     try {
-      const response = await fetch(`${API_BASE}/trouble-tickets`, {
+      const response = await fetch(`${API_BASE}/trouble-tickets/${ttSerialNo}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         credentials: 'include',
       });
@@ -108,7 +112,7 @@ export const ttService = {
     }
   },
 
-  async createLocalTT(data: any): Promise<any> {
+  async createLocalTT(data: any, token?: string): Promise<any> {
     try {
       const response = await fetch(`${API_BASE}/tt/create`, {
         method: 'POST',
@@ -116,6 +120,7 @@ export const ttService = {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         credentials: 'include',
         body: JSON.stringify(data),
@@ -132,13 +137,13 @@ export const ttService = {
     }
   },
 
-  async searchAllTTs(accessNumber: string): Promise<DisplayTT[]> {
+  async searchAllTTs(accessNumber: string, token?: string): Promise<DisplayTT[]> {
     const displayTTs: DisplayTT[] = [];
 
     try {
       const localResponse = await this.getLocalTTs({
         access_number: accessNumber,
-      });
+      }, token);
 
       if (localResponse.success && localResponse.data.data.length > 0) {
         localResponse.data.data.forEach((localTT) => {
@@ -159,7 +164,7 @@ export const ttService = {
         });
       }
 
-      const externalResponse = await this.queryExternalTTs(accessNumber);
+      const externalResponse = await this.queryExternalTTs(accessNumber, token);
 
       if (externalResponse.success &&
         externalResponse.data.success &&
@@ -191,7 +196,7 @@ export const ttService = {
     );
   },
 
-  async getUserLocalTTs(userId?: number, phone?: string): Promise<DisplayTT[]> {
+  async getUserLocalTTs(userId?: number, phone?: string, token?: string): Promise<DisplayTT[]> {
     try {
       const params: LocalTTQueryParams = {};
 
@@ -199,7 +204,7 @@ export const ttService = {
         params.mobile_no = phone;
       }
 
-      const response = await this.getLocalTTs(params);
+      const response = await this.getLocalTTs(params, token);
 
       if (response.success) {
         return response.data.data.map((localTT) => ({

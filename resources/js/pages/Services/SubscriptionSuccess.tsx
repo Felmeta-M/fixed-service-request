@@ -14,7 +14,7 @@ export default function SubscriptionSuccess() {
                     </div>
 
                     <h2 className="mt-6 text-2xl font-extrabold text-gray-900">
-                        Subscription Successful 🎉
+                        Subscription Successful
                     </h2>
 
                     <p className="mt-2 text-sm text-gray-600">
@@ -42,7 +42,7 @@ export default function SubscriptionSuccess() {
                                 active:scale-[0.97]
                             "
                         >
-                            Go to My Services
+                            Go to Dashboard
                             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                         </Button>
                     </Link>

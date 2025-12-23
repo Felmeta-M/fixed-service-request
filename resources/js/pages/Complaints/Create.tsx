@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import MainLayout from '@/layouts/main-layout';
 import { complaintSchema, ComplaintFormValues, TroubleReasons } from '@/types/complaint';
 import { router, useForm, usePage } from '@inertiajs/react';
+import axios from 'axios';
 import { toast } from 'sonner';
 
 export function parseApiError(message: string): {
@@ -38,6 +39,7 @@ export function parseApiError(message: string): {
 export default function CreateComplaintPage() {
     const { auth } = usePage().props as any;
 
+    const { user } = auth;
     const {
         data,
         setData,
@@ -57,62 +59,136 @@ export default function CreateComplaintPage() {
 
     const Required = () => <span className="text-red-500 ml-1">*</span>;
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        clearErrors();
+    // const handleSubmit = async (e: React.FormEvent) => {
+    //     e.preventDefault();
+    //     clearErrors();
 
-        const validation = complaintSchema.safeParse(data);
-        console.log("🚀 ~ handleSubmit ~ validation:", validation)
-        if (!validation.success) {
-            validation.error.errors.forEach((err) => {
-                const field = err.path[0] as keyof ComplaintFormValues;
-                setError(field, err.message);
-            });
-            return;
-        }
+    //     const validation = complaintSchema.safeParse(data);
+    //     console.log("🚀 ~ handleSubmit ~ validation:", validation)
+    //     if (!validation.success) {
+    //         validation.error.errors.forEach((err) => {
+    //             const field = err.path[0] as keyof ComplaintFormValues;
+    //             setError(field, err.message);
+    //         });
+    //         return;
+    //     }
 
-        const toastId = toast.loading('Submitting complaint...');
+    //     const toastId = toast.loading('Submitting complaint...');
 
-        try {
-            const response = await fetch(
-                'https://localhost:3000/api/v1/tt/create',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(validation.data),
-                }
-            );
+    //     try {
+    //         const response = await fetch(
+    //             `${process.env.API_BASE_URL}/v1/tt/create}`,
+    //             {
+    //                 method: 'POST',
+    //                 headers: {
+    //                     'Content-Type': 'application/json',
+    //                 },
+    //                 body: JSON.stringify(validation.data),
+    //             }
+    //         );
 
-            const responseData = await response.json();
+    //         const responseData = await response.json();
 
-            if (responseData.success === false) {
-                const parsed = parseApiError(responseData.message);
+    //         if (responseData.success === false) {
+    //             const parsed = parseApiError(responseData.message);
 
-                toast.dismiss(toastId);
+    //             toast.dismiss(toastId);
 
-                if (parsed.type === 'field') {
-                    setError('mobile_no', parsed.text);
-                    toast.error('Please correct the highlighted field.');
-                    return;
-                }
+    //             if (parsed.type === 'field') {
+    //                 setError('mobile_no', parsed.text);
+    //                 toast.error('Please correct the highlighted field.');
+    //                 return;
+    //             }
 
-                toast.error(parsed.text);
+    //             toast.error(parsed.text);
+    //             return;
+    //         }
+
+    //         // ✅ Success
+    //         toast.dismiss(toastId);
+    //         toast.success('Complaint submitted successfully!');
+    //         reset();
+
+    //     } catch (err) {
+    //         toast.dismiss(toastId);
+    //         toast.error('Network error. Please try again.');
+    //         console.error('Submit error:', err);
+    //     }
+    // };
+
+
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearErrors();
+
+    const validation = complaintSchema.safeParse(data);
+    console.log('🚀 ~ handleSubmit ~ validation:', validation);
+
+    if (!validation.success) {
+        validation.error.errors.forEach((err) => {
+            const field = err.path[0] as keyof ComplaintFormValues;
+            setError(field, err.message);
+        });
+        return;
+    }
+
+    const toastId = toast.loading('Submitting complaint...');
+
+    try {
+        const response = await axios.post(
+            `${import.meta.env.VITE_API_BASE_URL}/v1/tt/create`,
+            validation.data,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${user.api_token}`, // ✅ Bearer token added
+                },
+                timeout: 15000, // optional safety timeout
+            }
+        );
+
+        const responseData = response.data;
+
+        // ❌ API-level failure (not HTTP failure)
+        if (responseData?.success === false) {
+            const parsed = parseApiError(responseData.message);
+
+            toast.dismiss(toastId);
+
+            if (parsed.type === 'field') {
+                setError('mobile_no', parsed.text);
+                toast.error('Please correct the highlighted field.');
                 return;
             }
 
-            // ✅ Success
-            toast.dismiss(toastId);
-            toast.success('Complaint submitted successfully!');
-            reset();
-
-        } catch (err) {
-            toast.dismiss(toastId);
-            toast.error('Network error. Please try again.');
-            console.error('Submit error:', err);
+            toast.error(parsed.text);
+            return;
         }
-    };
+
+        // ✅ Success
+        toast.dismiss(toastId);
+        toast.success('Complaint submitted successfully!');
+        reset();
+
+    } catch (error) {
+        toast.dismiss(toastId);
+
+        // Axios-specific error handling
+        if (axios.isAxiosError(error)) {
+            console.error('Axios error:', error.response?.data || error.message);
+
+            const apiMessage =
+                error.response?.data?.message ||
+                'Request failed. Please try again.';
+
+            toast.error(apiMessage);
+        } else {
+            console.error('Unexpected error:', error);
+            toast.error('Network error. Please try again.');
+        }
+    }
+};
+
 
     return (
         <MainLayout>

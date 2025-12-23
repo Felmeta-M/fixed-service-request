@@ -65,7 +65,7 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
 
         $customer = Customer::current();
 
-        $data['customer_code'] = $customer->code;
+        $data['customer_code'] = $customer?->code;
         //TODO: to be replaced by frontend data
         $data['telecom_region'] = 2046; //$data['telecom_region']
         $data['survey_address_info']['region_city'] = 1; //$data['survey_address_info']['region_city']

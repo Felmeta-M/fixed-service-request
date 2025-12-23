@@ -47,7 +47,7 @@ class ResourceService extends BaseApiService
             'radius'         => '200',
             'combo_flag'     => '0',
 
-            'cust_id'        => $customer->code,
+            'cust_id'        => $customer?->code,
             'cust_name'      => $customer->name,
             'cust_addr' => $customer->address_string,
 

@@ -7,10 +7,13 @@ use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Customer;
 use App\Services\ApiResponse;
 use App\Services\GetCombiningService;
+use App\Traits\InteractsWithSMSGateway;
 use Illuminate\Support\Facades\Log;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
+   use InteractsWithSMSGateway;
+
    public function __construct(protected readonly GetCombiningService $get_combining_service) {}
 
    protected function offeringId(): int
@@ -30,9 +33,15 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
    public function create(array $data)
    {
+      $customer = Customer::current();
+      $data['sms_no'] = substr($data['sms_no'], -9); // substr($customer?->phone_number, -9) ?? $data['sms_no']; //sms_no shall be send from frontend
+      $data['customer_code'] = $customer?->code ?? $data['customer_code'];
+      $data['name'] = $customer?->name ?? $data['name'];
+
       $xml = $this->buildXml($data);
       // Log::info($xml);
       $response = $this->executeRequest($xml);
+      // Log::info($response);
       return $this->parseResponse($data, $response);
    }
 
@@ -54,15 +63,10 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
    protected function buildXml(array $data): string
    {
-      $customer = Customer::current();
       $email = $this->generateEmail();
 
       $cfg = config('services.subscriber');
       $cfg['default_password'] = 'REDACTED_PASSWORD';
-
-      $data['customer_code'] = $customer->code;
-      $data['external_operid'] = $data['external_operid'] ?? 512;
-      $data['completed_date'] = now()->format('YmdHis');
 
       // Default/demo values (until frontend provides them)
       $data = array_merge($data,  [
@@ -74,7 +78,6 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          'house_no'     => '1234',
          'street_name'  => 'StreetName',
          'apartment'    => 'Apartment',
-         'sms_no'       => '12141231',
 
          'enterprise_name'   => 'tet',
          'credit_class'      => 'Excellent',
@@ -98,9 +101,6 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          'external_oper_id'  => '512',
          'installment_date'  => now()->format('YmdHis'),
       ]);
-
-      $data['customer_code'] = $customer->code;
-      $data['name'] =  $customer->name;
 
       return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -260,6 +260,19 @@ XML;
                   'status' => FFDServiceProvisionStatus::Subscribed->value,
                   'subscribed_at' => now(),
                ]);
+            Log::info($data);
+            // ✅ Send SMS to customer
+            if ($data['sms_no']) {
+               try {
+                  $name = explode(' ', $data['name'])[0];
+                  $message = "Dear {$name}, thank you for choosing Ethio telecom. We are pleased to inform you that your subscription has been successfully created. For support or to submit a TT/complaint, please visit https://fixedservices.ethiotelecom.et/services.";
+                  $this->sendSmsOnly($data['sms_no'], $message);
+               } catch (\Throwable $smsException) {
+                  Log::error('Failed to send subscription SMS', [
+                     'error'         => $smsException->getMessage(),
+                  ]);
+               }
+            }
 
             // $message = $retCode === '-999'
             //     ? 'Duplicate request – previous success reused'

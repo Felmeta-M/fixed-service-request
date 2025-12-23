@@ -273,7 +273,7 @@ XML;
         /**
          * ❗ Ensure customer is authenticated / resolved
          */
-        // if (!$customer || empty($customer->code)) {
+        // if (!$customer || empty($customer?->code)) {
         //     throw new RuntimeException('Customer context missing for TT creation.');
         // }
 
@@ -283,7 +283,7 @@ XML;
         $ticket = TroubleTicket::updateOrCreate(
             ['tt_serial_no' => $ttSerialNo],
             [
-                'customer_code'  => '828300808', // $customer->code,
+                'customer_code'  => '828300808', // $customer?->code,
                 'access_number'  => $payload['access_number'],
                 'contact_person' => $payload['contact_person'],
                 'mobile_no'      => $payload['mobile_no'],

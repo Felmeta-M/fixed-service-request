@@ -142,8 +142,9 @@ class TelebirrController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function serviceSubscription(string $customerSurveyOrderId): bool
+    public function serviceSubscription(string $customerSurveyOrderId)
     {
+        // $customerSurveyOrderId = $request->get('customerSurveyOrderId');
         $record = DB::table('survey_requests as sr')
             ->join('customers as c', 'c.code', '=', 'sr.customer_code')
             ->where('sr.customer_survey_order_id', $customerSurveyOrderId)
@@ -156,8 +157,9 @@ class TelebirrController extends Controller
             ])
             ->first();
 
+        // Log::info('record', ['record' => $record]);
         if (!$record) {
-            Log::warning('Survey order or customer not found', [
+            Log::warning('Survey order or customer not found test', [
                 'customer_survey_order_id' => $customerSurveyOrderId,
             ]);
             return false;
@@ -168,34 +170,20 @@ class TelebirrController extends Controller
             'customer_code'   => $record->customer_code,
             'name'   => trim($record->name),
             'main_offer_id' => $record->main_offer_id,
+            'sms_no' => $record->phone_number,
         ];
+
+        // Log::info('data', ['data' => $data]);
 
         try {
             // Call the third-party subscription service
-            $service = $this->factory->make($record->main_offer_id);
+            $service = $this->factory->make($data['main_offer_id']);
             $service->create($data);
-
-            // ✅ Send SMS to customer
-            if (!empty($record->phone_number)) {
-                try {
-                    $name = explode(" ", $record->name)[0];
-                    $phoneNumber = substr($record->phone_number, -9);
-                    $message = "Dear {$name}, your subscription has been successfully created!";
-                    $this->sendSmsOnly($phoneNumber, $message);
-                } catch (\Throwable $smsException) {
-                    Log::error('Failed to send subscription SMS', [
-                        'customer_code' => $record->customer_code,
-                        'sms_number'    => $record->phone_number,
-                        'error'         => $smsException->getMessage(),
-                    ]);
-                }
-            }
-
             return true;
         } catch (\Throwable $e) {
             Log::error('Service subscription failed', [
                 'survey_order_id' => $customerSurveyOrderId,
-                'main_offer_id'   => $record->main_offer_id,
+                'main_offer_id'   => $data['main_offer_id'],
                 'error'           => $e->getMessage(),
             ]);
             return false;

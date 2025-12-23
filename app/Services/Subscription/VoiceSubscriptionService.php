@@ -8,10 +8,13 @@ use App\Models\Customer;
 use App\Services\ApiResponse;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
+use App\Traits\InteractsWithSMSGateway;
 use Illuminate\Support\Facades\Log;
 
 class VoiceSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
+   use InteractsWithSMSGateway;
+
    protected ?string $serviceNumber = null;
 
    public function __construct(
@@ -36,6 +39,11 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
 
    public function create(array $data)
    {
+      $customer = Customer::current();
+      $data['sms_no'] = substr($data['sms_no'], -9); // substr($customer?->phone_number, -9) ?? $data['sms_no']; //sms_no shall be send from frontend
+      $data['customer_code'] = $customer?->code ?? $data['customer_code'];
+      $data['name'] = $customer?->name ?? $data['name'];
+
       $xml = $this->buildXml($data);
       // Log::info($xml);
       $response = $this->executeRequest($xml);
@@ -46,7 +54,6 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
    protected function buildXml(array $data): string
    {
       $cfg = config('services.subscriber');
-      $customer = Customer::current();
 
       // Override frontend data with customer defaults
       //TODO: remove hardcoded values
@@ -57,7 +64,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
          'wereda'     => 10,
          'kebele'     =>  'Kebele',
          'house_no'   =>  '1234',
-         'sms_no'     => '12141231',
+         'sms_no'       => '121412361',
 
          'enterprise_name'     => 'test',
          'credit_class'        => 'Excellent',
@@ -79,9 +86,6 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
          'installment_date'        => now()->format('YmdHis'),
       ]);
 
-
-      $data['customer_code'] = $customer->code;
-      $data['name'] =  $customer->name;
 
       $serviceNumber = SurveyRequest::query()
          ->where('customer_survey_order_id', $data['survey_order_id'])
@@ -230,6 +234,19 @@ XML;
             'status' => FFDServiceProvisionStatus::Subscribed->value,
             'subscribed_at' => now(),
          ]);
+
+      // ✅ Send SMS to customer
+      if ($data['sms_no']) {
+         try {
+            $name = explode(' ', $data['name'])[0];
+            $message = "Dear {$name}, thank you for choosing Ethio telecom. We are pleased to inform you that your subscription has been successfully created. For support or to submit a TT/complaint, please visit https://fixedservices.ethiotelecom.et/services.";
+            $this->sendSmsOnly($data['sms_no'], $message);
+         } catch (\Throwable $smsException) {
+            Log::error('Failed to send subscription SMS', [
+               'error'         => $smsException->getMessage(),
+            ]);
+         }
+      }
 
       return ApiResponse::success([
          'customer_busi_order_id' => $customerBusiOrderId,

@@ -100,5 +100,6 @@ Route::prefix('v1')->group(function () {
     Route::post('tt/query', [TTController::class, 'query']);
     Route::post('tt/detail', [TTController::class, 'detail']);
     Route::post('tt/confirm-feedback', [TTController::class, 'confirm']);
-    Route::get('subscriber-details', [GetCombiningController::class, 'show']);
+
+    Route::post('telebirr/subscribe/{customerSurveyOrderId}', [TelebirrController::class, 'serviceSubscription']);
 });

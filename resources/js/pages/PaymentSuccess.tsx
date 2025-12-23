@@ -50,12 +50,12 @@ export default function PaymentSuccess({
                 </div> */}
 
                 {/* Info Box */}
-                <div className="mt-6 rounded-lg bg-blue-50 p-4 flex gap-3 animate-fade-in-up">
+                {/* <div className="mt-6 rounded-lg bg-blue-50 p-4 flex gap-3 animate-fade-in-up"> */}
                     {/* <Sparkles className="h-5 w-5 text-blue-500 mt-0.5 animate-pulse" /> */}
-                    <p className="text-sm text-blue-700">
+                    {/* <p className="text-sm text-blue-700">
                         You can review your payment history and manage services from the dashboard at any time.
                     </p>
-                </div>
+                </div> */}
 
                 {/* Actions */}
                 <div className="mt-8 flex flex-col gap-3">

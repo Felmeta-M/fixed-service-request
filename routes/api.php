@@ -21,7 +21,7 @@ use App\Http\Controllers\Api\v1\SubsriptionController;
 use App\Http\Controllers\Api\v1\SurveyOrderController;
 use App\Http\Controllers\Api\v1\SurveyTypeController;
 use App\Http\Controllers\Api\v1\TelebirrController;
-use App\Http\Controllers\Api\v1\TTController;
+use App\Http\Controllers\Api\v1\TroubleTicketController;
 use App\Http\Middleware\AuthenticateServiceClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -92,14 +92,17 @@ Route::prefix('v1')->group(function () {
         Route::post('create-order', [TelebirrController::class, 'createOrder'])->name('create.order');
 
         Route::get('payments/show', [PaymentController::class, 'show']);
+
+
+        Route::get('trouble-tickets', [TroubleTicketController::class, 'index']);
+        Route::get('trouble-tickets/{tt_serial_no}', [TroubleTicketController::class, 'show']);
+        Route::post('tt/create', [TroubleTicketController::class, 'store']);
+        Route::post('tt/query', [TroubleTicketController::class, 'query']);
+        Route::post('tt/detail', [TroubleTicketController::class, 'detail']);
+        Route::post('tt/confirm-feedback', [TroubleTicketController::class, 'confirm']);
     });
 
-    Route::get('trouble-tickets', [TTController::class, 'index']);
-    Route::get('trouble-tickets/{tt_serial_no}', [TTController::class, 'show']);
-    Route::post('tt/create', [TTController::class, 'store']);
-    Route::post('tt/query', [TTController::class, 'query']);
-    Route::post('tt/detail', [TTController::class, 'detail']);
-    Route::post('tt/confirm-feedback', [TTController::class, 'confirm']);
 
-    Route::post('telebirr/subscribe/{customerSurveyOrderId}', [TelebirrController::class, 'serviceSubscription']);
+    // Refresh a specific ticket
+    Route::post('trouble-tickets/{tt_serial_no}/refresh', [TroubleTicketController::class, 'refresh']);
 });

@@ -17,17 +17,7 @@ class TroubleTicket extends Model
     /**
      * The attributes that are mass assignable.
      */
-    protected $fillable = [
-        'customer_code',
-        'access_number',
-        'contact_person',
-        'mobile_no',
-        'trouble_title',
-        'trouble_reason',
-        'tt_description',
-        'tt_serial_no',
-        'status',
-    ];
+    protected $guarded = [];
 
     /**
      * Default attribute values.
@@ -40,6 +30,7 @@ class TroubleTicket extends Model
      * Attribute casting.
      */
     protected $casts = [
+        'last_checked_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

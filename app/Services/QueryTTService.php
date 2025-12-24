@@ -24,7 +24,7 @@ class QueryTTService extends BaseApiService
 
     protected function buildRequestXml(array $data): string
     {
-        $requestor = $data['requestor'] ?? 1;
+        $requestor =  1;
         $accessNumber = $data['access_number'];
 
         return <<<XML

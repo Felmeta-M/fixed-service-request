@@ -127,7 +127,7 @@ class CreateTTService extends BaseApiService
 
         $defaults = [
             'requestor' => 1,
-            'title' => $subscriber->title ?? 'Mr.',
+            'title' => $subscriber?->title ?? 'Mr.',
             'first_name' => $subscriber['customer']['first_name'],
             'middle_name' => "",
             'last_name' => $subscriber['customer']['first_name'],

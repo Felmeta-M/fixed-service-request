@@ -6,8 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import MainLayout from '@/layouts/main-layout';
 import { complaintSchema, ComplaintFormValues, TroubleReasons } from '@/types/complaint';
 import { router, useForm, usePage } from '@inertiajs/react';
-import axios from 'axios';
 import { toast } from 'sonner';
+import { ttService } from '@/lib/ttService';
 
 export function parseApiError(message: string): {
     type: 'field' | 'business' | 'general';
@@ -135,23 +135,10 @@ const handleSubmit = async (e: React.FormEvent) => {
     const toastId = toast.loading('Submitting complaint...');
 
     try {
-        const response = await axios.post(
-            `${import.meta.env.VITE_API_BASE_URL}/v1/tt/create`,
-            validation.data,
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user.api_token}`, // ✅ Bearer token added
-                },
-                timeout: 15000, // optional safety timeout
-            }
-        );
+        const response = await ttService.createLocalTT(validation.data, user.api_token);
 
-        const responseData = response.data;
-
-        // ❌ API-level failure (not HTTP failure)
-        if (responseData?.success === false) {
-            const parsed = parseApiError(responseData.message);
+        if (response.success === false) {
+            const parsed = parseApiError(response.message);
 
             toast.dismiss(toastId);
 
@@ -170,21 +157,18 @@ const handleSubmit = async (e: React.FormEvent) => {
         toast.success('Complaint submitted successfully!');
         reset();
 
-    } catch (error) {
+    } catch (error: any) {
         toast.dismiss(toastId);
+        console.error('Submit error:', error);
 
-        // Axios-specific error handling
-        if (axios.isAxiosError(error)) {
-            console.error('Axios error:', error.response?.data || error.message);
+        const message = error.message || 'Network error. Please try again.';
+        const parsed = parseApiError(message);
 
-            const apiMessage =
-                error.response?.data?.message ||
-                'Request failed. Please try again.';
-
-            toast.error(apiMessage);
+        if (parsed.type === 'field') {
+            setError('mobile_no', parsed.text);
+            toast.error('Please correct the highlighted field.');
         } else {
-            console.error('Unexpected error:', error);
-            toast.error('Network error. Please try again.');
+            toast.error(parsed.text);
         }
     }
 };

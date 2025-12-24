@@ -94,9 +94,9 @@ export default function ComplaintsIndex() {
           total: response.data.total
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load user TTs:', error);
-      toast.error('Failed to load your tickets');
+      toast.error(error.message || 'Failed to load your tickets');
     } finally {
       setLoading(false);
     }
@@ -119,9 +119,9 @@ export default function ComplaintsIndex() {
       } else {
         toast.success(`Found ${results.length} trouble tickets`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Search error:', error);
-      toast.error('Failed to search trouble tickets');
+      toast.error(error.message || 'Failed to search trouble tickets');
       setTts([]);
     } finally {
       setLoading(false);
@@ -150,9 +150,9 @@ export default function ComplaintsIndex() {
           });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Detail fetch error:', error);
-      toast.error('Failed to load details');
+      toast.error(error.message || 'Failed to load details');
     } finally {
       setDetailLoading(false);
     }

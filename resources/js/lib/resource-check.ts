@@ -100,9 +100,13 @@ export const useResourceChecker = () => {
             };
         } catch (error) {
             console.error('Resource check failed:', error);
+            let message = 'Failed to check resource availability. Try again.';
+            if (axios.isAxiosError(error) && error.response?.data?.message) {
+                message = error.response.data.message;
+            }
             return {
                 available: false,
-                message: 'Failed to check resource availability. Try again.',
+                message: message,
             };
         }
     };

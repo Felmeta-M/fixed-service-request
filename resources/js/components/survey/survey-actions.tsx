@@ -221,7 +221,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             wereda: addressInfo.wereda,
             kebele: addressInfo.kebele,
             house_no: addressInfo.house_no,
-            sms_no: contactInfo.mobile,
+            sms_no: contactInfo.mobile,// to be confirmed
             external_operid: survey.external_operid || '512',
             completed_date: new Date()
                 .toISOString()

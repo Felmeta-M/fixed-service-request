@@ -1,5 +1,4 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -130,7 +129,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                 {
                     enableHighAccuracy: true,
                     timeout: 15000,
-                    maximumAge: 0, 
+                    maximumAge: 0,
                 },
             );
         });
@@ -258,7 +257,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
     const handleManualCoordinateSubmit = async () => {
         const lat = parseCoordinate(manualLat);
         const lng = parseCoordinate(manualLng);
-        setShowUpdateBtn(false); 
+        setShowUpdateBtn(false);
 
         if (!lat || !lng) {
             setLocationError('Please enter valid coordinates');
@@ -280,7 +279,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
     };
 
     const handleAddressSearch = async (address: string) => {
-         console.log('🔍 Search triggered for:', address);
+        console.log('🔍 Search triggered for:', address);
         setLocationLoading(true);
         setLocationError('');
 
@@ -448,10 +447,9 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                 <Alert variant="destructive">
                     <AlertDescription>
                         <div className="flex items-center justify-between">
-                            <span className="font-semibold">Resource not available</span>
-                            <Badge variant="outline" className="ml-2 text-orange-600">
-                                Service Limited
-                            </Badge>
+                            <span className="font-semibold">
+                                Unable to detect the resource at your location. Please visit our nearest service center for assistance.
+                            </span>
                         </div>
                     </AlertDescription>
                 </Alert>

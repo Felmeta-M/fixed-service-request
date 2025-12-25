@@ -6,7 +6,9 @@ import {
   LocalTTResponse,
   SingleTTResponse,
   LocalTTQueryParams,
-  DisplayTT
+  DisplayTT,
+  ConfirmFeedbackRequest,
+  ConfirmFeedbackResponse
 } from '@/types/tt';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
@@ -230,6 +232,27 @@ export const ttService = {
     } catch (error) {
       console.error('Get user TTs error:', error);
       return [];
+    }
+  },
+
+  async confirmFeedback(data: ConfirmFeedbackRequest, token?: string): Promise<ConfirmFeedbackResponse> {
+    try {
+      const response = await fetch(`${API_BASE}/tt/confirm-feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+
+      return await handleResponse<ConfirmFeedbackResponse>(response);
+    } catch (error) {
+      console.error('Confirm Feedback Error:', error);
+      throw error;
     }
   },
 };

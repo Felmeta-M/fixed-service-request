@@ -5,17 +5,25 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { TTDetail } from '@/types/tt';
-import { Calendar, MapPin, Phone, User, FileText, Clock, AlertCircle } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { TTDetail, TTActivity } from '@/types/tt';
+import { Calendar, MapPin, Phone, User, FileText, Clock, AlertCircle, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
+import { ttService } from '@/lib/ttService';
+import { toast } from 'sonner';
+import { usePage } from '@inertiajs/react';
 
 interface TTDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   detail: TTDetail | null;
   loading: boolean;
+  source?: 'local' | 'external';
+  onConfirmSuccess?: () => void;
 }
 
 export function TTDetailDialog({
@@ -23,15 +31,77 @@ export function TTDetailDialog({
   onOpenChange,
   detail,
   loading,
+  source = 'external',
+  onConfirmSuccess,
 }: TTDetailDialogProps) {
+  const { auth } = usePage().props as any;
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [feedbackDesc, setFeedbackDesc] = useState('');
+  const [confirming, setConfirming] = useState(false);
+  const [resultCode, setResultCode] = useState<'0' | '1'>('0');
+
   const formatDate = (dateString: string) => {
-    if (!dateString || dateString === '?') return 'N/A';
+    if (!dateString || dateString === '?' || dateString === '') return 'N/A';
     try {
+      // Handle different date formats
+      if (dateString.length === 14 && /^\d+$/.test(dateString)) {
+        // Format: YYYYMMDDHHmmss
+        const year = dateString.substring(0, 4);
+        const month = dateString.substring(4, 6);
+        const day = dateString.substring(6, 8);
+        const hour = dateString.substring(8, 10);
+        const minute = dateString.substring(10, 12);
+        const second = dateString.substring(12, 14);
+        return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`).toLocaleString();
+      }
       return new Date(dateString).toLocaleString();
     } catch {
       return dateString;
     }
   };
+
+  const handleConfirmFeedback = async () => {
+    if (!detail?.ttNumber) {
+      toast.error('TT number is required');
+      return;
+    }
+
+    if (!feedbackDesc.trim()) {
+      toast.error('Please provide feedback description');
+      return;
+    }
+
+    setConfirming(true);
+    try {
+      const response = await ttService.confirmFeedback(
+        {
+          tt_no: detail.ttNumber,
+          result_code: resultCode,
+          desc: feedbackDesc,
+        },
+        auth?.user?.api_token
+      );
+
+      if (response.success && response.data.success) {
+        toast.success('Feedback confirmed successfully');
+        setShowFeedbackForm(false);
+        setFeedbackDesc('');
+        onConfirmSuccess?.();
+        // Optionally close the dialog after successful confirmation
+        // onOpenChange(false);
+      } else {
+        toast.error(response.data.desc || 'Failed to confirm feedback');
+      }
+    } catch (error: any) {
+      console.error('Confirm feedback error:', error);
+      toast.error(error.message || 'Failed to confirm feedback');
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  // Only show feedback form for external tickets
+  const canConfirmFeedback = source === 'external' && detail?.result_code === '0';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -39,7 +109,7 @@ export function TTDetailDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            TT Details: {detail?.ttNumber}
+            TT Details: {detail?.ttNumber || 'Loading...'}
           </DialogTitle>
           <DialogDescription>
             Complete information about the trouble ticket
@@ -49,27 +119,102 @@ export function TTDetailDialog({
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
               <p className="text-muted-foreground">Loading details...</p>
             </div>
           </div>
         ) : detail ? (
-          <ScrollArea className="h-[calc(90vh-120px)] pr-4">
+          <ScrollArea className="h-[calc(90vh-200px)] pr-4">
             <div className="space-y-6">
               {/* Header with Status */}
               <div className="rounded-lg border p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold">{detail.troubleTitle}</h3>
+                    <h3 className="text-lg font-semibold">{detail.troubleTitle || 'N/A'}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {detail.troubleReason}
+                      {detail.troubleReason || 'N/A'}
                     </p>
                   </div>
-                  <Badge variant={detail.result_code === '0' ? 'default' : 'destructive'}>
-                    {detail.result_code === '0' ? 'Active' : 'Failed'}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={detail.result_code === '0' ? 'default' : 'destructive'}>
+                      {detail.result_code === '0' ? 'Active' : 'Failed'}
+                    </Badge>
+                    {canConfirmFeedback && !showFeedbackForm && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowFeedbackForm(true)}
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Confirm Feedback
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* Feedback Confirmation Form */}
+              {showFeedbackForm && (
+                <div className="rounded-lg border p-4 bg-blue-50 dark:bg-blue-950">
+                  <h4 className="font-medium mb-3">Confirm Feedback</h4>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <Button
+                        variant={resultCode === '0' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setResultCode('0')}
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Resolved
+                      </Button>
+                      <Button
+                        variant={resultCode === '1' ? 'destructive' : 'outline'}
+                        size="sm"
+                        onClick={() => setResultCode('1')}
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Not Resolved
+                      </Button>
+                    </div>
+                    <Textarea
+                      placeholder="Enter your feedback description..."
+                      value={feedbackDesc}
+                      onChange={(e) => setFeedbackDesc(e.target.value)}
+                      rows={3}
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowFeedbackForm(false);
+                          setFeedbackDesc('');
+                        }}
+                        disabled={confirming}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleConfirmFeedback}
+                        disabled={confirming || !feedbackDesc.trim()}
+                      >
+                        {confirming ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Confirming...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            Confirm
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Customer Information */}
@@ -82,16 +227,20 @@ export function TTDetailDialog({
                     <div>
                       <label className="text-sm text-muted-foreground">Name</label>
                       <p className="font-medium">
-                        {detail.title} {detail.firstName} {detail.middleName} {detail.lastName}
+                        {[detail.title, detail.firstName, detail.middleName, detail.lastName]
+                          .filter(Boolean)
+                          .join(' ') || 'N/A'}
                       </p>
                     </div>
                     <div>
                       <label className="text-sm text-muted-foreground">Customer Type</label>
-                      <p className="font-medium">{detail.customerType}</p>
+                      <p className="font-medium">{detail.customerType || 'N/A'}</p>
                     </div>
                     <div>
                       <label className="text-sm text-muted-foreground">Category</label>
-                      <p className="font-medium">{detail.customerCategory} / {detail.custSubCategory}</p>
+                      <p className="font-medium">
+                        {detail.customerCategory || 'N/A'} / {detail.custSubCategory || 'N/A'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -105,15 +254,15 @@ export function TTDetailDialog({
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm text-muted-foreground">Contact Person</label>
-                      <p className="font-medium">{detail.contactPerson}</p>
+                      <p className="font-medium">{detail.contactPerson || 'N/A'}</p>
                     </div>
                     <div>
                       <label className="text-sm text-muted-foreground">Mobile</label>
-                      <p className="font-medium">{detail.mobileNo}</p>
+                      <p className="font-medium">{detail.mobileNo || 'N/A'}</p>
                     </div>
                     <div>
                       <label className="text-sm text-muted-foreground">Email</label>
-                      <p className="font-medium">{detail.email !== '?' ? detail.email : 'N/A'}</p>
+                      <p className="font-medium">{detail.email && detail.email !== '?' ? detail.email : 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -127,15 +276,15 @@ export function TTDetailDialog({
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm text-muted-foreground">Access Number</label>
-                      <p className="font-medium">{detail.accessNumber}</p>
+                      <p className="font-medium">{detail.accessNumber || 'N/A'}</p>
                     </div>
                     <div>
                       <label className="text-sm text-muted-foreground">Account Number</label>
-                      <p className="font-medium">{detail.acctNumber}</p>
+                      <p className="font-medium">{detail.acctNumber || 'N/A'}</p>
                     </div>
                     <div>
                       <label className="text-sm text-muted-foreground">Subscriber ID</label>
-                      <p className="font-medium">{detail.subsID}</p>
+                      <p className="font-medium">{detail.subsID || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -149,16 +298,20 @@ export function TTDetailDialog({
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm text-muted-foreground">Region/Zone</label>
-                      <p className="font-medium">{detail.adminRegion} / {detail.zone}</p>
+                      <p className="font-medium">
+                        {detail.adminRegion || 'N/A'} / {detail.zone || 'N/A'}
+                      </p>
                     </div>
                     <div>
                       <label className="text-sm text-muted-foreground">Woreda/Kebele</label>
-                      <p className="font-medium">{detail.wereda} / {detail.kebele}</p>
+                      <p className="font-medium">
+                        {detail.wereda || 'N/A'} / {detail.kebele || 'N/A'}
+                      </p>
                     </div>
                     <div>
                       <label className="text-sm text-muted-foreground">Address</label>
                       <p className="font-medium">
-                        {detail.houseNo} {detail.street}, {detail.city}
+                        {[detail.houseNo, detail.street, detail.city].filter(Boolean).join(', ') || 'N/A'}
                       </p>
                     </div>
                   </div>
@@ -195,31 +348,56 @@ export function TTDetailDialog({
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm text-muted-foreground">SMS Notification</label>
-                      <p className="font-medium">{detail.sendSMS}</p>
+                      <p className="font-medium">{detail.sendSMS || 'N/A'}</p>
                     </div>
                     <div>
                       <label className="text-sm text-muted-foreground">Description</label>
-                      <p className="font-medium">{detail.ttDescription}</p>
+                      <p className="font-medium">{detail.ttDescription || 'N/A'}</p>
                     </div>
                     <div>
                       <label className="text-sm text-muted-foreground">Remark</label>
-                      <p className="font-medium">{detail.Remark !== '?' ? detail.Remark : 'N/A'}</p>
+                      <p className="font-medium">{detail.Remark && detail.Remark !== '?' ? detail.Remark : 'N/A'}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Activities Section */}
-              {detail.activities && detail.activities.length > 0 && (
+              {detail.activities && Array.isArray(detail.activities) && detail.activities.length > 0 && (
                 <div className="space-y-4">
-                  <h4 className="font-medium">Activities</h4>
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Activity History
+                  </h4>
                   <div className="space-y-3">
-                    {detail.activities.map((activity, index) => (
+                    {detail.activities.map((activity: TTActivity, index: number) => (
                       <div key={index} className="border-l-2 border-primary pl-4 py-2">
-                        <p className="font-medium">{activity.action}</p>
-                        <p className="text-sm text-muted-foreground">
-                          By {activity.handler} at {formatDate(activity.timestamp)}
-                        </p>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="font-medium">{activity.activity_name || 'N/A'}</p>
+                            {activity.remarks && (
+                              <p className="text-sm text-muted-foreground mt-1">{activity.remarks}</p>
+                            )}
+                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                              {activity.handler && (
+                                <span>Handler: {activity.handler}</span>
+                              )}
+                              {activity.tt_status && (
+                                <Badge variant="outline" className="text-xs">
+                                  {activity.tt_status}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          {activity.in_time && activity.in_time !== '?' && (
+                            <span>In: {formatDate(activity.in_time)}</span>
+                          )}
+                          {activity.out_time && activity.out_time !== '?' && (
+                            <span>Out: {formatDate(activity.out_time)}</span>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -232,6 +410,12 @@ export function TTDetailDialog({
             No details available
           </div>
         )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

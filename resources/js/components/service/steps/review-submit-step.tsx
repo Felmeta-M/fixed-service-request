@@ -192,7 +192,11 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                             <div>
                                 <span className="text-sm text-gray-600">Device</span>
                                 <p className="font-semibold">
-                                    {formData.withDevice ? "With Device" : "Without Device"}
+                                    {formData.withDevice === undefined 
+                                        ? "Not selected" 
+                                        : formData.withDevice 
+                                            ? "With Device" 
+                                            : "Without Device"}
                                 </p>
                             </div>
 

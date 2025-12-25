@@ -55,7 +55,16 @@ export interface TTDetail {
   attachment: string;
   result_code: string;
   desc: string;
-  activities: any[];
+  activities: TTActivity[];
+}
+
+export interface TTActivity {
+  activity_name: string;
+  tt_status: string;
+  out_time: string;
+  in_time: string;
+  handler: string;
+  remarks: string;
 }
 
 // Local Database Interfaces
@@ -140,6 +149,22 @@ export interface LocalTTQueryParams {
   status?: string;
   page?: number;
   per_page?: number;
+}
+
+export interface ConfirmFeedbackRequest {
+  tt_no: string;
+  result_code: '0' | '1'; // 0 = success/closed, 1 = failed
+  desc: string;
+}
+
+export interface ConfirmFeedbackResponse {
+  success: boolean;
+  data: {
+    success: boolean;
+    requestor?: string;
+    result_code: string;
+    desc: string;
+  };
 }
 
 // Combined interface for display

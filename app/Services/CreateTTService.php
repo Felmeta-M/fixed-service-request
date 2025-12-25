@@ -283,7 +283,7 @@ XML;
         $ticket = TroubleTicket::updateOrCreate(
             ['tt_serial_no' => $ttSerialNo],
             [
-                'customer_code'  => '828300808', // $customer?->code,
+                'customer_code'  => $customer?->code ?? '828300808',
                 'access_number'  => $payload['access_number'],
                 'contact_person' => $payload['contact_person'],
                 'mobile_no'      => $payload['mobile_no'],

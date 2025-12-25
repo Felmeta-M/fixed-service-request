@@ -47,20 +47,20 @@ class TroubleTicketController extends Controller
             $tickets = $ticketsQuery->latest()->paginate(10);
         
             // Refresh each ticket if needed (throttle inside refresh)
-            foreach ($tickets as $ticket) {
-                try {
-                    $this->refreshTicket($ticket);
-                } catch (\Throwable $e) {
-                    // Log refresh error but continue processing remaining tickets
-                    Log::warning('Failed to refresh ticket in index', [
-                        'tt_serial_no' => $ticket->tt_serial_no ?? null,
-                        'access_number' => $ticket->access_number ?? null,
-                        'error' => $e->getMessage(),
-                        'exception' => $e,
-                    ]);
-                    // Continue processing other tickets
-                }
-            }
+            // foreach ($tickets as $ticket) {
+            //     try {
+            //         $this->refreshTicket($ticket);
+            //     } catch (\Throwable $e) {
+            //         // Log refresh error but continue processing remaining tickets
+            //         Log::warning('Failed to refresh ticket in index', [
+            //             'tt_serial_no' => $ticket->tt_serial_no ?? null,
+            //             'access_number' => $ticket->access_number ?? null,
+            //             'error' => $e->getMessage(),
+            //             'exception' => $e,
+            //         ]);
+            //         // Continue processing other tickets
+            //     }
+            // }
 
             return response()->json([
                 'success' => true,

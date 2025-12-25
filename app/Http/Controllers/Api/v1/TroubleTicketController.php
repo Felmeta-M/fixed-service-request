@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers\Api\v1;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\CreateTTRequest;
-use App\Http\Requests\QueryTTRequest;
-use App\Http\Requests\QueryTTDetailRequest;
-use App\Http\Requests\ConfirmFeedbackRequest;
+use RuntimeException;
+use App\Enums\TicketStatus;
+use Illuminate\Http\Request;
 use App\Models\TroubleTicket;
-use App\Services\CreateTTService;
 use App\Services\QueryTTService;
+use App\Services\CreateTTService;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\QueryTTRequest;
+use App\Http\Requests\CreateTTRequest;
 use App\Services\QueryTTDetailService;
 use App\Services\ConfirmFeedbackService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use RuntimeException;
+use App\Http\Requests\QueryTTDetailRequest;
+use App\Http\Requests\ConfirmFeedbackRequest;
 
 class TroubleTicketController extends Controller
 {
@@ -29,38 +29,41 @@ class TroubleTicketController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-    
+
         try {
             // Fetch tickets for this customer
             $ticketsQuery = TroubleTicket::query()
                 ->where('customer_code', $user->customer_code);
-        
+
             if ($request->filled('access_number')) {
                 $ticketsQuery->where('access_number', $request->access_number);
             }
-        
+
             if ($request->filled('status')) {
                 $ticketsQuery->where('status', $request->status);
             }
-        
+
             // Get paginated tickets
             $tickets = $ticketsQuery->latest()->paginate(10);
-        
+
             // Refresh each ticket if needed (throttle inside refresh)
-            // foreach ($tickets as $ticket) {
-            //     try {
-            //         $this->refreshTicket($ticket);
-            //     } catch (\Throwable $e) {
-            //         // Log refresh error but continue processing remaining tickets
-            //         Log::warning('Failed to refresh ticket in index', [
-            //             'tt_serial_no' => $ticket->tt_serial_no ?? null,
-            //             'access_number' => $ticket->access_number ?? null,
-            //             'error' => $e->getMessage(),
-            //             'exception' => $e,
-            //         ]);
-            //         // Continue processing other tickets
-            //     }
-            // }
+            foreach ($tickets as $ticket) {
+                try {
+                    if (! in_array($ticket->status, TicketStatus::active(), true)) {
+                        continue;
+                    }
+
+                    $this->refreshTicket($ticket);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to refresh ticket in index', [
+                        'tt_serial_no' => $ticket->tt_serial_no ?? null,
+                        'access_number' => $ticket->access_number ?? null,
+                        'error' => $e->getMessage(),
+                        'exception' => $e,
+                    ]);
+                }
+            }
+
 
             return response()->json([
                 'success' => true,
@@ -81,7 +84,7 @@ class TroubleTicketController extends Controller
             ]);
         }
     }
-    
+
 
     protected function refreshTicket(TroubleTicket $ticket)
     {
@@ -89,7 +92,7 @@ class TroubleTicketController extends Controller
         if ($ticket->last_checked_at && $ticket->last_checked_at->diffInMinutes(now()) < 5) {
             return;
         }
-    
+
         try {
             // Call third-party TT service
             $response = $this->queryTTService->queryTT([
@@ -118,7 +121,7 @@ class TroubleTicketController extends Controller
         try {
             $payload = $response->getData(true);
             // Log::info('TT raw response', $payload);
-        
+
             // Validate response structure before accessing nested data
             if (!is_array($payload) || !isset($payload['data'])) {
                 Log::warning('Invalid response structure in refreshTicket', [
@@ -128,15 +131,15 @@ class TroubleTicketController extends Controller
                 ]);
                 return;
             }
-        
+
             $data = $payload['data'] ?? null;
-        
+
             if (empty($data['success']) || empty($data['tt_list'][0])) {
                 return;
             }
-        
+
             $tt = $data['tt_list'][0];
-            
+
             // Validate tt structure before accessing tt_status
             if (!is_array($tt) || !isset($tt['tt_status'])) {
                 Log::warning('Invalid tt structure in refreshTicket response', [
@@ -146,9 +149,9 @@ class TroubleTicketController extends Controller
                 ]);
                 return;
             }
-        
+
             $newStatus = strtolower($tt['tt_status']);
-        
+
             // Update only if status changed
             if ($ticket->status !== $newStatus) {
                 try {
@@ -167,7 +170,7 @@ class TroubleTicketController extends Controller
                     return;
                 }
             }
-        
+
             // Update last_checked_at timestamp
             try {
                 $ticket->update(['last_checked_at' => now()]);
@@ -191,7 +194,7 @@ class TroubleTicketController extends Controller
             return;
         }
     }
-    
+
 
     /**
      * Show single ticket by TT number

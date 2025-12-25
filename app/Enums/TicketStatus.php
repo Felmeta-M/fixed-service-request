@@ -1,18 +1,16 @@
-<?php 
+<?php
 
+namespace App\Enums;
 
 enum TicketStatus: string
 {
-    case PENDING = 'PENDING';
-    case IN_PROGRESS = 'IN_PROGRESS';
-    case RESOLVED = 'RESOLVED';
-    case CLOSED = 'CLOSED';
+    case WAITING_FOR_CHECK_IN = 'waiting for check-in';
+    case CANCELLED = 'cancelled';
 
     public static function active(): array
     {
         return [
-            self::PENDING->value,
-            self::IN_PROGRESS->value,
+            self::WAITING_FOR_CHECK_IN->value,
         ];
     }
 }

@@ -95,7 +95,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          'external_sequence'   => uniqid(),
          'network_type'        => '4',
          'cpe_type'            => '2701DTU',
-         'cpe_serial'          => '1',
+         'cpe_serial'          => '2',
          'sub_type'            => '1',
          'sub_language'        => '2002',
          'offering_id'         => '1457567289',
@@ -220,6 +220,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                            <com:PropertyType>1</com:PropertyType>
                            <com:Value>{$data['cpe_serial']}</com:Value>
                         </com:InstanceProperty>
+
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
 

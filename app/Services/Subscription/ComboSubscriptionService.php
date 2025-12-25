@@ -2,62 +2,101 @@
 
 namespace App\Services\Subscription;
 
+use App\Models\Customer;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
-class ComboSubscriptionService
+class ComboSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
-    public function build(array $data): string
-    {
-        $cfg = config('services.subscriber');
+   protected function offeringId(): int
+   {
+      return 1457567289; // FBB OR DATA
+   }
 
-        $default = [
-            'channel_id'            => 35,
-            'technical_channel_id'  => 53,
-            'tenant_id'             => 101,
-            'access_user'           => 'ecaf',
-            'access_pwd'            => 'REDACTED_PASSWORD',
+   protected function businessCode(): string
+   {
+      return '';
+   }
 
-            'survey_order_id'       => '20000455487924',
-            'customer_code'         => '828285101',
-            'customer_name'         => 'aaa',
-            'secret_answer'         => 'REDACTED_PASSWORD=',
+   protected function networkType(): int
+   {
+      return 1; // matches actual XML
+   }
 
-            'region'                => 3,
-            'city'                  => 1,
-            'zone'                  => 1,
-            'wereda'                => 10,
-            'kebele'                => 'Kebele',
-            'house_no'              => '1234',
-            'street_name'           => 'yuelu',
-            'apartment'             => 'Apartment',
+   public function create(array $data)
+   {
+      if (Auth::check()) {
+         $customer = Customer::current();
+         $data['sms_no'] = substr($customer?->phone_number, -9);
+         $data['customer_code'] = $customer?->code;
+         $data['name'] = $customer?->name;
+      } else {
+         $data['sms_no'] = substr($data['sms_no'], -9);
+         $data['customer_code'] =  $data['customer_code'];
+         $data['name'] =  $data['name'];
+      }
 
-            'email'                 => 'ok@ok.com',
-            'mobile_no'             => '068485484',
+      $xml = $this->buildXml($data);
+      // Log::info($xml);
+      $response = $this->executeRequest($xml);
+      // Log::info($response);
+      return $this->parseResponse($data, $response);
+   }
 
-            'enterprise_name'       => 'feng',
+   public function buildXml(array $data): string
+   {
+      $cfg = config('services.subscriber');
+      $email = $this->generateEmail();
 
-            'external_sequence'     => 'EXT' . now()->format('YmdHis'),
-            'group_offering_id'     => '180427974', //offer_id
+      $default = [
+         'channel_id'            => 35,
+         'technical_channel_id'  => 53,
+         'tenant_id'             => 101,
+         'access_user'           => 'ecaf',
+         'access_pwd'            => 'REDACTED_PASSWORD',
 
-            'service_number'        => '123789896',
-            'voice_offering_id'     => '1207609454',
+         'survey_order_id'       => '20000455487924',
+         'customer_code'         => '828285101',
+         'customer_name'         => 'aaa',
+         'secret_answer'         => 'REDACTED_PASSWORD=',
 
-            'data_offering_id'      => '1457567289',
-            'cpe_type'              => '2701DTU',
-            'cpe_serial'            => '2',
-            'internet_account'      => 'ghhtuuy@qq.com',
-            'internet_password'     => 'REDACTED_PASSWORD',
+         'region'                => 3,
+         'city'                  => 1,
+         'zone'                  => 1,
+         'wereda'                => 10,
+         'kebele'                => 'Kebele',
+         'house_no'              => '1234',
+         'street_name'           => 'yuelu',
+         'apartment'             => 'Apartment',
 
-            'external_oper_id'      => '9527',
-            'external_oper_name'    => 'helloworld',
-            'installment_date'      => '20251223000000',
-        ];
+         'email'                 => 'ok@ok.com',
+         'mobile_no'             => '068485484',
 
-        $data = array_merge($data, $default);
+         'enterprise_name'       => 'feng',
+
+         'external_sequence'     => 'EXT' . now()->format('YmdHis'),
+         'group_offering_id'     => '180427974', // group offer
+
+         'service_number'        => '123789896', // query available number by region mapping
+         'voice_offering_id'     => '1207609454', //FL
+
+         'data_offering_id'      => '1457567289',
+
+         'cpe_type'              => '2701DTU',
+         'cpe_serial'            => '2',
+         'internet_account'      => 'ghhtuuy@qq.com',
+         'internet_password'     => 'REDACTED_PASSWORD',
+
+         'external_oper_id'      => '9527',
+         'external_oper_name'    => 'helloworld',
+         'installment_date'      => '20251223000000',
+      ];
+
+      $data = array_merge($data, $default);
 
 
-        return <<<XML
+      return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                   xmlns:ser="http://oss.huawei.com/webservice/bss/services"
                   xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
@@ -67,9 +106,9 @@ class ComboSubscriptionService
 
          <ser:RequestHeader>
             <com:Version>1</com:Version>
-            <com:TransactionId>{$this->txId()}</com:TransactionId>
+            <com:TransactionId>{$this->transactionId()}</com:TransactionId>
             <com:SessionId>1</com:SessionId>
-            <com:ProcessTime>{$this->now()}</com:ProcessTime>
+    <com:ProcessTime>{$this->processTime()}</com:ProcessTime>
             <com:ContactId>1</com:ContactId>
             <com:Language>2002</com:Language>
             <com:ChannelId>{$cfg['channel_id']}</com:ChannelId>
@@ -234,6 +273,7 @@ class ComboSubscriptionService
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
                   <com:SLAPriority>0</com:SLAPriority>
+                  
                   <com:InstanceProperty>
                      <com:PropertyCode>50135</com:PropertyCode>
                      <com:PropertyType>1</com:PropertyType>
@@ -244,7 +284,8 @@ class ComboSubscriptionService
                      <com:PropertyType>1</com:PropertyType>
                      <com:Value>{$data['cpe_serial']}</com:Value>
                   </com:InstanceProperty>
-                  <com:InternetAccount>{$data['internet_account']}</com:InternetAccount>
+
+                  <com:InternetAccount>{$email}</com:InternetAccount>
                   <com:InternetPassword>{$data['internet_password']}</com:InternetPassword>
                   <com:CallCenterAccess>980,894</com:CallCenterAccess>
                   <com:GreenFlag>1</com:GreenFlag>
@@ -260,15 +301,7 @@ class ComboSubscriptionService
    </soapenv:Body>
 </soapenv:Envelope>
 XML;
-    }
+   }
 
-    protected function txId(): string
-    {
-        return Str::uuid()->toString();
-    }
-
-    protected function now(): string
-    {
-        return Carbon::now()->format('YmdHis');
-    }
+   protected function parseResponse(array $data, string $xml) {}
 }

@@ -6,8 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import MainLayout from '@/layouts/main-layout';
 import { complaintSchema, ComplaintFormValues, TroubleReasons } from '@/types/complaint';
 import { router, useForm, usePage } from '@inertiajs/react';
-import axios from 'axios';
 import { toast } from 'sonner';
+import { ttService } from '@/lib/ttService';
 
 export function parseApiError(message: string): {
     type: 'field' | 'business' | 'general';

@@ -5,6 +5,7 @@ import { useResourceChecker } from '@/lib/resource-check';
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, ChevronRight, FileText, Loader2, MoveLeftIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { CustomerCreationStep } from './steps/customer-creation-step';
 import { LocationSetupStep } from './steps/location-setup-step';
 import { ReviewSubmitStep } from './steps/review-submit-step';
@@ -130,6 +131,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
         // Check resource availability for location step
         setCheckingResource(true);
+        const toastId = toast.loading('Checking resource availability...');
 
         try {
             const result = await checkResourceAvailability(
@@ -148,12 +150,15 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             });
 
             if (result.available) {
+                toast.success(result.message || 'Resource available!', { id: toastId });
                 nextStep();
             } else {
+                toast.error(result.message || 'Resource check failed', { id: toastId });
                 // No UI surface here; Location step can use `formData.resourceMessage` if needed.
             }
         } catch (error) {
             console.error('Resource check error:', error);
+            toast.error('An unexpected error occurred during resource check.', { id: toastId });
             updateFormData({
                 resourceAvailable: false,
                 resourceMessage: 'Resource check failed',

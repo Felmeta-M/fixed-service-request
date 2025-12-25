@@ -11,6 +11,29 @@ import {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
+export class ApiError extends Error {
+  constructor(public message: string, public status: number, public data?: any) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+async function handleResponse<T>(response: Response): Promise<T> {
+  if (!response.ok) {
+    let message = `Request failed with status ${response.status}`;
+    let data = null;
+    try {
+      const json = await response.json();
+      message = json.message || message;
+      data = json;
+    } catch (e) {
+      // ignore if not json
+    }
+    throw new ApiError(message, response.status, data);
+  }
+  return await response.json();
+}
+
 export const ttService = {
   async queryExternalTTs(accessNumber: string, token?: string): Promise<TTQueryResponse> {
     try {
@@ -23,11 +46,7 @@ export const ttService = {
         body: JSON.stringify({ access_number: accessNumber } as TTQueryRequest),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
+      return await handleResponse<TTQueryResponse>(response);
     } catch (error) {
       console.error('External TT Query Error:', error);
       throw error;
@@ -45,11 +64,7 @@ export const ttService = {
         body: JSON.stringify({ search: ttNumber } as TTDetailRequest),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
+      return await handleResponse<TTDetailResponse>(response);
     } catch (error) {
       console.error('TT Detail Error:', error);
       throw error;
@@ -77,11 +92,7 @@ export const ttService = {
         credentials: 'include',
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
+      return await handleResponse<LocalTTResponse>(response);
     } catch (error) {
       console.error('Local TT Fetch Error:', error);
       throw error;
@@ -101,11 +112,7 @@ export const ttService = {
         credentials: 'include',
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
+      return await handleResponse<SingleTTResponse>(response);
     } catch (error) {
       console.error('Local TT Detail Error:', error);
       throw error;
@@ -126,11 +133,7 @@ export const ttService = {
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
+      return await handleResponse<any>(response);
     } catch (error) {
       console.error('Create TT Error:', error);
       throw error;

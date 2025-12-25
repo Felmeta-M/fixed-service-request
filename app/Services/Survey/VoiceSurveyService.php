@@ -28,7 +28,9 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
 
         $houseNo = $data['survey_address_info']['house_no'] ?? $customer->house_no;
 
-        $this->serviceNumber = $this->queryAvailableNumberService->getAvailableNumberServices();
+        $depId = "1766044689199549668";
+        // fetch from db;
+        $this->serviceNumber = $this->queryAvailableNumberService->getAvailableNumberServices($depId);
 
         if (!$this->serviceNumber) {
             throw new \RuntimeException('Unable to reserve service number');

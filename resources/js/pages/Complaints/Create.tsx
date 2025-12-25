@@ -7,7 +7,7 @@ import MainLayout from '@/layouts/main-layout';
 import { complaintSchema, ComplaintFormValues, TroubleReasons } from '@/types/complaint';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
-import { ttService } from '@/lib/ttService';
+import axios from 'axios';
 
 export function parseApiError(message: string): {
     type: 'field' | 'business' | 'general';
@@ -59,64 +59,6 @@ export default function CreateComplaintPage() {
 
     const Required = () => <span className="text-red-500 ml-1">*</span>;
 
-    // const handleSubmit = async (e: React.FormEvent) => {
-    //     e.preventDefault();
-    //     clearErrors();
-
-    //     const validation = complaintSchema.safeParse(data);
-    //     console.log("🚀 ~ handleSubmit ~ validation:", validation)
-    //     if (!validation.success) {
-    //         validation.error.errors.forEach((err) => {
-    //             const field = err.path[0] as keyof ComplaintFormValues;
-    //             setError(field, err.message);
-    //         });
-    //         return;
-    //     }
-
-    //     const toastId = toast.loading('Submitting complaint...');
-
-    //     try {
-    //         const response = await fetch(
-    //             `${process.env.API_BASE_URL}/tt/create}`,
-    //             {
-    //                 method: 'POST',
-    //                 headers: {
-    //                     'Content-Type': 'application/json',
-    //                 },
-    //                 body: JSON.stringify(validation.data),
-    //             }
-    //         );
-
-    //         const responseData = await response.json();
-
-    //         if (responseData.success === false) {
-    //             const parsed = parseApiError(responseData.message);
-
-    //             toast.dismiss(toastId);
-
-    //             if (parsed.type === 'field') {
-    //                 setError('mobile_no', parsed.text);
-    //                 toast.error('Please correct the highlighted field.');
-    //                 return;
-    //             }
-
-    //             toast.error(parsed.text);
-    //             return;
-    //         }
-
-    //         // ✅ Success
-    //         toast.dismiss(toastId);
-    //         toast.success('Complaint submitted successfully!');
-    //         reset();
-
-    //     } catch (err) {
-    //         toast.dismiss(toastId);
-    //         toast.error('Network error. Please try again.');
-    //         console.error('Submit error:', err);
-    //     }
-    // };
-
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         clearErrors();
@@ -141,15 +83,15 @@ export default function CreateComplaintPage() {
                 {
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${user.api_token}`, // ✅ Bearer token added
+                        Authorization: `Bearer ${user.api_token}`,
                     },
-                    timeout: 15000, // optional safety timeout
+                    timeout: 15000,
                 }
             );
 
             const responseData = response.data;
 
-            // ❌ API-level failure (not HTTP failure)
+            // API-level failure (not HTTP failure)
             if (responseData?.success === false) {
                 const parsed = parseApiError(responseData.message);
 
@@ -165,31 +107,31 @@ export default function CreateComplaintPage() {
                 return;
             }
 
-            // ✅ Success
+            // Success
             toast.dismiss(toastId);
             toast.success('Complaint submitted successfully!');
             reset();
 
-        // Redirect to complaints index page after a short delay
-        setTimeout(() => {
-            router.visit('/complaints', {
-                preserveScroll: false,
-            });
-        }, 1000);
+            // Redirect to complaints index page after a short delay
+            setTimeout(() => {
+                router.visit('/complaints', {
+                    preserveScroll: false,
+                });
+            }, 1000);
 
-    } catch (error: any) {
-        toast.dismiss(toastId);
-        console.error('Submit error:', error);
+        } catch (error: any) {
+            toast.dismiss(toastId);
 
+            if (error.response && error.response.data) {
                 const apiMessage =
-                    error.response?.data?.message ||
+                    error.response.data.message ||
                     'Request failed. Please try again.';
 
                 toast.error(apiMessage);
             } else {
-                console.error('Unexpected error:', error);
                 toast.error('Network error. Please try again.');
             }
+            console.error('Submit error:', error);
         }
     };
 

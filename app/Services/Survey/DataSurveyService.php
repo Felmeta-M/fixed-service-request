@@ -100,12 +100,4 @@ XML;
             'customer_survey_order_id' => $surveyOrderId
         ]);
     }
-
-    protected function parseBandwidth(string|int $value): int
-    {
-        $value = strtolower(trim((string)$value));
-        if (preg_match('/^(\d+)m$/', $value, $m)) return $m[1] * 1024;
-        if (preg_match('/^(\d+)gbps$/', $value, $m)) return $m[1] * 1024 * 1024;
-        return (int)$value;
-    }
 }

@@ -19,14 +19,14 @@ class QueryAvailableNumberService extends BaseApiService
         return config('services.query_available_number.endpoint');
     }
 
-    public function getAvailableNumberServices(?int $resCnt = 100, ?string $deptId = null): string|bool
+    public function getAvailableNumberServices(string $deptId, ?int $resCnt = 100): string|bool
     {
         $data = [
             'pay_mode' => '1',
             'tele_type' => '4',
             'need_query_by_dept' => false,
             'res_cnt' => $resCnt,
-            'dept_id' => '1766044689199549668',
+            'dept_id' => $deptId
         ];
 
         $numberList = $this->queryAvailableNumbers($data);
@@ -40,7 +40,7 @@ class QueryAvailableNumberService extends BaseApiService
                 'oper_type' => 1029,
                 'res_code' => $numberService,
             ];
-                return $numberService;
+            return $numberService;
         }
 
         return false;

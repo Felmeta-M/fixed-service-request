@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 use App\Services\Survey\SurveyServiceFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class SurveyOrderController extends Controller
@@ -92,6 +93,14 @@ class SurveyOrderController extends Controller
                 ], Response::HTTP_INTERNAL_SERVER_ERROR),
             };
         } catch (Throwable $e) {
+
+            Log::error('ComboSurveyService error', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong. Please try again later.',

@@ -56,7 +56,7 @@ abstract class BaseSurveyService extends BaseApiService
         $resource = self::decrypt($resource);
         $xml = $this->buildXml($data, $resource);
         $response = $this->executeRequest($xml);
-        // Log::info($response);
+        Log::info($response);
         return $this->parseResponse($data, $response, $resource);
     }
 
@@ -82,13 +82,13 @@ abstract class BaseSurveyService extends BaseApiService
         array $data,
         ?array $resource
     ): void {
-        Log::info('Persisting survey with Order ID: ', ['service_number' => $data['service_number'] ?? $this->serviceNumber ?? null]);
 
-        DB::transaction(function () use ($surveyOrderId, $data, $resource) {
+        $serviceNumber = $data['service_number'] ?? $this->serviceNumber ?? null;
+        DB::transaction(function () use ($surveyOrderId, $data, $resource, $serviceNumber) {
             $survey = SurveyRequest::create([
                 ...$data,
                 'with_device' => (bool)$data['with_device'],
-                'service_number' => $data['service_number'] ?? $this->serviceNumber ?? null,
+                'service_number' => $serviceNumber,
                 'customer_survey_order_id' => $surveyOrderId,
                 'status' => FFDServiceProvisionStatus::Completed->value,
                 'cable_length' => $resource['distance'] ?? null,
@@ -102,11 +102,8 @@ abstract class BaseSurveyService extends BaseApiService
                     : null,
             ]);
 
-            //reserve the number
-            // $this->reserveNumberService($data['service_number'] ?? $this->serviceNumber); 
-
             $requestData = [
-                'service_number' => $data['service_number'] ?? $this->serviceNumber ?? null,
+                'service_number' => $serviceNumber,
                 'offering_id' => $survey->main_offer_id,
                 'network_type' => 4, // Fixed network
                 'sub_type' => 0,
@@ -153,6 +150,14 @@ abstract class BaseSurveyService extends BaseApiService
             Log::error('Decryption failed: ' . $e->getMessage());
             return null; // Or throw a custom exception if you prefer
         }
+    }
+
+    protected function parseBandwidth(string|int $value): int
+    {
+        $value = strtolower(trim((string)$value));
+        if (preg_match('/^(\d+)m$/', $value, $m)) return $m[1] * 1024;
+        if (preg_match('/^(\d+)gbps$/', $value, $m)) return $m[1] * 1024 * 1024;
+        return (int)$value;
     }
 
     /** Service-specific hooks */

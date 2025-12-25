@@ -50,7 +50,7 @@ class PaymentCalculatorService
      */
     protected function fetchVoiceComboFee(?array $requestData): int
     {
-        if (empty($requestData)) {
+        if (empty($requestData['service_number'])) {
             return $this->defaultFee();
         }
 

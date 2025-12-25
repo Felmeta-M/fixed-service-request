@@ -5,6 +5,7 @@ namespace App\Services\Subscription;
 use App\Models\Customer;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ComboSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
@@ -40,7 +41,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       $xml = $this->buildXml($data);
       // Log::info($xml);
       $response = $this->executeRequest($xml);
-      // Log::info($response);
+      Log::info($response);
       return $this->parseResponse($data, $response);
    }
 
@@ -75,7 +76,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
 
          'enterprise_name'       => 'feng',
 
-         'external_sequence'     => 'EXT' . now()->format('YmdHis'),
+         'external_sequence'     => now()->format('YmdHis'),
          'group_offering_id'     => '180427974', // group offer
 
          'service_number'        => '123789896', // query available number by region mapping
@@ -129,7 +130,6 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
             <com:CustomerBusiOrder>
                <com:CustomerSurveyOrderId>{$data['survey_order_id']}</com:CustomerSurveyOrderId>
                <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
-
                <com:CustomerInfo>
                   <com:SubLanguage>2002</com:SubLanguage>
                   <com:IVRLanguage>2002</com:IVRLanguage>

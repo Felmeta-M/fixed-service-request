@@ -5,27 +5,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/layouts/main-layout';
 import { Link, usePage } from '@inertiajs/react';
 import { 
-  Eye, 
   Filter, 
   Plus, 
   Search, 
   X, 
   AlertCircle, 
   RefreshCw,
-  Globe,
-  Home,
   Loader2,
-  User,
-  Phone,
-  Calendar,
   FileText,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Home,
+  Globe
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { DisplayTT } from '@/types/tt';
 import { toast } from 'sonner';
-import { TTDetailDialog } from '@/components/complaints/tt-detail-dialog';
+import TTTable from '@/components/complaints/tt-table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ttService } from '@/lib/ttService';
@@ -37,12 +33,10 @@ export default function ComplaintsIndex() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [accessNumber, setAccessNumber] = useState('');
+  const [filterAccessNumber, setFilterAccessNumber] = useState('');
+  const [filterTTSerialNo, setFilterTTSerialNo] = useState('');
   const [tts, setTts] = useState<DisplayTT[]>([]);
   const [loading, setLoading] = useState(false);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [selectedTT, setSelectedTT] = useState<DisplayTT | null>(null);
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [ttDetail, setTtDetail] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'my-tickets' | 'search'>('my-tickets');
   const [showFilters, setShowFilters] = useState(false);
   const [pagination, setPagination] = useState({
@@ -54,21 +48,35 @@ export default function ComplaintsIndex() {
 
   const { auth } = usePage().props as any;
 
-  // Load user's tickets on mount
+  // Load user's tickets on mount and when filters change
   useEffect(() => {
     if (activeTab === 'my-tickets' && auth?.user?.id) {
-      loadUserTTs();
+      loadUserTTs(1);
     }
-  }, [activeTab, auth?.user?.id]);
+  }, [activeTab, auth?.user?.id, filterAccessNumber, filterTTSerialNo, statusFilter]);
 
   const loadUserTTs = async (page = 1) => {
     setLoading(true);
     try {
-      const response = await ttService.getLocalTTs({
-        mobile_no: auth.user.phone,
+      const params: any = {
         page: page,
         per_page: 10,
-      }, auth.user.api_token);
+      };
+      
+      // Add filters if provided
+      if (filterAccessNumber.trim()) {
+        params.access_number = filterAccessNumber.trim();
+      }
+      
+      if (filterTTSerialNo.trim()) {
+        params.tt_serial_no = filterTTSerialNo.trim();
+      }
+      
+      if (statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
+      
+      const response = await ttService.getLocalTTs(params, auth.user.api_token);
 
       if (response.success) {
         const localTTs = response.data.data.map(tt => ({
@@ -128,241 +136,18 @@ export default function ComplaintsIndex() {
     }
   };
 
-  const handleViewDetails = async (tt: DisplayTT) => {
-    setSelectedTT(tt);
-    setDetailLoading(true);
-    setDetailDialogOpen(true);
 
-    try {
-      if (tt.source === 'external') {
-        // Use external API for external TTs
-        const response = await ttService.getTTDetail(tt.tt_no, auth.user.api_token);
-        if (response.success && response.data) {
-          setTtDetail(response.data);
-        }
-      } else {
-        // For local TTs, we can either show basic info from local_data
-        // or try to fetch external detail using the tt_serial_no
-        // Let's try to fetch external detail first
-        try {
-          const response = await ttService.getTTDetail(tt.tt_no, auth.user.api_token);
-          if (response.success && response.data) {
-            setTtDetail(response.data);
-          } else {
-            // Fallback to local data mapping
-            const localData = tt.local_data;
-            if (localData) {
-              setTtDetail({
-                ttNumber: localData.tt_serial_no,
-                title: '',
-                firstName: '',
-                middleName: '',
-                lastName: '',
-                customerType: '',
-                customerLevel: '',
-                customerCategory: '',
-                custSubCategory: '',
-                custID: '',
-                subsID: '',
-                adminRegion: '',
-                zone: '',
-                city: '',
-                subCity: '',
-                wereda: '',
-                kebele: '',
-                street: '',
-                houseNo: '',
-                buildingName: '',
-                floor: '',
-                roomNo: '',
-                troubleTitle: localData.trouble_title,
-                troubleReason: localData.trouble_reason,
-                troubleGrand: '',
-                contactPerson: localData.contact_person,
-                mobileNo: localData.mobile_no,
-                telephoneNo: '',
-                email: '',
-                accessNumber: localData.access_number,
-                acctNumber: localData.account_number || '',
-                additionalFaultyNbr: '',
-                deadline: '',
-                acceptTime: localData.created_at,
-                occurrenceDate: localData.occurrence_date || localData.created_at,
-                expectFeedbackTime: '',
-                faultLocation: '',
-                sendSMS: '',
-                ttDescription: localData.tt_description,
-                Remark: '',
-                attachment: '',
-                result_code: localData.status === 'completed' ? '0' : '1',
-                desc: '',
-                activities: [],
-              } as any);
-            }
-          }
-        } catch {
-          // Fallback to local data mapping
-          const localData = tt.local_data;
-          if (localData) {
-            setTtDetail({
-              ttNumber: localData.tt_serial_no,
-              title: '',
-              firstName: '',
-              middleName: '',
-              lastName: '',
-              customerType: '',
-              customerLevel: '',
-              customerCategory: '',
-              custSubCategory: '',
-              custID: '',
-              subsID: '',
-              adminRegion: '',
-              zone: '',
-              city: '',
-              subCity: '',
-              wereda: '',
-              kebele: '',
-              street: '',
-              houseNo: '',
-              buildingName: '',
-              floor: '',
-              roomNo: '',
-              troubleTitle: localData.trouble_title,
-              troubleReason: localData.trouble_reason,
-              troubleGrand: '',
-              contactPerson: localData.contact_person,
-              mobileNo: localData.mobile_no,
-              telephoneNo: '',
-              email: '',
-              accessNumber: localData.access_number,
-              acctNumber: localData.account_number || '',
-              additionalFaultyNbr: '',
-              deadline: '',
-              acceptTime: localData.created_at,
-              occurrenceDate: localData.occurrence_date || localData.created_at,
-              expectFeedbackTime: '',
-              faultLocation: '',
-              sendSMS: '',
-              ttDescription: localData.tt_description,
-              Remark: '',
-              attachment: '',
-              result_code: localData.status === 'completed' ? '0' : '1',
-              desc: '',
-              activities: [],
-            } as any);
-          }
-        }
-      }
-    } catch (error: any) {
-      console.error('Detail fetch error:', error);
-      toast.error(error.message || 'Failed to load details');
-    } finally {
-      setDetailLoading(false);
-    }
-  };
-
-  const handleFeedbackConfirmed = () => {
-    // Reload the current view
-    if (activeTab === 'my-tickets') {
-      loadUserTTs(pagination.current_page);
-    } else if (accessNumber) {
-      handleSearch();
-    }
-  };
-
-  const filteredTTs = tts.filter(tt => {
-    // Source filter
-    if (sourceFilter !== 'all' && tt.source !== sourceFilter) {
-      return false;
-    }
-
-    // Status filter
-    if (statusFilter !== 'all') {
-      const ttStatus = tt.status.toLowerCase();
-      const filterStatus = statusFilter.toLowerCase();
-      
-      if (filterStatus === 'pending' && !ttStatus.includes('pending')) {
-        return false;
-      }
-      if (filterStatus === 'in_progress' && !ttStatus.includes('progress')) {
-        return false;
-      }
-      if (filterStatus === 'completed' && 
-          !ttStatus.includes('completed') && 
-          !ttStatus.includes('resolved') &&
-          !ttStatus.includes('closed')) {
-        return false;
-      }
-      if (filterStatus === 'cancelled' && 
-          !ttStatus.includes('cancelled') && 
-          !ttStatus.includes('failed')) {
-        return false;
-      }
-    }
-
-    // Search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return (
-        tt.tt_no.toLowerCase().includes(query) ||
-        tt.cust_name.toLowerCase().includes(query) ||
-        tt.trouble_title.toLowerCase().includes(query) ||
-        tt.access_number.includes(query)
-      );
-    }
-
-    return true;
-  });
-
-  const getStatusBadge = (status: string) => {
-    const lowerStatus = status.toLowerCase();
-    
-    if (lowerStatus.includes('pending') || lowerStatus === 'pending') {
-      return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
-    }
-    if (lowerStatus.includes('progress') || lowerStatus === 'in_progress') {
-      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">In Progress</Badge>;
-    }
-    if (lowerStatus.includes('completed') || lowerStatus.includes('resolved') || lowerStatus.includes('closed')) {
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Completed</Badge>;
-    }
-    if (lowerStatus.includes('cancelled') || lowerStatus.includes('failed')) {
-      return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Cancelled</Badge>;
-    }
-    return <Badge variant="outline">{status || 'N/A'}</Badge>;
-  };
-
-  const getSourceIcon = (source: 'local' | 'external') => {
-    return source === 'local' ? (
-      <Home className="h-4 w-4 text-purple-600" />
-    ) : (
-      <Globe className="h-4 w-4 text-cyan-600" />
-    );
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return dateString;
-    }
-  };
 
   const clearFilters = () => {
     setSourceFilter('all');
     setStatusFilter('all');
     setSearchQuery('');
+    setFilterAccessNumber('');
+    setFilterTTSerialNo('');
     setShowFilters(false);
   };
 
-  const hasActiveFilters = sourceFilter !== 'all' || statusFilter !== 'all' || searchQuery;
+  const hasActiveFilters = sourceFilter !== 'all' || statusFilter !== 'all' || searchQuery || filterAccessNumber || filterTTSerialNo;
 
   // Pagination handlers
   const handleNextPage = () => {
@@ -390,41 +175,8 @@ export default function ComplaintsIndex() {
             <h1 className="text-2xl font-bold tracking-tight">Trouble Tickets</h1>
             <p className="text-muted-foreground">Manage and track your complaint tickets</p>
           </div>
-          <div className="flex gap-2">
-            <Link href="/complaints/create">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                New Complaint
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-6">
-          {/* <TabsList>
-            <TabsTrigger value="my-tickets" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              My Tickets ({pagination.total})
-            </TabsTrigger>
-            <TabsTrigger value="search" className="flex items-center gap-2">
-              <Search className="h-4 w-4" />
-              Search Tickets
-            </TabsTrigger>
-          </TabsList> */}
-
-          <TabsContent value="my-tickets" className="space-y-6">
-            {/* Controls and Filters */}
-            <div className='border-none'>
+          <div className="flex items-center gap-2">
               <div className="">
-                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-                  <div>
-                    <div>My Compliant Tickets</div>
-                    <div className="text-sm text-muted-foreground">
-                      All tickets created under your account. Showing page {pagination.current_page} of {pagination.last_page}
-                    </div>
-                  </div>
-                  
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -454,29 +206,64 @@ export default function ComplaintsIndex() {
                       Refresh
                     </Button>
                   </div>
+              
+          </div>
+          <div className="flex gap-2">
+            <Link href="/complaints/create">
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                New Complaint
+              </Button>
+            </Link>
+                  </div>
                 </div>
               </div>
 
+        {/* Main Content */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-6">
+          {/* <TabsList>
+            <TabsTrigger value="my-tickets" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              My Tickets ({pagination.total})
+            </TabsTrigger>
+            <TabsTrigger value="search" className="flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              Search Tickets
+            </TabsTrigger>
+          </TabsList> */}
+
+          <TabsContent value="my-tickets" className="space-y-6">
+            {/* Controls and Filters */}
+            <div className='border-none'>
+              
+
               {showFilters && (
-                <div className="border-t pt-4">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="border-t pt-2">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Search</label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <label className="text-sm font-medium">Access Number</label>
                         <Input
-                          placeholder="Search tickets..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-9"
+                        placeholder="Filter by access number..."
+                        value={filterAccessNumber}
+                        onChange={(e) => setFilterAccessNumber(e.target.value)}
+                        size="sm"
                         />
                       </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">TT Serial Number</label>
+                      <Input
+                        placeholder="Filter by TT serial no..."
+                        value={filterTTSerialNo}
+                        onChange={(e) => setFilterTTSerialNo(e.target.value)}
+                        size="sm"
+                      />
                     </div>
 
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Status</label>
                       <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-8 px-2 text-sm">
                           <SelectValue placeholder="All Status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -484,192 +271,51 @@ export default function ComplaintsIndex() {
                           <SelectItem value="pending">Pending</SelectItem>
                           <SelectItem value="in_progress">In Progress</SelectItem>
                           <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="resolved">Resolved</SelectItem>
+                          <SelectItem value="closed">Closed</SelectItem>
                           <SelectItem value="cancelled">Cancelled</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
+                    {/* <div className="space-y-2">
+                      <label className="text-sm font-medium">Quick Search</label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          placeholder="Search in results..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+                    </div> */}
+                  {/* </div> */}
+                  <div className="mt-2">
                     {hasActiveFilters && (
-                      <div className="flex items-end">
+                    <div className="mt-4 flex justify-end">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={clearFilters}
-                          className="w-full"
                         >
                           <X className="h-4 w-4 mr-2" />
-                          Clear Filters
+                        Clear All Filters
                         </Button>
                       </div>
                     )}
+                  </div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Tickets Table */}
-            <Card className='border-none'>
-              <CardContent className="p-0">
-                {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="text-center">
-                      <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-                      <p className="mt-2 text-muted-foreground">Loading your tickets...</p>
-                    </div>
-                  </div>
-                ) : filteredTTs.length === 0 ? (
-                  <div className="py-12 text-center">
-                    <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-4 text-lg font-semibold">No Trouble Tickets Found</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {hasActiveFilters 
-                        ? 'No tickets match your filters'
-                        : 'You haven\'t created any tickets yet'}
-                    </p>
-                    <div className="mt-6">
-                      <Link href="/complaints/create">
-                        <Button>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create Your First Ticket
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b bg-gray-50">
-                            <th className="px-4 py-3 text-left font-medium text-gray-700">TT Number</th>
-                            <th className="px-4 py-3 text-left font-medium text-gray-700">Customer</th>
-                            <th className="px-4 py-3 text-left font-medium text-gray-700">Access #</th>
-                            <th className="px-4 py-3 text-left font-medium text-gray-700">Issue</th>
-                            <th className="px-4 py-3 text-left font-medium text-gray-700">Created</th>
-                            <th className="px-4 py-3 text-left font-medium text-gray-700">Status</th>
-                            <th className="px-4 py-3 text-left font-medium text-gray-700">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredTTs.map((tt) => (
-                            <tr key={tt.id} className="border-b hover:bg-gray-50">
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  {getSourceIcon(tt.source)}
-                                  <span className="font-mono font-medium text-gray-900">
-                                    {tt.tt_no}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  <User className="h-4 w-4 text-muted-foreground" />
-                                  <span className="text-gray-800">{tt.cust_name}</span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  <Phone className="h-4 w-4 text-muted-foreground" />
-                                  <span className="font-medium text-gray-700">{tt.access_number}</span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="max-w-xs">
-                                  <div className="font-medium text-gray-800">{tt.trouble_title}</div>
-                                  <div className="text-xs text-muted-foreground capitalize">
-                                    {tt.trouble_reason?.replace('_', ' ') || 'N/A'}
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                                  <span className="text-gray-600 whitespace-nowrap">
-                                    {formatDate(tt.created_at)}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                {getStatusBadge(tt.status)}
-                              </td>
-                              <td className="px-4 py-3">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleViewDetails(tt)}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                  <span className="sr-only">View details</span>
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    
-                    {/* Pagination */}
-                    {pagination.last_page > 1 && (
-                      <div className="border-t px-4 py-3">
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm text-muted-foreground">
-                            Showing {(pagination.current_page - 1) * pagination.per_page + 1} to{' '}
-                            {Math.min(pagination.current_page * pagination.per_page, pagination.total)} of{' '}
-                            {pagination.total} entries
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handlePrevPage}
-                              disabled={pagination.current_page === 1 || loading}
-                            >
-                              Previous
-                            </Button>
-                            
-                            {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
-                              let pageNum;
-                              if (pagination.last_page <= 5) {
-                                pageNum = i + 1;
-                              } else if (pagination.current_page <= 3) {
-                                pageNum = i + 1;
-                              } else if (pagination.current_page >= pagination.last_page - 2) {
-                                pageNum = pagination.last_page - 4 + i;
-                              } else {
-                                pageNum = pagination.current_page - 2 + i;
-                              }
-                              
-                              return (
-                                <Button
-                                  key={pageNum}
-                                  variant={pagination.current_page === pageNum ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => handlePageClick(pageNum)}
-                                  disabled={loading}
-                                  className="w-8"
-                                >
-                                  {pageNum}
-                                </Button>
-                              );
-                            })}
-                            
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleNextPage}
-                              disabled={pagination.current_page === pagination.last_page || loading}
-                            >
-                              Next
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
+            <TTTable
+              tts={tts}
+              loading={loading}
+              onTTUpdate={() => loadUserTTs(pagination.current_page)}
+            />
           </TabsContent>
 
           <TabsContent value="search" className="space-y-6">
@@ -774,12 +420,12 @@ export default function ComplaintsIndex() {
                       <div>
                         <CardTitle>Found Tickets</CardTitle>
                         <CardDescription>
-                          Showing {filteredTTs.length} of {tts.length} tickets
+                          Access Number: <span className="font-mono font-medium">{accessNumber}</span> - Showing {tts.length} tickets
                         </CardDescription>
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                        <Select value={sourceFilter} onValueChange={(value) => setSourceFilter(value as SourceFilter)}>
                           <SelectTrigger className="w-[140px]">
                             <SelectValue placeholder="All Sources" />
                           </SelectTrigger>
@@ -829,91 +475,52 @@ export default function ComplaintsIndex() {
                 </Card>
 
                 {/* Results Table */}
-                <Card>
-                  <CardContent className="p-0">
-                    {filteredTTs.length === 0 ? (
-                      <div className="py-12 text-center">
-                        <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-4 text-lg font-semibold">No Tickets Match Filters</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                          Try adjusting your filter criteria
-                        </p>
-                        <div className="mt-6">
-                          <Button variant="outline" onClick={clearFilters}>
-                            Clear All Filters
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b bg-gray-50">
-                              <th className="px-4 py-3 text-left font-medium text-gray-700">Source</th>
-                              <th className="px-4 py-3 text-left font-medium text-gray-700">TT Number</th>
-                              <th className="px-4 py-3 text-left font-medium text-gray-700">Customer</th>
-                              <th className="px-4 py-3 text-left font-medium text-gray-700">Access #</th>
-                              <th className="px-4 py-3 text-left font-medium text-gray-700">Issue</th>
-                              <th className="px-4 py-3 text-left font-medium text-gray-700">Created</th>
-                              <th className="px-4 py-3 text-left font-medium text-gray-700">Deadline</th>
-                              <th className="px-4 py-3 text-left font-medium text-gray-700">Status</th>
-                              <th className="px-4 py-3 text-left font-medium text-gray-700">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {filteredTTs.map((tt) => (
-                              <tr key={tt.id} className="border-b hover:bg-gray-50">
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center gap-2">
-                                    {getSourceIcon(tt.source)}
-                                    <span className="text-xs font-medium">
-                                      {tt.source === 'local' ? 'Local' : 'External'}
-                                    </span>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <span className="font-mono font-medium text-gray-900">
-                                    {tt.tt_no}
-                                  </span>
-                                </td>
-                                <td className="px-4 py-3 text-gray-800">{tt.cust_name}</td>
-                                <td className="px-4 py-3 font-medium text-gray-700">{tt.access_number}</td>
-                                <td className="px-4 py-3">
-                                  <div className="max-w-xs">
-                                    <div className="font-medium text-gray-800">{tt.trouble_title}</div>
-                                    <div className="text-xs text-muted-foreground capitalize">
-                                      {tt.trouble_reason?.replace('_', ' ') || 'N/A'}
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                                  {formatDate(tt.created_at)}
-                                </td>
-                                <td className="px-4 py-3 text-gray-600">
-                                  {tt.deadline ? formatDate(tt.deadline) : 'N/A'}
-                                </td>
-                                <td className="px-4 py-3">
-                                  {getStatusBadge(tt.status)}
-                                </td>
-                                <td className="px-4 py-3">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleViewDetails(tt)}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                    <span className="sr-only">View details</span>
-                                  </Button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <TTTable
+                  tts={tts.filter(tt => {
+                    // Source filter
+                    if (sourceFilter !== 'all' && tt.source !== sourceFilter) {
+                      return false;
+                    }
+                    
+                    // Status filter
+                    if (statusFilter !== 'all') {
+                      const ttStatus = tt.status.toLowerCase();
+                      const filterStatus = statusFilter.toLowerCase();
+                      
+                      if (filterStatus === 'pending' && !ttStatus.includes('pending')) {
+                        return false;
+                      }
+                      if (filterStatus === 'in_progress' && !ttStatus.includes('progress')) {
+                        return false;
+                      }
+                      if (filterStatus === 'completed' && 
+                          !ttStatus.includes('completed') && 
+                          !ttStatus.includes('resolved') &&
+                          !ttStatus.includes('closed')) {
+                        return false;
+                      }
+                      if (filterStatus === 'cancelled' && 
+                          !ttStatus.includes('cancelled') && 
+                          !ttStatus.includes('failed')) {
+                        return false;
+                      }
+                    }
+                    
+                    // Search query
+                    if (searchQuery) {
+                      const query = searchQuery.toLowerCase();
+                      return (
+                        tt.tt_no.toLowerCase().includes(query) ||
+                        tt.cust_name.toLowerCase().includes(query) ||
+                        tt.trouble_title.toLowerCase().includes(query) ||
+                        tt.access_number.includes(query)
+                      );
+                    }
+                    
+                    return true;
+                  })}
+                  loading={loading}
+                />
               </>
             ) : accessNumber && !loading ? (
               <Card>
@@ -943,15 +550,6 @@ export default function ComplaintsIndex() {
         </Tabs>
       </div>
 
-      {/* TT Detail Dialog */}
-      <TTDetailDialog
-        open={detailDialogOpen}
-        onOpenChange={setDetailDialogOpen}
-        detail={ttDetail}
-        loading={detailLoading}
-        source={selectedTT?.source}
-        onConfirmSuccess={handleFeedbackConfirmed}
-      />
     </MainLayout>
   );
 }

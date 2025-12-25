@@ -1,0 +1,460 @@
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import { TTDetail, TTActivity } from '@/types/tt';
+import { Calendar, MapPin, Phone, User, FileText, Clock, AlertCircle, CheckCircle2, XCircle, Loader2, ArrowLeft } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from 'react';
+import { ttService } from '@/lib/ttService';
+import { toast } from 'sonner';
+import { usePage, router } from '@inertiajs/react';
+import MainLayout from '@/layouts/main-layout';
+
+interface ShowProps {
+  ttNumber: string;
+}
+
+export default function ComplaintsShow({ ttNumber }: ShowProps) {
+  const { auth } = usePage().props as any;
+  const [detail, setDetail] = useState<TTDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [feedbackDesc, setFeedbackDesc] = useState('');
+  const [confirming, setConfirming] = useState(false);
+  const [resultCode, setResultCode] = useState<'0' | '1'>('0');
+  const [source, setSource] = useState<'local' | 'external'>('external');
+
+  useEffect(() => {
+    loadTTDetail();
+  }, [ttNumber]);
+
+  const loadTTDetail = async () => {
+    setLoading(true);
+    try {
+      const response = await ttService.getTTDetail(ttNumber, auth?.user?.api_token);
+      if (response.success && response.data) {
+        setDetail(response.data);
+      } else {
+        toast.error('Failed to load TT details');
+      }
+    } catch (error: any) {
+      console.error('Load TT detail error:', error);
+      toast.error(error.message || 'Failed to load TT details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString || dateString === '?' || dateString === '') return 'N/A';
+    try {
+      // Handle different date formats
+      if (dateString.length === 14 && /^\d+$/.test(dateString)) {
+        // Format: YYYYMMDDHHmmss
+        const year = dateString.substring(0, 4);
+        const month = dateString.substring(4, 6);
+        const day = dateString.substring(6, 8);
+        const hour = dateString.substring(8, 10);
+        const minute = dateString.substring(10, 12);
+        const second = dateString.substring(12, 14);
+        return new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`).toLocaleString();
+      }
+      return new Date(dateString).toLocaleString();
+    } catch {
+      return dateString;
+    }
+  };
+
+  const handleConfirmFeedback = async () => {
+    if (!detail?.ttNumber) {
+      toast.error('TT number is required');
+      return;
+    }
+
+    if (!feedbackDesc.trim()) {
+      toast.error('Please provide feedback description');
+      return;
+    }
+
+    setConfirming(true);
+    try {
+      const response = await ttService.confirmFeedback(
+        {
+          tt_no: detail.ttNumber,
+          result_code: resultCode,
+          desc: feedbackDesc,
+        },
+        auth?.user?.api_token
+      );
+
+      if (response.success && response.data.success) {
+        toast.success('Feedback confirmed successfully');
+        setShowFeedbackForm(false);
+        setFeedbackDesc('');
+        loadTTDetail(); // Reload details
+      } else {
+        toast.error(response.data.desc || 'Failed to confirm feedback');
+      }
+    } catch (error: any) {
+      console.error('Confirm feedback error:', error);
+      toast.error(error.message || 'Failed to confirm feedback');
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  // Only show feedback form for external tickets
+  const canConfirmFeedback = source === 'external' && detail?.result_code === '0';
+
+  return (
+    <MainLayout>
+      <div className="w-full space-y-6 px-4 py-2 lg:px-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.visit('/complaints')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">TT Details</h1>
+              <p className="text-muted-foreground">Trouble Ticket: {ttNumber}</p>
+            </div>
+          </div>
+        </div>
+
+        {loading ? (
+          <Card>
+            <CardContent className="py-12">
+              <div className="flex items-center justify-center">
+                <div className="text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+                  <p className="text-muted-foreground">Loading details...</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : detail ? (
+          <div className="space-y-6">
+            {/* Header Card with Status */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg">{detail.troubleTitle || 'N/A'}</CardTitle>
+                    <CardDescription>
+                      {detail.troubleReason || 'N/A'}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={detail.result_code === '0' ? 'default' : 'destructive'}>
+                      {detail.result_code === '0' ? 'Active' : 'Failed'}
+                    </Badge>
+                    {canConfirmFeedback && !showFeedbackForm && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowFeedbackForm(true)}
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Confirm Feedback
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {/* Feedback Confirmation Form */}
+            {showFeedbackForm && (
+              <Card className="bg-blue-50 dark:bg-blue-950">
+                <CardHeader>
+                  <CardTitle className="text-lg">Confirm Feedback</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <Button
+                        variant={resultCode === '0' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setResultCode('0')}
+                        disabled={confirming}
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Resolved
+                      </Button>
+                      <Button
+                        variant={resultCode === '1' ? 'destructive' : 'outline'}
+                        size="sm"
+                        onClick={() => setResultCode('1')}
+                        disabled={confirming}
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Not Resolved
+                      </Button>
+                    </div>
+                    <Textarea
+                      placeholder="Enter your feedback description..."
+                      value={feedbackDesc}
+                      onChange={(e) => setFeedbackDesc(e.target.value)}
+                      rows={3}
+                      disabled={confirming}
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowFeedbackForm(false);
+                          setFeedbackDesc('');
+                        }}
+                        disabled={confirming}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleConfirmFeedback}
+                        disabled={confirming || !feedbackDesc.trim()}
+                      >
+                        {confirming ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Confirming...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            Confirm
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Details Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Customer Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Customer Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-sm text-muted-foreground">Name</label>
+                    <p className="font-medium">
+                      {[detail.title, detail.firstName, detail.middleName, detail.lastName]
+                        .filter(Boolean)
+                        .join(' ') || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Customer Type</label>
+                    <p className="font-medium">{detail.customerType || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Category</label>
+                    <p className="font-medium">
+                      {detail.customerCategory || 'N/A'} / {detail.custSubCategory || 'N/A'}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Contact Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-sm text-muted-foreground">Contact Person</label>
+                    <p className="font-medium">{detail.contactPerson || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Mobile</label>
+                    <p className="font-medium">{detail.mobileNo || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Email</label>
+                    <p className="font-medium">{detail.email && detail.email !== '?' ? detail.email : 'N/A'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Service Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Service Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-sm text-muted-foreground">Access Number</label>
+                    <p className="font-medium">{detail.accessNumber || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Account Number</label>
+                    <p className="font-medium">{detail.acctNumber || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Subscriber ID</label>
+                    <p className="font-medium">{detail.subsID || 'N/A'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Location Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Location
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-sm text-muted-foreground">Region/Zone</label>
+                    <p className="font-medium">
+                      {detail.adminRegion || 'N/A'} / {detail.zone || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Woreda/Kebele</label>
+                    <p className="font-medium">
+                      {detail.wereda || 'N/A'} / {detail.kebele || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Address</label>
+                    <p className="font-medium">
+                      {[detail.houseNo, detail.street, detail.city].filter(Boolean).join(', ') || 'N/A'}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Timeline */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Timeline
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-sm text-muted-foreground">Accept Time</label>
+                    <p className="font-medium">{formatDate(detail.acceptTime)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Occurrence Date</label>
+                    <p className="font-medium">{formatDate(detail.occurrenceDate)}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Deadline</label>
+                    <p className="font-medium">{formatDate(detail.deadline)}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Additional Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    Additional Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-sm text-muted-foreground">SMS Notification</label>
+                    <p className="font-medium">{detail.sendSMS || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Description</label>
+                    <p className="font-medium">{detail.ttDescription || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Remark</label>
+                    <p className="font-medium">{detail.Remark && detail.Remark !== '?' ? detail.Remark : 'N/A'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Activities Section */}
+            {detail.activities && Array.isArray(detail.activities) && detail.activities.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Activity History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {detail.activities.map((activity: TTActivity, index: number) => (
+                      <div key={index} className="border-l-2 border-primary pl-4 py-2">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="font-medium">{activity.activity_name || 'N/A'}</p>
+                            {activity.remarks && (
+                              <p className="text-sm text-muted-foreground mt-1">{activity.remarks}</p>
+                            )}
+                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                              {activity.handler && (
+                                <span>Handler: {activity.handler}</span>
+                              )}
+                              {activity.tt_status && (
+                                <Badge variant="outline" className="text-xs">
+                                  {activity.tt_status}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          {activity.in_time && activity.in_time !== '?' && (
+                            <span>In: {formatDate(activity.in_time)}</span>
+                          )}
+                          {activity.out_time && activity.out_time !== '?' && (
+                            <span>Out: {formatDate(activity.out_time)}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground">
+              No details available
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </MainLayout>
+  );
+}
+

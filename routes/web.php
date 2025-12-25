@@ -86,6 +86,11 @@ Route::middleware(['otp.auth'])->group(function () {
 
     Route::get('/complaints', fn() => Inertia::render('Complaints/Index'))->name('complaints.index');
     Route::get('/complaints/create', fn() => Inertia::render('Complaints/Create'))->name('complaints.create');
+    Route::get('/complaints/{ttNumber}', function (string $ttNumber) {
+        return Inertia::render('Complaints/Show', [
+            'ttNumber' => $ttNumber,
+        ]);
+    })->name('complaints.show');
 
 
     Route::get('/create-survey-requests', fn() => Inertia::render('SurveyRequests/Create'))->name('survey.create');

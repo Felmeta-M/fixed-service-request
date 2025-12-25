@@ -126,7 +126,6 @@ export default function CreateComplaintPage() {
                 const apiMessage =
                     error.response.data.message ||
                     'Request failed. Please try again.';
-
                 toast.error(apiMessage);
             } else {
                 toast.error('Network error. Please try again.');

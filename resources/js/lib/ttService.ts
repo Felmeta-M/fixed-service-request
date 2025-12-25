@@ -78,6 +78,7 @@ export const ttService = {
       const queryString = new URLSearchParams();
 
       if (params.access_number) queryString.append('access_number', params.access_number);
+      if (params.tt_serial_no) queryString.append('tt_serial_no', params.tt_serial_no);
       if (params.mobile_no) queryString.append('mobile_no', params.mobile_no);
       if (params.status) queryString.append('status', params.status);
       if (params.page) queryString.append('page', params.page.toString());

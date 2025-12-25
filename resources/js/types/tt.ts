@@ -145,6 +145,7 @@ export interface TTDetailRequest {
 
 export interface LocalTTQueryParams {
   access_number?: string;
+  tt_serial_no?: string;
   mobile_no?: string;
   status?: string;
   page?: number;

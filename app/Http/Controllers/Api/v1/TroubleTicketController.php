@@ -35,6 +35,11 @@ class TroubleTicketController extends Controller
             $ticketsQuery = TroubleTicket::query()
                 ->where('customer_code', $user->customer_code);
 
+            if ($request->filled('tt_serial_no')) {
+                $ticketsQuery->where('tt_serial_no', $request->tt_serial_no);
+            }
+
+
             if ($request->filled('access_number')) {
                 $ticketsQuery->where('access_number', $request->access_number);
             }

@@ -59,19 +59,23 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 
 interface DeviceOptionSelectorProps {
-    value: boolean;
+    value?: boolean;
     onChange: (value: boolean) => void;
 }
 
 export function DeviceOptionSelector({ value, onChange }: DeviceOptionSelectorProps) {
+    // Show message only when explicitly set to false (not undefined/null)
     const isWithoutDevice = value === false;
+    // When undefined, use empty string so nothing is selected initially
+    // When explicitly set, use the corresponding value
+    const displayValue = value === undefined ? '' : (value ? 'with' : 'without');
 
     return (
         <div className="space-y-3">
-            <Label className="text-sm font-medium">Device Option</Label>
+            <Label className="text-sm font-medium">Device Option <span className="text-red-500">*</span></Label>
 
             <RadioGroup
-                value={value ? "with" : "without"}
+                value={displayValue}
                 onValueChange={(val) => onChange(val === "with")}
                 className="space-y-2"
             >
@@ -79,7 +83,7 @@ export function DeviceOptionSelector({ value, onChange }: DeviceOptionSelectorPr
                 <label
                     className={cn(
                         "flex cursor-pointer items-center gap-2 rounded-lg border p-2 transition w-full sm:max-w-72",
-                        isWithoutDevice
+                        displayValue === "without"
                             ? "border-gray-300 ring-1 ring-primary"
                             : "border-border hover:border-muted-foreground/50"
                     )}
@@ -92,7 +96,7 @@ export function DeviceOptionSelector({ value, onChange }: DeviceOptionSelectorPr
                 <label
                     className={cn(
                         "flex cursor-pointer items-center gap-2 rounded-lg border p-2 transition w-full sm:max-w-72",
-                        value
+                        displayValue === "with"
                             ? "border-gray-300 ring-1 ring-primary"
                             : "border-border hover:border-muted-foreground/50"
                     )}
@@ -121,10 +125,8 @@ export function DeviceOptionSelector({ value, onChange }: DeviceOptionSelectorPr
                         </p>
 
                         <ul className="list-disc pl-5 space-y-1">
-                            <li>Huawei ONT</li>
-                            <li>ZTE ONT</li>
-                            <li>FiberHome ONT</li>
-                            <li>Nokia ONT</li>
+                            <li>Huawei Device</li>
+                            <li>ZTE Device</li>
                         </ul>
                     </AlertDescription>
                 </Alert>

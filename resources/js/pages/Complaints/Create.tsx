@@ -170,12 +170,16 @@ export default function CreateComplaintPage() {
             toast.success('Complaint submitted successfully!');
             reset();
 
-        } catch (error) {
-            toast.dismiss(toastId);
+        // Redirect to complaints index page after a short delay
+        setTimeout(() => {
+            router.visit('/complaints', {
+                preserveScroll: false,
+            });
+        }, 1000);
 
-            // Axios-specific error handling
-            if (axios.isAxiosError(error)) {
-                console.error('Axios error:', error.response?.data || error.message);
+    } catch (error: any) {
+        toast.dismiss(toastId);
+        console.error('Submit error:', error);
 
                 const apiMessage =
                     error.response?.data?.message ||

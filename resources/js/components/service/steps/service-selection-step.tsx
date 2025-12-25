@@ -3,6 +3,7 @@ import { DeviceOptionSelector } from '@/components/survey/device-option-selector
 import { Card, CardContent } from '@/components/ui/card';
 import { useBandwidthOptions } from '@/hooks/use-bandwidth-options';
 import { AlertCircle, CheckCircle, Package, Phone, Wifi } from 'lucide-react';
+import { useEffect } from 'react';
 
 interface ServiceSelectionStepProps {
     formData: any;
@@ -36,6 +37,27 @@ const serviceTypes = [
 
 export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: ServiceSelectionStepProps) {
     const { residentialOptions, enterpriseOptions, loading: loadingBandwidths } = useBandwidthOptions();
+
+    // Set default bandwidth to "5M" when options are loaded and bandwidth is empty
+    useEffect(() => {
+        if (!loadingBandwidths && residentialOptions.length > 0 && !formData.bandwidth) {
+            // Find "5M" in residential options (case-insensitive, handle variations like "5M", "5Mbps", etc.)
+            const defaultBandwidth = residentialOptions.find(
+                (option) => 
+                    option.value.toLowerCase().includes('5m') || 
+                    option.value.toLowerCase().includes('5 mbps') ||
+                    option.numericValue === 5
+            );
+
+            if (defaultBandwidth) {
+                onUpdate({
+                    bandwidth: defaultBandwidth.value,
+                    bandwidthNumericValue: defaultBandwidth.numericValue,
+                    customerType: 'residential',
+                });
+            }
+        }
+    }, [loadingBandwidths, residentialOptions, formData.bandwidth, onUpdate]);
 
     const handleServiceSelect = (serviceId: string) => {
         if (hasActiveSurvey) return; // Prevent selection if there's an active survey

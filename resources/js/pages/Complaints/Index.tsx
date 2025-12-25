@@ -141,13 +141,116 @@ export default function ComplaintsIndex() {
           setTtDetail(response.data);
         }
       } else {
-        // Use local Laravel API for local TTs
-        const response = await ttService.getLocalTT(tt.tt_no, auth.user.api_token);
-        if (response.success && response.data) {
-          setTtDetail({
-            ...response.data,
-            source: 'local',
-          });
+        // For local TTs, we can either show basic info from local_data
+        // or try to fetch external detail using the tt_serial_no
+        // Let's try to fetch external detail first
+        try {
+          const response = await ttService.getTTDetail(tt.tt_no, auth.user.api_token);
+          if (response.success && response.data) {
+            setTtDetail(response.data);
+          } else {
+            // Fallback to local data mapping
+            const localData = tt.local_data;
+            if (localData) {
+              setTtDetail({
+                ttNumber: localData.tt_serial_no,
+                title: '',
+                firstName: '',
+                middleName: '',
+                lastName: '',
+                customerType: '',
+                customerLevel: '',
+                customerCategory: '',
+                custSubCategory: '',
+                custID: '',
+                subsID: '',
+                adminRegion: '',
+                zone: '',
+                city: '',
+                subCity: '',
+                wereda: '',
+                kebele: '',
+                street: '',
+                houseNo: '',
+                buildingName: '',
+                floor: '',
+                roomNo: '',
+                troubleTitle: localData.trouble_title,
+                troubleReason: localData.trouble_reason,
+                troubleGrand: '',
+                contactPerson: localData.contact_person,
+                mobileNo: localData.mobile_no,
+                telephoneNo: '',
+                email: '',
+                accessNumber: localData.access_number,
+                acctNumber: localData.account_number || '',
+                additionalFaultyNbr: '',
+                deadline: '',
+                acceptTime: localData.created_at,
+                occurrenceDate: localData.occurrence_date || localData.created_at,
+                expectFeedbackTime: '',
+                faultLocation: '',
+                sendSMS: '',
+                ttDescription: localData.tt_description,
+                Remark: '',
+                attachment: '',
+                result_code: localData.status === 'completed' ? '0' : '1',
+                desc: '',
+                activities: [],
+              } as any);
+            }
+          }
+        } catch {
+          // Fallback to local data mapping
+          const localData = tt.local_data;
+          if (localData) {
+            setTtDetail({
+              ttNumber: localData.tt_serial_no,
+              title: '',
+              firstName: '',
+              middleName: '',
+              lastName: '',
+              customerType: '',
+              customerLevel: '',
+              customerCategory: '',
+              custSubCategory: '',
+              custID: '',
+              subsID: '',
+              adminRegion: '',
+              zone: '',
+              city: '',
+              subCity: '',
+              wereda: '',
+              kebele: '',
+              street: '',
+              houseNo: '',
+              buildingName: '',
+              floor: '',
+              roomNo: '',
+              troubleTitle: localData.trouble_title,
+              troubleReason: localData.trouble_reason,
+              troubleGrand: '',
+              contactPerson: localData.contact_person,
+              mobileNo: localData.mobile_no,
+              telephoneNo: '',
+              email: '',
+              accessNumber: localData.access_number,
+              acctNumber: localData.account_number || '',
+              additionalFaultyNbr: '',
+              deadline: '',
+              acceptTime: localData.created_at,
+              occurrenceDate: localData.occurrence_date || localData.created_at,
+              expectFeedbackTime: '',
+              faultLocation: '',
+              sendSMS: '',
+              ttDescription: localData.tt_description,
+              Remark: '',
+              attachment: '',
+              result_code: localData.status === 'completed' ? '0' : '1',
+              desc: '',
+              activities: [],
+            } as any);
+          }
         }
       }
     } catch (error: any) {
@@ -155,6 +258,15 @@ export default function ComplaintsIndex() {
       toast.error(error.message || 'Failed to load details');
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handleFeedbackConfirmed = () => {
+    // Reload the current view
+    if (activeTab === 'my-tickets') {
+      loadUserTTs(pagination.current_page);
+    } else if (accessNumber) {
+      handleSearch();
     }
   };
 
@@ -838,6 +950,7 @@ export default function ComplaintsIndex() {
         detail={ttDetail}
         loading={detailLoading}
         source={selectedTT?.source}
+        onConfirmSuccess={handleFeedbackConfirmed}
       />
     </MainLayout>
   );

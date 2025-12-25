@@ -24,7 +24,7 @@ interface ServiceFormData {
     serviceType: string;
     bandwidth: string;
     customerType: string;
-    withDevice: boolean;
+    withDevice?: boolean;
     latitude: number;
     longitude: number;
     distance: string;
@@ -64,7 +64,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         serviceType: '1457567289',
         bandwidth: '',
         customerType: '',
-        withDevice: false,
+        withDevice: undefined,
         latitude: 0,
         longitude: 0,
         distance: '',
@@ -186,7 +186,9 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
         switch (adjustedStep) {
             case 0: // Service Selection
-                return formData.serviceType && (!formData.serviceType.includes('1457567289') || formData.bandwidth);
+                const hasValidService = formData.serviceType && (!formData.serviceType.includes('1457567289') || formData.bandwidth);
+                const hasDeviceSelection = formData.withDevice !== undefined; // Device selection is required
+                return hasValidService && hasDeviceSelection;
             case 1: // Location Setup
                 return formData.latitude !== 0 && formData.longitude !== 0 && formData.address;
             case 2: // Review

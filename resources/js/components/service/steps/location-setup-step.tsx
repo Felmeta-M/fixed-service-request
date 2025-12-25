@@ -448,7 +448,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                     <AlertDescription>
                         <div className="flex items-center justify-between">
                             <span className="font-semibold">
-                                Unable to detect the resource at your location. Please visit our nearest service center for assistance.
+                            We’re unable to provide automatic provisioning at this location. Please visit your nearest ET Shop for support.
                             </span>
                         </div>
                     </AlertDescription>

@@ -45,7 +45,7 @@ export function ProfessionalSearch({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="w-full py-2 pr-20 pl-10 focus:ring-1 focus:ring-primary"
+                    className="w-full h-8 focus:ring-1 focus:ring-primary"
                 />
 
                 {/* Search Button (inside input) */}

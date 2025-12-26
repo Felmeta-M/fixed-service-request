@@ -1028,7 +1028,7 @@ export default function Create() {
                             <FormInput
                                 label="Place of Birth"
                                 id="place_of_birth"
-                                required
+                                // required
                                 autoFocus
                                 value={data.place_of_birth}
                                 onChange={(e) => handleInputChange('place_of_birth', e.target.value)}
@@ -1043,7 +1043,7 @@ export default function Create() {
 
                 {/* {step === 2 && ( */}
                 <div className="space-y-6">
-                    <Card>
+                    {/* <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-3 text-gray-800">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
@@ -1078,7 +1078,7 @@ export default function Create() {
                                 />
                             </div>
                         </CardContent>
-                    </Card>
+                    </Card> */}
                     <Card className="">
                         <CardHeader className="">
                             <CardTitle className="flex items-center gap-3 text-gray-800">
@@ -1120,7 +1120,7 @@ export default function Create() {
                                 <FormInput
                                     label="Email Address"
                                     id="email"
-                                    required
+                                    // required
                                     type="email"
                                     value={data.contact?.email || ''}
                                     onChange={(e) => handleNestedInputChange('contact', 'email', e.target.value)}
@@ -1282,10 +1282,10 @@ export default function Create() {
                                     error={formErrors.religion}
                                     disabled={isFieldReadOnly('religion')}
                                 />
-                                <FormSelect
+                                {/* <FormSelect
                                     label="Income Level"
                                     id="income"
-                                    required
+                                    // required
                                     value={data.income}
                                     onChange={(value) => handleSelectChange('income', value)}
                                     options={[
@@ -1300,7 +1300,7 @@ export default function Create() {
                                     placeholder="Select income level"
                                     error={formErrors.income}
                                     disabled={isFieldReadOnly('income')}
-                                />
+                                /> */}
                             </div>
                         </CardContent>
                     </Card>

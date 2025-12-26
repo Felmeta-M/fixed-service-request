@@ -3,12 +3,22 @@
 namespace App\Services\Subscription;
 
 use App\Services\BaseApiService;
+use App\Services\Payment\PaymentService;
+use App\Services\QueryAvailableNumberService;
+use App\Services\ReserveNumberService;
 use Illuminate\Support\Str;
 
 abstract class BaseSubscriptionService extends BaseApiService
 {
     protected int $timeout = 10;
     protected int $rateLimit = 15;
+    protected ?string $serviceNumber = null;
+
+    public function __construct(
+        protected readonly PaymentService $payment_service,
+        protected readonly QueryAvailableNumberService $queryAvailableNumberService,
+        protected readonly ReserveNumberService $reserveNumberService,
+    ) {}
 
     protected function endpoint(): string
     {

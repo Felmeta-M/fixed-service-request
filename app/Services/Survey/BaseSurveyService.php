@@ -56,7 +56,7 @@ abstract class BaseSurveyService extends BaseApiService
         $resource = self::decrypt($resource);
         $xml = $this->buildXml($data, $resource);
         $response = $this->executeRequest($xml);
-        Log::info($response);
+        // Log::info($response);
         return $this->parseResponse($data, $response, $resource);
     }
 

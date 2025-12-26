@@ -183,41 +183,41 @@ export function GoogleLocationMap({
         (lat: number, lng: number) => {
             if (!map) return;
 
-        // Remove existing marker
-        if (markerRef.current) {
-            markerRef.current.setMap(null);
-        }
+            // Remove existing marker
+            if (markerRef.current) {
+                markerRef.current.setMap(null);
+            }
 
-        // Create new marker with smooth animation
-        markerRef.current = new google.maps.Marker({
-            position: { lat, lng },
-            map: map,
-            title: 'Selected Location',
-            draggable: true,
-            animation: google.maps.Animation.DROP,
-        });
+            // Create new marker with smooth animation
+            markerRef.current = new google.maps.Marker({
+                position: { lat, lng },
+                map: map,
+                title: 'Selected Location',
+                draggable: true,
+                animation: google.maps.Animation.DROP,
+            });
 
-        // Add smooth drag end listener
-        markerRef.current.addListener('dragend', async (event: google.maps.MapMouseEvent) => {
-            if (!event.latLng || internalAnimating) return;
+            // Add smooth drag end listener
+            markerRef.current.addListener('dragend', async (event: google.maps.MapMouseEvent) => {
+                if (!event.latLng || internalAnimating) return;
 
-            const newLat = event.latLng.lat();
-            const newLng = event.latLng.lng();
+                const newLat = event.latLng.lat();
+                const newLng = event.latLng.lng();
 
-            // Smooth pan to dragged location
-            smoothPanTo(newLat, newLng);
+                // Smooth pan to dragged location
+                smoothPanTo(newLat, newLng);
 
-            // Update address asynchronously while keeping marker responsive
-            const address = await getAddressFromCoordinates(newLat, newLng);
-            onLocationSelect(newLat, newLng, address);
-        });
+                // Update address asynchronously while keeping marker responsive
+                const address = await getAddressFromCoordinates(newLat, newLng);
+                onLocationSelect(newLat, newLng, address);
+            });
 
-        // Add click listener for info window
-        markerRef.current.addListener('click', () => {
-            if (infoWindowRef.current && markerRef.current) {
-                const position = markerRef.current.getPosition();
-                if (position) {
-                    infoWindowRef.current.setContent(`
+            // Add click listener for info window
+            markerRef.current.addListener('click', () => {
+                if (infoWindowRef.current && markerRef.current) {
+                    const position = markerRef.current.getPosition();
+                    if (position) {
+                        infoWindowRef.current.setContent(`
                         <div class="p-2 max-w-xs">
                             <strong class="text-sm font-semibold">Selected Location</strong><br>
                             <span class="text-xs">Lat: ${formatCoordinate(position.lat())}</span><br>
@@ -225,10 +225,10 @@ export function GoogleLocationMap({
                             <span class="text-xs text-gray-600">${selectedLocation?.address || 'Click to select location'}</span>
                         </div>
                     `);
-                    infoWindowRef.current.open(map, markerRef.current);
+                        infoWindowRef.current.open(map, markerRef.current);
+                    }
                 }
-            }
-        });
+            });
         },
         [getAddressFromCoordinates, internalAnimating, map, onLocationSelect, selectedLocation, smoothPanTo],
     );
@@ -316,45 +316,45 @@ export function GoogleLocationMap({
     //     onAddressSearch(query);
     // };
     const handleSearch = async () => {
-    const query = searchQuery.trim();
-    if (!query || internalAnimating) return;
+        const query = searchQuery.trim();
+        if (!query || internalAnimating) return;
 
-    if (map && typeof google !== 'undefined' && google.maps?.Geocoder) {
-        try {
-            setIsGeocoding(true);
-            const geocoder = new google.maps.Geocoder();
+        if (map && typeof google !== 'undefined' && google.maps?.Geocoder) {
+            try {
+                setIsGeocoding(true);
+                const geocoder = new google.maps.Geocoder();
 
-            const results = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
-                geocoder.geocode({ address: query }, (results, status) => {
-                    if (status === 'OK' && results && results.length > 0) {
-                        resolve(results);
-                        return;
-                    }
-                    reject(new Error(`Geocoding failed: ${status}`));
+                const results = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
+                    geocoder.geocode({ address: query }, (results, status) => {
+                        if (status === 'OK' && results && results.length > 0) {
+                            resolve(results);
+                            return;
+                        }
+                        reject(new Error(`Geocoding failed: ${status}`));
+                    });
                 });
-            });
 
-            const first = results[0];
-            const location = first.geometry.location;
-            
-            // Call the parent handler with coordinates AND address
-            onLocationSelect(location.lat(), location.lng(), first.formatted_address);
-            
-            // Clear search query after successful search
-            setSearchQuery('');
-            
-        } catch (error) {
-            console.error('Geocoding failed:', error);
-            // Fall back to the parent handler for error display
+                const first = results[0];
+                const location = first.geometry.location;
+
+                // Call the parent handler with coordinates AND address
+                onLocationSelect(location.lat(), location.lng(), first.formatted_address);
+
+                // Clear search query after successful search
+                setSearchQuery('');
+
+            } catch (error) {
+                console.error('Geocoding failed:', error);
+                // Fall back to the parent handler for error display
+                onAddressSearch(query);
+            } finally {
+                setIsGeocoding(false);
+            }
+        } else {
+            // Fallback to parent handler if Geocoder not available
             onAddressSearch(query);
-        } finally {
-            setIsGeocoding(false);
         }
-    } else {
-        // Fallback to parent handler if Geocoder not available
-        onAddressSearch(query);
-    }
-};
+    };
 
     // Get user's current location
     const getCurrentLocation = useCallback(() => {
@@ -388,12 +388,12 @@ export function GoogleLocationMap({
             },
             (error) => {
                 console.error('Error getting location:', error);
-                
+
                 // Dismiss loading toast
                 toast.dismiss(toastId);
-                
+
                 let errorMessage = 'Unable to retrieve your location.';
-                
+
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
                         errorMessage = 'Location access denied. Please enable location permissions.';
@@ -405,7 +405,7 @@ export function GoogleLocationMap({
                         errorMessage = 'Location request timed out.';
                         break;
                 }
-                
+
                 alert(errorMessage);
                 setIsGettingLocation(false);
             },
@@ -434,7 +434,7 @@ export function GoogleLocationMap({
     return (
         <div className="space-y-2">
             {/* Search Bar and Get Location Button */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-col sm:flex-row">
                 <div className="flex-1">
                     <ProfessionalSearch
                         searchQuery={searchQuery}
@@ -460,7 +460,7 @@ export function GoogleLocationMap({
                         <>
                             {/* <Navigation className="h-4 w-4" /> */}
                             <MapPin className="h-4 w-4" />
-                            <span className="hidden sm:inline">Get My Location</span>
+                            <span className="">Get My Location</span>
                         </>
                     )}
                 </Button>

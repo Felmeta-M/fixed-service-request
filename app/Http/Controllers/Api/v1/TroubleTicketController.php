@@ -36,12 +36,12 @@ class TroubleTicketController extends Controller
                 ->where('customer_code', $user->customer_code);
 
             if ($request->filled('tt_serial_no')) {
-                $ticketsQuery->where('tt_serial_no', $request->tt_serial_no);
+                $ticketsQuery->where('tt_serial_no', 'like', '%' . $request->tt_serial_no . '%');
             }
 
 
             if ($request->filled('access_number')) {
-                $ticketsQuery->where('access_number', $request->access_number);
+                $ticketsQuery->where('access_number', 'like', '%' . $request->access_number . '%');
             }
 
             if ($request->filled('status')) {

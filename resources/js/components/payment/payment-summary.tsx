@@ -202,24 +202,24 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
 
     return (
         <div className="px-4">
-            <div className="mx-auto bg-white max-w-4xl">
+            <div className="mx-auto bg-white max-w-4xl px-4">
                 {/* Invoice Header */}
                 <div className="mb-2 rounded-lg bg-white pt-4 shadow-xs">
                     <div className="flex flex-col justify-between md:flex-row md:items-start">
                         <div>
                             <div className="mb-2 flex items-center gap-2">
-                            
+
                                 <div>
                                     {/* <h1 className="text-2xl font-bold text-gray-900">Service and Payment Details</h1> */}
                                     <p className="text-lg font-bold">Order Summary & Payment Details</p>
                                 </div>
                             </div>
                             {/* <div className="mt-4 space-y-2"> */}
-                                {/* <div className="flex items-center gap-2 text-sm">
+                            {/* <div className="flex items-center gap-2 text-sm">
                                     <Calendar className="h-4 w-4 text-gray-400" />
                                     <span className="text-gray-600">Date: {formattedDate}</span>
                                 </div> */}
-                                {/* <div className="flex items-center gap-2 text-sm">
+                            {/* <div className="flex items-center gap-2 text-sm">
                                     <Hash className="h-4 w-4 text-gray-400" />
                                     <span className="text-gray-600">Order Id: {customer_survey_order_id || 'Pending'}</span>
                                 </div> */}
@@ -352,7 +352,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                     <span className="text-lg font-semibold text-gray-900">Total Amount</span>
                                     <span className="text-lg font-semibold text-gray-900">{totalAmount} ETB</span>
                                 </div>
-                                
+
                                 {/* {!isFree && (
                                     <>
                                         <div className="flex justify-between text-sm text-gray-600">
@@ -365,7 +365,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                                 ].filter(Boolean).join(', ')}
                                             </span>
                                         </div> */}
-                                        {/* <div className="rounded-lg bg-primary/5 p-4">
+                                {/* <div className="rounded-lg bg-primary/5 p-4">
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <p className="font-semibold text-gray-900">Total Amount Due</p>
@@ -377,7 +377,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                                 </div>
                                             </div>
                                         </div> */}
-                                    {/* </>
+                                {/* </>
                                 )} */}
                             </div>
                         </div>
@@ -398,12 +398,12 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                 </div> */}
                                 <div>
                                     <Link href="/services" className="text-sm text-gray-600 underline hover:text-gray-800">
-                                       <Button variant="outline" className="gap-2">
-                                        Cancel
-                                       </Button>
+                                        <Button variant="outline" className="gap-2">
+                                            Cancel
+                                        </Button>
                                     </Link>
                                 </div>
-                                
+
                                 <div className="flex gap-3">
                                     {/* {canSubscribe && isFree ? ( */}
                                     {canSubscribe ? (
@@ -441,7 +441,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center gap-2">
-                                                     {/* <img src={logo} alt="ID" className="mr-2 h-5 w-10" /> */}
+                                                    {/* <img src={logo} alt="ID" className="mr-2 h-5 w-10" /> */}
                                                     Pay {totalAmount} ETB
                                                 </div>
                                             )}

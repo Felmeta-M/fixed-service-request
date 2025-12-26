@@ -4,12 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/layouts/main-layout';
 import { Link, usePage } from '@inertiajs/react';
-import { 
-  Filter, 
-  Plus, 
-  Search, 
-  X, 
-  AlertCircle, 
+import {
+  Filter,
+  Plus,
+  Search,
+  X,
+  AlertCircle,
   RefreshCw,
   Loader2,
   FileText,
@@ -18,7 +18,7 @@ import {
   Home,
   Globe
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DisplayTT } from '@/types/tt';
 import { toast } from 'sonner';
 import TTTable from '@/components/complaints/tt-table';
@@ -47,13 +47,36 @@ export default function ComplaintsIndex() {
   });
 
   const { auth } = usePage().props as any;
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced filter values - these are used for API calls
+  const [debouncedFilterAccessNumber, setDebouncedFilterAccessNumber] = useState('');
+  const [debouncedFilterTTSerialNo, setDebouncedFilterTTSerialNo] = useState('');
+
+  // Debounce filter inputs - wait 500ms after user stops typing before updating debounced values
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedFilterAccessNumber(filterAccessNumber);
+      setDebouncedFilterTTSerialNo(filterTTSerialNo);
+    }, 500);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [filterAccessNumber, filterTTSerialNo]);
 
   // Load user's tickets on mount and when filters change
   useEffect(() => {
     if (activeTab === 'my-tickets' && auth?.user?.id) {
       loadUserTTs(1);
     }
-  }, [activeTab, auth?.user?.id, filterAccessNumber, filterTTSerialNo, statusFilter]);
+  }, [activeTab, auth?.user?.id, debouncedFilterAccessNumber, debouncedFilterTTSerialNo, statusFilter]);
 
   const loadUserTTs = async (page = 1) => {
     setLoading(true);
@@ -62,20 +85,20 @@ export default function ComplaintsIndex() {
         page: page,
         per_page: 10,
       };
-      
-      // Add filters if provided
-      if (filterAccessNumber.trim()) {
-        params.access_number = filterAccessNumber.trim();
+
+      // Add filters if provided (use debounced values)
+      if (debouncedFilterAccessNumber.trim()) {
+        params.access_number = debouncedFilterAccessNumber.trim();
       }
-      
-      if (filterTTSerialNo.trim()) {
-        params.tt_serial_no = filterTTSerialNo.trim();
+
+      if (debouncedFilterTTSerialNo.trim()) {
+        params.tt_serial_no = debouncedFilterTTSerialNo.trim();
       }
-      
+
       if (statusFilter !== 'all') {
         params.status = statusFilter;
       }
-      
+
       const response = await ttService.getLocalTTs(params, auth.user.api_token);
 
       if (response.success) {
@@ -121,7 +144,7 @@ export default function ComplaintsIndex() {
     try {
       const results = await ttService.searchAllTTs(accessNumber, auth.user.api_token);
       setTts(results);
-      
+
       if (results.length === 0) {
         toast.info('No trouble tickets found for this access number');
       } else {
@@ -176,48 +199,48 @@ export default function ComplaintsIndex() {
             <p className="text-muted-foreground">Manage and track your complaint tickets</p>
           </div>
           <div className="flex items-center gap-2">
-              <div className="">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowFilters(!showFilters)}
-                      className="flex items-center gap-2"
-                    >
-                      <Filter className="h-4 w-4" />
-                      Filters
-                      {hasActiveFilters && (
-                        <span className="flex h-2 w-2 rounded-full bg-primary" />
-                      )}
-                      {showFilters ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => loadUserTTs(pagination.current_page)}
-                      disabled={loading}
-                    >
-                      <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                      Refresh
-                    </Button>
-                  </div>
-              
-          </div>
-          <div className="flex gap-2">
-            <Link href="/complaints/create">
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                New Complaint
-              </Button>
-            </Link>
-                  </div>
-                </div>
+            <div className="">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                  {hasActiveFilters && (
+                    <span className="flex h-2 w-2 rounded-full bg-primary" />
+                  )}
+                  {showFilters ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => loadUserTTs(pagination.current_page)}
+                  disabled={loading}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
               </div>
+
+            </div>
+            <div className="flex gap-2">
+              <Link href="/complaints/create">
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Complaint
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="space-y-6">
@@ -235,20 +258,20 @@ export default function ComplaintsIndex() {
           <TabsContent value="my-tickets" className="space-y-6">
             {/* Controls and Filters */}
             <div className='border-none'>
-              
+
 
               {showFilters && (
                 <div className="border-t pt-2">
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Access Number</label>
-                        <Input
+                      <Input
                         placeholder="Filter by access number..."
                         value={filterAccessNumber}
                         onChange={(e) => setFilterAccessNumber(e.target.value)}
                         size="sm"
-                        />
-                      </div>
+                      />
+                    </div>
 
                     <div className="space-y-2">
                       <label className="text-sm font-medium">TT Serial Number</label>
@@ -290,21 +313,21 @@ export default function ComplaintsIndex() {
                         />
                       </div>
                     </div> */}
-                  {/* </div> */}
-                  <div className="mt-2">
-                    {hasActiveFilters && (
-                    <div className="mt-4 flex justify-end">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={clearFilters}
-                        >
-                          <X className="h-4 w-4 mr-2" />
-                        Clear All Filters
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                    {/* </div> */}
+                    <div className="mt-2">
+                      {hasActiveFilters && (
+                        <div className="mt-4 flex justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={clearFilters}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Clear All Filters
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -329,7 +352,7 @@ export default function ComplaintsIndex() {
                       Enter access number to search across local and external systems
                     </CardDescription>
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -346,8 +369,8 @@ export default function ComplaintsIndex() {
                         disabled={loading}
                       />
                     </div>
-                    <Button 
-                      onClick={handleSearch} 
+                    <Button
+                      onClick={handleSearch}
                       disabled={loading || !accessNumber.trim()}
                     >
                       {loading ? (
@@ -423,7 +446,7 @@ export default function ComplaintsIndex() {
                           Access Number: <span className="font-mono font-medium">{accessNumber}</span> - Showing {tts.length} tickets
                         </CardDescription>
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
                         <Select value={sourceFilter} onValueChange={(value) => setSourceFilter(value as SourceFilter)}>
                           <SelectTrigger className="w-[140px]">
@@ -458,7 +481,7 @@ export default function ComplaintsIndex() {
                             className="w-[200px] pl-9"
                           />
                         </div>
-                        
+
                         {hasActiveFilters && (
                           <Button
                             variant="outline"
@@ -481,31 +504,31 @@ export default function ComplaintsIndex() {
                     if (sourceFilter !== 'all' && tt.source !== sourceFilter) {
                       return false;
                     }
-                    
+
                     // Status filter
                     if (statusFilter !== 'all') {
                       const ttStatus = tt.status.toLowerCase();
                       const filterStatus = statusFilter.toLowerCase();
-                      
+
                       if (filterStatus === 'pending' && !ttStatus.includes('pending')) {
                         return false;
                       }
                       if (filterStatus === 'in_progress' && !ttStatus.includes('progress')) {
                         return false;
                       }
-                      if (filterStatus === 'completed' && 
-                          !ttStatus.includes('completed') && 
-                          !ttStatus.includes('resolved') &&
-                          !ttStatus.includes('closed')) {
+                      if (filterStatus === 'completed' &&
+                        !ttStatus.includes('completed') &&
+                        !ttStatus.includes('resolved') &&
+                        !ttStatus.includes('closed')) {
                         return false;
                       }
-                      if (filterStatus === 'cancelled' && 
-                          !ttStatus.includes('cancelled') && 
-                          !ttStatus.includes('failed')) {
+                      if (filterStatus === 'cancelled' &&
+                        !ttStatus.includes('cancelled') &&
+                        !ttStatus.includes('failed')) {
                         return false;
                       }
                     }
-                    
+
                     // Search query
                     if (searchQuery) {
                       const query = searchQuery.toLowerCase();
@@ -516,7 +539,7 @@ export default function ComplaintsIndex() {
                         tt.access_number.includes(query)
                       );
                     }
-                    
+
                     return true;
                   })}
                   loading={loading}

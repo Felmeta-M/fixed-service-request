@@ -76,7 +76,18 @@ export const useResourceChecker = () => {
                 }
             );
 
-            if (response.data.success && response.data.data) {
+            // Check if response is successful
+            if (response.data.success) {
+                // If data is null, no resource is available
+                if (!response.data.data || response.data.data === null) {
+                    return {
+                        available: false,
+                        message: 'No available resources in this area',
+                        data: null,
+                    };
+                }
+
+                // Process the resource data
                 const resource = response.data.data;
                 const availablePorts = parseInt(resource.ava_port) || 0;
 
@@ -93,10 +104,11 @@ export const useResourceChecker = () => {
                 };
             }
 
+            // Response was not successful
             return {
                 available: false,
                 message: response.data.message || 'Resource check failed',
-                data: response.data.data,
+                data: response.data.data || null,
             };
         } catch (error) {
             console.error('Resource check failed:', error);

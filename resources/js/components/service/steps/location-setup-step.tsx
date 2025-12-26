@@ -5,9 +5,18 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { parseCoordinate } from '@/lib/coordinate-utils';
 import { usePage } from '@inertiajs/react';
-import { Loader2, MapPin, Navigation } from 'lucide-react';
+import { AlertCircle, Loader2, MapPin, Navigation } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GoogleLocationMap } from '../google-location-map';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface LocationSetupStepProps {
     formData: any;
@@ -23,6 +32,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
     const [isMapAnimating, setIsMapAnimating] = useState(false);
     const [isEditingAddress, setIsEditingAddress] = useState(false);
     const [manualAddress, setManualAddress] = useState('');
+    const [showResourceUnavailableDialog, setShowResourceUnavailableDialog] = useState(false);
 
     const [manualLat, setManualLat] = useState(formData.latitude || '');
     const [manualLng, setManualLng] = useState(formData.longitude || '');
@@ -105,6 +115,13 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
             setLocationLoading(false);
         }
     }, []); // Empty dependency array - run only once
+
+    // Show modal when resource is not available
+    useEffect(() => {
+        if (formData.resourceAvailable === false) {
+            setShowResourceUnavailableDialog(true);
+        }
+    }, [formData.resourceAvailable]);
 
     const getCurrentLocationWithTimeout = (): Promise<GeolocationPosition> => {
         return new Promise((resolve, reject) => {
@@ -401,7 +418,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                                                     />
                                                 </Field>
 
-                                                {showUpdateBtn && (
+                                                {/* {showUpdateBtn && (
                                                     <div className="flex items-end">
                                                         <Button
                                                             onClick={handleManualCoordinateSubmit}
@@ -416,7 +433,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                                                             {isGeocoding ? 'Updating...' : 'Update Coordinates'}
                                                         </Button>
                                                     </div>
-                                                )}
+                                                )} */}
                                             </div>
                                         </FieldGroup>
 
@@ -443,17 +460,26 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                 </Alert>
             )}
 
-            {formData.resourceAvailable === false && (
-                <Alert variant="destructive">
-                    <AlertDescription>
-                        <div className="flex items-center justify-between">
-                            <span className="font-semibold">
-                            We’re unable to provide automatic provisioning at this location. Please visit your nearest ET Shop for support.
-                            </span>
+            <AlertDialog open={showResourceUnavailableDialog} onOpenChange={setShowResourceUnavailableDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
+                                <AlertCircle className="h-5 w-5 text-red-600" />
+                            </div>
+                            <AlertDialogTitle className="text-left">Service Unavailable at This Location</AlertDialogTitle>
                         </div>
-                    </AlertDescription>
-                </Alert>
-            )}
+                        <AlertDialogDescription className="pt-2 text-left">
+                        Sorry, currently we have no available resources in this area. Please visit our shops for manual assistance.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction onClick={() => setShowResourceUnavailableDialog(false)}>
+                            Understood
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

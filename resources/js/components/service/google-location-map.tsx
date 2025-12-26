@@ -1,8 +1,11 @@
 import { formatCoordinate } from '@/lib/coordinate-utils';
 import { GoogleMap, LoadScript } from '@react-google-maps/api';
-import { Loader2 } from 'lucide-react';
+import { Loader2, LocateIcon, MapPin, Navigation } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ProfessionalSearch } from './map-search';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import LocationPicker from '../LocationPicker';
 
 interface GoogleLocationMapProps {
     onLocationSelect: (lat: number, lng: number, address?: string) => void;
@@ -48,6 +51,7 @@ export function GoogleLocationMap({
     const [searchQuery, setSearchQuery] = useState('');
     const [isGeocoding, setIsGeocoding] = useState(false);
     const [internalAnimating, setInternalAnimating] = useState(false);
+    const [isGettingLocation, setIsGettingLocation] = useState(false);
     const markerRef = useRef<google.maps.Marker | null>(null);
     const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
     const animationRef = useRef<number | null>(null);
@@ -352,6 +356,67 @@ export function GoogleLocationMap({
     }
 };
 
+    // Get user's current location
+    const getCurrentLocation = useCallback(() => {
+        if (!navigator.geolocation || !map) {
+            alert('Geolocation is not supported by your browser');
+            return;
+        }
+
+        setIsGettingLocation(true);
+        const toastId = toast.loading('Locating...');
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                // Dismiss loading toast
+                toast.dismiss(toastId);
+
+                // Smooth pan to current location
+                smoothPanTo(lat, lng, 16);
+
+                // Update marker position
+                updateMarkerPosition(lat, lng);
+
+                // Get address for current location
+                const address = await getAddressFromCoordinates(lat, lng);
+                onLocationSelect(lat, lng, address);
+
+                setIsGettingLocation(false);
+            },
+            (error) => {
+                console.error('Error getting location:', error);
+                
+                // Dismiss loading toast
+                toast.dismiss(toastId);
+                
+                let errorMessage = 'Unable to retrieve your location.';
+                
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = 'Location access denied. Please enable location permissions.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = 'Location information is unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = 'Location request timed out.';
+                        break;
+                }
+                
+                alert(errorMessage);
+                setIsGettingLocation(false);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0,
+            }
+        );
+    }, [map, smoothPanTo, updateMarkerPosition, getAddressFromCoordinates, onLocationSelect]);
+
     // Use external animation state if provided, otherwise use internal
     const isCurrentlyAnimating = isAnimating !== undefined ? isAnimating : internalAnimating;
 
@@ -368,17 +433,50 @@ export function GoogleLocationMap({
 
     return (
         <div className="space-y-2">
-            {/* Search Bar */}
-            <ProfessionalSearch
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                onSearch={handleSearch}
-                isLoading={isGeocoding || isCurrentlyAnimating}
-                placeholder="Search for an address, place, or landmark..."
-            />
+            {/* Search Bar and Get Location Button */}
+            <div className="flex gap-2">
+                <div className="flex-1">
+                    <ProfessionalSearch
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
+                        onSearch={handleSearch}
+                        isLoading={isGeocoding || isCurrentlyAnimating}
+                        placeholder="Search for an address, place, or landmark..."
+                    />
+                </div>
+                <Button
+                    type="button"
+                    onClick={getCurrentLocation}
+                    disabled={isGettingLocation || isCurrentlyAnimating || !map}
+                    // variant="outline"
+                    className="flex h-8 items-center gap-2"
+                >
+                    {isGettingLocation ? (
+                        <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="hidden sm:inline">Locating...</span>
+                        </>
+                    ) : (
+                        <>
+                            {/* <Navigation className="h-4 w-4" /> */}
+                            <MapPin className="h-4 w-4" />
+                            <span className="hidden sm:inline">Get My Location</span>
+                        </>
+                    )}
+                </Button>
+            </div>
 
             {/* Status Indicators */}
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
+                {isGettingLocation && (
+                    <div className="rounded-lg bg-green-50 p-3 transition-all duration-300">
+                        <div className="flex items-center space-x-2">
+                            <Loader2 className="h-4 w-4 animate-spin text-green-600" />
+                            <span className="text-sm text-green-700">Detecting your current location...</span>
+                        </div>
+                    </div>
+                )}
+
                 {isGeocoding && (
                     <div className="rounded-lg bg-blue-50 p-3 transition-all duration-300">
                         <div className="flex items-center space-x-2">
@@ -396,7 +494,7 @@ export function GoogleLocationMap({
                         </div>
                     </div>
                 )}
-            </div>
+            </div> */}
 
             {/* Google Maps Container */}
             <div className="relative overflow-hidden rounded-lg border transition-all duration-300">

@@ -153,8 +153,10 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 toast.success(result.message || 'Resource available!', { id: toastId });
                 nextStep();
             } else {
-                toast.error(result.message || 'Resource check failed', { id: toastId });
-                // No UI surface here; Location step can use `formData.resourceMessage` if needed.
+                // Don't show error toast here - the modal will be shown in location-setup-step
+                // Just dismiss the loading toast
+                toast.dismiss(toastId);
+                // The modal will be shown automatically via useEffect in location-setup-step when resourceAvailable is false
             }
         } catch (error) {
             console.error('Resource check error:', error);

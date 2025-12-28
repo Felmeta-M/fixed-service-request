@@ -97,7 +97,7 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
                             className="flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-primary hover:underline"
                             onClick={() => handleRowClick(tt)}
                         >
-                            {getSourceIcon(tt.source)}
+                            {/* {getSourceIcon(tt.source)} */}
                             <span className="font-mono">{String(info.getValue() ?? '-')}</span>
                         </button>
                     );

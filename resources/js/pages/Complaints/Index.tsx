@@ -231,10 +231,10 @@ export default function ComplaintsIndex() {
               </div>
 
             </div>
-            <div className="flex gap-2">
+            <div className="flex">
               <Link href="/complaints/create">
                 <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4" />
                   New Complaint
                 </Button>
               </Link>

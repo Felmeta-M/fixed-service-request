@@ -3,20 +3,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { parseCoordinate } from '@/lib/coordinate-utils';
 import { usePage } from '@inertiajs/react';
-import { AlertCircle, Loader2, MapPin, Navigation } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, MapPin, Navigation, Phone } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GoogleLocationMap } from '../google-location-map';
 import {
     AlertDialog,
     AlertDialogAction,
+    AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 interface LocationSetupStepProps {
     formData: any;
@@ -24,8 +28,17 @@ interface LocationSetupStepProps {
     googleMapsApiKey: string;
 }
 
+interface AuthUser {
+    id?: number;
+    customer_code?: string | number;
+    name?: string;
+    phone?: string;
+    email?: string;
+    api_token?: string;
+}
+
 export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: LocationSetupStepProps) {
-    const { user } = usePage().props.auth;
+    const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
     const [locationLoading, setLocationLoading] = useState(true);
     const [locationError, setLocationError] = useState('');
     const [isGeocoding, setIsGeocoding] = useState(false);
@@ -33,6 +46,27 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
     const [isEditingAddress, setIsEditingAddress] = useState(false);
     const [manualAddress, setManualAddress] = useState('');
     const [showResourceUnavailableDialog, setShowResourceUnavailableDialog] = useState(false);
+    const [showManualFlow, setShowManualFlow] = useState(false);
+
+    // Manual flow form state
+    const [manualFlowData, setManualFlowData] = useState({
+        phone: '',
+        name: '',
+        reason: '',
+    });
+    const [manualFlowErrors, setManualFlowErrors] = useState<Record<string, string>>({});
+    const [submittingManualFlow, setSubmittingManualFlow] = useState(false);
+
+    // Initialize manual flow data with user info when user is available
+    useEffect(() => {
+        if (user) {
+            setManualFlowData((prev) => ({
+                phone: prev.phone || (user as AuthUser)?.phone || '',
+                name: prev.name || (user as AuthUser)?.name || '',
+                reason: prev.reason,
+            }));
+        }
+    }, [user]);
 
     const [manualLat, setManualLat] = useState(formData.latitude || '');
     const [manualLng, setManualLng] = useState(formData.longitude || '');
@@ -118,10 +152,122 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
 
     // Show modal when resource is not available
     useEffect(() => {
-        if (formData.resourceAvailable === false) {
+        if (formData.resourceAvailable === false && !showManualFlow) {
             setShowResourceUnavailableDialog(true);
         }
-    }, [formData.resourceAvailable]);
+    }, [formData.resourceAvailable, showManualFlow]);
+
+    // Validate phone number format
+    const validatePhoneNumber = (phone: string): string => {
+        if (!phone.trim()) {
+            return 'Phone number is required';
+        }
+        // Allow phone numbers with 9-15 digits (international format)
+        const phoneRegex = /^[+]?[\d\s-]{9,15}$/;
+        const cleanedPhone = phone.replace(/[\s-]/g, '');
+        if (!phoneRegex.test(cleanedPhone)) {
+            return 'Please enter a valid phone number (9-15 digits)';
+        }
+        return '';
+    };
+
+    // Handle manual flow submission
+    const handleManualFlowSubmit = async () => {
+        // Clear previous errors
+        setManualFlowErrors({});
+
+        // Validate phone number (required)
+        const phoneError = validatePhoneNumber(manualFlowData.phone);
+        if (phoneError) {
+            setManualFlowErrors({ phone: phoneError });
+            return;
+        }
+
+        setSubmittingManualFlow(true);
+        const submissionToast = toast.loading('Submitting your request...');
+
+        try {
+            // Prepare submission data
+            const submissionData = {
+                phone: manualFlowData.phone.trim(),
+                name: manualFlowData.name.trim() || undefined,
+                reason: manualFlowData.reason.trim() || undefined,
+                latitude: formData.latitude,
+                longitude: formData.longitude,
+                address: formData.address,
+                serviceType: formData.serviceType,
+                bandwidth: formData.bandwidth,
+            };
+
+            // Submit to backend API
+            // TODO: Replace with actual endpoint when backend is ready
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_BASE_URL}/service/manual-request`,
+                submissionData,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${(user as AuthUser)?.api_token}`,
+                    },
+                },
+            );
+
+            if (response.data?.success !== false) {
+                toast.success('Your request has been submitted successfully. Our team will contact you shortly.', {
+                    id: submissionToast,
+                });
+                
+                // Close dialogs and reset manual flow
+                setShowManualFlow(false);
+                setShowResourceUnavailableDialog(false);
+                
+                // Update form data to mark as manual submission
+                onUpdate({
+                    ...formData,
+                    manualSubmission: true,
+                    manualFlowData: submissionData,
+                });
+            } else {
+                throw new Error(response.data?.message || 'Submission failed');
+            }
+        } catch (error: any) {
+            console.error('Manual flow submission error:', error);
+            const errorMessage =
+                error.response?.data?.message ||
+                error.message ||
+                'Failed to submit your request. Please try again later.';
+            
+            toast.error(errorMessage, { id: submissionToast });
+            
+            // If it's a validation error, show field-specific errors
+            if (error.response?.data?.errors) {
+                setManualFlowErrors(error.response.data.errors);
+            }
+        } finally {
+            setSubmittingManualFlow(false);
+        }
+    };
+
+    // Handle "Continue Manually" button click
+    const handleContinueManually = () => {
+        setShowResourceUnavailableDialog(false);
+        setShowManualFlow(true);
+        // Pre-fill with user data if available
+        setManualFlowData({
+            phone: (user as AuthUser)?.phone || '',
+            name: (user as AuthUser)?.name || '',
+            reason: '',
+        });
+        setManualFlowErrors({});
+    };
+
+    // Handle dialog close - reset states if user cancels
+    const handleDialogClose = (open: boolean) => {
+        if (!open) {
+            setShowResourceUnavailableDialog(false);
+            // Don't reset showManualFlow here to allow user to see the form
+        }
+    };
 
     const getCurrentLocationWithTimeout = (): Promise<GeolocationPosition> => {
         return new Promise((resolve, reject) => {
@@ -460,22 +606,166 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                 </Alert>
             )}
 
-            <AlertDialog open={showResourceUnavailableDialog} onOpenChange={setShowResourceUnavailableDialog}>
-                <AlertDialogContent>
+            {/* Resource Unavailable Dialog - Initial Notification */}
+            <AlertDialog open={showResourceUnavailableDialog && !showManualFlow} onOpenChange={handleDialogClose}>
+                <AlertDialogContent className="sm:max-w-md">
                     <AlertDialogHeader>
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                                <AlertCircle className="h-5 w-5 text-red-600" />
-                            </div>
-                            <AlertDialogTitle className="text-left">Service Unavailable at This Location</AlertDialogTitle>
+                            {/* <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100"> */}
+                                <AlertCircle className="h-5 w-5 text-amber-600" />
+                            {/* </div> */}
+                            <AlertDialogTitle className="text-left">Service Currently Unavailable</AlertDialogTitle>
                         </div>
-                        <AlertDialogDescription className="pt-2 text-left">
-                        Sorry, currently we have no available resources in this area. Please visit our shops for manual assistance.
+                        <AlertDialogDescription className="pt-3 text-left">
+                            <p className="mb-3 text-gray-700">
+                            <span className='text-orange-500'>Sorry, currently we have no available resources in this area. However, we're here to help you through an alternative process.</span>
+                                {/* We currently don't have automated resources available for this location. However, we're here to help you through an alternative process. */}
+                                {/* Sorry, currently we have no available resources in this area. Please visit our shops for manual assistance. */}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                                Would you like to submit a manual request? Our team will review your location and contact you to assist with your service needs.
+                            </p>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogAction onClick={() => setShowResourceUnavailableDialog(false)}>
-                            Understood
+                    <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row">
+                        <AlertDialogCancel onClick={() => setShowResourceUnavailableDialog(false)}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleContinueManually}
+                            className="bg-primary hover:bg-primary/90"
+                        >
+                            Continue Manually
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Manual Flow Dialog - Request Form */}
+            <AlertDialog open={showManualFlow} onOpenChange={(open) => !open && setShowManualFlow(false)}>
+                <AlertDialogContent className="sm:max-w-lg">
+                    <AlertDialogHeader>
+                        <div className="flex items-center gap-3">
+                            {/* <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100"> */}
+                                <Phone className="h-5 w-5 text-primary" />
+                            {/* </div> */}
+                            <AlertDialogTitle className="text-left">Submit Manual Request</AlertDialogTitle>
+                        </div>
+                        <AlertDialogDescription className=" text-left">
+                            <p className="text-gray-700">
+                                Please provide your contact information below. Our team will review your location and get back to you within 1-2 business days.
+                            </p>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+
+                    <div className="space-y-2">
+                        {/* Phone Number - Required */}
+                        <Field>
+                            <FieldLabel htmlFor="manual-phone">
+                                Phone Number <span className="text-red-500">*</span>
+                            </FieldLabel>
+                            <Input
+                                id="manual-phone"
+                                type="tel"
+                                placeholder="+251 9XX XXX XXX"
+                                value={manualFlowData.phone}
+                                onChange={(e) => {
+                                    setManualFlowData({ ...manualFlowData, phone: e.target.value });
+                                    if (manualFlowErrors.phone) {
+                                        setManualFlowErrors({ ...manualFlowErrors, phone: '' });
+                                    }
+                                }}
+                                className={manualFlowErrors.phone ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
+                                disabled={submittingManualFlow}
+                            />
+                            {manualFlowErrors.phone && (
+                                <p className="mt-1 text-sm text-red-600">{manualFlowErrors.phone}</p>
+                            )}
+                        </Field>
+
+                        {/* Name - Optional */}
+                        <Field>
+                            <FieldLabel htmlFor="manual-name">Full Name (Optional)</FieldLabel>
+                            <Input
+                                id="manual-name"
+                                type="text"
+                                placeholder="Enter your full name"
+                                value={manualFlowData.name}
+                                onChange={(e) => {
+                                    setManualFlowData({ ...manualFlowData, name: e.target.value });
+                                    if (manualFlowErrors.name) {
+                                        setManualFlowErrors({ ...manualFlowErrors, name: '' });
+                                    }
+                                }}
+                                className={manualFlowErrors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
+                                disabled={submittingManualFlow}
+                            />
+                            {manualFlowErrors.name && (
+                                <p className="mt-1 text-sm text-red-600">{manualFlowErrors.name}</p>
+                            )}
+                        </Field>
+
+                        {/* Reason/Notes - Optional */}
+                        <Field>
+                            <FieldLabel htmlFor="manual-reason">Additional Notes (Optional)</FieldLabel>
+                            <Textarea
+                                id="manual-reason"
+                                rows={3}
+                                placeholder="Any additional information about your service request..."
+                                value={manualFlowData.reason}
+                                onChange={(e) => {
+                                    setManualFlowData({ ...manualFlowData, reason: e.target.value });
+                                    if (manualFlowErrors.reason) {
+                                        setManualFlowErrors({ ...manualFlowErrors, reason: '' });
+                                    }
+                                }}
+                                className={manualFlowErrors.reason ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
+                                disabled={submittingManualFlow}
+                            />
+                            {manualFlowErrors.reason && (
+                                <p className="mt-1 text-sm text-red-600">{manualFlowErrors.reason}</p>
+                            )}
+                            <p className="mt-1 text-xs text-gray-500">
+                                Help us understand your specific service needs (e.g., preferred installation date, special requirements)
+                            </p>
+                        </Field>
+
+                        {/* Location Info Display */}
+                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                            <p className="mb-1 text-xs font-medium text-gray-700">Request Location</p>
+                            <p className="text-sm text-gray-600">{formData.address || 'Location selected on map'}</p>
+                            {/* <p className="mt-1 text-xs text-gray-500">
+                                {formData.latitude?.toFixed(6)}, {formData.longitude?.toFixed(6)}
+                            </p> */}
+                        </div>
+                    </div>
+
+                    <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row">
+                        <AlertDialogCancel
+                            onClick={() => {
+                                setShowManualFlow(false);
+                                setManualFlowErrors({});
+                            }}
+                            disabled={submittingManualFlow}
+                        >
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleManualFlowSubmit}
+                            disabled={submittingManualFlow}
+                            className="bg-primary hover:bg-primary/90"
+                        >
+                            {submittingManualFlow ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Submitting...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                                    Submit Request
+                                </>
+                            )}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

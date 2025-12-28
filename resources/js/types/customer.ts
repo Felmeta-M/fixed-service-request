@@ -114,7 +114,7 @@ export const customerSchema = z.object({
     occupation: z.string().min(1, 'Occupation is required'),
     education: z.string().min(1, 'Education is required'),
     religion: z.string().min(1, 'Religion is required'),
-    income: z.string().min(1, 'Income is required'),
+    // income: z.string().min(1, 'Income is required'),
     primary_language: z.string().min(1, 'Primary language is required').max(255),
     address: z
         .object({

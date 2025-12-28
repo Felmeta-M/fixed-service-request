@@ -5,6 +5,7 @@ export const TroubleReasons = {
     SLOW_INTERNET: 'slow_internet',
     NO_SIGNAL: 'no_signal',
     BILLING_ISSUE: 'billing_issue',
+    OTHER: 'other',
 } as const;
 
 export const complaintSchema = z.object({
@@ -30,9 +31,21 @@ export const complaintSchema = z.object({
         errorMap: () => ({ message: 'Trouble reason is required' }),
     }),
 
-    tt_description: z.string().min(5, 'Description is required'),
+    tt_description: z.string().optional().nullable(),
 
     occurrence_date: z.string().optional().nullable(),
-});
+}).refine(
+    (data) => {
+        // If trouble_reason is OTHER, description is required
+        if (data.trouble_reason === TroubleReasons.OTHER) {
+            return data.tt_description && data.tt_description.trim().length >= 5;
+        }
+        return true;
+    },
+    {
+        message: 'Description is required (minimum 5 characters) when "Other" is selected',
+        path: ['tt_description'],
+    }
+);
 
 export type ComplaintFormValues = z.infer<typeof complaintSchema>;

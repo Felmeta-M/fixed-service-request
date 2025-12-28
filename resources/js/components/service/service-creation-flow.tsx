@@ -82,6 +82,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const { checkResourceAvailability } = useResourceChecker();
 
     // Load user data from authenticated user
+    // Use stable dependencies (user.id, user.name, etc.) instead of the entire user object
     useEffect(() => {
         const loadUserData = () => {
             try {
@@ -94,19 +95,29 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 const contactNo = user.phone || '';
                 const contactEmail = user.email || 'customer@ethiotelecom.et';
 
-                setFormData((prev) => ({
-                    ...prev,
-                    contactPerson,
-                    contactNo,
-                    contactEmail,
-                }));
+                setFormData((prev) => {
+                    // Only update if values actually changed to prevent unnecessary re-renders
+                    if (
+                        prev.contactPerson === contactPerson &&
+                        prev.contactNo === contactNo &&
+                        prev.contactEmail === contactEmail
+                    ) {
+                        return prev;
+                    }
+                    return {
+                        ...prev,
+                        contactPerson,
+                        contactNo,
+                        contactEmail,
+                    };
+                });
             } catch (error) {
                 console.error('Failed to load user data:', error);
             }
         };
 
         loadUserData();
-    }, [user]);
+    }, [user?.id, user?.name, user?.phone, user?.email]);
 
     const hasActiveSurvey = surveys?.some((s) => ['waiting', 'approved'].includes(s.status?.toLowerCase()));
 

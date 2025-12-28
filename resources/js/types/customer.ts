@@ -155,3 +155,37 @@ export const customerSchema = z.object({
 });
 
 export type CustomerFormValues = z.infer<typeof customerSchema>;
+
+/**
+ * Creates a dynamic customer schema with conditional validations
+ * @param isEmailRequired - Whether email is required (when notification mode is Email)
+ * @param isKebeleRequired - Whether kebele is required (for regions other than Addis Ababa)
+ * @returns A Zod schema with conditional validations applied
+ */
+export function createDynamicCustomerSchema(isEmailRequired: boolean, isKebeleRequired: boolean) {
+    return customerSchema.extend({
+        contact: z.object({
+            notification_mode: z.string().optional(),
+            mobile_no: z.string().optional(),
+            email: isEmailRequired
+                ? z.string().email('Valid email is required when Email notification mode is selected').min(1, 'Email is required when Email notification mode is selected')
+                : z.string().email('Invalid email format').optional().or(z.literal('')),
+            office_no: z.string().optional(),
+            home_no: z.string().optional(),
+            fax_no: z.string().optional(),
+        }),
+        address: z
+            .object({
+                region: z.string().min(1, 'Region is required').max(128),
+                zone: z.string().optional(),
+                woreda: z.string().optional(),
+                city: z.string().optional(),
+                street_name: z.string().optional(),
+                kebele: isKebeleRequired
+                    ? z.string().min(1, 'Kebele is required for this region')
+                    : z.string().optional(),
+                house_no: z.string().optional(),
+            })
+            .partial(),
+    });
+}

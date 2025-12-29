@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
-use App\Models\SurveyRequest;
+use App\Models\SurveyOrder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -177,7 +177,7 @@ XML;
       }
 
       // Fetch the survey request record
-      $surveyRequest = SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])->first();
+      $surveyRequest = SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])->first();
 
       if (!$surveyRequest) {
          return ApiResponse::error('Survey request not found');

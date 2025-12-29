@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Carbon\Carbon;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class SurveyRequestResource extends JsonResource
+class SurveyOrderResource extends JsonResource
 {
     public function toArray($request): array
     {

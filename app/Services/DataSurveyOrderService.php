@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
-use App\Models\SurveyRequest;
+use App\Models\SurveyOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -175,7 +175,7 @@ XML;
 
     protected function createLocalSurveyOrder(string $customerSurveyOrderId, array $data, array $resourceCheck = [])
     {
-        SurveyRequest::create([
+        SurveyOrder::create([
             ...$data,
             'customer_survey_order_id' => $customerSurveyOrderId,
             'status' => FFDServiceProvisionStatus::Completed->value,
@@ -188,7 +188,7 @@ XML;
 
     public function find($customerSurveyOrderId)
     {
-        return SurveyRequest::query()->where('customer_survey_order_id', $customerSurveyOrderId)->first();
+        return SurveyOrder::query()->where('customer_survey_order_id', $customerSurveyOrderId)->first();
     }
 
     protected function endpoint(): string

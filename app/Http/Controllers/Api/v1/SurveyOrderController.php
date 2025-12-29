@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Enums\FFDServiceProvisionStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SurveyOrderFormRequest;
-use App\Http\Resources\SurveyRequestResource;
-use App\Models\SurveyRequest;
+use App\Http\Resources\SurveyOrderResource;
+use App\Models\SurveyOrder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\ValidationException;
@@ -27,7 +28,7 @@ class SurveyOrderController extends Controller
      */
     public function index(Request $request)
     {
-        $query = SurveyRequest::query()->with(['payment']);
+        $query = SurveyOrder::query()->with(['payment']);
 
         if (!$request->has('customer_code')) {
             return response()->json([
@@ -40,16 +41,31 @@ class SurveyOrderController extends Controller
 
         $surveyRequests = $query->latest()->paginate(10);
 
-        return SurveyRequestResource::collection($surveyRequests);
+        return SurveyOrderResource::collection($surveyRequests);
     }
 
     /**
      * Store a newly created resource in storage.
      */
+
     public function store(SurveyOrderFormRequest $request): JsonResponse
     {
         try {
             $data = $request->validated();
+            $customer = auth()->user();
+
+            // 🚫 Prevent multiple active survey requests
+            $hasBlockedSurvey = SurveyOrder::query()
+                ->where('customer_code', $customer?->customer_code)
+                ->whereIn('status', FFDServiceProvisionStatus::blockedForNewRequest())
+                ->exists();
+
+            if ($hasBlockedSurvey) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You already have an active or completed request. Please wait until it is finalized.',
+                ], Response::HTTP_CONFLICT);
+            }
 
             $service = $this->factory->make($data['main_offer_id']);
 
@@ -66,38 +82,13 @@ class SurveyOrderController extends Controller
                 'message' => 'The requested resource was not found.',
             ], Response::HTTP_NOT_FOUND);
         } catch (QueryException $e) {
-            $sqlState = $e->errorInfo[0] ?? null;
-
-            return match ($sqlState) {
-                // PostgreSQL unique violation
-                '23505' => response()->json([
-                    'success' => false,
-                    'message' => 'This record already exists.',
-                ], Response::HTTP_CONFLICT),
-
-                // Foreign key violation
-                '23503' => response()->json([
-                    'success' => false,
-                    'message' => 'This action is not allowed because related data exists.',
-                ], Response::HTTP_UNPROCESSABLE_ENTITY),
-
-                // Not null / check constraint
-                '23502', '23514' => response()->json([
-                    'success' => false,
-                    'message' => 'Invalid or incomplete data provided.',
-                ], Response::HTTP_UNPROCESSABLE_ENTITY),
-
-                default => response()->json([
-                    'success' => false,
-                    'message' => 'Some of the information you entered is not valid. Please review your inputs and try again.',
-                ], Response::HTTP_INTERNAL_SERVER_ERROR),
-            };
+            return response()->json([
+                'success' => false,
+                'message' => 'Database error occurred.',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         } catch (Throwable $e) {
-
-            Log::error('ComboSurveyService error', [
+            Log::error('SurveyOrder store error', [
                 'message' => $e->getMessage(),
-                'file'    => $e->getFile(),
-                'line'    => $e->getLine(),
                 'trace'   => $e->getTraceAsString(),
             ]);
 
@@ -108,6 +99,7 @@ class SurveyOrderController extends Controller
         }
     }
 
+
     /**
      * Display the specified resource.
      */
@@ -115,7 +107,7 @@ class SurveyOrderController extends Controller
     {
         $orderId = $request->input('customer_survey_order_id');
 
-        $query = SurveyRequest::query()->with(['payment']);
+        $query = SurveyOrder::query()->with(['payment']);
 
         if ($orderId) {
             $query->orWhere('customer_survey_order_id', $orderId);
@@ -130,7 +122,7 @@ class SurveyOrderController extends Controller
             ], 404);
         }
 
-        return new SurveyRequestResource($surveyRequest);
+        return new SurveyOrderResource($surveyRequest);
     }
 
     /**
@@ -148,7 +140,7 @@ class SurveyOrderController extends Controller
         $customerCode = $request->input('customer_code');
         $orderId = $request->input('customer_survey_order_id');
 
-        $query = SurveyRequest::query();
+        $query = SurveyOrder::query();
 
         if ($customerCode) {
             $query->where('customer_code', $customerCode);
@@ -175,7 +167,7 @@ class SurveyOrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Survey request status updated to '{$surveyRequest->status}'.",
-            'data' => new SurveyRequestResource($surveyRequest),
+            'data' => new SurveyOrderResource($surveyRequest),
         ]);
     }
 
@@ -190,7 +182,7 @@ class SurveyOrderController extends Controller
             'customer_survey_order_id' => 'required|string',
         ]);
 
-        $surveyRequest = SurveyRequest::where('customer_code', $request->customer_code)
+        $surveyRequest = SurveyOrder::where('customer_code', $request->customer_code)
             ->where('customer_survey_order_id', $request->customer_survey_order_id)
             ->first();
 

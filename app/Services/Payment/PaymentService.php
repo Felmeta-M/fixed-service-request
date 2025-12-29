@@ -4,7 +4,7 @@ namespace App\Services\Payment;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Payment;
-use App\Models\SurveyRequest;
+use App\Models\SurveyOrder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

@@ -3,7 +3,7 @@
 namespace App\Services\Payment;
 
 use App\Enums\OfferId;
-use App\Models\SurveyRequest;
+use App\Models\SurveyOrder;
 use Illuminate\Support\Facades\Log;
 
 class PaymentCalculatorService
@@ -16,11 +16,11 @@ class PaymentCalculatorService
     /**
      * Calculate all fees for a survey request.
      *
-     * @param SurveyRequest $survey
+     * @param SurveyOrder $survey
      * @param array|null $requestData Optional request data for third-party fee calculation
      * @return array ['subscription_fee', 'cable_charge', 'total_amount']
      */
-    public function calculateFees(SurveyRequest $survey, ?array $requestData = null): array
+    public function calculateFees(SurveyOrder $survey, ?array $requestData = null): array
     {
         $subscriptionFee = $this->calculateSubscriptionFee($survey, $requestData);
         $cableCharge     = $this->calculateCableCharge($survey);
@@ -35,7 +35,7 @@ class PaymentCalculatorService
     /**
      * Determine subscription / one-off fee.
      */
-    protected function calculateSubscriptionFee(SurveyRequest $survey, ?array $requestData = null): int
+    protected function calculateSubscriptionFee(SurveyOrder $survey, ?array $requestData = null): int
     {
         return match ((int) $survey->main_offer_id) {
             OfferId::FixedData->value => 0, // Data service → zero subscription
@@ -98,7 +98,7 @@ class PaymentCalculatorService
     /**
      * Calculate cable charge.
      */
-    protected function calculateCableCharge(SurveyRequest $survey): float
+    protected function calculateCableCharge(SurveyOrder $survey): float
     {
         return $this->cableChargeService->calculate($survey->cable_charge, $survey->cable_type);
     }

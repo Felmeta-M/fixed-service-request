@@ -35,6 +35,24 @@ enum FFDServiceProvisionStatus: int
         };
     }
 
+    /**
+     * Statuses that prevent creating a new service/survey request
+     */
+    public static function blockedForNewRequest(): array
+    {
+        return [
+            self::Created->value,
+            self::Processing->value,
+            self::Suspended->value,
+            self::Waiting->value,
+            self::Completed->value,
+            self::Ready->value,
+            self::Pending->value,
+            self::Paid->value,
+            self::Subscribed->value,
+        ];
+    }
+
     public static function options(): array
     {
         return array_column(

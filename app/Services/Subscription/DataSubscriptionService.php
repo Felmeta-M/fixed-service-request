@@ -2,7 +2,7 @@
 
 namespace App\Services\Subscription;
 
-use App\Models\SurveyRequest;
+use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Customer;
 use App\Services\ApiResponse;
@@ -260,7 +260,7 @@ XML;
       foreach ($rsp->ExtParamList->children($ns['com'])->ParameterInfo as $p) {
          if ((string)$p->ParamName === 'FBBNUMBER') {
             $serviceNo = (string)$p->ParamValue;
-            SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])
+            SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
                ->update([
                   'service_number' => $serviceNo,
                   'status' => FFDServiceProvisionStatus::Subscribed->value,

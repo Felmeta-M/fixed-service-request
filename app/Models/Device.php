@@ -20,6 +20,6 @@ class Device extends Model
 
     public function surveyRequest()
     {
-        return $this->belongsTo(SurveyRequest::class);
+        return $this->belongsTo(SurveyOrder::class);
     }
 }

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
-use App\Http\Resources\SurveyRequestResource;
-use App\Models\SurveyRequest;
+use App\Http\Resources\SurveyOrderResource;
+use App\Models\SurveyOrder;
 use App\Services\Payment\OneOffFeeService;
 use App\Services\Payment\PaymentService;
 use App\Traits\CableChargeTrait;
@@ -27,10 +27,10 @@ class OneOffFeeController extends Controller
             'customer_survey_order_id' => 'required|exists:survey_requests,customer_survey_order_id'
         ]);
 
-        $survey = SurveyRequest::with(['payment'])
+        $survey = SurveyOrder::with(['payment'])
             ->where('customer_survey_order_id', $validated['customer_survey_order_id'])->firstOrFail();
 
-        return new SurveyRequestResource($survey);
+        return new SurveyOrderResource($survey);
     }
 
 

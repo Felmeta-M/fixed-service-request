@@ -40,6 +40,6 @@ class Payment extends Model
 
     public function survey_request()
     {
-        return $this->belongsTo(SurveyRequest::class, 'customer_survey_order_id', 'customer_survey_order_id');
+        return $this->belongsTo(SurveyOrder::class, 'customer_survey_order_id', 'customer_survey_order_id');
     }
 }

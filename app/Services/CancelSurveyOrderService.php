@@ -3,8 +3,9 @@
 namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
-use App\Models\SurveyRequest;
+use App\Models\SurveyOrder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class CancelSurveyOrderService extends BaseApiService
@@ -24,10 +25,10 @@ class CancelSurveyOrderService extends BaseApiService
         try {
             // Build XML
             $xmlPayload = $this->buildXml($data['customer_survey_order_id']);
-
+            // Log::info($xmlPayload);
             // Execute SOAP request
             $xmlResponse = $this->executeRequest($xmlPayload);
-
+            // Log::info($xmlResponse);
             // Parse XML response
             return $this->parseResponse($data, $xmlResponse);
         } catch (\RuntimeException $e) {
@@ -88,11 +89,11 @@ XML;
             return ApiResponse::error($retMsg);
         }
 
-        $surveyOrder =  SurveyRequest::where('customer_survey_order_id', $data['customer_survey_order_id'])->first();
+        $surveyOrder =  SurveyOrder::where('customer_survey_order_id', $data['customer_survey_order_id'])->first();
 
         if ($surveyOrder) {
             $surveyOrder->update([
-                'status' => FFDServiceProvisionStatus::Canceled->value,
+                'status' => FFDServiceProvisionStatus::Cancelled,
                 'cancel_reason' => $data['cancel_reason'],
                 'deleted_at' => now(),
             ]);

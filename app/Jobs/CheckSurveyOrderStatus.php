@@ -8,7 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use App\Models\SurveyRequest;
+use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Services\QuerySurveyOrderService;
 use App\Traits\InteractsWithSMSGateway;
@@ -29,7 +29,7 @@ class CheckSurveyOrderStatus implements ShouldQueue
         $user = Auth::guard('otp')->user();
         $queryDataSurveyOrderService = app(QuerySurveyOrderService::class);
 
-        $pendingOrders = SurveyRequest::where(
+        $pendingOrders = SurveyOrder::where(
             'status',
             FFDServiceProvisionStatus::Pending->value
         )->get();

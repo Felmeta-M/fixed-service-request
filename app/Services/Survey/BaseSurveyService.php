@@ -3,7 +3,7 @@
 namespace App\Services\Survey;
 
 use App\Services\BaseApiService;
-use App\Models\SurveyRequest;
+use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Services\Payment\PaymentCalculatorService;
 use App\Services\Payment\PaymentService;
@@ -86,12 +86,12 @@ abstract class BaseSurveyService extends BaseApiService
 
         $serviceNumber = $data['service_number'] ?? $this->serviceNumber ?? null;
         DB::transaction(function () use ($surveyOrderId, $data, $resource, $serviceNumber) {
-            $survey = SurveyRequest::create([
+            $survey = SurveyOrder::create([
                 ...$data,
                 'with_device' => (bool)$data['with_device'],
                 'service_number' => $serviceNumber,
                 'customer_survey_order_id' => $surveyOrderId,
-                'status' => FFDServiceProvisionStatus::Completed->value,
+                'status' => $data['survey_is_manual'] ? FFDServiceProvisionStatus::Waiting->value : FFDServiceProvisionStatus::Completed->value,
                 'cable_length' => $resource['distance'] ?? null,
                 'cable_type'   => $resource['cable_type'] ?? null,
                 $data['lat']  = isset($resource['latitude'])

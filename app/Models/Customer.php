@@ -75,6 +75,6 @@ class Customer extends Authenticatable
 
     public function surveyRequest()
     {
-        return $this->belongsTo(SurveyRequest::class, 'customer_code', 'code');
+        return $this->belongsTo(SurveyOrder::class, 'customer_code', 'code');
     }
 }

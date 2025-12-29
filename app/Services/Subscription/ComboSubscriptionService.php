@@ -4,7 +4,7 @@ namespace App\Services\Subscription;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Customer;
-use App\Models\SurveyRequest;
+use App\Models\SurveyOrder;
 use App\Services\ApiResponse;
 use App\Traits\InteractsWithSMSGateway;
 use Carbon\Carbon;

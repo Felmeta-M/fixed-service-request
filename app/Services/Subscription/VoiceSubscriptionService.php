@@ -2,7 +2,7 @@
 
 namespace App\Services\Subscription;
 
-use App\Models\SurveyRequest;
+use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Customer;
 use App\Services\ApiResponse;
@@ -93,7 +93,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
       ]);
 
 
-      $serviceNumber = SurveyRequest::query()
+      $serviceNumber = SurveyOrder::query()
          ->where('customer_survey_order_id', $data['survey_order_id'])
          ->value('service_number');
 
@@ -234,7 +234,7 @@ XML;
       $customerBusiOrderId = (string) $rsp->CustomerBusiOrderId;
 
       // create survey order request and initia payment
-      SurveyRequest::where('customer_survey_order_id', $data['survey_order_id'])
+      SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
          ->update([
             'service_number' => $this->serviceNumber,
             'status' => FFDServiceProvisionStatus::Subscribed->value,

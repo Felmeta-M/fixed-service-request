@@ -8,7 +8,7 @@ use App\Http\Controllers\OtpAuthController;
 use App\Http\Controllers\SupportRequestController;
 use App\Http\Resources\PaymentResource;
 use App\Models\Payment;
-use App\Models\SurveyRequest;
+use App\Models\SurveyOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -65,7 +65,7 @@ Route::middleware(['otp.auth'])->group(function () {
 
     Route::get('/payment/summary', function (Request $request) {
         $payment_details = new PaymentResource(Payment::query()->where('customer_survey_order_id', $request->query('customerSurveyOrderId'))->latest()->first());
-        $survey_details = SurveyRequest::query()->where('customer_survey_order_id', $request->query('customerSurveyOrderId'))->latest()
+        $survey_details = SurveyOrder::query()->where('customer_survey_order_id', $request->query('customerSurveyOrderId'))->latest()
             ->first(['customer_type', 'survey_type', 'main_offer_id', 'bandwidth']);
         return Inertia::render('Subscriber/PaymentSummary', [
             'payment_details' => $payment_details,
@@ -79,7 +79,7 @@ Route::middleware(['otp.auth'])->group(function () {
         ]);
     })->name('payment.summary');
     // Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    // Route::get('/survey-requests', fn() => Inertia::render('SurveyRequests/Index'))->name('survey.requests.dashboard');
+    // Route::get('/survey-requests', fn() => Inertia::render('SurveyOrders/Index'))->name('survey.requests.dashboard');
     Route::get('/support-request', [SupportRequestController::class, 'index'])->name('support.request');
     Route::post('/logout', [OtpAuthController::class, 'logout'])->name('logout');
     Route::get('/create-customer', fn() => Inertia::render('Customers/Create'))->name('customers.create');
@@ -93,7 +93,7 @@ Route::middleware(['otp.auth'])->group(function () {
     })->name('complaints.show');
 
 
-    Route::get('/create-survey-requests', fn() => Inertia::render('SurveyRequests/Create'))->name('survey.create');
+    Route::get('/create-survey-requests', fn() => Inertia::render('SurveyOrders/Create'))->name('survey.create');
 
     Route::get('/survey-requests/create-subscriber/{id}', function ($id) {
         return Inertia::render('Subscriber/Create', [

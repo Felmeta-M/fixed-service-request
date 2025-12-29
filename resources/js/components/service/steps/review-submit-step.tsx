@@ -90,6 +90,9 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 // Forward exact encrypted resource-check data
                 distance: encryptedResource?.distance ?? formData.distance,
                 cable_type: encryptedResource?.cable_type ?? formData.cable_type,
+                neid: encryptedResource?.neid,
+                nename: encryptedResource?.nename,
+
             },
             with_device: formData.withDevice,
             completed_date: new Date()

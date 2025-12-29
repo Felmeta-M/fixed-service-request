@@ -74,7 +74,6 @@ export default function Create() {
         contact_person: 'Loading...',
         contact_no: 'Loading...',
         contact_email: 'Loading...',
-        completed_date: new Date(),
         external_operid: '512',
         customer_type: '',
     });

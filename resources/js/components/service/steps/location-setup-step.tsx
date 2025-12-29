@@ -795,9 +795,9 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                             {manualFlowErrors.address && (
                                 <p className="mt-1 text-sm text-red-600">{manualFlowErrors.address}</p>
                             )}
-                            <p className="mt-1 text-xs text-gray-500">
+                            {/* <p className="mt-1 text-xs text-gray-500">
                                 You can edit this address to provide more specific location details
-                            </p>
+                            </p> */}
                         </Field>
                         {/* Reason/Notes - Optional */}
                         {/* <Field>

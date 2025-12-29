@@ -23,7 +23,7 @@ class ResourceService extends BaseApiService
             $xmlResponse = $this->executeRequest($xmlPayload);
             // Log::info($xmlResponse);
             $parsedXml = $this->parseResponseXml($xmlResponse, $data);
-            return ApiResponse::success($parsedXml);
+            return $parsedXml;
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
         } catch (\Throwable $e) {
@@ -148,7 +148,13 @@ XML;
         $shortestResource =  $this->getShortestResource($resources);
         // Store latest shortest resource in session
         // session(['latest_resource' => $shortestResource]);
-        return $shortestResource;
+        $shortestResource = $this->getShortestResource($resources);
+
+        if ($shortestResource) {
+            return ApiResponse::success($shortestResource);
+        } else {
+            return ApiResponse::success(data: $this->emptyResource($data), success: false);
+        }
     }
 
     public function getShortestResource(array $resources): ?array
@@ -176,5 +182,20 @@ XML;
             Log::error('Failed to process resource: ' . $e->getMessage());
             return null; // Or throw custom exception if needed
         }
+    }
+
+    private function emptyResource(array $data = []): array
+    {
+        return [
+            'distance' => Crypt::encryptString((string)($data['cable_type'] ?? '0')),
+            'ava_port' => '',
+            'neid' => Crypt::encryptString((string)($data['longitude'] ?? '7000')),
+            'nename' => '',
+            'typeid' => '',
+            'longitude' => Crypt::encryptString((string)($data['longitude'] ?? '')),
+            'latitude' => Crypt::encryptString((string)($data['latitude'] ?? '')),
+            'cable_type' => Crypt::encryptString((string)($data['cable_type'] ?? '3')),
+            'cable_type_desc' => '',
+        ];
     }
 }

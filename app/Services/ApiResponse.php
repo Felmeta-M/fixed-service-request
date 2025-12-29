@@ -7,10 +7,10 @@ use Throwable;
 
 class ApiResponse
 {
-    public static function success(mixed $data = null, string $message = 'OK', int $status = 200): JsonResponse
+    public static function success(mixed $data = null, string $message = 'OK', int $status = 200, $success = true): JsonResponse
     {
         return response()->json([
-            'success' => true,
+            'success' => $success,
             'message' => $message,
             'data'    => $data,
         ], $status);

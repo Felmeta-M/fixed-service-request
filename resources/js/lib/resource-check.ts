@@ -78,28 +78,10 @@ export const useResourceChecker = () => {
 
             // Check if response is successful
             if (response.data.success) {
-                // If data is null, no resource is available
-                if (!response.data.data || response.data.data === null) {
-                    return {
-                        available: false,
-                        message: 'No available resources in this area',
-                        data: null,
-                    };
-                }
-
-                // Process the resource data
                 const resource = response.data.data;
-                const availablePorts = parseInt(resource.ava_port) || 0;
-
-                // `distance` is encrypted by the backend (Crypt::encryptString),
-                // and the SOAP call already receives `radius=200`, so we treat ports>0 as availability.
-                const isAvailable = availablePorts > 0;
-
                 return {
-                    available: isAvailable,
-                    message: isAvailable
-                        ? `Resource available (${availablePorts} ports)`
-                        : 'No available resources in this area',
+                    available: true,
+                    message: "Resource available",
                     data: resource,
                 };
             }
@@ -108,7 +90,7 @@ export const useResourceChecker = () => {
             return {
                 available: false,
                 message: response.data.message || 'Resource check failed',
-                data: response.data.data || null,
+                data: undefined,
             };
         } catch (error) {
             console.error('Resource check failed:', error);

@@ -91,7 +91,7 @@ export function CancelConfirmationDialog({
                         {cancelText}
                     </AlertDialogCancel>
 
-                    <AlertDialogAction disabled={showReasonInput && cancellationReason.length < 20} onClick={handleConfirm}>
+                    <AlertDialogAction disabled={showReasonInput && cancellationReason.length < 2} onClick={handleConfirm}>
                         {loading ? (
                             <div className="flex items-center gap-2">
                                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

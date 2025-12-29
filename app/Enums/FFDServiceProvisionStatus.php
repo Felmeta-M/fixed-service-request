@@ -35,6 +35,11 @@ enum FFDServiceProvisionStatus: int
         };
     }
 
+    public static function active(): array
+    {
+        return [self::Waiting];
+    }
+
     /**
      * Statuses that prevent creating a new service/survey request
      */

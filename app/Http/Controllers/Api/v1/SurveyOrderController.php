@@ -7,11 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SurveyOrderFormRequest;
 use App\Http\Resources\SurveyOrderResource;
 use App\Models\SurveyOrder;
+use App\Services\QuerySurveyOrderService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use App\Services\Survey\SurveyServiceFactory;
+use FFI;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -20,29 +22,104 @@ use Throwable;
 class SurveyOrderController extends Controller
 {
     public function __construct(
-        protected SurveyServiceFactory $factory
+        protected SurveyServiceFactory $factory,
+        protected readonly QuerySurveyOrderService $querySurveyOrderService
+
     ) {}
 
     /**
      * Display a listing of the resource.
      */
+
     public function index(Request $request)
     {
-        $query = SurveyOrder::query()->with(['payment']);
+        try {
+            $customer = auth()->user();
 
-        if (!$request->has('customer_code')) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Please provide customer code.',
-            ], 404);
+            $query = SurveyOrder::query()
+                ->with(['payment'])
+                ->where('customer_code', $customer->customer_code)
+                ->whereNull('deleted_at');
+
+            if ($request->filled('survey_order_no')) {
+                $query->where('survey_order_no', 'like', '%' . $request->survey_order_no . '%');
+            }
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            $surveyOrders = $query->latest()->paginate(10);
+
+            /** Refresh only WAITING survey orders */
+            foreach ($surveyOrders as $order) {
+                try {
+                    if ($order->status !== FFDServiceProvisionStatus::Waiting->value) {
+                        continue;
+                    }
+
+                    $this->refreshSurveyOrder($order);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to refresh survey order', [
+                        'survey_order_no' => $order->survey_order_no ?? null,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            return SurveyOrderResource::collection($surveyOrders);
+        } catch (\Throwable $e) {
+            Log::error('Failed to fetch survey orders', [
+                'customer_code' => $request->customer_code ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return SurveyOrderResource::collection(collect());
+        }
+    }
+
+
+    protected function refreshSurveyOrder(SurveyOrder $order): void
+    {
+        // Throttle
+        if ($order->last_checked_at && $order->last_checked_at->diffInMinutes(now()) < 5) {
+            return;
         }
 
-        $query->where('customer_code', $request->input('customer_code'))->whereNull('deleted_at');
+        // Only WAITING orders go to third-party
+        if ($order->status !== FFDServiceProvisionStatus::Waiting->value) {
+            return;
+        }
 
-        $surveyRequests = $query->latest()->paginate(10);
+        try {
+            $response = $this->querySurveyOrderService
+                ->querySurveyOrderDetail($order->customer_survey_order_id);
+        } catch (\Throwable $e) {
+            Log::error('Survey order API call failed', [
+                'survey_order_no' => $order->survey_order_no,
+                'error' => $e->getMessage(),
+            ]);
+            return;
+        }
 
-        return SurveyOrderResource::collection($surveyRequests);
+        if (empty($response['success']) || empty($response['status'])) {
+            return;
+        }
+
+        $newStatus = $response['status'];
+
+        if ($order->status !== $newStatus) {
+            $order->update([
+                'status' => $newStatus,
+                'last_synced_status' => $newStatus,
+            ]);
+        }
+
+        $order->update([
+            'last_checked_at' => now(),
+        ]);
     }
+
 
     /**
      * Store a newly created resource in storage.

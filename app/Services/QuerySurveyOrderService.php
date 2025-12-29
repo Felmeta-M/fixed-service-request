@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\FFDServiceProvisionStatus;
+use Illuminate\Support\Facades\Log;
 
 class QuerySurveyOrderService extends BaseApiService
 {
@@ -19,6 +21,7 @@ class QuerySurveyOrderService extends BaseApiService
             $xmlPayload = $this->buildRequestXml($surveyOrderId);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedXml = $this->parseResponseXml($xmlResponse);
+            Log::info($parsedXml);
             return ApiResponse::success($parsedXml);
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
@@ -62,9 +65,7 @@ XML;
         $parsed = simplexml_load_string($xml);
 
         $namespaces = $parsed->getNamespaces(true);
-
         $body = $parsed->children($namespaces['soapenv'])->Body;
-
         $responseMsg = $body->children($namespaces['ser'])->QuerySurveyOrderDetailRspMsg;
 
         $responseHeader = $responseMsg->ResponseHeader->children($namespaces['com']);
@@ -80,20 +81,29 @@ XML;
         $customerSurveyOrderId = (string) $responseBody->CustomerSurveyOrderId;
 
         $subOrders = [];
+        $statuses  = [];
+
         if (isset($responseBody->SubOrderList)) {
             foreach ($responseBody->SubOrderList->children($namespaces['com']) as $subOrder) {
+                $status = strtolower((string) $subOrder->OrderStatus);
+
+                $statuses[] = $status;
+
                 $subOrders[] = [
-                    'SubSurveyOrderId' => (string) $subOrder->SubSurveyOrderId,
-                    'OrderType' => (string) $subOrder->OrderType,
-                    'OrderStatus' => (string) $subOrder->OrderStatus,
-                    'PrimaryOfferid' => (string) $subOrder->PrimaryOfferid,
-                    'TelecomRegion' => (string) $subOrder->TelecomRegion,
-                    'ContactPerson' => (string) $subOrder->ContactPerson,
-                    'ContactNo' => (string) $subOrder->ContactNo,
-                    'ContactEmail' => (string) $subOrder->ContactEmail,
+                    'sub_survey_order_id' => (string) $subOrder->SubSurveyOrderId,
+                    'order_type'          => (string) $subOrder->OrderType,
+                    'order_status'        => $status,
+                    'primary_offer_id'    => (string) $subOrder->PrimaryOfferid,
+                    'telecom_region'      => (string) $subOrder->TelecomRegion,
+                    'contact_person'      => (string) $subOrder->ContactPerson,
+                    'contact_no'          => (string) $subOrder->ContactNo,
+                    'contact_email'       => (string) $subOrder->ContactEmail,
                 ];
             }
         }
+
+        /** 🔑 Compute MAIN survey order status */
+        $mainStatus = $this->resolveSurveyOrderStatus($statuses);
 
         return [
             'success' => true,
@@ -101,7 +111,25 @@ XML;
             'ret_msg' => $retMsg,
             'response_time' => (string) $responseHeader->ResponseTime,
             'customer_survey_order_id' => $customerSurveyOrderId,
+            'status' => $mainStatus,           // ✅ IMPORTANT
             'sub_orders' => $subOrders,
         ];
+    }
+
+    private function resolveSurveyOrderStatus(array $statuses): string
+    {
+        if (empty($statuses)) {
+            return FFDServiceProvisionStatus::Waiting->value;
+        }
+
+        if (in_array('waiting', $statuses, true)) {
+            return FFDServiceProvisionStatus::Waiting->value;
+        }
+
+        if (in_array('failed', $statuses, true) || in_array('rejected', $statuses, true)) {
+            return FFDServiceProvisionStatus::Failed->value;
+        }
+
+        return FFDServiceProvisionStatus::Completed->value;
     }
 }

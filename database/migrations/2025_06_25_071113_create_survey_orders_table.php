@@ -10,7 +10,7 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('survey_requests', function (Blueprint $table) {
+        Schema::create('survey_orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id')->nullable()->constrained('customers')->cascadeOnDelete()->cascadeOnUpdate();
             $table->bigInteger('customer_code')->index();

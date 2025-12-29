@@ -22,13 +22,14 @@ class CancelSurveyOrderService extends BaseApiService
 
     public function cancelSurveyOrder(array $data): JsonResponse
     {
+        \Log::info($data);
         try {
             // Build XML
-            $xmlPayload = $this->buildXml($data['customer_survey_order_id']);
-            // Log::info($xmlPayload);
+            $xmlPayload = $this->buildXml($data);
+            Log::info($xmlPayload);
             // Execute SOAP request
             $xmlResponse = $this->executeRequest($xmlPayload);
-            // Log::info($xmlResponse);
+            Log::info($xmlResponse);
             // Parse XML response
             return $this->parseResponse($data, $xmlResponse);
         } catch (\RuntimeException $e) {
@@ -38,7 +39,7 @@ class CancelSurveyOrderService extends BaseApiService
         }
     }
 
-    protected function buildXml(string $customerSurveyOrderId): string
+    protected function buildXml(array $data): string
     {
         $transactionId = uniqid();
         $processTime   = now()->format('YmdHis');
@@ -61,7 +62,7 @@ class CancelSurveyOrderService extends BaseApiService
             <com:AccessPwd>{$config['access_pwd']}</com:AccessPwd>
          </ser:RequestHeader>
          <ser:CancelSurveyOrderRequestBody>
-            <com:CustomerSurveyOrderId>{$customerSurveyOrderId}</com:CustomerSurveyOrderId>
+            <com:CustomerSurveyOrderId>{$data['customer_survey_order_id']}</com:CustomerSurveyOrderId>
          </ser:CancelSurveyOrderRequestBody>
       </ser:CancelSurveyOrderReqMsg>
    </soapenv:Body>
@@ -106,7 +107,7 @@ XML;
                 'res_code' => $surveyOrder?->service_number,
             ];
 
-            $releaseNumber = $this->reserveNumberService->unpick($data);
+            // $releaseNumber = $this->reserveNumberService->unpick($data);
             // if (!$releaseNumber) {
             //     throw new RuntimeException('Unable to release service number!!');
             // }

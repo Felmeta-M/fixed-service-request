@@ -40,6 +40,7 @@ export default function CreateComplaintPage() {
     const { auth } = usePage().props as any;
 
     const { user } = auth;
+    console.log('user:', user)
     const {
         data,
         setData,
@@ -51,9 +52,9 @@ export default function CreateComplaintPage() {
     } = useForm<ComplaintFormValues>({
         trouble_title: '',
         access_number: '',
-        contact_person: '',
-        mobile_no: '',
-        trouble_reason: '',
+        contact_person: user?.name || '',
+        mobile_no: user?.phone || '',
+        trouble_reason: undefined as any,
         tt_description: '',
     });
 
@@ -210,8 +211,8 @@ export default function CreateComplaintPage() {
                                     </label>
 
                                     <Select
-                                        value={data.trouble_reason}
-                                        onValueChange={(value) => setData('trouble_reason', value)}
+                                        value={data.trouble_reason || ''}
+                                        onValueChange={(value) => setData('trouble_reason', value as ComplaintFormValues['trouble_reason'])}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select trouble reason" />
@@ -229,6 +230,9 @@ export default function CreateComplaintPage() {
                                             <SelectItem value={TroubleReasons.BILLING_ISSUE}>
                                                 Billing issue
                                             </SelectItem>
+                                            <SelectItem value={TroubleReasons.OTHER}>
+                                                Other
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
 
@@ -240,11 +244,11 @@ export default function CreateComplaintPage() {
                                 {/* Description */}
                                 <div className="lg:col-span-2 space-y-1">
                                     <label className="text-sm font-medium">
-                                        Description <Required />
+                                        Description {data.trouble_reason === TroubleReasons.OTHER && <Required />}
                                     </label>
                                     <Textarea
                                         rows={5}
-                                        value={data.tt_description}
+                                        value={data.tt_description || ''}
                                         onChange={(e) => setData('tt_description', e.target.value)}
                                     />
                                     {errors.tt_description && (

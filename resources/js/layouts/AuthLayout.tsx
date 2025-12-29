@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div>
             <Header />
             <main>{children}</main>
-            <Toaster />
+            <Toaster position="top-center" />
         </div>
     );
 }

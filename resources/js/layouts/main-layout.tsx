@@ -23,7 +23,7 @@ export default function MainLayout({ children, currentStep = 0, isNewCustomer = 
     const isServiceCreation = page.url.startsWith('/services/create');
 
     const steps = [
-        ...(isNewCustomer ? [{ name: 'Customer Profile', icon: User }] : []),
+        ...(isNewCustomer ? [{ name: 'Customer Information', icon: User }] : []),
         { name: 'Service Information', icon: Wifi },
         { name: 'Location Information', icon: MapPin },
         { name: 'Review & Submit', icon: FileText },

@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCustomerCategories, useCustomerSubcategories, useCustomerTypes } from '@/hooks/use-customer-types';
@@ -7,12 +8,13 @@ import { useOccupations } from '@/hooks/use-occupations';
 import { useRegions, useWoredas, useZones } from '@/hooks/use-regions';
 import { cn } from '@/lib/utils';
 import { FormSelectProps } from '@/types';
-import { CustomerFormValues, customerSchema } from '@/types/customer';
-import { useForm, usePage } from '@inertiajs/react';
+import { CustomerFormValues, createDynamicCustomerSchema } from '@/types/customer';
+import { router, useForm, usePage } from '@inertiajs/react';
 import axios, { AxiosError } from 'axios';
 import { Building, CheckCircle, FileIcon, MapPinIcon, PhoneIcon, User } from 'lucide-react';
-import { FormEventHandler, useEffect, useState } from 'react';
+import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 type ApiError = {
     message: string;
@@ -185,6 +187,21 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
 
     const [readOnlyFields, setReadOnlyFields] = useState<Set<string>>(new Set());
     const [isLoadingPrefill, setIsLoadingPrefill] = useState(true);
+    const [hasNidData, setHasNidData] = useState(false);
+
+    // Fields that should be read-only when filled from NID
+    const NID_READONLY_FIELDS = [
+        'first_name',
+        'middle_name',
+        'last_name',
+        'gender',
+        'date_of_birth',
+        'nationality',
+        'identification_type',
+        'identification_number',
+        // 'contact.notification_mode',
+        'contact.mobile_no',
+    ];
 
     const { data, setData } = useForm<CustomerFormValues>('createCustomer', {
         first_name: '',
@@ -272,7 +289,7 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                             customer_subcategory: customer.customer_subcategory || '1',
                             contact: {
                                 notification_mode: customer.contact?.notification_mode || customer.notification_mode || '1',
-                                mobile_no: customer.contact?.mobile_no || customer.mobile_no || '',
+                                mobile_no: customer.contact?.mobile_no || customer.phone || '',
                                 office_no: customer.contact?.office_no || customer.office_no || '',
                                 email: customer.contact?.email || customer.email || '',
                                 home_no: customer.contact?.home_no || customer.home_no || '',
@@ -292,6 +309,31 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                         };
 
                         setData(transform);
+
+                        // Check if data came from NID (has identification_number and related fields)
+                        const hasNid = !!(transform.identification_number && transform.first_name && transform.date_of_birth);
+                        setHasNidData(hasNid);
+
+                        // Set read-only fields if data came from NID
+                        if (hasNid) {
+                            const newReadOnlyFields = new Set<string>();
+                            NID_READONLY_FIELDS.forEach((field) => {
+                                if (field === 'contact.mobile_no') {
+                                    if (transform.contact?.mobile_no) newReadOnlyFields.add(field);
+                                } else if (field === 'contact.notification_mode') {
+                                    if (transform.contact?.notification_mode) newReadOnlyFields.add(field);
+                                } else {
+                                    // @ts-ignore - dynamic access based on field name
+                                    if (transform[field]) newReadOnlyFields.add(field);
+                                }
+                            });
+                            setReadOnlyFields(newReadOnlyFields);
+                        }
+
+                        // Fill phone number from NID if available and not already set
+                        if (hasNid && transform.contact?.mobile_no && !data.contact?.mobile_no) {
+                            // Phone number is already in transform.contact.mobile_no from API
+                        }
 
                         if (customer.photo_base64) {
                             localStorage.setItem('customer_photo_base64', customer.photo_base64);
@@ -381,6 +423,26 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
         return readOnlyFields.has(fieldName);
     };
 
+    // Check if email is required based on notification mode
+    const isEmailRequired = useMemo(() => {
+        return data.contact?.notification_mode === '2'; // Email mode
+    }, [data.contact?.notification_mode]);
+
+    // Check if kebele is required based on region (not required for Addis Ababa)
+    const isKebeleRequired = useMemo(() => {
+        if (!data.address?.region) return false;
+        
+        // Find the region name from the region options
+        const selectedRegion = regionOptions.find((r) => r.value === data.address?.region);
+        const regionName = selectedRegion?.label?.toLowerCase() || '';
+        
+        // Addis Ababa region names (case-insensitive check)
+        const addisAbabaNames = ['addis ababa', 'addisababa', 'addis_ababa'];
+        const isAddisAbaba = addisAbabaNames.some((name) => regionName.includes(name));
+        
+        return !isAddisAbaba; // Required for all regions except Addis Ababa
+    }, [data.address?.region, regionOptions]);
+
     // Enhanced submit handler with comprehensive error handling
     const handleSubmit: FormEventHandler = async (e) => {
         e.preventDefault();
@@ -399,8 +461,11 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
         });
 
         try {
-            // Step 1: Validate form data
-            const result = customerSchema.safeParse(data);
+            // Step 1: Create dynamic schema with conditional validations
+            const dynamicSchema = createDynamicCustomerSchema(isEmailRequired, isKebeleRequired);
+
+            // Step 2: Validate form data
+            const result = dynamicSchema.safeParse(data);
 
             if (!result.success) {
                 const fieldErrors: Record<string, string> = {};
@@ -529,10 +594,18 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
             sessionStorage.removeItem('pending_customer_id');
             localStorage.removeItem('customer_photo_base64');
 
-            // Proceed to next step
+            // Move to next step first, then reload auth data in background
+            // This ensures smooth transition while updating the auth state
+            onNext();
+            
+            // Reload auth data to update isNewCustomer flag
             setTimeout(() => {
-                onNext();
-            }, 2000);
+                router.reload({
+                    only: ['auth'], // Only reload auth data
+                    preserveState: true, // Preserve current component state
+                    preserveScroll: true, // Preserve scroll position
+                });
+            }, 500);
         } catch (error) {
             const apiError = handleApiError(error);
 
@@ -733,30 +806,30 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
     const hasPrefilledData = readOnlyFields.size > 0;
 
     return (
-        <div className="mx-auto max-w-4xl space-y-6 pb-10">
-            <div className="rounded-b-lg p-4 shadow-sm">
+        <div className="mx-auto max-w-4xl space-y-6">
+            {/* <div className="rounded-b-lg p-4 shadow-sm">
                 <h1 className="text-2xl font-bold text-gray-900">Create New Customer</h1>
                 <p className="text-md mt-1 text-gray-600">Fill in the customer details</p>
-            </div>
+            </div> */}
 
             {/* Error Summary */}
             {renderErrorSummary()}
 
-            <Card className="">
-                <CardHeader className="">
-                    <CardTitle className="flex items-center gap-3 text-gray-800">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
+            <div className="">
+                {/* <div className="pb-4">
+                    <div className="flex items-center gap-3 text-gray-800"> */}
+                        {/* <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
                             <User className="h-5 w-5" />
-                        </div>
-                        <div>
+                        </div> */}
+                        {/* <div>
                             <h2 className="text-xl">Personal Information</h2>
-                            <CardDescription className="text-gray-500">
+                            <div className="text-gray-500">
                                 {hasPrefilledData ? 'Identity details and additional information' : 'Basic personal details of the customer'}
-                            </CardDescription>
+                            </div>
                         </div>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6 p-6">
+                    </div>
+                </div> */}
+                <div className="space-y-4">
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div className="space-y-2">
                             <FormSelect
@@ -940,11 +1013,11 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                             readOnly={isFieldReadOnly('place_of_birth')}
                         />
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             <div className="space-y-6">
-                <Card>
+                {/* <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-3 text-gray-800">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
@@ -966,39 +1039,49 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                 options={[{ label: 'National ID', value: '2' }]}
                                 placeholder="Select ID type"
                                 error={formErrors.identification_type}
-                                disabled={isFieldReadOnly('identification_type')}
+                                disabled={isFieldReadOnly('identification_type') || hasNidData}
                             />
                             <FormInput
                                 label="Identification Number"
                                 id="identification_number"
+                                required
                                 value={data.identification_number}
                                 onChange={(e) => handleInputChange('identification_number', e.target.value)}
                                 placeholder="Enter ID number"
                                 error={formErrors.identification_number}
-                                readOnly={isFieldReadOnly('identification_number')}
+                                readOnly={isFieldReadOnly('identification_number') || hasNidData}
+                                disabled={isFieldReadOnly('identification_number') || hasNidData}
                             />
                         </div>
                     </CardContent>
-                </Card>
-                <Card className="">
-                    <CardHeader className="">
-                        <CardTitle className="flex items-center gap-3 text-gray-800">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
+                </Card> */}
+                <div className="">
+                    <div className="pb-4">
+                        <div className="flex items-center gap-3 text-gray-800">
+                            {/* <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
                                 <PhoneIcon className="h-5 w-5" />
-                            </div>
+                            </div> */}
                             <div>
                                 <h2 className="text-xl">Contact Information</h2>
-                                <CardDescription className="text-gray-500">Phone numbers and email addresses</CardDescription>
+                                <div className="text-gray-500">Phone numbers and email addresses</div>
                             </div>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6 p-6">
+                        </div>
+                    </div>
+                    <div className="space-y-6 ">
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <FormSelect
                                 label="Notification Mode"
                                 id="contact.notification_mode"
                                 value={data.contact?.notification_mode || ''}
-                                onChange={(val) => handleNestedInputChange('contact', 'notification_mode', val)}
+                                onChange={(val) => {
+                                    handleNestedInputChange('contact', 'notification_mode', val);
+                                    // Clear email error when notification mode changes
+                                    setFormErrors((prev) => {
+                                        const newErrors = { ...prev };
+                                        delete newErrors['contact.email'];
+                                        return newErrors;
+                                    });
+                                }}
                                 options={[
                                     { label: 'SMS', value: '1' },
                                     { label: 'Email', value: '2' },
@@ -1021,32 +1104,32 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                             <FormInput
                                 label="Email Address"
                                 id="email"
-                                required
+                                required={isEmailRequired}
                                 type="email"
                                 value={data.contact?.email || ''}
                                 onChange={(e) => handleNestedInputChange('contact', 'email', e.target.value)}
-                                placeholder=""
+                                placeholder={isEmailRequired ? 'Enter email address (required)' : 'Enter email address (optional)'}
                                 error={formErrors['contact.email']}
                                 readOnly={isFieldReadOnly('contact.email')}
                             />
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
 
-            <Card className="">
-                <CardHeader className="">
-                    <CardTitle className="flex items-center gap-3 text-gray-800">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
+            <div className="">
+                <div className="pb-4">
+                    <div className="flex items-center gap-3 text-gray-800">
+                        {/* <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
                             <MapPinIcon className="h-5 w-5" />
-                        </div>
+                        </div> */}
                         <div>
                             <h2 className="text-xl">Address</h2>
-                            <CardDescription className="text-gray-500">Current residential address</CardDescription>
+                            <div className="text-gray-500">Current residential address</div>
                         </div>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6 p-6">
+                    </div>
+                </div>
+                <div className="space-y-6 ">
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <FormSelect
                             label="Region"
@@ -1093,9 +1176,10 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                         <FormInput
                             label="Kebele"
                             id="address.kebele"
+                            required={isKebeleRequired}
                             value={data.address?.kebele}
                             onChange={(e) => handleNestedInputChange('address', 'kebele', e.target.value)}
-                            placeholder=""
+                            placeholder={isKebeleRequired ? 'Enter kebele (required)' : 'Enter kebele (optional for Addis Ababa)'}
                             error={formErrors['address.kebele']}
                             readOnly={isFieldReadOnly('address.kebele')}
                         />
@@ -1109,23 +1193,23 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                             readOnly={isFieldReadOnly('address.house_no')}
                         />
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             <div className="space-y-6">
-                <Card className="">
-                    <CardHeader className="">
-                        <CardTitle className="flex items-center gap-3 text-gray-800">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
+                    <div className="">
+                    <div className="pb-4">
+                        <div className="flex items-center gap-3 text-gray-800">
+                            {/* <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
                                 <Building className="h-5 w-5" />
-                            </div>
+                            </div> */}
                             <div>
                                 <h2 className="text-xl">Professional Information</h2>
-                                <CardDescription className="text-gray-500">Work and educational background</CardDescription>
+                                <div className="text-gray-500">Work and educational background</div>
                             </div>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6 p-6">
+                        </div>
+                    </div>
+                    <div className="space-y-6">
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <FormSelect
                                 label="Occupation"
@@ -1179,7 +1263,7 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                 error={formErrors.religion}
                                 disabled={isFieldReadOnly('religion')}
                             />
-                            <FormSelect
+                            {/* <FormSelect
                                 label="Income Level"
                                 id="income"
                                 required
@@ -1197,13 +1281,13 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                 placeholder="Select income level"
                                 error={formErrors.income}
                                 disabled={isFieldReadOnly('income')}
-                            />
+                            /> */}
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
 
-            <div className="flex justify-end rounded-lg bg-gray-50 p-4">
+            <div className="flex justify-end rounded-lg">
                 <Button
                     type="button"
                     onClick={handleSubmit}
@@ -1219,8 +1303,8 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                         </>
                     ) : (
                         <>
-                            Submit
-                            <CheckCircle className="h-4 w-4" />
+                            Next
+                            {/* <CheckCircle className="h-4 w-4" /> */}
                         </>
                     )}
                 </Button>

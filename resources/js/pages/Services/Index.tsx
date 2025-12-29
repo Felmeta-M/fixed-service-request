@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 import { useSurveyList } from '@/hooks/use-survey-list';
 import MainLayout from '@/layouts/main-layout';
 import { ServiceProvisionStatus } from '@/lib/status-map';
-import { Link, usePage } from '@inertiajs/react';
-import { AlertCircle, BarChart3, Box, CheckCircle2, ChevronDown, ChevronUp, Clock, Filter, Phone, Plus, TrendingUp, Wifi, X } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { AlertCircle, BarChart3, Box, CheckCircle2, ChevronDown, ChevronUp, Clock, Filter, Phone, Plus, TrendingUp, UserPlus, Wifi, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const typeMap = {
@@ -210,13 +210,23 @@ export default function CustomerDashboard() {
             <MainLayout>
                 <div className="w-full space-y-6 px-4 lg:px-6">
                     <Card>
-                        <CardContent className="p-6">
+                        <CardContent className="p-6 flex flex-col sm:flex-row justify-between">
                             <div className="flex items-center space-x-3 text-red-600">
                                 <AlertCircle className="h-5 w-5" />
                                 <div>
                                     <p className="font-medium">Error loading dashboard</p>
                                     <p className="text-sm">{error}</p>
                                 </div>
+                                
+                            </div>
+                            <div className="mt-6 flex gap-3">
+                                {/* // if error is customer not created, show a button that routes to the customer creation page */}
+                                {error === 'User not authenticated or no customer code' && (
+                                    <Button variant="outline" onClick={() => router.visit('/services/create')} className="gap-2">
+                                        <UserPlus className="h-4 w-4" />
+                                        Create Profile
+                                    </Button>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

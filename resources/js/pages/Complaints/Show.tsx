@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { TTDetail, TTActivity } from '@/types/tt';
+import { TTDetail, TTActivity, LocalTroubleTicket } from '@/types/tt';
 import { Calendar, MapPin, Phone, User, FileText, Clock, AlertCircle, CheckCircle2, XCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
@@ -14,6 +14,65 @@ import MainLayout from '@/layouts/main-layout';
 interface ShowProps {
   ttNumber: string;
 }
+
+// Helper function to transform LocalTroubleTicket to TTDetail format
+const transformLocalToTTDetail = (localTT: LocalTroubleTicket): TTDetail => {
+  // Map status to result_code format (external uses '0' for active, '1' for failed/closed)
+  const resultCode = localTT.status === 'completed' || localTT.status === 'cancelled' ? '1' : '0';
+  
+  // Split contact person name into parts (simple split on spaces)
+  const nameParts = (localTT.contact_person || '').trim().split(/\s+/);
+  const firstName = nameParts[0] || '';
+  const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(' ') : '';
+  const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+  
+  return {
+    ttNumber: localTT.tt_serial_no,
+    title: '',
+    firstName,
+    middleName,
+    lastName,
+    customerType: '',
+    customerLevel: '',
+    customerCategory: '',
+    custSubCategory: '',
+    custID: '',
+    subsID: '',
+    adminRegion: '',
+    zone: '',
+    city: '',
+    subCity: '',
+    wereda: '',
+    kebele: '',
+    street: '',
+    houseNo: '',
+    buildingName: '',
+    floor: '',
+    roomNo: '',
+    accessNumber: localTT.access_number || '',
+    acctNumber: localTT.account_number || '',
+    additionalFaultyNbr: '',
+    contactPerson: localTT.contact_person || '',
+    mobileNo: localTT.mobile_no || '',
+    telephoneNo: '',
+    email: '',
+    troubleTitle: localTT.trouble_title || '',
+    troubleReason: localTT.trouble_reason || '',
+    troubleGrand: '',
+    deadline: '',
+    acceptTime: localTT.created_at || '',
+    occurrenceDate: localTT.occurrence_date || '',
+    expectFeedbackTime: '',
+    faultLocation: '',
+    sendSMS: '',
+    ttDescription: localTT.tt_description || '',
+    Remark: '',
+    attachment: '',
+    result_code: resultCode,
+    desc: '',
+    activities: [],
+  };
+};
 
 export default function ComplaintsShow({ ttNumber }: ShowProps) {
   const { auth } = usePage().props as any;
@@ -32,15 +91,41 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
   const loadTTDetail = async () => {
     setLoading(true);
     try {
-      const response = await ttService.getTTDetail(ttNumber, auth?.user?.api_token);
-      if (response.success && response.data) {
-        setDetail(response.data);
+      // Try external API first
+      try {
+        const externalResponse = await ttService.getTTDetail(ttNumber, auth?.user?.api_token);
+        if (externalResponse.success && externalResponse.data) {
+          setDetail(externalResponse.data);
+          setSource('external');
+          return;
+        }
+      } catch (externalError: any) {
+        // If it's a 404 or fails, try local API
+        if (externalError.status === 404) {
+          console.log('External TT not found, trying local API...');
+        } else {
+          // For other errors, log but continue to try local
+          console.warn('External TT fetch error (non-404):', externalError);
+        }
+      }
+
+      // If external fetch failed or returned no data, try local API
+      const localResponse = await ttService.getLocalTT(ttNumber, auth?.user?.api_token);
+      if (localResponse.success && localResponse.data) {
+        const transformedDetail = transformLocalToTTDetail(localResponse.data);
+        setDetail(transformedDetail);
+        setSource('local');
       } else {
         toast.error('Failed to load TT details');
       }
     } catch (error: any) {
       console.error('Load TT detail error:', error);
-      toast.error(error.message || 'Failed to load TT details');
+      // Only show error toast if both external and local failed
+      if (error.status !== 404) {
+        toast.error(error.message || 'Failed to load TT details');
+      } else {
+        toast.error('Trouble ticket not found');
+      }
     } finally {
       setLoading(false);
     }
@@ -109,21 +194,21 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
 
   return (
     <MainLayout>
-      <div className="w-full space-y-6 px-4 py-2 lg:px-6">
+      <div className="w-full space-y-4 px-4 py-2 lg:px-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => router.visit('/complaints')}
-              className="flex items-center gap-2"
+              className="flex items-center"
             >
               <ArrowLeft className="h-4 w-4" />
               Back
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">TT Details</h1>
+            <div className="flex flex-row items-center gap-2">
+              {/* <h1 className="text-2xl font-bold tracking-tight">TT Details</h1> */}
               <p className="text-muted-foreground">Trouble Ticket: {ttNumber}</p>
             </div>
           </div>
@@ -141,9 +226,9 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
             </CardContent>
           </Card>
         ) : detail ? (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Header Card with Status */}
-            <Card>
+            <Card className='border-none shadow-xs'>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -153,8 +238,14 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={detail.result_code === '0' ? 'default' : 'destructive'}>
-                      {detail.result_code === '0' ? 'Active' : 'Failed'}
+                    <Badge variant={detail.result_code === '0' ? 'default' : source === 'local' && detail.result_code === '1' ? 'secondary' : 'destructive'}>
+                      {source === 'local' 
+                        ? (detail.result_code === '0' ? 'Active' : detail.result_code === '1' ? 'Completed' : 'Failed')
+                        : (detail.result_code === '0' ? 'Active' : 'Failed')
+                      }
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {source === 'local' ? 'Local' : 'External'}
                     </Badge>
                     {canConfirmFeedback && !showFeedbackForm && (
                       <Button
@@ -242,9 +333,9 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
             )}
 
             {/* Details Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Customer Information */}
-              <Card>
+              <Card className='border-none shadow-xs'>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <User className="h-4 w-4" />
@@ -274,7 +365,7 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
               </Card>
 
               {/* Contact Information */}
-              <Card>
+              <Card className='border-none shadow-xs'>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Phone className="h-4 w-4" />
@@ -298,7 +389,7 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
               </Card>
 
               {/* Service Information */}
-              <Card>
+              <Card className='border-none shadow-xs'>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <FileText className="h-4 w-4" />
@@ -322,7 +413,7 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
               </Card>
 
               {/* Location Information */}
-              <Card>
+              <Card className='border-none shadow-xs'>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
@@ -352,7 +443,7 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
               </Card>
 
               {/* Timeline */}
-              <Card>
+              <Card className='border-none shadow-xs'>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Clock className="h-4 w-4" />
@@ -376,7 +467,7 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
               </Card>
 
               {/* Additional Information */}
-              <Card>
+              <Card className='border-none shadow-xs'>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <AlertCircle className="h-4 w-4" />
@@ -402,7 +493,7 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
 
             {/* Activities Section */}
             {detail.activities && Array.isArray(detail.activities) && detail.activities.length > 0 && (
-              <Card>
+              <Card className='border-none shadow-xs'>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Clock className="h-4 w-4" />
@@ -447,7 +538,7 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
             )}
           </div>
         ) : (
-          <Card>
+          <Card className='border-none shadow-xs'>
             <CardContent className="py-12 text-center text-muted-foreground">
               No details available
             </CardContent>

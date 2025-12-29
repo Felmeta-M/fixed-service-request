@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface Survey {
     id: string;
@@ -167,13 +167,30 @@ export function useSurveyList(): UseSurveyListReturn {
         await fetchSurveys();
     }, [fetchSurveys]);
 
+    // Move the check inside useEffect to prevent infinite loops
+    useEffect(() => {
+        if (!user?.customer_code) {
+            setError('User not authenticated or no customer code');
+            setSurveys([]);
+            setHasMore(false);
+            setTotal(0);
+            setLoading(false);
+        }
+    }, [user?.customer_code]);
+
+    // Return early if no customer code, but don't call setters during render
     if (!user?.customer_code) {
-        setError('User not authenticated or no customer code');
-        setSurveys([]);
-        setHasMore(false);
-        setTotal(0);
-        setLoading(false);
-        return [] as unknown as UseSurveyListReturn;
+        return {
+            surveys: [],
+            loading: false,
+            error: 'User not authenticated or no customer code',
+            fetchSurveys: async () => [],
+            refetch: async () => {},
+            hasMore: false,
+            loadMore: async () => {},
+            currentPage: 1,
+            total: 0,
+        };
     }
 
     return {

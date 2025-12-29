@@ -82,6 +82,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const { checkResourceAvailability } = useResourceChecker();
 
     // Load user data from authenticated user
+    // Use stable dependencies (user.id, user.name, etc.) instead of the entire user object
     useEffect(() => {
         const loadUserData = () => {
             try {
@@ -94,19 +95,29 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 const contactNo = user.phone || '';
                 const contactEmail = user.email || 'customer@ethiotelecom.et';
 
-                setFormData((prev) => ({
-                    ...prev,
-                    contactPerson,
-                    contactNo,
-                    contactEmail,
-                }));
+                setFormData((prev) => {
+                    // Only update if values actually changed to prevent unnecessary re-renders
+                    if (
+                        prev.contactPerson === contactPerson &&
+                        prev.contactNo === contactNo &&
+                        prev.contactEmail === contactEmail
+                    ) {
+                        return prev;
+                    }
+                    return {
+                        ...prev,
+                        contactPerson,
+                        contactNo,
+                        contactEmail,
+                    };
+                });
             } catch (error) {
                 console.error('Failed to load user data:', error);
             }
         };
 
         loadUserData();
-    }, [user]);
+    }, [user?.id, user?.name, user?.phone, user?.email]);
 
     const hasActiveSurvey = surveys?.some((s) => ['waiting', 'approved'].includes(s.status?.toLowerCase()));
 
@@ -209,7 +220,17 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             case 0:
                 return <ServiceSelectionStep formData={formData} onUpdate={updateFormData} hasActiveSurvey={hasActiveSurvey} />;
             case 1:
-                return <LocationSetupStep formData={formData} onUpdate={updateFormData} googleMapsApiKey={googleMapsApiKey} />;
+                return (
+                    <LocationSetupStep
+                        formData={formData}
+                        onUpdate={updateFormData}
+                        googleMapsApiKey={googleMapsApiKey}
+                        onNext={(surveyId: string) => {
+                            setCreatedSurveyId(surveyId);
+                            nextStep();
+                        }}
+                    />
+                );
             case 2:
                 return (
                     <ReviewSubmitStep
@@ -235,7 +256,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     };
 
     const stepTitles = [
-        ...(isNewCustomer ? [{ title: 'Customer Profile', description: 'Create your customer profile' }] : []),
+        ...(isNewCustomer ? [{ title: 'Customer Information', description: 'Create your customer profile' }] : []),
         { title: 'Service Information', description: 'Choose your service type and configuration' },
         { title: 'Location Information', description: 'Select installation location and check availability' },
         { title: 'Review & Submit', description: 'Verify details and submit your request' },

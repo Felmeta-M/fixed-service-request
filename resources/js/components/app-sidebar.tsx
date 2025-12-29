@@ -45,7 +45,7 @@ const defaultCreateServiceSteps = [
 
 const getStepDescription = (stepName: string) => {
     switch (stepName) {
-        case 'Customer Profile':
+        case 'Customer Information':
             return 'Create or confirm your profile';
         case 'Service Information':
             return 'Choose service type and configuration';

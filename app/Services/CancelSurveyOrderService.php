@@ -22,15 +22,9 @@ class CancelSurveyOrderService extends BaseApiService
 
     public function cancelSurveyOrder(array $data): JsonResponse
     {
-        \Log::info($data);
         try {
-            // Build XML
             $xmlPayload = $this->buildXml($data);
-            Log::info($xmlPayload);
-            // Execute SOAP request
             $xmlResponse = $this->executeRequest($xmlPayload);
-            Log::info($xmlResponse);
-            // Parse XML response
             return $this->parseResponse($data, $xmlResponse);
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
@@ -90,28 +84,48 @@ XML;
             return ApiResponse::error($retMsg);
         }
 
-        $surveyOrder =  SurveyOrder::where('customer_survey_order_id', $data['customer_survey_order_id'])->first();
+        $surveyOrder = SurveyOrder::where(
+            'customer_survey_order_id',
+            $data['customer_survey_order_id']
+        )->first();
 
         if ($surveyOrder) {
-            $surveyOrder->update([
-                'status' => FFDServiceProvisionStatus::Cancelled,
-                'cancel_reason' => $data['cancel_reason'],
-                'deleted_at' => now(),
-            ]);
+            /**
+             * Release reserved service number BEFORE deleting
+             */
+            if ($surveyOrder->service_number) {
+                try {
+                    $this->reserveNumberService->unpick([
+                        'res_type_id' => 10,
+                        'oper_type'   => 1030,
+                        'res_code'    => $surveyOrder->service_number,
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::error('Failed to release service number', [
+                        'service_number' => $surveyOrder->service_number,
+                        'survey_order_id' => $surveyOrder->id,
+                        'error' => $e->getMessage(),
+                    ]);
+
+                    // Decide if delete should stop or continue
+                    // return; // ← uncomment if you want to stop deletion
+                }
+            }
+            /**
+             * Optional: log cancellation before delete
+             */
+        // Log::info('Survey order force deleted', [
+        //     'survey_order_id' => $surveyOrder->id,
+        //     'customer_survey_order_id' => $surveyOrder->customer_survey_order_id,
+        //     'cancel_reason' => $data['cancel_reason'] ?? null,
+        // ]);
+
+            /**
+             * Force delete (permanent)
+             */
+            $surveyOrder->forceDelete();
         }
 
-        if ($surveyOrder?->service_number) {
-            $data = [
-                'res_type_id' => 10,
-                'oper_type' => 1030,
-                'res_code' => $surveyOrder?->service_number,
-            ];
-
-            // $releaseNumber = $this->reserveNumberService->unpick($data);
-            // if (!$releaseNumber) {
-            //     throw new RuntimeException('Unable to release service number!!');
-            // }
-        }
 
         $bodyData = $response->CancelSurveyOrderRequestBody ?? null;
 

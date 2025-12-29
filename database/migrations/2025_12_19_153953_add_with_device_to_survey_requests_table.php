@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('survey_requests', function (Blueprint $table) {
+        Schema::table('survey_orders', function (Blueprint $table) {
             $table->boolean('with_device')
                 ->default(false)
                 ->after('id') // adjust position if needed
@@ -24,7 +24,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('survey_requests', function (Blueprint $table) {
+        Schema::table('survey_orders', function (Blueprint $table) {
             $table->dropColumn('with_device');
         });
     }

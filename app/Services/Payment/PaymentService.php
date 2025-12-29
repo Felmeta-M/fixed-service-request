@@ -37,7 +37,7 @@ class PaymentService
 
         DB::transaction(function () use ($data, $customer) {
 
-            // DB::table('survey_requests')
+            // DB::table('survey_orders')
             //     ->where('customer_survey_order_id', $data['customer_survey_order_id'])
             //     ->update([
             //         'cable_charge' => $data['cable_charge'],

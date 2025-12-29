@@ -28,7 +28,7 @@ class TelebirrController extends Controller
     {
         try {
             $validated = $request->validate([
-                'customerSurveyOrderId' => 'required|exists:survey_requests,customer_survey_order_id',
+                'customerSurveyOrderId' => 'required|exists:survey_orders,customer_survey_order_id',
             ]);
 
             $rawRequest = $this->createOrderService->createOrder($validated);
@@ -106,7 +106,7 @@ class TelebirrController extends Controller
                         'updated_at'        => now(),
                     ]);
 
-                DB::table('survey_requests')
+                DB::table('survey_orders')
                     ->where('customer_survey_order_id', $payment->customer_survey_order_id)
                     ->update([
                         'status'     => FFDServiceProvisionStatus::Paid,
@@ -142,7 +142,7 @@ class TelebirrController extends Controller
     public function serviceSubscription(string $customerSurveyOrderId)
     {
         // $customerSurveyOrderId = $request->get('customerSurveyOrderId');
-        $record = DB::table('survey_requests as sr')
+        $record = DB::table('survey_orders as sr')
             ->join('customers as c', 'c.code', '=', 'sr.customer_code')
             ->where('sr.customer_survey_order_id', $customerSurveyOrderId)
             ->orderByDesc('sr.id')

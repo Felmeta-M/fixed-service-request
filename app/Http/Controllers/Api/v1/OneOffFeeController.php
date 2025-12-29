@@ -24,7 +24,7 @@ class OneOffFeeController extends Controller
     {
 
         $validated = $request->validate([
-            'customer_survey_order_id' => 'required|exists:survey_requests,customer_survey_order_id'
+            'customer_survey_order_id' => 'required|exists:survey_orders,customer_survey_order_id'
         ]);
 
         $survey = SurveyOrder::with(['payment'])

@@ -137,12 +137,12 @@ class SurveyOrderController extends Controller
                 ->whereIn('status', FFDServiceProvisionStatus::blockedForNewRequest())
                 ->exists();
 
-            if ($hasBlockedSurvey) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You already have an active or completed request. Please wait until it is finalized.',
-                ], Response::HTTP_CONFLICT);
-            }
+            // if ($hasBlockedSurvey) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'You already have an active or completed request. Please wait until it is finalized.',
+            //     ], Response::HTTP_CONFLICT);
+            // }
 
             $service = $this->factory->make($data['main_offer_id']);
 

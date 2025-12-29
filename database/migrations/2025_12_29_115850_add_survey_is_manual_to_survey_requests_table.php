@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('survey_requests', function (Blueprint $table) {
+        Schema::table('survey_orders', function (Blueprint $table) {
             $table->boolean('survey_is_manual')
                 ->default(false)
                 ->after('id'); // adjust position if needed
@@ -16,7 +16,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::table('survey_requests', function (Blueprint $table) {
+        Schema::table('survey_orders', function (Blueprint $table) {
             $table->dropColumn('survey_is_manual');
         });
     }

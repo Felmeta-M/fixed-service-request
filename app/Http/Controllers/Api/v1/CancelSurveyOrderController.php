@@ -23,7 +23,7 @@ class CancelSurveyOrderController extends Controller
         ]);
 
         $validated = $request->only(['customer_survey_order_id', 'cancel_reason']);
-        Log::info($validated);
+        
         return $this->cancelSurveyOrderService->cancelSurveyOrder($validated);
     }
 }

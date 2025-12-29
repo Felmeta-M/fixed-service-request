@@ -26,6 +26,7 @@ class SurveyRequestResource extends JsonResource
             // 'sec_contact_email' => $this->sec_contact_email,
             'status'   => $this->status,
             'with_device' => $this->device,
+            'survey_is_manual' => $this->survey_is_manual,
             'created_at' => $this->created_at?->format('Y-m-d'),
             // 'subscribed_at' => $this->subscribed_at ? Carbon::parse($this->subscribed_at)->diffForHumans() : $this->subscribed_at,
             'payment' => new PaymentResource($this->payment),

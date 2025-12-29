@@ -47,6 +47,7 @@ abstract class BaseSurveyService extends BaseApiService
     final public function create(array $data)
     {
         $resource = [
+            'neid' => $data['survey_address_info']['neid'] ?? null,
             'distance' => $data['survey_address_info']['distance'] ?? null,
             'cable_type' => $data['survey_address_info']['cable_type'] ?? null,
             'longitude' => $data['survey_address_info']['longitude'] ?? null,

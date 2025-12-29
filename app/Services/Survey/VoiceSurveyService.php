@@ -4,7 +4,6 @@ namespace App\Services\Survey;
 
 use App\Models\Customer;
 use App\Services\ApiResponse;
-use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class VoiceSurveyService extends BaseSurveyService implements SurveyInterface

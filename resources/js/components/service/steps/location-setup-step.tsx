@@ -268,11 +268,11 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
             toast.success('Service request created successfully. Our team will review your manual request.', {
                 id: submissionToast,
             });
-            
+
             // Close dialogs and reset manual flow
             setShowManualFlow(false);
             setShowResourceUnavailableDialog(false);
-            
+
             // Update form data to mark as manual submission
             onUpdate({
                 ...formData,
@@ -290,9 +290,9 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                 error.response?.data?.message ||
                 error.message ||
                 'Failed to submit your request. Please try again later.';
-            
+
             toast.error(errorMessage, { id: submissionToast });
-            
+
             // If it's a validation error, show field-specific errors
             if (error.response?.data?.errors) {
                 setManualFlowErrors(error.response.data.errors);
@@ -541,10 +541,10 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
         currentLocation ||
         (hasValidLocation
             ? {
-                  lat: formData.latitude,
-                  lng: formData.longitude,
-                  address: formData.address,
-              }
+                lat: formData.latitude,
+                lng: formData.longitude,
+                address: formData.address,
+            }
             : null);
 
     return (
@@ -665,22 +665,27 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                 <AlertDialogContent className="sm:max-w-md">
                     <AlertDialogHeader>
                         <div className="flex items-center gap-3">
-                            {/* <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100"> */}
-                                <AlertCircle className="h-5 w-5 text-amber-600" />
-                            {/* </div> */}
-                            <AlertDialogTitle className="text-left">Service Currently Unavailable</AlertDialogTitle>
+                            <AlertCircle className="h-5 w-5 text-amber-600" />
+                            <AlertDialogTitle className="text-left">
+                                Location Review Needed
+                            </AlertDialogTitle>
                         </div>
+
                         <AlertDialogDescription className="pt-3 text-left">
                             <p className="mb-3 text-gray-700">
-                            <span className='text-orange-500'>Sorry, currently we have no available resources in this area. However, we're here to help you through an alternative process.</span>
-                                {/* We currently don't have automated resources available for this location. However, we're here to help you through an alternative process. */}
-                                {/* Sorry, currently we have no available resources in this area. Please visit our shops for manual assistance. */}
+                                Thank you for selecting your location on the map. We’re currently unable to automatically provision service for this location because available resources could not be confirmed.
                             </p>
+
+                            <p className="mb-3 text-gray-700">
+                                You can continue by submitting a manual request. Our team will review your location, perform a manual survey if needed, and contact you to assist with the next steps.
+                            </p>
+
                             <p className="text-sm text-gray-600">
-                                Would you like to submit a manual request? Our team will review your location and contact you to assist with your service needs.
+                                We appreciate your patience and look forward to helping you get connected.
                             </p>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
+
                     <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row">
                         <AlertDialogCancel onClick={() => setShowResourceUnavailableDialog(false)}>
                             Cancel
@@ -701,7 +706,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                     <AlertDialogHeader>
                         <div className="flex items-center gap-3">
                             {/* <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100"> */}
-                                <Phone className="h-5 w-5 text-primary" />
+                            <Phone className="h-5 w-5 text-primary" />
                             {/* </div> */}
                             <AlertDialogTitle className="text-left">Submit Manual Request</AlertDialogTitle>
                         </div>
@@ -811,7 +816,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                             {manualFlowErrors.reason && (
                                 <p className="mt-1 text-sm text-red-600">{manualFlowErrors.reason}</p>
                             )} */}
-                            {/* <p className="mt-1 text-xs text-gray-500">
+                        {/* <p className="mt-1 text-xs text-gray-500">
                                 Help us understand your specific service needs (e.g., preferred installation date, special requirements)
                             </p> */}
                         {/* </Field> */}
@@ -820,7 +825,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                         {/* <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
                             <p className="mb-1 text-xs font-medium text-gray-700">Request Location</p>
                             <p className="text-sm text-gray-600">{formData.address || 'Location selected on map'}</p> */}
-                            {/* <p className="mt-1 text-xs text-gray-500">
+                        {/* <p className="mt-1 text-xs text-gray-500">
                                 {formData.latitude?.toFixed(6)}, {formData.longitude?.toFixed(6)}
                             </p> */}
                         {/* </div> */}

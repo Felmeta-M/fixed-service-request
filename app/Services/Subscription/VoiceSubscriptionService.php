@@ -14,8 +14,6 @@ use Illuminate\Support\Facades\Log;
 
 class VoiceSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
-   use InteractsWithSMSGateway;
-
    protected ?string $serviceNumber = null;
 
    public function __construct(
@@ -244,14 +242,29 @@ XML;
          ]);
 
       // ✅ Send SMS to customer
-      if ($data['sms_no']) {
+      if (! empty($data['sms_no']) && InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])) {
+
+         $phone = $data['sms_no'];
+         $name  = trim(explode(' ', $data['name'] ?? '')[0] ?? 'Customer');
+
+         $message = sprintf(
+            'Dear %s, thank you for choosing Ethio telecom. Your subscription has been successfully created. For support or to submit a TT/complaint, please visit https://fixedservices.ethiotelecom.et/services.',
+            $name
+         );
+
          try {
-            $name = explode(' ', $data['name'])[0];
-            $message = "Dear {$name}, thank you for choosing Ethio telecom. We are pleased to inform you that your subscription has been successfully created. For support or to submit a TT/complaint, please visit https://fixedservices.ethiotelecom.et/services.";
-            $this->sendSmsOnly($data['sms_no'], $message);
-         } catch (\Throwable $smsException) {
-            Log::error('Failed to send subscription SMS', [
-               'error'         => $smsException->getMessage(),
+            InteractsWithSMSGateway::sendSmsOnly($phone, $message);
+         } catch (\RuntimeException $e) {
+            // Business-level failure (rate limit, gateway reject)
+            Log::warning('Subscription SMS blocked or rejected', [
+               'phone'   => $phone,
+               'reason'  => $e->getMessage(),
+            ]);
+         } catch (\Throwable $e) {
+            // System-level failure
+            Log::error('Subscription SMS failed unexpectedly', [
+               'phone'  => $phone,
+               'error'  => $e->getMessage(),
             ]);
          }
       }

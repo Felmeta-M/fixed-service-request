@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
 
+    // Token endpoints with strict rate limiting
     Route::middleware(['throttle:service_client'])->group(function () {
         Route::post('/issue-token', [ServiceClientController::class, 'issueToken']);
         Route::get('/fetch-token', function (Request $request) {
@@ -39,70 +40,86 @@ Route::prefix('v1')->group(function () {
         })->middleware(AuthenticateServiceClient::class);
     });
 
-    Route::apiResource('survey-types', SurveyTypeController::class);
-    Route::apiResource('bandwidth-options', BandwidthOptionController::class);
-    Route::apiResource('occupations', OccupationController::class);
+    // Public read-only endpoints with moderate rate limiting
+    Route::middleware(['throttle:api_public'])->group(function () {
+        Route::apiResource('survey-types', SurveyTypeController::class);
+        Route::apiResource('bandwidth-options', BandwidthOptionController::class);
+        Route::apiResource('occupations', OccupationController::class);
 
-    Route::prefix('locations')->group(function () {
-        Route::get('/regions', [LocationController::class, 'regions']);
-        Route::get('/zones/{regionId}', [LocationController::class, 'zones'])->where('regionId', '[0-9]+');
-        Route::get('/weredas/{zoneId}', [LocationController::class, 'weredas'])->where('zoneId', '[0-9]+');
+        Route::prefix('locations')->group(function () {
+            Route::get('/regions', [LocationController::class, 'regions']);
+            Route::get('/zones/{regionId}', [LocationController::class, 'zones'])->where('regionId', '[0-9]+');
+            Route::get('/weredas/{zoneId}', [LocationController::class, 'weredas'])->where('zoneId', '[0-9]+');
+        });
     });
 
     Route::middleware(['auth:api'])->group(function () {
 
-        Route::prefix('customer')->group(function () {
-            Route::get('/', [CustomerController::class, 'show']);
-            Route::post('/create', [CustomerController::class, 'store']);
-            Route::post('/ecaf', [EcafController::class, 'upload']);
-            Route::post('/query-by-service-number', [CustomerController::class, 'getCustomerByServiceNumber']);
-            Route::post('/query-by-customer-code', [CustomerController::class, 'getCustomerByCode']);
-            Route::get('/types', [CustomerController::class, 'types']);
-            Route::get('/categories', [CustomerController::class, 'categories']);
-            Route::get('/subcategories', [CustomerController::class, 'subcategories']);
+        // Heavy operations: Customer creation and ECAF upload
+        Route::middleware(['throttle:api_heavy'])->group(function () {
+            Route::prefix('customer')->group(function () {
+                Route::post('/create', [CustomerController::class, 'store']);
+                Route::post('/ecaf', [EcafController::class, 'upload']);
+            });
+
+            Route::post('ecaf-upload', [EcafController::class, 'upload']);
+
+            Route::prefix('survey')->group(function () {
+                Route::post('/create', [SurveyOrderController::class, 'store']);
+            });
         });
 
-        Route::prefix('survey')->group(function () {
-            Route::post('/create', [SurveyOrderController::class, 'store']);
-            Route::post('/order', [QuerySurveyOrderController::class, 'querySurveyOrder']);
-            Route::post('/order-summary', [QuerySurveyOrderSummaryController::class, 'querySurveyOrderSummary']);
+        // General authenticated endpoints: Customer queries and read operations
+        Route::middleware(['throttle:api_authenticated'])->group(function () {
+            Route::prefix('customer')->group(function () {
+                Route::get('/', [CustomerController::class, 'show']);
+                Route::post('/query-by-service-number', [CustomerController::class, 'getCustomerByServiceNumber']);
+                Route::post('/query-by-customer-code', [CustomerController::class, 'getCustomerByCode']);
+                Route::get('/types', [CustomerController::class, 'types']);
+                Route::get('/categories', [CustomerController::class, 'categories']);
+                Route::get('/subcategories', [CustomerController::class, 'subcategories']);
+            });
+
+            Route::prefix('survey')->group(function () {
+                Route::post('/order', [QuerySurveyOrderController::class, 'querySurveyOrder']);
+                Route::post('/order-summary', [QuerySurveyOrderSummaryController::class, 'querySurveyOrderSummary']);
+            });
+
+            Route::get('survey-requests', [SurveyOrderController::class, 'index']);
+            Route::get('survey-requests/show', [SurveyOrderController::class, 'show']);
+            Route::patch('survey-requests/update', [SurveyOrderController::class, 'update']);
+            Route::delete('survey-requests/delete', [SurveyOrderController::class, 'destroy']);
+
+            Route::post('account-list', [AccountController::class, 'getAccount']);
+            Route::post('primary-offers', [PrimaryOfferingController::class, 'getPrimaryOffer']);
+            Route::post('avaiable-number', [AvailableNumberController::class, 'getAvaiableNumber']);
+            Route::post('cancel-survey-order', [CancelSurveyOrderController::class, 'cancel']);
+            Route::post('resource-check', [ResourceCheckController::class, 'check']);
+            Route::post('release-number-service', [ReserveNumberServiceController::class, 'release']);
+
+            Route::post('calc-one-off-fee', [OneOffFeeController::class, 'calculateOneOffFee']);
+            Route::post('one-off-fee', [OneOffFeeController::class, 'fee']);
+
+            Route::get('payments/show', [PaymentController::class, 'show']);
         });
 
-        Route::get('survey-requests', [SurveyOrderController::class, 'index']);
-        Route::get('survey-requests/show', [SurveyOrderController::class, 'show']);
-        Route::patch('survey-requests/update', [SurveyOrderController::class, 'update']);
-        Route::delete('survey-requests/delete', [SurveyOrderController::class, 'destroy']);
+        // Critical operations: Payments, orders, subscriptions
+        Route::middleware(['throttle:api_critical'])->group(function () {
+            Route::prefix('services')->group(function () {
+                Route::post('/subscription', [SubsriptionController::class, 'store']);
+            });
 
-        Route::prefix('services')->group(function () {
-            Route::post('/subscription', [SubsriptionController::class, 'store']);
+            Route::post('create-order', [TelebirrController::class, 'createOrder'])->name('create.order');
         });
 
-        Route::post('ecaf-upload', [EcafController::class, 'upload']);
-
-        Route::post('account-list', [AccountController::class, 'getAccount']);
-        Route::post('primary-offers', [PrimaryOfferingController::class, 'getPrimaryOffer']);
-        Route::post('avaiable-number', [AvailableNumberController::class, 'getAvaiableNumber']);
-        Route::post('cancel-survey-order', [CancelSurveyOrderController::class, 'cancel']);
-        Route::post('resource-check', [ResourceCheckController::class, 'check']);
-        Route::post('release-number-service', [ReserveNumberServiceController::class, 'release']);
-
-        Route::post('calc-one-off-fee', [OneOffFeeController::class, 'calculateOneOffFee']);
-        Route::post('one-off-fee', [OneOffFeeController::class, 'fee']);
-
-        Route::post('create-order', [TelebirrController::class, 'createOrder'])->name('create.order');
-
-        Route::get('payments/show', [PaymentController::class, 'show']);
-
-
-        Route::get('trouble-tickets', [TroubleTicketController::class, 'index']);
-        Route::get('trouble-tickets/{tt_serial_no}', [TroubleTicketController::class, 'show']);
-        Route::post('tt/create', [TroubleTicketController::class, 'store']);
-        Route::post('tt/query', [TroubleTicketController::class, 'query']);
-        Route::post('tt/detail', [TroubleTicketController::class, 'detail']);
-        Route::post('tt/confirm-feedback', [TroubleTicketController::class, 'confirm']);
+        // Trouble ticket operations
+        Route::middleware(['throttle:api_trouble_tickets'])->group(function () {
+            Route::get('trouble-tickets', [TroubleTicketController::class, 'index']);
+            Route::get('trouble-tickets/{tt_serial_no}', [TroubleTicketController::class, 'show']);
+            Route::post('tt/create', [TroubleTicketController::class, 'store']);
+            Route::post('tt/query', [TroubleTicketController::class, 'query']);
+            Route::post('tt/detail', [TroubleTicketController::class, 'detail']);
+            Route::post('tt/confirm-feedback', [TroubleTicketController::class, 'confirm']);
+        });
     });
-
-
-    // Refresh a specific ticket
-    Route::post('trouble-tickets/{tt_serial_no}/refresh', [TroubleTicketController::class, 'refresh']);
 });

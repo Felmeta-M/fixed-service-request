@@ -22,7 +22,7 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
 
         $transactionId = $this->transactionId();
         $processTime   = $this->processTime();
-        $sessionId     = $cfg['session_id'] ?? uniqid();
+        $sessionId     = uniqid();
         $contactNo     = substr($data['contact_no'], -9);
         $completedDate = now()->format('YmdHis');
 
@@ -75,7 +75,7 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
 <com:CompletedDate>{$completedDate}</com:CompletedDate>
 <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
 <com:ExtParamList>
-<com:ParameterInfo><com:ParamName>NEID</com:ParamName><com:ParamValue>700041565830</com:ParamValue></com:ParameterInfo>
+<com:ParameterInfo><com:ParamName>NEID</com:ParamName><com:ParamValue>{$resource['neid']}</com:ParamValue></com:ParameterInfo>
 <com:ParameterInfo><com:ParamName>CABLETYPE</com:ParamName><com:ParamValue>3</com:ParamValue></com:ParameterInfo>
 <com:ParameterInfo><com:ParamName>NUMBER_LINE</com:ParamName><com:ParamValue>1</com:ParamValue></com:ParameterInfo>
 <com:ParameterInfo><com:ParamName>LONGITUDE</com:ParamName><com:ParamValue>{$resource['longitude']}</com:ParamValue></com:ParameterInfo>

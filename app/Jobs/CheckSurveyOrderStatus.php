@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Auth;
 class CheckSurveyOrderStatus implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    use InteractsWithSMSGateway;
 
     public function __construct()
     {

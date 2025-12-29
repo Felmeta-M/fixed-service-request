@@ -65,7 +65,7 @@ class DataSurveyService extends BaseSurveyService implements SurveyInterface
 <com:CompletedDate>{$completedDate}</com:CompletedDate>
 <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
 <com:ExtParamList>
-<com:ParameterInfo><com:ParamName>NEID</com:ParamName><com:ParamValue>700041565830</com:ParamValue></com:ParameterInfo>
+<com:ParameterInfo><com:ParamName>NEID</com:ParamName><com:ParamValue>{$resource['neid']}</com:ParamValue></com:ParameterInfo>
 <com:ParameterInfo><com:ParamName>CABLETYPE</com:ParamName><com:ParamValue>3</com:ParamValue></com:ParameterInfo>
 <com:ParameterInfo><com:ParamName>LONGITUDE</com:ParamName><com:ParamValue>{$resource['longitude']}</com:ParamValue></com:ParameterInfo>
 <com:ParameterInfo><com:ParamName>LATITUDE</com:ParamName><com:ParamValue>{$resource['latitude']}</com:ParamValue></com:ParameterInfo>

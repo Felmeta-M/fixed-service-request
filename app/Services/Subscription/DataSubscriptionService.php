@@ -13,8 +13,6 @@ use Illuminate\Support\Facades\Log;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
-   use InteractsWithSMSGateway;
-
    public function __construct(protected readonly GetCombiningService $get_combining_service) {}
 
    protected function offeringId(): int
@@ -268,19 +266,38 @@ XML;
                   'status' => FFDServiceProvisionStatus::Subscribed->value,
                   'subscribed_at' => now(),
                ]);
-            Log::info($data);
+
             // ✅ Send SMS to customer
-            if ($data['sms_no']) {
+            if (! empty($data['sms_no']) && InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])) {
+
+               $phone = $data['sms_no'];
+
                try {
-                  $name = explode(' ', $data['name'])[0];
-                  $message = "Dear {$name}, thank you for choosing Ethio telecom. We are pleased to inform you that your subscription has been successfully created. For support or to submit a TT/complaint, please visit https://fixedservices.ethiotelecom.et/services.";
-                  $this->sendSmsOnly($data['sms_no'], $message);
-               } catch (\Throwable $smsException) {
+                  $name = trim(explode(' ', $data['name'] ?? 'Customer')[0]);
+
+                  $message = "Dear {$name}, thank you for choosing Ethio Telecom. "
+                     . "We are pleased to inform you that your subscription has been successfully created. "
+                     . "Your service number is {$serviceNo}. "
+                     . "For support or to submit a TT/complaint, please visit "
+                     . "https://fixedservices.ethiotelecom.et/services.";
+
+                  InteractsWithSMSGateway::sendSmsOnly($phone, $message);
+               } catch (\RuntimeException $e) {
+                  // Business-level issue (rate limiting, gateway rejection)
+                  Log::warning('Subscription SMS blocked or rate-limited', [
+                     'phone'  => $phone,
+                     'reason' => $e->getMessage(),
+                  ]);
+               } catch (\Throwable $e) {
+                  // System-level failure
                   Log::error('Failed to send subscription SMS', [
-                     'error'         => $smsException->getMessage(),
+                     'phone' => $phone,
+                     'error' => $e->getMessage(),
                   ]);
                }
             }
+
+
 
             // $message = $retCode === '-999'
             //     ? 'Duplicate request – previous success reused'

@@ -137,7 +137,7 @@ abstract class BaseSurveyService extends BaseApiService
         try {
             $decrypted = $data;
             // List of fields to decrypt
-            $fieldsToDecrypt = ['distance', 'cable_type', 'latitude', 'longitude'];
+            $fieldsToDecrypt = ['neid', 'distance', 'cable_type', 'latitude', 'longitude'];
 
             foreach ($fieldsToDecrypt as $field) {
                 if (isset($data[$field]) && !is_null($data[$field])) {

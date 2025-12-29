@@ -32,7 +32,8 @@ class SurveyOrderFormRequest extends FormRequest
             'status'               => 'nullable|string',
             'completed_date'       => 'nullable|date',
             'external_operid'       => 'nullable|string',
-            'with_device'           => 'nullable|boolean'
+            'with_device'           => 'nullable|boolean',
+            'survey_is_manual'      => 'nullable|boolean',
         ];
     }
 }

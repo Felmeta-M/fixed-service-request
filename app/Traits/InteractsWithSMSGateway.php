@@ -3,146 +3,192 @@
 namespace App\Traits;
 
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Throwable;
 
 trait InteractsWithSMSGateway
 {
-    public static function sendSmsOnly(string|int $phone, $message = null): bool|string
-    {
-        $encodedMessage = urlencode($message);
-        $phone = substr($phone, -9);
-        $encodedPhoneNumber = urlencode("251{$phone}");
+    /* -----------------------------------------------------------------
+     |  Public API
+     | -----------------------------------------------------------------
+     */
 
-        $smsEndPoint = config('services.sms_end_point');
-        $url = "{$smsEndPoint}{$encodedPhoneNumber}&message={$encodedMessage}";
+    public static function sendSmsOnly(string|int $phone, string $message): bool
+    {
+        self::applySmsRateLimit($phone);
+
+        $phone = self::normalizePhone($phone);
+
+        $url = self::buildSmsUrl($phone, $message);
 
         return self::sendRequest($url);
     }
 
-    protected static function sendRequest(string $url): bool|string
+    public static function sendOTP(string|int $phone): string
     {
-        try {
-            $response = Http::get($url);
-            if ($response->successful()) {
-                return true;
-            }
-            return false;
-        } catch (Exception $e) {
-            // Log the error in case of an exception
-            Log::error("HTTP request error occurred: ", ['error' => $e->getMessage()]);
+        self::applyOtpRateLimit($phone);
+
+        $phone = self::normalizePhone($phone);
+
+        $otp = self::generateOtp();
+        self::storeOtp($phone, $otp);
+
+        $message = "Your verification code is {$otp}. It expires in 5 minutes.";
+
+        $url = self::buildSmsUrl($phone, $message);
+
+        if (! self::sendRequest($url)) {
+            throw new \RuntimeException('Failed to send OTP SMS.');
         }
-
-        return false;
-    }
-
-    public static function sendOTP(string $phone, $message = null)
-    {
-        try {
-            $phone = substr($phone, -9);
-            $otp = self::OTP();
-            $message = "Your verification code is {$otp}. It will expire in 5 minutes. Do not share this code with anyone.";
-            $encodedMessage = urlencode("{$message}");
-            $encodedPhoneNumber = urlencode("251{$phone}");
-            $smsEndPoint = config('services.sms_end_point');
-            $url = "{$smsEndPoint}{$encodedPhoneNumber}&message={$encodedMessage}";
-
-            self::setOTP($phone, $otp);
-
-            $response = self::sendRequest($url);
-            if ($response) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'OTP successfully sent'
-                ]);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'OTP could not be sent'
-                ], 500);
-            }
-        } catch (Throwable $th) {
-            Log::info($th->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'OTP could not be sent'
-            ], 500);
-        }
-    }
-
-    public static function OTP(string|int $length = 6): string
-    {
-        $characters = '123456789';
-        $charactersLength = strlen($characters);
-        $code = '';
-        for ($i = 0; $i < (int)$length; $i++) {
-            $code .= $characters[rand(0, $charactersLength - 1)];
-        }
-
-        return $code;
-    }
-
-    public static function setOTP($phone = null, $code = null): string
-    {
-        $otp = $code ?: self::OTP();
-
-        DB::table('service_clients')->where('phone', $phone)->delete();
-
-        DB::table('service_clients')->insert([
-            'phone' => $phone,
-            'otp_code' => sha1($otp),
-            'otp_expires_at' => Carbon::now()->addMinutes(5)
-        ]);
 
         return $otp;
     }
 
-    public static function verifyOTP(string $otp)
+    public static function verifyOTP(string $otp): bool
     {
-        $otpRecord = self::findOTP($otp);
+        $record = self::findOtpRecord($otp);
 
-        if (!$otpRecord) {
-            return [
-                'success' => false,
-                'message' => 'Invalid verification code.'
-            ];
+        if (! $record) {
+            return false;
         }
 
-        if (Carbon::parse($otpRecord->otp_expires_at)->isPast()) {
-            return [
-                'success' => false,
-                'message' => 'Verification code has expired.'
-            ];
+        if (Carbon::parse($record->otp_expires_at)->isPast()) {
+            self::deleteOtp($otp);
+            return false;
         }
 
-        return [
-            'success' => true,
-            'message' => 'Verification successful.',
-            'data' => [
-                'otp_code' => $otpRecord->otp_code,
-            ]
-        ];
+        self::deleteOtp($otp);
+
+        return true;
     }
 
-    public static function findOTP(string $otp)
+    /* -----------------------------------------------------------------
+     |  Rate Limiting
+     | -----------------------------------------------------------------
+     */
+
+    protected static function applySmsRateLimit(string|int $phone): void
+    {
+        $phoneKey = 'sms:phone:' . self::normalizePhone($phone);
+        $ipKey = 'sms:ip:' . self::requestIp();
+
+        if (
+            RateLimiter::tooManyAttempts($ipKey, 3) ||
+            RateLimiter::tooManyAttempts($phoneKey, 5)
+        ) {
+            throw new \RuntimeException('SMS rate limit exceeded.');
+        }
+
+        RateLimiter::hit($ipKey, 60);
+        RateLimiter::hit($phoneKey, 3600);
+    }
+
+    protected static function applyOtpRateLimit(string|int $phone): void
+    {
+        $key = 'otp:phone:' . self::normalizePhone($phone);
+
+        if (RateLimiter::tooManyAttempts($key, 3)) {
+            throw new \RuntimeException('OTP rate limit exceeded.');
+        }
+
+        RateLimiter::hit($key, 300);
+    }
+
+    /* -----------------------------------------------------------------
+     |  OTP Logic
+     | -----------------------------------------------------------------
+     */
+
+    protected static function generateOtp(int $length = 6): string
+    {
+        return str_pad(
+            (string) random_int(0, (10 ** $length) - 1),
+            $length,
+            '0',
+            STR_PAD_LEFT
+        );
+    }
+
+    protected static function storeOtp(string $phone, string $otp): void
+    {
+        DB::transaction(function () use ($phone, $otp) {
+            DB::table('service_clients')->where('phone', $phone)->delete();
+
+            DB::table('service_clients')->insert([
+                'phone' => $phone,
+                'otp_code' => hash('sha256', $otp),
+                'otp_expires_at' => Carbon::now()->addMinutes(5),
+                'created_at' => now(),
+            ]);
+        });
+    }
+
+    protected static function findOtpRecord(string $otp)
     {
         return DB::table('service_clients')
-            ->where('otp_code', sha1($otp))
+            ->where('otp_code', hash('sha256', $otp))
             ->first();
     }
 
-    public static function deleteOTP(string $otp): int
+    protected static function deleteOtp(string $otp): int
     {
-        return DB::table('service_clients')->where('otp_code', sha1($otp))->delete();
+        return DB::table('service_clients')
+            ->where('otp_code', hash('sha256', $otp))
+            ->delete();
     }
 
-    public static function ensurePhoneIsLocal(string|int $phone): bool|int
-    {
-        $pattern = "/^(\+251|251|0)?(9|7)(\d){8}$/";
+    /* -----------------------------------------------------------------
+     |  SMS Transport
+     | -----------------------------------------------------------------
+     */
 
-        return preg_match($pattern, $phone);
+    protected static function sendRequest(string $url): bool
+    {
+        try {
+            return Http::timeout(10)->get($url)->successful();
+        } catch (Throwable $e) {
+            Log::error('SMS gateway request failed', [
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    protected static function buildSmsUrl(string $phone, string $message): string
+    {
+        $endpoint = config('services.sms_end_point');
+
+        return sprintf(
+            '%s%s&message=%s',
+            $endpoint,
+            urlencode("251{$phone}"),
+            urlencode($message)
+        );
+    }
+
+    /* -----------------------------------------------------------------
+     |  Helpers
+     | -----------------------------------------------------------------
+     */
+
+    public static function normalizePhone(string|int $phone): string
+    {
+        $phone = preg_replace('/\D/', '', (string) $phone);
+
+        return substr($phone, -9);
+    }
+
+    protected static function requestIp(): string
+    {
+        return request()?->ip() ?? 'cli';
+    }
+
+    public static function ensurePhoneIsLocal(string|int $phone): bool
+    {
+        return (bool) preg_match("/^(\+251|251|0)?(9|7)\d{8}$/", $phone);
     }
 }

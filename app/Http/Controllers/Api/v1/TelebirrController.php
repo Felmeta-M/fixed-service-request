@@ -5,12 +5,10 @@ namespace App\Http\Controllers\Api\v1;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
-use App\Models\SurveyRequest;
 use App\Services\CreateOrderService;
 use App\Services\Payment\PaymentService;
 use App\Services\RsaSignatureService;
 use App\Services\Subscription\SubscriptionServiceFactory;
-use App\Traits\InteractsWithSMSGateway;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +16,6 @@ use RuntimeException;
 
 class TelebirrController extends Controller
 {
-    use InteractsWithSMSGateway;
 
     public function __construct(
         protected readonly CreateOrderService $createOrderService,

@@ -46,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
             }
         ]);
 
+        // Rate limiter for service client token endpoints
         RateLimiter::for('service_client', function (Request $request) {
             return Limit::perSecond(5, 3)->by($request->ip()) // 3 requests for every 5 seconds
                 ->response(function () {
@@ -53,6 +54,85 @@ class AppServiceProvider extends ServiceProvider
                         'message' => 'Rate limit exceeded. Please wait a second 5.',
                     ], 429);
                 });
+        });
+
+        // Rate limiter for public read-only endpoints (survey-types, bandwidth-options, occupations, locations)
+        RateLimiter::for('api_public', function (Request $request) {
+            return Limit::perMinute(60)->by($request->ip())
+                ->response(function (Request $request, array $headers) {
+                    return response()->json([
+                        'message' => 'Too many requests. Please try again later.',
+                        'retry_after' => $headers['Retry-After'] ?? 60,
+                    ], 429);
+                });
+        });
+
+        // Rate limiter for general authenticated endpoints
+        RateLimiter::for('api_authenticated', function (Request $request) {
+            $user = $request->user();
+            $key = $user ? $user->id : $request->ip();
+
+            return Limit::perMinute(120)->by($key)
+                ->response(function (Request $request, array $headers) {
+                    return response()->json([
+                        'message' => 'Too many requests. Please try again later.',
+                        'retry_after' => $headers['Retry-After'] ?? 60,
+                    ], 429);
+                });
+        });
+
+        // Rate limiter for critical operations (payments, orders, subscriptions)
+        RateLimiter::for('api_critical', function (Request $request) {
+            $user = $request->user();
+            $key = $user ? $user->id : $request->ip();
+
+            return Limit::perMinute(30)->by($key)
+                ->response(function (Request $request, array $headers) {
+                    return response()->json([
+                        'message' => 'Rate limit exceeded for critical operations. Please try again later.',
+                        'retry_after' => $headers['Retry-After'] ?? 60,
+                    ], 429);
+                });
+        });
+
+        // Rate limiter for heavy operations (survey creation, customer creation)
+        RateLimiter::for('api_heavy', function (Request $request) {
+            $user = $request->user();
+            $key = $user ? $user->id : $request->ip();
+
+            return Limit::perMinute(40)->by($key)
+                ->response(function (Request $request, array $headers) {
+                    return response()->json([
+                        'message' => 'Rate limit exceeded for this operation. Please try again later.',
+                        'retry_after' => $headers['Retry-After'] ?? 60,
+                    ], 429);
+                });
+        });
+
+        // Rate limiter for trouble ticket operations
+        RateLimiter::for('api_trouble_tickets', function (Request $request) {
+            $user = $request->user();
+            $key = $user ? $user->id : $request->ip();
+
+            return Limit::perMinute(60)->by($key)
+                ->response(function (Request $request, array $headers) {
+                    return response()->json([
+                        'message' => 'Too many trouble ticket requests. Please try again later.',
+                        'retry_after' => $headers['Retry-After'] ?? 60,
+                    ], 429);
+                });
+        });
+
+        RateLimiter::for('send-sms', function (Request $request) {
+            $phone = preg_replace('/\D/', '', $request->input('phone'));
+
+            return [
+                // Per IP
+                Limit::perMinute(3)->by($request->ip()),
+
+                // Per phone number
+                Limit::perHour(5)->by('sms:phone:' . $phone),
+            ];
         });
 
         if (app()->isProduction()) {

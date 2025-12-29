@@ -163,6 +163,7 @@ XML;
             }
 
             // Encrypt sensitive fields
+            $resource['neid'] = Crypt::encryptString((string)$resource['neid']);
             $resource['distance'] = Crypt::encryptString((string)$resource['distance']);
             $resource['cable_type'] = Crypt::encryptString((string)$resource['cable_type']);
             $resource['longitude'] = Crypt::encryptString((string)$resource['longitude']);

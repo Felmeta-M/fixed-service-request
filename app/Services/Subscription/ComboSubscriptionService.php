@@ -14,8 +14,6 @@ use Illuminate\Support\Str;
 
 class ComboSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
-   use InteractsWithSMSGateway;
-
    protected function offeringId(): int
    {
       return 1457567289; // FBB OR DATA

@@ -195,8 +195,10 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
 
         try {
             // Build survey creation payload (same structure as review-submit-step)
-            // The backend expects encrypted resource fields (distance/cable_type/latitude/longitude)
+            // The backend expects encrypted resource fields (distance/cable_type/latitude/longitude/neid/nename)
             // exactly as returned from `/api/v1/resource-check`.
+            // IMPORTANT: Even when resource is not available (manual flow), resourceData may still contain
+            // encrypted fields from the resource check that must be forwarded to survey/create API.
             const encryptedResource = formData.resourceData;
 
             const submitData = {

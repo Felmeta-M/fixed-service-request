@@ -34,7 +34,7 @@ export interface ResourceCheckResponse {
 }
 
 export const useResourceChecker = () => {
-    const { auth } = usePage().props;
+    const { auth } = usePage<{ auth: { user: { api_token: string; id?: number; name?: string; address?: string } } }>().props;
     const user = auth.user;
 
     console.log('Using resource checker with user:', user);
@@ -78,10 +78,31 @@ export const useResourceChecker = () => {
 
             // Check if response is successful
             if (response.data.success) {
+                // If data is null, no resource is available
+                if (!response.data.data || response.data.data === null) {
+                    return {
+                        available: false,
+                        message: 'No available resources in this area',
+                        data: undefined,
+                    };
+                }
+
+                // Process the resource data
                 const resource = response.data.data;
+                const availablePorts = parseInt(resource.ava_port) || 0;
+
+                // `distance`, `cable_type`, `latitude`, `longitude`, `neid` are encrypted by the backend (Crypt::encryptString),
+                // and the SOAP call already receives `radius=200`, so we treat ports>0 as availability.
+                // IMPORTANT: Even when ports <= 0 (resource not available), we still return the encrypted resource data
+                // because it contains encrypted fields that must be forwarded to survey/create API.
+                const isAvailable = availablePorts > 0;
+
                 return {
-                    available: true,
-                    message: "Resource available",
+                    available: isAvailable,
+                    message: isAvailable
+                        ? `Resource available (${availablePorts} ports)`
+                        : 'No available resources in this area',
+                    // Always return resource data (even when not available) as it contains encrypted fields needed for survey creation
                     data: resource,
                 };
             }
@@ -90,7 +111,7 @@ export const useResourceChecker = () => {
             return {
                 available: false,
                 message: response.data.message || 'Resource check failed',
-                data: undefined,
+                data: response.data.data || undefined,
             };
         } catch (error) {
             console.error('Resource check failed:', error);

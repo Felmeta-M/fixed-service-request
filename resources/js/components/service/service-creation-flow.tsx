@@ -29,6 +29,8 @@ interface ServiceFormData {
     longitude: number;
     distance: string;
     cable_type: string;
+    neid: string;
+    nename: string;
     address: string;
     contactPerson: string;
     contactNo: string;
@@ -69,6 +71,8 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         longitude: 0,
         distance: '',
         cable_type: '',
+        neid: '',
+        nename: '',
         address: '',
         contactPerson: '',
         contactNo: '',
@@ -152,12 +156,16 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
             updateFormData({
                 resourceAvailable: result.available,
+                // Store resourceData even when available=false, as it contains encrypted fields (distance, cable_type, latitude, longitude, neid, nename)
+                // that must be forwarded to survey/create API for both normal and manual flows
                 resourceData: result.data,
                 resourceMessage: result.message,
 
-                // Preserve exact encrypted fields for survey create.
+                // Preserve exact encrypted fields for survey create (used as fallback if resourceData is not available)
                 distance: result.data?.distance ?? '',
                 cable_type: result.data?.cable_type ?? '',
+                neid: result.data?.neid ?? '',
+                nename: result.data?.nename ?? '',
             });
 
             if (result.available) {

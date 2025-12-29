@@ -26,6 +26,7 @@ interface LocationSetupStepProps {
     formData: any;
     onUpdate: (data: any) => void;
     googleMapsApiKey: string;
+    onNext?: (surveyId: string) => void;
 }
 
 interface AuthUser {
@@ -37,7 +38,7 @@ interface AuthUser {
     api_token?: string;
 }
 
-export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: LocationSetupStepProps) {
+export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext }: LocationSetupStepProps) {
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
     const [locationLoading, setLocationLoading] = useState(true);
     const [locationError, setLocationError] = useState('');
@@ -183,52 +184,105 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
             return;
         }
 
+        // Validate address (required)
+        if (!formData.address || !formData.address.trim()) {
+            setManualFlowErrors({ address: 'Location address is required' });
+            return;
+        }
+
         setSubmittingManualFlow(true);
-        const submissionToast = toast.loading('Submitting your request...');
+        const submissionToast = toast.loading('Creating service request...');
 
         try {
-            // Prepare submission data
-            const submissionData = {
-                phone: manualFlowData.phone.trim(),
-                name: manualFlowData.name.trim() || undefined,
-                reason: manualFlowData.reason.trim() || undefined,
-                latitude: formData.latitude,
-                longitude: formData.longitude,
-                address: formData.address,
-                serviceType: formData.serviceType,
+            // Build survey creation payload (same structure as review-submit-step)
+            // For manual flow, we don't have encrypted resource data, so we'll use plain coordinates
+            const submitData = {
+                customer_code: (user as AuthUser)?.customer_code?.toString() || '',
+                customer_type: formData.customerType || 'residential',
+                survey_type: 'EIC08',
+                telecom_region: '104',
+                oper_type: 'A',
+                main_offer_id: formData.serviceType,
                 bandwidth: formData.bandwidth,
+                contact_person: manualFlowData.name.trim() || formData.contactPerson || (user as AuthUser)?.name || 'Customer',
+                contact_no: manualFlowData.phone.trim() || formData.contactNo || (user as AuthUser)?.phone || '',
+                contact_email: formData.contactEmail || (user as AuthUser)?.email || '',
+                survey_address_info: {
+                    region_city: '2',
+                    subcity_zone: '11',
+                    wereda_town: '141',
+                    kebele: '',
+                    // For manual flow, use plain coordinates (not encrypted)
+                    latitude: String(formData.latitude),
+                    longitude: String(formData.longitude),
+                    address: formData.address || '',
+                    // No distance/cable_type for manual flow
+                    distance: undefined,
+                    cable_type: undefined,
+                },
+                with_device: formData.withDevice,
+                completed_date: new Date()
+                    .toISOString()
+                    .replace(/[-:T.Z]/g, '')
+                    .slice(0, 14),
+                external_operid: '512',
+                survey_is_manual: true, // Mark as manual survey
             };
 
-            // Submit to backend API
-            // TODO: Replace with actual endpoint when backend is ready
-            const response = await axios.post(
-                `${import.meta.env.VITE_API_BASE_URL}/service/manual-request`,
-                submissionData,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${(user as AuthUser)?.api_token}`,
-                    },
+            // Create survey via the same API as normal flow
+            const response = await axios.post('/api/v1/survey/create', submitData, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${(user as AuthUser)?.api_token}`,
                 },
-            );
+            });
 
-            if (response.data?.success !== false) {
-                toast.success('Your request has been submitted successfully. Our team will contact you shortly.', {
-                    id: submissionToast,
-                });
-                
-                // Close dialogs and reset manual flow
-                setShowManualFlow(false);
-                setShowResourceUnavailableDialog(false);
-                
-                // Update form data to mark as manual submission
-                onUpdate({
-                    ...formData,
-                    manualSubmission: true,
-                    manualFlowData: submissionData,
-                });
-            } else {
-                throw new Error(response.data?.message || 'Submission failed');
+            const isSurveySuccess = response.data.success && response.data.data?.original?.success !== false;
+
+            if (!isSurveySuccess) {
+                const errorMsg = response.data.data?.original?.message || response.data.message || 'Failed to create service request';
+                throw new Error(errorMsg);
+            }
+
+            const responseData = response.data.data;
+            const { customer_survey_order_id: surveyId } = responseData;
+
+            // Save to local storage
+            const serviceTypes: Record<string, string> = {
+                '1457567289': 'Fixed Broadband',
+                '1207609454': 'Fixed Voice',
+                '180427974': 'Combo Services',
+            };
+            const newSurvey = {
+                id: surveyId,
+                type: serviceTypes[formData.serviceType] || 'Service Request',
+                status: 'waiting',
+                createdAt: new Date().toISOString(),
+                main_offer_id: formData.serviceType,
+            };
+
+            const existingSurveys = JSON.parse(localStorage.getItem('userSurveys') || '[]');
+            existingSurveys.push(newSurvey);
+            localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
+
+            toast.success('Service request created successfully. Our team will review your manual request.', {
+                id: submissionToast,
+            });
+            
+            // Close dialogs and reset manual flow
+            setShowManualFlow(false);
+            setShowResourceUnavailableDialog(false);
+            
+            // Update form data to mark as manual submission
+            onUpdate({
+                ...formData,
+                manualSubmission: true,
+                resourceAvailable: false, // Ensure it's marked as manual
+            });
+
+            // Proceed to next step (review/payment) with the created survey ID
+            if (onNext && surveyId) {
+                onNext(String(surveyId));
             }
         } catch (error: any) {
             console.error('Manual flow submission error:', error);
@@ -662,7 +716,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                         {/* Phone Number - Required */}
                         <Field>
                             <FieldLabel htmlFor="manual-phone">
-                                Phone Number <span className="text-red-500">*</span>
+                                Contact Phone Number <span className="text-red-500">*</span>
                             </FieldLabel>
                             <Input
                                 id="manual-phone"
@@ -684,7 +738,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                         </Field>
 
                         {/* Name - Optional */}
-                        <Field>
+                        {/* <Field>
                             <FieldLabel htmlFor="manual-name">Full Name (Optional)</FieldLabel>
                             <Input
                                 id="manual-name"
@@ -703,15 +757,47 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                             {manualFlowErrors.name && (
                                 <p className="mt-1 text-sm text-red-600">{manualFlowErrors.name}</p>
                             )}
-                        </Field>
+                        </Field> */}
 
-                        {/* Reason/Notes - Optional */}
                         <Field>
-                            <FieldLabel htmlFor="manual-reason">Additional Notes (Optional)</FieldLabel>
+                            <FieldLabel htmlFor="manual-address">
+                                Address <span className="text-red-500">*</span>
+                            </FieldLabel>
+                            <Textarea
+                                id="manual-address"
+                                rows={3}
+                                // type="text"
+                                placeholder="Enter your specific location address"
+                                value={formData.address || ''}
+                                onChange={(e) => {
+                                    const newAddress = e.target.value;
+                                    onUpdate({
+                                        ...formData,
+                                        address: newAddress,
+                                    });
+                                    // Clear any address-related errors
+                                    if (manualFlowErrors.address) {
+                                        setManualFlowErrors({ ...manualFlowErrors, address: '' });
+                                    }
+                                }}
+                                className={manualFlowErrors.address ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
+                                disabled={submittingManualFlow || locationLoading}
+                                required
+                            />
+                            {manualFlowErrors.address && (
+                                <p className="mt-1 text-sm text-red-600">{manualFlowErrors.address}</p>
+                            )}
+                            <p className="mt-1 text-xs text-gray-500">
+                                You can edit this address to provide more specific location details
+                            </p>
+                        </Field>
+                        {/* Reason/Notes - Optional */}
+                        {/* <Field>
+                            <FieldLabel htmlFor="manual-reason">Description</FieldLabel>
                             <Textarea
                                 id="manual-reason"
                                 rows={3}
-                                placeholder="Any additional information about your service request..."
+                                placeholder=""
                                 value={manualFlowData.reason}
                                 onChange={(e) => {
                                     setManualFlowData({ ...manualFlowData, reason: e.target.value });
@@ -724,20 +810,20 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey }: Loca
                             />
                             {manualFlowErrors.reason && (
                                 <p className="mt-1 text-sm text-red-600">{manualFlowErrors.reason}</p>
-                            )}
-                            <p className="mt-1 text-xs text-gray-500">
+                            )} */}
+                            {/* <p className="mt-1 text-xs text-gray-500">
                                 Help us understand your specific service needs (e.g., preferred installation date, special requirements)
-                            </p>
-                        </Field>
+                            </p> */}
+                        {/* </Field> */}
 
                         {/* Location Info Display */}
-                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        {/* <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
                             <p className="mb-1 text-xs font-medium text-gray-700">Request Location</p>
-                            <p className="text-sm text-gray-600">{formData.address || 'Location selected on map'}</p>
+                            <p className="text-sm text-gray-600">{formData.address || 'Location selected on map'}</p> */}
                             {/* <p className="mt-1 text-xs text-gray-500">
                                 {formData.latitude?.toFixed(6)}, {formData.longitude?.toFixed(6)}
                             </p> */}
-                        </div>
+                        {/* </div> */}
                     </div>
 
                     <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row">

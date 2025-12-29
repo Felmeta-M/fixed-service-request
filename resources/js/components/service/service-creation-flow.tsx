@@ -220,7 +220,17 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             case 0:
                 return <ServiceSelectionStep formData={formData} onUpdate={updateFormData} hasActiveSurvey={hasActiveSurvey} />;
             case 1:
-                return <LocationSetupStep formData={formData} onUpdate={updateFormData} googleMapsApiKey={googleMapsApiKey} />;
+                return (
+                    <LocationSetupStep
+                        formData={formData}
+                        onUpdate={updateFormData}
+                        googleMapsApiKey={googleMapsApiKey}
+                        onNext={(surveyId: string) => {
+                            setCreatedSurveyId(surveyId);
+                            nextStep();
+                        }}
+                    />
+                );
             case 2:
                 return (
                     <ReviewSubmitStep
@@ -246,7 +256,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     };
 
     const stepTitles = [
-        ...(isNewCustomer ? [{ title: 'Customer Profile', description: 'Create your customer profile' }] : []),
+        ...(isNewCustomer ? [{ title: 'Customer Information', description: 'Create your customer profile' }] : []),
         { title: 'Service Information', description: 'Choose your service type and configuration' },
         { title: 'Location Information', description: 'Select installation location and check availability' },
         { title: 'Review & Submit', description: 'Verify details and submit your request' },

@@ -1303,8 +1303,8 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                         </>
                     ) : (
                         <>
-                            Submit
-                            <CheckCircle className="h-4 w-4" />
+                            Next
+                            {/* <CheckCircle className="h-4 w-4" /> */}
                         </>
                     )}
                 </Button>

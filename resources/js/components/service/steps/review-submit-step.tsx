@@ -97,6 +97,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 .replace(/[-:T.Z]/g, '')
                 .slice(0, 14),
             external_operid: '512',
+            survey_is_manual: false, // Normal flow - resource is available
         };
         const response = await axios.post('/api/v1/survey/create', submitData, {
             headers: {

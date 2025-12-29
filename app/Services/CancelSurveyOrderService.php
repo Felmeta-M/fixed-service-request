@@ -23,6 +23,23 @@ class CancelSurveyOrderService extends BaseApiService
     public function cancelSurveyOrder(array $data): JsonResponse
     {
         try {
+            $customer = auth()->user();
+            $order = SurveyOrder::where([
+                'customer_survey_order_id' =>  $data['customer_survey_order_id'],
+                'customer_code' => $customer->customer_code,
+            ])->first();
+
+            if (! $order) {
+                return ApiResponse::error(message: 'Survey order not found.');
+            }
+
+            /**
+             * 🚫 Cancel only if status = WAITING
+             */
+            if ($order->status !== FFDServiceProvisionStatus::Waiting->value) {
+                return ApiResponse::error(message: 'Only waiting survey orders can be cancelled.');
+            }
+
             $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
             return $this->parseResponse($data, $xmlResponse);

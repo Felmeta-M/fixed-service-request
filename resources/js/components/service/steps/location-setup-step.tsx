@@ -5,7 +5,7 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { parseCoordinate } from '@/lib/coordinate-utils';
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { AlertCircle, CheckCircle2, Loader2, MapPin, Navigation, Phone } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GoogleLocationMap } from '../google-location-map';
@@ -195,7 +195,10 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
 
         try {
             // Build survey creation payload (same structure as review-submit-step)
-            // For manual flow, we don't have encrypted resource data, so we'll use plain coordinates
+            // The backend expects encrypted resource fields (distance/cable_type/latitude/longitude)
+            // exactly as returned from `/api/v1/resource-check`.
+            const encryptedResource = formData.resourceData;
+
             const submitData = {
                 customer_code: (user as AuthUser)?.customer_code?.toString() || '',
                 customer_type: formData.customerType || 'residential',
@@ -212,13 +215,15 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                     subcity_zone: '11',
                     wereda_town: '141',
                     kebele: '',
-                    // For manual flow, use plain coordinates (not encrypted)
-                    latitude: String(formData.latitude),
-                    longitude: String(formData.longitude),
+                    // Use encrypted values from resource-check (required by BaseSurveyService::decrypt)
+                    latitude: encryptedResource?.latitude ?? String(formData.latitude),
+                    longitude: encryptedResource?.longitude ?? String(formData.longitude),
                     address: formData.address || '',
-                    // No distance/cable_type for manual flow
-                    distance: undefined,
-                    cable_type: undefined,
+                    // Forward exact encrypted resource-check data
+                    distance: encryptedResource?.distance ?? formData.distance,
+                    cable_type: encryptedResource?.cable_type ?? formData.cable_type,
+                    neid: encryptedResource?.neid,
+                    nename: encryptedResource?.nename,
                 },
                 with_device: formData.withDevice,
                 completed_date: new Date()
@@ -280,10 +285,8 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                 resourceAvailable: false, // Ensure it's marked as manual
             });
 
-            // Proceed to next step (review/payment) with the created survey ID
-            if (onNext && surveyId) {
-                onNext(String(surveyId));
-            }
+            // Navigate to services page for manual surveys (instead of payment step)
+            router.visit(route('services'));
         } catch (error: any) {
             console.error('Manual flow submission error:', error);
             const errorMessage =

@@ -47,41 +47,66 @@ export function FormSelect({
     loading,
     labelRight,
 }: FormSelectProps & { required?: boolean }) {
+    const hasError = !!error;
+    
     return (
         <div className="space-y-2">
-            <Label htmlFor={id} className="font-medium text-gray-700">
+            <Label htmlFor={id} className={cn("font-medium", hasError ? "text-red-700" : "text-gray-700")}>
                 {label}
                 {required && <span className="text-red-500">*</span>}
                 {labelRight && <div className="inline-block">{labelRight}</div>}
             </Label>
 
-            <Select value={value} onValueChange={onChange} disabled={disabled || loading}>
-                <SelectTrigger className={`${error ? 'border-red-300' : 'border-gray-300'} flex items-center justify-between`}>
-                    {loading ? (
-                        <div className="flex items-center space-x-2">
-                            <svg className="h-4 w-4 animate-spin text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                            </svg>
-                            <span className="text-sm text-gray-500">Loading...</span>
-                        </div>
-                    ) : (
-                        <SelectValue placeholder={placeholder} />
+            <div className="relative">
+                <Select value={value} onValueChange={onChange} disabled={disabled || loading}>
+                    <SelectTrigger 
+                        className={cn(
+                            "flex items-center justify-between transition-colors",
+                            hasError 
+                                ? "border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-200 bg-red-50" 
+                                : "border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        )}
+                    >
+                        {loading ? (
+                            <div className="flex items-center space-x-2">
+                                <svg className="h-4 w-4 animate-spin text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                </svg>
+                                <span className="text-sm text-gray-500">Loading...</span>
+                            </div>
+                        ) : (
+                            <SelectValue placeholder={placeholder} />
+                        )}
+                    </SelectTrigger>
+
+                    {!loading && (
+                        <SelectContent className="bg-white shadow-lg">
+                            {options?.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
                     )}
-                </SelectTrigger>
-
-                {!loading && (
-                    <SelectContent className="bg-white shadow-lg">
-                        {options?.map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
+                </Select>
+                {hasError && (
+                    <div className="absolute right-10 top-1/2 -translate-y-1/2 pointer-events-none">
+                        <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                    </div>
                 )}
-            </Select>
+            </div>
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && (
+                <div className="flex items-start gap-1">
+                    <svg className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-sm text-red-600 font-medium">{error}</p>
+                </div>
+            )}
         </div>
     );
 }
@@ -114,28 +139,47 @@ export function FormInput({
     disabled = false,
 }: FormInputProps) {
     const safeValue = value ?? '';
+    const hasError = !!error;
+    
     return (
         <div className="space-y-2">
-            <Label htmlFor={id} className="font-medium text-gray-700">
+            <Label htmlFor={id} className={cn("font-medium", hasError ? "text-red-700" : "text-gray-700")}>
                 {label}
                 {required && <span className="text-red-500">*</span>}
             </Label>
-            <input
-                type={type}
-                className={cn(
-                    'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
-                    `${error ? 'border-red-300 focus:ring-red-200' : 'border-gray-300 focus:ring-primary'} focus:border-2 focus:border-primary focus:outline-none`,
+            <div className="relative">
+                <input
+                    type={type}
+                    className={cn(
+                        'flex h-10 w-full rounded-md border bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm transition-colors',
+                        hasError 
+                            ? 'border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-200 bg-red-50' 
+                            : 'border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20',
+                    )}
+                    id={id}
+                    value={safeValue}
+                    onChange={onChange}
+                    autoFocus={autoFocus}
+                    placeholder={placeholder}
+                    readOnly={readOnly}
+                    disabled={disabled}
+                />
+                {hasError && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                    </div>
                 )}
-                id={id}
-                value={safeValue}
-                onChange={onChange}
-                autoFocus={autoFocus}
-                placeholder={placeholder}
-                readOnly={readOnly}
-                disabled={disabled}
-            />
-
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            </div>
+            {error && (
+                <div className="flex items-start gap-1">
+                    <svg className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-sm text-red-600 font-medium">{error}</p>
+                </div>
+            )}
         </div>
     );
 }
@@ -149,10 +193,31 @@ const handleApiError = (error: unknown): ApiError => {
             success?: boolean;
         }>;
 
+        const status = axiosError.response?.status;
+        const responseData = axiosError.response?.data;
+
+        // Enhanced 422 error handling
+        if (status === 422) {
+            // Laravel validation errors can be in different formats
+            const errors = responseData?.errors || responseData?.data?.errors || {};
+            
+            // Build a comprehensive error message for 422
+            const errorCount = Object.keys(errors).length;
+            const message = errorCount > 0 
+                ? `Validation failed: ${errorCount} field${errorCount > 1 ? 's' : ''} need${errorCount > 1 ? '' : 's'} attention`
+                : responseData?.message || 'Validation failed. Please check your input.';
+
+            return {
+                message,
+                errors,
+                status: 422,
+            };
+        }
+
         return {
-            message: axiosError.response?.data?.message || axiosError.message || 'An API error occurred',
-            errors: axiosError.response?.data?.errors,
-            status: axiosError.response?.status,
+            message: responseData?.message || axiosError.message || 'An API error occurred',
+            errors: responseData?.errors || responseData?.data?.errors,
+            status,
         };
     }
 
@@ -609,13 +674,84 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
         } catch (error) {
             const apiError = handleApiError(error);
 
-            // Handle API validation errors
-            if (apiError.errors) {
+            // Enhanced 422 error handling - map Laravel validation errors to form fields
+            if (apiError.status === 422 && apiError.errors) {
                 const fieldErrors: Record<string, string> = {};
+                
+                // Process all error fields, handling nested field names
                 Object.entries(apiError.errors).forEach(([field, messages]) => {
-                    fieldErrors[field] = messages[0]; // Take first error message
+                    // Handle array of error messages (Laravel format)
+                    const errorMessage = Array.isArray(messages) ? messages[0] : messages;
+                    
+                    // Map Laravel field names to form field names
+                    // Handle nested fields like 'address.region', 'contact.mobile_no'
+                    fieldErrors[field] = errorMessage;
                 });
+                
                 setFormErrors(fieldErrors);
+
+                // Find and scroll to first error field
+                const firstErrorField = Object.keys(fieldErrors)[0];
+                if (firstErrorField) {
+                    // Try to find the input element by ID or name
+                    setTimeout(() => {
+                        const fieldId = firstErrorField.replace(/\./g, '_');
+                        const element = document.getElementById(fieldId) || 
+                                      document.querySelector(`[name="${firstErrorField}"]`) ||
+                                      document.querySelector(`[id*="${firstErrorField.split('.').pop()}"]`);
+                        
+                        if (element) {
+                            element.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'center' 
+                            });
+                            // Focus the element if it's an input
+                            if (element instanceof HTMLElement && (element.tagName === 'INPUT' || element.tagName === 'SELECT')) {
+                                element.focus();
+                            }
+                        } else {
+                            // Fallback: scroll to top
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                    }, 100);
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+
+                // Show specific 422 validation error toast
+                const errorCount = Object.keys(fieldErrors).length;
+                toast.error('Validation Error', {
+                    id: submissionToast,
+                    description: `${errorCount} field${errorCount > 1 ? 's' : ''} ${errorCount > 1 ? 'have' : 'has'} validation errors. Please check the highlighted fields.`,
+                    duration: 8000,
+                    action: {
+                        label: 'Retry',
+                        onClick: () => handleSubmit(e),
+                    },
+                });
+            } else {
+                // Handle other API errors
+                if (apiError.errors) {
+                    const fieldErrors: Record<string, string> = {};
+                    Object.entries(apiError.errors).forEach(([field, messages]) => {
+                        fieldErrors[field] = Array.isArray(messages) ? messages[0] : messages;
+                    });
+                    setFormErrors(fieldErrors);
+                }
+
+                // Show generic error toast
+                toast.error('Failed to create customer', {
+                    id: submissionToast,
+                    description: apiError.message,
+                    duration: 10000,
+                    action: {
+                        label: 'Retry',
+                        onClick: () => handleSubmit(e),
+                    },
+                });
+
+                // Scroll to top to show errors
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
             // Update submission state
@@ -625,20 +761,6 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                 error: apiError,
                 success: false,
             });
-
-            // Show error toast
-            toast.error('Failed to create customer', {
-                id: submissionToast,
-                description: apiError.message,
-                duration: 10000,
-                action: {
-                    label: 'Retry',
-                    onClick: () => handleSubmit(e),
-                },
-            });
-
-            // Scroll to top to show errors
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
 
@@ -744,40 +866,74 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
         });
     };
 
-    // Error summary component
+    // Error summary component with enhanced 422 error display
     const renderErrorSummary = () => {
         if (!submissionState.error && Object.keys(formErrors).length === 0) return null;
 
-        const errorMessages: string[] = [];
-
-        if (submissionState.error?.message) {
-            errorMessages.push(submissionState.error.message);
-        }
+        const is422Error = submissionState.error?.status === 422;
+        const errorCount = Object.keys(formErrors).length;
 
         return (
             <>
                 {submissionState.error && (
-                    <Card className="border-red-200 shadow-none">
-                        <CardContent className="">
-                            <div className="flex items-start">
-                                <div className="mr-3 text-red-500">
-                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
+                    <Card className={cn(
+                        "shadow-sm border-2",
+                        is422Error ? "border-red-400 bg-red-50" : "border-red-200 bg-red-50"
+                    )}>
+                        <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                                <div className="flex-shrink-0 mt-0.5">
+                                    {is422Error ? (
+                                        <svg className="h-6 w-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                        </svg>
+                                    ) : (
+                                        <svg className="h-6 w-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                        </svg>
+                                    )}
                                 </div>
-                                <div className="flex-1">
-                                    {submissionState.error?.message && <h3 className="font-medium text-red-800">{'Submission Error'}</h3>}
-                                    <ul className="mt-2 list-disc space-y-1 pl-5">
-                                        {errorMessages.map((message, index) => (
-                                            <li key={`error-${index}`} className="text-sm text-red-700">
-                                                {message}
-                                            </li>
-                                        ))}
-                                    </ul>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className={cn(
+                                        "font-semibold mb-2",
+                                        is422Error ? "text-red-800" : "text-red-800"
+                                    )}>
+                                        {is422Error ? 'Validation Error' : 'Submission Error'}
+                                    </h3>
+                                    {submissionState.error?.message && (
+                                        <p className="text-sm text-red-700 mb-3">
+                                            {submissionState.error.message}
+                                        </p>
+                                    )}
+                                    {is422Error && errorCount > 0 && (
+                                        <div className="mt-3">
+                                            <p className="text-xs font-medium text-red-600 mb-2">
+                                                Please fix the following {errorCount} field{errorCount > 1 ? 's' : ''}:
+                                            </p>
+                                            <ul className="space-y-1 max-h-40 overflow-y-auto">
+                                                {Object.entries(formErrors).slice(0, 5).map(([field, message]) => {
+                                                    // Format field name for display
+                                                    const displayField = field
+                                                        .replace(/\./g, ' → ')
+                                                        .replace(/_/g, ' ')
+                                                        .replace(/\b\w/g, l => l.toUpperCase());
+                                                    return (
+                                                        <li key={field} className="text-xs text-red-600 flex items-start gap-2">
+                                                            <span className="text-red-500 mt-1">•</span>
+                                                            <span>
+                                                                <span className="font-medium">{displayField}:</span> {message}
+                                                            </span>
+                                                        </li>
+                                                    );
+                                                })}
+                                                {errorCount > 5 && (
+                                                    <li className="text-xs text-red-500 italic">
+                                                        ... and {errorCount - 5} more field{errorCount - 5 > 1 ? 's' : ''}
+                                                    </li>
+                                                )}
+                                            </ul>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </CardContent>
@@ -1092,11 +1248,11 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                             />
                             <FormInput
                                 label="Phone Number"
-                                id="phone"
+                                id="contact_mobile_no"
                                 required
                                 value={data.contact?.mobile_no || ''}
                                 onChange={(e) => handleNestedInputChange('contact', 'mobile_no', e.target.value)}
-                                placeholder="Enter mobile number"
+                                placeholder="Enter mobile number (e.g., 0912345678)"
                                 error={formErrors['contact.mobile_no']}
                                 readOnly={isFieldReadOnly('contact.mobile_no')}
                                 disabled={isFieldReadOnly('contact.mobile_no')}

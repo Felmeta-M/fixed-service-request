@@ -39,7 +39,7 @@ class CustomerRequest extends FormRequest
             'contact.notification_mode' => 'nullable|integer',
             'contact.home_no' => 'nullable|min:9|max:20',
             'contact.office_no' => 'nullable|min:9|max:20',
-            'contact.mobile_no' => 'nullable|min:9|max:10',
+            'contact.mobile_no' => ['nullable', 'regex:/^(\+251|251|0)?(9)\d{8}$/'],
             'contact.fax_no' => 'nullable|string|min:9|max:20',
             'contact_person' => 'nullable|array',
             'contact_person.*.first_name' => 'nullable|string|max:255',

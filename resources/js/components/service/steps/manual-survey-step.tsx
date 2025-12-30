@@ -19,36 +19,38 @@ interface AuthUser {
     api_token?: string;
 }
 
-interface ManualSurveyStepProps {
-    formData: {
-        serviceType?: string;
-        bandwidth?: string;
-        customerType?: string;
-        withDevice?: boolean;
-        latitude?: number;
-        longitude?: number;
-        address?: string;
-        contactPerson?: string;
-        contactNo?: string;
-        contactEmail?: string;
-        resourceData?: {
-            distance: string;
-            ava_port: string;
-            neid: string;
-            nename: string;
-            typeid: string;
-            longitude: string;
-            latitude: string;
-            cable_type: string;
-            cable_type_desc: string;
-        };
-        distance?: string;
-        cable_type?: string;
-        neid?: string;
-        nename?: string;
+type FormData = {
+    serviceType?: string;
+    bandwidth?: string;
+    customerType?: string;
+    withDevice?: boolean;
+    latitude?: number;
+    longitude?: number;
+    address?: string;
+    contactPerson?: string;
+    contactNo?: string;
+    contactEmail?: string;
+    resourceData?: {
+        distance: string;
+        ava_port: string;
+        neid: string;
+        nename: string;
+        typeid: string;
+        longitude: string;
+        latitude: string;
+        cable_type: string;
+        cable_type_desc: string;
     };
+    distance?: string;
+    cable_type?: string;
+    neid?: string;
+    nename?: string;
+};
+
+interface ManualSurveyStepProps {
+    formData: FormData;
     onBack: () => void;
-    onUpdate?: (data: Partial<typeof formData>) => void;
+    onUpdate?: (data: Partial<FormData>) => void;
 }
 
 export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveyStepProps) {
@@ -89,6 +91,38 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             return 'Please enter a valid phone number (9-15 digits)';
         }
         return '';
+    };
+
+    // Map API field names to form field names
+    const mapApiFieldToFormField = (apiField: string): string => {
+        const fieldMap: Record<string, string> = {
+            contact_no: 'phone',
+            contact_person: 'name',
+            survey_address_info: 'address',
+            'survey_address_info.address': 'address',
+            'survey_address_info.latitude': 'address',
+            'survey_address_info.longitude': 'address',
+        };
+        return fieldMap[apiField] || apiField;
+    };
+
+    // Parse Laravel validation errors into form field errors
+    const parseValidationErrors = (errors: Record<string, string | string[]>): Record<string, string> => {
+        const formErrors: Record<string, string> = {};
+
+        Object.entries(errors).forEach(([apiField, errorMessages]) => {
+            const formField = mapApiFieldToFormField(apiField);
+            // Handle both string and array formats
+            const errorMessage = Array.isArray(errorMessages)
+                ? errorMessages[0]
+                : errorMessages;
+
+            if (errorMessage) {
+                formErrors[formField] = errorMessage;
+            }
+        });
+
+        return formErrors;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -215,24 +249,55 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
 
             let errorMessage = 'Failed to create your service request. Please try again.';
             let errorDescription = 'An unexpected error occurred.';
+            let validationErrors: Record<string, string> = {};
 
             if (axios.isAxiosError(error)) {
-                if (error.response?.data?.message) {
-                    errorMessage = error.response.data.message;
-                } else if (error.response?.data?.errors) {
-                    // Handle validation errors
-                    const errors = error.response.data.errors;
-                    const firstError = Object.values(errors)[0];
-                    errorMessage = Array.isArray(firstError) ? firstError[0] : String(firstError);
-                    errorDescription = 'Please check the form and correct any errors.';
-                    setManualFlowErrors(errors);
-                } else if (error.response?.status === 422) {
-                    errorMessage = 'Validation error';
-                    errorDescription = 'Please check your input and try again.';
-                } else if (error.response?.status === 401) {
+                const responseData = error.response?.data;
+                const status = error.response?.status;
+
+                // Handle 422 Unprocessable Content (Validation Errors)
+                if (status === 422 && responseData) {
+                    // Parse validation errors from Laravel format
+                    if (responseData.errors) {
+                        validationErrors = parseValidationErrors(responseData.errors);
+                        setManualFlowErrors(validationErrors);
+                    }
+
+                    // Set error message - prefer the main message, fallback to first validation error
+                    if (responseData.message) {
+                        errorMessage = responseData.message;
+                    } else if (Object.keys(validationErrors).length > 0) {
+                        const firstError = Object.values(validationErrors)[0];
+                        errorMessage = firstError || 'Validation error';
+                    } else {
+                        errorMessage = 'Validation error';
+                    }
+
+                    errorDescription = 'Please check the form and correct any highlighted errors.';
+
+                    // Scroll to first error field
+                    const firstErrorField = Object.keys(validationErrors)[0];
+                    if (firstErrorField) {
+                        setTimeout(() => {
+                            const errorElement = document.getElementById(`manual-${firstErrorField}`);
+                            if (errorElement) {
+                                errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                errorElement.focus();
+                            }
+                        }, 100);
+                    }
+                } else if (responseData?.message) {
+                    // Handle other error responses with messages
+                    errorMessage = responseData.message;
+                    if (responseData.errors) {
+                        validationErrors = parseValidationErrors(responseData.errors);
+                        setManualFlowErrors(validationErrors);
+                        errorDescription = 'Please check the form and correct any errors.';
+                    }
+                } else if (status === 401) {
                     errorMessage = 'Authentication required';
                     errorDescription = 'Please log in and try again.';
-                } else if (error.response?.status === 500) {
+                } else if (status === 500) {
                     errorMessage = 'Server error';
                     errorDescription = 'Our servers encountered an issue. Please try again later.';
                 } else if (error.message) {
@@ -339,12 +404,19 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                             setManualFlowErrors({ ...manualFlowErrors, phone: '' });
                                         }
                                     }}
-                                    className={manualFlowErrors.phone ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
+                                    className={
+                                        manualFlowErrors.phone
+                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
+                                            : ''
+                                    }
                                     disabled={submitting}
                                     required
                                 />
                                 {manualFlowErrors.phone && (
-                                    <p className="mt-1 text-sm text-red-600">{manualFlowErrors.phone}</p>
+                                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                        <AlertCircle className="h-4 w-4" />
+                                        {manualFlowErrors.phone}
+                                    </p>
                                 )}
                             </Field>
                             <Field>
@@ -368,12 +440,19 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                             setManualFlowErrors({ ...manualFlowErrors, address: '' });
                                         }
                                     }}
-                                    className={manualFlowErrors.address ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
+                                    className={
+                                        manualFlowErrors.address
+                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
+                                            : ''
+                                    }
                                     disabled={submitting}
                                     required
                                 />
                                 {manualFlowErrors.address && (
-                                    <p className="mt-1 text-sm text-red-600">{manualFlowErrors.address}</p>
+                                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                        <AlertCircle className="h-4 w-4" />
+                                        {manualFlowErrors.address}
+                                    </p>
                                 )}
                             </Field>
                         </FieldGroup>

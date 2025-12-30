@@ -58,14 +58,14 @@ class EsignetService
             // Define mandatory claims (disable user selection)
             $claims = [
                 'userinfo' => [
-                    'name'         => ['essential' => true],
+                    'name' => ['essential' => true],
                     'phone_number' => ['essential' => true],
-                    'email'        => ['essential' => true],
-                    'picture'      => ['essential' => true],
-                    'gender'       => ['essential' => true],
-                    'birthdate'    => ['essential' => true],
-                    'address'      => ['essential' => true],
-                    'nationality'  => ['essential' => true],
+                    'email' => ['essential' => true],
+                    'picture' => ['essential' => true],
+                    'gender' => ['essential' => true],
+                    'birthdate' => ['essential' => true],
+                    'address' => ['essential' => true],
+                    'nationality' => ['essential' => true],
                 ],
                 'id_token' => [
                     'sub' => ['essential' => true],
@@ -78,22 +78,22 @@ class EsignetService
 
             // Build authorization URL
             $authUrl = $this->authorizationEndpoint . '?' . http_build_query([
-                'response_type'         => 'code',
-                'client_id'             => $this->clientId,
-                'redirect_uri'          => $this->redirectUri,
-                'scope'                 => 'openid profile email',
-                'code_challenge'        => $challenge,
+                'response_type' => 'code',
+                'client_id' => $this->clientId,
+                'redirect_uri' => $this->redirectUri,
+                'scope' => 'openid profile email',
+                'code_challenge' => $challenge,
                 'code_challenge_method' => 'S256',
-                'state'                 => $state,
-                'claims'                => $encodedClaims,
-                'acr_values'            => $acrValues,
+                'state' => $state,
+                'claims' => $encodedClaims,
+                'acr_values' => $acrValues,
             ]);
 
             return [
-                'status'        => 'ok',
-                'auth_url'      => $authUrl,
+                'status' => 'ok',
+                'auth_url' => $authUrl,
                 'code_verifier' => $verifier,
-                'state'         => $state,
+                'state' => $state,
             ];
         } catch (Throwable $e) {
             Log::error('Error building authorization URL', [
@@ -101,7 +101,7 @@ class EsignetService
             ]);
 
             return [
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'Unable to build authorization URL.',
             ];
         }
@@ -273,7 +273,7 @@ class EsignetService
             if ($customer) {
                 // logger()->info('Customer found, updating', ['sub' => $sub]);
             } else {
-                logger()->info('Customer not found, creating new', ['sub' => $sub]);
+                // logger()->info('Customer not found, creating new', ['sub' => $sub]);
                 $customer = new Customer();
                 $customer->sub = $sub;
                 $customer->name = $name;

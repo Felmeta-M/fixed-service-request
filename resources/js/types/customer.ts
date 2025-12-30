@@ -129,7 +129,7 @@ export const customerSchema = z.object({
         .partial(),
     contact: z.object({
         notification_mode: z.string().optional(),
-        mobile_no: z.string().optional(),
+        mobile_no: z.number().optional(),
         email: z.string().email().optional(),
         office_no: z.string().optional(),
         home_no: z.string().optional(),
@@ -166,7 +166,7 @@ export function createDynamicCustomerSchema(isEmailRequired: boolean, isKebeleRe
     return customerSchema.extend({
         contact: z.object({
             notification_mode: z.string().optional(),
-            mobile_no: z.string().optional(),
+            mobile_no: z.number().optional(),
             email: isEmailRequired
                 ? z.string().email('Valid email is required when Email notification mode is selected').min(1, 'Email is required when Email notification mode is selected')
                 : z.string().email('Invalid email format').optional().or(z.literal('')),

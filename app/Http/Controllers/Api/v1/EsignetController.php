@@ -9,6 +9,7 @@ use App\Services\EsignetService;
 use App\Services\LocalAuthService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class EsignetController extends Controller
@@ -118,14 +119,24 @@ class EsignetController extends Controller
 
         session()->forget(['esign_state', 'esign_code_verifier']);
 
-        if ($esignetUser?->verified_at) {
+
+        Log::info('esignetUser', [
+            'exists' => (bool) $esignetUser,
+            'verified_at' => $esignetUser?->verified_at,
+        ]);
+
+        if ($esignetUser !== null && $esignetUser->verified_at !== null) {
             return redirect()->route('services');
         }
 
         return redirect()->route('services.create')->with([
             'error' => 'Your profile is incomplete. Please update it.',
-            'prefill' => new CustomerResource($this->customerService->getLocalCustomerData($user->customer_sub_id)),
+            'prefill' => new CustomerResource(
+                $this->customerService->getLocalCustomerData($user->customer_sub_id)
+            ),
         ]);
+
+
     }
 
 

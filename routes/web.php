@@ -57,6 +57,20 @@ Route::middleware(['otp.auth'])->group(function () {
         ]);
     })->name('services.create');
 
+    Route::get('/services/manual-create', function (Request $request) {
+        $formData = null;
+        if ($request->has('formData')) {
+            $formDataJson = $request->query('formData');
+            if ($formDataJson) {
+                $formData = json_decode($formDataJson, true);
+            }
+        }
+        return Inertia::render('Services/ManualCreate', [
+            'googleMapsApiKey' => config('services.google.google_api_key'),
+            'formData' => $formData,
+        ]);
+    })->name('services.manual-create');
+
     Route::get('/services/{customerSurveyOrderId}', function (string $customerSurveyOrderId) {
         return Inertia::render('Services/Show', [
             'customerSurveyOrderId' => $customerSurveyOrderId,

@@ -69,27 +69,28 @@ class CreateOrderService
         /**
          * 2️⃣ Manual query fallback (ONLY to detect completed payment)
          */
-        if ($this->isPaymentInitiated($data['customerSurveyOrderId'])) {
+        // if ($this->isPaymentInitiated($data['customerSurveyOrderId'])) {
 
-            $queryOrder = $this->requestQueryOrder($fabricToken->token, $data);
+        //     $queryOrder = $this->requestQueryOrder($fabricToken->token, $data);
+        //     Log::info($queryOrder);
 
-            // Normalize provider response
-            $queryOrder = is_object($queryOrder)
-                ? (array) $queryOrder
-                : ($queryOrder ?? []);
+        //     // Normalize provider response
+        //     $queryOrder = is_object($queryOrder)
+        //         ? (array) $queryOrder
+        //         : ($queryOrder ?? []);
 
-            // ✅ Payment already completed → confirm & STOP
-            if (($queryOrder['trade_status'] ?? null) === 'Completed') {
+        //     // ✅ Payment already completed → confirm & STOP
+        //     if (($queryOrder['trade_status'] ?? null) === 'Completed') {
 
-                $payment = app(PaymentService::class)
-                    ->find($data['customerSurveyOrderId']);
+        //         $payment = app(PaymentService::class)
+        //             ->find($data['customerSurveyOrderId']);
 
-                app(PaymentService::class)
-                    ->confirmPayment($payment, $queryOrder);
+        //         app(PaymentService::class)
+        //             ->confirmPayment($payment, $queryOrder);
 
-                throw new RuntimeException('Payment already completed.');
-            }
-        }
+        //         throw new RuntimeException('Payment already completed.');
+        //     }
+        // }
 
         /**
          * 3️⃣ Always create a NEW payment intent
@@ -154,8 +155,8 @@ class CreateOrderService
             throw new RuntimeException("Create order request failed.");
         }
 
-        $object = $response->object();
-        Log::info($object);
+        // $object = $response->object();
+        Log::info('queryOrder', ['object' => $response]);
 
         return $object ?? null;
     }

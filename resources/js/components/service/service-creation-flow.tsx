@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { CustomerCreationStep } from './steps/customer-creation-step';
 import { LocationSetupStep } from './steps/location-setup-step';
+import { ManualSurveyStep } from './steps/manual-survey-step';
 import { ReviewSubmitStep } from './steps/review-submit-step';
 import { ServiceSelectionStep } from './steps/service-selection-step';
 import { SubscriptionPaymentStep } from './steps/subscription-payment-step';
@@ -82,6 +83,8 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
     const [checkingResource, setCheckingResource] = useState(false);
     const [createdSurveyId, setCreatedSurveyId] = useState<string | null>(null);
+    const [showManualStep, setShowManualStep] = useState(false);
+    const [hasSeenResourceDialog, setHasSeenResourceDialog] = useState(false); // Track if user has seen the dialog
     const { surveys } = useSurveyList();
     const { checkResourceAvailability } = useResourceChecker();
 
@@ -138,6 +141,9 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
     const adjustedStep = getAdjustedStep();
 
+    // Check if we should show manual step (when resource is not available)
+    const shouldShowManualStep = showManualStep && formData.resourceAvailable === false;
+
     const checkResourceAndProceed = async () => {
         if (adjustedStep !== 1) {
             nextStep();
@@ -146,6 +152,9 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
         // Check resource availability for location step
         setCheckingResource(true);
+        // Reset dialog state when checking a new location
+        setHasSeenResourceDialog(false);
+        setShowManualStep(false);
         const toastId = toast.loading('Checking resource availability...');
 
         try {
@@ -224,6 +233,26 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             return <CustomerCreationStep onNext={() => onStepChange(1)} />;
         }
 
+        // Show manual step if resource is not available and user chose to continue manually
+        if (shouldShowManualStep) {
+            return (
+                <ManualSurveyStep
+                    formData={formData}
+                    onBack={() => {
+                        setShowManualStep(false);
+                        // Reset dialog state so it can show again if user changes location
+                        setHasSeenResourceDialog(false);
+                        // Go back to location step (adjustedStep 1)
+                        // For new customers: step 0=customer, step 1=service, step 2=location
+                        // For existing customers: step 0=service, step 1=location
+                        const locationStep = isNewCustomer ? 2 : 1;
+                        onStepChange(locationStep);
+                    }}
+                    onUpdate={updateFormData}
+                />
+            );
+        }
+
         switch (adjustedStep) {
             case 0:
                 return <ServiceSelectionStep formData={formData} onUpdate={updateFormData} hasActiveSurvey={hasActiveSurvey} />;
@@ -236,6 +265,13 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                         onNext={(surveyId: string) => {
                             setCreatedSurveyId(surveyId);
                             nextStep();
+                        }}
+                        onContinueManually={() => {
+                            setShowManualStep(true);
+                        }}
+                        hasSeenResourceDialog={hasSeenResourceDialog}
+                        onResourceDialogSeen={() => {
+                            setHasSeenResourceDialog(true);
                         }}
                     />
                 );
@@ -263,18 +299,31 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         }
     };
 
-    const stepTitles = [
-        ...(isNewCustomer ? [{ title: 'Customer Information', description: 'Create your customer profile' }] : []),
-        { title: 'Service Information', description: 'Choose your service type and configuration' },
-        { title: 'Location Information', description: 'Select installation location and check availability' },
-        { title: 'Review & Submit', description: 'Verify details and submit your request' },
-        { title: 'Payment / Subscribe', description: 'Review charges and proceed to pay or subscribe' },
-    ];
+    // Build step titles dynamically based on flow state
+    const getStepTitles = () => {
+        const baseTitles = [
+            ...(isNewCustomer ? [{ title: 'Customer Information', description: 'Create your customer profile' }] : []),
+            { title: 'Service Information', description: 'Choose your service type and configuration' },
+            { title: 'Location Information', description: 'Select installation location and check availability' },
+        ];
+
+        if (shouldShowManualStep) {
+            return [...baseTitles, { title: 'Manual Request', description: 'Submit your manual service request' }];
+        }
+
+        return [
+            ...baseTitles,
+            { title: 'Review & Submit', description: 'Verify details and submit your request' },
+            { title: 'Payment / Subscribe', description: 'Review charges and proceed to pay or subscribe' },
+        ];
+    };
+
+    const stepTitles = getStepTitles();
 
     const totalSteps = stepTitles.length;
     const isLastStep = currentStep === totalSteps - 1;
-    // Hide navigation for CustomerCreation (0 if new) and Review (2 adjusted)
-    const showNavigation = !(isNewCustomer && currentStep === 0) && adjustedStep < 2;
+    // Hide navigation for CustomerCreation (0 if new), Manual Step, and Review (2 adjusted)
+    const showNavigation = !(isNewCustomer && currentStep === 0) && !shouldShowManualStep && adjustedStep < 2;
 
     return (
             <div className="w-full space-y-6 px-4 py-2 lg:px-6">            
@@ -290,15 +339,23 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                                 <MoveLeftIcon className="h-5 w-5" /> Back
                             </Button>
                         </Link>
-                        <div className="text-lg font-bold text-gray-900 lg:text-xl">{stepTitles[currentStep]?.title}</div>
-                        <div className="text-sm text-gray-500 lg:text-base">{stepTitles[currentStep]?.description}</div>
+                        <div className="text-lg font-bold text-gray-900 lg:text-xl">
+                            {shouldShowManualStep
+                                ? stepTitles[stepTitles.length - 1]?.title
+                                : stepTitles[currentStep]?.title}
+                        </div>
+                        <div className="text-sm text-gray-500 lg:text-base">
+                            {shouldShowManualStep
+                                ? stepTitles[stepTitles.length - 1]?.description
+                                : stepTitles[currentStep]?.description}
+                        </div>
                     </div>
 
                     {/* Desktop step indicator */}
                     <div className="hidden items-center space-x-4 sm:flex">
                         <div className="flex items-center space-x-2 text-sm text-gray-500">
                             <span>
-                                Step {currentStep + 1} of {totalSteps}
+                                Step {shouldShowManualStep ? totalSteps : currentStep + 1} of {totalSteps}
                             </span>
                         </div>
                     </div>

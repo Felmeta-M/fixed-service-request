@@ -149,23 +149,50 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
             existingSurveys.push(newSurvey);
             localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
 
-            toast.success('Service request created', { id: submissionToast });
+            toast.success('Service request created successfully!', {
+                id: submissionToast,
+                description: 'Your service request has been submitted and is now being processed.',
+                duration: 5000,
+            });
 
             onNext?.(String(surveyId));
             return;
         } catch (err: unknown) {
             console.error('Submission error:', err);
 
-            const msg = axios.isAxiosError(err)
-                ? (typeof err.response?.data === 'object' && err.response?.data && 'message' in err.response.data
-                      ? (err.response.data as { message?: string }).message
-                      : undefined) || err.message
-                : err instanceof Error
-                  ? err.message
-                  : 'Failed to submit service request';
+            let errorMessage = 'Failed to create your service request. Please try again.';
+            let errorDescription = 'An unexpected error occurred.';
 
-            setError(msg);
-            toast.error(msg, { id: submissionToast });
+            if (axios.isAxiosError(err)) {
+                if (err.response?.data?.message) {
+                    errorMessage = err.response.data.message;
+                } else if (err.response?.data?.errors) {
+                    const errors = err.response.data.errors;
+                    const firstError = Object.values(errors)[0];
+                    errorMessage = Array.isArray(firstError) ? firstError[0] : String(firstError);
+                    errorDescription = 'Please check the form and correct any errors.';
+                } else if (err.response?.status === 422) {
+                    errorMessage = 'Validation error';
+                    errorDescription = 'Please check your input and try again.';
+                } else if (err.response?.status === 401) {
+                    errorMessage = 'Authentication required';
+                    errorDescription = 'Please log in and try again.';
+                } else if (err.response?.status === 500) {
+                    errorMessage = 'Server error';
+                    errorDescription = 'Our servers encountered an issue. Please try again later.';
+                } else if (err.message) {
+                    errorMessage = err.message;
+                }
+            } else if (err instanceof Error) {
+                errorMessage = err.message;
+            }
+
+            setError(errorMessage);
+            toast.error(errorMessage, {
+                id: submissionToast,
+                description: errorDescription,
+                duration: 5000,
+            });
             return;
         } finally {
             setSubmitting(false);

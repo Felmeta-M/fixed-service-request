@@ -22,7 +22,8 @@ class TelebirrController extends Controller
         protected readonly PaymentService $paymentService,
         protected readonly RsaSignatureService $rsaSignatureService,
         protected SubscriptionServiceFactory $factory
-    ) {}
+    ) {
+    }
 
     public function createOrder(Request $request)
     {
@@ -50,94 +51,31 @@ class TelebirrController extends Controller
     public function notify(Request $request)
     {
         $data = $request->validate([
-            'merch_code'        => 'nullable',
-            'merch_order_id'   => 'nullable',
+            'merch_order_id' => 'nullable',
             'payment_order_id' => 'nullable',
-            'total_amount'     => 'nullable',
-            'transId'         => 'nullable',
-            'trade_status'     => 'nullable',
-            'sign'           => 'nullable', // enable when signature verification is ready
+            'total_amount' => 'nullable',
+            'transId' => 'nullable',
+            'trade_status' => 'nullable',
+            'sign' => 'nullable',
         ]);
 
-        /**
-         * (Recommended)
-         * Verify Telebirr RSA signature here
-         */
-        // if (! $this->rsaSignatureService->verify($data)) {
-        //     Log::warning('Telebirr Invalid Signature', $data);
-        //     return response()->json(['success' => false], 403);
-        // }
-
-        $payment = Payment::where('merch_order_id', $data['merch_order_id'])->first();
+        $payment = Payment::where(
+            'merch_order_id',
+            $data['merch_order_id']
+        )->first();
 
         if (!$payment) {
-            Log::error('Telebirr Callback: Payment Not Found', [
-                'merch_order_id' => $data['merch_order_id'],
-            ]);
-
-            // Always return 200 so Telebirr doesn’t retry forever
+            Log::error('Telebirr Callback: Payment Not Found', $data);
             return response()->json(['success' => true]);
         }
 
-        /**
-         * Idempotency guard
-         */
-        if ($payment->status === FFDServiceProvisionStatus::Paid) {
-            Log::info('Telebirr Duplicate Callback Ignored', [
-                'order' => $payment->merch_order_id,
-            ]);
+        // ✅ Delegate core logic
+        $this->paymentService->confirmPayment($payment, $data);
 
-            return response()->json(['success' => true]);
-        }
-
-        $isCompleted = $data['trade_status'] === 'Completed';
-
-        DB::transaction(function () use ($payment, $data, $isCompleted) {
-
-            if ($isCompleted) {
-                DB::table('payments')
-                    ->where('id', $payment->id)
-                    ->update([
-                        'status'            => FFDServiceProvisionStatus::Paid,
-                        'trans_id'          => $data['transId'],
-                        'total_amount'      => $data['total_amount'],
-                        'payment_order_id'  => $data['payment_order_id'],
-                        'payload'           => json_encode($data),
-                        'updated_at'        => now(),
-                    ]);
-
-                DB::table('survey_orders')
-                    ->where('customer_survey_order_id', $payment->customer_survey_order_id)
-                    ->update([
-                        'status'     => FFDServiceProvisionStatus::Paid,
-                        'updated_at' => now(),
-                    ]);
-            } else {
-                DB::table('payments')
-                    ->where('id', $payment->id)
-                    ->update([
-                        'status'     => FFDServiceProvisionStatus::Failed,
-                        'updated_at' => now(),
-                    ]);
-            }
-        });
-
-        // 🚀 AFTER COMMIT (safe place for third-party calls)
-        if ($isCompleted) {
-            try {
-                $this->serviceSubscription($payment->customer_survey_order_id);
-            } catch (\Throwable $e) {
-                Log::error('Service subscription failed', [
-                    'order_id' => $payment->customer_survey_order_id,
-                    'error'    => $e->getMessage(),
-                ]);
-            }
-        }
-
-
-
+        // Always 200 so Telebirr doesn’t retry
         return response()->json(['success' => true]);
     }
+
 
     public function serviceSubscription(string $customerSurveyOrderId)
     {
@@ -164,8 +102,8 @@ class TelebirrController extends Controller
 
         $data = [
             'survey_order_id' => $customerSurveyOrderId,
-            'customer_code'   => $record->customer_code,
-            'name'   => trim($record->name),
+            'customer_code' => $record->customer_code,
+            'name' => trim($record->name),
             'main_offer_id' => $record->main_offer_id,
             'sms_no' => $record->phone_number,
         ];
@@ -180,8 +118,8 @@ class TelebirrController extends Controller
         } catch (\Throwable $e) {
             Log::error('Service subscription failed', [
                 'survey_order_id' => $customerSurveyOrderId,
-                'main_offer_id'   => $data['main_offer_id'],
-                'error'           => $e->getMessage(),
+                'main_offer_id' => $data['main_offer_id'],
+                'error' => $e->getMessage(),
             ]);
             return false;
         }

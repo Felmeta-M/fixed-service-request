@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Payment;
 use App\Models\SurveyOrder;
+use App\Services\Subscription\SubscriptionServiceFactory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,11 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentService
 {
+
+    public function __construct(
+        protected SubscriptionServiceFactory $factory
+    ) {
+    }
     /**
      * Create a new payment record.
      */
@@ -33,7 +39,8 @@ class PaymentService
     public function createOrUpdatePayment(array $data)
     {
         $customer = Auth::guard('api')->user();
-        if (!$customer) return;
+        if (!$customer)
+            return;
 
         DB::transaction(function () use ($data, $customer) {
 
@@ -47,14 +54,14 @@ class PaymentService
                 ['customer_survey_order_id' => $data['customer_survey_order_id']],
                 [
                     'service_number' => $data['service_number'],
-                    'customer_code'  => $customer->customer_code,
-                    'total_amount'   => $data['total_amount'],
+                    'customer_code' => $customer->customer_code,
+                    'total_amount' => $data['total_amount'],
                     'subscription_fee' => $data['subscription_fee'] ?? 0,
                     'cable_charge' => $data['cable_charge'] ?? 0,
-                    'device_fee'        => $data['device_fee'] ?? 0,
-                    'status'         => FFDServiceProvisionStatus::Pending->value,
-                    'updated_at'     => now(),
-                    'created_at'     => now(),
+                    'device_fee' => $data['device_fee'] ?? 0,
+                    'status' => FFDServiceProvisionStatus::Pending->value,
+                    'updated_at' => now(),
+                    'created_at' => now(),
                 ]
             );
         });
@@ -100,4 +107,58 @@ class PaymentService
         $payment->update(['status' => 'failed']);
         return $payment;
     }
+
+    public function confirmPayment(
+        Payment $payment,
+        array $providerPayload
+    ): void {
+        // Idempotency guard
+        if ($payment->status === FFDServiceProvisionStatus::Paid->value) {
+            Log::info('Payment already confirmed, skipping', [
+                'order' => $payment->customer_survey_order_id,
+            ]);
+            return;
+        }
+
+        $isCompleted = ($providerPayload['trade_status'] ?? null) === 'Completed';
+
+        DB::transaction(function () use ($payment, $providerPayload, $isCompleted) {
+
+            if ($isCompleted) {
+                $payment->update([
+                    'status' => FFDServiceProvisionStatus::Paid->value,
+                    'trans_id' => $providerPayload['transId'] ?? null,
+                    'total_amount' => $providerPayload['total_amount'] ?? $payment->total_amount,
+                    'payment_order_id' => $providerPayload['payment_order_id'] ?? null,
+                    'payload' => json_encode($providerPayload),
+                ]);
+
+                SurveyOrder::where(
+                    'customer_survey_order_id',
+                    $payment->customer_survey_order_id
+                )->update([
+                            'status' => FFDServiceProvisionStatus::Paid->value,
+                        ]);
+            } else {
+                $payment->update([
+                    'status' => FFDServiceProvisionStatus::Failed->value,
+                ]);
+            }
+        });
+
+        /**
+         * 🚀 After commit (safe side effects)
+         */
+        if ($isCompleted) {
+            try {
+                $this->serviceSubscription($payment->customer_survey_order_id);
+            } catch (\Throwable $e) {
+                Log::error('Service subscription failed', [
+                    'order_id' => $payment->customer_survey_order_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
 }

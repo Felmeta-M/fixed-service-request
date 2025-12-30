@@ -50,32 +50,59 @@ class CreateOrderService
      */
     public function createOrder(array $data): string
     {
-        // 1️⃣ Get Fabric token
+        // 1️⃣ Get Fabric token (cached)
         $tokenService = app(FabricTokenService::class);
 
         $fabricToken = Cache::get('fabricToken');
+
         if (!$fabricToken) {
             $fabricToken = $tokenService->applyFabricToken();
+
             $expirationDate = Carbon::createFromFormat(
                 'YmdHis',
                 $fabricToken->expirationDate
             );
-            Cache::put(
-                'fabricToken',
-                $fabricToken,
-                $expirationDate
-            );
+
+            Cache::put('fabricToken', $fabricToken, $expirationDate);
         }
-        // send query order
-        // if ($this->isPaymentInitiated($data['customerSurveyOrderId'])) {
-        //     $order = $this->requestQueryOrder($data);
-        // }
-        // 2️⃣ Send create order request
+
+        /**
+         * 2️⃣ Manual query fallback (ONLY to detect completed payment)
+         */
+        if ($this->isPaymentInitiated($data['customerSurveyOrderId'])) {
+
+            $queryOrder = $this->requestQueryOrder($fabricToken->token, $data);
+
+            // Normalize provider response
+            $queryOrder = is_object($queryOrder)
+                ? (array) $queryOrder
+                : ($queryOrder ?? []);
+
+            // ✅ Payment already completed → confirm & STOP
+            if (($queryOrder['trade_status'] ?? null) === 'Completed') {
+
+                $payment = app(PaymentService::class)
+                    ->find($data['customerSurveyOrderId']);
+
+                app(PaymentService::class)
+                    ->confirmPayment($payment, $queryOrder);
+
+                throw new RuntimeException('Payment already completed.');
+            }
+        }
+
+        /**
+         * 3️⃣ Always create a NEW payment intent
+         */
         $prepay_id = $this->requestCreateOrder($fabricToken->token, $data);
 
-        // 3️⃣ Build rawRequest string for H5 page
+        /**
+         * 4️⃣ Build rawRequest string for H5 page
+         */
         return $this->createRawRequest($prepay_id);
     }
+
+
 
     /**
      * Send create order request
@@ -130,7 +157,7 @@ class CreateOrderService
         $object = $response->object();
         Log::info($object);
 
-        // return $object ?? null;
+        return $object ?? null;
     }
 
     /**
@@ -190,6 +217,10 @@ class CreateOrderService
     {
         $payment = $this->paymentService->find($customerSurveyOrderId);
 
+        if (empty($payment)) {
+            return false;
+        }
+
         return !empty($payment?->merch_order_id);
     }
 
@@ -202,19 +233,6 @@ class CreateOrderService
 
         if ($payment->status === FFDServiceProvisionStatus::Paid) {
             throw new RuntimeException("Your payment has already been processed. No further action is needed.");
-        } {
-
-            // "timestamp": "1535166225",
-            // "nonce_str": "5K8264ILTKCH16CQ2502SI8ZNMTM67VS",
-            // "method": "payment.queryorder",
-            // "sign_type": "SHA256WithRSA",
-            // "sign": "iq33P+PJk1A+aArrb9cFQk1zAXTJ8gp3+1fuonRETw26Hbjo1DLy7ANgQsp0DaFOnKCGLCDDTpIohH7kypuOcxjWrkjdyULNl2rIQEseTKugFp4UozwmXXO8Bfv/eEP//S0IEUlq7Y0wrUQU82g+A8JwvZPIU5furEadJx/Bj17Pbsjp4oeteS0fxORH80JUNeRKVhDRYl6bKyAX7V8mZRZhGDFLrdYc/rHiSg9+nVh5v5vmtzJ9v6zhVEJkLB8G5AG9KvD4Mf1PXmsszh40JIyft5X2Abc54cIDgfmX8cYIPA6fE6ftHJcAM+Gk74YehMIvQw3d75rZX/k17JdKZQ==",
-            // "version": "1.0",
-            // "biz_content": {
-            //     "appid": "{{MerchantId}}",
-            //     "merch_code": "{{MerchantCode}}",
-            // 	"merch_order_id": "{{merch_order_id}}"
-            // }
         }
 
         $request = [

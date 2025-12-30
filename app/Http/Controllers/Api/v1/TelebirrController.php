@@ -2,15 +2,12 @@
 
 namespace App\Http\Controllers\Api\v1;
 
-use App\Enums\FFDServiceProvisionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Services\CreateOrderService;
 use App\Services\Payment\PaymentService;
 use App\Services\RsaSignatureService;
-use App\Services\Subscription\SubscriptionServiceFactory;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
@@ -21,7 +18,6 @@ class TelebirrController extends Controller
         protected readonly CreateOrderService $createOrderService,
         protected readonly PaymentService $paymentService,
         protected readonly RsaSignatureService $rsaSignatureService,
-        protected SubscriptionServiceFactory $factory
     ) {
     }
 
@@ -74,54 +70,5 @@ class TelebirrController extends Controller
 
         // Always 200 so Telebirr doesn’t retry
         return response()->json(['success' => true]);
-    }
-
-
-    public function serviceSubscription(string $customerSurveyOrderId)
-    {
-        // $customerSurveyOrderId = $request->get('customerSurveyOrderId');
-        $record = DB::table('survey_orders as sr')
-            ->join('customers as c', 'c.code', '=', 'sr.customer_code')
-            ->where('sr.customer_survey_order_id', $customerSurveyOrderId)
-            ->orderByDesc('sr.id')
-            ->select([
-                'sr.customer_code',
-                'sr.main_offer_id',
-                'c.name',
-                'c.phone_number',
-            ])
-            ->first();
-
-        // Log::info('record', ['record' => $record]);
-        if (!$record) {
-            Log::warning('Survey order or customer not found test', [
-                'customer_survey_order_id' => $customerSurveyOrderId,
-            ]);
-            return false;
-        }
-
-        $data = [
-            'survey_order_id' => $customerSurveyOrderId,
-            'customer_code' => $record->customer_code,
-            'name' => trim($record->name),
-            'main_offer_id' => $record->main_offer_id,
-            'sms_no' => $record->phone_number,
-        ];
-
-        // Log::info('data', ['data' => $data]);
-
-        try {
-            // Call the third-party subscription service
-            $service = $this->factory->make($data['main_offer_id']);
-            $service->create($data);
-            return true;
-        } catch (\Throwable $e) {
-            Log::error('Service subscription failed', [
-                'survey_order_id' => $customerSurveyOrderId,
-                'main_offer_id' => $data['main_offer_id'],
-                'error' => $e->getMessage(),
-            ]);
-            return false;
-        }
     }
 }

@@ -14,10 +14,11 @@ use Inertia\Inertia;
 class EsignetController extends Controller
 {
     public function __construct(
-        protected EsignetService   $esignetService,
+        protected EsignetService $esignetService,
         protected LocalAuthService $localAuthService,
-        protected CustomerService  $customerService,
-    ) {}
+        protected CustomerService $customerService,
+    ) {
+    }
 
     /** Starts ESIGNET login */
     public function redirectToEsignet()
@@ -34,17 +35,10 @@ class EsignetController extends Controller
             ]);
         }
 
-        // Save PKCE + state
         session()->put('esignet', [
             'state' => $result['state'],
             'code_verifier' => $result['code_verifier'],
         ]);
-
-        // logger()->info('Esignet session created', [
-        //     'state' => $result['state'],
-        //     'code_verifier' => $result['code_verifier'],
-        // ]);
-
 
         return redirect()->away($result['auth_url']);
     }
@@ -128,7 +122,7 @@ class EsignetController extends Controller
             return redirect()->route('services');
         }
 
-        return redirect()->route('customers.create')->with([
+        return redirect()->route('services.create')->with([
             'error' => 'Your profile is incomplete. Please update it.',
             'prefill' => new CustomerResource($this->customerService->getLocalCustomerData($user->customer_sub_id)),
         ]);
@@ -168,5 +162,12 @@ class EsignetController extends Controller
                 'message' => 'Unknown authentication error.'
             ]),
         };
+    }
+
+    private function finishLogin(array $data)
+    {
+        return redirect()->route('services')->with([
+            'customer' => new CustomerResource($data),
+        ]);
     }
 }

@@ -260,87 +260,8 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
 
     return (
         <div className="space-y-4">
-            {/* Info Card */}
-            <div className="border-amber-200 bg-amber-50 p-2">
-                <div className="">
-                    <div className="flex items-start gap-3">
-                        <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
-                        <div>
-                            <h3 className="font-semibold text-amber-900 mb-2">Location Review Needed</h3>
-                            <p className="text-sm text-amber-800">
-                                We're currently unable to automatically provision service for this location because
-                                available resources could not be confirmed. Our team will review your location,
-                                perform a manual survey if needed, and contact you to assist with the next steps.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Form */}
             <form onSubmit={handleSubmit}>
-                {/* <div>
-                    <div>
-                        <div className="font-semibold text-lg">Contact Information</div>
-                        <div className="text-sm text-gray-500">Please provide your contact details for our team to reach you</div>
-                    </div>
-                    <div>
-                        <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Field>
-                                <FieldLabel htmlFor="manual-phone">
-                                    Contact Phone Number <span className="text-red-500">*</span>
-                                </FieldLabel>
-                                <Input
-                                    id="manual-phone"
-                                    type="tel"
-                                    placeholder="+251 9XX XXX XXX"
-                                    value={manualFlowData.phone}
-                                    onChange={(e) => {
-                                        setManualFlowData({ ...manualFlowData, phone: e.target.value });
-                                        if (manualFlowErrors.phone) {
-                                            setManualFlowErrors({ ...manualFlowErrors, phone: '' });
-                                        }
-                                    }}
-                                    className={manualFlowErrors.phone ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
-                                    disabled={submitting}
-                                    required
-                                />
-                                {manualFlowErrors.phone && (
-                                    <p className="mt-1 text-sm text-red-600">{manualFlowErrors.phone}</p>
-                                )}
-                            </Field>
-
-                            <Field>
-                                <FieldLabel htmlFor="manual-name">Full Name</FieldLabel>
-                                <Input
-                                    id="manual-name"
-                                    type="text"
-                                    placeholder="Enter your full name"
-                                    value={manualFlowData.name}
-                                    onChange={(e) => {
-                                        setManualFlowData({ ...manualFlowData, name: e.target.value });
-                                        if (manualFlowErrors.name) {
-                                            setManualFlowErrors({ ...manualFlowErrors, name: '' });
-                                        }
-                                    }}
-                                    className={manualFlowErrors.name ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
-                                    disabled={submitting}
-                                />
-                                {manualFlowErrors.name && (
-                                    <p className="mt-1 text-sm text-red-600">{manualFlowErrors.name}</p>
-                                )}
-                            </Field>
-                        </FieldGroup>
-                    </div>
-                </div> */}
-
                 <div className="mt-4">
-                    <div className="mb-2">
-                        {/* <div className="font-semibold text-lg">Service Information</div>
-                        <div className="text-sm text-gray-500">Your selected service details</div> */}
-                        {/* <div className="font-semibold text-lg">Manual Survey Information</div>
-                        <div className="text-sm text-gray-500">Please provide your contact details for our team to reach you</div> */}
-                    </div>
                     <div >
                         <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {formData.serviceType && (
@@ -385,8 +306,8 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                         formData.withDevice === undefined
                                             ? 'Not selected'
                                             : formData.withDevice
-                                              ? 'With Device'
-                                              : 'Without Device'
+                                                ? 'With Device'
+                                                : 'Without Device'
                                     }
                                     disabled
                                     className="bg-gray-50"
@@ -454,31 +375,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 {manualFlowErrors.address && (
                                     <p className="mt-1 text-sm text-red-600">{manualFlowErrors.address}</p>
                                 )}
-                                <p className="mt-1 text-xs text-gray-500">
-                                    You can edit this address to provide more specific location details
-                                </p>
                             </Field>
-
-                            {/* <div className="grid grid-cols-2 gap-4">
-                                <Field>
-                                    <FieldLabel>Latitude</FieldLabel>
-                                    <Input
-                                        type="text"
-                                        value={formData.latitude?.toFixed(6) || ''}
-                                        disabled
-                                        className="bg-gray-50"
-                                    />
-                                </Field>
-                                <Field>
-                                    <FieldLabel>Longitude</FieldLabel>
-                                    <Input
-                                        type="text"
-                                        value={formData.longitude?.toFixed(6) || ''}
-                                        disabled
-                                        className="bg-gray-50"
-                                    />
-                                </Field>
-                            </div> */}
                         </FieldGroup>
                     </div>
                 </div>
@@ -493,18 +390,18 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                         className="flex items-center gap-2"
                     >
                         <ArrowLeft className="h-4 w-4" />
-                        Back to Location
+                        Back
                     </Button>
                     <Button type="submit" disabled={submitting} className="bg-primary hover:bg-primary/90">
                         {submitting ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Creating Request...
+                                Submitting Request...
                             </>
                         ) : (
                             <>
                                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                                Submit Request
+                                Submit
                             </>
                         )}
                     </Button>

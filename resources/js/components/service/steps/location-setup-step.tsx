@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { parseCoordinate } from '@/lib/coordinate-utils';
 import { router, usePage } from '@inertiajs/react';
-import { AlertCircle, Loader2, MapPin, Navigation } from 'lucide-react';
+import { AlertCircle, Loader2, MapPin, CheckCircle2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GoogleLocationMap } from '../google-location-map';
 import {
@@ -385,8 +385,10 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
 
     return (
         <div className="min-w-sm space-y-6 md:min-w-3xl">
-            <div className="space-y-2">
-                <div className="h-full rounded-lg">
+            {/* Map Section with Enhanced Styling */}
+            <div className="space-y-4">
+                <div className="relative h-full overflow-hidden rounded-xl border border-border shadow-lg transition-all duration-300 hover:shadow-xl">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none z-10" />
                     <GoogleLocationMap
                         onLocationSelect={handleLocationSelect}
                         onAddressSearch={handleAddressSearch}
@@ -399,31 +401,73 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                     />
                 </div>
 
+                {/* Location Details Card - Enhanced Design */}
                 {(hasValidLocation || currentLocation) && (
-                    <Card className="border-none pr-0 pl-0 shadow-none transition-all duration-300">
-                        <CardContent className="border-none pr-0 pl-0 shadow-none">
-                            <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                    {/* Title */}
-                                    <div className="mb-3 flex items-center gap-2">
-                                        <MapPin className="h-4 w-4 text-primary" />
-                                        <h4 className="font-semibold text-gray-900">
-                                            {locationLoading ? 'Detecting Location...' : 'Selected Location'}
-                                        </h4>
-
-                                        {(isGeocoding || isMapAnimating) && (
-                                            <div className="flex items-center space-x-2">
-                                                {isGeocoding && <Loader2 className="h-3 w-3 animate-spin text-blue-600" />}
-                                                {isMapAnimating && <div className="h-2 w-2 animate-pulse rounded-full bg-purple-600" />}
-                                            </div>
-                                        )}
+                    <Card className="border border-border/50 bg-gradient-to-br from-card to-card/50 shadow-md transition-all duration-300 hover:shadow-lg">
+                        <CardContent className="p-6">
+                            <div className="space-y-5">
+                                {/* Header Section */}
+                                <div className="flex items-center justify-between border-b border-border/50 pb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 ring-2 ring-primary/20">
+                                            {locationLoading ? (
+                                                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                                            ) : (
+                                                <MapPin className="h-5 w-5 text-primary" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-semibold text-foreground">
+                                                {locationLoading ? 'Detecting Location...' : 'Selected Location'}
+                                            </h4>
+                                            <p className="text-xs text-muted-foreground">
+                                                {locationLoading ? 'Please wait while we detect your location' : 'Coordinates and address details'}
+                                            </p>
+                                        </div>
                                     </div>
 
-                                    <div className="flex flex-col">
-                                        <FieldGroup>
-                                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                                <Field>
-                                                    <FieldLabel htmlFor="manualLat">Latitude</FieldLabel>
+                                    {(isGeocoding || isMapAnimating) && (
+                                        <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5">
+                                            {isGeocoding && (
+                                                <>
+                                                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                                                    <span className="text-xs font-medium text-primary">Geocoding...</span>
+                                                </>
+                                            )}
+                                            {isMapAnimating && (
+                                                <>
+                                                    <div className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+                                                    <span className="text-xs font-medium text-primary">Updating...</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {!locationLoading && !isGeocoding && !isMapAnimating && (hasValidLocation || currentLocation) && (
+                                        <div className="flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 ring-1 ring-green-200">
+                                            <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                                            <span className="text-xs font-medium text-green-700">Confirmed</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Coordinates Section */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+                                        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                            Coordinates
+                                        </span>
+                                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
+                                    </div>
+
+                                    <FieldGroup>
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                            <Field>
+                                                <FieldLabel htmlFor="manualLat" className="text-sm font-medium text-foreground">
+                                                    Latitude
+                                                </FieldLabel>
+                                                <div className="relative">
                                                     <Input
                                                         id="manualLat"
                                                         type="number"
@@ -434,12 +478,19 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                                                             setManualLat(e.target.value);
                                                             setShowUpdateBtn(true);
                                                         }}
-                                                        className="focus:ring-1 focus:ring-primary"
+                                                        className="h-11 border-border/60 bg-background/50 transition-all duration-200 focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/20"
                                                     />
-                                                </Field>
+                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                        <span className="text-xs text-muted-foreground">°N</span>
+                                                    </div>
+                                                </div>
+                                            </Field>
 
-                                                <Field>
-                                                    <FieldLabel htmlFor="manualLng">Longitude</FieldLabel>
+                                            <Field>
+                                                <FieldLabel htmlFor="manualLng" className="text-sm font-medium text-foreground">
+                                                    Longitude
+                                                </FieldLabel>
+                                                <div className="relative">
                                                     <Input
                                                         id="manualLng"
                                                         type="number"
@@ -450,36 +501,28 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                                                             setManualLng(e.target.value);
                                                             setShowUpdateBtn(true);
                                                         }}
-                                                        className="focus:ring-1 focus:ring-primary"
+                                                        className="h-11 border-border/60 bg-background/50 transition-all duration-200 focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/20"
                                                     />
-                                                </Field>
-
-                                                {/* {showUpdateBtn && (
-                                                    <div className="flex items-end">
-                                                        <Button
-                                                            onClick={handleManualCoordinateSubmit}
-                                                            disabled={isGeocoding}
-                                                            className="w-full hover:opacity-90"
-                                                        >
-                                                            {isGeocoding ? (
-                                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                            ) : (
-                                                                <Navigation className="mr-2 h-4 w-4" />
-                                                            )}
-                                                            {isGeocoding ? 'Updating...' : 'Update Coordinates'}
-                                                        </Button>
+                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                        <span className="text-xs text-muted-foreground">°E</span>
                                                     </div>
-                                                )} */}
-                                            </div>
-                                        </FieldGroup>
+                                                </div>
+                                            </Field>
+                                        </div>
+                                    </FieldGroup>
 
-                                        {/* <div className="pt-4">
-                                            <p className="mb-1 text-sm font-medium text-gray-700">Address</p>
-                                            <div className="flex items-center gap-2">
-                                                <p className="flex-1 text-sm text-gray-700">{mapLocation?.address || formData.address}</p>
+                                    {/* Address Display (if available) */}
+                                    {mapLocation?.address && (
+                                        <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+                                            <div className="flex items-start gap-2">
+                                                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-medium text-muted-foreground">Address</p>
+                                                    <p className="mt-1 text-sm text-foreground">{mapLocation.address}</p>
+                                                </div>
                                             </div>
-                                        </div> */}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </CardContent>
@@ -487,55 +530,76 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                 )}
             </div>
 
+            {/* Enhanced Loading Alert */}
             {locationLoading && (
-                <Alert className="border-blue-200 bg-blue-50">
-                    <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                    <AlertDescription className="text-blue-700">
-                        {isEditingAddress ? 'Updating address...' : 'Getting your current location...'}
+                <Alert className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20">
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        </div>
+                        <AlertDescription className="text-sm font-medium text-foreground">
+                            {isEditingAddress ? 'Updating address...' : 'Getting your current location...'}
+                        </AlertDescription>
+                    </div>
+                </Alert>
+            )}
+
+            {/* Enhanced Error Display */}
+            {locationError && (
+                <Alert className="border-destructive/20 bg-destructive/5 shadow-sm">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    <AlertDescription className="text-sm text-destructive">
+                        {locationError}
                     </AlertDescription>
                 </Alert>
             )}
 
-            {/* Resource Unavailable Dialog - Initial Notification */}
+            {/* Enhanced Resource Unavailable Dialog */}
             <AlertDialog open={showResourceUnavailableDialog} onOpenChange={handleDialogClose}>
-                <AlertDialogContent className="sm:max-w-md">
+                <AlertDialogContent className="sm:max-w-lg">
                     <AlertDialogHeader>
-                        <div className="flex items-center gap-3">
-                            <AlertCircle className="h-5 w-5 text-amber-600" />
-                            <AlertDialogTitle className="text-left">
+                        <div className="flex items-center gap-3 pb-2">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 ring-2 ring-amber-200">
+                                <AlertCircle className="h-5 w-5 text-amber-600" />
+                            </div>
+                            <AlertDialogTitle className="text-xl font-semibold text-foreground">
                                 Location Review Needed
                             </AlertDialogTitle>
                         </div>
 
-                        <AlertDialogDescription className="pt-3 text-left">
-                            <p className="mb-3 text-gray-700">
-                                Thank you for selecting your location on the map. We’re currently unable to automatically provision service for this location because available resources could not be confirmed.
+                        <AlertDialogDescription className="space-y-3 pt-2 text-left">
+                            <p className="text-sm leading-relaxed text-muted-foreground">
+                                Thank you for selecting your location on the map. We're currently unable to automatically provision service for this location because available resources could not be confirmed.
                             </p>
 
-                            <p className="mb-3 text-gray-700">
-                                You can continue by submitting a manual request. Our team will review your location, perform a manual survey if needed, and contact you to assist with the next steps.
-                            </p>
+                            <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+                                <p className="text-sm leading-relaxed text-foreground">
+                                    You can continue by submitting a manual request. Our team will review your location, perform a manual survey if needed, and contact you to assist with the next steps.
+                                </p>
+                            </div>
 
-                            <p className="text-sm text-gray-600">
+                            <p className="text-xs text-muted-foreground">
                                 We appreciate your patience and look forward to helping you get connected.
                             </p>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
 
-                    <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row">
-                        <AlertDialogCancel onClick={() => setShowResourceUnavailableDialog(false)}>
+                    <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-2">
+                        <AlertDialogCancel
+                            onClick={() => setShowResourceUnavailableDialog(false)}
+                            className="mt-0 sm:mt-0"
+                        >
                             Cancel
                         </AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleContinueManually}
-                            className="bg-primary hover:bg-primary/90"
+                            className="bg-primary hover:bg-primary/90 focus:ring-2 focus:ring-primary/20"
                         >
                             Continue Manually
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-
         </div>
     );
 }

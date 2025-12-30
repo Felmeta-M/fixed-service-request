@@ -22,8 +22,7 @@ class CustomerController extends Controller
         protected readonly QueryCustomerByServiceNumberService $queryCustomerByServiceNumberService,
         protected readonly QueryCustomerByCodeService          $queryCustomerByCodeService,
     )
-    {
-    }
+    { }
 
     /**
      * Display a listing of the resource.

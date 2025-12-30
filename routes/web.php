@@ -29,8 +29,6 @@ Route::get('/auth/error', function () {
 })->name('auth.error');
 
 
-//Route::get('/customers', [CustomerController::class, 'create'])->name('customer.create');
-
 // NID routes in web.php with session support
 Route::prefix('api/v1')->middleware('web')->group(function () {
     Route::post('/nid/otp', [NidController::class, 'getOtp']);
@@ -49,8 +47,7 @@ Route::middleware('guest:otp')->group(function () {
 Route::middleware(['otp.auth'])->group(function () {
     Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name('services');
     Route::get('/services/subscription-success', fn() => Inertia::render('Services/SubscriptionSuccess'))->name('services.subscription-success');
-    // Route::get('/services/create', action: fn() => Inertia::render('Services/Create'))->name('services.create');
-    // In your web.php
+
     Route::get('/services/create', function () {
         return Inertia::render('Services/Create', [
             'googleMapsApiKey' => config('services.google.google_api_key'),
@@ -84,16 +81,9 @@ Route::middleware(['otp.auth'])->group(function () {
         return Inertia::render('Subscriber/PaymentSummary', [
             'payment_details' => $payment_details,
             'survey_details' => $survey_details,
-            // 'subscriber_data' => json_decode($request->query('subscriber_data')),
-
-            // 'fee_data' => json_decode($request->query('fee_data')),
-            // 'customer_data' => json_decode($request->query('customer_data')),
-            // 'survey_data' => json_decode($request->query('survey_data')),
-            // 'is_fallback' => filter_var($request->query('is_fallback', false), FILTER_VALIDATE_BOOLEAN),
         ]);
     })->name('payment.summary');
-    // Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    // Route::get('/survey-requests', fn() => Inertia::render('SurveyOrders/Index'))->name('survey.requests.dashboard');
+   
     Route::get('/support-request', [SupportRequestController::class, 'index'])->name('support.request');
     Route::post('/logout', [OtpAuthController::class, 'logout'])->name('logout');
     Route::get('/create-customer', fn() => Inertia::render('Customers/Create'))->name('customers.create');
@@ -114,9 +104,7 @@ Route::middleware(['otp.auth'])->group(function () {
             'surveyOrderId' => $id,
             'customerCode' => request('customer_code'),
             'offeringId' => request('offering_id'),
-            // 'subscriber_data' => request('subscriber_data'),
             'available_numbers' => request('available_numbers'),
-            // 'survey_data' => request('survey_data'),
         ]);
     })->name('subscriber.create');
 

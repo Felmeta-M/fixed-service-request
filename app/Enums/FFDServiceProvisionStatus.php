@@ -58,6 +58,19 @@ enum FFDServiceProvisionStatus: int
         ];
     }
 
+    public static function canCancelSurveyOrder(): array
+    {
+        return [
+            self::Created->value,
+            self::Processing->value,
+            self::Suspended->value,
+            self::Waiting->value,
+            self::Completed->value,
+            self::Ready->value,
+            self::Pending->value,
+        ];
+    }
+
     public static function options(): array
     {
         return array_column(

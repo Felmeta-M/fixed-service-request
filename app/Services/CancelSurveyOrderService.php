@@ -36,7 +36,8 @@ class CancelSurveyOrderService extends BaseApiService
             /**
              * 🚫 Cancel only if status = WAITING
              */
-            if ($order->status !== FFDServiceProvisionStatus::Waiting->value) {
+
+            if (!in_array($order->status, FFDServiceProvisionStatus::canCancelSurveyOrder())) {
                 return ApiResponse::error(message: 'Only waiting survey orders can be cancelled.');
             }
 

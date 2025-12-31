@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import { ArrowDownToLineIcon, ArrowUpToLineIcon,  X } from 'lucide-react';
+import { ArrowDownToLineIcon, ArrowUpToLineIcon, Eye, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
     AlertDialog,
@@ -18,6 +18,7 @@ import SurveyDetailModal from './survey-detail-modal';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { getServiceActionFlags } from '@/lib/service-action-rules';
 import { toast } from 'sonner';
+import { useCancelSurveyOrder, useDeleteSurveyOrder, useCreateSubscription } from '@/hooks/use-api-mutations';
 
 type Address = {
     address1?: string;
@@ -32,6 +33,15 @@ type Contact = {
     name1?: string;
     name2?: string;
     mobile?: string;
+};
+type SurveyRow = {
+    customer_survey_order_id?: string;
+    service_number?: string | null;
+    main_offer_id?: string;
+    status?: string;
+    created_at?: string;
+    updated_at?: string;
+    [key: string]: unknown;
 };
 
 type AuthUser = {
@@ -71,7 +81,6 @@ interface SurveyActionsProps {
 }
 
 export default function SurveyActions({ survey, onActionComplete, onUpdatingChange }: SurveyActionsProps) {
-    const [loading, setLoading] = useState(false);
     const [openCancelDialog, setOpenCancelDialog] = useState(false);
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [error, setError] = useState('');
@@ -81,6 +90,12 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const [apiErrors, setApiErrors] = useState<{ [key: string]: string }>({});
 
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
+
+    const cancelMutation = useCancelSurveyOrder();
+    const deleteMutation = useDeleteSurveyOrder();
+    const createSubscriptionMutation = useCreateSubscription();
+
+    const loading = cancelMutation.isPending || deleteMutation.isPending || createSubscriptionMutation.isPending;
 
     const { main_offer_id } = survey
 
@@ -129,124 +144,58 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         setShowErrorDialog(false);
     };
 
-    const handleCancel = async (cancellationReason?: string) => {
+    const handleCancel = (cancellationReason?: string) => {
         if (!cancellationReason) {
             setError('Please provide a reason for cancellation.');
             setShowErrorDialog(true);
             return;
         }
 
-        setLoading(true);
         onUpdatingChange(true);
         clearErrors();
 
-        try {
-            const response = await fetch('/api/v1/cancel-survey-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    Authorization: `Bearer ${user.api_token}`,
-                },
-                body: JSON.stringify({
-                    customer_survey_order_id: String(survey.customer_survey_order_id),
-                    cancel_reason: cancellationReason,
-                }),
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                onActionComplete();
-            } else {
-                handleApiError(result, 'cancellation');
-            }
-        } catch (err: unknown) {
-            handleApiError(err, 'cancellation_network');
-        } finally {
-            setLoading(false);
-            onUpdatingChange(false);
-            setOpenCancelDialog(false);
-        }
-    };
-
-    const handleDelete = async () => {
-        setLoading(true);
-        onUpdatingChange(true);
-        clearErrors();
-
-        try {
-            const response = await fetch('/api/v1/survey-requests/delete', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user.api_token}`,
-                },
-                body: JSON.stringify({
-                    customer_code: survey.customer_code,
-                    customer_survey_order_id: survey.customer_survey_order_id,
-                }),
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                onActionComplete();
-            } else {
-                handleApiError(result, 'deletion');
-            }
-        } catch (err: unknown) {
-            handleApiError(err, 'deletion_network');
-        } finally {
-            setLoading(false);
-            onUpdatingChange(false);
-            setOpenDeleteDialog(false);
-        }
-    };
-
-    const handleSubscribe = async () => {
-        const addressInfo = getAddressInfo();
-        const contactInfo = getContactInfo();
-        const customerInfo = getCustomerInfo();
-
-        const payload = {
-            offering_id: survey.main_offer_id || survey.offering_id || customerData?.ext_params?.PrimaryOfferId || '',
-            survey_order_id: String(survey.customer_survey_order_id),
-            customer_code: String(survey.customer_code),
-            name: customerInfo.name,
-            enterprise_name: customerInfo.enterprise_name,
-            region: addressInfo.region,
-            city: addressInfo.city,
-            zone: addressInfo.zone,
-            wereda: addressInfo.wereda,
-            kebele: addressInfo.kebele,
-            house_no: addressInfo.house_no,
-            sms_no: contactInfo.mobile,// to be confirmed
-            external_operid: survey.external_operid || '512',
-            completed_date: new Date()
-                .toISOString()
-                .replace(/[-:T.Z]/g, '')
-                .slice(0, 14),
-        };
-        console.log("🚀 ~ handleSubscribe ~ payload:", payload)
-
-        const response = await fetch('/api/v1/services/subscription', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${user.api_token}`,
+        cancelMutation.mutate(
+            {
+                customer_survey_order_id: String(survey.customer_survey_order_id),
+                cancel_reason: cancellationReason,
             },
-            body: JSON.stringify(payload),
-        });
-
-        const result = await response.json().catch(() => null);
-
-        if (!response.ok || !result?.success) {
-            throw new Error(result?.message || `Subscriber creation failed (HTTP ${response.status})`);
-        }
-
-        return result;
+            {
+                onSuccess: () => {
+                    onActionComplete();
+                    setOpenCancelDialog(false);
+                    onUpdatingChange(false);
+                },
+                onError: (error: Error) => {
+                    handleApiError(error, 'cancellation');
+                    onUpdatingChange(false);
+                },
+            }
+        );
     };
+
+    const handleDelete = () => {
+        onUpdatingChange(true);
+        clearErrors();
+
+        deleteMutation.mutate(
+            {
+                customer_code: survey.customer_code!,
+                customer_survey_order_id: survey.customer_survey_order_id!,
+            },
+            {
+                onSuccess: () => {
+                    onActionComplete();
+                    setOpenDeleteDialog(false);
+                    onUpdatingChange(false);
+                },
+                onError: (error: Error) => {
+                    handleApiError(error, 'deletion');
+                    onUpdatingChange(false);
+                },
+            }
+        );
+    };
+
 
     const handleUpgrade = () => {
         console.log('Upgrade requested for survey:', survey.customer_survey_order_id);
@@ -330,29 +279,62 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         const id = survey?.customer_survey_order_id;
         if (!id) return;
 
-        setLoading(true);
         onUpdatingChange(true);
         clearErrors();
 
-        const t = toast.loading('Creating subscription...');
+        // Show loading toast when subscribe is clicked
+        const subscribeToast = toast.loading('Processing subscription...');
 
-        try {
-            await handleSubscribe();
-            toast.success('Subscription created successfully!', { id: t });
+        const addressInfo = getAddressInfo();
+        const contactInfo = getContactInfo();
+        const customerInfo = getCustomerInfo();
 
-            // Refresh list state if the caller stays on the page; safe even if we navigate.
-            onActionComplete();
+        const payload = {
+            offering_id: survey.main_offer_id || survey.offering_id || customerData?.ext_params?.PrimaryOfferId || '',
+            survey_order_id: String(survey.customer_survey_order_id),
+            customer_code: String(survey.customer_code),
+            name: customerInfo.name,
+            enterprise_name: customerInfo.enterprise_name,
+            region: addressInfo.region,
+            city: addressInfo.city,
+            zone: addressInfo.zone,
+            wereda: addressInfo.wereda,
+            kebele: addressInfo.kebele,
+            house_no: addressInfo.house_no,
+            sms_no: contactInfo.mobile,// to be confirmed
+            external_operid: survey.external_operid || '512',
+            completed_date: new Date()
+                .toISOString()
+                .replace(/[-:T.Z]/g, '')
+                .slice(0, 14),
+        };
 
-            router.visit('/services/subscription-success');
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Subscription failed';
-            toast.error(msg, { id: t });
-            setError(msg);
-            setShowErrorDialog(true);
-        } finally {
-            setLoading(false);
-            onUpdatingChange(false);
-        }
+        createSubscriptionMutation.mutate(payload, {
+            onSuccess: () => {
+                toast.success('Subscription created successfully!', {
+                    id: subscribeToast,
+                    description: 'Your service subscription has been activated.',
+                });
+                onActionComplete();
+                router.visit('/services/subscription-success');
+                onUpdatingChange(false);
+            },
+            onError: (error: Error) => {
+                const msg = error.message || 'Subscription failed';
+                toast.error(msg, {
+                    id: subscribeToast,
+                    description: 'Please try again or contact support if the issue persists.',
+                });
+                setError(msg);
+                setShowErrorDialog(true);
+                onUpdatingChange(false);
+            },
+        });
+    };
+    const handleRowClick = (survey: SurveyRow) => {
+        const id = survey?.customer_survey_order_id;
+        if (!id) return;
+        router.visit(`/services/${id}`);
     };
 
 
@@ -387,6 +369,15 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                         Subscribe
                     </Button>
                 )}
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRowClick(survey as SurveyRow)}
+                    className="h-8 w-8 p-0"
+                >
+                    <Eye className="h-4 w-4" />
+                    <span className="sr-only">View details</span>
+                </Button>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button
@@ -417,10 +408,10 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                             <ArrowUpToLineIcon className="h-4 w-4" />
                             <span>Upgrade</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleDowngrade} className="flex items-center gap-2 cursor-pointer">
+                        {/* <DropdownMenuItem onClick={handleDowngrade} className="flex items-center gap-2 cursor-pointer">
                             <ArrowDownToLineIcon className="h-4 w-4" />
                             <span>Downgrade</span>
-                        </DropdownMenuItem>
+                        </DropdownMenuItem> */}
                         {canCancel && <DropdownMenuSeparator />}
                         {canCancel && (
                             <DropdownMenuItem

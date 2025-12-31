@@ -1,37 +1,34 @@
-import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api-client';
 
 interface Occupation {
     id: number;
     remark: string;
 }
 
+interface OccupationsResponse {
+    success: boolean;
+    data: Occupation[];
+}
+
 export function useOccupations() {
-    const [occupations, setOccupations] = useState<{ label: string; value: string }[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchOccupations = async () => {
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/occupations`);
-                if (response.data.success) {
-                    const formattedOccupations = response.data.data.map((occ: Occupation) => ({
-                        label: occ.remark,
-                        value: occ.id.toString(),
-                    }));
-                    setOccupations(formattedOccupations);
-                }
-            } catch (err) {
-                setError('Failed to fetch occupations');
-                console.error('Error fetching occupations:', err);
-            } finally {
-                setLoading(false);
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['occupations'],
+        queryFn: async () => {
+            const response = await apiClient.get<OccupationsResponse>('/occupations');
+            if (response.success) {
+                return response.data.map((occ) => ({
+                    label: occ.remark,
+                    value: occ.id.toString(),
+                }));
             }
-        };
+            return [];
+        },
+    });
 
-        fetchOccupations();
-    }, []);
-
-    return { occupations, loading, error };
+    return {
+        occupations: data || [],
+        loading: isLoading,
+        error: error ? (error instanceof Error ? error.message : 'Failed to fetch occupations') : null,
+    };
 }

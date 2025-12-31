@@ -83,7 +83,7 @@ export function useSurveyList(): UseSurveyListReturn {
                 if (filters?.search) params.append('search', filters.search);
                 if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
 
-                const res = await fetch(`/api/v1/survey-requests?${params.toString()}`, {
+                const res = await fetch(`/survey-requests?${params.toString()}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -141,7 +141,7 @@ export function useSurveyList(): UseSurveyListReturn {
                 if (filters?.search) params.append('search', filters.search);
                 if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
 
-                const res = await fetch(`/api/v1/survey-requests?${params.toString()}`, {
+                const res = await fetch(`/survey-requests?${params.toString()}`, {
                     headers: {
                         'Content-Type': 'application/json',
                         Accept: 'application/json',

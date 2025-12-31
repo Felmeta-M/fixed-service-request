@@ -6,9 +6,9 @@ import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from 
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Link } from '@inertiajs/react';
-import axios from 'axios';
 import { ArrowLeft, ChevronRight, IdCard, Loader2, Smartphone } from 'lucide-react';
 import { useState } from 'react';
+import { useNidOtp, useNidKyc } from '@/hooks/use-api-mutations';
 
 interface VerificationError {
     message: string;
@@ -22,116 +22,78 @@ export function VerificationForm({ className, ...props }: React.ComponentProps<'
     const [nationalId, setNationalId] = useState('');
     const [verificationCode, setVerificationCode] = useState('');
     const [step, setStep] = useState('option');
-    const [loading, setLoading] = useState(false);
     const [transactionId, setTransactionId] = useState('');
     const [maskedContact, setMaskedContact] = useState('');
     const [error, setError] = useState<VerificationError | null>(null);
 
+    const nidOtpMutation = useNidOtp();
+    const nidKycMutation = useNidKyc();
+
     const handleVerifyNationalId = async () => {
-        setLoading(true);
         setError(null);
 
-        try {
-            if (nationalId.length !== 16) {
-                throw {
-                    message: 'National ID must be exactly 16 digits',
-                    isValidationError: true,
-                    showNationalIdHelp: true,
-                };
-            }
-
-            const response = await axios.post('/api/v1/nid/otp', {
-                individual_id: nationalId,
+        if (nationalId.length !== 16) {
+            setError({
+                message: 'National ID must be exactly 16 digits',
+                isValidationError: true,
+                showNationalIdHelp: true,
             });
-
-            const otpData = response.data?.data?.original?.data;
-
-            if (!otpData || otpData.ret_code !== '0') {
-                throw {
-                    message: otpData?.ret_msg || 'Failed to send verification code',
-                    ret_code: otpData?.ret_code,
-                };
-            }
-
-            setTransactionId(otpData.transaction_id);
-
-            if (otpData.masked_mobile) {
-                setMaskedContact(`sent to ${otpData.masked_mobile}`);
-            } else if (otpData.masked_email) {
-                setMaskedContact(`sent to ${otpData.masked_email}`);
-            } else {
-                setMaskedContact('sent to your registered contact');
-            }
-
-            setStep('verify');
-        } catch (err: any) {
-            console.error('OTP Error:', err);
-
-            if (err.response?.data?.message) {
-                setError({
-                    message: err.response.data.message,
-                    ret_code: err.response.data.ret_code,
-                    showNationalIdHelp: err.response.data.ret_code === '9999',
-                });
-            } else if (err.isValidationError) {
-                setError(err);
-            } else {
-                setError({
-                    message: 'Failed to verify National ID. Please try again.',
-                });
-            }
-        } finally {
-            setLoading(false);
+            return;
         }
+
+        nidOtpMutation.mutate(
+            { individual_id: nationalId },
+            {
+                onSuccess: (otpData) => {
+                    setTransactionId(otpData.transaction_id);
+
+                    if (otpData.masked_mobile) {
+                        setMaskedContact(`sent to ${otpData.masked_mobile}`);
+                    } else if (otpData.masked_email) {
+                        setMaskedContact(`sent to ${otpData.masked_email}`);
+                    } else {
+                        setMaskedContact('sent to your registered contact');
+                    }
+
+                    setStep('verify');
+                },
+                onError: (err: Error & { ret_code?: string }) => {
+                    setError({
+                        message: err.message || 'Failed to verify National ID. Please try again.',
+                        ret_code: err.ret_code,
+                        showNationalIdHelp: err.ret_code === '9999',
+                    });
+                },
+            }
+        );
     };
 
     const handleVerificationCode = async () => {
-        setLoading(true);
         setError(null);
 
-        try {
-            if (verificationCode.length !== 6) {
-                throw {
-                    message: 'Verification code must be exactly 6 digits',
-                    isValidationError: true,
-                };
-            }
+        if (verificationCode.length !== 6) {
+            setError({
+                message: 'Verification code must be exactly 6 digits',
+                isValidationError: true,
+            });
+            return;
+        }
 
-            const response = await axios.post('/api/v1/nid/kyc', {
+        nidKycMutation.mutate(
+            {
                 individual_id: nationalId,
                 otp_value: verificationCode,
                 transaction_id: transactionId,
-            });
-
-            const kyc = response.data;
-
-            if (!kyc.success || kyc.ret_code !== '0') {
-                throw {
-                    message: kyc.message || 'Verification failed',
-                    ret_code: kyc.ret_code,
-                };
+            },
+            {
+                onError: (err: Error & { ret_code?: string }) => {
+                    setError({
+                        message: err.message || 'Failed to verify code. Please try again.',
+                        ret_code: err.ret_code,
+                    });
+                },
             }
-
-            localStorage.setItem('kycData', JSON.stringify(kyc.data));
-            window.location.href = '/profile';
-        } catch (err: any) {
-            console.error('KYC Error:', err);
-
-            if (err.response?.data?.message) {
-                setError({
-                    message: err.response.data.message,
-                    ret_code: err.response.data.ret_code,
-                });
-            } else if (err.isValidationError) {
-                setError(err);
-            } else {
-                setError({
-                    message: err.message || 'Failed to verify code. Please try again.',
-                });
-            }
-        } finally {
-            setLoading(false);
-        }
+        );
     };
 
     const resetVerification = () => {
@@ -229,8 +191,8 @@ export function VerificationForm({ className, ...props }: React.ComponentProps<'
                                     <FieldDescription>Enter your 16-digit Ethiopian National ID number</FieldDescription>
                                 </Field>
                                 <Field>
-                                    <Button type="submit" disabled={loading || nationalId.length !== 16} className="w-full">
-                                        {loading ? (
+                                    <Button type="submit" disabled={nidOtpMutation.isPending || nationalId.length !== 16} className="w-full">
+                                        {nidOtpMutation.isPending ? (
                                             <>
                                                 <Loader2 className="mr-2 size-4 animate-spin" />
                                                 Verifying ID...
@@ -281,8 +243,8 @@ export function VerificationForm({ className, ...props }: React.ComponentProps<'
                                     <FieldDescription>Code {maskedContact}</FieldDescription>
                                 </Field>
                                 <Field>
-                                    <Button type="submit" disabled={loading || verificationCode.length !== 6} className="w-full">
-                                        {loading ? (
+                                    <Button type="submit" disabled={nidKycMutation.isPending || verificationCode.length !== 6} className="w-full">
+                                        {nidKycMutation.isPending ? (
                                             <>
                                                 <Loader2 className="mr-2 size-4 animate-spin" />
                                                 Verifying Code...

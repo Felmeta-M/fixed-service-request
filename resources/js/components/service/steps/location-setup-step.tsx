@@ -19,7 +19,6 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import axios from 'axios';
 import { toast } from 'sonner';
 
 interface LocationSetupStepProps {

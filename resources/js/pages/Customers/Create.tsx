@@ -10,10 +10,10 @@ import { cn } from '@/lib/utils';
 import { FormSelectProps } from '@/types';
 import { CustomerFormValues, customerSchema } from '@/types/customer';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import axios, { AxiosError } from 'axios';
 import { Building, CheckCircle, FileIcon, MapPinIcon, PhoneIcon, User } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useGetCustomer, useCreateCustomer, useUploadEcaf } from '@/hooks/use-api-mutations';
 
 // Error types for better error handling
 type ApiError = {
@@ -142,17 +142,13 @@ export function FormInput({
 
 // Utility function to handle API errors
 const handleApiError = (error: unknown): ApiError => {
-    if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<{
-            message?: string;
-            errors?: Record<string, string[]>;
-            success?: boolean;
-        }>;
-
+    // Handle ApiClientError from our API client
+    if (error && typeof error === 'object' && 'status' in error && 'data' in error) {
+        const apiError = error as { status?: number; data?: any; message?: string };
         return {
-            message: axiosError.response?.data?.message || axiosError.message || 'An API error occurred',
-            errors: axiosError.response?.data?.errors,
-            status: axiosError.response?.status,
+            message: apiError.data?.message || apiError.message || 'An API error occurred',
+            errors: apiError.data?.errors,
+            status: apiError.status,
         };
     }
 
@@ -194,6 +190,11 @@ export default function Create() {
     const [readOnlyFields, setReadOnlyFields] = useState<Set<string>>(new Set());
     console.log('🚀 ~ Create ~ readOnlyFields:', readOnlyFields);
     const [isLoadingPrefill, setIsLoadingPrefill] = useState(true);
+
+    // TanStack Query hooks
+    const { data: customerData, isLoading: isLoadingCustomer } = useGetCustomer(user?.customer_sub_id);
+    const createCustomerMutation = useCreateCustomer();
+    const uploadEcafMutation = useUploadEcaf();
 
     const { data, setData, processing } = useForm<CustomerFormValues>('createCustomer', {
         first_name: '',
@@ -249,113 +250,126 @@ export default function Create() {
 
     // Enhanced prefill data loading with better error handling
     useEffect(() => {
-        const loadDataFromApi = async () => {
-            try {
-                setIsLoadingPrefill(true);
-                setSubmissionState((prev) => ({ ...prev, error: null }));
+        if (customerData && (customerData as any)?.success && (customerData as any)?.data) {
+            const customer = (customerData as any).data;
+            console.log('🚀 ~ loadDataFromApi ~ customer:', customer);
 
-                if (user?.customer_sub_id) {
-                    const response = await axios.get('/api/v1/customer', {
-                        params: { customer_sub_id: user?.customer_sub_id },
-                        headers: {
-                            Authorization: `Bearer ${user?.api_token}`,
-                        },
-                        timeout: 10000, // 10 second timeout
-                    });
-                    console.log('🚀 ~ loadDataFromApi ~ response:', response);
+            // Show success toast for prefill
+            toast.success('Customer data loaded successfully', {
+                description: 'Some fields are pre-filled from existing data',
+                duration: 3000,
+            });
 
-                    if (response.data?.success && response.data?.data) {
-                        const customer = response.data.data;
+            const transform = {
+                first_name: customer.first_name || '',
+                middle_name: customer.middle_name || '',
+                last_name: customer.last_name || '',
+                title: customer.title || '1',
+                gender:
+                    customer.gender?.toLowerCase() === 'male'
+                        ? '1'
+                        : customer.gender?.toLowerCase() === 'female'
+                        ? '2'
+                        : '',
+                nationality:
+                    customer.nationality?.toLowerCase() === 'ethiopian'
+                        ? '1231'
+                        : '1000',
+                date_of_birth: customer.date_of_birth || '',
+                place_of_birth: customer.place_of_birth || '',
+                identification_type: customer.identification_type || '2',
+                identification_number: customer.identification_number || '',
+                occupation: customer.occupation || '',
+                education: customer.education || '',
+                religion: customer.religion || '',
+                income: customer.income || '',
+                primary_language: customer.primary_language || '2060',
+                customer_type: customer.customer_type || '1',
+                customer_category: customer.customer_category || '1',
+                customer_subcategory: customer.customer_subcategory || '1',
+                contact: {
+                    notification_mode:
+                        customer.contact?.notification_mode ||
+                        customer.notification_mode ||
+                        '1',
+                    mobile_no:
+                        customer.contact?.mobile_no ||
+                        customer.mobile_no ||
+                        '',
+                    office_no:
+                        customer.contact?.office_no ||
+                        customer.office_no ||
+                        '',
+                    email: customer.contact?.email || customer.email || '',
+                    home_no: customer.contact?.home_no || customer.home_no || '',
+                    fax_no: customer.contact?.fax_no || customer.fax_no || '',
+                },
+                address: {
+                    region:
+                        customer.address?.regionne ||
+                        customer.regionn ||
+                        '',
+                    zone: customer.address?.zonee || customer.zonee || '',
+                    woreda:
+                        customer.address?.woredaa ||
+                        customer.woredaa ||
+                        '',
+                    city: customer.address?.cityy || customer.cityy || '',
+                    street_name:
+                        customer.address?.street_name ||
+                        customer.street_name ||
+                        '',
+                    kebele: customer.address?.kebele || customer.kebele || '',
+                    house_no:
+                        customer.address?.house_no ||
+                        customer.house_no ||
+                        '',
+                },
+                contact_person: customer.contact_person || [],
+                customer_level: customer.customer_level || '2',
+            };
+            console.log('transfored data', transform);
 
-                        // Show success toast for prefill
-                        toast.success('Customer data loaded successfully', {
-                            description: 'Some fields are pre-filled from existing data',
-                            duration: 3000,
-                        });
+            setData(transform);
 
-                        const transform = {
-                            first_name: customer.first_name || '',
-                            middle_name: customer.middle_name || '',
-                            last_name: customer.last_name || '',
-                            title: customer.title || '1',
-                            gender: customer.gender?.toLowerCase() === 'male' ? '1' : customer.gender?.toLowerCase() === 'female' ? '2' : undefined,
-                            nationality: customer.nationality?.toLowerCase() === 'ethiopian' ? '1231' : '1000',
-                            date_of_birth: customer.date_of_birth || '',
-                            place_of_birth: customer.place_of_birth || '',
-                            identification_type: customer.identification_type || '2',
-                            identification_number: customer.identification_number || '',
-                            occupation: customer.occupation || '',
-                            education: customer.education || '',
-                            religion: customer.religion || '',
-                            income: customer.income || '',
-                            primary_language: customer.primary_language || '2060',
-                            customer_type: customer.customer_type || '1',
-                            customer_category: customer.customer_category || '1',
-                            customer_subcategory: customer.customer_subcategory || '1',
-                            contact: {
-                                notification_mode: customer.contact?.notification_mode || customer.notification_mode || '1',
-                                mobile_no: customer.contact?.mobile_no || customer.mobile_no || '',
-                                office_no: customer.contact?.office_no || customer.office_no || '',
-                                email: customer.contact?.email || customer.email || '',
-                                home_no: customer.contact?.home_no || customer.home_no || '',
-                                fax_no: customer.contact?.fax_no || customer.fax_no || '',
-                            },
-                            address: {
-                                region: customer.address?.regionne || customer.regionn || '',
-                                zone: customer.address?.zonee || customer.zonee || '',
-                                woreda: customer.address?.woredaa || customer.woredaa || '',
-                                city: customer.address?.cityy || customer.cityy || '',
-                                street_name: customer.address?.street_name || customer.street_name || '',
-                                kebele: customer.address?.kebele || customer.kebele || '',
-                                house_no: customer.address?.house_no || customer.house_no || '',
-                            },
-                            contact_person: customer.contact_person || [],
-                            customer_level: customer.customer_level || '2',
-                        };
-                        console.log('transfored data', transform);
-
-                        setData(transform);
-
-                        const newReadOnlyFields = new Set<string>();
-                        API_READONLY_FIELDS.forEach((field) => {
-                            if (field === 'contact.mobile_no') {
-                                if (transform.contact?.mobile_no) newReadOnlyFields.add(field);
-                            } else if (field === 'contact.notification_mode') {
-                                if (transform.contact?.notification_mode) newReadOnlyFields.add(field);
-                            } else {
-                                // @ts-ignore - dynamic access based on field name
-                                if (transform[field]) newReadOnlyFields.add(field);
-                            }
-                        });
-                        setReadOnlyFields(newReadOnlyFields);
-
-                        if (customer.photo_base64) {
-                            localStorage.setItem('customer_photo_base64', customer.photo_base64);
-                        }
-                    } else {
-                        toast.info('Starting with new customer form', {
-                            description: 'No existing customer data found',
-                            duration: 3000,
-                        });
-                    }
+            const newReadOnlyFields = new Set<string>();
+            API_READONLY_FIELDS.forEach((field) => {
+                if (field === 'contact.mobile_no') {
+                    if (transform.contact?.mobile_no)
+                        newReadOnlyFields.add(field);
+                } else if (field === 'contact.notification_mode') {
+                    if (transform.contact?.notification_mode)
+                        newReadOnlyFields.add(field);
+                } else {
+                    // @ts-ignore - dynamic access based on field name
+                    if ((transform as any)[field]) newReadOnlyFields.add(field);
                 }
-            } catch (error) {
-                const apiError = handleApiError(error);
-                console.error('Error loading data from API:', apiError);
+            });
+            setReadOnlyFields(newReadOnlyFields);
 
-                toast.error('Failed to load customer data', {
-                    description: apiError.message,
-                    duration: 5000,
-                });
-
-                setSubmissionState((prev) => ({ ...prev, error: apiError }));
-            } finally {
-                setIsLoadingPrefill(false);
+            if (customer.photo_base64) {
+                localStorage.setItem(
+                    'customer_photo_base64',
+                    customer.photo_base64
+                );
             }
-        };
+        }
+    }, [customerData, setData]);
 
-        loadDataFromApi();
-    }, [user?.customer_sub_id, user?.api_token, setData]);
+    // Handle loading state
+    useEffect(() => {
+        setIsLoadingPrefill(isLoadingCustomer);
+    }, [isLoadingCustomer]);
+
+    // Handle error state
+    useEffect(() => {
+        if (customerData === undefined && !isLoadingCustomer && user?.customer_sub_id) {
+            toast.info('Starting with new customer form', {
+                description: 'No existing customer data found',
+                duration: 3000,
+            });
+        }
+    }, [customerData, isLoadingCustomer, user?.customer_sub_id]);
 
     // Set default customer category when customer_type is residential
     useEffect(() => {
@@ -436,213 +450,172 @@ export default function Create() {
         });
         console.log('🚀 ~ submit ~ submissionToast:', submissionToast);
 
-        try {
-            // Step 1: Validate form data
-            const result = customerSchema.safeParse(data);
-            console.log('🚀 ~ submit ~ result:', result);
+        // Step 1: Validate form data
+        const result = customerSchema.safeParse(data);
+        console.log('🚀 ~ submit ~ result:', result);
 
-            if (!result.success) {
-                const fieldErrors: Record<string, string> = {};
+        if (!result.success) {
+            const fieldErrors: Record<string, string> = {};
 
-                for (const issue of result.error.issues) {
-                    const key = issue.path.join('.');
-                    if (key) {
-                        if (!fieldErrors[key]) fieldErrors[key] = issue.message;
-                    } else {
-                        if (!fieldErrors._form) fieldErrors._form = issue.message;
-                    }
-                }
-
-                setFormErrors(fieldErrors);
-
-                toast.error('Form validation failed', {
-                    id: submissionToast,
-                    description: 'Please check all required fields',
-                    duration: 5000,
-                });
-
-                setSubmissionState((prev) => ({
-                    ...prev,
-                    isSubmitting: false,
-                }));
-                return;
-            }
-
-            // Update toast to show creation in progress
-            toast.loading('Creating customer...', {
-                id: submissionToast,
-            });
-            console.log('🚀 ~ submit ~ submissionToast:', submissionToast);
-            // Step 2: Create customer
-            const response = await axios.post(
-                `${import.meta.env.VITE_API_BASE_URL}/customer/create`,
-                {
-                    ...result.data,
-                    date_of_birth: result.data.date_of_birth ? result.data.date_of_birth.replace(/-/g, '') : null,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${user?.api_token}`,
-                        'Content-Type': 'application/json',
-                    },
-                    // timeout: 30000, // 30 second timeout for customer creation
-                },
-            );
-
-            if (!response.data.success) {
-                throw new Error(response.data.message || 'Customer creation failed');
-            }
-
-            // Check for nested error in data.original (common in some Laravel API wrappers)
-            if (response.data.data?.original && response.data.data.original.success === false) {
-                throw new Error(response.data.data.original.message || 'Customer creation failed');
-            }
-
-            const customer = response.data.data?.original?.data || response.data.data;
-            setCreatedCustomerData(customer);
-
-            // Update toast to show success
-            toast.success('Customer created successfully!', {
-                id: submissionToast,
-                description: 'Now processing photo upload...',
-                duration: 3000,
-            });
-
-            // Step 3: Upload photo if exists
-            const base64Photo = localStorage.getItem('customer_photo_base64');
-            if (base64Photo) {
-                setSubmissionState((prev) => ({
-                    ...prev,
-                    isUploadingPhoto: true,
-                }));
-
-                const photoToast = toast.loading('Uploading customer photo...', {
-                    description: 'Please wait',
-                    duration: Infinity,
-                });
-
-                try {
-                    const uploadResult = await uploadPhotoToEcaf(customer, base64Photo);
-
-                    if (uploadResult.success) {
-                        toast.success('Photo uploaded successfully!', {
-                            id: photoToast,
-                            duration: 3000,
-                        });
-                    } else {
-                        toast.warning('Customer created but photo upload failed', {
-                            id: photoToast,
-                            description: uploadResult.message,
-                            duration: 5000,
-                        });
-                    }
-                } catch (photoError) {
-                    const apiError = handleApiError(photoError);
-                    toast.error('Photo upload failed', {
-                        id: photoToast,
-                        description: apiError.message,
-                        duration: 5000,
-                    });
-                } finally {
-                    setSubmissionState((prev) => ({
-                        ...prev,
-                        isUploadingPhoto: false,
-                    }));
+            for (const issue of result.error.issues) {
+                const key = issue.path.join('.');
+                if (key) {
+                    if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+                } else {
+                    if (!fieldErrors._form) fieldErrors._form = issue.message;
                 }
             }
 
-            // Step 4: Final success state
-            setSubmissionState({
-                isSubmitting: false,
-                isUploadingPhoto: false,
-                error: null,
-                success: true,
-            });
+            setFormErrors(fieldErrors);
 
-            // Show final success message
-            toast.success('Customer setup completed!', {
-                description: 'Redirecting to services page...',
-                duration: 3000,
-            });
-
-            // Cleanup and redirect
-            sessionStorage.removeItem('pending_customer_id');
-            localStorage.removeItem('customer_photo_base64');
-
-            // Redirect after a brief delay to show success message
-            setTimeout(() => {
-                router.get(route('services'));
-            }, 2000);
-        } catch (error) {
-            const apiError = handleApiError(error);
-
-            // Handle API validation errors
-            if (apiError.errors) {
-                const fieldErrors: Record<string, string> = {};
-                Object.entries(apiError.errors).forEach(([field, messages]) => {
-                    fieldErrors[field] = messages[0]; // Take first error message
-                });
-                setFormErrors(fieldErrors);
-            }
-
-            // Update submission state
-            setSubmissionState({
-                isSubmitting: false,
-                isUploadingPhoto: false,
-                error: apiError,
-                success: false,
-            });
-
-            // Show error toast
-            toast.error('Failed to create customer', {
+            toast.error('Form validation failed', {
                 id: submissionToast,
-                description: apiError.message,
-                duration: 10000,
-                action: {
-                    label: 'Retry',
-                    onClick: () => submit(e),
-                },
+                description: 'Please check all required fields',
+                duration: 5000,
             });
 
-            // Scroll to top to show errors
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setSubmissionState((prev) => ({
+                ...prev,
+                isSubmitting: false,
+            }));
+            return;
         }
+
+        // Update toast to show creation in progress
+        toast.loading('Creating customer...', {
+            id: submissionToast,
+        });
+        console.log('🚀 ~ submit ~ submissionToast:', submissionToast);
+        
+        // Step 2: Create customer
+        createCustomerMutation.mutate(
+            {
+                ...result.data,
+                date_of_birth: result.data.date_of_birth ? result.data.date_of_birth.replace(/-/g, '') : null,
+            },
+            {
+                onSuccess: (customer) => {
+                    setCreatedCustomerData(customer);
+
+                    // Update toast to show success
+                    toast.success('Customer created successfully!', {
+                        id: submissionToast,
+                        description: 'Now processing photo upload...',
+                        duration: 3000,
+                    });
+
+                    // Step 3: Upload photo if exists
+                    const base64Photo = localStorage.getItem('customer_photo_base64');
+                    if (base64Photo) {
+                        setSubmissionState((prev) => ({
+                            ...prev,
+                            isUploadingPhoto: true,
+                        }));
+
+                        const photoToast = toast.loading('Uploading customer photo...', {
+                            description: 'Please wait',
+                            duration: Infinity,
+                        });
+
+                        const ecafData = {
+                            cust_code: customer.customer_code || customer.customer_id,
+                            first_name: data.first_name,
+                            last_name: data.last_name,
+                            other_name: data.middle_name || '',
+                            transaction_id: customer.transaction_id || `txn_${Date.now()}`,
+                            photo: base64Photo,
+                        };
+
+                        uploadEcafMutation.mutate(ecafData, {
+                            onSuccess: () => {
+                                toast.success('Photo uploaded successfully!', {
+                                    id: photoToast,
+                                    duration: 3000,
+                                });
+                                setSubmissionState((prev) => ({
+                                    ...prev,
+                                    isUploadingPhoto: false,
+                                }));
+                                completeCustomerSetup();
+                            },
+                            onError: (error: Error) => {
+                                toast.warning('Customer created but photo upload failed', {
+                                    id: photoToast,
+                                    description: error.message,
+                                    duration: 5000,
+                                });
+                                setSubmissionState((prev) => ({
+                                    ...prev,
+                                    isUploadingPhoto: false,
+                                }));
+                                completeCustomerSetup();
+                            },
+                        });
+                    } else {
+                        completeCustomerSetup();
+                    }
+                },
+                onError: (error: Error) => {
+                    const apiError = handleApiError(error);
+
+                    // Handle API validation errors
+                    if (apiError.errors) {
+                        const fieldErrors: Record<string, string> = {};
+                        Object.entries(apiError.errors).forEach(([field, messages]) => {
+                            fieldErrors[field] = Array.isArray(messages) ? messages[0] : messages;
+                        });
+                        setFormErrors(fieldErrors);
+                    }
+
+                    // Update submission state
+                    setSubmissionState({
+                        isSubmitting: false,
+                        isUploadingPhoto: false,
+                        error: apiError,
+                        success: false,
+                    });
+
+                    // Show error toast
+                    toast.error('Failed to create customer', {
+                        id: submissionToast,
+                        description: apiError.message,
+                        duration: 10000,
+                        action: {
+                            label: 'Retry',
+                            onClick: () => handleSubmit(e),
+                        },
+                    });
+
+                    // Scroll to top to show errors
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+            }
+        );
     };
 
-    const uploadPhotoToEcaf = async (customerData: any, photoBase64: string) => {
-        try {
-            const ecafData = {
-                cust_code: customerData.customer_code || customerData.customer_id,
-                first_name: data.first_name,
-                last_name: data.last_name,
-                other_name: data.middle_name || '',
-                transaction_id: customerData.transaction_id || `txn_${Date.now()}`,
-                photo: photoBase64,
-            };
+    const completeCustomerSetup = () => {
+        // Step 4: Final success state
+        setSubmissionState({
+            isSubmitting: false,
+            isUploadingPhoto: false,
+            error: null,
+            success: true,
+        });
 
-            const response = await axios.post('/api/v1/ecaf-upload', ecafData, {
-                headers: {
-                    Authorization: `Bearer ${user.api_token}`,
-                    'Content-Type': 'application/json',
-                },
-                timeout: 60000, // 60 second timeout for photo upload
-            });
+        // Show final success message
+        toast.success('Customer setup completed!', {
+            description: 'Redirecting to services page...',
+            duration: 3000,
+        });
 
-            if (response.data?.status === 'success' || response.data?.success) {
-                return { success: true, data: response.data };
-            }
+        // Cleanup and redirect
+        sessionStorage.removeItem('pending_customer_id');
+        localStorage.removeItem('customer_photo_base64');
 
-            return {
-                success: false,
-                message: response.data?.message || 'ECAF upload failed',
-            };
-        } catch (error: any) {
-            const apiError = handleApiError(error);
-            return {
-                success: false,
-                message: apiError.message || 'Upload failed',
-            };
-        }
+        // Redirect after a brief delay to show success message
+        setTimeout(() => {
+            router.visit('/services');
+        }, 2000);
     };
 
     // Enhanced change handlers

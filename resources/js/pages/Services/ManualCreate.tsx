@@ -7,7 +7,7 @@ import MainLayout from '@/layouts/main-layout';
 import { router, usePage } from '@inertiajs/react';
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useCreateSurvey } from '@/hooks/use-api-mutations';
 import { toast } from 'sonner';
 
 interface AuthUser {
@@ -78,6 +78,7 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
 
     const [manualFlowErrors, setManualFlowErrors] = useState<Record<string, string>>({});
     const [submitting, setSubmitting] = useState(false);
+    const createSurveyMutation = useCreateSurvey();
 
     // Initialize form data from user if not provided
     useEffect(() => {
@@ -135,138 +136,95 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
             return;
         }
 
+        // Build survey creation payload (same structure as review-submit-step)
+        const encryptedResource = formData.resourceData;
+
+        const submitData = {
+            customer_code: (user as AuthUser)?.customer_code?.toString() || '',
+            customer_type: formData.customerType || 'residential',
+            survey_type: 'EIC08',
+            telecom_region: '104',
+            oper_type: 'A',
+            main_offer_id: formData.serviceType,
+            bandwidth: formData.bandwidth,
+            contact_person: manualFlowData.name.trim() || formData.contactPerson || (user as AuthUser)?.name || 'Customer',
+            contact_no: manualFlowData.phone.trim() || formData.contactNo || (user as AuthUser)?.phone || '',
+            contact_email: formData.contactEmail || (user as AuthUser)?.email || '',
+            survey_address_info: {
+                region_city: '2',
+                subcity_zone: '11',
+                wereda_town: '141',
+                kebele: '',
+                // Use encrypted values from resource-check (required by BaseSurveyService::decrypt)
+                latitude: encryptedResource?.latitude ?? String(formData.latitude),
+                longitude: encryptedResource?.longitude ?? String(formData.longitude),
+                address: formData.address || '',
+                // Forward exact encrypted resource-check data
+                distance: encryptedResource?.distance ?? formData.distance,
+                cable_type: encryptedResource?.cable_type ?? formData.cable_type,
+                neid: encryptedResource?.neid,
+                nename: encryptedResource?.nename,
+            },
+            with_device: formData.withDevice,
+            completed_date: new Date()
+                .toISOString()
+                .replace(/[-:T.Z]/g, '')
+                .slice(0, 14),
+            external_operid: '512',
+            survey_is_manual: true, // Mark as manual survey
+        };
+
         const submissionToast = toast.loading('Creating your service request...', {
             description: 'Please wait while we process your manual request',
         });
 
-        try {
-            // Build survey creation payload (same structure as review-submit-step)
-            const encryptedResource = formData.resourceData;
+        createSurveyMutation.mutate(submitData, {
+            onSuccess: (response) => {
+                const responseData = response.data;
+                const { customer_survey_order_id: surveyId } = responseData;
 
-            const submitData = {
-                customer_code: (user as AuthUser)?.customer_code?.toString() || '',
-                customer_type: formData.customerType || 'residential',
-                survey_type: 'EIC08',
-                telecom_region: '104',
-                oper_type: 'A',
-                main_offer_id: formData.serviceType,
-                bandwidth: formData.bandwidth,
-                contact_person: manualFlowData.name.trim() || formData.contactPerson || (user as AuthUser)?.name || 'Customer',
-                contact_no: manualFlowData.phone.trim() || formData.contactNo || (user as AuthUser)?.phone || '',
-                contact_email: formData.contactEmail || (user as AuthUser)?.email || '',
-                survey_address_info: {
-                    region_city: '2',
-                    subcity_zone: '11',
-                    wereda_town: '141',
-                    kebele: '',
-                    // Use encrypted values from resource-check (required by BaseSurveyService::decrypt)
-                    latitude: encryptedResource?.latitude ?? String(formData.latitude),
-                    longitude: encryptedResource?.longitude ?? String(formData.longitude),
-                    address: formData.address || '',
-                    // Forward exact encrypted resource-check data
-                    distance: encryptedResource?.distance ?? formData.distance,
-                    cable_type: encryptedResource?.cable_type ?? formData.cable_type,
-                    neid: encryptedResource?.neid,
-                    nename: encryptedResource?.nename,
-                },
-                with_device: formData.withDevice,
-                completed_date: new Date()
-                    .toISOString()
-                    .replace(/[-:T.Z]/g, '')
-                    .slice(0, 14),
-                external_operid: '512',
-                survey_is_manual: true, // Mark as manual survey
-            };
+                // Save to local storage
+                const serviceTypes: Record<string, string> = {
+                    '1457567289': 'Fixed Broadband',
+                    '1207609454': 'Fixed Voice',
+                    '180427974': 'Combo Services',
+                };
+                const newSurvey = {
+                    id: surveyId,
+                    type: serviceTypes[formData.serviceType] || 'Service Request',
+                    status: 'waiting',
+                    createdAt: new Date().toISOString(),
+                    main_offer_id: formData.serviceType,
+                };
 
-            // Create survey via the same API as normal flow
-            const response = await axios.post('/api/v1/survey/create', submitData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${(user as AuthUser)?.api_token}`,
-                },
-            });
+                const existingSurveys = JSON.parse(localStorage.getItem('userSurveys') || '[]');
+                existingSurveys.push(newSurvey);
+                localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
 
-            const isSurveySuccess = response.data.success && response.data.data?.original?.success !== false;
+                toast.success('Service request created successfully!', {
+                    id: submissionToast,
+                    description: 'Your manual request has been submitted. Our team will review your location and contact you within 1-2 business days.',
+                    duration: 5000,
+                });
 
-            if (!isSurveySuccess) {
-                const errorMsg =
-                    response.data.data?.original?.message ||
-                    response.data.message ||
-                    'Failed to create service request. Please try again.';
-                throw new Error(errorMsg);
-            }
+                setSubmitting(false);
 
-            const responseData = response.data.data;
-            const { customer_survey_order_id: surveyId } = responseData;
-
-            // Save to local storage
-            const serviceTypes: Record<string, string> = {
-                '1457567289': 'Fixed Broadband',
-                '1207609454': 'Fixed Voice',
-                '180427974': 'Combo Services',
-            };
-            const newSurvey = {
-                id: surveyId,
-                type: serviceTypes[formData.serviceType] || 'Service Request',
-                status: 'waiting',
-                createdAt: new Date().toISOString(),
-                main_offer_id: formData.serviceType,
-            };
-
-            const existingSurveys = JSON.parse(localStorage.getItem('userSurveys') || '[]');
-            existingSurveys.push(newSurvey);
-            localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
-
-            toast.success('Service request created successfully!', {
-                id: submissionToast,
-                description: 'Your manual request has been submitted. Our team will review your location and contact you within 1-2 business days.',
-                duration: 5000,
-            });
-
-            // Navigate to services page after a brief delay
-            setTimeout(() => {
-                router.visit(route('services'));
-            }, 1500);
-        } catch (error: any) {
-            console.error('Manual survey creation error:', error);
-
-            let errorMessage = 'Failed to create your service request. Please try again.';
-            let errorDescription = 'An unexpected error occurred.';
-
-            if (axios.isAxiosError(error)) {
-                if (error.response?.data?.message) {
-                    errorMessage = error.response.data.message;
-                } else if (error.response?.data?.errors) {
-                    // Handle validation errors
-                    const errors = error.response.data.errors;
-                    const firstError = Object.values(errors)[0];
-                    errorMessage = Array.isArray(firstError) ? firstError[0] : String(firstError);
-                    errorDescription = 'Please check the form and correct any errors.';
-                    setManualFlowErrors(errors);
-                } else if (error.response?.status === 422) {
-                    errorMessage = 'Validation error';
-                    errorDescription = 'Please check your input and try again.';
-                } else if (error.response?.status === 401) {
-                    errorMessage = 'Authentication required';
-                    errorDescription = 'Please log in and try again.';
-                } else if (error.response?.status === 500) {
-                    errorMessage = 'Server error';
-                    errorDescription = 'Our servers encountered an issue. Please try again later.';
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-            } else if (error instanceof Error) {
-                errorMessage = error.message;
-            }
-
-            toast.error(errorMessage, {
-                id: submissionToast,
-                description: errorDescription,
-                duration: 5000,
-            });
-        } finally {
-            setSubmitting(false);
-        }
+                // Navigate to services page after a brief delay
+                setTimeout(() => {
+                    router.visit(route('services'));
+                }, 1500);
+            },
+            onError: (error: Error) => {
+                console.error('Manual survey creation error:', error);
+                toast.dismiss(submissionToast);
+                const errorMessage = error.message || 'Failed to create your service request. Please try again.';
+                toast.error(errorMessage, {
+                    description: 'An unexpected error occurred. Please try again.',
+                    duration: 5000,
+                });
+                setSubmitting(false);
+            },
+        });
     };
 
     const serviceTypes: Record<string, string> = {
@@ -445,8 +403,8 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={submitting} className="bg-primary hover:bg-primary/90">
-                            {submitting ? (
+                        <Button type="submit" disabled={submitting || createSurveyMutation.isPending} className="bg-primary hover:bg-primary/90">
+                            {(submitting || createSurveyMutation.isPending) ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     Creating Request...

@@ -1,0 +1,424 @@
+/**
+ * Mutation hooks for API operations (POST, PUT, DELETE)
+ */
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api-client';
+import { useAuthToken } from './use-auth-token';
+import { router } from '@inertiajs/react';
+import { toast } from 'sonner';
+
+/**
+ * Parse API error messages for complaints
+ */
+export function parseApiError(message: string): {
+    type: 'field' | 'business' | 'general';
+    text: string;
+} {
+    const lower = message.toLowerCase();
+
+    if (lower.includes('mobile')) {
+        return {
+            type: 'field',
+            text: 'Mobile number must be 10 digits and start with 0.',
+        };
+    }
+
+    if (lower.includes('already cct')) {
+        return {
+            type: 'business',
+            text: message,
+        };
+    }
+
+    return {
+        type: 'general',
+        text: message || 'Something went wrong.',
+    };
+}
+
+/**
+ * Hook for creating a complaint/trouble ticket
+ */
+export function useCreateComplaint() {
+    const token = useAuthToken();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: any) => {
+            if (!token) throw new Error('Authentication required');
+            const response = await apiClient.post<any>('/tt/create', data, { token });
+            
+            // Check for API-level failure (success: false)
+            if (response?.success === false) {
+                const parsed = parseApiError(response.message);
+                const error = new Error(parsed.text);
+                (error as any).parsed = parsed;
+                throw error;
+            }
+            
+            return response;
+        },
+        onSuccess: () => {
+            // Invalidate related queries - use the correct query key
+            queryClient.invalidateQueries({ queryKey: ['localTTs'] });
+            toast.success('Complaint submitted successfully!');
+            setTimeout(() => {
+                router.visit('/complaints', { preserveScroll: false });
+            }, 1000);
+        },
+        onError: (error: Error & { parsed?: ReturnType<typeof parseApiError> }) => {
+            // Error is handled in the component for field-specific errors
+            if (error.parsed?.type === 'field') {
+                // Don't show toast here, let component handle it
+                return;
+            }
+            toast.error(error.message || 'Failed to submit complaint');
+        },
+    });
+}
+
+/**
+ * Hook for fetching customer by customer_sub_id
+ */
+export function useGetCustomer(customerSubId?: string | number) {
+    const token = useAuthToken();
+
+    return useQuery({
+        queryKey: ['customer', customerSubId, token],
+        queryFn: async () => {
+            if (!token || !customerSubId) throw new Error('Authentication and customer ID required');
+            return apiClient.get<any>(`/customer?customer_sub_id=${customerSubId.toString()}`, { token });
+        },
+        enabled: !!token && !!customerSubId,
+    });
+}
+
+/**
+ * Hook for creating a customer
+ */
+export function useCreateCustomer() {
+    const token = useAuthToken();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: any) => {
+            if (!token) throw new Error('Authentication required');
+            // Format date_of_birth if present
+            const payload = {
+                ...data,
+                date_of_birth: data.date_of_birth ? data.date_of_birth.replace(/-/g, '') : null,
+            };
+            const response = await apiClient.post<any>('/customer/create', payload, { token });
+            
+            // Check for nested error structure
+            if (!response.success) {
+                throw new Error(response.message || 'Customer creation failed');
+            }
+            
+            // Check for nested error in data.original
+            if ((response as any).data?.original && (response as any).data.original.success === false) {
+                throw new Error((response as any).data.original.message || 'Customer creation failed');
+            }
+            
+            return (response as any).data?.original?.data || (response as any).data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['customers'] });
+        },
+    });
+}
+
+/**
+ * Hook for creating a survey
+ */
+export function useCreateSurvey() {
+    const token = useAuthToken();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: any) => {
+            if (!token) throw new Error('Authentication required');
+            const response = await apiClient.post<any>('/survey/create', data, { token });
+
+            // Check for nested error structure (common in Laravel API wrappers)
+            const isSuccess = (response as any).success && (response as any).data?.original?.success !== false;
+
+            if (!isSuccess) {
+                const errorMsg =
+                    (response as any).data?.original?.message ||
+                    (response as any).message ||
+                    'Failed to create service request. Please try again.';
+                throw new Error(errorMsg);
+            }
+
+            return response;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['surveyList'] });
+            queryClient.invalidateQueries({ queryKey: ['surveyDetail'] });
+        },
+    });
+}
+
+/**
+ * Hook for resource check
+ */
+export function useResourceCheck() {
+    const token = useAuthToken();
+
+    return useMutation({
+        mutationFn: async (data: any) => {
+            if (!token) throw new Error('Authentication required');
+            return apiClient.post<{
+                available: boolean;
+                message: string;
+                data?: any;
+            }>('/resource-check', data, { token });
+        },
+        onError: (error: Error) => {
+            toast.error(error.message || 'Failed to check resource availability');
+        },
+    });
+}
+
+/**
+ * Hook for uploading ECAF document
+ */
+export function useUploadEcaf() {
+    const token = useAuthToken();
+
+    return useMutation({
+        mutationFn: async (data: any) => {
+            if (!token) throw new Error('Authentication required');
+            // Handle both FormData and JSON payloads
+            if (data instanceof FormData) {
+                return apiClient.post('/ecaf-upload', data, { token });
+            }
+            return apiClient.post('/ecaf-upload', data, { token });
+        },
+        onSuccess: () => {
+            toast.success('Document uploaded successfully!');
+        },
+        onError: (error: Error) => {
+            toast.error(error.message || 'Failed to upload document');
+        },
+    });
+}
+
+/**
+ * Hook for NID OTP verification
+ */
+export function useNidOtp() {
+    return useMutation({
+        mutationFn: async (data: { individual_id: string }) => {
+            const response = await apiClient.post<any>('/nid/otp', data);
+            const otpData = response?.data?.original?.data;
+            
+            if (!otpData || otpData.ret_code !== '0') {
+                const error = new Error(otpData?.ret_msg || 'Failed to send verification code');
+                (error as any).ret_code = otpData?.ret_code;
+                throw error;
+            }
+            
+            return otpData;
+        },
+    });
+}
+
+/**
+ * Hook for NID KYC verification
+ */
+export function useNidKyc() {
+    return useMutation({
+        mutationFn: async (data: { individual_id: string; otp_value: string; transaction_id: string }) => {
+            const response = await apiClient.post<any>('/nid/kyc', data);
+            
+            if (!response.success || response.ret_code !== '0') {
+                const error = new Error(response.message || 'Verification failed');
+                (error as any).ret_code = response.ret_code;
+                throw error;
+            }
+            
+            return response;
+        },
+        onSuccess: (data) => {
+            if (data.data) {
+                localStorage.setItem('kycData', JSON.stringify(data.data));
+            }
+            window.location.href = '/profile';
+        },
+    });
+}
+
+/**
+ * Mutation hook for confirming TT feedback
+ */
+export function useConfirmFeedback() {
+    const token = useAuthToken();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: { tt_no: string; result_code: '0' | '1'; desc: string }) => {
+            if (!token) throw new Error('Authentication token required');
+            const response = await apiClient.post<any>(
+                `${import.meta.env.VITE_API_BASE_URL}/tt/confirm-feedback`,
+                data,
+                { token }
+            );
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to confirm feedback');
+            }
+            return response;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['localTTs'] });
+            queryClient.invalidateQueries({ queryKey: ['localTT'] });
+            queryClient.invalidateQueries({ queryKey: ['externalTTDetail'] });
+            toast.success('Feedback confirmed successfully');
+        },
+        onError: (error: Error) => {
+            toast.error(error.message || 'Failed to confirm feedback');
+        },
+    });
+}
+
+/**
+ * Mutation hook for canceling a survey order
+ */
+export function useCancelSurveyOrder() {
+    const token = useAuthToken();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: { customer_survey_order_id: string; cancel_reason: string }) => {
+            if (!token) throw new Error('Authentication token required');
+            const response = await apiClient.post<any>('/cancel-survey-order', data, { token });
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to cancel survey order');
+            }
+            return response;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['surveyList'] });
+            queryClient.invalidateQueries({ queryKey: ['surveyDetail'] });
+            toast.success('Survey order cancelled successfully');
+        },
+        onError: (error: Error) => {
+            toast.error(error.message || 'Failed to cancel survey order');
+        },
+    });
+}
+
+/**
+ * Mutation hook for deleting a survey order
+ */
+export function useDeleteSurveyOrder() {
+    const token = useAuthToken();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: { customer_code: string | number; customer_survey_order_id: string | number }) => {
+            if (!token) throw new Error('Authentication token required');
+            const response = await apiClient.delete<any>('/survey-requests/delete', {
+                token,
+                body: data,
+            });
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to delete survey order');
+            }
+            return response;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['surveyList'] });
+            queryClient.invalidateQueries({ queryKey: ['surveyDetail'] });
+            toast.success('Survey order deleted successfully');
+        },
+        onError: (error: Error) => {
+            toast.error(error.message || 'Failed to delete survey order');
+        },
+    });
+}
+
+/**
+ * Mutation hook for calculating one-off fee
+ */
+export function useCalculateOneOffFee() {
+    const token = useAuthToken();
+
+    return useMutation({
+        mutationFn: async (data: any) => {
+            if (!token) throw new Error('Authentication token required');
+            const response = await apiClient.post<any>('/calc-one-off-fee', data, { token });
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to calculate fees');
+            }
+            return response;
+        },
+    });
+}
+
+/**
+ * Mutation hook for creating payment order
+ */
+export function useCreatePaymentOrder() {
+    const token = useAuthToken();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: { customerSurveyOrderId: string; customerCode: string | number; amount: number }) => {
+            if (!token) throw new Error('Authentication token required');
+            const response = await apiClient.post<any>('/create-order', data, { token });
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to create payment order');
+            }
+            return response;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['surveyDetail'] });
+            queryClient.invalidateQueries({ queryKey: ['surveyList'] });
+        },
+    });
+}
+
+/**
+ * Mutation hook for creating a subscription
+ */
+export function useCreateSubscription() {
+    const token = useAuthToken();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: {
+            offering_id: string;
+            survey_order_id: string;
+            customer_code: string;
+            name: string;
+            enterprise_name?: string;
+            region: string;
+            city: string;
+            zone: string;
+            wereda: string;
+            kebele: string;
+            house_no: string;
+            sms_no: string;
+            external_operid?: string;
+            completed_date: string;
+        }) => {
+            if (!token) throw new Error('Authentication token required');
+            const response = await apiClient.post<any>('/services/subscription', data, {
+                token,
+            });
+            
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to create subscription');
+            }
+            
+            return response;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['surveyList'] });
+            queryClient.invalidateQueries({ queryKey: ['surveyDetail'] });
+        },
+    });
+}
+

@@ -7,6 +7,7 @@ import { CheckCircle2, User, FileText, Phone, Mail, Calendar, Hash } from 'lucid
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { getServiceActionFlags, type ServiceActionFocus } from '@/lib/service-action-rules';
+import { useCreateSubscription, useCreatePaymentOrder } from '@/hooks/use-api-mutations';
 
 
 // type BadgeVariant = 'default' | 'success' | 'destructive' | 'outline';
@@ -51,7 +52,9 @@ type PaymentSummaryProps = {
 export function PaymentSummary({ paymentDetails, surveyDetails, focus }: PaymentSummaryProps) {
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
 
-    const [loading, setLoading] = useState(false);
+    const createSubscriptionMutation = useCreateSubscription();
+    const createPaymentOrderMutation = useCreatePaymentOrder();
+    const loading = createSubscriptionMutation.isPending || createPaymentOrderMutation.isPending;
 
     const payment = paymentDetails?.data;
     const customer_survey_order_id = payment?.customer_survey_order_id ?? surveyDetails?.customer_survey_order_id ?? '';
@@ -104,101 +107,75 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
     const cableLengthRaw = surveyDetails?.cable_length;
     const cableLength = cableLengthRaw === null || cableLengthRaw === undefined || cableLengthRaw === '' ? null : String(cableLengthRaw);
 
-    const onPaymentConfirm = async () => {
-        setLoading(true);
-        const t = toast.loading('Creating payment order...');
-
-        try {
-            const response = await fetch('/api/v1/create-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user.api_token}`,
-                },
-                body: JSON.stringify({
-                    customerSurveyOrderId: customer_survey_order_id,
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
-            }
-
-            const result = await response.json();
-
-            if (result.success && result.rawRequest) {
-                toast.dismiss(t);
-                window.location.href = result.rawRequest;
-            } else {
-                throw new Error(result.message || 'Failed to create payment order');
-            }
-        } catch (error) {
-            console.error('Payment error:', error);
-            toast.error(error instanceof Error ? error.message : 'Failed to process payment. Please try again.', { id: t });
-        } finally {
-            setLoading(false);
-            toast.dismiss(t);
+    const onPaymentConfirm = () => {
+        if (!customer_survey_order_id || !user.customer_code || !totalAmountNumber) {
+            toast.error('Missing required information for payment');
+            return;
         }
+
+        createPaymentOrderMutation.mutate(
+            {
+                customerSurveyOrderId: customer_survey_order_id,
+                customerCode: user.customer_code,
+                amount: totalAmountNumber,
+            },
+            {
+                onSuccess: (result) => {
+                    if ((result as any).rawRequest) {
+                        window.location.href = (result as any).rawRequest;
+                    } else {
+                        toast.error('Payment order created but redirect URL not found');
+                    }
+                },
+                onError: (error: Error) => {
+                    toast.error(error.message || 'Failed to process payment. Please try again.');
+                },
+            }
+        );
     };
 
-    const onSubscribeConfirm = async () => {
-        setLoading(true);
-        const t = toast.loading('Creating subscription...');
+    const onSubscribeConfirm = () => {
+        // Show loading toast when subscribe is clicked
+        const subscribeToast = toast.loading('Processing subscription...');
 
-        try {
-            // const nameParts = (user?.name ?? '').trim().split(/\s+/).filter(Boolean);
-            // const first_name = nameParts[0] ?? '';
-            // const middle_name = nameParts[1] ?? '';
-            // const last_name = nameParts.slice(2).join(' ') ?? '';
+        const payload = {
+            offering_id: surveyDetails?.main_offer_id || '',
+            survey_order_id: customer_survey_order_id.toString(),
+            customer_code: String(user.customer_code),
+            name: user.name ?? '',
+            enterprise_name: user.enterprise_name ?? 'Test Enterprise',
+            region: '',
+            city: '',
+            zone: '',
+            wereda: '',
+            kebele: '',
+            house_no: '',
+            sms_no: '',
+            external_operid: '',
+            completed_date: new Date()
+                .toISOString()
+                .replace(/[-:T.Z]/g, '')
+                .slice(0, 14),
+        };
 
-            const payload = {
-                offering_id: surveyDetails?.main_offer_id,
-                survey_order_id: customer_survey_order_id.toString(),
-                customer_code: user.customer_code,
-                name: user.name ?? '',
-                enterprise_name: user.enterprise_name ?? 'Test Enterprise',
-                region: '',
-                city: '',
-                zone: '',
-                wereda: '',
-                kebele: '',
-                house_no: '',
-                sms_no: '',
-                external_operid: '',
-                completed_date: new Date()
-                    .toISOString()
-                    .replace(/[-:T.Z]/g, '')
-                    .slice(0, 14),
-            };
-
-            const response = await fetch('/api/v1/services/subscription', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user.api_token}`,
-                },
-                body: JSON.stringify(payload),
-            });
-
-            const result = await response.json().catch(() => null);
-
-            if (!response.ok) {
-                throw new Error(result?.message || `Subscription failed (HTTP ${response.status})`);
-            }
-
-            if (!result?.success) {
-                throw new Error(result?.message || 'Subscription failed');
-            }
-
-            toast.success('Subscription created successfully!', { id: t });
-            router.visit('/services/subscription-success');
-        } catch (error) {
-            console.error('Subscription error:', error);
-            toast.error(error instanceof Error ? error.message : 'Subscription failed. Please try again.', { id: t });
-        } finally {
-            setLoading(false);
-        }
+        createSubscriptionMutation.mutate(payload, {
+            onSuccess: () => {
+                toast.success('Subscription created successfully!', {
+                    id: subscribeToast,
+                    description: 'Your service subscription has been activated.',
+                });
+                router.visit('/services/subscription-success');
+            },
+            onError: (error: Error) => {
+                toast.error(error.message || 'Subscription failed. Please try again.', {
+                    id: subscribeToast,
+                    description: 'Please try again or contact support if the issue persists.',
+                });
+            },
+        });
     };
+// <｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
+// read_file
 
     return (
         <div className="px-4">
@@ -405,8 +382,8 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                 </div>
 
                                 <div className="flex gap-3">
-                                    {/* {canSubscribe && isFree ? ( */}
-                                    {canSubscribe ? (
+                                    {/* {canSubscribe ? ( */}
+                                    {canSubscribe && isFree ? (
                                         <Button
                                             onClick={onSubscribeConfirm}
                                             disabled={loading || !customer_survey_order_id}
@@ -426,8 +403,8 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                         </Button>
                                     ) : null}
 
-                                    {/* {canPay && !isFree ? ( */}
-                                    {canPay ? (
+                                    {/* {canPay ? ( */}
+                                    {canPay && !isFree ? (
                                         <Button
                                             onClick={onPaymentConfirm}
                                             disabled={loading || !customer_survey_order_id}

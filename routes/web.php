@@ -15,6 +15,7 @@ use Inertia\Inertia;
 
 
 Route::get('/', fn() => Inertia::render('Home'))->name('home');
+Route::get('/terms', fn() => Inertia::render('Terms'))->name('terms');
 Route::get('/verification', fn() => Inertia::render('Verification'))->name('verification');
 
 Route::get('/login/esignet', [EsignetController::class, 'redirectToEsignet'])

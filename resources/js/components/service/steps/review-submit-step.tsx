@@ -2,10 +2,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { usePage } from '@inertiajs/react';
-import axios from 'axios';
 import { CheckCircle, Loader2, Wifi } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useCreateSurvey } from '@/hooks/use-api-mutations';
 
 interface ReviewSubmitStepProps {
     formData: {
@@ -61,8 +61,12 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
     const [error, setError] = useState('');
 
     const serviceInfo = serviceTypes[formData.serviceType as keyof typeof serviceTypes];
+    const createSurveyMutation = useCreateSurvey();
 
-    const handleSurveyRequest = async () => {
+    const handleSubmit = async () => {
+        setSubmitting(true);
+        setError('');
+
         // The backend expects encrypted resource fields (distance/cable_type/latitude/longitude)
         // exactly as returned from `/api/v1/resource-check`.
         const encryptedResource = formData.resourceData;
@@ -92,7 +96,6 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 cable_type: encryptedResource?.cable_type ?? formData.cable_type,
                 neid: encryptedResource?.neid,
                 nename: encryptedResource?.nename,
-
             },
             with_device: formData.withDevice,
             completed_date: new Date()
@@ -102,36 +105,15 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
             external_operid: '512',
             survey_is_manual: false, // Normal flow - resource is available
         };
-        const response = await axios.post('/api/v1/survey/create', submitData, {
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${user.api_token}`,
-            },
-        });
-
-        const isSurveySuccess = response.data.success && response.data.data?.original?.success !== false;
-
-        if (!isSurveySuccess) {
-            const errorMsg = response.data.data?.original?.message || response.data.message || 'Failed to create service request';
-            throw new Error(errorMsg);
-        }
-
-        return response;
-    };
-
-    const handleSubmit = async () => {
-        setSubmitting(true);
-        setError('');
 
         const submissionToast = toast.loading('Creating service request...');
 
-        try {
-            // 1. Create Survey
-            const response = await handleSurveyRequest();
-            console.log('🚀 ~ handleSubmit ~ response:', response);
+        createSurveyMutation.mutate(submitData, {
+            onSuccess: (response) => {
+                console.log('🚀 ~ handleSubmit ~ response:', response);
 
-            const responseData = response.data.data;
-            console.log("🚀 ~ handleSubmit ~ responseData:", responseData)
+                const responseData = response.data;
+                console.log("🚀 ~ handleSubmit ~ responseData:", responseData)
 
             const { customer_survey_order_id: surveyId } = responseData;
             console.log("🚀 ~ handleSubmit ~ surveyId:", surveyId)
@@ -149,54 +131,26 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
             existingSurveys.push(newSurvey);
             localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
 
-            toast.success('Service request created successfully!', {
-                id: submissionToast,
-                description: 'Your service request has been submitted and is now being processed.',
-                duration: 5000,
-            });
+                toast.success('Service request created successfully!', {
+                    id: submissionToast,
+                    description: 'Your service request has been submitted and is now being processed.',
+                    duration: 5000,
+                });
 
-            onNext?.(String(surveyId));
-            return;
-        } catch (err: unknown) {
-            console.error('Submission error:', err);
-
-            let errorMessage = 'Failed to create your service request. Please try again.';
-            let errorDescription = 'An unexpected error occurred.';
-
-            if (axios.isAxiosError(err)) {
-                if (err.response?.data?.message) {
-                    errorMessage = err.response.data.message;
-                } else if (err.response?.data?.errors) {
-                    const errors = err.response.data.errors;
-                    const firstError = Object.values(errors)[0];
-                    errorMessage = Array.isArray(firstError) ? firstError[0] : String(firstError);
-                    errorDescription = 'Please check the form and correct any errors.';
-                } else if (err.response?.status === 422) {
-                    errorMessage = 'Validation error';
-                    errorDescription = 'Please check your input and try again.';
-                } else if (err.response?.status === 401) {
-                    errorMessage = 'Authentication required';
-                    errorDescription = 'Please log in and try again.';
-                } else if (err.response?.status === 500) {
-                    errorMessage = 'Server error';
-                    errorDescription = 'Our servers encountered an issue. Please try again later.';
-                } else if (err.message) {
-                    errorMessage = err.message;
-                }
-            } else if (err instanceof Error) {
-                errorMessage = err.message;
-            }
-
-            setError(errorMessage);
-            toast.error(errorMessage, {
-                id: submissionToast,
-                description: errorDescription,
-                duration: 5000,
-            });
-            return;
-        } finally {
-            setSubmitting(false);
-        }
+                setSubmitting(false);
+                onNext?.(String(surveyId));
+            },
+            onError: (err: Error) => {
+                console.error('Submission error:', err);
+                setSubmitting(false);
+                const errorMessage = err.message || 'Failed to create your service request. Please try again.';
+                setError(errorMessage);
+                toast.error(errorMessage, {
+                    id: submissionToast,
+                    duration: 5000,
+                });
+            },
+        });
     };
 
     return (
@@ -333,8 +287,8 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                     Back
                 </Button>
 
-                <Button onClick={handleSubmit} disabled={submitting || !formData.resourceAvailable} className="bg-primary hover:bg-primary/80">
-                    {submitting ? (
+                <Button onClick={handleSubmit} disabled={submitting || createSurveyMutation.isPending || !formData.resourceAvailable} className="bg-primary hover:bg-primary/80">
+                    {(submitting || createSurveyMutation.isPending) ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Processing...
@@ -342,7 +296,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                     ) : (
                         <>
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Submit
+                            Next
                         </>
                     )}
                 </Button>

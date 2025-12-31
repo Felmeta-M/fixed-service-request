@@ -13,9 +13,8 @@ import { TTDetail, TTActivity } from '@/types/tt';
 import { Calendar, MapPin, Phone, User, FileText, Clock, AlertCircle, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
-import { ttService } from '@/lib/ttService';
 import { toast } from 'sonner';
-import { usePage } from '@inertiajs/react';
+import { useConfirmFeedback } from '@/hooks/use-api-mutations';
 
 interface TTDetailDialogProps {
   open: boolean;
@@ -34,11 +33,12 @@ export function TTDetailDialog({
   source = 'external',
   onConfirmSuccess,
 }: TTDetailDialogProps) {
-  const { auth } = usePage().props as any;
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [feedbackDesc, setFeedbackDesc] = useState('');
-  const [confirming, setConfirming] = useState(false);
   const [resultCode, setResultCode] = useState<'0' | '1'>('0');
+
+  const confirmFeedbackMutation = useConfirmFeedback();
+  const confirming = confirmFeedbackMutation.isPending;
 
   const formatDate = (dateString: string) => {
     if (!dateString || dateString === '?' || dateString === '') return 'N/A';
@@ -60,7 +60,7 @@ export function TTDetailDialog({
     }
   };
 
-  const handleConfirmFeedback = async () => {
+  const handleConfirmFeedback = () => {
     if (!detail?.ttNumber) {
       toast.error('TT number is required');
       return;
@@ -71,33 +71,22 @@ export function TTDetailDialog({
       return;
     }
 
-    setConfirming(true);
-    try {
-      const response = await ttService.confirmFeedback(
-        {
-          tt_no: detail.ttNumber,
-          result_code: resultCode,
-          desc: feedbackDesc,
+    confirmFeedbackMutation.mutate(
+      {
+        tt_no: detail.ttNumber,
+        result_code: resultCode,
+        desc: feedbackDesc,
+      },
+      {
+        onSuccess: () => {
+          setShowFeedbackForm(false);
+          setFeedbackDesc('');
+          onConfirmSuccess?.();
+          // Optionally close the dialog after successful confirmation
+          // onOpenChange(false);
         },
-        auth?.user?.api_token
-      );
-
-      if (response.success && response.data.success) {
-        toast.success('Feedback confirmed successfully');
-        setShowFeedbackForm(false);
-        setFeedbackDesc('');
-        onConfirmSuccess?.();
-        // Optionally close the dialog after successful confirmation
-        // onOpenChange(false);
-      } else {
-        toast.error(response.data.desc || 'Failed to confirm feedback');
       }
-    } catch (error: any) {
-      console.error('Confirm feedback error:', error);
-      toast.error(error.message || 'Failed to confirm feedback');
-    } finally {
-      setConfirming(false);
-    }
+    );
   };
 
   // Only show feedback form for external tickets

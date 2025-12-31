@@ -1,5 +1,7 @@
 import { usePage } from '@inertiajs/react';
-import axios from 'axios';
+import { useMutation } from '@tanstack/react-query';
+import { apiClient } from './api-client';
+import { useAuthToken } from '@/hooks/use-auth-token';
 
 export interface ResourceCheckRequest {
     prod_spec_code?: string;
@@ -36,14 +38,20 @@ export interface ResourceCheckResponse {
 export const useResourceChecker = () => {
     const { auth } = usePage<{ auth: { user: { api_token: string; id?: number; name?: string; address?: string } } }>().props;
     const user = auth.user;
+    const token = useAuthToken();
 
     console.log('Using resource checker with user:', user);
 
-    const checkResourceAvailability = async (
-        coordinates: { latitude: number; longitude: number },
-        customerName?: string,
-    ): Promise<{ available: boolean; message: string; data?: ResourceCheckResponse['data'] }> => {
-        try {
+    const mutation = useMutation({
+        mutationFn: async ({
+            coordinates,
+            customerName,
+        }: {
+            coordinates: { latitude: number; longitude: number };
+            customerName?: string;
+        }): Promise<{ available: boolean; message: string; data?: ResourceCheckResponse['data'] }> => {
+            if (!token) throw new Error('Authentication required');
+
             const requestData: ResourceCheckRequest = {
                 prod_spec_code: 'C_P_UFBI_E',
                 event_code: '101',
@@ -63,23 +71,15 @@ export const useResourceChecker = () => {
                 combo_flag: '0',
             };
 
-            // console.log('Resource check request:', requestData);
-
             // Use the app API so we get the encrypted fields that survey-create expects.
-            const response = await axios.post<ResourceCheckResponse>(`/api/v1/resource-check`, requestData,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Accept: 'application/json',
-                        Authorization: `Bearer ${user.api_token}`,
-                    },
-                }
-            );
+            const response = await apiClient.post<ResourceCheckResponse>(`/resource-check`, requestData, {
+                token,
+            });
 
             // Check if response is successful
-            if (response.data.success) {
+            if (response.success) {
                 // If data is null, no resource is available
-                if (!response.data.data || response.data.data === null) {
+                if (!response.data || response.data === null) {
                     return {
                         available: false,
                         message: 'No available resources in this area',
@@ -88,7 +88,7 @@ export const useResourceChecker = () => {
                 }
 
                 // Process the resource data
-                const resource = response.data.data;
+                const resource = response.data;
                 const availablePorts = parseInt(resource.ava_port) || 0;
 
                 // `distance`, `cable_type`, `latitude`, `longitude`, `neid` are encrypted by the backend (Crypt::encryptString),
@@ -110,21 +110,31 @@ export const useResourceChecker = () => {
             // Response was not successful
             return {
                 available: false,
-                message: response.data.message || 'Resource check failed',
-                data: response.data.data || undefined,
+                message: response.message || 'Resource check failed',
+                data: response.data || undefined,
             };
+        },
+    });
+
+    const checkResourceAvailability = async (
+        coordinates: { latitude: number; longitude: number },
+        customerName?: string,
+    ): Promise<{ available: boolean; message: string; data?: ResourceCheckResponse['data'] }> => {
+        try {
+            const result = await mutation.mutateAsync({ coordinates, customerName });
+            return result;
         } catch (error) {
             console.error('Resource check failed:', error);
-            let message = 'Failed to check resource availability. Try again.';
-            if (axios.isAxiosError(error) && error.response?.data?.message) {
-                message = error.response.data.message;
-            }
             return {
                 available: false,
-                message: message,
+                message: error instanceof Error ? error.message : 'Failed to check resource availability. Try again.',
             };
         }
     };
 
-    return { checkResourceAvailability };
+    return {
+        checkResourceAvailability,
+        isLoading: mutation.isPending,
+        error: mutation.error,
+    };
 };

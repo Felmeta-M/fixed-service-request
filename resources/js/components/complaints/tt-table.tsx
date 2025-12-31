@@ -221,7 +221,7 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
 
     return (
         <div className="w-full flex-col justify-start gap-6">
-            <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
+            <div className="overflow-hidden rounded-lg bg-white shadow-xs">
                 <div className="overflow-x-auto">
                     <Table className="min-w-[700px]">
                         <TableHeader className="bg-gray-50">

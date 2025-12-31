@@ -1,6 +1,6 @@
 import { Option } from '@/types/customer';
-import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api-client';
 
 interface SurveyType {
     id: number;
@@ -8,32 +8,20 @@ interface SurveyType {
 }
 
 export function useSurveyTypes() {
-    const [types, setTypes] = useState<Option[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['survey-types'],
+        queryFn: async () => {
+            const response = await apiClient.get<SurveyType[]>('/survey-types');
+            return response.map((type) => ({
+                label: type.name,
+                value: type.id.toString(),
+            }));
+        },
+    });
 
-    useEffect(() => {
-        const fetchSurveyTypes = async () => {
-            try {
-                setLoading(true);
-                const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/survey-types`);
-                console.log('response', response.data);
-                const formattedSurveyTypes = response.data.map((type: SurveyType) => ({
-                    label: type.name,
-                    value: type.id.toString(),
-                }));
-
-                setTypes(formattedSurveyTypes);
-            } catch (error) {
-                setError('Failed to load types');
-                console.error('Error loading types', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchSurveyTypes();
-    }, []);
-
-    return { types, loading, error };
+    return {
+        types: data || [],
+        loading: isLoading,
+        error: error ? (error instanceof Error ? error.message : 'Failed to load types') : null,
+    };
 }

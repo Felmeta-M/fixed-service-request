@@ -4,62 +4,36 @@ import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
 import { Head, usePage } from '@inertiajs/react';
 import { AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { useSurveyDetail } from '@/hooks/use-surveys';
 
 export default function SurveyShowPage() {
     const { surveyId, auth } = usePage().props;
-    const { user } = usePage().props.auth
-    const [survey, setSurvey] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        fetchSurveyDetails();
-    }, [surveyId]);
-
-    const fetchSurveyDetails = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            // Use your existing API endpoint with query parameters
-            const response = await fetch(`/api/v1/survey-requests/show?customer_survey_order_id=${surveyId}`, {
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user.api_token}`,
-                },
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.data) {
-                setSurvey(result.data);
-            } else {
-                setError(result.message || 'Failed to load survey details');
-                toast.error('Error', {
-                    description: result.message || 'Could not load survey details.',
-                });
-            }
-        } catch (err: any) {
-            console.error('Error fetching survey:', err);
-            setError('Network error. Please try again.');
-            toast.error('Network Error', {
-                description: 'Failed to connect to the server. Please check your internet connection.',
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+    
+    const surveyDetailQuery = useSurveyDetail(surveyId);
+    const loading = surveyDetailQuery.isLoading;
+    const error = surveyDetailQuery.error?.message || null;
+    
+    // Transform query data to component format
+    const survey = surveyDetailQuery.data?.data || null;
 
     const handleBack = () => {
         window.history.back();
     };
 
     const handleRefresh = () => {
-        fetchSurveyDetails();
+        surveyDetailQuery.refetch();
     };
+
+    // Handle errors
+    useEffect(() => {
+        if (surveyDetailQuery.error) {
+            toast.error('Error', {
+                description: surveyDetailQuery.error.message || 'Could not load survey details.',
+            });
+        }
+    }, [surveyDetailQuery.error]);
 
     return (
         <MainLayout>

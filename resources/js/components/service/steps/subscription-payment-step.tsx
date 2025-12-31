@@ -3,8 +3,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PaymentSummary } from '@/components/payment/payment-summary';
 import { usePage } from '@inertiajs/react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { useSurveyDetail } from '@/hooks/use-surveys';
 
 interface SubscriptionPaymentStepProps {
     surveyId: string | null;
@@ -36,6 +37,7 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete }: Subscr
         cable_type?: string | null;
         lat?: string | number | null;
         long?: string | number | null;
+        status?: string | number | null;
         payment?: PaymentDetails | null;
     };
 
@@ -44,53 +46,32 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete }: Subscr
         message?: string;
     };
 
-    const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
+    const surveyDetailQuery = useSurveyDetail(surveyId || '');
+    const loading = surveyDetailQuery.isLoading;
+    const error = surveyDetailQuery.error?.message || null;
 
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [surveyDetails, setSurveyDetails] = useState<SurveyDetails | null>(null);
-    const [paymentDetails, setPaymentDetails] = useState<{ data: PaymentDetails } | null>(null);
+    // Transform query data to component format
+    const surveyDetails: SurveyDetails | null = surveyDetailQuery.data?.data
+        ? {
+              customer_survey_order_id: surveyDetailQuery.data.data.customer_survey_order_id,
+              main_offer_id: surveyDetailQuery.data.data.main_offer_id,
+              service_number: surveyDetailQuery.data.data.service_number,
+              cable_length: null,
+              cable_type: null,
+              lat: null,
+              long: null,
+              status: surveyDetailQuery.data.data.status,
+              payment: surveyDetailQuery.data.data.payment || null,
+          }
+        : null;
 
-    const fetchDetails = async () => {
-        if (!surveyId) {
-            setError('Missing survey id. Please go back and try again.');
-            setLoading(false);
-            return;
-        }
+    const paymentDetails: { data: PaymentDetails } | null = surveyDetailQuery.data?.data?.payment
+        ? { data: surveyDetailQuery.data.data.payment as PaymentDetails }
+        : null;
 
-        try {
-            setLoading(true);
-            setError(null);
-
-            const response = await fetch(`/api/v1/survey-requests/show?customer_survey_order_id=${surveyId}`, {
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user.api_token}`,
-                },
-            });
-
-            const result: SurveyApiResponse = await response.json().catch(() => ({} as SurveyApiResponse));
-
-            if (!response.ok || !result.data) {
-                throw new Error(result.message || `Failed to load summary (HTTP ${response.status})`);
-            }
-
-            setSurveyDetails(result.data);
-            setPaymentDetails(result.data.payment ? { data: result.data.payment } : null);
-        } catch (e) {
-            const msg = e instanceof Error ? e.message : 'Failed to load summary';
-            setError(msg);
-            toast.error(msg);
-        } finally {
-            setLoading(false);
-        }
+    const fetchDetails = () => {
+        surveyDetailQuery.refetch();
     };
-
-    useEffect(() => {
-        fetchDetails();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [surveyId]);
 
     if (loading) {
         return (

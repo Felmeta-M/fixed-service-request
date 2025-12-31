@@ -7,33 +7,7 @@ import MainLayout from '@/layouts/main-layout';
 import { complaintSchema, ComplaintFormValues, TroubleReasons } from '@/types/complaint';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
-import axios from 'axios';
-
-export function parseApiError(message: string): {
-    type: 'field' | 'business' | 'general';
-    text: string;
-} {
-    const lower = message.toLowerCase();
-
-    if (lower.includes('mobile')) {
-        return {
-            type: 'field',
-            text: 'Mobile number must be 10 digits and start with 0.',
-        };
-    }
-
-    if (lower.includes('already cct')) {
-        return {
-            type: 'business',
-            text: message,
-        };
-    }
-
-    return {
-        type: 'general',
-        text: message || 'Something went wrong.',
-    };
-}
+import { useCreateComplaint } from '@/hooks/use-api-mutations';
 
 
 export default function CreateComplaintPage() {
@@ -60,6 +34,8 @@ export default function CreateComplaintPage() {
 
     const Required = () => <span className="text-red-500 ml-1">*</span>;
 
+    const createComplaintMutation = useCreateComplaint();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         clearErrors();
@@ -75,64 +51,21 @@ export default function CreateComplaintPage() {
             return;
         }
 
-        const toastId = toast.loading('Submitting complaint...');
-
-        try {
-            const response = await axios.post(
-                `${import.meta.env.VITE_API_BASE_URL}/tt/create`,
-                validation.data,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${user.api_token}`,
-                    },
-                    timeout: 15000,
-                }
-            );
-
-            const responseData = response.data;
-
-            // API-level failure (not HTTP failure)
-            if (responseData?.success === false) {
-                const parsed = parseApiError(responseData.message);
-
-                toast.dismiss(toastId);
-
-                if (parsed.type === 'field') {
-                    setError('mobile_no', parsed.text);
+        createComplaintMutation.mutate(validation.data, {
+            onError: (error: Error & { parsed?: { type: string; text: string } }) => {
+                if (error.parsed?.type === 'field') {
+                    setError('mobile_no', error.parsed.text);
                     toast.error('Please correct the highlighted field.');
-                    return;
+                } else if (error.parsed?.type === 'business') {
+                    toast.error(error.parsed.text);
+                } else {
+                    toast.error(error.message || 'Network error. Please try again.');
                 }
-
-                toast.error(parsed.text);
-                return;
-            }
-
-            // Success
-            toast.dismiss(toastId);
-            toast.success('Complaint submitted successfully!');
-            reset();
-
-            // Redirect to complaints index page after a short delay
-            setTimeout(() => {
-                router.visit('/complaints', {
-                    preserveScroll: false,
-                });
-            }, 1000);
-
-        } catch (error: any) {
-            toast.dismiss(toastId);
-
-            if (error.response && error.response.data) {
-                const apiMessage =
-                    error.response.data.message ||
-                    'Request failed. Please try again.';
-                toast.error(apiMessage);
-            } else {
-                toast.error('Network error. Please try again.');
-            }
-            console.error('Submit error:', error);
-        }
+            },
+            onSuccess: () => {
+                reset();
+            },
+        });
     };
 
 
@@ -261,8 +194,7 @@ export default function CreateComplaintPage() {
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    disabled={processing}
-                                    // onClick={() => router.visit('/complaints')}
+                                    disabled={processing || createComplaintMutation.isPending}
                                     onClick={() => {
                                         if (confirm('Discard changes?')) {
                                             router.visit('/complaints');
@@ -273,8 +205,8 @@ export default function CreateComplaintPage() {
                                 </Button>
 
                                 {/* Submit Button */}
-                                <Button type="submit" disabled={processing}>
-                                    {processing ? 'Submitting...' : 'Submit Complaint'}
+                                <Button type="submit" disabled={processing || createComplaintMutation.isPending}>
+                                    {processing || createComplaintMutation.isPending ? 'Submitting...' : 'Submit Complaint'}
                                 </Button>
                             </div>
                         </form>

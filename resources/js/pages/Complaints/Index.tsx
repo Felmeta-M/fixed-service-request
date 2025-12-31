@@ -24,7 +24,8 @@ import { toast } from 'sonner';
 import TTTable from '@/components/complaints/tt-table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ttService } from '@/lib/ttService';
+import { useLocalTTs, useSearchExternalTTs } from '@/hooks/use-complaints';
+import { useAuthToken } from '@/hooks/use-auth-token';
 
 type SourceFilter = 'all' | 'local' | 'external';
 
@@ -47,6 +48,7 @@ export default function ComplaintsIndex() {
   });
 
   const { auth } = usePage().props as any;
+  const token = useAuthToken();
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Debounced filter values - these are used for API calls
@@ -71,93 +73,140 @@ export default function ComplaintsIndex() {
     };
   }, [filterAccessNumber, filterTTSerialNo]);
 
-  // Load user's tickets on mount and when filters change
+  // Query for local TTs (for my-tickets tab)
+  const localTTsQuery = useLocalTTs({
+    page: pagination.current_page,
+    per_page: 10,
+    access_number: activeTab === 'my-tickets' ? (debouncedFilterAccessNumber.trim() || undefined) : undefined,
+    tt_serial_no: activeTab === 'my-tickets' ? (debouncedFilterTTSerialNo.trim() || undefined) : undefined,
+    status: activeTab === 'my-tickets' && statusFilter !== 'all' ? statusFilter : undefined,
+  });
+
+  // Query for local TTs with search access number (for search tab)
+  const searchLocalTTsQuery = useLocalTTs({
+    page: 1,
+    per_page: 100,
+    access_number: activeTab === 'search' && accessNumber.trim() ? accessNumber.trim() : undefined,
+  });
+
+  // Query for external TTs (used in search)
+  const externalTTsQuery = useSearchExternalTTs(
+    activeTab === 'search' && accessNumber.trim() ? accessNumber.trim() : ''
+  );
+
+  // Update local state when query data changes
   useEffect(() => {
-    if (activeTab === 'my-tickets' && auth?.user?.id) {
-      loadUserTTs(1);
+    if (activeTab === 'my-tickets' && localTTsQuery.data?.success) {
+      const localTTs = localTTsQuery.data.data.data.map(tt => ({
+        id: `local_${tt.id}`,
+        tt_no: tt.tt_serial_no,
+        source: 'local' as const,
+        cust_name: tt.contact_person,
+        access_number: tt.access_number,
+        trouble_title: tt.trouble_title,
+        accept_time: tt.created_at,
+        trouble_reason: tt.trouble_reason,
+        deadline: '',
+        status: tt.status,
+        created_at: tt.created_at,
+        local_data: tt,
+      }));
+
+      setTts(localTTs);
+      setPagination({
+        current_page: localTTsQuery.data.data.current_page,
+        last_page: localTTsQuery.data.data.last_page,
+        per_page: localTTsQuery.data.data.per_page,
+        total: localTTsQuery.data.data.total
+      });
     }
-  }, [activeTab, auth?.user?.id, debouncedFilterAccessNumber, debouncedFilterTTSerialNo, statusFilter]);
+  }, [localTTsQuery.data, activeTab]);
 
-  const loadUserTTs = async (page = 1) => {
-    setLoading(true);
-    try {
-      const params: any = {
-        page: page,
-        per_page: 10,
-      };
-
-      // Add filters if provided (use debounced values)
-      if (debouncedFilterAccessNumber.trim()) {
-        params.access_number = debouncedFilterAccessNumber.trim();
-      }
-
-      if (debouncedFilterTTSerialNo.trim()) {
-        params.tt_serial_no = debouncedFilterTTSerialNo.trim();
-      }
-
-      if (statusFilter !== 'all') {
-        params.status = statusFilter;
-      }
-
-      const response = await ttService.getLocalTTs(params, auth.user.api_token);
-
-      if (response.success) {
-        const localTTs = response.data.data.map(tt => ({
-          id: `local_${tt.id}`,
-          tt_no: tt.tt_serial_no,
-          source: 'local' as const,
-          cust_name: tt.contact_person,
-          access_number: tt.access_number,
-          trouble_title: tt.trouble_title,
-          accept_time: tt.created_at,
-          trouble_reason: tt.trouble_reason,
-          deadline: '',
-          status: tt.status,
-          created_at: tt.created_at,
-          local_data: tt,
-        }));
-
-        setTts(localTTs);
-        setPagination({
-          current_page: response.data.current_page,
-          last_page: response.data.last_page,
-          per_page: response.data.per_page,
-          total: response.data.total
-        });
-      }
-    } catch (error: any) {
-      console.error('Failed to load user TTs:', error);
-      toast.error(error.message || 'Failed to load your tickets');
-    } finally {
-      setLoading(false);
+  // Handle loading state
+  useEffect(() => {
+    if (activeTab === 'my-tickets') {
+      setLoading(localTTsQuery.isLoading);
     }
-  };
+  }, [localTTsQuery.isLoading, activeTab]);
 
-  const handleSearch = async () => {
+  // Handle errors
+  useEffect(() => {
+    if (localTTsQuery.error && activeTab === 'my-tickets') {
+      toast.error(localTTsQuery.error.message || 'Failed to load your tickets');
+    }
+  }, [localTTsQuery.error, activeTab]);
+
+  const handleSearch = () => {
     if (!accessNumber.trim()) {
       toast.error('Please enter an access number');
       return;
     }
 
-    setLoading(true);
     setActiveTab('search');
-    try {
-      const results = await ttService.searchAllTTs(accessNumber, auth.user.api_token);
-      setTts(results);
-
-      if (results.length === 0) {
-        toast.info('No trouble tickets found for this access number');
-      } else {
-        toast.success(`Found ${results.length} trouble tickets`);
-      }
-    } catch (error: any) {
-      console.error('Search error:', error);
-      toast.error(error.message || 'Failed to search trouble tickets');
-      setTts([]);
-    } finally {
-      setLoading(false);
-    }
   };
+
+  // Combine search results when in search tab
+  useEffect(() => {
+    if (activeTab === 'search' && accessNumber.trim()) {
+      setLoading(externalTTsQuery.isLoading || searchLocalTTsQuery.isLoading);
+
+      if (!externalTTsQuery.isLoading && !searchLocalTTsQuery.isLoading) {
+        const displayTTs: DisplayTT[] = [];
+
+        // Add local TTs
+        if (searchLocalTTsQuery.data?.success) {
+          searchLocalTTsQuery.data.data.data.forEach((tt) => {
+            displayTTs.push({
+              id: `local_${tt.id}`,
+              tt_no: tt.tt_serial_no,
+              source: 'local' as const,
+              cust_name: tt.contact_person,
+              access_number: tt.access_number,
+              trouble_title: tt.trouble_title,
+              accept_time: tt.created_at,
+              trouble_reason: tt.trouble_reason,
+              deadline: '',
+              status: tt.status,
+              created_at: tt.created_at,
+              local_data: tt,
+            });
+          });
+        }
+
+        // Add external TTs
+        if (externalTTsQuery.data?.success && externalTTsQuery.data.data.success) {
+          externalTTsQuery.data.data.tt_list.forEach((externalTT) => {
+            displayTTs.push({
+              id: `external_${externalTT.tt_no}`,
+              tt_no: externalTT.tt_no,
+              source: 'external' as const,
+              cust_name: externalTT.cust_name,
+              access_number: externalTT.acc_number,
+              trouble_title: externalTT.trouble_title,
+              accept_time: externalTT.accept_time,
+              trouble_reason: externalTT.trouble_reason,
+              deadline: externalTT.deadline,
+              status: externalTT.tt_status || 'unknown',
+              created_at: externalTT.accept_time,
+              external_data: externalTT,
+            });
+          });
+        }
+
+        const sortedTTs = displayTTs.sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        setTts(sortedTTs);
+
+        if (sortedTTs.length === 0 && !externalTTsQuery.isLoading && !searchLocalTTsQuery.isLoading) {
+          toast.info('No trouble tickets found for this access number');
+        } else if (sortedTTs.length > 0) {
+          toast.success(`Found ${sortedTTs.length} trouble tickets`);
+        }
+      }
+    }
+  }, [activeTab, accessNumber, externalTTsQuery.data, externalTTsQuery.isLoading, searchLocalTTsQuery.data, searchLocalTTsQuery.isLoading]);
 
 
 
@@ -175,18 +224,18 @@ export default function ComplaintsIndex() {
   // Pagination handlers
   const handleNextPage = () => {
     if (pagination.current_page < pagination.last_page) {
-      loadUserTTs(pagination.current_page + 1);
+      setPagination((prev) => ({ ...prev, current_page: prev.current_page + 1 }));
     }
   };
 
   const handlePrevPage = () => {
     if (pagination.current_page > 1) {
-      loadUserTTs(pagination.current_page - 1);
+      setPagination((prev) => ({ ...prev, current_page: prev.current_page - 1 }));
     }
   };
 
   const handlePageClick = (page: number) => {
-    loadUserTTs(page);
+    setPagination((prev) => ({ ...prev, current_page: page }));
   };
 
   return (
@@ -222,7 +271,14 @@ export default function ComplaintsIndex() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => loadUserTTs(pagination.current_page)}
+                  onClick={() => {
+                    if (activeTab === 'my-tickets') {
+                      localTTsQuery.refetch();
+                    } else if (activeTab === 'search') {
+                      externalTTsQuery.refetch();
+                      searchLocalTTsQuery.refetch();
+                    }
+                  }}
                   disabled={loading}
                 >
                   <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -343,7 +399,7 @@ export default function ComplaintsIndex() {
 
           <TabsContent value="search" className="space-y-6">
             {/* Search Card */}
-            <Card>
+            <Card >
               <CardContent className="pt-6">
                 <div className="space-y-4">
                   <div>

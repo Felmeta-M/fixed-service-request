@@ -2,7 +2,7 @@ import { ServiceList } from '@/components/service/service-list';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { useSurveyList } from '@/hooks/use-survey-list';
+import { useSurveyList } from '@/hooks/use-surveys';
 import MainLayout from '@/layouts/main-layout';
 import { ServiceProvisionStatus } from '@/lib/status-map';
 import { Link, router, usePage } from '@inertiajs/react';
@@ -54,13 +54,35 @@ export default function CustomerDashboard() {
         // return create customer page
     }
 
-    const { surveys, loading, error, fetchSurveys, refetch, hasMore, loadMore, total } = useSurveyList();
+    const [filters, setFilters] = useState<{ search?: string; status?: string }>({});
+    const surveyListQuery = useSurveyList(filters);
+    
+    // Flatten pages to get all surveys
+    const surveys = surveyListQuery.data?.pages.flatMap((page) => page.data || []) || [];
+    const loading = surveyListQuery.isLoading;
+    const error = surveyListQuery.error?.message || null;
+    const total = surveyListQuery.data?.pages[0]?.meta?.total || 0;
+    const hasMore = surveyListQuery.hasNextPage || false;
+
+    const fetchSurveys = () => {
+        surveyListQuery.refetch();
+    };
+
+    const loadMore = () => {
+        if (hasMore && !loading) {
+            surveyListQuery.fetchNextPage();
+        }
+    };
+
+    const refetch = () => {
+        surveyListQuery.refetch();
+    };
 
     console.log('🚀 ~ Dashboard ~ surveys:', surveys);
 
     useEffect(() => {
-        fetchSurveys();
-    }, [fetchSurveys]);
+        // Initial fetch is handled by the query
+    }, []);
 
     // Calculate dashboard stats from survey data
     const dashboardStats = useMemo((): DashboardStats => {
@@ -121,13 +143,23 @@ export default function CustomerDashboard() {
             });
     }, [surveys]);
 
+    // Update filters when they change
+    useEffect(() => {
+        setFilters({
+            search: globalFilter || undefined,
+            status: statusFilter !== 'all' ? statusFilter : undefined,
+        });
+    }, [globalFilter, statusFilter]);
+
     // Handle filter changes immediately
     const handleTypeFilterChange = (value: string) => {
         setAppliedFilters((prev) => ({ ...prev, type: value }));
+        setTypeFilter(value);
     };
 
     const handleStatusFilterChange = (value: string) => {
         setAppliedFilters((prev) => ({ ...prev, status: value }));
+        setStatusFilter(value);
     };
 
     const handleClearFilters = () => {
@@ -167,7 +199,7 @@ export default function CustomerDashboard() {
     }
 
     const StatCard = ({ title, value, description, icon: Icon, trend, color, loading: isLoading }: any) => (
-        <Card className="overflow-hidden pt-3 pb-3">
+        <Card className="overflow-hidden pt-3 pb-3 shadow-xs">
             <CardContent className="pt-0 pr-4 pb-0 pl-4">
                 {isLoading ? (
                     <div className="flex items-center justify-between">
@@ -262,7 +294,7 @@ export default function CustomerDashboard() {
                         value={dashboardStats.activeServices}
                         description="Currently in progress"
                         icon={CheckCircle2}
-                        color="text-green-600"
+                        color="text-primary"
                         loading={loading}
                     />
                     <StatCard

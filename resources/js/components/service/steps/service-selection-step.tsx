@@ -1,7 +1,9 @@
 import { BandwidthSelector } from '@/components/survey/bandwidth-selector';
 import { DeviceOptionSelector } from '@/components/survey/device-option-selector';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useBandwidthOptions } from '@/hooks/use-bandwidth-options';
+import { Link } from '@inertiajs/react';
 import { AlertCircle, CheckCircle, Package, Phone, Wifi } from 'lucide-react';
 import { useEffect } from 'react';
 
@@ -129,6 +131,38 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                 value={formData.withDevice}
                 onChange={(val) => onUpdate({ withDevice: val })}
             />
+
+            {/* Terms and Conditions Checkbox */}
+            <div >
+                <div>
+                    <div className="flex items-start gap-3">
+                        <Checkbox
+                            id="terms-acceptance"
+                            checked={formData.termsAccepted || false}
+                            onCheckedChange={(checked) => onUpdate({ termsAccepted: checked === true })}
+                            disabled={hasActiveSurvey}
+                            className="mt-1 border-primary"
+                        />
+                        <label
+                            htmlFor="terms-acceptance"
+                            className={`flex-1 cursor-pointer text-sm leading-relaxed ${hasActiveSurvey ? 'cursor-not-allowed opacity-50' : ''}`}
+                        >
+                            <span>
+                                I accept the{' '}
+                                <Link
+                                    href={route('terms')}
+                                    target="_blank"
+                                    className="font-medium text-primary underline hover:text-primary/80"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    Terms and Conditions
+                                </Link>
+                                {' '}and agree to the service agreement. By proceeding, I acknowledge that I have read and understood the terms of service.
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
 
             {hasActiveSurvey && (
                 <Card className="bg-gray-50">

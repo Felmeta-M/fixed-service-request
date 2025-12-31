@@ -13,7 +13,7 @@ import { formatCoordinate, formatCoordinatesForAPI, parseCoordinate } from '@/li
 import { useResourceChecker } from '@/lib/resource-check';
 import { SurveyRequest, SurveyRequestFormValues } from '@/types/survey';
 import { Link, router, useForm } from '@inertiajs/react';
-import axios from 'axios';
+import { useCreateSurvey } from '@/hooks/use-api-mutations';
 import {
     ArrowLeft,
     ChevronDown,
@@ -35,6 +35,7 @@ export default function Create() {
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const createSurveyMutation = useCreateSurvey();
     const [locationError, setLocationError] = useState('');
     const [locationOption, setLocationOption] = useState<string | null>('current');
     const [showLocationOptions, setShowLocationOptions] = useState(false);
@@ -551,32 +552,36 @@ export default function Create() {
                 main_offer_id: data.main_offer_id,
             };
 
-            const existingSurveys = JSON.parse(localStorage.getItem('userSurveys') || '[]');
-            existingSurveys.push(newSurvey);
-            localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
+            createSurveyMutation.mutate(submitData, {
+                onSuccess: (response) => {
+                    const responseData = response.data;
 
-            const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/v1/survey/create`, submitData);
+                    if (responseData?.survey_id) {
+                        const newSurvey = {
+                            id: responseData.survey_id || Date.now(),
+                            type: getServiceName(data.main_offer_id),
+                            status: 'waiting',
+                            createdAt: new Date().toISOString(),
+                            customerCode: data.customer_code,
+                            surveyType: getSurveyType(data.survey_type),
+                            main_offer_id: data.main_offer_id,
+                        };
 
-            if (response.data.success) {
-                const newSurvey = {
-                    id: response.data.survey_id || Date.now(),
-                    type: getServiceName(data.main_offer_id),
-                    status: 'waiting',
-                    createdAt: new Date().toISOString(),
-                    customerCode: data.customer_code,
-                    surveyType: getSurveyType(data.survey_type),
-                    main_offer_id: data.main_offer_id,
-                };
+                        const existingSurveys = JSON.parse(localStorage.getItem('userSurveys') || '[]');
+                        existingSurveys.push(newSurvey);
+                        localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
+                    }
 
-                const existingSurveys = JSON.parse(localStorage.getItem('userSurveys') || '[]');
-                existingSurveys.push(newSurvey);
-                localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
-            }
-
-            router.visit('/dashboard');
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create order');
-        } finally {
+                    setLoading(false);
+                    router.visit('/dashboard');
+                },
+                onError: (err: Error) => {
+                    setError(err.message || 'Failed to create order');
+                    setLoading(false);
+                },
+            });
+        } catch (e) {
+            setError('An error occurred while creating the order');
             setLoading(false);
         }
     };

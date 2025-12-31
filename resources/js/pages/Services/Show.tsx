@@ -4,8 +4,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
 import { Link, usePage } from '@inertiajs/react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { useSurveyDetail } from '@/hooks/use-surveys';
 
 type SurveyDetails = {
     customer_survey_order_id: string;
@@ -38,13 +39,11 @@ type ServiceShowProps = {
 
 export default function ServiceShowPage() {
     const { props, url } = usePage<ServiceShowProps>();
-    const { user } = usePage<{ auth: { user: { api_token: string } } }>().props.auth;
     const { customerSurveyOrderId } = props;
 
-    const [surveyDetails, setSurveyDetails] = useState<SurveyDetails | null>(null);
-    const [paymentDetails, setPaymentDetails] = useState<PaymentDetailsResource>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const surveyDetailQuery = useSurveyDetail(customerSurveyOrderId);
+    const loading = surveyDetailQuery.isLoading;
+    const error = surveyDetailQuery.error?.message || null;
 
     const showSuccessToastsFromUrl = (rawUrl: string) => {
         const query = rawUrl.includes('?') ? rawUrl.split('?')[1] : '';
@@ -61,10 +60,7 @@ export default function ServiceShowPage() {
 
     useEffect(() => {
         showSuccessToastsFromUrl(url);
-
-        fetchDetails();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [customerSurveyOrderId]);
+    }, [url]);
 
     const focus = (() => {
         const query = url.includes('?') ? url.split('?')[1] : '';
@@ -74,42 +70,29 @@ export default function ServiceShowPage() {
         return null;
     })();
 
-    const fetchDetails = async () => {
-        try {
-            setLoading(true);
-            setError(null);
+    // Transform query data to component format
+    const surveyDetails: SurveyDetails | null = surveyDetailQuery.data?.data
+        ? {
+              customer_survey_order_id: surveyDetailQuery.data.data.customer_survey_order_id,
+              customer_type: surveyDetailQuery.data.data.customer_type,
+              survey_type: surveyDetailQuery.data.data.survey_type,
+              main_offer_id: surveyDetailQuery.data.data.main_offer_id,
+              bandwidth: surveyDetailQuery.data.data.bandwidth,
+              status: surveyDetailQuery.data.data.status,
+              service_number: surveyDetailQuery.data.data.service_number,
+              created_at: surveyDetailQuery.data.data.created_at,
+              updated_at: surveyDetailQuery.data.data.updated_at,
+          }
+        : null;
 
-            const response = await fetch(`/api/v1/survey-requests/show?customer_survey_order_id=${customerSurveyOrderId}`, {
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user.api_token}`,
-                },
-            });
+    // Normalize nested payment resource
+    const paymentDetails: PaymentDetailsResource = surveyDetailQuery.data?.data?.payment
+        ? { data: surveyDetailQuery.data.data.payment as PaymentDetailsData }
+        : null;
 
-            const result = await response.json().catch(() => null);
-
-            if (!response.ok || !result?.data) {
-                throw new Error(result?.message || `Failed to load service (HTTP ${response.status})`);
-            }
-
-            setSurveyDetails(result.data as SurveyDetails);
-
-            // Normalize nested payment resource: API returns payment as plain object
-            const payment = result.data?.payment ?? null;
-            setPaymentDetails(payment ? { data: payment as PaymentDetailsData } : null);
-        } catch (e) {
-            const msg = e instanceof Error ? e.message : 'Failed to load service';
-            setError(msg);
-            toast.error(msg);
-        } finally {
-            setLoading(false);
-        }
+    const fetchDetails = () => {
+        surveyDetailQuery.refetch();
     };
-
-    useEffect(() => {
-        showSuccessToastsFromUrl(url);
-    }, [url]);
 
     if (loading) {
         return (
@@ -139,7 +122,7 @@ export default function ServiceShowPage() {
                             </div>
 
                             <div className="mt-6 flex gap-3">
-                                <Button variant="outline" onClick={fetchDetails} className="gap-2">
+                                <Button variant="outline" onClick={fetchDetails} disabled={loading} className="gap-2">
                                     <RefreshCw className="h-4 w-4" />
                                     Try Again
                                 </Button>

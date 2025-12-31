@@ -13,7 +13,7 @@ import {
     getSortedRowModel,
     useReactTable,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Box, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileText, Phone, RefreshCw, Wifi } from 'lucide-react';
+import { ArrowUpDown, Box, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, FileText, Phone, RefreshCw, Wifi } from 'lucide-react';
 import * as React from 'react';
 import SurveyActions from './survey-actions';
 
@@ -79,7 +79,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                 header: ({ column }) => (
                     <Button
                         variant="ghost"
-                        className="px-0 font-medium hover:text-primary"
+                        className="px-0 font-medium !hover:text-primary"
                         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                     >
                         Order ID
@@ -89,7 +89,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                 cell: (info) => (
                     <button
                         type="button"
-                        className="text-sm font-medium text-gray-900 hover:text-primary hover:underline"
+                        className="relative z-10 text-sm font-medium text-gray-900 hover:text-primary hover:underline"
                         onClick={() => handleRowClick(info.row.original)}
                     >
                         {String(info.getValue() ?? '-')}
@@ -191,12 +191,21 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                 cell: ({ row }) => {
                     const survey = row.original;
                     return (
-                        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                             <SurveyActions
                                 survey={survey}
                                 onActionComplete={() => onSurveyUpdate?.()}
                                 onUpdatingChange={(isUpdating) => console.log('Updating:', isUpdating)}
                             />
+                            {/* <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRowClick(survey)}
+                                className="h-8 w-8 p-0"
+                            >
+                                <Eye className="h-4 w-4" />
+                                <span className="sr-only">View details</span>
+                            </Button> */}
                         </div>
                     );
                 },
@@ -244,7 +253,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
 
     return (
         <div className="w-full flex-col justify-start gap-6">
-            <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
+            <div className="overflow-hidden rounded-lg bg-white shadow-sm">
                 <div className="overflow-x-auto">
                     <Table className="min-w-[700px]">
                         <TableHeader className="bg-gray-50">

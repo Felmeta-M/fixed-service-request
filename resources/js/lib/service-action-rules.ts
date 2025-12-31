@@ -26,7 +26,7 @@ export const getServiceActionFlags = ({ status, mainOfferId, totalAmount }: GetS
     const statusNum = toFiniteNumberOrNull(status);
 
     // Cancellation rules (keep existing intent: cancellable in Waiting Survey & Survey Completed)
-    const canCancel = statusNum === 3;
+    const canCancel = statusNum === 3 || statusNum === 5;
 
     // If we don't know the status yet, be conservative on list/detail: hide pay/subscribe.
     if (statusNum == null) {

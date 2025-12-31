@@ -26,7 +26,6 @@ export default function CreateSubscriber() {
     const { surveyOrderId, offeringId, available_numbers, auth } = usePage().props;
     const { user } = usePage().props.auth
 
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [surveyData, setSurveyData] = useState(null);
@@ -35,6 +34,11 @@ export default function CreateSubscriber() {
     const [feeData, setFeeData] = useState<FeeData | null>(null);
     const [calculatedAmount, setCalculatedAmount] = useState(0);
     const [apiErrors, setApiErrors] = useState<{ [key: string]: string }>({});
+
+    const calculateFeeMutation = useCalculateOneOffFee();
+    const createPaymentMutation = useCreatePaymentOrder();
+
+    const loading = calculateFeeMutation.isPending || createPaymentMutation.isPending;
 
     // Enhanced error handling
     const handleApiError = (result: any, context: string = '') => {
@@ -90,7 +94,7 @@ export default function CreateSubscriber() {
         }
     }, []);
 
-    const calculateOneOffFee = async () => {
+    const calculateOneOffFee = () => {
         if (!selectedNumber) {
             setError('Please select a service number');
             return;
@@ -103,64 +107,56 @@ export default function CreateSubscriber() {
 
         clearErrors();
 
-        try {
-            setLoading(true);
-            const response = await fetch('/api/v1/calc-one-off-fee', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user.api_token}`,
+        calculateFeeMutation.mutate(
+            {
+                business_code: 'CO064',
+                customer: {
+                    type: 1,
+                    category: 1,
+                    subcategory: 1,
+                    level: 6,
+                    nationality: 1231,
+                    id_type: 2,
                 },
-                body: JSON.stringify({
-                    business_code: 'CO064',
-                    customer: {
-                        type: 1,
-                        category: 1,
-                        subcategory: 1,
-                        level: 6,
-                        nationality: 1231,
-                        id_type: 2,
-                    },
-                    sub_order: {
-                        business_code: 'CO015',
-                        external_sequence: generateExternalSequence(),
-                        service_number: selectedNumber,
-                        offering_id: offeringId || surveyData?.offering_id || '',
-                        network_type: 4,
-                        sub_type: 0,
-                    },
-                }),
-            });
+                sub_order: {
+                    business_code: 'CO015',
+                    external_sequence: generateExternalSequence(),
+                    service_number: selectedNumber,
+                    offering_id: offeringId || surveyData?.offering_id || '',
+                    network_type: 4,
+                    sub_type: 0,
+                },
+            },
+            {
+                onSuccess: (result) => {
+                    // Check for API errors first
+                    if (result?.original?.success === false || result?.success === false) {
+                        handleApiError(result, 'fee_calculation');
+                        return;
+                    }
 
-            const result = await response.json();
+                    if (result.success && result.data?.fees) {
+                        setFeeData(result.data);
+                        const totalAmount = calculateTotalAmount(result.data.fees);
+                        setCalculatedAmount(totalAmount);
+                        setStep('payment');
+                        setSuccess('Fees calculated successfully');
 
-            // Check for API errors first
-            if (result?.original?.success === false || result?.success === false) {
-                handleApiError(result, 'fee_calculation');
-                return; // Prevent moving forward
+                        // Clear any previous fee calculation errors
+                        setApiErrors((prev) => {
+                            const newErrors = { ...prev };
+                            delete newErrors.fee_calculation;
+                            return newErrors;
+                        });
+                    } else {
+                        handleApiError({ message: 'Failed to calculate fees' }, 'fee_calculation');
+                    }
+                },
+                onError: (error: Error) => {
+                    handleApiError({ message: error.message || 'Failed to calculate fees' }, 'fee_calculation');
+                },
             }
-
-            if (result.success && result.data?.fees) {
-                setFeeData(result.data);
-                const totalAmount = calculateTotalAmount(result.data.fees);
-                setCalculatedAmount(totalAmount);
-                setStep('payment');
-                setSuccess('Fees calculated successfully');
-
-                // Clear any previous fee calculation errors
-                setApiErrors((prev) => {
-                    const newErrors = { ...prev };
-                    delete newErrors.fee_calculation;
-                    return newErrors;
-                });
-            } else {
-                throw new Error('Failed to calculate fees');
-            }
-        } catch (err: any) {
-            handleApiError({ message: err.message || 'Failed to calculate fees' }, 'fee_calculation');
-        } finally {
-            setLoading(false);
-        }
+        );
     };
 
     const generateExternalSequence = () => {
@@ -188,7 +184,7 @@ export default function CreateSubscriber() {
         return total;
     };
 
-    const handlePayment = async () => {
+    const handlePayment = () => {
         clearErrors();
 
         if (!user?.customer_code) {
@@ -201,43 +197,35 @@ export default function CreateSubscriber() {
             return;
         }
 
-        try {
-            setLoading(true);
-            const response = await fetch('/api/v1/create-order', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${user.api_token}`,
+        createPaymentMutation.mutate(
+            {
+                customerSurveyOrderId: surveyOrderId,
+                customerCode: user.customer_code,
+                amount: calculatedAmount,
+            },
+            {
+                onSuccess: (result) => {
+                    // Check for API errors first
+                    if (result?.original?.success === false || result?.success === false) {
+                        handleApiError(result, 'payment_creation');
+                        return;
+                    }
+
+                    if (result.success && result.rawRequest) {
+                        setSuccess('Payment order created successfully. Redirecting...');
+                        // Small delay to show success message before redirect
+                        setTimeout(() => {
+                            window.location.href = result.rawRequest;
+                        }, 1000);
+                    } else {
+                        handleApiError({ message: 'Failed to create payment order' }, 'payment_creation');
+                    }
                 },
-                body: JSON.stringify({
-                    customerSurveyOrderId: surveyOrderId,
-                    customerCode: user.customer_code,
-                    amount: calculatedAmount,
-                }),
-            });
-
-            const result = await response.json();
-
-            // Check for API errors first
-            if (result?.original?.success === false || result?.success === false) {
-                handleApiError(result, 'payment_creation');
-                return; // Prevent redirect on error
+                onError: (error: Error) => {
+                    handleApiError({ message: error.message || 'Failed to process payment' }, 'payment_creation');
+                },
             }
-
-            if (result.success && result.rawRequest) {
-                setSuccess('Payment order created successfully. Redirecting...');
-                // Small delay to show success message before redirect
-                setTimeout(() => {
-                    window.location.href = result.rawRequest;
-                }, 1000);
-            } else {
-                throw new Error('Failed to create payment order');
-            }
-        } catch (err: any) {
-            handleApiError({ message: err.message || 'Failed to process payment' }, 'payment_creation');
-        } finally {
-            setLoading(false);
-        }
+        );
     };
 
     // Get service type name based on offering ID

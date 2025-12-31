@@ -6,10 +6,11 @@ import { TTDetail, TTActivity, LocalTroubleTicket } from '@/types/tt';
 import { Calendar, MapPin, Phone, User, FileText, Clock, AlertCircle, CheckCircle2, XCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
-import { ttService } from '@/lib/ttService';
 import { toast } from 'sonner';
 import { usePage, router } from '@inertiajs/react';
 import MainLayout from '@/layouts/main-layout';
+import { useExternalTTDetail, useLocalTT } from '@/hooks/use-complaints';
+import { useConfirmFeedback } from '@/hooks/use-api-mutations';
 
 interface ShowProps {
   ttNumber: string;
@@ -75,61 +76,42 @@ const transformLocalToTTDetail = (localTT: LocalTroubleTicket): TTDetail => {
 };
 
 export default function ComplaintsShow({ ttNumber }: ShowProps) {
-  const { auth } = usePage().props as any;
-  const [detail, setDetail] = useState<TTDetail | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [feedbackDesc, setFeedbackDesc] = useState('');
-  const [confirming, setConfirming] = useState(false);
+  // const [confirming, setConfirming] = useState(false);
   const [resultCode, setResultCode] = useState<'0' | '1'>('0');
-  const [source, setSource] = useState<'local' | 'external'>('external');
 
+  // Query external TT first
+  const externalQuery = useExternalTTDetail(ttNumber);
+  // Query local TT as fallback
+  const localQuery = useLocalTT(ttNumber);
+
+  // Determine which source to use
+  const source = externalQuery.data?.success && externalQuery.data.data ? 'external' : 'local';
+  const loading = externalQuery.isLoading || localQuery.isLoading;
+
+  // Get detail from the appropriate source
+  const detail: TTDetail | null = (() => {
+    if (externalQuery.data?.success && externalQuery.data.data) {
+      return externalQuery.data.data;
+    }
+    if (localQuery.data?.success && localQuery.data.data) {
+      return transformLocalToTTDetail(localQuery.data.data);
+    }
+    return null;
+  })();
+
+  // Handle errors
   useEffect(() => {
-    loadTTDetail();
-  }, [ttNumber]);
-
-  const loadTTDetail = async () => {
-    setLoading(true);
-    try {
-      // Try external API first
-      try {
-        const externalResponse = await ttService.getTTDetail(ttNumber, auth?.user?.api_token);
-        if (externalResponse.success && externalResponse.data) {
-          setDetail(externalResponse.data);
-          setSource('external');
-          return;
-        }
-      } catch (externalError: any) {
-        // If it's a 404 or fails, try local API
-        if (externalError.status === 404) {
-          console.log('External TT not found, trying local API...');
-        } else {
-          // For other errors, log but continue to try local
-          console.warn('External TT fetch error (non-404):', externalError);
-        }
-      }
-
-      // If external fetch failed or returned no data, try local API
-      const localResponse = await ttService.getLocalTT(ttNumber, auth?.user?.api_token);
-      if (localResponse.success && localResponse.data) {
-        const transformedDetail = transformLocalToTTDetail(localResponse.data);
-        setDetail(transformedDetail);
-        setSource('local');
-      } else {
-        toast.error('Failed to load TT details');
-      }
-    } catch (error: any) {
-      console.error('Load TT detail error:', error);
-      // Only show error toast if both external and local failed
-      if (error.status !== 404) {
+    if (externalQuery.error && localQuery.error) {
+      const error = localQuery.error;
+      if ((error as any).status !== 404) {
         toast.error(error.message || 'Failed to load TT details');
       } else {
         toast.error('Trouble ticket not found');
       }
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [externalQuery.error, localQuery.error]);
 
   const formatDate = (dateString: string) => {
     if (!dateString || dateString === '?' || dateString === '') return 'N/A';
@@ -151,7 +133,9 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
     }
   };
 
-  const handleConfirmFeedback = async () => {
+  const confirmFeedbackMutation = useConfirmFeedback();
+
+  const handleConfirmFeedback = () => {
     if (!detail?.ttNumber) {
       toast.error('TT number is required');
       return;
@@ -162,32 +146,25 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
       return;
     }
 
-    setConfirming(true);
-    try {
-      const response = await ttService.confirmFeedback(
-        {
-          tt_no: detail.ttNumber,
-          result_code: resultCode,
-          desc: feedbackDesc,
+    confirmFeedbackMutation.mutate(
+      {
+        tt_no: detail.ttNumber,
+        result_code: resultCode,
+        desc: feedbackDesc,
+      },
+      {
+        onSuccess: () => {
+          setShowFeedbackForm(false);
+          setFeedbackDesc('');
+          // Refetch both queries to get updated data
+          externalQuery.refetch();
+          localQuery.refetch();
         },
-        auth?.user?.api_token
-      );
-
-      if (response.success && response.data.success) {
-        toast.success('Feedback confirmed successfully');
-        setShowFeedbackForm(false);
-        setFeedbackDesc('');
-        loadTTDetail(); // Reload details
-      } else {
-        toast.error(response.data.desc || 'Failed to confirm feedback');
       }
-    } catch (error: any) {
-      console.error('Confirm feedback error:', error);
-      toast.error(error.message || 'Failed to confirm feedback');
-    } finally {
-      setConfirming(false);
-    }
+    );
   };
+
+  const confirming = confirmFeedbackMutation.isPending;
 
   // Only show feedback form for external tickets
   const canConfirmFeedback = source === 'external' && detail?.result_code === '0';

@@ -50,6 +50,7 @@ interface ServiceFormData {
     };
     bandwidthNumericValue?: number;
     resourceMessage?: string;
+    termsAccepted?: boolean;
 }
 
 interface ServiceCreationFlowProps {
@@ -218,7 +219,8 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             case 0: // Service Selection
                 const hasValidService = formData.serviceType && (!formData.serviceType.includes('1457567289') || formData.bandwidth);
                 const hasDeviceSelection = formData.withDevice !== undefined; // Device selection is required
-                return hasValidService && hasDeviceSelection;
+                const hasAcceptedTerms = formData.termsAccepted === true; // Terms acceptance is required
+                return hasValidService && hasDeviceSelection && hasAcceptedTerms;
             case 1: // Location Setup
                 return formData.latitude !== 0 && formData.longitude !== 0 && formData.address;
             case 2: // Review

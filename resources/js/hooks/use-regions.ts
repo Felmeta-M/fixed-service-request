@@ -1,6 +1,6 @@
 import { Option } from '@/types/customer';
-import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api-client';
 
 interface Region {
     id: number;
@@ -8,94 +8,62 @@ interface Region {
 }
 
 export function useRegions() {
-    const [regions, setRegions] = useState<Option[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['regions'],
+        queryFn: async () => {
+            const response = await apiClient.get<Region[]>('/locations/regions');
+            return response.map((region) => ({
+                label: region.name,
+                value: region.id.toString(),
+            }));
+        },
+    });
 
-    useEffect(() => {
-        const fetchRegions = async () => {
-            try {
-                setLoading(true);
-                const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/locations/regions`);
-                console.log('response', response.data);
-                const formattedRegions = response.data.map((region: Region) => ({
-                    label: region.name,
-                    value: region.id.toString(),
-                }));
-
-                setRegions(formattedRegions);
-            } catch (error) {
-                setError('Failed to load regions');
-                console.error('Error loading regions', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchRegions();
-    }, []);
-
-    return { regions, loading, error };
+    return {
+        regions: data || [],
+        loading: isLoading,
+        error: error ? (error instanceof Error ? error.message : 'Failed to load regions') : null,
+    };
 }
 
 export function useZones(regionValue?: string) {
-    const [zones, setZones] = useState<Option[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['zones', regionValue],
+        queryFn: async () => {
+            if (!regionValue) return [];
+            const response = await apiClient.get<Region[]>(`/locations/zones/${regionValue}`);
+            return response.map((zone) => ({
+                label: zone.name,
+                value: zone.id.toString(),
+            }));
+        },
+        enabled: !!regionValue,
+    });
 
-    useEffect(() => {
-        const fetchZones = async () => {
-            try {
-                if (regionValue) {
-                    setLoading(true);
-                    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/locations/zones/${regionValue}`);
-                    const formattedZones = response.data.map((zone: Region) => ({
-                        label: zone.name,
-                        value: zone.id.toString(),
-                    }));
-                    setZones(formattedZones);
-                } else {
-                    setZones([]);
-                }
-            } catch (error) {
-                setError('Failed to load zones');
-                console.error('Error loading zones', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchZones();
-    }, [regionValue]);
-    return { zones, loading, error };
+    return {
+        zones: data || [],
+        loading: isLoading,
+        error: error ? (error instanceof Error ? error.message : 'Failed to load zones') : null,
+    };
 }
 
 export function useWoredas(zoneValue?: string) {
-    const [woredas, setWoredas] = useState<Option[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['woredas', zoneValue],
+        queryFn: async () => {
+            if (!zoneValue) return [];
+            const response = await apiClient.get<Region[]>(`/locations/weredas/${zoneValue}`);
+            return response.map((woreda) => ({
+                label: woreda.name,
+                value: woreda.id.toString(),
+            }));
+        },
+        enabled: !!zoneValue,
+    });
 
-    useEffect(() => {
-        const fetchWoredas = async () => {
-            try {
-                if (zoneValue) {
-                    setLoading(true);
-                    const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/locations/weredas/${zoneValue}`);
-                    const formattedWoredas = response.data.map((woreda: Region) => ({
-                        label: woreda.name,
-                        value: woreda.id.toString(),
-                    }));
-                    setWoredas(formattedWoredas);
-                } else {
-                    setWoredas([]);
-                }
-            } catch (error) {
-                setError('Failed to load woredas');
-                console.error('Error loading woredas', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchWoredas();
-    }, [zoneValue]);
-    return { woredas, loading, error };
+    return {
+        woredas: data || [],
+        loading: isLoading,
+        error: error ? (error instanceof Error ? error.message : 'Failed to load woredas') : null,
+    };
 }

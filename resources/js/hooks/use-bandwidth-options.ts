@@ -1,10 +1,15 @@
-import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api-client';
 
 interface BandwidthOptionResponse {
     id: number;
     residential_options: string[];
     enterprise_options: string[];
+}
+
+interface BandwidthOptionsApiResponse {
+    success: boolean;
+    data: BandwidthOptionResponse[];
 }
 
 export interface ProcessedBandwidthOption {
@@ -13,68 +18,68 @@ export interface ProcessedBandwidthOption {
     numericValue: number;
 }
 
+// Function to convert bandwidth string to numeric value
+const parseBandwidthValue = (bandwidth: string): number => {
+    // Remove any whitespace and convert to lowercase
+    const cleanValue = bandwidth.trim().toLowerCase();
+
+    // Check if it's in Gbps
+    if (cleanValue.includes('gbps')) {
+        const numericPart = parseFloat(cleanValue.replace('gbps', ''));
+        return numericPart * 1024; // Convert Gbps to Mbps
+    }
+
+    // Check if it's in Mbps or just M
+    if (cleanValue.includes('m') || cleanValue.includes('mbps')) {
+        const numericPart = parseFloat(cleanValue.replace('mbps', '').replace('m', ''));
+        return numericPart;
+    }
+
+    // If it's just a number, assume it's Mbps
+    return parseFloat(cleanValue);
+};
+
 export function useBandwidthOptions() {
-    const [residentialOptions, setResidentialOptions] = useState<ProcessedBandwidthOption[]>([]);
-    const [enterpriseOptions, setEnterpriseOptions] = useState<ProcessedBandwidthOption[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['bandwidth-options'],
+        queryFn: async () => {
+            const response = await apiClient.get<BandwidthOptionsApiResponse>('/bandwidth-options');
 
-    // Function to convert bandwidth string to numeric value
-    const parseBandwidthValue = (bandwidth: string): number => {
-        // Remove any whitespace and convert to lowercase
-        const cleanValue = bandwidth.trim().toLowerCase();
+            if (response.success && response.data.length > 0) {
+                const bandwidthData = response.data[0];
 
-        // Check if it's in Gbps
-        if (cleanValue.includes('gbps')) {
-            const numericPart = parseFloat(cleanValue.replace('gbps', ''));
-            return numericPart * 1024; // Convert Gbps to Mbps
-        }
+                // Process residential options
+                const formattedResidential = bandwidthData.residential_options.map((value) => ({
+                    label: value,
+                    value,
+                    numericValue: parseBandwidthValue(value),
+                }));
 
-        // Check if it's in Mbps or just M
-        if (cleanValue.includes('m') || cleanValue.includes('mbps')) {
-            const numericPart = parseFloat(cleanValue.replace('mbps', '').replace('m', ''));
-            return numericPart;
-        }
+                // Process enterprise options
+                const formattedEnterprise = bandwidthData.enterprise_options.map((value) => ({
+                    label: value,
+                    value,
+                    numericValue: parseBandwidthValue(value),
+                }));
 
-        // If it's just a number, assume it's Mbps
-        return parseFloat(cleanValue);
-    };
-
-    useEffect(() => {
-        const fetchBandwidthOptions = async () => {
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/bandwidth-options`);
-
-                if (response.data.success) {
-                    const data: BandwidthOptionResponse = response.data.data[0];
-
-                    // Process residential options
-                    const formattedResidential = data.residential_options.map((value) => ({
-                        label: value,
-                        value,
-                        numericValue: parseBandwidthValue(value),
-                    }));
-
-                    // Process enterprise options
-                    const formattedEnterprise = data.enterprise_options.map((value) => ({
-                        label: value,
-                        value,
-                        numericValue: parseBandwidthValue(value),
-                    }));
-
-                    setResidentialOptions(formattedResidential);
-                    setEnterpriseOptions(formattedEnterprise);
-                }
-            } catch (err) {
-                setError('Failed to fetch bandwidth options');
-                console.error('Error fetching bandwidth options:', err);
-            } finally {
-                setLoading(false);
+                return {
+                    residentialOptions: formattedResidential,
+                    enterpriseOptions: formattedEnterprise,
+                };
             }
-        };
 
-        fetchBandwidthOptions();
-    }, []);
+            return {
+                residentialOptions: [],
+                enterpriseOptions: [],
+            };
+        },
+    });
 
-    return { residentialOptions, enterpriseOptions, loading, error, parseBandwidthValue };
+    return {
+        residentialOptions: data?.residentialOptions || [],
+        enterpriseOptions: data?.enterpriseOptions || [],
+        loading: isLoading,
+        error: error ? (error instanceof Error ? error.message : 'Failed to fetch bandwidth options') : null,
+        parseBandwidthValue,
+    };
 }

@@ -14,8 +14,8 @@ export default function GuestLayout({ children }: Props) {
     const { auth } = usePage().props as { auth?: { user?: any } };
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     return (
-        <div className="mx-auto bg-gradient-to-br from-blue-50 to-indigo-100">
-            <header className="sticky top-0 z-50 mx-auto w-full border-b bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <div className="mx-auto ">
+            <header className="sticky top-0 z-50 mx-auto w-full bg-gradient-to-r from-[#F5FBF6] via-[#FEFFFE] to-[#F4F7FB]">
                 <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 items-center justify-between">
                         {/* Logo Section */}
@@ -33,19 +33,19 @@ export default function GuestLayout({ children }: Props) {
                                     {/* <Link href="#services" className="text-sm font-medium text-gray-700 transition-colors hover:text-gray-900">
                                         Services
                                     </Link> */}
-                                    <Link
+                                    {/* <Link
                                         href={route('terms')}
-                                        className="cursor-pointer text-sm font-medium text-gray-700 transition-all duration-200 hover:text-primary hover:underline"
+                                        className="cursor-pointer text-sm transition-all duration-200 hover:text-primary hover:underline"
                                     >
                                         Terms and Conditions
-                                    </Link>
+                                    </Link> */}
 
-                                    <select className="rounded-md border px-2 py-1 text-sm">
-                                        <option value="en">English</option>
-                                        <option value="am">አማርኛ</option>
-                                        <option value="or">Afaan Oromoo</option>
-                                        <option value="ti">ትግርኛ</option>
-                                        <option value="so">Af Somali</option>
+                                    <select className="w-12 rounded border px-1 py-1 text-xs">
+                                        <option value="en">EN</option>
+                                        <option value="am">AM</option>
+                                        <option value="or">OR</option>
+                                        <option value="ti">TI</option>
+                                        <option value="so">SO</option>
                                     </select>
                                 </nav>
                                 {auth?.user ? (
@@ -67,7 +67,7 @@ export default function GuestLayout({ children }: Props) {
                                 ) : (
                                     // If NOT logged in
                                     <Link href={route('otp.phone')} className="cursor-pointer">
-                                        <Button className=" h-8 flex cursor-pointer items-center bg-primary text-white hover:opacity-90">
+                                        <Button className="flex cursor-pointer items-center bg-primary text-white hover:opacity-90">
                                             <LogIn className="h-4 w-4" />
                                             <span>Login</span>
                                         </Button>
@@ -85,7 +85,7 @@ export default function GuestLayout({ children }: Props) {
                     </div>
                 </div>
                 {isMobileMenuOpen && (
-                    <div className="border-t bg-white/95 backdrop-blur md:hidden">
+                    <div className="border-t bg-gradient-to-r from-[#F5FBF6] via-[#FEFFFE] to-[#F4F7FB] backdrop-blur-sm md:hidden">
                         <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
                             <Link
                                 href="#services"

@@ -9,7 +9,7 @@
 
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+        'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -57,6 +57,14 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    /* ET Brand Colors */
+    --color-et-green: var(--et-green);
+    --color-et-light-green: var(--et-green-light);
+    --color-et-blue: var(--et-blue);
+    --color-et-light-blue: var(--et-blue-light);
+    --color-et-yellow: var(--et-yellow);
+    --color-et-red: var(--et-red);
 }
 
 /*
@@ -85,7 +93,9 @@
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
     /* --primary: oklch(0.205 0 0); */
-    --primary: oklch(0.7899 0.2065 131.79);
+    /* --primary: oklch(0.7899 0.2065 131.79); */
+    --primary: oklch(0.761 0.1736 129.58);
+    /* --primary: oklch(0.7617 0.1979 132.01); */
     /* --primary: oklch(0.7878 0.2168 135.96); */
     --primary-bg:  oklch(1 0 0);
     --secondary-bg: oklch(0.9703 0.0207 166.11);
@@ -120,6 +130,14 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.87 0 0);
+
+    /* ET Brand Colors */
+    --et-green: #27ac44;
+    --et-light-green: #80ca28;
+    --et-blue: #2868ba;
+    --et-light-blue: #0072bc;
+    --et-yellow: #f8b909;
+    --et-red: #ea1c23;
 }
 
 .dark {

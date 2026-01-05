@@ -4,7 +4,9 @@ namespace App\Http\Middleware;
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
 
@@ -18,6 +20,18 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
+    /**
+     * Supported locales with their display names.
+     */
+    protected array $availableLocales = [
+        'en' => 'English',
+        'am' => 'አማርኛ',
+        'om' => 'Afaan Oromoo',
+        'so' => 'Af Soomaali',
+        'ti' => 'ትግርኛ',
+        'aa' => 'Qafar',
+    ];
 
     /**
      * Determines the current asset version.
@@ -74,7 +88,12 @@ class HandleInertiaRequests extends Middleware
             'sidebarOpen' => !$request->hasCookie('sidebar_state')
                 || $request->cookie('sidebar_state') === 'true',
 
-            'latestResource' => fn() => session('latest_resource', null)
+            'latestResource' => fn() => session('latest_resource', null),
+
+            // Localization data
+            'locale' => App::getLocale(),
+            'availableLocales' => $this->availableLocales,
+            'translations' => fn() => $this->getTranslations(),
         ];
     }
 
@@ -93,5 +112,26 @@ class HandleInertiaRequests extends Middleware
             'email' => $user->email,
             'api_token' => $user->api_token,
         ];
+    }
+
+    /**
+     * Get translations for the current locale.
+     */
+    private function getTranslations(): array
+    {
+        $locale = App::getLocale();
+        $path = lang_path("{$locale}.json");
+
+        if (File::exists($path)) {
+            return json_decode(File::get($path), true) ?? [];
+        }
+
+        // Fallback to English if locale file doesn't exist
+        $fallbackPath = lang_path('en.json');
+        if (File::exists($fallbackPath)) {
+            return json_decode(File::get($fallbackPath), true) ?? [];
+        }
+
+        return [];
     }
 }

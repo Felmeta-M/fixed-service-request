@@ -1,7 +1,7 @@
+import { useTranslation } from '@/hooks/use-translation';
 import { Link } from '@inertiajs/react';
-// import logo from '../../images/ethio_logo_full.png';
-import { Globe, Instagram, Linkedin, Navigation, Navigation2, NavigationIcon, Plane, TestTube } from 'lucide-react';
-import logo from "../../images/ethiotelecom-logo-white.png"
+import { Globe, Instagram, Linkedin, NavigationIcon } from 'lucide-react';
+import logo from '../../images/ethiotelecom-logo-white.png';
 // import { CiLinkedin } from "react-icons/ci";
 // import { LiaTelegramPlane } from "react-icons/lia";
 // import { PiTiktokLogo } from "react-icons/pi";
@@ -9,16 +9,16 @@ import logo from "../../images/ethiotelecom-logo-white.png"
 
 export const Footer = () => {
     const currentYear = new Date().getFullYear();
+    const { t } = useTranslation();
 
-    
-const navigation = {
-    main: [
-      { name: "About", href: "https://www.ethiotelecom.et/profile/" },
-      { name: "Jobs", href: "https://www.ethiotelecom.et/vacancy/" },
-      { name: "Press", href: "https://www.ethiotelecom.et/press-release/" },
-      { name: "Partners", href: "https://vaspartnersportal.ethiotelecom.et/" },
-      { name: "Docs", href: "#" },
-    ],
+    const navigation = {
+        main: [
+            { name: t('footer.about'), href: 'https://www.ethiotelecom.et/profile/' },
+            { name: t('footer.jobs'), href: 'https://www.ethiotelecom.et/vacancy/' },
+            { name: t('footer.press'), href: 'https://www.ethiotelecom.et/press-release/' },
+            { name: t('footer.partners'), href: 'https://vaspartnersportal.ethiotelecom.et/' },
+            { name: t('footer.docs'), href: '#' },
+        ],
     social: [
       {
         name: "company web address",
@@ -129,7 +129,7 @@ const navigation = {
             ))}
           </div>
           <p className="mt-10 text-center text-xs leading-5 text-white">
-            &copy; {currentYear} Ethio telecom. All rights reserved.
+            {t('footer.copyright', { year: currentYear })}
           </p>
         </div>
       </footer>

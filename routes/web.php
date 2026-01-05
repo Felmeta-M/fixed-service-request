@@ -10,9 +10,27 @@ use App\Http\Resources\PaymentResource;
 use App\Models\Payment;
 use App\Models\SurveyOrder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
 
+// Locale switching route
+Route::post('/locale', function (Request $request) {
+    $locale = $request->input('locale');
+    $supportedLocales = ['en', 'am', 'om', 'so', 'ti', 'aa'];
+    
+    Log::info('Locale switch requested', ['locale' => $locale, 'supported' => in_array($locale, $supportedLocales)]);
+    
+    if (in_array($locale, $supportedLocales)) {
+        Session::put('locale', $locale);
+        App::setLocale($locale);
+        Log::info('Locale set successfully', ['new_locale' => $locale, 'session_id' => Session::getId()]);
+    }
+    
+    // Return JSON response - the frontend will reload the page
+    return response()->json(['success' => true, 'locale' => $locale]);
+})->name('locale.switch');
 
 Route::get('/', fn() => Inertia::render('Home'))->name('home');
 Route::get('/terms', fn() => Inertia::render('Terms'))->name('terms');
@@ -110,7 +128,7 @@ Route::middleware(['otp.auth'])->group(function () {
     })->name('subscriber.create');
 
     // Add this route for NID success redirect
-    Route::get('/nid/success', [App\Http\Controllers\OtpAuthController::class, 'handleNidSuccess'])
+    Route::get('/nid/success', [OtpAuthController::class, 'handleNidSuccess'])
         ->name('nid.success')
         ->middleware('web');
 

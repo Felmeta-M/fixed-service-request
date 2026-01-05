@@ -8,6 +8,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
+import { useTranslation } from '@/hooks/use-translation';
 import { router, usePage } from '@inertiajs/react';
 import { LogOut, MoreVertical } from 'lucide-react';
 
@@ -22,6 +23,7 @@ export function NavUser() {
     const { isMobile } = useSidebar();
     const { auth } = usePage().props;
     const user = auth.user as User;
+    const { t } = useTranslation();
 
     // const user: User = {
     //     id: 6,
@@ -88,7 +90,7 @@ export function NavUser() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout}>
                             <LogOut className="mr-2 size-4" />
-                            Log out
+                            {t('nav.log_out')}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

@@ -1,4 +1,6 @@
 import { Footer } from '@/components/layout/footer';
+import { LocaleSwitcher } from '@/components/locale-switcher';
+import { useTranslation } from '@/hooks/use-translation';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { Link, usePage } from '@inertiajs/react';
@@ -13,9 +15,10 @@ type Props = {
 export default function GuestLayout({ children }: Props) {
     const { auth } = usePage().props as { auth?: { user?: any } };
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const { t, locale } = useTranslation();
     return (
         <div className="mx-auto ">
-            <header className="sticky top-0 z-50 mx-auto w-full bg-gradient-to-r from-[#F5FBF6] via-[#FEFFFE] to-[#F4F7FB]">
+            <header key={locale} className="sticky top-0 z-50 mx-auto w-full bg-gradient-to-r from-[#F5FBF6] via-[#FEFFFE] to-[#F4F7FB]">
                 <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 items-center justify-between">
                         {/* Logo Section */}
@@ -40,13 +43,7 @@ export default function GuestLayout({ children }: Props) {
                                         Terms and Conditions
                                     </Link> */}
 
-                                    <select className="w-12 rounded border px-1 py-1 text-xs">
-                                        <option value="en">EN</option>
-                                        <option value="am">AM</option>
-                                        <option value="or">OR</option>
-                                        <option value="ti">TI</option>
-                                        <option value="so">SO</option>
-                                    </select>
+                                    <LocaleSwitcher variant="compact" />
                                 </nav>
                                 {auth?.user ? (
                                     <div className="flex items-center space-x-4">
@@ -55,12 +52,12 @@ export default function GuestLayout({ children }: Props) {
                                             className="flex items-center gap-2 font-medium text-muted-foreground transition-colors duration-200 hover:text-accent-foreground"
                                         >
                                             <LayoutDashboard className="h-4 w-4" />
-                                            <span>Dashboard</span>
+                                            <span>{t('nav.dashboard')}</span>
                                         </Link>
                                         <Link href={route('logout')} method="post" as="button">
                                             <Button variant="outline" type="submit">
                                                 <LogOut className="h-4 w-4" />
-                                                <span>Log out </span>
+                                                <span>{t('nav.logout')}</span>
                                             </Button>
                                         </Link>
                                     </div>
@@ -69,7 +66,7 @@ export default function GuestLayout({ children }: Props) {
                                     <Link href={route('otp.phone')} className="cursor-pointer">
                                         <Button className="flex cursor-pointer items-center bg-primary text-white hover:opacity-90">
                                             <LogIn className="h-4 w-4" />
-                                            <span>Login</span>
+                                            <span>{t('nav.login')}</span>
                                         </Button>
                                     </Link>
                                 )}
@@ -92,15 +89,20 @@ export default function GuestLayout({ children }: Props) {
                                 className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
-                                Services
+                                {t('nav.services')}
                             </Link>
                             <Link
                                 href={route('terms')}
                                 className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
-                                Terms and Conditions
+                                {t('footer.terms')}
                             </Link>
+
+                            {/* Language Switcher */}
+                            <div className="py-2">
+                                <LocaleSwitcher />
+                            </div>
 
                             {auth?.user ? (
                                 <>
@@ -112,7 +114,7 @@ export default function GuestLayout({ children }: Props) {
                                     >
                                         <div className="flex items-center gap-2">
                                             <LayoutDashboard className="h-4 w-4" />
-                                            <span>Dashboard</span>
+                                            <span>{t('nav.dashboard')}</span>
                                         </div>
                                     </Link>
 
@@ -126,7 +128,7 @@ export default function GuestLayout({ children }: Props) {
                                     >
                                         <Button variant="outline" className="flex w-full items-center justify-center gap-2">
                                             <LogOut className="h-4 w-4" />
-                                            <span>Logout</span>
+                                            <span>{t('nav.log_out')}</span>
                                         </Button>
                                     </Link>
                                 </>
@@ -136,7 +138,7 @@ export default function GuestLayout({ children }: Props) {
                                     <Link href={route('otp.phone')} className="block cursor-pointer pt-3" onClick={() => setIsMobileMenuOpen(false)}>
                                         <Button className="br-primary flex w-full items-center justify-center space-x-2 text-white hover:opacity-90">
                                             <LogIn className="h-4 w-4" />
-                                            <span>Login</span>
+                                            <span>{t('nav.login_to_account')}</span>
                                         </Button>
                                     </Link>
                                 </>

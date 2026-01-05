@@ -10,14 +10,14 @@ import { Button } from '../ui/button';
 export const Header = () => {
     const { activeCustomer, clearActiveCustomer } = useActiveCustomer();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
 
     const handleLogout = () => {
         clearActiveCustomer();
     };
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <header key={locale} className="sticky top-0 z-50 w-full border-b bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/60">
             <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-2">
                 <div className="flex h-16 items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -67,7 +67,7 @@ export const Header = () => {
                                 {/* Login Button */}
                                 <Link href="/otp/phone">
                                     <Button className="flex items-center space-x-2 bg-primary text-white hover:opacity-90">
-                                        <LogIn className="h-4 w-4" />
+                                        {/* <LogIn className="h-4 w-4" /> */}
                                         <span>{t('nav.login')}</span>
                                     </Button>
                                 </Link>

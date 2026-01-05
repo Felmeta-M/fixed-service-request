@@ -6,13 +6,31 @@ import { useSurveyList } from '@/hooks/use-surveys';
 import MainLayout from '@/layouts/main-layout';
 import { ServiceProvisionStatus } from '@/lib/status-map';
 import { Link, router, usePage } from '@inertiajs/react';
-import { AlertCircle, BarChart3, Box, CheckCircle2, ChevronDown, ChevronUp, Clock, Filter, Phone, Plus, TrendingUp, UserPlus, Wifi, X } from 'lucide-react';
+import {
+    AlertCircle,
+    BarChart3,
+    Box,
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    Filter,
+    Phone,
+    Plus,
+    TrendingUp,
+    UserPlus,
+    Wifi,
+    X,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const typeMap = {
-    '1943913918': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
-    '1207609454': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
-    '180427974': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
+    // '1943913918': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
+    // '1207609454': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
+    // '180427974': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
+    '1943913918': { label: 'Internet', text: 'text-et-blue', bg: 'bg-blue-400', icon: Wifi },
+    '1207609454': { label: 'Voice', text: 'text-primary', bg: 'bg-purple-400', icon: Phone },
+    '180427974': { label: 'Combo', text: 'text-et-green', bg: 'bg-green-400', icon: Box },
 };
 
 interface DashboardStats {
@@ -56,7 +74,7 @@ export default function CustomerDashboard() {
 
     const [filters, setFilters] = useState<{ search?: string; status?: string }>({});
     const surveyListQuery = useSurveyList(filters);
-    
+
     // Flatten pages to get all surveys
     const surveys = surveyListQuery.data?.pages.flatMap((page) => page.data || []) || [];
     const loading = surveyListQuery.isLoading;
@@ -242,14 +260,13 @@ export default function CustomerDashboard() {
             <MainLayout>
                 <div className="w-full space-y-6 px-4 lg:px-6">
                     <Card>
-                        <CardContent className="p-6 flex flex-col sm:flex-row justify-between">
+                        <CardContent className="flex flex-col justify-between p-6 sm:flex-row">
                             <div className="flex items-center space-x-3 text-red-600">
                                 <AlertCircle className="h-5 w-5" />
                                 <div>
                                     <p className="font-medium">Error loading dashboard</p>
                                     <p className="text-sm">{error}</p>
                                 </div>
-                                
                             </div>
                             <div className="mt-6 flex gap-3">
                                 {/* // if error is customer not created, show a button that routes to the customer creation page */}
@@ -286,7 +303,7 @@ export default function CustomerDashboard() {
                         value={dashboardStats.totalServices}
                         description="All your service requests"
                         icon={BarChart3}
-                        color="text-blue-600"
+                        color="text-et-blue"
                         loading={loading}
                     />
                     <StatCard
@@ -302,7 +319,7 @@ export default function CustomerDashboard() {
                         value={dashboardStats.pendingRequests}
                         description="Awaiting action"
                         icon={Clock}
-                        color="text-orange-600"
+                        color="text-et-yellow"
                         loading={loading}
                     />
                     <StatCard
@@ -310,7 +327,7 @@ export default function CustomerDashboard() {
                         value={dashboardStats.completedServices}
                         description="Successfully delivered"
                         icon={TrendingUp}
-                        color="text-purple-600"
+                        color="text-et-green"
                         loading={loading}
                     />
                 </div>
@@ -371,9 +388,9 @@ export default function CustomerDashboard() {
                                                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                                             >
                                                 <option value="">All Types</option>
-                                                <option value="1943913918">🌐 Internet</option>
-                                                <option value="1207609454">📞 Voice</option>
-                                                <option value="180427974">📦 Combo</option>
+                                                <option value="1943913918">Internet</option>
+                                                <option value="1207609454">Voice</option>
+                                                <option value="180427974">Combo</option>
                                             </select>
                                         </div>
 
@@ -417,8 +434,8 @@ export default function CustomerDashboard() {
                                             {appliedFilters.type === '1943913918'
                                                 ? 'Internet'
                                                 : appliedFilters.type === '1207609454'
-                                                    ? 'Voice'
-                                                    : 'Combo'}
+                                                  ? 'Voice'
+                                                  : 'Combo'}
                                             <button onClick={() => handleTypeFilterChange('')} className="ml-1 rounded-full hover:bg-primary/20">
                                                 <X className="h-3 w-3" />
                                             </button>

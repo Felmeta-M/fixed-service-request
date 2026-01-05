@@ -13,14 +13,17 @@ import {
     getSortedRowModel,
     useReactTable,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Box, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, FileText, Phone, RefreshCw, Wifi } from 'lucide-react';
+import { ArrowUpDown, Box, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileText, Phone, RefreshCw, Wifi } from 'lucide-react';
 import * as React from 'react';
 import SurveyActions from './survey-actions';
 
 const typeMap = {
-    '1457567289': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
-    '1207609454': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
-    '180427974': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
+    // '1457567289': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
+    // '1207609454': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
+    // '180427974': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
+    '1457567289': { label: 'Internet', text: 'text-et-blue', bg: 'bg-blue-400', icon: Wifi },
+    '1207609454': { label: 'Voice', text: 'text-primary', bg: 'bg-purple-400', icon: Phone },
+    '180427974': { label: 'Combo', text: 'text-et-green', bg: 'bg-green-400', icon: Box },
 };
 
 interface SurveyTableProps {
@@ -79,7 +82,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                 header: ({ column }) => (
                     <Button
                         variant="ghost"
-                        className="px-0 font-medium !hover:text-primary"
+                        className="!hover:text-primary px-0 font-medium"
                         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                     >
                         Order ID

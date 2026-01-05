@@ -45,10 +45,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
         if (!loadingBandwidths && residentialOptions.length > 0 && !formData.bandwidth) {
             // Find "5M" in residential options (case-insensitive, handle variations like "5M", "5Mbps", etc.)
             const defaultBandwidth = residentialOptions.find(
-                (option) => 
-                    option.value.toLowerCase().includes('5m') || 
-                    option.value.toLowerCase().includes('5 mbps') ||
-                    option.numericValue === 5
+                (option) => option.value.toLowerCase().includes('5m') || option.value.toLowerCase().includes('5 mbps') || option.numericValue === 5,
             );
 
             if (defaultBandwidth) {
@@ -93,7 +90,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                                 name="serviceType"
                                 value={service.value}
                                 checked={isSelected}
-                                onChange={() => { }}
+                                onChange={() => {}}
                                 className="absolute inset-0 cursor-pointer opacity-0"
                                 disabled={hasActiveSurvey}
                             />
@@ -127,13 +124,10 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                 </div>
             )}
 
-            <DeviceOptionSelector
-                value={formData.withDevice}
-                onChange={(val) => onUpdate({ withDevice: val })}
-            />
+            <DeviceOptionSelector value={formData.withDevice} onChange={(val) => onUpdate({ withDevice: val })} />
 
             {/* Terms and Conditions Checkbox */}
-            <div >
+            <div>
                 <div>
                     <div className="flex items-start gap-3">
                         <Checkbox
@@ -151,13 +145,12 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                                 I accept the{' '}
                                 <Link
                                     href={route('terms')}
-                                    target="_blank"
                                     className="font-medium text-primary underline hover:text-primary/80"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     Terms and Conditions
-                                </Link>
-                                {' '}and agree to the service agreement. By proceeding, I acknowledge that I have read and understood the terms of service.
+                                </Link>{' '}
+                                and agree to the service agreement. By proceeding, I acknowledge that I have read and understood the terms of service.
                             </span>
                         </label>
                     </div>

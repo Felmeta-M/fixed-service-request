@@ -1,11 +1,10 @@
+import { Button } from '@/components/ui/button';
 import { formatCoordinate } from '@/lib/coordinate-utils';
 import { GoogleMap, LoadScript } from '@react-google-maps/api';
-import { Loader2, LocateIcon, MapPin, Navigation } from 'lucide-react';
+import { Loader2, MapPin } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ProfessionalSearch } from './map-search';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import LocationPicker from '../LocationPicker';
+import { ProfessionalSearch } from './map-search';
 
 interface GoogleLocationMapProps {
     onLocationSelect: (lat: number, lng: number, address?: string) => void;
@@ -34,7 +33,7 @@ const easeInOutCubic = (t: number): number => {
 };
 
 // Add this constant outside your component
-const LIBRARIES: ("places" | "drawing" | "geometry" | "localContext" | "visualization")[] = ['places'];
+const LIBRARIES: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualization')[] = ['places'];
 
 export function GoogleLocationMap({
     onLocationSelect,
@@ -159,9 +158,7 @@ export function GoogleLocationMap({
         async (lat: number, lng: number): Promise<string> => {
             try {
                 setIsGeocoding(true);
-                const response = await fetch(
-                    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${googleMapsApiKey}`,
-                );
+                const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${googleMapsApiKey}`);
                 const data = await response.json();
 
                 if (data.status === 'OK' && data.results.length > 0) {
@@ -342,7 +339,6 @@ export function GoogleLocationMap({
 
                 // Clear search query after successful search
                 setSearchQuery('');
-
             } catch (error) {
                 console.error('Geocoding failed:', error);
                 // Fall back to the parent handler for error display
@@ -413,7 +409,7 @@ export function GoogleLocationMap({
                 enableHighAccuracy: true,
                 timeout: 10000,
                 maximumAge: 0,
-            }
+            },
         );
     }, [map, smoothPanTo, updateMarkerPosition, getAddressFromCoordinates, onLocationSelect]);
 
@@ -434,7 +430,7 @@ export function GoogleLocationMap({
     return (
         <div className="space-y-2">
             {/* Search Bar and Get Location Button */}
-            <div className="flex gap-2 flex-col sm:flex-row">
+            <div className="flex flex-col gap-2 sm:flex-row">
                 <div className="flex-1">
                     <ProfessionalSearch
                         searchQuery={searchQuery}
@@ -497,7 +493,7 @@ export function GoogleLocationMap({
             </div> */}
 
             {/* Google Maps Container */}
-            <div className="relative overflow-hidden rounded-lg border transition-all duration-300">
+            <div className="relative overflow-hidden rounded-sm transition-all duration-300">
                 {isLoading && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-100/80 backdrop-blur-sm">
                         <div className="text-center">
@@ -507,7 +503,7 @@ export function GoogleLocationMap({
                     </div>
                 )}
 
-                <div className="absolute top-2 right-14 z-10 rounded-lg bg-white/90 px-3 py-2 text-xs font-medium text-gray-700 backdrop-blur-sm transition-all duration-300">
+                <div className="absolute top-2 right-14 z-10 rounded-sm bg-white/90 px-3 py-2 text-xs font-medium text-gray-700 backdrop-blur-sm transition-all duration-300">
                     📍 Click on map or drag marker to select location
                 </div>
 

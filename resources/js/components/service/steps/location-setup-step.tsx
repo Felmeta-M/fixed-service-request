@@ -1,14 +1,4 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { parseCoordinate } from '@/lib/coordinate-utils';
-import { router, usePage } from '@inertiajs/react';
-import { AlertCircle, Loader2, MapPin, CheckCircle2 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { GoogleLocationMap } from '../google-location-map';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -19,7 +9,14 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { toast } from 'sonner';
+import { Card, CardContent } from '@/components/ui/card';
+import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { parseCoordinate } from '@/lib/coordinate-utils';
+import { usePage } from '@inertiajs/react';
+import { AlertCircle, CheckCircle2, Loader2, MapPin } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { GoogleLocationMap } from '../google-location-map';
 
 interface LocationSetupStepProps {
     formData: any;
@@ -40,7 +37,15 @@ interface AuthUser {
     api_token?: string;
 }
 
-export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext, onContinueManually, hasSeenResourceDialog = false, onResourceDialogSeen }: LocationSetupStepProps) {
+export function LocationSetupStep({
+    formData,
+    onUpdate,
+    googleMapsApiKey,
+    onNext,
+    onContinueManually,
+    hasSeenResourceDialog = false,
+    onResourceDialogSeen,
+}: LocationSetupStepProps) {
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
     const [locationLoading, setLocationLoading] = useState(true);
     const [locationError, setLocationError] = useState('');
@@ -138,7 +143,6 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
             setShowResourceUnavailableDialog(true);
         }
     }, [formData.resourceAvailable, hasSeenResourceDialog]);
-
 
     // Handle "Continue Manually" button click - show manual step in flow
     const handleContinueManually = () => {
@@ -376,18 +380,18 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
         currentLocation ||
         (hasValidLocation
             ? {
-                lat: formData.latitude,
-                lng: formData.longitude,
-                address: formData.address,
-            }
+                  lat: formData.latitude,
+                  lng: formData.longitude,
+                  address: formData.address,
+              }
             : null);
 
     return (
         <div className="min-w-sm space-y-6 md:min-w-3xl">
             {/* Map Section with Enhanced Styling */}
             <div className="space-y-4">
-                <div className="relative h-full overflow-hidden rounded-xl border border-border shadow-lg transition-all duration-300 hover:shadow-xl">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none z-10" />
+                <div className="relative h-full overflow-hidden rounded-sm shadow-xs">
+                    <div className="pointer-events-none absolute inset-0 z-10" />
                     <GoogleLocationMap
                         onLocationSelect={handleLocationSelect}
                         onAddressSearch={handleAddressSearch}
@@ -402,13 +406,13 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
 
                 {/* Location Details Card - Enhanced Design */}
                 {(hasValidLocation || currentLocation) && (
-                    <Card className="border border-border/50 bg-gradient-to-br from-card to-card/50 shadow-md transition-all duration-300 hover:shadow-lg">
-                        <CardContent className="p-6">
+                    <Card className="shadow-none transition-all duration-300">
+                        <CardContent className="shadow-none">
                             <div className="space-y-5">
                                 {/* Header Section */}
-                                <div className="flex items-center justify-between border-b border-border/50 pb-4">
+                                <div className="flex items-center justify-between pb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 ring-2 ring-primary/20">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-sm ring-1 ring-primary/80">
                                             {locationLoading ? (
                                                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
                                             ) : (
@@ -426,7 +430,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                                     </div>
 
                                     {(isGeocoding || isMapAnimating) && (
-                                        <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5">
+                                        <div className="flex items-center gap-2 rounded-full px-3 py-1.5">
                                             {isGeocoding && (
                                                 <>
                                                     <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
@@ -443,9 +447,9 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                                     )}
 
                                     {!locationLoading && !isGeocoding && !isMapAnimating && (hasValidLocation || currentLocation) && (
-                                        <div className="flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 ring-1 ring-green-200">
-                                            <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                                            <span className="text-xs font-medium text-green-700">Confirmed</span>
+                                        <div className="flex items-center gap-1.5 rounded-full px-3 py-1.5">
+                                            <CheckCircle2 className="h-3.5 w-3.5 text-et-green" />
+                                            <span className="text-xs font-medium text-et-green">Confirmed</span>
                                         </div>
                                     )}
                                 </div>
@@ -454,9 +458,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-2">
                                         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
-                                        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                                            Coordinates
-                                        </span>
+                                        <span className="text-xs font-medium tracking-wider text-muted-foreground uppercase">Coordinates</span>
                                         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
                                     </div>
 
@@ -479,7 +481,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                                                         }}
                                                         className="h-11 border-border/60 bg-background/50 transition-all duration-200 focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/20"
                                                     />
-                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                    <div className="absolute top-1/2 right-3 -translate-y-1/2">
                                                         <span className="text-xs text-muted-foreground">°N</span>
                                                     </div>
                                                 </div>
@@ -502,7 +504,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                                                         }}
                                                         className="h-11 border-border/60 bg-background/50 transition-all duration-200 focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/20"
                                                     />
-                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                    <div className="absolute top-1/2 right-3 -translate-y-1/2">
                                                         <span className="text-xs text-muted-foreground">°E</span>
                                                     </div>
                                                 </div>
@@ -531,9 +533,9 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
 
             {/* Enhanced Loading Alert */}
             {locationLoading && (
-                <Alert className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 shadow-sm">
+                <Alert className="flex items-center shadow-xs">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
                             <Loader2 className="h-4 w-4 animate-spin text-primary" />
                         </div>
                         <AlertDescription className="text-sm font-medium text-foreground">
@@ -547,9 +549,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
             {locationError && (
                 <Alert className="border-destructive/20 bg-destructive/5 shadow-sm">
                     <AlertCircle className="h-4 w-4 text-destructive" />
-                    <AlertDescription className="text-sm text-destructive">
-                        {locationError}
-                    </AlertDescription>
+                    <AlertDescription className="text-sm text-destructive">{locationError}</AlertDescription>
                 </Alert>
             )}
 
@@ -561,19 +561,19 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 ring-2 ring-amber-200">
                                 <AlertCircle className="h-5 w-5 text-amber-600" />
                             </div>
-                            <AlertDialogTitle className="text-xl font-semibold text-foreground">
-                                Location Review Needed
-                            </AlertDialogTitle>
+                            <AlertDialogTitle className="text-xl font-semibold text-foreground">Location Review Needed</AlertDialogTitle>
                         </div>
 
                         <AlertDialogDescription className="space-y-3 pt-2 text-left">
                             <p className="text-sm leading-relaxed text-muted-foreground">
-                                Thank you for selecting your location on the map. We're currently unable to automatically provision service for this location because available resources could not be confirmed.
+                                Thank you for selecting your location on the map. We're currently unable to automatically provision service for this
+                                location because available resources could not be confirmed.
                             </p>
 
                             <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
                                 <p className="text-sm leading-relaxed text-foreground">
-                                    You can continue by submitting a manual request. Our team will review your location, perform a manual survey if needed, and contact you to assist with the next steps.
+                                    You can continue by submitting a manual request. Our team will review your location, perform a manual survey if
+                                    needed, and contact you to assist with the next steps.
                                 </p>
                             </div>
 
@@ -584,10 +584,7 @@ export function LocationSetupStep({ formData, onUpdate, googleMapsApiKey, onNext
                     </AlertDialogHeader>
 
                     <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-2">
-                        <AlertDialogCancel
-                            onClick={() => setShowResourceUnavailableDialog(false)}
-                            className="mt-0 sm:mt-0"
-                        >
+                        <AlertDialogCancel onClick={() => setShowResourceUnavailableDialog(false)} className="mt-0 sm:mt-0">
                             Cancel
                         </AlertDialogCancel>
                         <AlertDialogAction

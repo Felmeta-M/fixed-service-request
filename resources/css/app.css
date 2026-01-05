@@ -60,9 +60,9 @@
 
     /* ET Brand Colors */
     --color-et-green: var(--et-green);
-    --color-et-light-green: var(--et-green-light);
+    --color-et-light-green: var(--et-light-green);
     --color-et-blue: var(--et-blue);
-    --color-et-light-blue: var(--et-blue-light);
+    --color-et-light-blue: var(--et-light-blue);
     --color-et-yellow: var(--et-yellow);
     --color-et-red: var(--et-red);
 }

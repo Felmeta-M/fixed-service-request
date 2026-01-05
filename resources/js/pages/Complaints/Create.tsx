@@ -3,27 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useCreateComplaint } from '@/hooks/use-api-mutations';
 import MainLayout from '@/layouts/main-layout';
-import { complaintSchema, ComplaintFormValues, TroubleReasons } from '@/types/complaint';
+import { ComplaintFormValues, complaintSchema, TroubleReasons } from '@/types/complaint';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
-import { useCreateComplaint } from '@/hooks/use-api-mutations';
-
 
 export default function CreateComplaintPage() {
     const { auth } = usePage().props as any;
 
     const { user } = auth;
-    console.log('user:', user)
-    const {
-        data,
-        setData,
-        errors,
-        setError,
-        clearErrors,
-        processing,
-        reset,
-    } = useForm<ComplaintFormValues>({
+    console.log('user:', user);
+    const { data, setData, errors, setError, clearErrors, processing, reset } = useForm<ComplaintFormValues>({
         trouble_title: '',
         access_number: '',
         contact_person: user?.name || '',
@@ -32,7 +23,7 @@ export default function CreateComplaintPage() {
         tt_description: '',
     });
 
-    const Required = () => <span className="text-red-500 ml-1">*</span>;
+    const Required = () => <span className="ml-1 text-red-500">*</span>;
 
     const createComplaintMutation = useCreateComplaint();
 
@@ -68,7 +59,6 @@ export default function CreateComplaintPage() {
         });
     };
 
-
     return (
         <MainLayout>
             <div className="w-full px-4 py-6 lg:px-6">
@@ -80,19 +70,13 @@ export default function CreateComplaintPage() {
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-
                                 {/* Title */}
-                                <div className="lg:col-span-2 space-y-1">
+                                <div className="space-y-1 lg:col-span-2">
                                     <label className="text-sm font-medium">
                                         Title <Required />
                                     </label>
-                                    <Input
-                                        value={data.trouble_title}
-                                        onChange={(e) => setData('trouble_title', e.target.value)}
-                                    />
-                                    {errors.trouble_title && (
-                                        <p className="text-sm text-red-600">{errors.trouble_title}</p>
-                                    )}
+                                    <Input value={data.trouble_title} onChange={(e) => setData('trouble_title', e.target.value)} />
+                                    {errors.trouble_title && <p className="text-sm text-red-600">{errors.trouble_title}</p>}
                                 </div>
 
                                 {/* Access Number */}
@@ -102,11 +86,12 @@ export default function CreateComplaintPage() {
                                     </label>
                                     <Input
                                         value={data.access_number}
-                                        onChange={(e) => setData('access_number', e.target.value)}
+                                        onChange={(e) => {
+                                            const value = e.target.value.replace(/\D/g, '').slice(0, 12);
+                                            setData('access_number', value);
+                                        }}
                                     />
-                                    {errors.access_number && (
-                                        <p className="text-sm text-red-600">{errors.access_number}</p>
-                                    )}
+                                    {errors.access_number && <p className="text-sm text-red-600">{errors.access_number}</p>}
                                 </div>
 
                                 {/* Mobile Number */}
@@ -116,11 +101,12 @@ export default function CreateComplaintPage() {
                                     </label>
                                     <Input
                                         value={data.mobile_no}
-                                        onChange={(e) => setData('mobile_no', e.target.value)}
+                                        onChange={(e) => {
+                                            const value = e.target.value.replace(/[^0-9+]/g, '').slice(0, 13);
+                                            setData('mobile_no', value);
+                                        }}
                                     />
-                                    {errors.mobile_no && (
-                                        <p className="text-sm text-red-600">{errors.mobile_no}</p>
-                                    )}
+                                    {errors.mobile_no && <p className="text-sm text-red-600">{errors.mobile_no}</p>}
                                 </div>
 
                                 {/* Contact Person */}
@@ -128,13 +114,8 @@ export default function CreateComplaintPage() {
                                     <label className="text-sm font-medium">
                                         Contact Person <Required />
                                     </label>
-                                    <Input
-                                        value={data.contact_person}
-                                        onChange={(e) => setData('contact_person', e.target.value)}
-                                    />
-                                    {errors.contact_person && (
-                                        <p className="text-sm text-red-600">{errors.contact_person}</p>
-                                    )}
+                                    <Input value={data.contact_person} onChange={(e) => setData('contact_person', e.target.value)} />
+                                    {errors.contact_person && <p className="text-sm text-red-600">{errors.contact_person}</p>}
                                 </div>
 
                                 {/* Trouble Reason */}
@@ -151,31 +132,19 @@ export default function CreateComplaintPage() {
                                             <SelectValue placeholder="Select trouble reason" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value={TroubleReasons.NO_INTERNET}>
-                                                No internet connectivity
-                                            </SelectItem>
-                                            <SelectItem value={TroubleReasons.SLOW_INTERNET}>
-                                                Slow internet
-                                            </SelectItem>
-                                            <SelectItem value={TroubleReasons.NO_SIGNAL}>
-                                                No signal
-                                            </SelectItem>
-                                            <SelectItem value={TroubleReasons.BILLING_ISSUE}>
-                                                Billing issue
-                                            </SelectItem>
-                                            <SelectItem value={TroubleReasons.OTHER}>
-                                                Other
-                                            </SelectItem>
+                                            <SelectItem value={TroubleReasons.NO_INTERNET}>No internet connectivity</SelectItem>
+                                            <SelectItem value={TroubleReasons.SLOW_INTERNET}>Slow internet</SelectItem>
+                                            <SelectItem value={TroubleReasons.NO_SIGNAL}>No signal</SelectItem>
+                                            <SelectItem value={TroubleReasons.BILLING_ISSUE}>Billing issue</SelectItem>
+                                            <SelectItem value={TroubleReasons.OTHER}>Other</SelectItem>
                                         </SelectContent>
                                     </Select>
 
-                                    {errors.trouble_reason && (
-                                        <p className="text-sm text-red-600">{errors.trouble_reason}</p>
-                                    )}
+                                    {errors.trouble_reason && <p className="text-sm text-red-600">{errors.trouble_reason}</p>}
                                 </div>
 
                                 {/* Description */}
-                                <div className="lg:col-span-2 space-y-1">
+                                <div className="space-y-1 lg:col-span-2">
                                     <label className="text-sm font-medium">
                                         Description {data.trouble_reason === TroubleReasons.OTHER && <Required />}
                                     </label>
@@ -184,9 +153,7 @@ export default function CreateComplaintPage() {
                                         value={data.tt_description || ''}
                                         onChange={(e) => setData('tt_description', e.target.value)}
                                     />
-                                    {errors.tt_description && (
-                                        <p className="text-sm text-red-600">{errors.tt_description}</p>
-                                    )}
+                                    {errors.tt_description && <p className="text-sm text-red-600">{errors.tt_description}</p>}
                                 </div>
                             </div>
 

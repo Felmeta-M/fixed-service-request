@@ -13,6 +13,18 @@ export default function HomePage() {
     // if (auth?.user) {
     //     window.location.href = route('services');
     // }
+
+    // Color mapping to ensure Tailwind detects the classes
+    const getColorClass = (color: string) => {
+        const colorMap: Record<string, string> = {
+            primary: 'text-primary',
+            'et-green': 'text-et-green',
+            'et-blue': 'text-et-blue',
+            'et-yellow': 'text-et-yellow',
+            'et-red': 'text-et-red',
+        };
+        return colorMap[color] || 'text-gray-600';
+    };
     const features = [
         {
             icon: MapPin,
@@ -125,8 +137,8 @@ export default function HomePage() {
                                 Manage Your <span className="bg-primary bg-clip-text text-transparent">Fixed Services</span> Online
                             </h1>
                             <p className="mx-auto mb-8 max-w-2xl text-lg leading-relaxed text-gray-700 sm:text-xl">
-                                Get reliable high-speed broadband, fixed voice, or combined services. Request and manage everything online with
-                                fast,secure service provisioning.
+                                Get reliable high-speed broadband, fixed voice, and combined services. 
+                                {/* Request and manage everything online with fast,secure service provisioning. */}
                                 <br />
                             </p>
                         </div>
@@ -216,7 +228,8 @@ export default function HomePage() {
                                             // className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-${service.color}-100 transition-transform duration-200 group-hover:scale-110`}
                                             className={`mb-2 flex h-14 w-14 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110`}
                                         >
-                                            <service.icon className={`h-7 w-7 text-${service.color}`} />
+                                            {/* <service.icon className={`h-7 w-7 text-${service.color}`} /> */}
+                                            <service.icon className={`h-7 w-7 ${getColorClass(service.color)}`} />
                                         </div>
                                         <CardTitle className="text-xl">{service.title}</CardTitle>
                                         <CardDescription className="text-base">{service.description}</CardDescription>
@@ -225,7 +238,8 @@ export default function HomePage() {
                                         <ul className="space-y-3">
                                             {service.features.map((feature, featureIndex) => (
                                                 <li key={featureIndex} className="flex items-center text-sm text-gray-600">
-                                                    <CheckCircle className={`h-4 w-4 text-${service.color} mr-3 flex-shrink-0`} />
+                                                    {/* <CheckCircle className={`h-4 w-4 text-${service.color} mr-3 flex-shrink-0`} /> */}
+                                                    <CheckCircle className={`h-4 w-4 ${getColorClass(service.color)} mr-3 flex-shrink-0`} />
                                                     {feature}
                                                 </li>
                                             ))}

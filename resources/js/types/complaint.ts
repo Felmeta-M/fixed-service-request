@@ -11,13 +11,17 @@ export const TroubleReasons = {
 export const complaintSchema = z.object({
     trouble_title: z.string().min(1, 'Subject is required'),
 
-    access_number: z.string().min(1, 'Access number is required'),
+    access_number: z.string()
+        .min(1, 'Access number is required')
+        .regex(/^\d{12}$/, 'Service number must be exactly 12 digits'),
 
     account_number: z.string().optional().nullable(),
 
     contact_person: z.string().min(1, 'Contact person is required'),
 
-    mobile_no: z.string().min(9, 'Mobile number is required'),
+    mobile_no: z.string()
+        .min(1, 'Mobile number is required')
+        .regex(/^(\+251|251|0)?9\d{8}$/, 'Invalid mobile number. Must start with +251, 251, 09, or 9'),
 
     // trouble_reason: z.enum([
     //     TroubleReasons.NO_INTERNET,

@@ -4,7 +4,6 @@ import {
     SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
-    SidebarGroupLabel,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
@@ -48,7 +47,7 @@ const getStepDescription = (stepName: string) => {
         case 'Customer Information':
             return 'Create or confirm your profile';
         case 'Service Information':
-            return 'Choose service type and configuration';
+            return 'Choose service configuration';
         case 'Location Information':
             return 'Select location and check availability';
         case 'Review & Submit':

@@ -125,7 +125,8 @@ export default function HomePage() {
                                 Manage Your <span className="bg-primary bg-clip-text text-transparent">Fixed Services</span> Online
                             </h1>
                             <p className="mx-auto mb-8 max-w-2xl text-lg leading-relaxed text-gray-700 sm:text-xl">
-                                Get reliable fixed voice, high-speed broadband, or combined services.
+                                Get reliable high-speed broadband, fixed voice, or combined services. Request and manage everything online with
+                                fast,secure service provisioning.
                                 <br />
                             </p>
                         </div>

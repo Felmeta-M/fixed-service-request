@@ -1,12 +1,11 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import GuestLayout from '@/layouts/GuestLayout';
 import { Link, usePage } from '@inertiajs/react';
-import { ArrowRight, CheckCircle, ChevronDown, MapPin, Package, Phone, Star, Users, Wifi } from 'lucide-react';
-import telebirrLogo from '../images/telebirr-logo-1.png';
-import fixedHeroImage from '../images/fixed-hero.png';
+import { ArrowRight, CheckCircle, MapPin, Package, Phone, Users, Wifi } from 'lucide-react';
 import { useRef } from 'react';
+import fixedHeroImage from '../images/fixed-hero.png';
+import telebirrLogo from '../images/telebirr-logo-1.png';
 
 export default function HomePage() {
     const { auth } = usePage().props;
@@ -70,7 +69,7 @@ export default function HomePage() {
         { number: 'Real-Time', label: 'GIS Coverage Check' },
         { number: 'Secure', label: 'Telebirr Payments' },
         { number: 'Official', label: 'Ethio telecom Platform' },
-      ];
+    ];
 
     const testimonials = [
         {
@@ -94,15 +93,15 @@ export default function HomePage() {
     ];
 
     const scrollToDemo = () => {
-        demoRef.current?.scrollIntoView({ behavior: "smooth" });
-      };
+        demoRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     return (
         <GuestLayout>
             <div className="min-h-screen">
                 {/* Hero Section */}
-                <section 
-                    className="min-h-screen relative flex items-center justify-center overflow-hidden px-4 py-20 sm:px-6 lg:px-8"
+                <section
+                    className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-20 sm:px-6 lg:px-8"
                     style={{
                         backgroundImage: `url(${fixedHeroImage})`,
                         backgroundSize: 'cover',
@@ -112,10 +111,10 @@ export default function HomePage() {
                 >
                     {/* Overlay for better text readability */}
                     <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/80 to-white/90" />
-                    
+
                     {/* Additional subtle overlay for depth */}
                     <div className="absolute inset-0 bg-gradient-to-r from-et-green/5 via-transparent to-et-blue/5" />
-                    
+
                     {/* Content */}
                     <div className="relative z-10 mx-auto max-w-4xl text-center">
                         {/* <Badge variant="outline" className="mb-4 border px-4 text-sm font-semibold text-et-green">
@@ -127,7 +126,6 @@ export default function HomePage() {
                             </h1>
                             <p className="mx-auto mb-8 max-w-2xl text-lg leading-relaxed text-gray-700 sm:text-xl">
                                 Get reliable fixed voice, high-speed broadband, or combined services.
-                                Request and manage everything online with fast, secure service provisioning.
                                 <br />
                             </p>
                         </div>
@@ -176,15 +174,14 @@ export default function HomePage() {
                         </div>
                     </div>
                 </section> */}
-                
+
                 {/* <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
               Trusted by 5,000+ businesses
               including
             </p> */}
-            
 
-        {/* Scroll Indicator */}
-        {/* <div className="flex justify-center pb-8">
+                {/* Scroll Indicator */}
+                {/* <div className="flex justify-center pb-8">
           <button
             onClick={scrollToDemo}
             className="group flex flex-col items-center text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors"
@@ -199,7 +196,7 @@ export default function HomePage() {
                     <div className="mx-auto max-w-screen-2xl">
                         <div className="mb-16 text-center">
                             {/* <Badge variant="outline" className="mb-4 px-4 py-1 text-primary"> */}
-                                <h3 className='"mb-4 pb-4 px-4 py-1 text-primary font-semibold'>Our Services</h3>
+                            <h3 className='"mb-4 px-4 py-1 pb-4 font-semibold text-primary'>Our Services</h3>
                             {/* </Badge> */}
                             <h2 className="mb-4 text-4xl font-bold text-gray-900">Comprehensive Fixed Line Solutions</h2>
                             <p className="mx-auto max-w-2xl text-lg text-gray-600">

@@ -14,7 +14,7 @@ export default function GuestLayout({ children }: Props) {
     const { auth } = usePage().props as { auth?: { user?: any } };
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     return (
-        <div className="mx-auto ">
+        <div className="mx-auto">
             <header className="sticky top-0 z-50 mx-auto w-full bg-gradient-to-r from-[#F5FBF6] via-[#FEFFFE] to-[#F4F7FB]">
                 <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 items-center justify-between">
@@ -52,7 +52,7 @@ export default function GuestLayout({ children }: Props) {
                                     <div className="flex items-center space-x-4">
                                         <Link
                                             href={route('services')}
-                                            className="flex items-center gap-2 font-medium text-muted-foreground transition-colors duration-200 hover:text-accent-foreground"
+                                            className="flex items-center gap-2 text-muted-foreground transition-colors duration-200 hover:text-accent-foreground"
                                         >
                                             <LayoutDashboard className="h-4 w-4" />
                                             <span>Dashboard</span>

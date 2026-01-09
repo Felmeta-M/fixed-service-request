@@ -137,13 +137,13 @@ export default function HomePage() {
                                 Manage Your <span className="bg-primary bg-clip-text text-transparent">Fixed Services</span> Online
                             </h1>
                             <p className="mx-auto mb-8 max-w-2xl text-lg leading-relaxed text-gray-700 sm:text-xl">
-                                Get reliable high-speed broadband, fixed voice, and combined services. 
+                                Get reliable high-speed broadband, fixed voice, and combined services.
                                 {/* Request and manage everything online with fast,secure service provisioning. */}
                                 <br />
                             </p>
                         </div>
                         <div className="mt-16 flex flex-col justify-center gap-4 sm:flex-row">
-                            <Link href={route('otp.phone')}>
+                            <Link href={auth?.user ? route('services') : route('otp.phone')}>
                                 <Button
                                     size="lg"
                                     className="bg-primary px-8 py-6 text-lg font-semibold text-white shadow-xl transition-all duration-200 hover:opacity-90 hover:shadow-2xl"

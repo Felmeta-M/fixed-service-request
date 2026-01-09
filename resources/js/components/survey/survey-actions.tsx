@@ -1,6 +1,9 @@
+import { useCancelSurveyOrder, useCreateSubscription, useDeleteSurveyOrder } from '@/hooks/use-api-mutations';
+import { getServiceActionFlags } from '@/lib/service-action-rules';
 import { router, usePage } from '@inertiajs/react';
-import { ArrowDownToLineIcon, ArrowUpToLineIcon, Eye, X } from 'lucide-react';
+import { Eye, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -12,13 +15,10 @@ import {
     AlertDialogTitle,
 } from '../ui/alert-dialog';
 import { Button } from '../ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { CancelConfirmationDialog } from './cancel-confirmation-dialog';
 import DeleteConfirmationDialog from './delete-confirmation-dialog';
 import SurveyDetailModal from './survey-detail-modal';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { getServiceActionFlags } from '@/lib/service-action-rules';
-import { toast } from 'sonner';
-import { useCancelSurveyOrder, useDeleteSurveyOrder, useCreateSubscription } from '@/hooks/use-api-mutations';
 
 type Address = {
     address1?: string;
@@ -97,7 +97,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
     const loading = cancelMutation.isPending || deleteMutation.isPending || createSubscriptionMutation.isPending;
 
-    const { main_offer_id } = survey
+    const { main_offer_id } = survey;
 
     useEffect(() => {
         if (user) {
@@ -169,7 +169,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                     handleApiError(error, 'cancellation');
                     onUpdatingChange(false);
                 },
-            }
+            },
         );
     };
 
@@ -192,10 +192,9 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                     handleApiError(error, 'deletion');
                     onUpdatingChange(false);
                 },
-            }
+            },
         );
     };
-
 
     const handleUpgrade = () => {
         console.log('Upgrade requested for survey:', survey.customer_survey_order_id);
@@ -206,7 +205,6 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         console.log('Downgrade requested for survey:', survey.customer_survey_order_id);
         alert(`Downgrade service ${survey.customer_survey_order_id}`);
     };
-
 
     const getAddressInfo = () => {
         if (!customerData?.addresses || customerData.addresses.length === 0) {
@@ -301,7 +299,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             wereda: addressInfo.wereda,
             kebele: addressInfo.kebele,
             house_no: addressInfo.house_no,
-            sms_no: contactInfo.mobile,// to be confirmed
+            sms_no: contactInfo.mobile, // to be confirmed
             external_operid: survey.external_operid || '512',
             completed_date: new Date()
                 .toISOString()
@@ -337,17 +335,11 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         router.visit(`/services/${id}`);
     };
 
-
     return (
         <>
             <div className="flex items-center justify-end gap-2">
                 {canPay && (
-                    <Button
-                        onClick={() => navigateToDetails('payment')}
-                        disabled={loading}
-                        className="gap-1 bg-primary px-4 text-white"
-                        size="sm"
-                    >
+                    <Button onClick={() => navigateToDetails('payment')} disabled={loading} className="gap-1 bg-primary px-4 text-white" size="sm">
                         {loading ? (
                             <>
                                 <div className="h-3 w-3 animate-spin rounded-full border-b-2 border-white"></div>
@@ -360,70 +352,48 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 )}
 
                 {canSubscribe && (
-                    <Button
-                        onClick={onSubscribeClick}
-                        disabled={loading}
-                        className="gap-1 bg-primary px-2 text-white"
-                        size="sm"
-                    >
+                    <Button onClick={onSubscribeClick} disabled={loading} className="gap-1 bg-primary px-2 text-white" size="sm">
                         Subscribe
                     </Button>
                 )}
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRowClick(survey as SurveyRow)}
-                    className="h-8 w-8 p-0"
-                >
+                <Button variant="ghost" size="sm" onClick={() => handleRowClick(survey as SurveyRow)} className="h-8 w-8 p-0">
                     <Eye className="h-4 w-4" />
                     <span className="sr-only">View details</span>
                 </Button>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            disabled={loading}
-                        >
-                            <span className="sr-only">Open menu</span>
-                            <svg
-                                className="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                                />
-                            </svg>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={handleUpgrade} className="flex items-center gap-2 cursor-pointer">
+                {canCancel && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={loading}>
+                                <span className="sr-only">Open menu</span>
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                                    />
+                                </svg>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                            {/* <DropdownMenuItem onClick={handleUpgrade} className="flex items-center gap-2 cursor-pointer">
                             <ArrowUpToLineIcon className="h-4 w-4" />
                             <span>Upgrade</span>
-                        </DropdownMenuItem>
-                        {/* <DropdownMenuItem onClick={handleDowngrade} className="flex items-center gap-2 cursor-pointer">
+                        </DropdownMenuItem> */}
+                            {/* <DropdownMenuItem onClick={handleDowngrade} className="flex items-center gap-2 cursor-pointer">
                             <ArrowDownToLineIcon className="h-4 w-4" />
                             <span>Downgrade</span>
                         </DropdownMenuItem> */}
-                        {canCancel && <DropdownMenuSeparator />}
-                        {canCancel && (
-                            <DropdownMenuItem
-                                onClick={() => setOpenCancelDialog(true)}
-                                className="flex items-center gap-2 cursor-pointer"
-                            >
-                                <X className="h-4 w-4" />
-                                <span>Cancel Service</span>
-                            </DropdownMenuItem>
-                        )}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                            {/* {canCancel && <DropdownMenuSeparator />} */}
+                            {canCancel && (
+                                <DropdownMenuItem onClick={() => setOpenCancelDialog(true)} className="flex cursor-pointer items-center gap-2">
+                                    <X className="h-4 w-4" />
+                                    <span>Cancel Service</span>
+                                </DropdownMenuItem>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
 
                 {/* {canCancel && (
                     <Button

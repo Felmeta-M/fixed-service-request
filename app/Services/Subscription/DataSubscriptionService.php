@@ -13,7 +13,9 @@ use Illuminate\Support\Facades\Log;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
-   public function __construct(protected readonly GetCombiningService $get_combining_service) {}
+   public function __construct(protected readonly GetCombiningService $get_combining_service)
+   {
+   }
 
    protected function offeringId(): int
    {
@@ -39,8 +41,8 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          $data['name'] = $customer?->name;
       } else {
          $data['sms_no'] = substr($data['sms_no'], -9);
-         $data['customer_code'] =  $data['customer_code'];
-         $data['name'] =  $data['name'];
+         $data['customer_code'] = $data['customer_code'];
+         $data['name'] = $data['name'];
       }
 
       $xml = $this->buildXml($data);
@@ -74,37 +76,37 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       $cfg['default_password'] = 'REDACTED_PASSWORD';
 
       // Default/demo values (until frontend provides them)
-      $data = array_merge($data,  [
-         'region'       => 1,
-         'city'         => 1,
-         'zone'         => 3,
-         'wereda'       => 10,
-         'kebele'       => 'Kebele',
-         'house_no'     => '1234',
-         'street_name'  => 'StreetName',
-         'apartment'    => 'Apartment',
+      $data = array_merge($data, [
+         'region' => 1,
+         'city' => 1,
+         'zone' => 3,
+         'wereda' => 10,
+         'kebele' => 'Kebele',
+         'house_no' => '1234',
+         'street_name' => 'StreetName',
+         'apartment' => 'Apartment',
 
-         'enterprise_name'   => 'tet',
-         'credit_class'      => 'Excellent',
-         'payment_mode'      => 'CASH',
-         'ext_payment_type'  => '0',
+         'enterprise_name' => 'tet',
+         'credit_class' => 'Excellent',
+         'payment_mode' => 'CASH',
+         'ext_payment_type' => '0',
 
-         'business_code'       => 'CO015',
-         'external_sequence'   => uniqid(),
-         'network_type'        => '4',
-         'cpe_type'            => '2701DTU',
-         'cpe_serial'          => '2',
-         'sub_type'            => '1',
-         'sub_language'        => '2002',
-         'offering_id'         => '1457567289',
-         'effective_mode'      => '0',
-         'sla_priority'        => '6',
-         'internet_account'    => 'ghhur@qq.com',
-         'internet_password'   => 'REDACTED_PASSWORD',
-         'call_center_access'  => '994',
+         'business_code' => 'CO015',
+         'external_sequence' => uniqid(),
+         'network_type' => '4',
+         'cpe_type' => '2701DTU',
+         'cpe_serial' => '2',
+         'sub_type' => '1',
+         'sub_language' => '2002',
+         'offering_id' => '1457567289',
+         'effective_mode' => '0',
+         'sla_priority' => '6',
+         'internet_account' => 'ghhur@qq.com',
+         'internet_password' => 'REDACTED_PASSWORD',
+         'call_center_access' => '994',
 
-         'external_oper_id'  => '512',
-         'installment_date'  => now()->format('YmdHis'),
+         'external_oper_id' => '512',
+         'installment_date' => now()->format('YmdHis'),
       ]);
 
       return <<<XML
@@ -239,75 +241,116 @@ XML;
    }
 
 
-   protected function parseResponse(array $data, string $xml)
+   protected function parseResponse(string $xml, array $data): array
    {
-      $parsed = simplexml_load_string($xml);
-      $ns = $parsed->getNamespaces(true);
+      $res = [
+         'success' => false,
+         'ret_code' => null,
+         'ret_msg' => null,
+         'customer_busi_order_id' => null,
+         'extra_params' => [],
+      ];
 
-      $body = $parsed->children($ns['soapenv'])->Body;
-      $rsp  = $body->children($ns['ser'])->CreateNewSubscriberRspMsg;
-      $hdr  = $rsp->ResponseHeader->children($ns['com']);
-
-      $retCode = (string)$hdr->RetCode;
-      $retMsg  = (string)$hdr->RetMsg;
-
-      // Real failure cases only
-      if ($retCode !== '0' && $retCode !== '-999') {
-         return ApiResponse::error($retMsg);
+      $obj = simplexml_load_string($xml);
+      if (!$obj) {
+         return $res;
       }
 
-      /** DATA returns FBBNUMBER */
-      foreach ($rsp->ExtParamList->children($ns['com'])->ParameterInfo as $p) {
-         if ((string)$p->ParamName === 'FBBNUMBER') {
-            $serviceNo = (string)$p->ParamValue;
-            SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
-               ->update([
-                  'service_number' => $serviceNo,
-                  'status' => FFDServiceProvisionStatus::Subscribed->value,
-                  'subscribed_at' => now(),
-               ]);
+      $namespaces = $obj->getNamespaces(true);
 
-            // ✅ Send SMS to customer
-            if (! empty($data['sms_no']) && InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])) {
+      // SOAP Body
+      $body = $obj->children($namespaces['soapenv'])->Body ?? null;
+      if (!$body) {
+         return $res;
+      }
 
-               $phone = $data['sms_no'];
+      // Huawei response
+      $rsp = $body->children($namespaces['ser'])->CreateNewSubscriberRspMsg ?? null;
+      if (!$rsp) {
+         return $res;
+      }
 
-               try {
-                  $name = trim(explode(' ', $data['name'] ?? 'Customer')[0]);
+      // Response header
+      $header = $rsp
+         ->children($namespaces['ser'])
+         ->ResponseHeader
+         ->children($namespaces['com']);
 
-                  $message = "Dear {$name}, thank you for choosing Ethio Telecom. "
-                     . "We are pleased to inform you that your subscription has been successfully created. "
-                     . "Your service number is {$serviceNo}. "
-                     . "For support or to submit a TT/complaint, please visit "
-                     . "https://fixedservices.ethiotelecom.et/services.";
+      $res['ret_code'] = (string) $header->RetCode;
+      $res['ret_msg'] = (string) $header->RetMsg;
+      $res['success'] = ($res['ret_code'] === '0');
 
-                  InteractsWithSMSGateway::sendSmsOnly($phone, $message);
-               } catch (\RuntimeException $e) {
-                  // Business-level issue (rate limiting, gateway rejection)
-                  Log::warning('Subscription SMS blocked or rate-limited', [
-                     'phone'  => $phone,
-                     'reason' => $e->getMessage(),
-                  ]);
-               } catch (\Throwable $e) {
-                  // System-level failure
-                  Log::error('Failed to send subscription SMS', [
-                     'phone' => $phone,
-                     'error' => $e->getMessage(),
-                  ]);
-               }
-            }
+      // Customer business order ID
+      $res['customer_busi_order_id'] =
+         (string) $rsp->children($namespaces['ser'])->CustomerBusiOrderId;
 
-
-
-            // $message = $retCode === '-999'
-            //     ? 'Duplicate request – previous success reused'
-            //     : 'Provisioned successfully';
-            return ApiResponse::success([
-               'service_number' => $serviceNo
-            ]);
+      // Extra parameters (FBBNUMBER, etc.)
+      if (isset($rsp->ExtParamList)) {
+         foreach (
+            $rsp->ExtParamList->children($namespaces['com'])->ParameterInfo as $p
+         ) {
+            $res['extra_params'][(string) $p->ParamName]
+               = (string) $p->ParamValue;
          }
       }
 
-      return ApiResponse::error('Service number not returned');
+      /**
+       * ✅ POST-SUCCESS BUSINESS LOGIC
+       * Runs BEFORE return $res;
+       */
+      if ($res['success']) {
+
+         $serviceNo = $res['extra_params']['FBBNUMBER'] ?? null;
+
+         if (empty($serviceNo)) {
+            Log::error('Huawei success response missing FBBNUMBER', [
+               'response' => $res,
+            ]);
+
+            return $res;
+         }
+
+         // Update SurveyOrder
+         SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
+            ->update([
+               'service_number' => $serviceNo,
+               'status' => FFDServiceProvisionStatus::Subscribed->value,
+               'subscribed_at' => now(),
+            ]);
+
+         // Send SMS
+         if (
+            !empty($data['sms_no']) &&
+            InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])
+         ) {
+            $phone = $data['sms_no'];
+
+            try {
+               $name = trim(explode(' ', $data['name'] ?? 'Customer')[0]);
+
+               $message = "Dear {$name}, thank you for choosing Ethio Telecom. "
+                  . "We are pleased to inform you that your subscription has been successfully created. "
+                  . "Your service number is {$serviceNo}. "
+                  . "For support or to submit a TT/complaint, please visit "
+                  . "https://fixedservices.ethiotelecom.et/services.";
+
+               InteractsWithSMSGateway::sendSmsOnly($phone, $message);
+
+            } catch (\RuntimeException $e) {
+               Log::warning('Subscription SMS blocked or rate-limited', [
+                  'phone' => $phone,
+                  'reason' => $e->getMessage(),
+               ]);
+            } catch (\Throwable $e) {
+               Log::error('Failed to send subscription SMS', [
+                  'phone' => $phone,
+                  'error' => $e->getMessage(),
+               ]);
+            }
+         }
+      }
+
+      return $res;
    }
+
 }

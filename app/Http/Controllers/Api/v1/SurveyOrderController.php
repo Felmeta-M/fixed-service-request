@@ -148,6 +148,11 @@ class SurveyOrderController extends Controller
 
             return $service->create($data);
         } catch (ValidationException $e) {
+            Log::error('SurveyOrder store error', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Please correct the highlighted errors.',
@@ -159,6 +164,11 @@ class SurveyOrderController extends Controller
                 'message' => 'The requested resource was not found.',
             ], Response::HTTP_NOT_FOUND);
         } catch (QueryException $e) {
+            Log::error('SurveyOrder store error', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Database error occurred.',

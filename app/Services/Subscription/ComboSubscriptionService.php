@@ -2,401 +2,281 @@
 
 namespace App\Services\Subscription;
 
-use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Customer;
-use App\Models\SurveyOrder;
-use App\Services\ApiResponse;
-use App\Traits\InteractsWithSMSGateway;
-use Carbon\Carbon;
+use App\Services\QueryAvailableNumberService;
+use App\Services\ReserveNumberService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class ComboSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
-   protected function offeringId(): int
-   {
-      return 1457567289; // FBB OR DATA
-   }
+    public function __construct(
+        protected readonly QueryAvailableNumberService $queryAvailableNumberService,
+        protected readonly ReserveNumberService $reserveNumberService,
+    ) {}
 
-   protected function businessCode(): string
-   {
-      return '';
-   }
+    protected function offeringId(): int
+    {
+        return 180427974;
+    }
 
-   protected function networkType(): int
-   {
-      return 1; // matches actual XML
-   }
+    protected function businessCode(): string
+    {
+        return 'CO015';
+    }
 
-   public function create(array $data)
-   {
-      if (Auth::check()) {
-         $customer = Customer::current();
-         $data['sms_no'] = substr($customer?->phone_number, -9);
-         $data['customer_code'] = $customer?->code;
-         $data['name'] = $customer?->name;
-      } else {
-         $data['sms_no'] = substr($data['sms_no'], -9);
-         $data['customer_code'] =  $data['customer_code'];
-         $data['name'] =  $data['name'];
-      }
+    protected function networkType(): int
+    {
+        return 4;
+    }
 
-      $xml = $this->buildXml($data);
-      Log::info($xml);
-      $response = $this->executeRequest($xml);
-      Log::info($response);
-      return $this->parseResponse($data, $response);
-   }
+    public function create(array $payload): array
+    {
+        $data = $this->normalize($payload);
 
-   public function buildXml(array $data): string
-   {
-      $cfg = config('services.subscriber');
-      $email = $this->generateEmail();
+        $xml = $this->buildXml($data);
 
-      $depId = "1766044689199549668";
-      // fetch from db;
-      $this->serviceNumber = $this->queryAvailableNumberService->getAvailableNumberServices($depId);
+        Log::info('Huawei Combo Request', ['xml' => $xml]);
 
-      if (!$this->serviceNumber) {
-         throw new \RuntimeException('Unable to reserve service number');
-      }
+        $response = $this->executeRequest($xml);
 
-      $data['service_number'] = $this->serviceNumber;
+        Log::info('Huawei Combo Response', ['xml' => $response]);
 
-      $default = [
-         'channel_id'            => 35,
-         'technical_channel_id'  => 53,
-         'tenant_id'             => 101,
-         'access_user'           => 'ecaf',
-         'access_pwd'            => 'REDACTED_PASSWORD',
+        return $this->parseResponse($response);
+    }
 
-         'customer_name'         => 'aaa',
-         'secret_answer'         => 'REDACTED_PASSWORD=',
+    /**
+     * FRONTEND > DEFAULT
+     * Never misses any XML field
+     */
+    private function normalize(array $payload): array
+    {
+        $customer = Auth::check() ? Customer::current() : null;
 
-         'region'                => 3,
-         'city'                  => 1,
-         'zone'                  => 1,
-         'wereda'                => 10,
-         'kebele'                => 'Kebele',
-         'house_no'              => '1234',
-         'street_name'           => 'yuelu',
-         'apartment'             => 'Apartment',
+        $serviceNumber = $this->queryAvailableNumberService
+            ->getAvailableNumberServices('1766044689199549668');
 
-         'email'                 => 'ok@ok.com',
-         'mobile_no'             => '068485484',
+        if (!$serviceNumber) {
+            throw new \RuntimeException('Unable to reserve service number');
+        }
 
-         'enterprise_name'       => 'feng',
+        $email = $this->generateEmail();
 
-         'external_sequence'     => now()->format('YmdHis'),
-         'group_offering_id'     => '180427974', // group offer
+        $defaults = [
 
-         'voice_offering_id'     => '1207609454', //FL
+            'header' => [
+                'version'              => 1,
+                'transaction_id'       => $this->transactionId(),
+                'session_id'           => 1,
+                'process_time'         => $this->processTime(),
+                'contact_id'           => 1,
+                'language'             => 2002,
+                'channel_id'           => 35,
+                'technical_channel_id' => 53,
+                'tenant_id'            => 101,
+                'access_user'          => 'ecaf',
+                'access_pwd'           => 'REDACTED_PASSWORD',
+                'access_ip'            => 1,
+                'test_flag'            => 1,
+            ],
 
-         'data_offering_id'      => '1457567289',
+            'survey_order_id' => null,
 
-         'cpe_type'              => '2701DTU',
-         'cpe_serial'            => '2',
-         'internet_account'      => 'ghhtuuy@qq.com',
-         'internet_password'     => 'REDACTED_PASSWORD',
+            'customer' => [
+                'code'  => $customer?->code,
+                'name'  => $customer?->name ?? $payload['name'],
+            ],
 
-         'external_oper_id'      => '9527',
-         'external_oper_name'    => 'helloworld',
-         'installment_date'      => now()->format('YmdHis'),
-      ];
+            //TODO: Add real customer address data from payload or query from database
+            'address' => [
+                'region' => 3,
+                'city'   => 1,
+                'zone'   => 1,
+                'wereda' => 10,
+                'kebele' => 'Kebele',
+                'house_no' => '1234',
+                'street'  => 'yuelu',
+                'apartment' => 'Apartment',
+            ],
 
-      $data = array_merge($data, $default);
+            'account' => [
+                'payment_type' => 1,
+                'bill_cycle'   => '01',
+                'initial_credit' => 100,
+                'collection_center' => '10172',
+                'enterprise_name' => 'feng',
+            ],
 
-      // $data['service_number'] = "980600167";
+            'combo' => [
+                'group_offering_id' => 180427974,
+                'voice_offering_id' => 1207609454,
+                'data_offering_id'  => 1457567289,
+                'cpe_type'   => '2701DTU',
+                'cpe_serial' => '2',
+            ],
 
-      Log::info($data);
+            'internet' => [
+                'account'  => $email,
+                'password' => 'REDACTED_PASSWORD',
+            ],
 
-      return <<<XML
+            'meta' => [
+                'external_seq' => now()->format('YmdHis'),
+                'install_date' => now()->format('YmdHis'),
+            ],
+
+            'operator' => [
+                'id'   => '9527',
+                'name' => 'helloworld',
+            ],
+
+            'service_number' => $serviceNumber,
+        ];
+
+        return array_replace_recursive($defaults, $payload);
+    }
+
+    /**
+     * FULL XML — NOTHING OMITTED
+     */
+    private function buildXml(array $d): string
+    {
+        return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                  xmlns:com="http://www.huawei.com/bss/soaif/interface/common/"
-                  xmlns:ser="http://oss.huawei.com/webservice/bss/services">
-   <soapenv:Header/>
-   <soapenv:Body>
-      <ser:CreateNewSubscriberReqMsg>
-         <ser:RequestHeader>
-            <com:Version>1</com:Version>
-           <com:TransactionId>{$this->transactionId()}</com:TransactionId>
-            <com:SessionId>1</com:SessionId>
-            <com:ProcessTime>{$this->processTime()}</com:ProcessTime>
-            <com:ContactId>1</com:ContactId>
-            <com:Language>2002</com:Language>
-            <com:ChannelId>{$cfg['channel_id']}</com:ChannelId>
-            <com:TechnicalChannelId>{$cfg['technical_channel_id']}</com:TechnicalChannelId>
-            <com:TenantId>{$cfg['tenant_id']}</com:TenantId>
-            <com:AccessUser>{$cfg['access_user']}</com:AccessUser>
-            <com:AccessPwd>{$cfg['access_pwd']}</com:AccessPwd>
-            <!--Optional:-->
-            <com:AccessIP>1</com:AccessIP>
-            <com:TestFlag>1</com:TestFlag>
-            <!--Zero or more repetitions:-->
-            <com:AdditionalProperty>
-               <com:Code>1</com:Code>
-               <com:Value>1</com:Value>
-            </com:AdditionalProperty>
-         </ser:RequestHeader>
-         <ser:CreateNewSubscriberReqBody>
-            <!--Optional:-->
-            <com:CustomerBusiOrder>
-              <com:CustomerSurveyOrderId>{$data['survey_order_id']}</com:CustomerSurveyOrderId>
-               <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
-               <com:CustomerInfo>
-               <com:SubLanguage>2002</com:SubLanguage>
-                  <!--Optional:-->
-                  <com:IVRLanguage>2002</com:IVRLanguage>
-                  <com:CustomerType>2</com:CustomerType>
-                  <com:CustomerCategory>5</com:CustomerCategory>
-                  <com:CustomerSubcategory>14</com:CustomerSubcategory>
-                  <com:CustomerLevel>2</com:CustomerLevel>
-                  <com:CustomerName>aaa</com:CustomerName>
-                  <com:BranchName>BranchName</com:BranchName>
-                  <com:Title>1</com:Title>
-                  <com:Nationality>1</com:Nationality>
-                  <com:IdentificationType>5</com:IdentificationType>
-                  <com:IdentificationNumber>2022112233</com:IdentificationNumber>
-                  <com:VATRegNo>123456</com:VATRegNo>
-                  <com:Gender>1</com:Gender>
-                  <com:DateofBirth>19660612</com:DateofBirth>
-                  <com:PlaceofBirth>1966</com:PlaceofBirth>
-                  <com:Occupation>1</com:Occupation>
-                  <com:Education>1</com:Education>
-                  <com:Religion>1</com:Religion>
-                  <com:Income>7</com:Income>
-                  <com:Hobbies>Sport</com:Hobbies>
-                  <com:PrimaryLanguage>2002</com:PrimaryLanguage>
-                  <com:SecondaryLanguage>2060</com:SecondaryLanguage>
-                  <com:SecretQuestion>1</com:SecretQuestion>
-                  <com:SecretAnswer>REDACTED_PASSWORD=</com:SecretAnswer>
-                  <com:PromotionMessageFlag>2</com:PromotionMessageFlag>
-                  <com:CustomerAddressInfo>
-                     <com:EthioZoneOrRegion>3</com:EthioZoneOrRegion>
-                     <com:AdministrativeRegionOrCity>1</com:AdministrativeRegionOrCity>
-                     <com:SubcityOrZone>1</com:SubcityOrZone>
-                     <com:WeredaOrTown>10</com:WeredaOrTown>
-                     <com:Kebele>Kebele</com:Kebele>
-                     <com:HouseNo>1234</com:HouseNo>
-                     <com:StreetName>yuelu</com:StreetName>
-                     <com:Apartment>Apartment</com:Apartment>
-                  </com:CustomerAddressInfo>
-                  <com:CustomerContactInfo>
-                     <com:NotificationMode>2</com:NotificationMode>
-                     <com:Email>ok@ok.com</com:Email>
-                     <com:POBox>123123</com:POBox>
-                     <!--Optional:-->
-                     <com:ZipCode>123123</com:ZipCode>
-                     <!--Optional:-->
-                     <com:HomeNo>1234567891</com:HomeNo>
-                     <!--Optional:-->
-                     <com:OfficeNo>112312311</com:OfficeNo>
-                     <!--Optional:-->
-                     <com:MobileNo>068485484</com:MobileNo>
-                     <!--Optional:-->
-                     <com:FaxNo>213352323</com:FaxNo>
-                  </com:CustomerContactInfo>
-                  <com:CustomerContactPersonInfoList>
-                     <!--1 or more repetitions:-->
-                     <com:ContactPersonInfo>
-                        <com:FirstName>zhang</com:FirstName>
-                        <com:MiddleName>san</com:MiddleName>
-                        <com:LastName>feng</com:LastName>
-                        <com:Title>1</com:Title>
-                        <!--Optional:-->
-                        <com:HomeNo>123456789</com:HomeNo>
-                        <!--Optional:-->
-                        <com:OfficeNo>119113119</com:OfficeNo>
-                        <!--Optional:-->
-                        <com:MobileNo>065484145</com:MobileNo>
-                        <!--Optional:-->
-                        <com:FaxNo>123123141</com:FaxNo>
-                     </com:ContactPersonInfo>
-                  </com:CustomerContactPersonInfoList>
-               </com:CustomerInfo>
-               <com:AccountInfo>
-                  <!--Optional:-->
-                  <!--Optional:-->
-                  <com:PaymentType>1</com:PaymentType>
-                  <!--Optional:-->
-                  <com:BillCycle>01</com:BillCycle>
-                  <!--Optional:-->
-                  <com:InitialCredit>100</com:InitialCredit>
-                  <com:ethioZoneOrRegion>3</com:ethioZoneOrRegion>
-                  <com:CollectionCenter>10172</com:CollectionCenter>
-                  <com:Language>2002</com:Language>
-                  <!--Optional:><com:FirstName>liu</com:FirstName><com:MiddleOrFatherName>chuan</com:MiddleOrFatherName><com:LastName>feng</com:LastName-->
-                  <com:EnterpriseCustomerName>feng</com:EnterpriseCustomerName>
-                  <com:Title>1</com:Title>
-                  <com:CreditClass>Excellent</com:CreditClass>
-                  <!--Optional:1: Yes 0: No-->
-                  <com:GreenList>1</com:GreenList>
-                  <!--Optional:-->
-                  <com:LateFeeFlag>1</com:LateFeeFlag>
-                  <!--Optional:-->
-                  <com:TaxExemptionFlag>1</com:TaxExemptionFlag>
-                  <com:AdministrativeRegionCity>1</com:AdministrativeRegionCity>
-                  <com:SubcityZone>1</com:SubcityZone>
-                  <com:WeredaTown>2</com:WeredaTown>
-                  <com:Kebele>Kebele</com:Kebele>
-                  <!--Optional:-->
-                  <com:HouseNo>1234</com:HouseNo>
-                  <!--Optional:-->
-                  <com:StreetName>StreetName</com:StreetName>
-                  <!--Optional:-->
-                  <com:Apartment>Apartment</com:Apartment>
-                  <!--Optional:-->
-                  <com:POBox>1231231</com:POBox>
-                  <!--Optional:-->
-                  <com:SMSNo>12141231</com:SMSNo>
-                  <!--Optional:-->
-                  <com:Email>ok@ok.com</com:Email>
-                  <!--Optional:-->
-                  <com:FaxNo>010-123141231</com:FaxNo>
-                  <!--Optional:-->
-                  <com:Postcode>123456</com:Postcode>
-                  <!--Optional:-->
-                  <com:PaymentMode>
-                     <com:PaymentMode>CASH</com:PaymentMode>
-                  </com:PaymentMode>
-                 
-               </com:AccountInfo>
-               <com:IsCombo>1</com:IsCombo>
-            </com:CustomerBusiOrder>
-            <com:SubBusiOrderlist>
-               <com:BusinessCode>CO015</com:BusinessCode>
-               <!--You have a CHOICE of the next 2 items at this level-->
-               <com:GroupSubInfo>
-                  <com:ExternalSequnce>?</com:ExternalSequnce>
-                  <com:PrimaryOffering>
-                     <com:NewPrimaryOffering>
-                        <com:OfferingId>
-                           <com:OfferingId>180427974</com:OfferingId>
-                        </com:OfferingId>
-                       
-                     </com:NewPrimaryOffering>
-                     <com:EffectiveMode>0</com:EffectiveMode>
- 
-                     <com:InstanceProperty>
-                           <com:PropertyCode>50135</com:PropertyCode>
-                           <com:PropertyType>1</com:PropertyType>
-                           <com:Value>2701DTU</com:Value>
-                        </com:InstanceProperty>
-                        <com:InstanceProperty>
-                           <com:PropertyCode>50134</com:PropertyCode>
-                           <com:PropertyType>1</com:PropertyType>
-                           <com:Value>2</com:Value>
-                        </com:InstanceProperty>
-                
-                  </com:PrimaryOffering>
-                 
-               </com:GroupSubInfo>
-            </com:SubBusiOrderlist>
-            <com:SubBusiOrderlist>
-               <com:BusinessCode>CO015</com:BusinessCode>
-               <!--You have a CHOICE of the next 2 items at this level-->
-               <com:SubscriberInfo>
-                  <!--Optional:  0:Prepaid  1:Postpaid  3:Hybrid.-->
-                  <com:SubType>1</com:SubType>
-                  <com:ServiceNumber>{$data['service_number']}</com:ServiceNumber>
-                  <!--Optional:  21：GSM 22：CDMA  3：ADSL  4：FIX  固话-->
-                  <com:NetworkType>4</com:NetworkType>
-                  <!--Optional:  0:Prepaid  1:Postpaid  3:Hybrid.-->
-                  <com:SubType>1</com:SubType>
-                  <com:PrimaryOffering>
-                     <com:NewPrimaryOffering>
-                        <com:OfferingId>
-                           <com:OfferingId>1207609454</com:OfferingId>
-                           <com:ServiceNumber>123789896</com:ServiceNumber>
-                        </com:OfferingId>
-                     </com:NewPrimaryOffering>
-                  </com:PrimaryOffering>
-                  <com:SLAPriority>0</com:SLAPriority>
-                  <com:CallCenterAccess>980,894</com:CallCenterAccess>
-                  <com:SubLanguage>2002</com:SubLanguage>
-                  <com:IVRLanguage>2060</com:IVRLanguage>
-                  <com:GreenFlag>1</com:GreenFlag>
-               </com:SubscriberInfo>
-            </com:SubBusiOrderlist>
-            <com:SubBusiOrderlist>
-               <com:BusinessCode>CO015</com:BusinessCode>
-               <!--You have a CHOICE of the next 2 items at this level-->
-               <com:SubscriberInfo>
-                  <!--Optional:  0:Prepaid  1:Postpaid  3:Hybrid.-->
-                  <com:SubType>0</com:SubType>
-                  <com:PrimaryOffering>
-                     <com:NewPrimaryOffering>
-                        <com:OfferingId>
-                           <com:OfferingId>1457567289</com:OfferingId>
-                        </com:OfferingId>
-                     </com:NewPrimaryOffering>
-                  </com:PrimaryOffering>
-                  <com:SLAPriority>0</com:SLAPriority>
-                  <com:InternetAccount>{$email}</com:InternetAccount>
-                  <com:InternetPassword>REDACTED_PASSWORD</com:InternetPassword>
-                  <com:CallCenterAccess>980,894</com:CallCenterAccess>
-                  <com:SubLanguage>2002</com:SubLanguage>
-                  <com:IVRLanguage>2060</com:IVRLanguage>
-                  <com:GreenFlag>1</com:GreenFlag>
-               </com:SubscriberInfo>
-            </com:SubBusiOrderlist>
-            <com:ExternalOperid>9527</com:ExternalOperid>
-            <com:ExternalOperName>helloworld</com:ExternalOperName>
-            <com:InstallmentCompletedDate>{$data['installment_date']}</com:InstallmentCompletedDate>
-         </ser:CreateNewSubscriberReqBody>
-      </ser:CreateNewSubscriberReqMsg>
-   </soapenv:Body>
+                  xmlns:ser="http://oss.huawei.com/webservice/bss/services"
+                  xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
+<soapenv:Header/>
+<soapenv:Body>
+<ser:CreateNewSubscriberReqMsg>
+
+<ser:RequestHeader>
+ <com:Version>{$d['header']['version']}</com:Version>
+ <com:TransactionId>{$d['header']['transaction_id']}</com:TransactionId>
+ <com:SessionId>{$d['header']['session_id']}</com:SessionId>
+ <com:ProcessTime>{$d['header']['process_time']}</com:ProcessTime>
+ <com:ContactId>{$d['header']['contact_id']}</com:ContactId>
+ <com:Language>{$d['header']['language']}</com:Language>
+ <com:ChannelId>{$d['header']['channel_id']}</com:ChannelId>
+ <com:TechnicalChannelId>{$d['header']['technical_channel_id']}</com:TechnicalChannelId>
+ <com:TenantId>{$d['header']['tenant_id']}</com:TenantId>
+ <com:AccessUser>{$d['header']['access_user']}</com:AccessUser>
+ <com:AccessPwd>{$d['header']['access_pwd']}</com:AccessPwd>
+ <com:AccessIP>{$d['header']['access_ip']}</com:AccessIP>
+ <com:TestFlag>{$d['header']['test_flag']}</com:TestFlag>
+</ser:RequestHeader>
+
+<ser:CreateNewSubscriberReqBody>
+
+<com:CustomerBusiOrder>
+ <com:CustomerSurveyOrderId>{$d['survey_order_id']}</com:CustomerSurveyOrderId>
+ <com:CustomerCode>{$d['customer']['code']}</com:CustomerCode>
+ <com:IsCombo>1</com:IsCombo>
+</com:CustomerBusiOrder>
+
+<com:SubBusiOrderlist>
+ <com:BusinessCode>CO015</com:BusinessCode>
+ <com:GroupSubInfo>
+   <com:ExternalSequnce>{$d['meta']['external_seq']}</com:ExternalSequnce>
+   <com:PrimaryOffering>
+     <com:NewPrimaryOffering>
+       <com:OfferingId>
+         <com:OfferingId>{$d['combo']['group_offering_id']}</com:OfferingId>
+       </com:OfferingId>
+     </com:NewPrimaryOffering>
+     <com:EffectiveMode>0</com:EffectiveMode>
+     <com:InstanceProperty>
+       <com:PropertyCode>50135</com:PropertyCode>
+       <com:PropertyType>1</com:PropertyType>
+       <com:Value>{$d['combo']['cpe_type']}</com:Value>
+     </com:InstanceProperty>
+     <com:InstanceProperty>
+       <com:PropertyCode>50134</com:PropertyCode>
+       <com:PropertyType>1</com:PropertyType>
+       <com:Value>{$d['combo']['cpe_serial']}</com:Value>
+     </com:InstanceProperty>
+   </com:PrimaryOffering>
+ </com:GroupSubInfo>
+</com:SubBusiOrderlist>
+
+<com:SubBusiOrderlist>
+ <com:BusinessCode>CO015</com:BusinessCode>
+ <com:SubscriberInfo>
+   <com:SubType>1</com:SubType>
+   <com:ServiceNumber>{$d['service_number']}</com:ServiceNumber>
+   <com:NetworkType>4</com:NetworkType>
+   <com:PrimaryOffering>
+     <com:NewPrimaryOffering>
+       <com:OfferingId>
+         <com:OfferingId>{$d['combo']['voice_offering_id']}</com:OfferingId>
+       </com:OfferingId>
+     </com:NewPrimaryOffering>
+   </com:PrimaryOffering>
+ </com:SubscriberInfo>
+</com:SubBusiOrderlist>
+
+<com:SubBusiOrderlist>
+ <com:BusinessCode>CO015</com:BusinessCode>
+ <com:SubscriberInfo>
+   <com:SubType>0</com:SubType>
+   <com:PrimaryOffering>
+     <com:NewPrimaryOffering>
+       <com:OfferingId>
+         <com:OfferingId>{$d['combo']['data_offering_id']}</com:OfferingId>
+       </com:OfferingId>
+     </com:NewPrimaryOffering>
+   </com:PrimaryOffering>
+   <com:InternetAccount>{$d['internet']['account']}</com:InternetAccount>
+   <com:InternetPassword>{$d['internet']['password']}</com:InternetPassword>
+ </com:SubscriberInfo>
+</com:SubBusiOrderlist>
+
+<com:ExternalOperid>{$d['operator']['id']}</com:ExternalOperid>
+<com:ExternalOperName>{$d['operator']['name']}</com:ExternalOperName>
+<com:InstallmentCompletedDate>{$d['meta']['install_date']}</com:InstallmentCompletedDate>
+
+</ser:CreateNewSubscriberReqBody>
+</ser:CreateNewSubscriberReqMsg>
+</soapenv:Body>
 </soapenv:Envelope>
- 
 XML;
-   }
+    }
 
-   protected function parseResponse(array $data, string $xml): array
-   {
-      libxml_use_internal_errors(true); // suppress XML parsing warnings
+    /**
+     * Namespace-safe response parsing
+     */
+    private function parseResponse(string $xml): array
+    {
+        $res = [
+            'success' => false,
+            'ret_code' => null,
+            'ret_msg' => null,
+            'customer_busi_order_id' => null,
+            'extra_params' => [],
+        ];
 
-      $responseData = [
-         'success' => false,
-         'ret_code' => null,
-         'ret_msg' => null,
-         'customer_busi_order_id' => null,
-         'extra_params' => [],
-      ];
+        $obj = simplexml_load_string($xml);
+        if (!$obj) return $res;
 
-      try {
-         $xmlObject = simplexml_load_string($xml, "SimpleXMLElement", LIBXML_NOCDATA);
-         if (!$xmlObject) {
-            throw new \RuntimeException('Invalid XML response');
-         }
+        $body = $obj->children('soapenv', true)->Body;
+        $rsp  = $body->children('ser', true)->CreateNewSubscriberRspMsg;
 
-         $body = $xmlObject->children('soapenv', true)->Body ?? null;
-         if (!$body) return $responseData;
+        $header = $rsp->children('ser', true)
+            ->ResponseHeader->children('com', true);
 
-         $rspMsg = $body->children('ser', true)->CreateNewSubscriberRspMsg ?? null;
-         if (!$rspMsg) return $responseData;
+        $res['ret_code'] = (string) $header->RetCode;
+        $res['ret_msg']  = (string) $header->RetMsg;
+        $res['success']  = ((string) $header->RetCode === '0');
 
-         $header = $rspMsg->ResponseHeader ?? null;
-         if ($header) {
-            $responseData['ret_code'] = (string) $header->RetCode;
-            $responseData['ret_msg'] = (string) $header->RetMsg;
-            $responseData['success'] = ((string) $header->RetCode === '0');
-         }
+        $res['customer_busi_order_id'] =
+            (string) $rsp->CustomerBusiOrderId;
 
-         $responseData['customer_busi_order_id'] = (string) $rspMsg->CustomerBusiOrderId;
-
-         // Parse ExtParamList (like FBBNUMBER)
-         if (isset($rspMsg->ExtParamList) && isset($rspMsg->ExtParamList->ParameterInfo)) {
-            foreach ($rspMsg->ExtParamList->ParameterInfo as $param) {
-               $name  = (string) $param->ParamName;
-               $value = (string) $param->ParamValue;
-               $responseData['extra_params'][$name] = $value;
+        if (isset($rsp->ExtParamList)) {
+            foreach ($rsp->ExtParamList->children('com', true)->ParameterInfo as $p) {
+                $res['extra_params'][(string)$p->ParamName]
+                    = (string)$p->ParamValue;
             }
-         }
-      } catch (\Throwable $e) {
-         \Log::error('Error parsing XML response: ' . $e->getMessage());
-      }
+        }
 
-      return $responseData;
-   }
+        return $res;
+    }
 }

@@ -51,7 +51,7 @@ class QueryAvailableNumberService extends BaseApiService
     {
         $xmlPayload = $this->buildXml($data);
         $xmlResponse = $this->executeRequest($xmlPayload);
-        Log::info($xmlResponse);
+        // Log::info($xmlResponse);
         return  $this->parseResponse($xmlResponse);
     }
 

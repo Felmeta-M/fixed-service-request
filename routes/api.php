@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\v1\AccountController;
 use App\Http\Controllers\Api\v1\AvailableNumberController;
 use App\Http\Controllers\Api\v1\BandwidthOptionController;
 use App\Http\Controllers\Api\v1\CancelSurveyOrderController;
+use App\Http\Controllers\Api\v1\ChangeOfferController;
 use App\Http\Controllers\Api\v1\CustomerController;
 use App\Http\Controllers\Api\v1\EcafController;
 use App\Http\Controllers\Api\v1\GetCombiningController;
@@ -92,6 +93,7 @@ Route::prefix('v1')->group(function () {
 
             Route::post('account-list', [AccountController::class, 'getAccount']);
             Route::post('primary-offers', [PrimaryOfferingController::class, 'getPrimaryOffer']);
+            Route::post('change-offer', [ChangeOfferController::class, 'changePrimaryOffering']);
             Route::post('avaiable-number', [AvailableNumberController::class, 'getAvaiableNumber']);
             Route::post('cancel-survey-order', [CancelSurveyOrderController::class, 'cancel']);
             Route::post('resource-check', [ResourceCheckController::class, 'check']);

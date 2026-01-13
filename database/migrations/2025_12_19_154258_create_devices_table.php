@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('devices', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('survey_request_id')
+            $table->foreignId('survey_order_id')
                 ->constrained()
                 ->cascadeOnDelete();
 

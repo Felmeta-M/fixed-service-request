@@ -24,6 +24,7 @@ class CustomerService extends BaseApiService
         try {
             $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
+            Log::info($xmlResponse);
             $parsedXml = $this->parseResponse($xmlResponse, $data);
             return ApiResponse::success($parsedXml);
         } catch (RuntimeException $e) {

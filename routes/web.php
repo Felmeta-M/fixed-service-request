@@ -84,7 +84,7 @@ Route::middleware(['otp.auth'])->group(function () {
             'survey_details' => $survey_details,
         ]);
     })->name('payment.summary');
-   
+
     Route::get('/support-request', [SupportRequestController::class, 'index'])->name('support.request');
     Route::post('/logout', [OtpAuthController::class, 'logout'])->name('logout');
     Route::get('/create-customer', fn() => Inertia::render('Customers/Create'))->name('customers.create');

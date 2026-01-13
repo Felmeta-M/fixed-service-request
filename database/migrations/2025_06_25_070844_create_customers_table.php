@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('sub')->nullable();
             $table->string('code')->nullable();
             $table->string('name')->nullable();
-            $table->string('phone')->nullable();
+            $table->string('phone_number')->nullable();
             $table->string('title')->nullable();
             $table->string('gender')->nullable();
             $table->string('nationality')->nullable();
@@ -28,7 +28,7 @@ return new class extends Migration {
             $table->string('religion')->nullable();
             $table->string('income')->nullable();
             $table->string('primary_language')->nullable();
-            $table->string('picture')->nullable();
+            $table->text('picture')->nullable();
             $table->json('address')->nullable();
             $table->json('contact')->nullable();
             $table->json('contact_persons')->nullable();

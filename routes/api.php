@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\v1\AccountController;
+use App\Http\Controllers\Api\v1\AvailableDeviceController;
 use App\Http\Controllers\Api\v1\AvailableNumberController;
 use App\Http\Controllers\Api\v1\BandwidthOptionController;
 use App\Http\Controllers\Api\v1\CancelSurveyOrderController;
@@ -46,6 +47,8 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('survey-types', SurveyTypeController::class);
         Route::apiResource('bandwidth-options', BandwidthOptionController::class);
         Route::apiResource('occupations', OccupationController::class);
+        Route::get('available-devices', [AvailableDeviceController::class, 'index']);
+        Route::get('available-devices/{id}', [AvailableDeviceController::class, 'show']);
 
         Route::prefix('locations')->group(function () {
             Route::get('/regions', [LocationController::class, 'regions']);

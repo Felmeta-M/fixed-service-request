@@ -166,6 +166,7 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
                 nename: encryptedResource?.nename,
             },
             with_device: formData.withDevice,
+            device_id: formData.deviceId || null,
             completed_date: new Date()
                 .toISOString()
                 .replace(/[-:T.Z]/g, '')

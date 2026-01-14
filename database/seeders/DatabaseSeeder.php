@@ -24,5 +24,11 @@ class DatabaseSeeder extends Seeder
         $this->call(OccupationSeeder::class);
         $this->call(CustomerTypeCategorySubcategorySeeder::class);
         $this->call(RegionZoneWeredaSeeder::class);
+        $this->call(SurveyTypeSeeder::class);
+        $this->call(BandwidthOptionsSeeder::class);
+        $this->call(OccupationSeeder::class);
+        $this->call(CustomerTypeCategorySubcategorySeeder::class);
+        $this->call(RegionZoneWeredaSeeder::class);
+        $this->call(AvailableDeviceSeeder::class);
     }
 }

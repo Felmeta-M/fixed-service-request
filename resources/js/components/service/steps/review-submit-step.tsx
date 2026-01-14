@@ -13,6 +13,15 @@ interface ReviewSubmitStepProps {
         bandwidth?: string;
         customerType?: string;
         withDevice?: boolean;
+        selectedDevice?: {
+            id: string;
+            name: string;
+            vendor: string;
+            model: string | null;
+            price: number;
+            description: string | null;
+        } | null;
+        deviceId?: string | null;
         latitude: number;
         longitude: number;
         distance?: string;
@@ -98,6 +107,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 nename: encryptedResource?.nename,
             },
             with_device: formData.withDevice,
+            device_id: formData.deviceId || null,
             completed_date: new Date()
                 .toISOString()
                 .replace(/[-:T.Z]/g, '')
@@ -177,11 +187,18 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                             <div>
                                 <span className="text-sm text-gray-600">Device</span>
                                 <p className="font-semibold">
-                                    {formData.withDevice === undefined 
-                                        ? "Not selected" 
-                                        : formData.withDevice 
-                                            ? "With Device" 
-                                            : "Without Device"}
+                                    {formData.withDevice === undefined
+                                        ? 'Not selected'
+                                        : formData.withDevice
+                                          ? formData.selectedDevice
+                                              ? `${formData.selectedDevice.name} (${formData.selectedDevice.vendor}) - ${new Intl.NumberFormat('en-ET', {
+                                                    style: 'currency',
+                                                    currency: 'ETB',
+                                                    minimumFractionDigits: 0,
+                                                    maximumFractionDigits: 2,
+                                                }).format(formData.selectedDevice.price)}`
+                                              : 'With Device (Not selected)'
+                                          : 'Without Device'}
                                 </p>
                             </div>
 

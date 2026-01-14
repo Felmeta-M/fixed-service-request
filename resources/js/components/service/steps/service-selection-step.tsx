@@ -124,7 +124,25 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                 </div>
             )}
 
-            <DeviceOptionSelector value={formData.withDevice} onChange={(val) => onUpdate({ withDevice: val })} />
+            <DeviceOptionSelector
+                value={formData.withDevice}
+                onChange={(val) => {
+                    // If switching to "without device", clear the selected device
+                    if (!val) {
+                        onUpdate({ withDevice: false, selectedDevice: null, deviceId: null });
+                    } else {
+                        onUpdate({ withDevice: true });
+                    }
+                }}
+                selectedDevice={formData.selectedDevice}
+                onDeviceSelect={(device) => {
+                    onUpdate({
+                        selectedDevice: device,
+                        deviceId: device.id,
+                    });
+                }}
+                disabled={hasActiveSurvey}
+            />
 
             {/* Terms and Conditions Checkbox */}
             <div>

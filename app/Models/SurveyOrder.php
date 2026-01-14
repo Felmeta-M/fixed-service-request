@@ -52,4 +52,9 @@ class SurveyOrder extends Model
     {
         return $this->hasOne(Payment::class, 'customer_survey_order_id', 'customer_survey_order_id');
     }
+
+    public function device()
+    {
+        return $this->belongsTo(AvailableDevice::class, 'device_id');
+    }
 }

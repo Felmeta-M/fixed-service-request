@@ -33,6 +33,7 @@ class SurveyOrderFormRequest extends FormRequest
             'completed_date' => 'nullable|date',
             'external_operid' => 'nullable|string',
             'with_device' => 'nullable|boolean',
+            'device_id' => 'nullable|uuid|exists:available_devices,id',
             'survey_is_manual' => 'nullable|boolean',
         ];
     }

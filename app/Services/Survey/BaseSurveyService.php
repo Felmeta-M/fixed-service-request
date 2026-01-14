@@ -89,6 +89,7 @@ abstract class BaseSurveyService extends BaseApiService
             $survey = SurveyOrder::create([
                 ...$data,
                 'with_device' => (bool)$data['with_device'],
+                'device_id' => $data['device_id'] ?? null,
                 'service_number' => $serviceNumber,
                 'customer_survey_order_id' => $surveyOrderId,
                 'status' => $data['survey_is_manual'] ? FFDServiceProvisionStatus::Waiting->value : FFDServiceProvisionStatus::Completed->value,
@@ -118,8 +119,14 @@ abstract class BaseSurveyService extends BaseApiService
 
             $calculator = app(PaymentCalculatorService::class);
             $fees = $calculator->calculateFees($survey, $requestData);
-            //TODO: device fee from one-off fee service
-            $deviceFee =  $survey->with_device ?  200 : 0;
+            
+            // Calculate device fee from selected device price
+            $deviceFee = 0;
+            if ($survey->with_device && $survey->device_id) {
+                $device = \App\Models\AvailableDevice::find($survey->device_id);
+                $deviceFee = $device ? (float) $device->price : 0;
+            }
+            
             $totalAmount = $fees['total_amount'] + $deviceFee;
             $this->payment_service->createOrUpdatePayment([
                 'customer_survey_order_id'       => $survey->customer_survey_order_id,

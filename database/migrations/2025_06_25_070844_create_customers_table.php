@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('sub')->nullable();
             $table->string('code')->nullable();
             $table->string('name')->nullable();
-            $table->string('phone')->nullable();
+            $table->string('phone_number')->nullable();
             $table->string('title')->nullable();
             $table->string('gender')->nullable();
             $table->string('nationality')->nullable();

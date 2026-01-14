@@ -1,0 +1,433 @@
+<?php
+
+namespace App\Exceptions;
+
+use App\Enums\ErrorCode;
+use App\Services\ApiResponse;
+use App\Services\Logging\AppLogger;
+use Illuminate\Auth\AuthenticationException as LaravelAuthException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
+use Illuminate\Validation\ValidationException as LaravelValidationException;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
+
+/**
+ * Professional exception handler with:
+ * - Consistent API error responses
+ * - Proper logging by exception type
+ * - Debug information in development
+ * - Request ID tracking
+ */
+class Handler extends ExceptionHandler
+{
+    /**
+     * Exception types with custom log levels
+     */
+    protected $levels = [
+        \PDOException::class => 'critical',
+        \RedisException::class => 'critical',
+        ConnectionException::class => 'error',
+        ExternalServiceException::class => 'error',
+        PaymentException::class => 'error',
+    ];
+
+    /**
+     * Exception types that are not reported (logged)
+     */
+    protected $dontReport = [
+        LaravelAuthException::class,
+        LaravelValidationException::class,
+        TokenMismatchException::class,
+        ModelNotFoundException::class,
+        NotFoundHttpException::class,
+        MethodNotAllowedHttpException::class,
+        ThrottleRequestsException::class,
+        // Our custom client-error exceptions
+        ValidationException::class,
+        NotFoundException::class,
+        AuthenticationException::class,
+        AuthorizationException::class,
+    ];
+
+    /**
+     * Inputs never flashed to session
+     */
+    protected $dontFlash = [
+        'current_password',
+        'password',
+        'password_confirmation',
+        'otp',
+        'pin',
+        'token',
+        'secret',
+        'api_key',
+        'card_number',
+        'cvv',
+    ];
+
+    /**
+     * Register exception handling callbacks
+     */
+    public function register(): void
+    {
+        // Custom rendering for API requests
+        $this->renderable(function (Throwable $e, Request $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return $this->renderApiException($e, $request);
+            }
+        });
+
+        // Additional reporting (Sentry, Bugsnag, etc.)
+        $this->reportable(function (Throwable $e) {
+            // Add external error tracking here if needed
+            // Example: \Sentry\captureException($e);
+        });
+    }
+
+    /**
+     * Report exception to logs
+     */
+    public function report(Throwable $e): void
+    {
+        if ($this->shouldntReport($e)) {
+            return;
+        }
+
+        $this->logException($e);
+    }
+
+    /**
+     * Render exception as API response
+     */
+    protected function renderApiException(Throwable $e, Request $request): JsonResponse
+    {
+        // Handle our custom base exceptions
+        if ($e instanceof BaseException) {
+            return $this->renderCustomException($e);
+        }
+
+        // Handle Laravel's validation exception
+        if ($e instanceof LaravelValidationException) {
+            return ApiResponse::validationError($e->errors(), $e->getMessage());
+        }
+
+        // Handle Laravel's authentication exception
+        if ($e instanceof LaravelAuthException) {
+            return ApiResponse::unauthorized('Authentication required. Please log in.');
+        }
+
+        // Handle model not found
+        if ($e instanceof ModelNotFoundException) {
+            $model = class_basename($e->getModel());
+            return ApiResponse::notFound($model, $e->getIds()[0] ?? null);
+        }
+
+        // Handle 404 routes
+        if ($e instanceof NotFoundHttpException) {
+            return ApiResponse::error(
+                message: 'The requested endpoint was not found.',
+                errorCode: ErrorCode::NOT_FOUND,
+                status: 404
+            );
+        }
+
+        // Handle method not allowed
+        if ($e instanceof MethodNotAllowedHttpException) {
+            return ApiResponse::error(
+                message: 'HTTP method not allowed for this endpoint.',
+                errorCode: ErrorCode::OPERATION_NOT_ALLOWED,
+                status: 405
+            );
+        }
+
+        // Handle rate limiting
+        if ($e instanceof ThrottleRequestsException) {
+            $retryAfter = $e->getHeaders()['Retry-After'] ?? 60;
+            return ApiResponse::rateLimited((int) $retryAfter);
+        }
+
+        // Handle CSRF token mismatch
+        if ($e instanceof TokenMismatchException) {
+            return ApiResponse::error(
+                message: 'Session expired. Please refresh and try again.',
+                errorCode: ErrorCode::SESSION_EXPIRED,
+                status: 419
+            );
+        }
+
+        // Handle HTTP exceptions
+        if ($e instanceof HttpException) {
+            return $this->renderHttpException($e);
+        }
+
+        // Handle connection exceptions (external services)
+        if ($e instanceof ConnectionException) {
+            return ApiResponse::error(
+                message: 'External service is temporarily unavailable.',
+                errorCode: ErrorCode::SERVICE_UNAVAILABLE,
+                status: 502
+            );
+        }
+
+        // Handle database exceptions
+        if ($e instanceof \PDOException) {
+            AppLogger::default()->critical('Database error', [
+                'exception' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ]);
+
+            return ApiResponse::error(
+                message: 'A database error occurred. Please try again later.',
+                errorCode: ErrorCode::INTERNAL_ERROR,
+                status: 500
+            );
+        }
+
+        // Default: unexpected exception
+        return ApiResponse::fromException($e);
+    }
+
+    /**
+     * Render our custom exceptions
+     */
+    protected function renderCustomException(BaseException $e): JsonResponse
+    {
+        $response = [
+            'success' => false,
+            'message' => $e->getUserMessage(),
+            'error_code' => $e->getErrorCode(),
+            'request_id' => AppLogger::getRequestId(),
+        ];
+
+        // Add validation errors for validation exceptions
+        if ($e instanceof ValidationException) {
+            $response['errors'] = $e->getErrors();
+        }
+
+        // Add retry-after for rate limiting
+        if ($e instanceof ExternalServiceException && $e->getErrorCode() === 'SERVICE_RATE_LIMITED') {
+            $retryAfter = $e->getContext()['retry_after'] ?? 60;
+            return response()->json($response, $e->getHttpStatusCode())
+                ->withHeaders(['Retry-After' => $retryAfter]);
+        }
+
+        // Add debug info in development
+        if (config('app.debug')) {
+            $response['debug'] = [
+                'exception' => get_class($e),
+                'developer_message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'context' => $e->getContext(),
+            ];
+        }
+
+        return response()->json($response, $e->getHttpStatusCode());
+    }
+
+    /**
+     * Render HTTP exceptions
+     */
+    protected function renderHttpException(HttpException $e): JsonResponse
+    {
+        $status = $e->getStatusCode();
+
+        $errorCode = match ($status) {
+            400 => ErrorCode::VALIDATION_ERROR,
+            401 => ErrorCode::AUTH_ERROR,
+            403 => ErrorCode::FORBIDDEN,
+            404 => ErrorCode::NOT_FOUND,
+            405 => ErrorCode::OPERATION_NOT_ALLOWED,
+            408 => ErrorCode::SERVICE_TIMEOUT,
+            409 => ErrorCode::DUPLICATE_RESOURCE,
+            422 => ErrorCode::VALIDATION_ERROR,
+            429 => ErrorCode::RATE_LIMITED,
+            500 => ErrorCode::INTERNAL_ERROR,
+            502 => ErrorCode::EXTERNAL_SERVICE_ERROR,
+            503 => ErrorCode::SERVICE_UNAVAILABLE,
+            504 => ErrorCode::SERVICE_TIMEOUT,
+            default => ErrorCode::UNKNOWN_ERROR,
+        };
+
+        $message = $e->getMessage() ?: $errorCode->userMessage();
+
+        return ApiResponse::error($message, $errorCode, $status);
+    }
+
+    /**
+     * Log exception with appropriate channel and context
+     */
+    protected function logException(Throwable $e): void
+    {
+        $context = $this->buildExceptionContext($e);
+        $logger = $this->determineLogger($e);
+        $level = $this->determineLevel($e);
+
+        $message = sprintf(
+            '[%s] %s in %s:%d',
+            class_basename($e),
+            $e->getMessage(),
+            $e->getFile(),
+            $e->getLine()
+        );
+
+        $logger->{$level}($message, $context);
+    }
+
+    /**
+     * Build context array for exception logging
+     */
+    protected function buildExceptionContext(Throwable $e): array
+    {
+        $context = [
+            'exception' => [
+                'class' => get_class($e),
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ],
+            'trace' => $this->formatTrace($e),
+        ];
+
+        // Add previous exception
+        if ($previous = $e->getPrevious()) {
+            $context['previous'] = [
+                'class' => get_class($previous),
+                'message' => $previous->getMessage(),
+                'file' => $previous->getFile(),
+                'line' => $previous->getLine(),
+            ];
+        }
+
+        // Add custom exception context
+        if ($e instanceof BaseException) {
+            $context['custom_context'] = $e->getContext();
+        }
+
+        // Add HTTP context
+        if ($e instanceof HttpException) {
+            $context['http'] = [
+                'status_code' => $e->getStatusCode(),
+                'headers' => $e->getHeaders(),
+            ];
+        }
+
+        // Add external service context
+        if ($e instanceof ExternalServiceException) {
+            $context['external_service'] = [
+                'service' => $e->getService(),
+                'status_code' => $e->getServiceStatusCode(),
+            ];
+        }
+
+        // Add payment context
+        if ($e instanceof PaymentException) {
+            $context['payment'] = [
+                'transaction_id' => $e->getTransactionId(),
+                'gateway_code' => $e->getGatewayCode(),
+            ];
+        }
+
+        return $context;
+    }
+
+    /**
+     * Format stack trace for logging
+     */
+    protected function formatTrace(Throwable $e): array
+    {
+        $trace = [];
+        foreach (array_slice($e->getTrace(), 0, 15) as $frame) {
+            $trace[] = sprintf(
+                '%s%s%s() at %s:%d',
+                $frame['class'] ?? '',
+                $frame['type'] ?? '',
+                $frame['function'] ?? 'unknown',
+                basename($frame['file'] ?? 'unknown'),
+                $frame['line'] ?? 0
+            );
+        }
+        return $trace;
+    }
+
+    /**
+     * Determine which logger to use
+     */
+    protected function determineLogger(Throwable $e): AppLogger
+    {
+        // Security exceptions
+        if ($e instanceof AuthenticationException ||
+            $e instanceof AuthorizationException ||
+            $e instanceof LaravelAuthException ||
+            $e instanceof TokenMismatchException) {
+            return AppLogger::security();
+        }
+
+        // Payment exceptions
+        if ($e instanceof PaymentException) {
+            return AppLogger::payment();
+        }
+
+        // External service exceptions
+        if ($e instanceof ExternalServiceException ||
+            $e instanceof ConnectionException) {
+            return AppLogger::api();
+        }
+
+        // Business logic exceptions
+        if ($e instanceof BusinessException) {
+            return AppLogger::business();
+        }
+
+        // API/Service exceptions
+        if (str_contains($e->getFile(), 'Services/')) {
+            return AppLogger::api();
+        }
+
+        return AppLogger::default();
+    }
+
+    /**
+     * Determine log level
+     */
+    protected function determineLevel(Throwable $e): string
+    {
+        // Check explicit levels
+        foreach ($this->levels as $class => $level) {
+            if ($e instanceof $class) {
+                return $level;
+            }
+        }
+
+        // Critical: Infrastructure issues
+        if ($e instanceof \PDOException ||
+            $e instanceof \RedisException) {
+            return 'critical';
+        }
+
+        // Error: Business and service failures
+        if ($e instanceof BusinessException ||
+            $e instanceof ExternalServiceException ||
+            $e instanceof PaymentException ||
+            $e instanceof ConnectionException) {
+            return 'error';
+        }
+
+        // Warning: Client errors
+        if ($e instanceof HttpException && $e->getStatusCode() < 500) {
+            return 'warning';
+        }
+
+        return 'error';
+    }
+}

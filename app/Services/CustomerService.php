@@ -2,14 +2,11 @@
 
 namespace App\Services;
 
-
 use App\Models\Customer;
-use App\Models\Otp;
+use App\Services\Logging\AppLogger;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
-use Log;
 use RuntimeException;
 use Throwable;
 
@@ -23,20 +20,30 @@ class CustomerService extends BaseApiService
     {
         try {
             $xmlPayload = $this->buildXml($data);
-            // Log::info('XML Payload', ['xml_payload' => $xmlPayload]);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            Log::info($xmlResponse);
+
+            AppLogger::api()->debug('Customer create response received', [
+                'transaction_id' => $this->transactionId,
+            ]);
+
             $parsedXml = $this->parseResponse($xmlResponse, $data);
             return ApiResponse::success($parsedXml);
         } catch (RuntimeException $e) {
+            AppLogger::api()->error('Customer create failed', [
+                'error' => $e->getMessage(),
+            ]);
             return ApiResponse::error($e->getMessage(), 500);
         } catch (Throwable $e) {
+            AppLogger::api()->error('Customer create exception', [
+                'error' => $e->getMessage(),
+            ]);
             return ApiResponse::exception($e, 'Customer create failed.');
         }
     }
+
     protected function buildXml(array $data = []): string
     {
-        $customer = Customer::current();
+        $customer = $this->getLocalCustomerDataOptimized();
 
         $credentials = config('services.customer');
 
@@ -140,7 +147,6 @@ class CustomerService extends BaseApiService
 XML;
     }
 
-
     public function parseResponse(string $xml, array $data)
     {
         $xmlObject = simplexml_load_string($xml);
@@ -164,38 +170,45 @@ XML;
 
         $customerCode = (string) $customerData->CustomerCode ?? '';
 
-        $customerResponse = DB::transaction(function () use ($customerCode, $data) {
-            $currentUser = Auth::guard('api')->user();
+        // Use Query Builder for atomic updates - more efficient than Eloquent
+        $customerSubId = Auth::guard('api')->user()?->customer_sub_id;
 
-            if (!$currentUser) {
-                throw new Exception("Authenticated OTP user not found.");
-            }
+        if (!$customerSubId) {
+            throw new Exception("Authenticated OTP user not found.");
+        }
 
-            // Update customer
-            Customer::where('sub', $currentUser->customer_sub_id)
+        DB::transaction(function () use ($customerCode, $data, $customerSubId) {
+            // Batch update using Query Builder - single query each
+            DB::table('customers')
+                ->where('sub', $customerSubId)
                 ->update([
-                        'title' => $data['title'],
-                        'code' => $customerCode,
-                        'contact' => $data['contact'],
-                        'contact_persons' => $data['contact_person'],
-                        'region' => $data['address']['region'],
-                        'city' => $data['address']['city'],
-                        'wereda' => $data['address']['woreda'],
-                        'zone' => $data['address']['zone'],
-                        'kebele' => $data['address']['kebele'],
-                        'house_no' => $data['address']['house_no'],
-                        'verified_at' => now(),
-                    ]);
+                    'title' => $data['title'],
+                    'code' => $customerCode,
+                    'contact' => json_encode($data['contact']),
+                    'contact_persons' => json_encode($data['contact_person']),
+                    'region' => $data['address']['region'],
+                    'city' => $data['address']['city'],
+                    'wereda' => $data['address']['woreda'],
+                    'zone' => $data['address']['zone'],
+                    'kebele' => $data['address']['kebele'],
+                    'house_no' => $data['address']['house_no'],
+                    'verified_at' => now(),
+                    'updated_at' => now(),
+                ]);
 
-            // Update OTP
-            Otp::where('customer_sub_id', $currentUser->customer_sub_id)
+            // Update OTP record
+            DB::table('otps')
+                ->where('customer_sub_id', $customerSubId)
                 ->update([
-                        'customer_code' => $customerCode,
-                    ]);
-
-            return $currentUser;
+                    'customer_code' => $customerCode,
+                    'updated_at' => now(),
+                ]);
         });
 
+        AppLogger::business()->info('Customer profile created', [
+            'customer_code' => $customerCode,
+            'transaction_id' => $this->transactionId,
+        ]);
 
         return ApiResponse::success([
             'response_time' => (string) $headerData->ResponseTime ?? '',
@@ -207,25 +220,74 @@ XML;
         ]);
     }
 
+    /**
+     * Get local customer data - optimized with Query Builder
+     */
     public function getLocalCustomerData($customerSubId): ?Customer
     {
         try {
-            $customer = Customer::query()->where('sub', $customerSubId)->first();
+            // Use Query Builder for simple lookup
+            $customerData = DB::table('customers')
+                ->where('sub', $customerSubId)
+                ->first();
 
-            if (!$customer) {
-                Log::warning('No local customer found for pre-filling', [
-                    'customer_id' => $customerSubId
+            if (!$customerData) {
+                AppLogger::auth()->debug('No local customer found', [
+                    'customer_sub_id' => $customerSubId,
                 ]);
                 return null;
             }
-            return $customer;
+
+            // Hydrate to model only if we need full model functionality
+            return Customer::find($customerData->id);
         } catch (Exception $e) {
-            Log::error('Error getting local customer data', [
-                'customer_id' => $customerSubId,
-                'error' => $e->getMessage()
+            AppLogger::auth()->error('Error getting local customer data', [
+                'customer_sub_id' => $customerSubId,
+                'error' => $e->getMessage(),
             ]);
             return null;
         }
+    }
+
+    /**
+     * Get current customer data optimized - Query Builder with selective columns
+     */
+    protected function getLocalCustomerDataOptimized(): ?object
+    {
+        $customerSubId = Auth::guard('api')->user()?->customer_sub_id;
+
+        if (!$customerSubId) {
+            return null;
+        }
+
+        return DB::table('customers')
+            ->where('sub', $customerSubId)
+            ->select([
+                'id',
+                'sub',
+                'code',
+                'name',
+                'phone_number',
+                'title',
+                'gender',
+                'nationality',
+                'identification_type',
+                'identification_number',
+                'birthdate',
+                'place_of_birth',
+                'occupation',
+                'education',
+                'religion',
+                'income',
+                'primary_language',
+                'region',
+                'city',
+                'wereda',
+                'zone',
+                'kebele',
+                'house_no',
+            ])
+            ->first();
     }
 
     protected function endpoint(): string

@@ -4,17 +4,20 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AvailableDeviceResource;
-use App\Models\AvailableDevice;
 use App\Services\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class AvailableDeviceController extends Controller
 {
+    private const CACHE_PREFIX = 'available_devices';
+    private const CACHE_TTL = 1800; // 30 minutes
+
     /**
-     * Display a listing of active available devices.
-     * 
+     * Display a listing of active available devices - cached Query Builder
+     *
      * Query parameters:
      * - service_type: Filter by service type ('1457567289' for broadband, '1207609454' for voice, '180427974' for combo)
      * - device_type: Direct filter by device type ('broadband', 'voice', 'universal')
@@ -22,55 +25,89 @@ class AvailableDeviceController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = AvailableDevice::query()->active();
+        // Build cache key based on filters
+        $cacheKey = $this->buildCacheKey($request);
 
-        // Filter by service type (maps to device type)
-        if ($request->has('service_type')) {
-            $serviceType = $request->service_type;
-            
-            // Map service types to device types
-            // '1457567289' = Fixed Broadband -> show broadband devices
-            // '1207609454' = Fixed Voice -> show voice devices
-            // '180427974' = Combo -> return all (will be filtered on frontend)
-            if ($serviceType === '1457567289') {
-                // Broadband service - show broadband and universal devices
-                $query->byType('broadband');
-            } elseif ($serviceType === '1207609454') {
-                // Voice service - show voice and universal devices
-                $query->byType('voice');
+        $devices = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($request) {
+            $query = DB::table('available_devices')
+                ->where('is_active', true)
+                ->select([
+                    'id',
+                    'name',
+                    'vendor',
+                    'model',
+                    'price',
+                    'device_type',
+                    'description',
+                    'image_url',
+                    'specifications',
+                    'is_active',
+                ]);
+
+            // Filter by service type (maps to device type)
+            if ($request->has('service_type')) {
+                $serviceType = $request->service_type;
+
+                if ($serviceType === '1457567289') {
+                    // Broadband service - show broadband and universal devices
+                    $query->whereIn('device_type', ['broadband', 'universal']);
+                } elseif ($serviceType === '1207609454') {
+                    // Voice service - show voice and universal devices
+                    $query->whereIn('device_type', ['voice', 'universal']);
+                }
+                // For combo ('180427974'), return all active devices
             }
-            // For combo ('180427974'), don't filter here - return all devices
-        }
 
-        // Direct device_type filter (takes precedence if provided)
-        if ($request->has('device_type')) {
-            $query->byType($request->device_type);
-        }
+            // Direct device_type filter (takes precedence if provided)
+            if ($request->has('device_type')) {
+                $deviceType = $request->device_type;
+                if ($deviceType === 'broadband') {
+                    $query->whereIn('device_type', ['broadband', 'universal']);
+                } elseif ($deviceType === 'voice') {
+                    $query->whereIn('device_type', ['voice', 'universal']);
+                } else {
+                    $query->where('device_type', $deviceType);
+                }
+            }
 
-        // Optional: Filter by vendor
-        if ($request->has('vendor')) {
-            $query->where('vendor', $request->vendor);
-        }
+            // Filter by vendor
+            if ($request->has('vendor')) {
+                $query->where('vendor', $request->vendor);
+            }
 
-        // Order by price ascending by default
-        $query->orderBy('price', 'asc');
+            return $query->orderBy('price', 'asc')->get();
+        });
 
-        $devices = $query->get();
-
-        // Transform devices through resources and resolve to arrays
-        $devicesData = $devices->map(function ($device) use ($request) {
-            return (new AvailableDeviceResource($device))->toArray($request);
+        // Transform devices
+        $devicesData = $devices->map(function ($device) {
+            return [
+                'id' => $device->id,
+                'name' => $device->name,
+                'vendor' => $device->vendor,
+                'model' => $device->model,
+                'price' => (float) $device->price,
+                'device_type' => $device->device_type,
+                'description' => $device->description,
+                'image_url' => $device->image_url,
+                'specifications' => $device->specifications ? json_decode($device->specifications, true) : null,
+            ];
         })->values()->all();
 
         return ApiResponse::success($devicesData);
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified resource - Query Builder with caching
      */
-    public function show(string $id): JsonResponse|AvailableDeviceResource
+    public function show(string $id): JsonResponse
     {
-        $device = AvailableDevice::find($id);
+        $cacheKey = self::CACHE_PREFIX . ':single:' . $id;
+
+        $device = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($id) {
+            return DB::table('available_devices')
+                ->where('id', $id)
+                ->first();
+        });
 
         if (!$device) {
             return response()->json([
@@ -79,6 +116,49 @@ class AvailableDeviceController extends Controller
             ], 404);
         }
 
-        return new AvailableDeviceResource($device);
+        return ApiResponse::success([
+            'id' => $device->id,
+            'name' => $device->name,
+            'vendor' => $device->vendor,
+            'model' => $device->model,
+            'price' => (float) $device->price,
+            'device_type' => $device->device_type,
+            'description' => $device->description,
+            'image_url' => $device->image_url,
+            'specifications' => $device->specifications ? json_decode($device->specifications, true) : null,
+            'is_active' => (bool) $device->is_active,
+        ]);
+    }
+
+    /**
+     * Build a cache key based on request parameters
+     */
+    protected function buildCacheKey(Request $request): string
+    {
+        $parts = [self::CACHE_PREFIX, 'list'];
+
+        if ($request->has('service_type')) {
+            $parts[] = 'st_' . $request->service_type;
+        }
+
+        if ($request->has('device_type')) {
+            $parts[] = 'dt_' . $request->device_type;
+        }
+
+        if ($request->has('vendor')) {
+            $parts[] = 'v_' . md5($request->vendor);
+        }
+
+        return implode(':', $parts);
+    }
+
+    /**
+     * Clear device cache (call when devices are modified)
+     */
+    public static function clearCache(): void
+    {
+        Cache::forget(self::CACHE_PREFIX . ':list');
+        // Also clear filtered caches by pattern if using Redis
+        // For file/database cache, you may need to track keys
     }
 }

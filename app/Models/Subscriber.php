@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Subscriber extends Model
 {
+    /**
+     * The attributes that are mass assignable.
+     * Only allow specific fields to prevent mass assignment attacks.
+     */
     protected $fillable = [
         'transaction_id',
         'customer_survey_order_id',
@@ -39,7 +43,16 @@ class Subscriber extends Model
         'call_center_access',
         'external_operid',
         'installment_completed_date',
-        'request_xml'
+        'request_xml',
+    ];
+
+    /**
+     * Attributes that should never be mass assigned.
+     */
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [

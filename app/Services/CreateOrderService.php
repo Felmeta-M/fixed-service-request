@@ -4,12 +4,11 @@ namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Helpers\TelebirrHelper;
+use App\Services\Logging\AppLogger;
 use App\Services\Payment\PaymentService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log as FacadesLog;
-use Log;
 use RuntimeException;
 
 class CreateOrderService
@@ -125,11 +124,20 @@ class CreateOrderService
             ->post($url, $payload); // convert JSON string to array
 
         if ($response->failed()) {
-            Log::error("HTTP error: {$response->status()} with response: " . $response->body());
+            AppLogger::payment()->error('Telebirr create order request failed', [
+                'status_code' => $response->status(),
+                'response' => $response->body(),
+                'order_id' => $data['customerSurveyOrderId'] ?? null,
+            ]);
             throw new RuntimeException("Create order request failed.");
         }
 
         $object = $response->object();
+
+        AppLogger::payment()->info('Telebirr order created successfully', [
+            'prepay_id' => $object->biz_content->prepay_id ?? null,
+            'order_id' => $data['customerSurveyOrderId'] ?? null,
+        ]);
 
         return $object->biz_content->prepay_id ?? null;
     }
@@ -151,13 +159,18 @@ class CreateOrderService
             ->post($url, $payload); // convert JSON string to array
 
         if ($response->failed()) {
-            Log::error("HTTP error: {$response->status()} with response: " . $response->body());
+            AppLogger::payment()->error('Telebirr query order request failed', [
+                'status_code' => $response->status(),
+                'response' => $response->body(),
+            ]);
             throw new RuntimeException("Create order request failed.");
         }
 
-        // $object = $response->object();
-        Log::info('queryOrder', ['object' => $response]);
+        AppLogger::payment()->debug('Telebirr query order response', [
+            'response' => $response->json(),
+        ]);
 
+        $object = $response->object();
         return $object ?? null;
     }
 

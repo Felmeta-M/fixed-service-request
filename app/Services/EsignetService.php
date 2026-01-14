@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use App\Services\Logging\AppLogger;
 use Exception;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use phpseclib3\Crypt\RSA;
 use RuntimeException;
@@ -35,7 +35,9 @@ class EsignetService
                 }
             }
         } catch (Throwable $e) {
-            Log::error('EsignetService::__construct failed', ['error' => $e->getMessage()]);
+            AppLogger::api()->error('EsignetService initialization failed', [
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
     }
@@ -96,7 +98,7 @@ class EsignetService
                 'state' => $state,
             ];
         } catch (Throwable $e) {
-            Log::error('Error building authorization URL', [
+            AppLogger::auth()->error('Failed to build Esignet authorization URL', [
                 'error' => $e->getMessage(),
             ]);
 
@@ -136,7 +138,9 @@ class EsignetService
 
             return ['status' => 'ok', 'token' => $json];
         } catch (Throwable $e) {
-            Log::error('Error exchanging token', ['error' => $e->getMessage()]);
+            AppLogger::auth()->error('Esignet token exchange failed', [
+                'error' => $e->getMessage(),
+            ]);
             return ['status' => 'error', 'message' => 'Token request failed.'];
         }
     }
@@ -171,14 +175,14 @@ class EsignetService
             $decoded = base64_decode($this->privateKey, true);
 
             if ($decoded === false) {
-                logger()->error('Private key base64 decode failed');
+                AppLogger::security()->error('Esignet private key base64 decode failed');
                 throw new RuntimeException('Private key base64 decode failed');
             }
 
             // Step 2. try load RSA key from JWK
             return RSA::loadPrivateKey($decoded, 'JWK')->withPadding(RSA::SIGNATURE_PKCS1);
         } catch (Throwable $e) {
-            logger()->error('Failed to load private key', [
+            AppLogger::security()->error('Failed to load Esignet private key', [
                 'exception' => $e->getMessage(),
                 'type' => get_class($e),
                 // never log the full key!
@@ -233,7 +237,9 @@ class EsignetService
                 'customer' => $customer,
             ];
         } catch (Throwable $e) {
-            Log::error('Exception fetching user info', ['error' => $e->getMessage()]);
+            AppLogger::auth()->error('Exception fetching Esignet user info', [
+                'error' => $e->getMessage(),
+            ]);
             return ['status' => 'error', 'message' => 'Error fetching user info'];
         }
     }
@@ -254,7 +260,7 @@ class EsignetService
         try {
             $sub = $payload['sub'] ?? null;
             if (!$sub) {
-                logger()->error('Missing sub in payload');
+                AppLogger::auth()->error('Missing sub in Esignet payload');
                 throw new Exception('Invalid user payload (missing sub).');
             }
             $name = $payload['name'] ?? null;
@@ -271,9 +277,10 @@ class EsignetService
             $address = $payload['address'] ?? null;
             $customer = Customer::where('sub', $sub)->first();
             if ($customer) {
-                // logger()->info('Customer found, updating', ['sub' => $sub]);
+                AppLogger::auth()->debug('Esignet customer found, using existing', [
+                    'customer_id' => $customer->id,
+                ]);
             } else {
-                // logger()->info('Customer not found, creating new', ['sub' => $sub]);
                 $customer = new Customer();
                 $customer->sub = $sub;
                 $customer->name = $name;
@@ -287,6 +294,11 @@ class EsignetService
                 $customer->address = $address ? json_encode($address) : null;
                 $customer->save();
                 $customer->refresh();
+
+                AppLogger::auth()->info('New customer created from Esignet', [
+                    'customer_id' => $customer->id,
+                    'phone_masked' => substr($customer->phone_number, -4),
+                ]);
             }
 
             return [
@@ -294,9 +306,9 @@ class EsignetService
                 'customer' => $customer
             ];
         } catch (Throwable $e) {
-            logger()->error('Customer sync failed', [
+            AppLogger::auth()->error('Customer sync from Esignet failed', [
                 'exception' => $e->getMessage(),
-                'payload' => $payload
+                'has_sub' => isset($payload['sub']),
             ]);
 
             return [

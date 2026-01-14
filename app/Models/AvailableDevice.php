@@ -13,6 +13,10 @@ class AvailableDevice extends Model
 
     protected $table = 'available_devices';
 
+    /**
+     * The attributes that are mass assignable.
+     * Only allow specific fields to prevent mass assignment attacks.
+     */
     protected $fillable = [
         'name',
         'vendor',
@@ -24,6 +28,16 @@ class AvailableDevice extends Model
         'image_url',
         'stock_quantity',
         'specifications',
+    ];
+
+    /**
+     * Attributes that should never be mass assigned.
+     */
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+        'deleted_at',
     ];
 
     protected $casts = [

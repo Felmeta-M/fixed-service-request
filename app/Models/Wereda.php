@@ -11,6 +11,27 @@ class Wereda extends Model
     use HasFactory;
     use SoftDeletes;
 
+    /**
+     * The attributes that are mass assignable.
+     * Only allow specific fields to prevent mass assignment attacks.
+     */
+    protected $fillable = [
+        'name',
+        'status',
+        'region_id',
+        'zone_id',
+    ];
+
+    /**
+     * Attributes that should never be mass assigned.
+     */
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
+
     public function region()
     {
         return $this->belongsTo(Region::class);

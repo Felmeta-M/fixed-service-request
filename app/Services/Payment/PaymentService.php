@@ -5,11 +5,11 @@ namespace App\Services\Payment;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Payment;
 use App\Models\SurveyOrder;
+use App\Services\Logging\AppLogger;
 use App\Services\Subscription\SubscriptionServiceFactory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class PaymentService
 {
@@ -114,8 +114,8 @@ class PaymentService
     ): void {
         // Idempotency guard
         if ($payment->status === FFDServiceProvisionStatus::Paid->value) {
-            Log::info('Payment already confirmed, skipping', [
-                'order' => $payment->customer_survey_order_id,
+            AppLogger::payment()->info('Payment already confirmed, skipping', [
+                'order_id' => $payment->customer_survey_order_id,
             ]);
             return;
         }
@@ -150,14 +150,28 @@ class PaymentService
          * 🚀 After commit (safe side effects)
          */
         if ($isCompleted) {
+            AppLogger::payment()->paymentEvent(
+                'payment_confirmed',
+                $payment->customer_survey_order_id,
+                (float) ($providerPayload['total_amount'] ?? $payment->total_amount),
+                FFDServiceProvisionStatus::Paid->value,
+                ['trans_id' => $providerPayload['transId'] ?? null]
+            );
+
             try {
                 $this->serviceSubscription($payment->customer_survey_order_id);
             } catch (\Throwable $e) {
-                Log::error('Service subscription failed', [
+                AppLogger::payment()->error('Service subscription failed after payment', [
                     'order_id' => $payment->customer_survey_order_id,
                     'error' => $e->getMessage(),
+                    'trace' => array_slice($e->getTrace(), 0, 5),
                 ]);
             }
+        } else {
+            AppLogger::payment()->warning('Payment not completed', [
+                'order_id' => $payment->customer_survey_order_id,
+                'trade_status' => $providerPayload['trade_status'] ?? 'unknown',
+            ]);
         }
     }
 
@@ -176,9 +190,8 @@ class PaymentService
             ])
             ->first();
 
-        // Log::info('record', ['record' => $record]);
         if (!$record) {
-            Log::warning('Survey order or customer not found test', [
+            AppLogger::payment()->warning('Survey order or customer not found for subscription', [
                 'customer_survey_order_id' => $customerSurveyOrderId,
             ]);
             return false;
@@ -192,15 +205,20 @@ class PaymentService
             'sms_no' => $record->phone_number,
         ];
 
-        // Log::info('data', ['data' => $data]);
-
         try {
             // Call the third-party subscription service
             $service = $this->factory->make($data['main_offer_id']);
             $service->create($data);
+
+            AppLogger::payment()->info('Service subscription created successfully', [
+                'survey_order_id' => $customerSurveyOrderId,
+                'main_offer_id' => $data['main_offer_id'],
+                'customer_code' => $data['customer_code'],
+            ]);
+
             return true;
         } catch (\Throwable $e) {
-            Log::error('Service subscription failed', [
+            AppLogger::payment()->error('Service subscription failed', [
                 'survey_order_id' => $customerSurveyOrderId,
                 'main_offer_id' => $data['main_offer_id'],
                 'error' => $e->getMessage(),

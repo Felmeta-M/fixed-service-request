@@ -14,6 +14,7 @@ class User extends Authenticatable
 
     /**
      * The attributes that are mass assignable.
+     * Only allow specific fields to prevent mass assignment attacks.
      *
      * @var list<string>
      */
@@ -21,6 +22,19 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+    ];
+
+    /**
+     * Attributes that should never be mass assigned.
+     *
+     * @var list<string>
+     */
+    protected $guarded = [
+        'id',
+        'email_verified_at',
+        'remember_token',
+        'created_at',
+        'updated_at',
     ];
 
     /**

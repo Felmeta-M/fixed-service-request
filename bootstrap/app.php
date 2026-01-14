@@ -1,10 +1,16 @@
 <?php
 
+use App\Exceptions\Handler;
 use App\Http\Middleware\EnsureOtpAuthenticated;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\LogHttpRequests;
+use App\Http\Middleware\SanitizeInput;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use App\Jobs\CheckSurveyOrderStatus;
+use App\Services\Logging\AppLogger;
+use App\Services\Security\SecureOtpService;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,10 +26,21 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+
+        // Security middleware (runs first)
+        $middleware->prepend(SecurityHeaders::class);
+
+        // Input sanitization (runs early)
+        $middleware->prepend(SanitizeInput::class);
+
+        // HTTP logging middleware (runs after security)
+        $middleware->append(LogHttpRequests::class);
+
         $middleware
             ->validateCsrfTokens(except: [
-                'telebirr/notify',
+                'telebirr/notify', // Payment webhook
                 'locale',
+                'api/*', // API routes use token auth
             ])
             ->web(append: [
                 SetLocale::class,
@@ -37,6 +54,29 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule) {
         $schedule->job(new CheckSurveyOrderStatus())->everyTwoMinutes();
+
+        // Professional log management - clean logs older than 30 days weekly
+        $schedule->command('logs:manage clean --days=30')
+            ->weekly()
+            ->sundays()
+            ->at('02:00')
+            ->description('Clean old log files');
+
+        // Archive logs older than 14 days monthly
+        $schedule->command('logs:manage archive --days=14')
+            ->monthly()
+            ->at('03:00')
+            ->description('Archive old log files');
+
+        // Security: Clean up expired OTPs hourly
+        $schedule->call(function () {
+            app(SecureOtpService::class)->cleanupExpired();
+        })->hourly()->description('Clean up expired OTPs');
     })
-    ->withExceptions(function (Exceptions $exceptions) {})
+    ->withExceptions(function (Exceptions $exceptions) {
+        // Log all exceptions using our professional logger
+        $exceptions->reportable(function (\Throwable $e) {
+            AppLogger::default()->exception($e);
+        });
+    })
     ->create();

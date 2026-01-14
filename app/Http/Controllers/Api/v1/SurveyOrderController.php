@@ -8,15 +8,15 @@ use App\Http\Requests\SurveyOrderFormRequest;
 use App\Http\Resources\SurveyOrderResource;
 use App\Models\SurveyOrder;
 use App\Services\QuerySurveyOrderService;
+use App\Services\Logging\AppLogger;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use App\Services\Survey\SurveyServiceFactory;
-use FFI;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class SurveyOrderController extends Controller
@@ -24,115 +24,208 @@ class SurveyOrderController extends Controller
     public function __construct(
         protected SurveyServiceFactory $factory,
         protected readonly QuerySurveyOrderService $querySurveyOrderService
-
     ) {}
 
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource - optimized with Query Builder
      */
-
     public function index(Request $request)
     {
         try {
             $customer = auth()->user();
 
-            $query = SurveyOrder::query()
-                ->with(['payment'])
-                ->where('customer_code', $customer->customer_code)
-                ->whereNull('deleted_at');
+            // Use Query Builder for the main listing query
+            $query = DB::table('survey_orders')
+                ->leftJoin('payments', 'survey_orders.customer_survey_order_id', '=', 'payments.customer_survey_order_id')
+                ->whereNull('survey_orders.deleted_at')
+                ->where('survey_orders.customer_code', $customer->customer_code)
+                ->select([
+                    'survey_orders.id',
+                    'survey_orders.customer_survey_order_id',
+                    'survey_orders.survey_order_no',
+                    'survey_orders.customer_code',
+                    'survey_orders.status',
+                    'survey_orders.main_offer_id',
+                    'survey_orders.main_offer_name',
+                    'survey_orders.service_number',
+                    'survey_orders.with_device',
+                    'survey_orders.last_checked_at',
+                    'survey_orders.created_at',
+                    'survey_orders.updated_at',
+                    'payments.id as payment_id',
+                    'payments.amount as payment_amount',
+                    'payments.status as payment_status',
+                ]);
 
             if ($request->filled('survey_order_no')) {
-                $query->where('survey_order_no', 'like', '%' . $request->survey_order_no . '%');
+                $query->where('survey_orders.survey_order_no', 'like', '%' . $request->survey_order_no . '%');
             }
 
             if ($request->filled('status')) {
-                $query->where('status', $request->status);
+                $query->where('survey_orders.status', $request->status);
             }
 
-            $surveyOrders = $query->latest()->paginate(10);
+            $surveyOrders = $query->latest('survey_orders.created_at')->paginate(10);
 
-            /** Refresh only WAITING survey orders */
-            foreach ($surveyOrders as $order) {
-                try {
+            // Collect orders that need refresh (WAITING status, not checked in last 5 minutes)
+            $ordersToRefresh = collect($surveyOrders->items())
+                ->filter(function ($order) {
                     if ($order->status !== FFDServiceProvisionStatus::Waiting->value) {
-                        continue;
+                        return false;
                     }
 
-                    $this->refreshSurveyOrder($order);
-                } catch (\Throwable $e) {
-                    Log::warning('Failed to refresh survey order', [
-                        'survey_order_no' => $order->survey_order_no ?? null,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
+                    if ($order->last_checked_at) {
+                        $lastChecked = \Carbon\Carbon::parse($order->last_checked_at);
+                        if ($lastChecked->diffInMinutes(now()) < 5) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                });
+
+            // Batch refresh orders
+            if ($ordersToRefresh->isNotEmpty()) {
+                $this->batchRefreshOrders($ordersToRefresh);
             }
 
-            return SurveyOrderResource::collection($surveyOrders);
-        } catch (\Throwable $e) {
-            Log::error('Failed to fetch survey orders', [
-                'customer_code' => $request->customer_code ?? null,
+            // Transform raw data to match SurveyOrderResource format
+            $transformedItems = collect($surveyOrders->items())->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'customer_survey_order_id' => $item->customer_survey_order_id,
+                    'survey_order_no' => $item->survey_order_no,
+                    'customer_code' => $item->customer_code,
+                    'status' => $item->status,
+                    'main_offer_id' => $item->main_offer_id,
+                    'main_offer_name' => $item->main_offer_name,
+                    'service_number' => $item->service_number,
+                    'with_device' => (bool) $item->with_device,
+                    'created_at' => $item->created_at,
+                    'updated_at' => $item->updated_at,
+                    'payment' => $item->payment_id ? [
+                        'id' => $item->payment_id,
+                        'amount' => $item->payment_amount,
+                        'status' => $item->payment_status,
+                    ] : null,
+                ];
+            });
+
+            return response()->json([
+                'data' => $transformedItems,
+                'links' => [
+                    'first' => $surveyOrders->url(1),
+                    'last' => $surveyOrders->url($surveyOrders->lastPage()),
+                    'prev' => $surveyOrders->previousPageUrl(),
+                    'next' => $surveyOrders->nextPageUrl(),
+                ],
+                'meta' => [
+                    'current_page' => $surveyOrders->currentPage(),
+                    'from' => $surveyOrders->firstItem(),
+                    'last_page' => $surveyOrders->lastPage(),
+                    'per_page' => $surveyOrders->perPage(),
+                    'to' => $surveyOrders->lastItem(),
+                    'total' => $surveyOrders->total(),
+                ],
+            ]);
+        } catch (Throwable $e) {
+            AppLogger::business()->error('Failed to fetch survey orders', [
+                'customer_code' => $customer->customer_code ?? null,
                 'error' => $e->getMessage(),
             ]);
 
-            return SurveyOrderResource::collection(collect());
+            return response()->json(['data' => [], 'meta' => ['total' => 0]]);
         }
     }
-
-
-    protected function refreshSurveyOrder(SurveyOrder $order): void
-    {
-        // Throttle
-        if ($order->last_checked_at && $order->last_checked_at->diffInMinutes(now()) < 5) {
-            return;
-        }
-
-        // Only WAITING orders go to third-party
-        if ($order->status !== FFDServiceProvisionStatus::Waiting->value) {
-            return;
-        }
-
-        try {
-            $response = $this->querySurveyOrderService
-                ->querySurveyOrderDetail($order->customer_survey_order_id);
-        } catch (\Throwable $e) {
-            Log::error('Survey order API call failed', [
-                'survey_order_no' => $order->survey_order_no,
-                'error' => $e->getMessage(),
-            ]);
-            return;
-        }
-
-        if (empty($response['success']) || empty($response['status'])) {
-            return;
-        }
-
-        $newStatus = $response['status'];
-
-        if ($order->status !== $newStatus) {
-            $order->update([
-                'status' => $newStatus,
-                'last_synced_status' => $newStatus,
-            ]);
-        }
-
-        $order->update([
-            'last_checked_at' => now(),
-        ]);
-    }
-
 
     /**
-     * Store a newly created resource in storage.
+     * Batch refresh multiple orders and update efficiently
      */
+    protected function batchRefreshOrders($orders): void
+    {
+        $statusUpdates = [];
+        $timestampUpdates = [];
 
+        foreach ($orders as $order) {
+            try {
+                $response = $this->querySurveyOrderService
+                    ->querySurveyOrderDetail($order->customer_survey_order_id);
+
+                if (empty($response['success']) || empty($response['status'])) {
+                    $timestampUpdates[] = $order->id;
+                    continue;
+                }
+
+                $newStatus = $response['status'];
+
+                if ($order->status !== $newStatus) {
+                    $statusUpdates[$order->id] = $newStatus;
+                }
+
+                $timestampUpdates[] = $order->id;
+            } catch (Throwable $e) {
+                AppLogger::business()->warning('Failed to refresh survey order', [
+                    'survey_order_no' => $order->survey_order_no ?? null,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Batch update statuses
+        if (!empty($statusUpdates)) {
+            $cases = [];
+            $syncCases = [];
+            $ids = [];
+            $bindings = [];
+
+            foreach ($statusUpdates as $id => $status) {
+                $cases[] = "WHEN id = ? THEN ?";
+                $syncCases[] = "WHEN id = ? THEN ?";
+                $bindings[] = $id;
+                $bindings[] = $status;
+                $ids[] = $id;
+            }
+
+            foreach ($statusUpdates as $id => $status) {
+                $bindings[] = $id;
+                $bindings[] = $status;
+            }
+
+            $caseStatement = implode(' ', $cases);
+            $syncCaseStatement = implode(' ', $syncCases);
+            $idPlaceholders = implode(',', array_fill(0, count($ids), '?'));
+            $bindings = array_merge($bindings, $ids);
+
+            DB::update(
+                "UPDATE survey_orders 
+                 SET status = CASE {$caseStatement} END,
+                     last_synced_status = CASE {$syncCaseStatement} END,
+                     updated_at = NOW()
+                 WHERE id IN ({$idPlaceholders})",
+                $bindings
+            );
+        }
+
+        // Batch update timestamps
+        if (!empty($timestampUpdates)) {
+            DB::table('survey_orders')
+                ->whereIn('id', $timestampUpdates)
+                ->update(['last_checked_at' => now()]);
+        }
+    }
+
+    /**
+     * Store a newly created resource - optimized existence check
+     */
     public function store(SurveyOrderFormRequest $request): JsonResponse
     {
         try {
             $data = $request->validated();
             $customer = auth()->user();
 
-            // 🚫 Prevent multiple active survey requests
-            $hasBlockedSurvey = SurveyOrder::query()
+            // Use Query Builder for existence check - much faster than Eloquent
+            $hasBlockedSurvey = DB::table('survey_orders')
+                ->whereNull('deleted_at')
                 ->where('customer_code', $customer?->customer_code)
                 ->whereIn('status', FFDServiceProvisionStatus::blockedForNewRequest())
                 ->exists();
@@ -140,7 +233,7 @@ class SurveyOrderController extends Controller
             // if ($hasBlockedSurvey) {
             //     return response()->json([
             //         'success' => false,
-            //         'message' => 'You already have an active or completed request. Please wait until it is finalized.',
+            //         'message' => 'You already have an active or completed request.',
             //     ], Response::HTTP_CONFLICT);
             // }
 
@@ -148,15 +241,14 @@ class SurveyOrderController extends Controller
 
             return $service->create($data);
         } catch (ValidationException $e) {
-            Log::error('SurveyOrder store error', [
-                'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
+            AppLogger::business()->warning('SurveyOrder validation error', [
+                'errors' => $e->errors(),
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Please correct the highlighted errors.',
-                'errors'  => $e->errors(),
+                'errors' => $e->errors(),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (ModelNotFoundException $e) {
             return response()->json([
@@ -164,9 +256,8 @@ class SurveyOrderController extends Controller
                 'message' => 'The requested resource was not found.',
             ], Response::HTTP_NOT_FOUND);
         } catch (QueryException $e) {
-            Log::error('SurveyOrder store error', [
-                'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
+            AppLogger::business()->error('SurveyOrder database error', [
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
@@ -174,9 +265,8 @@ class SurveyOrderController extends Controller
                 'message' => 'Database error occurred.',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         } catch (Throwable $e) {
-            Log::error('SurveyOrder store error', [
-                'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
+            AppLogger::business()->error('SurveyOrder store error', [
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
@@ -186,91 +276,32 @@ class SurveyOrderController extends Controller
         }
     }
 
-
     /**
-     * Display the specified resource.
+     * Display the specified resource - optimized with Query Builder
      */
     public function show(Request $request)
     {
         $orderId = $request->input('customer_survey_order_id');
 
-        $query = SurveyOrder::query()->with(['payment']);
-
-        if ($orderId) {
-            $query->orWhere('customer_survey_order_id', $orderId);
-        }
-
-        $surveyRequest = $query->first();
-
-        if (!$surveyRequest) {
+        if (!$orderId) {
             return response()->json([
                 'success' => false,
-                'message' => 'Survey request not found.',
-            ], 404);
+                'message' => 'Order ID is required.',
+            ], 400);
         }
 
-        return new SurveyOrderResource($surveyRequest);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-
-    public function update(Request $request)
-    {
-        $request->validate([
-            'customer_code' => 'required|string',
-            'customer_survey_order_id' => 'required|string',
-            'status' => 'required|string|in:Completed,Canceled,Waiting', // allowed statuses
-        ]);
-
-        $customerCode = $request->input('customer_code');
-        $orderId = $request->input('customer_survey_order_id');
-
-        $query = SurveyOrder::query();
-
-        if ($customerCode) {
-            $query->where('customer_code', $customerCode);
-        }
-
-        if ($orderId) {
-            $query->orWhere('customer_survey_order_id', $orderId);
-        }
-
-        $surveyRequest = $query->first();
-
-        if (!$surveyRequest) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Survey request not found.',
-            ], 404);
-        }
-
-        $surveyRequest->update([
-            'status' => $request->status,
-            // 'completed_date' => $request->status === 'completed' ? now() : $surveyRequest->completed_date,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => "Survey request status updated to '{$surveyRequest->status}'.",
-            'data' => new SurveyOrderResource($surveyRequest),
-        ]);
-    }
-
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Request $request)
-    {
-        $request->validate([
-            'customer_code' => 'required|string',
-            'customer_survey_order_id' => 'required|string',
-        ]);
-
-        $surveyRequest = SurveyOrder::where('customer_code', $request->customer_code)
-            ->where('customer_survey_order_id', $request->customer_survey_order_id)
+        // Use Query Builder with join for single query
+        $surveyRequest = DB::table('survey_orders')
+            ->leftJoin('payments', 'survey_orders.customer_survey_order_id', '=', 'payments.customer_survey_order_id')
+            ->whereNull('survey_orders.deleted_at')
+            ->where('survey_orders.customer_survey_order_id', $orderId)
+            ->select([
+                'survey_orders.*',
+                'payments.id as payment_id',
+                'payments.amount as payment_amount',
+                'payments.status as payment_status',
+                'payments.merch_order_id as payment_merch_order_id',
+            ])
             ->first();
 
         if (!$surveyRequest) {
@@ -280,11 +311,112 @@ class SurveyOrderController extends Controller
             ], 404);
         }
 
-        $surveyRequest->delete();
+        // Transform to resource format
+        return response()->json([
+            'success' => true,
+            'data' => $this->transformOrder($surveyRequest),
+        ]);
+    }
+
+    /**
+     * Update the specified resource - optimized with Query Builder
+     */
+    public function update(Request $request)
+    {
+        $request->validate([
+            'customer_code' => 'required|string',
+            'customer_survey_order_id' => 'required|string',
+            'status' => 'required|string|in:Completed,Canceled,Waiting',
+        ]);
+
+        $customerCode = $request->input('customer_code');
+        $orderId = $request->input('customer_survey_order_id');
+
+        // Direct Query Builder update - single query
+        $updated = DB::table('survey_orders')
+            ->whereNull('deleted_at')
+            ->where('customer_code', $customerCode)
+            ->where('customer_survey_order_id', $orderId)
+            ->update([
+                'status' => $request->status,
+                'updated_at' => now(),
+            ]);
+
+        if (!$updated) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Survey request not found.',
+            ], 404);
+        }
+
+        // Fetch updated record
+        $surveyRequest = DB::table('survey_orders')
+            ->where('customer_survey_order_id', $orderId)
+            ->first();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Survey request status updated to '{$request->status}'.",
+            'data' => $surveyRequest,
+        ]);
+    }
+
+    /**
+     * Remove the specified resource - optimized with Query Builder
+     */
+    public function destroy(Request $request)
+    {
+        $request->validate([
+            'customer_code' => 'required|string',
+            'customer_survey_order_id' => 'required|string',
+        ]);
+
+        // Soft delete using Query Builder - single query
+        $deleted = DB::table('survey_orders')
+            ->whereNull('deleted_at')
+            ->where('customer_code', $request->customer_code)
+            ->where('customer_survey_order_id', $request->customer_survey_order_id)
+            ->update([
+                'deleted_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+        if (!$deleted) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Survey request not found.',
+            ], 404);
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Survey request deleted successfully.',
-        ], 204);
+        ], 200);
+    }
+
+    /**
+     * Transform raw order data to resource format
+     */
+    protected function transformOrder($order): array
+    {
+        return [
+            'id' => $order->id,
+            'customer_survey_order_id' => $order->customer_survey_order_id,
+            'survey_order_no' => $order->survey_order_no,
+            'customer_code' => $order->customer_code,
+            'status' => $order->status,
+            'main_offer_id' => $order->main_offer_id,
+            'main_offer_name' => $order->main_offer_name ?? null,
+            'service_number' => $order->service_number ?? null,
+            'with_device' => (bool) ($order->with_device ?? false),
+            'created_at' => $order->created_at,
+            'updated_at' => $order->updated_at,
+            'payment' => isset($order->payment_id) ? [
+                'id' => $order->payment_id,
+                'amount' => $order->payment_amount,
+                'status' => $order->payment_status,
+                'merch_order_id' => $order->payment_merch_order_id ?? null,
+            ] : null,
+        ];
     }
 }

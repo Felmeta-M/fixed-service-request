@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use App\Services\Logging\AppLogger;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Client\Response;
 use RuntimeException;
 
@@ -77,18 +77,14 @@ abstract class BaseApiService
             $errors = array_map(fn($e) => $e->message, libxml_get_errors());
             libxml_clear_errors();
 
-            // Log the invalid XML and parsing errors
-            \Log::error('Failed to parse XML response', [
+            AppLogger::api()->error('Failed to parse XML response', [
                 'endpoint' => $this->endpoint() ?? 'unknown',
-                'xml' => $xml,
+                'xml_preview' => substr($xml, 0, 500),
                 'errors' => $errors,
             ]);
 
             throw new \RuntimeException('Invalid XML response from API');
         }
-
-        // Get namespaces if needed
-        $namespaces = $parsed->getNamespaces(true);
 
         return $parsed;
     }
@@ -99,10 +95,10 @@ abstract class BaseApiService
      */
     protected function logError(Response $response): void
     {
-        Log::error("API request failed", [
+        AppLogger::api()->error('API request failed', [
             'endpoint' => $this->endpoint(),
-            'status' => $response->status(),
-            'response' => $response->body(),
+            'status_code' => $response->status(),
+            'response' => substr($response->body(), 0, 1000),
         ]);
     }
 
@@ -119,7 +115,10 @@ abstract class BaseApiService
         foreach ($payloads as $payload) {
             $key = "{$ip}:{$this->endpoint()}";
             if (RateLimiter::tooManyAttempts($key, $this->rateLimit)) {
-                Log::warning("Rate limit exceeded for IP {$ip}, skipping request.");
+                AppLogger::api()->warning('Rate limit exceeded for async request', [
+                    'ip' => $ip,
+                    'endpoint' => $this->endpoint(),
+                ]);
                 continue;
             }
 
@@ -150,7 +149,7 @@ abstract class BaseApiService
                 $parsed = $this->parseXmlResponse($response->body());
                 $onSuccess($parsed);
             } catch (\Throwable $e) {
-                Log::error('Async request exception', ['exception' => $e]);
+                AppLogger::api()->exception($e, 'Async request exception');
                 if ($onError) $onError($e);
             }
         }

@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class ResourceCheck extends Model
 {
+    /**
+     * The attributes that are mass assignable.
+     * Only allow specific fields to prevent mass assignment attacks.
+     */
     protected $fillable = [
         'prod_spec_code',
         'number_line',
@@ -19,6 +23,15 @@ class ResourceCheck extends Model
         'combo_flag',
         'timestamp',
         'cust_addr',
+    ];
+
+    /**
+     * Attributes that should never be mass assigned.
+     */
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [];

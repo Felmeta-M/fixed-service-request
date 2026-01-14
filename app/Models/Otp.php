@@ -14,6 +14,10 @@ class Otp extends Authenticatable
 
     protected $table = 'otps';
 
+    /**
+     * The attributes that are mass assignable.
+     * Only allow specific fields to prevent mass assignment attacks.
+     */
     protected $fillable = [
         'name',
         'phone_number',
@@ -21,9 +25,17 @@ class Otp extends Authenticatable
         'customer_code',
         'code',
         'expires_at',
-        'api_token'
+        'api_token',
     ];
 
+    /**
+     * Attributes that should never be mass assigned.
+     */
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $dates = [
         'expires_at',

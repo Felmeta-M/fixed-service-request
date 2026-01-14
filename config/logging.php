@@ -1,9 +1,13 @@
 <?php
 
+use App\Services\Logging\JsonLogFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
+use Monolog\Processor\IntrospectionProcessor;
+use Monolog\Processor\WebProcessor;
+use Monolog\Processor\MemoryUsageProcessor;
 
 return [
 
@@ -38,6 +42,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Query Logging Configuration
+    |--------------------------------------------------------------------------
+    */
+
+    'query_slow_threshold' => env('LOG_QUERY_SLOW_THRESHOLD', 1000), // milliseconds
+    'query_detect_n1' => env('LOG_QUERY_DETECT_N1', true),
+    'query_log_all' => env('LOG_QUERY_LOG_ALL', false), // Enable in debug mode only
+
+    /*
+    |--------------------------------------------------------------------------
+    | HTTP Client Logging
+    |--------------------------------------------------------------------------
+    */
+
+    'http_client_log_all' => env('LOG_HTTP_CLIENT_ALL', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Log Channels
     |--------------------------------------------------------------------------
     |
@@ -54,7 +76,7 @@ return [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', env('LOG_STACK', 'single')),
+            'channels' => explode(',', env('LOG_STACK', 'daily')),
             'ignore_exceptions' => false,
         ],
 
@@ -70,6 +92,126 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | JSON Formatted Channels (for log aggregation - ELK, Datadog, etc.)
+        |--------------------------------------------------------------------------
+        */
+
+        'json' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/json/app.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'tap' => [App\Services\Logging\JsonLogTap::class],
+            'replace_placeholders' => true,
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Application-Specific Channels
+        |--------------------------------------------------------------------------
+        */
+
+        // API integrations (Telebirr, Esignet, SOAP services, etc.)
+        'api' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/api/api.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 30,
+            'replace_placeholders' => true,
+        ],
+
+        'api_json' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/api/api-json.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 30,
+            'tap' => [App\Services\Logging\JsonLogTap::class],
+            'replace_placeholders' => true,
+        ],
+
+        // Authentication & authorization events
+        'auth' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/auth/auth.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 30,
+            'replace_placeholders' => true,
+        ],
+
+        // Payment processing
+        'payment' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/payment/payment.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 90, // Keep payment logs longer for auditing
+            'replace_placeholders' => true,
+        ],
+
+        'payment_json' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/payment/payment-json.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 90,
+            'tap' => [App\Services\Logging\JsonLogTap::class],
+            'replace_placeholders' => true,
+        ],
+
+        // Security events (failed logins, suspicious activity, etc.)
+        'security' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/security/security.log'),
+            'level' => 'info',
+            'days' => 90,
+            'replace_placeholders' => true,
+        ],
+
+        // HTTP requests/responses
+        'http' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/http/requests.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
+        // Survey orders and business processes
+        'business' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/business/business.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 60,
+            'replace_placeholders' => true,
+        ],
+
+        // Background jobs and queues
+        'jobs' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/jobs/jobs.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
+        // Performance monitoring
+        'performance' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/performance/performance.log'),
+            'level' => 'info',
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
+        // Audit trail (critical business actions)
+        'audit' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/audit/audit.log'),
+            'level' => 'info',
+            'days' => 365, // Keep audit logs for 1 year
             'replace_placeholders' => true,
         ],
 
@@ -89,7 +231,7 @@ return [
             'handler_with' => [
                 'host' => env('PAPERTRAIL_URL'),
                 'port' => env('PAPERTRAIL_PORT'),
-                'connectionString' => 'tls://'.env('PAPERTRAIL_URL').':'.env('PAPERTRAIL_PORT'),
+                'connectionString' => 'tls://' . env('PAPERTRAIL_URL') . ':' . env('PAPERTRAIL_PORT'),
             ],
             'processors' => [PsrLogMessageProcessor::class],
         ],

@@ -7,9 +7,9 @@ use App\Http\Resources\CustomerResource;
 use App\Services\CustomerService;
 use App\Services\EsignetService;
 use App\Services\LocalAuthService;
+use App\Services\Logging\AppLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class EsignetController extends Controller
@@ -26,14 +26,16 @@ class EsignetController extends Controller
         $result = $this->esignetService->buildAuthorizationUrl();
 
         if ($result['status'] !== 'ok') {
-            logger()->error('Esignet Auth URL generation failed', [
-                'error' => $result['message']
+            AppLogger::auth()->error('Esignet Auth URL generation failed', [
+                'error' => $result['message'],
             ]);
 
             return Inertia::render('ErrorPage', [
                 'message' => 'We are unable to start the login process at the moment. Please try again later.'
             ]);
         }
+
+        AppLogger::auth()->info('Esignet login initiated');
 
         session()->put('esignet', [
             'state' => $result['state'],
@@ -54,7 +56,7 @@ class EsignetController extends Controller
         $temp = session('esignet');
 
         if (!$temp) {
-            logger()->warning('Esignet session missing on callback');
+            AppLogger::auth()->warning('Esignet session missing on callback');
 
             return Inertia::render('ErrorPage', [
                 'message' => 'Your login session has expired. Please start the login again.'
@@ -62,9 +64,9 @@ class EsignetController extends Controller
         }
 
         if ($validated['state'] !== $temp['state']) {
-            logger()->error('Esignet state mismatch', [
-                'expected' => $temp['state'],
-                'received' => $validated['state']
+            AppLogger::security()->securityEvent('esignet_state_mismatch', 'high', [
+                'expected_state_prefix' => substr($temp['state'], 0, 8),
+                'received_state_prefix' => substr($validated['state'], 0, 8),
             ]);
 
             return Inertia::render('ErrorPage', [
@@ -77,13 +79,9 @@ class EsignetController extends Controller
             $temp['code_verifier']
         );
 
-        // Log::info('Esignet token exchange result', [
-        //     'token' => $token
-        // ]);
-
         if ($token['status'] !== 'ok') {
-            logger()->error('Esignet token exchange failed', [
-                'error' => $token['message']
+            AppLogger::auth()->error('Esignet token exchange failed', [
+                'error' => $token['message'],
             ]);
 
             return Inertia::render('ErrorPage', [
@@ -96,9 +94,8 @@ class EsignetController extends Controller
         $result = $this->esignetService->getUserInfo($token['token']['access_token']);
 
         if ($result['status'] !== 'ok') {
-            logger()->error('Esignet user info fetch failed', [
-                'result' => $result,
-                'error' => $result['message']
+            AppLogger::auth()->error('Esignet user info fetch failed', [
+                'error' => $result['message'],
             ]);
 
             return Inertia::render('ErrorPage', [
@@ -122,11 +119,10 @@ class EsignetController extends Controller
 
         session()->forget(['esign_state', 'esign_code_verifier']);
 
-
-        // Log::info('esignetUser', [
-        //     'exists' => (bool) $esignetUser,
-        //     'verified_at' => $esignetUser?->verified_at,
-        // ]);
+        AppLogger::auth()->authEvent('esignet_login_success', $user->phone_number ?? null, true, [
+            'user_id' => $user->id,
+            'verified' => $esignetUser?->verified_at !== null,
+        ]);
 
         if ($esignetUser !== null && $esignetUser->verified_at !== null) {
             return redirect()->route('services');

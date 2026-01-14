@@ -2,37 +2,337 @@
 
 namespace App\Services;
 
+use App\Enums\ErrorCode;
+use App\Exceptions\BaseException;
+use App\Services\Logging\AppLogger;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
+/**
+ * Professional API Response service for consistent response formatting.
+ *
+ * Features:
+ * - Standardized success/error responses
+ * - Error codes for client-side handling
+ * - Request ID tracking
+ * - Debug information in development
+ * - Automatic logging of errors
+ *
+ * Usage:
+ *   return ApiResponse::success($data);
+ *   return ApiResponse::error('Not found', ErrorCode::NOT_FOUND);
+ *   return ApiResponse::fromException($exception);
+ */
 class ApiResponse
 {
-    public static function success(mixed $data = null, string $message = 'OK', int $status = 200, $success = true): JsonResponse
-    {
-        return response()->json([
-            'success' => $success,
+    /**
+     * Create a successful response
+     */
+    public static function success(
+        mixed $data = null,
+        string $message = 'Success',
+        int $status = 200,
+        array $meta = []
+    ): JsonResponse {
+        $response = [
+            'success' => true,
             'message' => $message,
-            'data'    => $data,
-        ], $status);
+            'data' => $data,
+        ];
+
+        // Add metadata if provided
+        if (!empty($meta)) {
+            $response['meta'] = $meta;
+        }
+
+        // Add request ID for tracing
+        $response['request_id'] = AppLogger::getRequestId();
+
+        return response()->json($response, $status);
     }
 
-    public static function error(string $message = 'Something went wrong.', int $status = 500, mixed $errors = null): JsonResponse
+    /**
+     * Create a paginated response
+     */
+    public static function paginated(
+        $paginator,
+        string $message = 'Success'
+    ): JsonResponse {
+        return self::success(
+            data: $paginator->items(),
+            message: $message,
+            meta: [
+                'current_page' => $paginator->currentPage(),
+                'from' => $paginator->firstItem(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'to' => $paginator->lastItem(),
+                'total' => $paginator->total(),
+            ]
+        );
+    }
+
+    /**
+     * Create an error response
+     */
+    public static function error(
+        string $message,
+        ErrorCode|string $errorCode = ErrorCode::UNKNOWN_ERROR,
+        int $status = 0,
+        ?array $errors = null,
+        array $context = []
+    ): JsonResponse {
+        // Handle string error codes
+        $code = $errorCode instanceof ErrorCode ? $errorCode : ErrorCode::tryFrom($errorCode) ?? ErrorCode::UNKNOWN_ERROR;
+
+        // Use enum's HTTP status if not explicitly provided
+        if ($status === 0) {
+            $status = $code->httpStatus();
+        }
+
+        $response = [
+            'success' => false,
+            'message' => $message,
+            'error_code' => $code->value,
+            'request_id' => AppLogger::getRequestId(),
+        ];
+
+        // Add validation errors if present
+        if ($errors !== null) {
+            $response['errors'] = $errors;
+        }
+
+        // Add debug info in non-production
+        if (config('app.debug') && !empty($context)) {
+            $response['debug'] = $context;
+        }
+
+        return response()->json($response, $status);
+    }
+
+    /**
+     * Create error response from exception
+     */
+    public static function fromException(Throwable $e, ?string $fallbackMessage = null): JsonResponse
+    {
+        // Handle our custom exceptions
+        if ($e instanceof BaseException) {
+            return self::error(
+                message: $e->getUserMessage(),
+                errorCode: $e->getErrorCode(),
+                status: $e->getHttpStatusCode(),
+                context: $e->getContext()
+            );
+        }
+
+        // Handle Laravel validation exceptions
+        if ($e instanceof ValidationException) {
+            return self::validationError($e->errors(), $e->getMessage());
+        }
+
+        // Handle Laravel's authentication exception
+        if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+            return self::error(
+                message: 'Authentication required.',
+                errorCode: ErrorCode::AUTH_ERROR,
+                status: 401
+            );
+        }
+
+        // Handle model not found
+        if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+            $model = class_basename($e->getModel());
+            return self::error(
+                message: "{$model} not found.",
+                errorCode: ErrorCode::NOT_FOUND,
+                status: 404
+            );
+        }
+
+        // Handle HTTP exceptions
+        if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpException) {
+            return self::fromHttpException($e);
+        }
+
+        // Handle rate limiting
+        if ($e instanceof \Illuminate\Http\Exceptions\ThrottleRequestsException) {
+            return self::error(
+                message: 'Too many requests. Please try again later.',
+                errorCode: ErrorCode::RATE_LIMITED,
+                status: 429
+            );
+        }
+
+        // Handle connection exceptions (external services)
+        if ($e instanceof \Illuminate\Http\Client\ConnectionException) {
+            AppLogger::api()->error('External service connection failed', [
+                'exception' => $e->getMessage(),
+            ]);
+
+            return self::error(
+                message: 'External service is temporarily unavailable.',
+                errorCode: ErrorCode::SERVICE_UNAVAILABLE,
+                status: 502
+            );
+        }
+
+        // Log unexpected exceptions
+        AppLogger::default()->exception($e, 'Unhandled exception');
+
+        // Generic error for unexpected exceptions
+        $message = $fallbackMessage ?? 'An unexpected error occurred. Please try again later.';
+
+        $response = [
+            'success' => false,
+            'message' => config('app.debug') ? $e->getMessage() : $message,
+            'error_code' => ErrorCode::INTERNAL_ERROR->value,
+            'request_id' => AppLogger::getRequestId(),
+        ];
+
+        // Add debug info in development
+        if (config('app.debug')) {
+            $response['debug'] = [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => array_slice($e->getTrace(), 0, 5),
+            ];
+        }
+
+        return response()->json($response, 500);
+    }
+
+    /**
+     * Create validation error response
+     */
+    public static function validationError(
+        array $errors,
+        string $message = 'The given data was invalid.'
+    ): JsonResponse {
+        return self::error(
+            message: $message,
+            errorCode: ErrorCode::VALIDATION_ERROR,
+            status: 422,
+            errors: $errors
+        );
+    }
+
+    /**
+     * Create not found response
+     */
+    public static function notFound(
+        string $resource = 'Resource',
+        mixed $identifier = null
+    ): JsonResponse {
+        $message = $identifier
+            ? "{$resource} with ID '{$identifier}' not found."
+            : "{$resource} not found.";
+
+        return self::error(
+            message: $message,
+            errorCode: ErrorCode::NOT_FOUND,
+            status: 404
+        );
+    }
+
+    /**
+     * Create unauthorized response
+     */
+    public static function unauthorized(string $message = 'Authentication required.'): JsonResponse
+    {
+        return self::error(
+            message: $message,
+            errorCode: ErrorCode::AUTH_ERROR,
+            status: 401
+        );
+    }
+
+    /**
+     * Create forbidden response
+     */
+    public static function forbidden(string $message = 'Access denied.'): JsonResponse
+    {
+        return self::error(
+            message: $message,
+            errorCode: ErrorCode::FORBIDDEN,
+            status: 403
+        );
+    }
+
+    /**
+     * Create rate limited response
+     */
+    public static function rateLimited(int $retryAfter = 60): JsonResponse
     {
         return response()->json([
             'success' => false,
-            'message' => $message,
-            'errors'  => $errors,
-        ], $status);
+            'message' => "Too many requests. Please try again in {$retryAfter} seconds.",
+            'error_code' => ErrorCode::RATE_LIMITED->value,
+            'retry_after' => $retryAfter,
+            'request_id' => AppLogger::getRequestId(),
+        ], 429)->withHeaders([
+            'Retry-After' => $retryAfter,
+        ]);
     }
 
-    public static function exception(Throwable $e, string $fallbackMessage = 'Server Error'): JsonResponse
+    /**
+     * Create created response (201)
+     */
+    public static function created(mixed $data, string $message = 'Resource created successfully.'): JsonResponse
     {
-        // Log full details for backend visibility
-        \Log::error($e->getMessage(), [
-            'exception' => $e,
-        ]);
+        return self::success($data, $message, 201);
+    }
 
-        // Send safe response for frontend
-        return self::error($fallbackMessage, 500);
+    /**
+     * Create no content response (204)
+     */
+    public static function noContent(): JsonResponse
+    {
+        return response()->json(null, 204);
+    }
+
+    /**
+     * Create accepted response (202) for async operations
+     */
+    public static function accepted(
+        string $message = 'Request accepted for processing.',
+        ?string $trackingId = null
+    ): JsonResponse {
+        $data = ['status' => 'processing'];
+
+        if ($trackingId) {
+            $data['tracking_id'] = $trackingId;
+        }
+
+        return self::success($data, $message, 202);
+    }
+
+    /**
+     * Handle HTTP exceptions
+     */
+    protected static function fromHttpException(\Symfony\Component\HttpKernel\Exception\HttpException $e): JsonResponse
+    {
+        $status = $e->getStatusCode();
+
+        $errorCode = match ($status) {
+            400 => ErrorCode::VALIDATION_ERROR,
+            401 => ErrorCode::AUTH_ERROR,
+            403 => ErrorCode::FORBIDDEN,
+            404 => ErrorCode::NOT_FOUND,
+            405 => ErrorCode::OPERATION_NOT_ALLOWED,
+            422 => ErrorCode::VALIDATION_ERROR,
+            429 => ErrorCode::RATE_LIMITED,
+            500 => ErrorCode::INTERNAL_ERROR,
+            502 => ErrorCode::EXTERNAL_SERVICE_ERROR,
+            503 => ErrorCode::SERVICE_UNAVAILABLE,
+            504 => ErrorCode::SERVICE_TIMEOUT,
+            default => ErrorCode::UNKNOWN_ERROR,
+        };
+
+        $message = $e->getMessage() ?: $errorCode->userMessage();
+
+        return self::error($message, $errorCode, $status);
     }
 }

@@ -3,8 +3,12 @@
 namespace App\Providers;
 
 use App\Services\CreateOrderService;
+use App\Services\Logging\AppLogger;
+use App\Services\Logging\HttpClientLogger;
+use App\Services\Logging\QueryLogger;
 use App\Services\Payment\PaymentService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -31,6 +35,35 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(PaymentService::class),
             );
         });
+
+        // Register AppLogger as singleton
+        $this->app->singleton(AppLogger::class, function ($app) {
+            return new AppLogger();
+        });
+    }
+
+    /**
+     * Bootstrap logging services.
+     */
+    protected function bootLogging(): void
+    {
+        // Register HTTP client logging macros
+        HttpClientLogger::register();
+
+        // Enable query logging for performance monitoring
+        if (config('app.debug') || config('logging.query_log_all', false)) {
+            QueryLogger::enable();
+        }
+
+        // Always enable slow query logging in production
+        if (app()->isProduction()) {
+            QueryLogger::enable();
+        }
+
+        // Log query summary at end of request
+        $this->app->terminating(function () {
+            QueryLogger::logSummary();
+        });
     }
 
     /**
@@ -38,6 +71,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Initialize professional logging
+        $this->bootLogging();
+
         Inertia::share([
             'auth' => function () {
                 return [

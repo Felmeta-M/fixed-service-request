@@ -13,7 +13,49 @@ class Customer extends Authenticatable
 {
     use Notifiable, HasFactory, HasApiTokens, SoftDeletes;
 
-    protected $guarded = ['id'];
+    /**
+     * The attributes that are mass assignable.
+     * Only allow specific fields to prevent mass assignment attacks.
+     */
+    protected $fillable = [
+        'sub',
+        'code',
+        'name',
+        'phone_number',
+        'title',
+        'gender',
+        'nationality',
+        'identification_type',
+        'identification_number',
+        'birthdate',
+        'place_of_birth',
+        'occupation',
+        'education',
+        'religion',
+        'income',
+        'primary_language',
+        'picture',
+        'address',
+        'contact',
+        'contact_persons',
+        'verified_at',
+        'region',
+        'city',
+        'wereda',
+        'zone',
+        'kebele',
+        'house_no',
+    ];
+
+    /**
+     * Attributes that should never be mass assigned.
+     */
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
 
     protected $appends = ['address_string'];
 

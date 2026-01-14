@@ -8,7 +8,8 @@ use Illuminate\Http\Request;
 use App\Models\TroubleTicket;
 use App\Services\QueryTTService;
 use App\Services\CreateTTService;
-use Illuminate\Support\Facades\Log;
+use App\Services\Logging\AppLogger;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\QueryTTRequest;
 use App\Http\Requests\CreateTTRequest;
@@ -31,14 +32,28 @@ class TroubleTicketController extends Controller
         $user = auth()->user();
 
         try {
-            // Fetch tickets for this customer
-            $ticketsQuery = TroubleTicket::query()
-                ->where('customer_code', $user->customer_code);
+            // Use Query Builder for better performance - only get needed columns
+            $ticketsQuery = DB::table('trouble_tickets')
+                ->whereNull('deleted_at')
+                ->where('customer_code', $user->customer_code)
+                ->select([
+                    'id',
+                    'tt_serial_no',
+                    'access_number',
+                    'status',
+                    'last_checked_at',
+                    'last_synced_status',
+                    'created_at',
+                    'updated_at',
+                    'customer_code',
+                    'service_number',
+                    'problem_type',
+                    'problem_description',
+                ]);
 
             if ($request->filled('tt_serial_no')) {
                 $ticketsQuery->where('tt_serial_no', 'like', '%' . $request->tt_serial_no . '%');
             }
-
 
             if ($request->filled('access_number')) {
                 $ticketsQuery->where('access_number', 'like', '%' . $request->access_number . '%');
@@ -49,40 +64,41 @@ class TroubleTicketController extends Controller
             }
 
             // Get paginated tickets
-            $tickets = $ticketsQuery->latest()->paginate(10);
+            $tickets = $ticketsQuery->latest('created_at')->paginate(10);
 
-            // Refresh each ticket if needed (throttle inside refresh)
-            foreach ($tickets as $ticket) {
-                try {
-                    if (! in_array($ticket->status, TicketStatus::active(), true)) {
-                        continue;
+            // Collect tickets that need refresh
+            $ticketsToRefresh = collect($tickets->items())
+                ->filter(function ($ticket) {
+                    // Only refresh active tickets that haven't been checked in 5 minutes
+                    if (!in_array($ticket->status, TicketStatus::active(), true)) {
+                        return false;
                     }
 
-                    $this->refreshTicket($ticket);
-                } catch (\Throwable $e) {
-                    Log::warning('Failed to refresh ticket in index', [
-                        'tt_serial_no' => $ticket->tt_serial_no ?? null,
-                        'access_number' => $ticket->access_number ?? null,
-                        'error' => $e->getMessage(),
-                        'exception' => $e,
-                    ]);
-                }
-            }
+                    if ($ticket->last_checked_at) {
+                        $lastChecked = \Carbon\Carbon::parse($ticket->last_checked_at);
+                        if ($lastChecked->diffInMinutes(now()) < 5) {
+                            return false;
+                        }
+                    }
 
+                    return true;
+                });
+
+            // Batch refresh tickets and collect updates
+            if ($ticketsToRefresh->isNotEmpty()) {
+                $this->batchRefreshTickets($ticketsToRefresh);
+            }
 
             return response()->json([
                 'success' => true,
                 'data' => $tickets,
             ]);
         } catch (\Throwable $e) {
-            // Log database query errors
-            Log::error('Failed to fetch tickets in index', [
+            AppLogger::api()->error('Failed to fetch tickets', [
                 'customer_code' => $user->customer_code ?? null,
                 'error' => $e->getMessage(),
-                'exception' => $e,
             ]);
 
-            // Return valid JSON response even on error
             return response()->json([
                 'success' => true,
                 'data' => [],
@@ -90,123 +106,124 @@ class TroubleTicketController extends Controller
         }
     }
 
-
-    protected function refreshTicket(TroubleTicket $ticket)
+    /**
+     * Batch refresh multiple tickets and update them efficiently
+     */
+    protected function batchRefreshTickets($tickets): void
     {
-        // Throttle: skip if last checked < 5 minutes
-        if ($ticket->last_checked_at && $ticket->last_checked_at->diffInMinutes(now()) < 5) {
-            return;
-        }
+        $updates = [];
+        $timestampUpdates = [];
 
-        try {
-            // Call third-party TT service
-            $response = $this->queryTTService->queryTT([
-                'access_number' => $ticket->access_number,
-            ]);
-        } catch (RuntimeException $e) {
-            // Handle rate limits, HTTP failures, XML parsing errors from BaseApiService
-            Log::error('TT service call failed in refreshTicket', [
-                'tt_serial_no' => $ticket->tt_serial_no ?? null,
-                'access_number' => $ticket->access_number ?? null,
-                'error' => $e->getMessage(),
-                'exception' => $e,
-            ]);
-            return;
-        } catch (\Throwable $e) {
-            // Handle network timeouts, malformed responses, or other unexpected errors
-            Log::error('Unexpected error during TT service call in refreshTicket', [
-                'tt_serial_no' => $ticket->tt_serial_no ?? null,
-                'access_number' => $ticket->access_number ?? null,
-                'error' => $e->getMessage(),
-                'exception' => $e,
-            ]);
-            return;
-        }
-
-        try {
-            $payload = $response->getData(true);
-            // Log::info('TT raw response', $payload);
-
-            // Validate response structure before accessing nested data
-            if (!is_array($payload) || !isset($payload['data'])) {
-                Log::warning('Invalid response structure in refreshTicket', [
-                    'tt_serial_no' => $ticket->tt_serial_no ?? null,
-                    'access_number' => $ticket->access_number ?? null,
-                    'payload_keys' => is_array($payload) ? array_keys($payload) : 'not an array',
-                ]);
-                return;
-            }
-
-            $data = $payload['data'] ?? null;
-
-            if (empty($data['success']) || empty($data['tt_list'][0])) {
-                return;
-            }
-
-            $tt = $data['tt_list'][0];
-
-            // Validate tt structure before accessing tt_status
-            if (!is_array($tt) || !isset($tt['tt_status'])) {
-                Log::warning('Invalid tt structure in refreshTicket response', [
-                    'tt_serial_no' => $ticket->tt_serial_no ?? null,
-                    'access_number' => $ticket->access_number ?? null,
-                    'tt_keys' => is_array($tt) ? array_keys($tt) : 'not an array',
-                ]);
-                return;
-            }
-
-            $newStatus = strtolower($tt['tt_status']);
-
-            // Update only if status changed
-            if ($ticket->status !== $newStatus) {
-                try {
-                    $ticket->update([
-                        'status' => $newStatus,
-                        'last_synced_status' => $newStatus,
-                    ]);
-                } catch (\Throwable $e) {
-                    Log::error('Failed to update ticket status in refreshTicket', [
-                        'tt_serial_no' => $ticket->tt_serial_no ?? null,
-                        'access_number' => $ticket->access_number ?? null,
-                        'new_status' => $newStatus,
-                        'error' => $e->getMessage(),
-                        'exception' => $e,
-                    ]);
-                    return;
-                }
-            }
-
-            // Update last_checked_at timestamp
+        foreach ($tickets as $ticket) {
             try {
-                $ticket->update(['last_checked_at' => now()]);
-            } catch (\Throwable $e) {
-                Log::error('Failed to update last_checked_at in refreshTicket', [
-                    'tt_serial_no' => $ticket->tt_serial_no ?? null,
-                    'access_number' => $ticket->access_number ?? null,
-                    'error' => $e->getMessage(),
-                    'exception' => $e,
+                $response = $this->queryTTService->queryTT([
+                    'access_number' => $ticket->access_number,
                 ]);
-                // Don't return here - status update was successful, this is just a timestamp
+
+                $payload = $response->getData(true);
+
+                if (!is_array($payload) || !isset($payload['data'])) {
+                    continue;
+                }
+
+                $data = $payload['data'] ?? null;
+
+                if (empty($data['success']) || empty($data['tt_list'][0])) {
+                    $timestampUpdates[] = $ticket->id;
+                    continue;
+                }
+
+                $tt = $data['tt_list'][0];
+
+                if (!is_array($tt) || !isset($tt['tt_status'])) {
+                    $timestampUpdates[] = $ticket->id;
+                    continue;
+                }
+
+                $newStatus = strtolower($tt['tt_status']);
+
+                if ($ticket->status !== $newStatus) {
+                    $updates[$ticket->id] = $newStatus;
+                }
+
+                $timestampUpdates[] = $ticket->id;
+            } catch (\Throwable $e) {
+                AppLogger::api()->warning('Failed to refresh ticket', [
+                    'tt_serial_no' => $ticket->tt_serial_no ?? null,
+                    'error' => $e->getMessage(),
+                ]);
             }
-        } catch (\Throwable $e) {
-            // Handle any unexpected errors during response processing
-            Log::error('Unexpected error processing TT response in refreshTicket', [
-                'tt_serial_no' => $ticket->tt_serial_no ?? null,
-                'access_number' => $ticket->access_number ?? null,
-                'error' => $e->getMessage(),
-                'exception' => $e,
-            ]);
-            return;
+        }
+
+        // Batch update statuses using CASE statement
+        if (!empty($updates)) {
+            $this->batchUpdateStatus($updates);
+        }
+
+        // Batch update last_checked_at timestamps
+        if (!empty($timestampUpdates)) {
+            DB::table('trouble_tickets')
+                ->whereIn('id', $timestampUpdates)
+                ->update(['last_checked_at' => now()]);
         }
     }
 
+    /**
+     * Batch update ticket statuses using a single query
+     */
+    protected function batchUpdateStatus(array $updates): void
+    {
+        if (empty($updates)) {
+            return;
+        }
+
+        $cases = [];
+        $syncCases = [];
+        $ids = [];
+        $bindings = [];
+
+        foreach ($updates as $id => $status) {
+            $cases[] = "WHEN id = ? THEN ?";
+            $syncCases[] = "WHEN id = ? THEN ?";
+            $bindings[] = $id;
+            $bindings[] = $status;
+            $ids[] = $id;
+        }
+
+        // Add bindings for sync cases
+        foreach ($updates as $id => $status) {
+            $bindings[] = $id;
+            $bindings[] = $status;
+        }
+
+        $caseStatement = implode(' ', $cases);
+        $syncCaseStatement = implode(' ', $syncCases);
+        $idPlaceholders = implode(',', array_fill(0, count($ids), '?'));
+        $bindings = array_merge($bindings, $ids);
+
+        DB::update(
+            "UPDATE trouble_tickets 
+             SET status = CASE {$caseStatement} END,
+                 last_synced_status = CASE {$syncCaseStatement} END,
+                 updated_at = NOW()
+             WHERE id IN ({$idPlaceholders})",
+            $bindings
+        );
+
+        AppLogger::api()->info('Batch updated ticket statuses', [
+            'count' => count($updates),
+        ]);
+    }
 
     /**
-     * Show single ticket by TT number
+     * Show single ticket by TT number - optimized with Query Builder
      */
     public function show(string $tt_serial_no)
     {
-        $ticket = TroubleTicket::where('tt_serial_no', $tt_serial_no)->first();
+        $ticket = DB::table('trouble_tickets')
+            ->whereNull('deleted_at')
+            ->where('tt_serial_no', $tt_serial_no)
+            ->first();
 
         if (!$ticket) {
             return response()->json([

@@ -26,6 +26,8 @@ use App\Http\Controllers\Api\v1\TelebirrController;
 use App\Http\Controllers\Api\v1\TelecomRegionController;
 use App\Http\Controllers\Api\v1\TroubleTicketController;
 use App\Http\Controllers\Api\v1\SubscriptionOrderStatusController;
+use App\Http\Controllers\Api\v1\PurchasedOfferingController;
+use App\Http\Controllers\Api\v1\ChangePrimaryOfferingController;
 use App\Http\Middleware\AuthenticateServiceClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -117,6 +119,16 @@ Route::prefix('v1')->group(function () {
             // Subscription order status queries
             Route::post('subscription-order-status', [SubscriptionOrderStatusController::class, 'query']);
             Route::get('subscription-order-status/labels', [SubscriptionOrderStatusController::class, 'statusLabels']);
+
+            // Purchased offering queries
+            Route::post('purchased-offering', [PurchasedOfferingController::class, 'query']);
+            Route::post('purchased-offering/by-service-number', [PurchasedOfferingController::class, 'queryByServiceNumber']);
+            Route::get('purchased-offering/object-types', [PurchasedOfferingController::class, 'objectTypes']);
+
+            // Change primary offering (bandwidth/plan upgrade/downgrade)
+            Route::post('change-primary-offering', [ChangePrimaryOfferingController::class, 'change']);
+            Route::post('change-bandwidth', [ChangePrimaryOfferingController::class, 'changeBandwidth']);
+            Route::get('change-primary-offering/object-types', [ChangePrimaryOfferingController::class, 'objectTypes']);
         });
 
         // Critical operations: Payments, orders, subscriptions

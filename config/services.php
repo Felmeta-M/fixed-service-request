@@ -254,6 +254,14 @@ return [
         'business_code' => env('SUBSCRIPTION_ORDER_STATUS_BUSINESS_CODE', 'ChangeSupplementaryOffering'),
     ],
 
+    'purchased_offering' => [
+        'endpoint' => env('PURCHASED_OFFERING_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/SELFCARE/HWBSS_Offering'),
+        'channel' => env('PURCHASED_OFFERING_CHANNEL', '3'),
+        'partner_id' => env('PURCHASED_OFFERING_PARTNER_ID', '101'),
+        'access_user' => env('PURCHASED_OFFERING_ACCESS_USER', 'ecare'),
+        'access_password' => env('PURCHASED_OFFERING_ACCESS_PASSWORD', 'REDACTED_PASSWORD'),
+    ],
+
     'telebirr' => [
         'base_url' => env('TELEBIRR_BASE_URL'),
         'web_base_url' => env('WEB_TELEBIRR_BASE_URL'),
@@ -309,6 +317,26 @@ return [
         'tenant'   => env('GET_COMBINING_TENANT', '101'),
         'channel'  => env('GET_COMBINING_CHANNEL', '59'),
         'tech_channel' => env('GET_COMBINING_TECH_CHANNEL', '35'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Change Primary Offering Service (BSS IECAF)
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for changing subscriber's primary offering (bandwidth/plan)
+    | via the BSS IECAF endpoint. Used for upgrade/downgrade operations.
+    |
+    */
+    'change_primary_offering' => [
+        'endpoint' => env('CHANGE_PRIMARY_OFFERING_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'version' => env('CHANGE_PRIMARY_OFFERING_VERSION', '1'),
+        'language' => env('CHANGE_PRIMARY_OFFERING_LANGUAGE', '2002'),
+        'channel_id' => env('CHANGE_PRIMARY_OFFERING_CHANNEL_ID', '40'),
+        'technical_channel_id' => env('CHANGE_PRIMARY_OFFERING_TECHNICAL_CHANNEL_ID', '51'),
+        'tenant_id' => env('CHANGE_PRIMARY_OFFERING_TENANT_ID', '101'),
+        'access_user' => env('CHANGE_PRIMARY_OFFERING_ACCESS_USER', 'ZTEOSS'),
+        'access_password' => env('CHANGE_PRIMARY_OFFERING_ACCESS_PASSWORD', 'REDACTED_PASSWORD'),
     ],
 
     /*

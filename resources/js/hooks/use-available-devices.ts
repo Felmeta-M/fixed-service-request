@@ -6,6 +6,7 @@ export interface AvailableDevice {
     name: string;
     vendor: string;
     model: string | null;
+    device_type: 'broadband' | 'voice' | 'universal';
     price: number;
     description: string | null;
     status: 'active' | 'inactive';
@@ -19,11 +20,16 @@ interface AvailableDevicesApiResponse {
     data: AvailableDevice[];
 }
 
-export function useAvailableDevices() {
+export function useAvailableDevices(serviceType?: string) {
     const { data, isLoading, error } = useQuery({
-        queryKey: ['available-devices'],
+        queryKey: ['available-devices', serviceType],
         queryFn: async () => {
-            const response = await apiClient.get<any>('/available-devices');
+            const params: Record<string, string> = {};
+            if (serviceType) {
+                params.service_type = serviceType;
+            }
+
+            const response = await apiClient.get<any>('/available-devices', { params });
 
             // Handle ApiResponse format: { success: true, data: [...] }
             if (response.success !== undefined && Array.isArray(response.data)) {

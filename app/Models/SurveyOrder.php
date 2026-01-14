@@ -57,4 +57,9 @@ class SurveyOrder extends Model
     {
         return $this->belongsTo(AvailableDevice::class, 'device_id');
     }
+
+    public function voiceDevice()
+    {
+        return $this->belongsTo(AvailableDevice::class, 'device_voice_id');
+    }
 }

@@ -90,6 +90,7 @@ abstract class BaseSurveyService extends BaseApiService
                 ...$data,
                 'with_device' => (bool)$data['with_device'],
                 'device_id' => $data['device_id'] ?? null,
+                'device_voice_id' => $data['device_voice_id'] ?? null,
                 'service_number' => $serviceNumber,
                 'customer_survey_order_id' => $surveyOrderId,
                 'status' => $data['survey_is_manual'] ? FFDServiceProvisionStatus::Waiting->value : FFDServiceProvisionStatus::Completed->value,
@@ -120,11 +121,21 @@ abstract class BaseSurveyService extends BaseApiService
             $calculator = app(PaymentCalculatorService::class);
             $fees = $calculator->calculateFees($survey, $requestData);
             
-            // Calculate device fee from selected device price
+            // Calculate device fee from selected device prices
+            // For combo services, add both internet and voice device prices
             $deviceFee = 0;
-            if ($survey->with_device && $survey->device_id) {
-                $device = \App\Models\AvailableDevice::find($survey->device_id);
-                $deviceFee = $device ? (float) $device->price : 0;
+            if ($survey->with_device) {
+                // Internet/Data device fee
+                if ($survey->device_id) {
+                    $device = \App\Models\AvailableDevice::find($survey->device_id);
+                    $deviceFee += $device ? (float) $device->price : 0;
+                }
+                
+                // Voice device fee (for combo services)
+                if ($survey->device_voice_id) {
+                    $voiceDevice = \App\Models\AvailableDevice::find($survey->device_voice_id);
+                    $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
+                }
             }
             
             $totalAmount = $fees['total_amount'] + $deviceFee;

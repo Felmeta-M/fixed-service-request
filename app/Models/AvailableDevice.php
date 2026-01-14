@@ -17,6 +17,7 @@ class AvailableDevice extends Model
         'name',
         'vendor',
         'model',
+        'device_type',
         'price',
         'description',
         'status',
@@ -37,5 +38,16 @@ class AvailableDevice extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
+    }
+
+    /**
+     * Scope to filter by device type
+     */
+    public function scopeByType($query, string $type)
+    {
+        return $query->where(function ($q) use ($type) {
+            $q->where('device_type', $type)
+              ->orWhere('device_type', 'universal');
+        });
     }
 }

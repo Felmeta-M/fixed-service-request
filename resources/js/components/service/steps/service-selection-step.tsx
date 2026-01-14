@@ -126,19 +126,52 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
 
             <DeviceOptionSelector
                 value={formData.withDevice}
+                serviceType={formData.serviceType}
                 onChange={(val) => {
-                    // If switching to "without device", clear the selected device
+                    const isCombo = formData.serviceType === '180427974';
+                    // If switching to "without device", clear all selected devices
                     if (!val) {
-                        onUpdate({ withDevice: false, selectedDevice: null, deviceId: null });
+                        if (isCombo) {
+                            onUpdate({
+                                withDevice: false,
+                                selectedDeviceInternet: null,
+                                selectedDeviceVoice: null,
+                                deviceId: null,
+                                deviceVoiceId: null,
+                            });
+                        } else {
+                            onUpdate({
+                                withDevice: false,
+                                selectedDevice: null,
+                                deviceId: null,
+                            });
+                        }
                     } else {
                         onUpdate({ withDevice: true });
                     }
                 }}
                 selectedDevice={formData.selectedDevice}
+                selectedDeviceInternet={formData.selectedDeviceInternet}
+                selectedDeviceVoice={formData.selectedDeviceVoice}
                 onDeviceSelect={(device) => {
+                    // Single service device selection
                     onUpdate({
                         selectedDevice: device,
                         deviceId: device.id,
+                    });
+                }}
+                onInternetDeviceSelect={(device) => {
+                    // Combo internet device selection
+                    onUpdate({
+                        selectedDeviceInternet: device,
+                        deviceId: device.id,
+                    });
+                }}
+                onVoiceDeviceSelect={(device) => {
+                    // Combo voice device selection
+                    onUpdate({
+                        selectedDeviceVoice: device,
+                        deviceVoiceId: device.id,
                     });
                 }}
                 disabled={hasActiveSurvey}

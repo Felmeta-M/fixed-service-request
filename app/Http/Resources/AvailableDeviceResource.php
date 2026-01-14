@@ -19,6 +19,7 @@ class AvailableDeviceResource extends JsonResource
             'name' => $this->name,
             'vendor' => $this->vendor,
             'model' => $this->model,
+            'device_type' => $this->device_type,
             'price' => (float) $this->price,
             'description' => $this->description,
             'status' => $this->status,

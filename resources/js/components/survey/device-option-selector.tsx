@@ -60,16 +60,26 @@ import { AvailableDevice } from '@/hooks/use-available-devices';
 interface DeviceOptionSelectorProps {
     value?: boolean;
     onChange: (value: boolean) => void;
-    selectedDevice?: AvailableDevice | null;
-    onDeviceSelect?: (device: AvailableDevice) => void;
+    serviceType?: string; // Service type for filtering devices
+    selectedDevice?: AvailableDevice | null; // For single service (broadband/voice)
+    selectedDeviceInternet?: AvailableDevice | null; // For combo internet device
+    selectedDeviceVoice?: AvailableDevice | null; // For combo voice device
+    onDeviceSelect?: (device: AvailableDevice) => void; // For single service
+    onInternetDeviceSelect?: (device: AvailableDevice) => void; // For combo internet
+    onVoiceDeviceSelect?: (device: AvailableDevice) => void; // For combo voice
     disabled?: boolean;
 }
 
 export function DeviceOptionSelector({
     value,
     onChange,
+    serviceType,
     selectedDevice,
+    selectedDeviceInternet,
+    selectedDeviceVoice,
     onDeviceSelect,
+    onInternetDeviceSelect,
+    onVoiceDeviceSelect,
     disabled,
 }: DeviceOptionSelectorProps) {
     // Show message only when explicitly set to false (not undefined/null)
@@ -82,6 +92,18 @@ export function DeviceOptionSelector({
     const handleDeviceSelect = (device: AvailableDevice) => {
         if (onDeviceSelect) {
             onDeviceSelect(device);
+        }
+    };
+
+    const handleInternetDeviceSelect = (device: AvailableDevice) => {
+        if (onInternetDeviceSelect) {
+            onInternetDeviceSelect(device);
+        }
+    };
+
+    const handleVoiceDeviceSelect = (device: AvailableDevice) => {
+        if (onVoiceDeviceSelect) {
+            onVoiceDeviceSelect(device);
         }
     };
 
@@ -144,8 +166,13 @@ export function DeviceOptionSelector({
             {isWithDevice && !disabled && (
                 <div className="mt-4">
                     <DeviceSelector
+                        serviceType={serviceType}
                         selectedDeviceId={selectedDevice?.id}
+                        selectedDeviceInternetId={selectedDeviceInternet?.id}
+                        selectedDeviceVoiceId={selectedDeviceVoice?.id}
                         onDeviceSelect={handleDeviceSelect}
+                        onInternetDeviceSelect={handleInternetDeviceSelect}
+                        onVoiceDeviceSelect={handleVoiceDeviceSelect}
                         disabled={disabled}
                     />
                 </div>

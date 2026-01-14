@@ -18,8 +18,7 @@ class EsignetController extends Controller
         protected EsignetService $esignetService,
         protected LocalAuthService $localAuthService,
         protected CustomerService $customerService,
-    ) {
-    }
+    ) {}
 
     /** Starts ESIGNET login */
     public function redirectToEsignet()
@@ -78,9 +77,9 @@ class EsignetController extends Controller
             $temp['code_verifier']
         );
 
-        Log::info('Esignet token exchange result', [
-            'token' => $token
-        ]);
+        // Log::info('Esignet token exchange result', [
+        //     'token' => $token
+        // ]);
 
         if ($token['status'] !== 'ok') {
             logger()->error('Esignet token exchange failed', [
@@ -124,10 +123,10 @@ class EsignetController extends Controller
         session()->forget(['esign_state', 'esign_code_verifier']);
 
 
-        Log::info('esignetUser', [
-            'exists' => (bool) $esignetUser,
-            'verified_at' => $esignetUser?->verified_at,
-        ]);
+        // Log::info('esignetUser', [
+        //     'exists' => (bool) $esignetUser,
+        //     'verified_at' => $esignetUser?->verified_at,
+        // ]);
 
         if ($esignetUser !== null && $esignetUser->verified_at !== null) {
             return redirect()->route('services');
@@ -139,8 +138,6 @@ class EsignetController extends Controller
                 $this->customerService->getLocalCustomerData($user->customer_sub_id)
             ),
         ]);
-
-
     }
 
 

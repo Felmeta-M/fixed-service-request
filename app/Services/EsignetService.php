@@ -227,7 +227,6 @@ class EsignetService
             }
 
             $customer = $result['customer'];
-            Log::info($customer);
 
             return [
                 'status' => 'ok',

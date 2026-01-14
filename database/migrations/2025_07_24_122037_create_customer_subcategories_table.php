@@ -13,9 +13,8 @@ return new class extends Migration {
         Schema::create('customer_subcategories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_category_id')->constrained()->cascadeOnDelete();
-            $table->string('name');
-            $table->string('status')->nullable();
             $table->unsignedTinyInteger('api_value');
+            $table->string('name');
             $table->boolean('status')->default(true);
             $table->timestamps();
         });

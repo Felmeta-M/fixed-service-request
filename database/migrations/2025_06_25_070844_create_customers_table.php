@@ -32,6 +32,7 @@ return new class extends Migration {
             $table->json('address')->nullable();
             $table->json('contact')->nullable();
             $table->json('contact_persons')->nullable();
+            $table->dateTime('verified_at')->nullable();
             $table->timestamps();
             $table->SoftDeletes();
         });

@@ -19,16 +19,16 @@ class DatabaseSeeder extends Seeder
         //     'name' => 'Test User',
         //     'email' => 'test@example.com',
         // ]);
-        $this->call(SurveyTypeSeeder::class);
-        $this->call(BandwidthOptionsSeeder::class);
+        // $this->call(SurveyTypeSeeder::class);
+        // $this->call(BandwidthOptionsSeeder::class);
         $this->call(OccupationSeeder::class);
-        $this->call(CustomerTypeCategorySubcategorySeeder::class);
-        $this->call(RegionZoneWeredaSeeder::class);
-        $this->call(SurveyTypeSeeder::class);
-        $this->call(BandwidthOptionsSeeder::class);
-        $this->call(OccupationSeeder::class);
-        $this->call(CustomerTypeCategorySubcategorySeeder::class);
-        $this->call(RegionZoneWeredaSeeder::class);
-        $this->call(AvailableDeviceSeeder::class);
+        // $this->call(CustomerTypeCategorySubcategorySeeder::class);
+        // $this->call(RegionZoneWeredaSeeder::class);
+        // $this->call(SurveyTypeSeeder::class);
+        // $this->call(BandwidthOptionsSeeder::class);
+        // $this->call(OccupationSeeder::class);
+        // $this->call(CustomerTypeCategorySubcategorySeeder::class);
+        // $this->call(RegionZoneWeredaSeeder::class);
+        // $this->call(AvailableDeviceSeeder::class);
     }
 }

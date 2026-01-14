@@ -2431,10 +2431,11 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                     }
                                     clearFieldError('customer_type');
                                 }}
-                                options={[
-                                    { label: 'Residential', value: '1' },
-                                    { label: 'Enterprise', value: '2' },
-                                ]}
+                                // options={[
+                                //     { label: 'Residential', value: '1' },
+                                //     { label: 'Enterprise', value: '2' },
+                                // ]}
+                                options={types}
                                 placeholder="Select customer type"
                                 error={formErrors.customer_type}
                                 disabled={isFieldReadOnly('customer_type')}

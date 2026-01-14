@@ -1,6 +1,8 @@
 import { LucideIcon } from 'lucide-react';
 import type { Config } from 'ziggy-js';
 
+export type Locale = 'en' | 'am' | 'om' | 'so' | 'ti' | 'aa';
+
 export interface Auth {
     user: User;
 }
@@ -28,6 +30,9 @@ export interface SharedData {
     auth: Auth;
     ziggy: Config & { location: string };
     sidebarOpen: boolean;
+    locale: Locale;
+    availableLocales: Record<Locale, string>;
+    translations: Record<string, string>;
     [key: string]: unknown;
 }
 

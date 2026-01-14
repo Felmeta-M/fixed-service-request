@@ -10,6 +10,7 @@ return new class extends Migration {
         Schema::create('otps', function (Blueprint $table) {
             $table->id();
             $table->string('phone_number')->index();
+            $table->string('phone_number')->index();
             $table->string('code')->unique()->nullable();
             $table->string('api_token')->unique()->nullable();
             $table->string('name')->nullable();

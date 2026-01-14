@@ -9,24 +9,12 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useTranslation } from '@/hooks/use-translation';
 import logo from '@/images/ethio_logo_full.png';
 import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
 import { CheckCircle, CreditCard, FileText, MapPin, RadioTower, ShieldQuestionIcon, Wifi } from 'lucide-react';
 import { NavUser } from './nav-user';
-
-const items = [
-    {
-        title: 'Services',
-        url: '/services',
-        icon: RadioTower,
-    },
-    {
-        title: 'Complaints',
-        url: '/complaints',
-        icon: ShieldQuestionIcon,
-    },
-];
 
 interface AppSidebarProps {
     currentStep?: number;
@@ -35,32 +23,40 @@ interface AppSidebarProps {
     props?: React.ComponentProps<typeof Sidebar>;
 }
 
-const defaultCreateServiceSteps = [
-    { name: 'Service Information', icon: Wifi },
-    { name: 'Location Information', icon: MapPin },
-    { name: 'Review & Submit', icon: FileText },
-    { name: 'Payment / Subscribe', icon: CreditCard },
-];
-
-const getStepDescription = (stepName: string) => {
-    switch (stepName) {
-        case 'Customer Information':
-            return 'Create or confirm your profile';
-        case 'Service Information':
-            return 'Choose service configuration';
-        case 'Location Information':
-            return 'Select location and check availability';
-        case 'Review & Submit':
-            return 'Verify details and submit request';
-        case 'Payment / Subscribe':
-            return 'Review charges and proceed';
-        default:
-            return '';
-    }
-};
-
-export function AppSidebar({ currentStep = 0, mode = 'list', steps = defaultCreateServiceSteps, ...props }: AppSidebarProps) {
+export function AppSidebar({ currentStep = 0, mode = 'list', steps, ...props }: AppSidebarProps) {
     const { url } = usePage();
+    const { t } = useTranslation();
+
+    const items = [
+        {
+            title: t('nav.services'),
+            url: '/services',
+            icon: RadioTower,
+        },
+        {
+            title: t('nav.complaints'),
+            url: '/complaints',
+            icon: ShieldQuestionIcon,
+        },
+    ];
+
+    const defaultCreateServiceSteps = [
+        { name: t('sidebar.steps.service_info'), icon: Wifi },
+        { name: t('sidebar.steps.location_info'), icon: MapPin },
+        { name: t('sidebar.steps.review_submit'), icon: FileText },
+        { name: t('sidebar.steps.payment'), icon: CreditCard },
+    ];
+
+    const actualSteps = steps || defaultCreateServiceSteps;
+
+    const getStepDescription = (stepName: string) => {
+        if (stepName === t('sidebar.steps.customer_info')) return t('sidebar.steps.customer_info_desc');
+        if (stepName === t('sidebar.steps.service_info')) return t('sidebar.steps.service_info_desc');
+        if (stepName === t('sidebar.steps.location_info')) return t('sidebar.steps.location_info_desc');
+        if (stepName === t('sidebar.steps.review_submit')) return t('sidebar.steps.review_submit_desc');
+        if (stepName === t('sidebar.steps.payment')) return t('sidebar.steps.payment_desc');
+        return '';
+    };
 
     const isCurrentPath = (itemUrl: string) => {
         return url === itemUrl;
@@ -80,10 +76,9 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps = defaultCrea
             <SidebarContent>
                 {displayMode === 'create' ? (
                     <SidebarGroup>
-                        {/* <SidebarGroupLabel className="text-md mb-4 font-bold text-gray-900">Service Setup Progress</SidebarGroupLabel> */}
                         <SidebarGroupContent>
                             <ol role="list" className="relative space-y-10 pt-2">
-                                {steps.map((step, idx) => {
+                                {actualSteps.map((step, idx) => {
                                     const status = idx < currentStep ? 'complete' : idx === currentStep ? 'current' : 'upcoming';
                                     const isCompleted = status === 'complete';
                                     const isCurrent = status === 'current';
@@ -92,7 +87,7 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps = defaultCrea
                                     return (
                                         <li key={step.name} className="relative">
                                             {/* Connecting line */}
-                                            {idx < steps.length - 1 && (
+                                            {idx < actualSteps.length - 1 && (
                                                 <div
                                                     className={cn(
                                                         'absolute top-11 left-7 h-10 w-0.5 -translate-y-1',

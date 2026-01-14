@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Http\Controllers\Api\v1\AvailableNumberController;
 use App\Models\User;
 use Database\Seeders\CustomerTypeCategorySubcategorySeeder;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -14,11 +15,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
         // $this->call(SurveyTypeSeeder::class);
         // $this->call(BandwidthOptionsSeeder::class);
         $this->call(OccupationSeeder::class);

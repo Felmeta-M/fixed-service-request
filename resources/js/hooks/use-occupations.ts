@@ -3,7 +3,7 @@ import { apiClient } from '@/lib/api-client';
 
 interface Occupation {
     id: number;
-    remark: string;
+    name: string;
 }
 
 interface OccupationsResponse {
@@ -18,7 +18,7 @@ export function useOccupations() {
             const response = await apiClient.get<OccupationsResponse>('/occupations');
             if (response.success) {
                 return response.data.map((occ) => ({
-                    label: occ.remark,
+                    label: occ.name,
                     value: occ.id.toString(),
                 }));
             }

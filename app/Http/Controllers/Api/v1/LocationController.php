@@ -11,16 +11,16 @@ class LocationController extends Controller
 {
     public function regions()
     {
-        return Region::whereNull('deleted_at')->orderBy('name', 'asc')->get(['id', 'name']);
+        return Region::query()->where('status', true)->orderBy('name', 'asc')->get(['id', 'name']);
     }
 
     public function zones($regionId)
     {
-        return Zone::where('region_id', $regionId)->orderBy('name', 'asc')->get(['id', 'name']);
+        return Zone::query()->where('region_id', $regionId)->where('status', true)->orderBy('name', 'asc')->get(['id', 'name']);
     }
 
     public function weredas($zoneId)
     {
-        return Wereda::where('zone_id', $zoneId)->orderBy('name', 'asc')->get(['id', 'name']);
+        return Wereda::where('zone_id', $zoneId)->where('status', true)->orderBy('name', 'asc')->get(['id', 'name']);
     }
 }

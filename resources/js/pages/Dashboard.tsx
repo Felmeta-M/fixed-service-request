@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSurveyList } from '@/hooks/use-survey-list';
+import { useTranslation } from '@/hooks/use-translation';
 import MainLayout from '@/layouts/main-layout';
 import { usePage } from '@inertiajs/react';
 import { BarChart3, Package, Phone, RefreshCw, TrendingUp, Users, Wifi } from 'lucide-react';
@@ -38,8 +39,9 @@ const MonthlyTrendChart = ({ data }: { data: any[] }) => (
 
 export default function Dashboard() {
     const { surveys, loading, refetch } = useSurveyList();
-    const { auth } = usePage().props;
+    const { auth } = usePage<{ auth: { user: any } }>().props;
     const { user } = auth;
+    const { t } = useTranslation();
     console.log(user);
 
     const stats = useMemo(() => {
@@ -78,10 +80,10 @@ export default function Dashboard() {
     }, [surveys]);
 
     const chartData = [
-        { name: 'Waiting', value: stats.waiting, color: '#f59e0b' },
-        { name: 'Completed', value: stats.completed, color: '#10b981' },
-        { name: 'Subscribed', value: stats.subscribed, color: '#3b82f6' },
-        { name: 'Cancelled', value: stats.cancelled, color: '#ef4444' },
+        { name: t('status.waiting'), value: stats.waiting, color: '#f59e0b' },
+        { name: t('status.completed'), value: stats.completed, color: '#10b981' },
+        { name: t('status.subscribed'), value: stats.subscribed, color: '#3b82f6' },
+        { name: t('status.cancelled'), value: stats.cancelled, color: '#ef4444' },
     ];
 
     const monthlyData = [
@@ -94,9 +96,9 @@ export default function Dashboard() {
     ];
 
     const serviceTypeData = [
-        { name: 'Broadband', value: stats.broadband, icon: Wifi, color: 'text-blue-600' },
-        { name: 'Voice', value: stats.voice, icon: Phone, color: 'text-green-600' },
-        { name: 'Combo', value: stats.combo, icon: Package, color: 'text-purple-600' },
+        { name: t('service_type.broadband'), value: stats.broadband, icon: Wifi, color: 'text-blue-600' },
+        { name: t('service_type.voice'), value: stats.voice, icon: Phone, color: 'text-green-600' },
+        { name: t('service_type.combo'), value: stats.combo, icon: Package, color: 'text-purple-600' },
     ];
 
     return (
@@ -107,13 +109,13 @@ export default function Dashboard() {
                     <div className="mb-8 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div>
-                                <h1 className="text-3xl font-bold text-gray-900">Service Analytics Dashboard</h1>
-                                <p className="mt-2 text-gray-600">Comprehensive overview of your service requests and performance</p>
+                                <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.title')}</h1>
+                                <p className="mt-2 text-gray-600">{t('dashboard.subtitle')}</p>
                             </div>
                         </div>
                         <Button onClick={refetch} disabled={loading} variant="outline">
                             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                            Refresh
+                            {t('common.refresh')}
                         </Button>
                     </div>
 
@@ -123,12 +125,12 @@ export default function Dashboard() {
                             <CardHeader className="pb-2">
                                 <CardTitle className="flex items-center gap-2 text-sm font-medium">
                                     <Users className="h-4 w-4" />
-                                    Total Services
+                                    {t('dashboard.total_services')}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">{stats.total}</div>
-                                <p className="text-xs text-gray-600">All service requests</p>
+                                <p className="text-xs text-gray-600">{t('dashboard.all_service_requests')}</p>
                             </CardContent>
                         </Card>
 
@@ -136,12 +138,12 @@ export default function Dashboard() {
                             <CardHeader className="pb-2">
                                 <CardTitle className="flex items-center gap-2 text-sm font-medium">
                                     <TrendingUp className="h-4 w-4 text-primary" />
-                                    Active Services
+                                    {t('dashboard.active_services')}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold text-primary">{stats.completed + stats.subscribed}</div>
-                                <p className="text-xs text-gray-600">Ready or subscribed</p>
+                                <p className="text-xs text-gray-600">{t('dashboard.ready_or_subscribed')}</p>
                             </CardContent>
                         </Card>
 
@@ -149,12 +151,12 @@ export default function Dashboard() {
                             <CardHeader className="pb-2">
                                 <CardTitle className="flex items-center gap-2 text-sm font-medium">
                                     <BarChart3 className="h-4 w-4 text-yellow-600" />
-                                    In Progress
+                                    {t('dashboard.in_progress')}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold text-yellow-600">{stats.waiting}</div>
-                                <p className="text-xs text-gray-600">Awaiting processing</p>
+                                <p className="text-xs text-gray-600">{t('dashboard.awaiting_processing')}</p>
                             </CardContent>
                         </Card>
 
@@ -162,14 +164,14 @@ export default function Dashboard() {
                             <CardHeader className="pb-2">
                                 <CardTitle className="flex items-center gap-2 text-sm font-medium">
                                     <Wifi className="h-4 w-4 text-blue-600" />
-                                    Success Rate
+                                    {t('dashboard.success_rate')}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold text-blue-600">
                                     {stats.total > 0 ? (((stats.completed + stats.subscribed) / stats.total) * 100).toFixed(1) : 0}%
                                 </div>
-                                <p className="text-xs text-gray-600">Service completion rate</p>
+                                <p className="text-xs text-gray-600">{t('dashboard.service_completion_rate')}</p>
                             </CardContent>
                         </Card>
                     </div>

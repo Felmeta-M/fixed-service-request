@@ -1,0 +1,15 @@
+/var/log/docker-nginx/*.log {
+    daily
+    size 50M
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 root adm
+    sharedscripts
+
+    postrotate
+        docker kill -s USR1 ffd_nginx >/dev/null 2>&1 || true
+    endscript
+}

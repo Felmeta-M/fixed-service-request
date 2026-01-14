@@ -78,6 +78,10 @@ class EsignetController extends Controller
             $temp['code_verifier']
         );
 
+        Log::info('Esignet token exchange result', [
+            'token' => $token
+        ]);
+
         if ($token['status'] !== 'ok') {
             logger()->error('Esignet token exchange failed', [
                 'error' => $token['message']

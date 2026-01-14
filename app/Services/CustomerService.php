@@ -23,6 +23,7 @@ class CustomerService extends BaseApiService
     {
         try {
             $xmlPayload = $this->buildXml($data);
+            // Log::info('XML Payload', ['xml_payload' => $xmlPayload]);
             $xmlResponse = $this->executeRequest($xmlPayload);
             Log::info($xmlResponse);
             $parsedXml = $this->parseResponse($xmlResponse, $data);
@@ -36,69 +37,43 @@ class CustomerService extends BaseApiService
     protected function buildXml(array $data = []): string
     {
         $customer = Customer::current();
-        $name = explode(' ', $customer->name ?? '');
 
         $credentials = config('services.customer');
 
-        $defaults = [
-            'customer_type' => '1',
-            'customer_category' => '1',
-            'customer_subcategory' => '1',
-            'customer_level' => '6',
-            'first_name' => $name[0] ?? 'Dream',
-            'middle_name' => $name[1] ?? 'MEE',
-            'last_name' => 'HEE',
-            'title' => '1',
-            'nationality' => '1231',
-            'identification_type' => '1',
-            'identification_number' => random_int(10000, 999999),
-            'gender' => '1',
-            'date_of_birth' => '19890705',
-            'place_of_birth' => 'CHANGSHA',
-            'occupation' => '15',
-            'education' => '2',
-            'religion' => '4',
-            'income' => '6',
-            'primary_language' => '2002',
-
-            'address' => [
-                'region' => '1',
-                'city' => '12',
-                'zone' => '89',
-                'woreda' => '1036',
-                'kebele' => 'WEF',
-                'house_no' => 'SER',
-            ],
-
-            'contact' => [
-                'notification_mode' => '1',
-                'email' => 'abc@123.com',
-                'home_no' => '0654789632',
-                'office_no' => '0258963256',
-                'mobile_no' => '0951852365',
-                'fax_no' => '0456987412',
-            ],
-
-            'contact_person' => [
-                [
-                    'first_name' => 'Junhua',
-                    'middle_name' => 'MEE',
-                    'last_name' => 'HEE',
-                    'title' => 'HEE',
-                    'home_no' => '0654789632',
-                    'office_no' => '0147852369',
-                    'mobile_no' => '0951852369',
-                    'fax_no' => '0741258963',
-                ]
-            ],
-        ];
-
-        //TODO: INTENTIONAL: defaults override input (testing mode)
-        $data = array_merge($data, $defaults);
-
-        // IDs & timestamps
         $this->transactionId = uniqid();
-        $processTime   = now()->format('YmdHis');
+        $processTime = now()->format('YmdHis');
+
+        $data['identification_number'] = random_int(100000, 999999); //TODO: remove this after testing
+        $data['income'] = "6"; //TODO: remove this after testing
+
+        // Safely handle optional contact person info (may be empty array from frontend)
+        $contactPerson = $data['contact_person'][0] ?? null;
+        $contactPersonXml = '';
+
+        if ($contactPerson) {
+            $cpFirstName = $contactPerson['first_name'] ?? '';
+            $cpMiddleName = $contactPerson['middle_name'] ?? '';
+            $cpLastName = $contactPerson['last_name'] ?? '';
+            $cpTitle = $contactPerson['title'] ?? '';
+            $cpHomeNo = $contactPerson['home_no'] ?? '';
+            $cpOfficeNo = $contactPerson['office_no'] ?? '';
+            $cpMobileNo = $contactPerson['mobile_no'] ?? '';
+            $cpFaxNo = $contactPerson['fax_no'] ?? '';
+
+            $contactPersonXml = "
+                    <com:CustomerContactPersonInfoList>
+                        <com:ContactPersonInfo>
+                            <com:FirstName>{$cpFirstName}</com:FirstName>
+                            <com:MiddleName>{$cpMiddleName}</com:MiddleName>
+                            <com:LastName>{$cpLastName}</com:LastName>
+                            <com:Title>{$cpTitle}</com:Title>
+                            <com:HomeNo>{$cpHomeNo}</com:HomeNo>
+                            <com:OfficeNo>{$cpOfficeNo}</com:OfficeNo>
+                            <com:MobileNo>{$cpMobileNo}</com:MobileNo>
+                            <com:FaxNo>{$cpFaxNo}</com:FaxNo>
+                        </com:ContactPersonInfo>
+                    </com:CustomerContactPersonInfoList>";
+        }
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -156,19 +131,7 @@ class CustomerService extends BaseApiService
                         <com:MobileNo>{$data['contact']['mobile_no']}</com:MobileNo>
                         <com:FaxNo>{$data['contact']['fax_no']}</com:FaxNo>
                     </com:CustomerContactInfo>
-
-                    <com:CustomerContactPersonInfoList>
-                        <com:ContactPersonInfo>
-                            <com:FirstName>{$data['contact_person'][0]['first_name']}</com:FirstName>
-                            <com:MiddleName>{$data['contact_person'][0]['middle_name']}</com:MiddleName>
-                            <com:LastName>{$data['contact_person'][0]['last_name']}</com:LastName>
-                            <com:Title>{$data['contact_person'][0]['title']}</com:Title>
-                            <com:HomeNo>{$data['contact_person'][0]['home_no']}</com:HomeNo>
-                            <com:OfficeNo>{$data['contact_person'][0]['office_no']}</com:OfficeNo>
-                            <com:MobileNo>{$data['contact_person'][0]['mobile_no']}</com:MobileNo>
-                            <com:FaxNo>{$data['contact_person'][0]['fax_no']}</com:FaxNo>
-                        </com:ContactPersonInfo>
-                    </com:CustomerContactPersonInfoList>
+                    {$contactPersonXml}
                 </com:CustomerInfo>
             </ser:CreateNewCustomerReqBody>
         </ser:CreateNewCustomerReqMsg>
@@ -192,14 +155,14 @@ XML;
 
         $bodyData = $response->children($namespaces['ser'])->CreateNewCustomerRespBody;
         $customerData = $bodyData->children($namespaces['com']);
-        $retCode = (string)$headerData->RetCode;
-        $retMsg = (string)$headerData->RetMsg;
+        $retCode = (string) $headerData->RetCode;
+        $retMsg = (string) $headerData->RetMsg;
 
         if ($retCode !== '0') {
             return ApiResponse::error("Create customer profile failed: {$retMsg}");
         }
 
-        $customerCode = (string)$customerData->CustomerCode ?? '';
+        $customerCode = (string) $customerData->CustomerCode ?? '';
 
         $customerResponse = DB::transaction(function () use ($customerCode, $data) {
             $currentUser = Auth::guard('api')->user();
@@ -211,34 +174,34 @@ XML;
             // Update customer
             Customer::where('sub', $currentUser->customer_sub_id)
                 ->update([
-                    'title' => $data['title'],
-                    'code' => $customerCode,
-                    'contact' => $data['contact'],
-                    'contact_persons' => $data['contact_person'],
-                    'region' => $data['address']['region'],
-                    'city' => $data['address']['city'],
-                    'wereda' => $data['address']['woreda'],
-                    'zone' => $data['address']['zone'],
-                    'kebele' => $data['address']['kebele'],
-                    'house_no' => $data['address']['house_no'],
-                    'verified_at' => now(),
-                ]);
+                        'title' => $data['title'],
+                        'code' => $customerCode,
+                        'contact' => $data['contact'],
+                        'contact_persons' => $data['contact_person'],
+                        'region' => $data['address']['region'],
+                        'city' => $data['address']['city'],
+                        'wereda' => $data['address']['woreda'],
+                        'zone' => $data['address']['zone'],
+                        'kebele' => $data['address']['kebele'],
+                        'house_no' => $data['address']['house_no'],
+                        'verified_at' => now(),
+                    ]);
 
             // Update OTP
             Otp::where('customer_sub_id', $currentUser->customer_sub_id)
                 ->update([
-                    'customer_code' => $customerCode,
-                ]);
+                        'customer_code' => $customerCode,
+                    ]);
 
             return $currentUser;
         });
 
 
         return ApiResponse::success([
-            'response_time' => (string)$headerData->ResponseTime ?? '',
+            'response_time' => (string) $headerData->ResponseTime ?? '',
             'ret_code' => $retCode,
             'ret_msg' => $retMsg,
-            'customer_id' => (string)$customerData->CustomerId ?? '',
+            'customer_id' => (string) $customerData->CustomerId ?? '',
             'customer_code' => $customerCode,
             'transaction_id' => $this->transactionId,
         ]);

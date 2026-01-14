@@ -1,9 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useTranslation } from '@/hooks/use-translation';
 import GuestLayout from '@/layouts/GuestLayout';
 import { Link, usePage } from '@inertiajs/react';
-import { ArrowRight, CheckCircle, ChevronDown, MapPin, Package, Phone, Star, Users, Wifi } from 'lucide-react';
+import { ArrowRight, CheckCircle, MapPin, Package, Phone, Users, Wifi } from 'lucide-react';
 import { useRef } from 'react';
 import fixedHeroImage from '../images/fixed-hero.png';
 import telebirrLogo from '../images/telebirr-logo-1.png';
@@ -11,25 +10,38 @@ import telebirrLogo from '../images/telebirr-logo-1.png';
 export default function HomePage() {
     const { auth } = usePage().props;
     const demoRef = useRef<HTMLDivElement>(null);
-    const { t } = useTranslation();
+    // if (auth?.user) {
+    //     window.location.href = route('services');
+    // }
 
+    // Color mapping to ensure Tailwind detects the classes
+    const getColorClass = (color: string) => {
+        const colorMap: Record<string, string> = {
+            primary: 'text-primary',
+            'et-green': 'text-et-green',
+            'et-blue': 'text-et-blue',
+            'et-yellow': 'text-et-yellow',
+            'et-red': 'text-et-red',
+        };
+        return colorMap[color] || 'text-gray-600';
+    };
     const features = [
         {
             icon: MapPin,
-            title: t('home.features.gis.title'),
-            description: t('home.features.gis.description'),
+            title: 'GIS Coverage Check',
+            description: 'Real-time coverage verification using GPS and GIS mapping technology',
             color: 'primary',
         },
         {
             image: telebirrLogo,
-            title: t('home.features.telebirr.title'),
-            description: t('home.features.telebirr.description'),
+            title: 'telebirr Payment',
+            description: 'Secure and convenient payment processing through Telebirr integration',
             color: 'et-blue',
         },
         {
             icon: Users,
-            title: t('home.features.support.title'),
-            description: t('home.features.support.description'),
+            title: '24/7 Support',
+            description: 'Round-the-clock customer service and technical support',
             color: 'et-green',
         },
     ];
@@ -37,32 +49,38 @@ export default function HomePage() {
     const services = [
         {
             icon: Phone,
-            title: t('home.services.voice.title'),
-            description: t('home.services.voice.description'),
-            features: [t('home.services.voice.feature1'), t('home.services.voice.feature2'), t('home.services.voice.feature3')],
+            title: 'Fixed Voice',
+            description: 'Reliable landline telephone service for your home or business',
+            features: ['Crystal clear voice quality', 'Local and international calling', 'Competitive rates'],
             color: 'primary',
         },
         {
             icon: Wifi,
-            title: t('home.services.broadband.title'),
-            description: t('home.services.broadband.description'),
-            features: [t('home.services.broadband.feature1'), t('home.services.broadband.feature2'), t('home.services.broadband.feature3')],
+            title: 'Fixed Broadband',
+            description: 'High-speed internet connection for seamless online experience',
+            features: ['Multiple speed options', 'Unlimited data plans', '24/7 technical support'],
             color: 'et-blue',
         },
         {
             icon: Package,
-            title: t('home.services.combo.title'),
-            description: t('home.services.combo.description'),
-            features: [t('home.services.combo.feature1'), t('home.services.combo.feature2'), t('home.services.combo.feature3')],
+            title: 'Combo Services',
+            description: 'Combined voice and broadband packages for maximum value',
+            features: ['Voice + Internet bundle', 'Cost-effective packages', 'Single billing convenience'],
             color: 'et-green',
         },
     ];
 
+    // const stats = [
+    //     { number: '24/7', label: 'Customer Support' },
+    //     { number: '15min', label: 'Average Setup Time' },
+    //     { number: '98%', label: 'Service Uptime' },
+    //     { number: '50K+', label: 'Happy Customers' },
+    // ];
     const stats = [
-        { number: t('home.stats.online_requests'), label: t('home.stats.service_requests') },
-        { number: t('home.stats.realtime'), label: t('home.stats.gis_check') },
-        { number: t('home.stats.secure'), label: t('home.stats.telebirr_payments') },
-        { number: t('home.stats.official'), label: t('home.stats.platform') },
+        { number: '100% Online', label: 'Service Requests' },
+        { number: 'Real-Time', label: 'GIS Coverage Check' },
+        { number: 'Secure', label: 'Telebirr Payments' },
+        { number: 'Official', label: 'Ethio telecom Platform' },
     ];
 
     const testimonials = [
@@ -85,7 +103,6 @@ export default function HomePage() {
             rating: 4,
         },
     ];
-
     const scrollToDemo = () => {
         demoRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
@@ -111,14 +128,17 @@ export default function HomePage() {
 
                     {/* Content */}
                     <div className="relative z-10 mx-auto max-w-4xl text-center">
+                        {/* <Badge variant="outline" className="mb-4 border px-4 text-sm font-semibold text-et-green">
+                            Online Service Provisioning Platform
+                        </Badge> */}
                         <div className="-mt-10 sm:-mt-12 lg:-mt-16">
                             <h1 className="mb-6 text-3xl leading-tight font-bold text-gray-900 sm:text-4xl lg:text-5xl">
-                                {t('home.hero.title', { highlight: '' }).split('{highlight}')[0]}
-                                <span className="bg-primary bg-clip-text text-transparent">{t('home.hero.title_highlight')}</span>
-                                {t('home.hero.title', { highlight: '' }).split('{highlight}')[1]}
+                                Manage Your <span className="bg-primary bg-clip-text text-transparent"> Fixed Services</span> Online
                             </h1>
                             <p className="mx-auto mb-8 max-w-2xl text-lg leading-relaxed text-gray-700 sm:text-xl">
-                                {t('home.hero.subtitle')}
+                                Get reliable high-speed broadband, fixed voice, and combined services.
+                                {/* Request and manage everything online with fast,secure service provisioning. */}
+                                <br />
                             </p>
                         </div>
                         <div className="mt-16 flex flex-col justify-center gap-4 sm:flex-row">
@@ -127,14 +147,23 @@ export default function HomePage() {
                                     size="lg"
                                     className="bg-primary px-8 py-6 text-lg font-semibold text-white shadow-xl transition-all duration-200 hover:opacity-90 hover:shadow-2xl"
                                 >
-                                    {t('home.cta.get_started')}
+                                    {/* <MapPin className="mr-3 h-5 w-5" /> */}
+                                    Get Started Now
                                     <ArrowRight className="text-medium ml-2 h-5 w-5" />
                                 </Button>
                             </Link>
+                            {/* <Link href="#services">
+                                <Button 
+                                    size="lg" 
+                                    variant="outline" 
+                                    className="px-8 py-6 text-lg font-semibold  text-gray-700 transition-all duration-200 hover:opacity-90"
+                                >
+                                    Explore Services
+                                </Button>
+                            </Link> */}
                         </div>
                     </div>
                 </section>
-
                 {/* Stats Section */}
                 {/* <section className="px-4 py- sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-screen-2xl">
@@ -177,13 +206,14 @@ export default function HomePage() {
                 <section id="services" className="bg-white px-4 py-20 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-screen-2xl">
                         <div className="mb-16 text-center">
-                            <h3 className='"mb-4 pb-4 px-4 py-1 text-primary font-semibold'>{t('home.services.title')}</h3>
-                            <h2 className="mb-4 text-4xl font-bold text-gray-900">{t('home.services.heading')}</h2>
+                            {/* <Badge variant="outline" className="mb-4 px-4 py-1 text-primary"> */}
+                            <h3 className='"mb-4 px-4 py-1 pb-4 font-semibold text-primary'>Our Services</h3>
+                            {/* </Badge> */}
+                            <h2 className="mb-4 text-4xl font-bold text-gray-900">Comprehensive Fixed Line Solutions</h2>
                             <p className="mx-auto max-w-2xl text-lg text-gray-600">
-                                {t('home.services.subtitle')}
+                                Choose from our range of reliable fixed line services designed to meet your communication needs
                             </p>
                         </div>
-
                         <div className="grid gap-8 md:grid-cols-3">
                             {services.map((service, index) => (
                                 <Card
@@ -232,8 +262,7 @@ export default function HomePage() {
                                 We combine cutting-edge technology with exceptional service to deliver the best customer experience
                             </p>
                         </div>
-
-                        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                                                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                             {features.map((feature, index) => (
                                 <div
                                     key={index}
@@ -291,7 +320,6 @@ export default function HomePage() {
                         </div>
                     </div>
                 </section> */}
-
                 {/* CTA Section */}
                 {/* <section className="px-4 py-20 sm:px-6 lg:px-8">
                     <div className="mx-auto flex max-w-4xl flex-col items-center text-center">

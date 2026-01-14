@@ -218,8 +218,29 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         switch (adjustedStep) {
             case 0: // Service Selection
                 const hasValidService = formData.serviceType && (!formData.serviceType.includes('1457567289') || formData.bandwidth);
-                const hasDeviceSelection = formData.withDevice !== undefined; // Device selection is required
                 const hasAcceptedTerms = formData.termsAccepted === true; // Terms acceptance is required
+                
+                // Device selection validation
+                let hasDeviceSelection = true; // Default to true (no device needed)
+                
+                // If device option hasn't been selected yet, disable next button
+                if (formData.withDevice === undefined) {
+                    hasDeviceSelection = false;
+                } else if (formData.withDevice === true) {
+                    // If "with device" is selected, must have selected device(s)
+                    if (formData.serviceType === '180427974') {
+                        // Combo service: need both internet and voice devices with IDs
+                        hasDeviceSelection = !!(
+                            formData.selectedDeviceInternet?.id && 
+                            formData.selectedDeviceVoice?.id
+                        );
+                    } else {
+                        // Single service (broadband or voice): need one device with ID
+                        hasDeviceSelection = !!(formData.selectedDevice?.id && formData.deviceId);
+                    }
+                }
+                // If withDevice === false, hasDeviceSelection remains true (no device needed)
+                
                 return hasValidService && hasDeviceSelection && hasAcceptedTerms;
             case 1: // Location Setup
                 return formData.latitude !== 0 && formData.longitude !== 0 && formData.address;

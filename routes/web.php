@@ -19,15 +19,15 @@ use Inertia\Inertia;
 Route::post('/locale', function (Request $request) {
     $locale = $request->input('locale');
     $supportedLocales = ['en', 'am', 'om', 'so', 'ti', 'aa'];
-    
+
     Log::info('Locale switch requested', ['locale' => $locale, 'supported' => in_array($locale, $supportedLocales)]);
-    
+
     if (in_array($locale, $supportedLocales)) {
         Session::put('locale', $locale);
         App::setLocale($locale);
         Log::info('Locale set successfully', ['new_locale' => $locale, 'session_id' => Session::getId()]);
     }
-    
+
     // Return JSON response - the frontend will reload the page
     return response()->json(['success' => true, 'locale' => $locale]);
 })->name('locale.switch');

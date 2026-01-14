@@ -88,7 +88,7 @@
     "dashboard.success_rate": "Success Rate",
     "dashboard.service_completion_rate": "Service completion rate",
     "sidebar.steps.service_info": "Service Information",
-    "sidebar.steps.service_info_desc": "Choose service type and configuration",
+    "sidebar.steps.service_info_desc": "Choose service configuration",
     "sidebar.steps.location_info": "Location Information",
     "sidebar.steps.location_info_desc": "Select location and check availability",
     "sidebar.steps.review_submit": "Review & Submit",

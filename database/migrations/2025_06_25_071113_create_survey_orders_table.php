@@ -13,8 +13,8 @@ return new class extends Migration {
         Schema::create('survey_orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id')->nullable()->constrained('customers')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->bigInteger('customer_code')->index();
-            $table->bigInteger('customer_survey_order_id')->unique();
+            $table->string('customer_code')->index();
+            $table->string('customer_survey_order_id')->unique();
             $table->string('main_offer_id');
             $table->string('service_number')->nullable()->unique();
             $table->string('survey_type'); //new or change
@@ -30,7 +30,7 @@ return new class extends Migration {
             $table->string('sec_contact_email')->nullable();
             $table->string('status')->nullable();
             $table->text('cancel_reason')->nullable();
-            $table->bigInteger('completed_date')->nullable();
+            $table->dateTime('completed_date')->nullable();
             $table->dateTime('subscribed_at')->nullable();
             $table->timestamps();
             $table->softDeletes();

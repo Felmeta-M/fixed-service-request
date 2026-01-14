@@ -22,13 +22,13 @@ class SetLocale
     public function handle(Request $request, Closure $next): Response
     {
         $locale = $this->determineLocale($request);
-        
-        Log::debug('SetLocale middleware', [
-            'determined_locale' => $locale,
-            'session_locale' => Session::get('locale'),
-            'url' => $request->url(),
-        ]);
-        
+
+        // Log::debug('SetLocale middleware', [
+        //     'determined_locale' => $locale,
+        //     'session_locale' => Session::get('locale'),
+        //     'url' => $request->url(),
+        // ]);
+
         App::setLocale($locale);
         Session::put('locale', $locale);
 
@@ -80,7 +80,7 @@ class SetLocale
     protected function parseAcceptLanguage(Request $request): ?string
     {
         $acceptLanguage = $request->header('Accept-Language');
-        
+
         if (!$acceptLanguage) {
             return null;
         }
@@ -90,12 +90,12 @@ class SetLocale
         foreach (explode(',', $acceptLanguage) as $part) {
             $part = trim($part);
             $quality = 1.0;
-            
+
             if (str_contains($part, ';q=')) {
                 [$part, $q] = explode(';q=', $part);
                 $quality = (float) $q;
             }
-            
+
             // Extract the primary language tag (e.g., 'en' from 'en-US')
             $lang = strtolower(substr(trim($part), 0, 2));
             $languages[$lang] = $quality;
@@ -114,4 +114,3 @@ class SetLocale
         return null;
     }
 }
-

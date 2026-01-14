@@ -45,6 +45,16 @@ class Customer extends Authenticatable
         'zone',
         'kebele',
         'house_no',
+        'street_name',
+        'apartment',
+        // BSS Classification
+        'customer_type',
+        'customer_category',
+        'customer_subcategory',
+        'customer_level',
+        // Notification & Credit
+        'notification_mode',
+        'credit_class',
     ];
 
     /**
@@ -74,7 +84,6 @@ class Customer extends Authenticatable
             'title',
             'name',
             'phone_number',
-            'title',
             'gender',
             'nationality',
             'identification_type',
@@ -95,7 +104,17 @@ class Customer extends Authenticatable
             'wereda',
             'zone',
             'kebele',
-            'house_no'
+            'house_no',
+            'street_name',
+            'apartment',
+            // BSS Classification
+            'customer_type',
+            'customer_category',
+            'customer_subcategory',
+            'customer_level',
+            // Notification & Credit
+            'notification_mode',
+            'credit_class',
         ])
             ->where('sub', Auth::guard('api')->user()?->customer_sub_id)
             ->first();
@@ -103,7 +122,7 @@ class Customer extends Authenticatable
 
     public function getAddressStringAttribute(): string
     {
-        $rawAddress = $this->addres;
+        $rawAddress = $this->address;
 
         if (is_array($rawAddress)) {
             return collect($rawAddress)

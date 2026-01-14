@@ -2,9 +2,8 @@
 
 namespace App\Services\Survey;
 
-use App\Models\Customer;
 use App\Services\ApiResponse;
-use Illuminate\Support\Facades\Auth;
+use App\Support\CustomerContext;
 use RuntimeException;
 
 class ComboSurveyService extends BaseSurveyService implements SurveyInterface
@@ -22,53 +21,58 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
    protected function buildXml(array $data, array $resource): string
    {
       $cfg = config('services.survey');
-      $customer = auth()->check() ? Customer::current() : null;
 
+      // Use shared helpers for timestamps
       $transactionId = $this->transactionId();
       $processTime   = $this->processTime();
       $sessionId     = $cfg['session_id'] ?? uniqid();
+      $completedDate = $this->completedDate();
+
+      // Use shared helpers for customer and contact info
+      $customerCode = $this->customerCode($data['customer_code'] ?? null);
+      $primaryContact = $this->getPrimaryContact($data);
 
       // Default values
-      $customerCode = $customer?->code ?? $data['customer_code'] ?? '828285101';
       $surveyType = $data['survey_type'] ?? 'EIC08';
       $telecomRegion = $data['telecom_region'] ?? '2046';
       $operType = $data['oper_type'] ?? 'A';
       $mainOfferId = $data['main_offer_id'] ?? $this->mainOfferId();
-      $contactPerson = $data['contact_person'] ?? ($customer?->name ?? 'unknown');
-      $contactNo = $data['contact_no'] ?? ($customer ? substr($customer->phone_number, -9) : substr($data['sms_no'], -9));
-      $contactEmail = $data['contact_email'] ?? ($customer?->email ?? 'ok@ok.com');
-      $completedDate = now()->format('YmdHis');
-      $bandwidth     = $data['bandwidth'] ? $this->parseBandwidth($data['bandwidth']) : 5120;
+      $bandwidth = $data['bandwidth'] ? $this->parseBandwidth($data['bandwidth']) : 5120;
 
-      // Inline survey address info
-      $surveyAddressInfo =  [
-         'administrative_region_or_city' => '1',
-         'subcity_or_zone' => '6028',
-         'wereda_or_town' => '7331',
-         'kebele' => 'kebele',
-         'house_no' => '22',
-         'supplement_address' => 'SupplementAddress',
+      // Get dynamic survey address info from customer or request data
+      $address = $this->getCustomerAddress();
+      $surveyAddressInfo = [
+         'administrative_region_or_city' => $data['survey_address_info']['region_city'] ?? $address['city'],
+         'subcity_or_zone' => $data['survey_address_info']['subcity_zone'] ?? $address['zone'],
+         'wereda_or_town' => $data['survey_address_info']['wereda_town'] ?? $address['wereda'],
+         'kebele' => $data['survey_address_info']['kebele'] ?? $address['kebele'],
+         'house_no' => $data['survey_address_info']['house_no'] ?? $address['house_no'],
+         'supplement_address' => $data['survey_address_info']['address'] ?? CustomerContext::addressString(''),
       ];
 
-      // Inline sub survey info (hardcoded)
+      // Use resource data for sub surveys
+      $neid = $resource['neid'] ?? '700041565830';
+      $cableType = $resource['cable_type'] ?? '3';
+
+      // Sub survey 1: Voice
       $subSurvey1MainOfferId = '1207609454';
       $subSurvey1ExtParams = [
-         ['ParamName' => 'NEID', 'ParamValue' => '700041565830'],
-         ['ParamName' => 'CABLETYPE', 'ParamValue' => '3'],
+         ['ParamName' => 'NEID', 'ParamValue' => $neid],
+         ['ParamName' => 'CABLETYPE', 'ParamValue' => $cableType],
          ['ParamName' => 'NUMBER_LINE', 'ParamValue' => '1'],
       ];
 
+      // Sub survey 2: Data
       $subSurvey2MainOfferId = '1457567289';
-      $subSurvey2Bandwidth = 5120;
       $subSurvey2ExtParams = [
-         ['ParamName' => 'NEID', 'ParamValue' => '700041565830'],
-         ['ParamName' => 'CABLETYPE', 'ParamValue' => '3'],
+         ['ParamName' => 'NEID', 'ParamValue' => $neid],
+         ['ParamName' => 'CABLETYPE', 'ParamValue' => $cableType],
       ];
 
-      // Inline extra params
+      // Main extra params with resource coordinates
       $extParams = [
-         ['ParamName' => 'NEID', 'ParamValue' => '700041565830'],
-         ['ParamName' => 'CABLETYPE', 'ParamValue' => '3'],
+         ['ParamName' => 'NEID', 'ParamValue' => $neid],
+         ['ParamName' => 'CABLETYPE', 'ParamValue' => $cableType],
          ['ParamName' => 'LONGITUDE', 'ParamValue' => $resource['longitude'] ?? '38.733694'],
          ['ParamName' => 'LATITUDE', 'ParamValue' => $resource['latitude'] ?? '9.007778'],
          ['ParamName' => 'GIS_FLAG', 'ParamValue' => 'True'],
@@ -126,9 +130,9 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
                 </com:SubSurveyinfoList>
 
                 <com:bandwidth>1024</com:bandwidth>
-                <com:ContactPerson>{$contactPerson}</com:ContactPerson>
-                <com:ContactNo>{$contactNo}</com:ContactNo>
-                <com:ContactEmail>{$contactEmail}</com:ContactEmail>
+                <com:ContactPerson>{$primaryContact['contact_person']}</com:ContactPerson>
+                <com:ContactNo>{$primaryContact['contact_no']}</com:ContactNo>
+                <com:ContactEmail>{$primaryContact['contact_email']}</com:ContactEmail>
                 <com:CompletedDate>{$completedDate}</com:CompletedDate>
 
                 <com:ExtParamList>

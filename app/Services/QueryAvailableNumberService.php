@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Services\Logging\AppLogger;
+use RuntimeException;
 
 class QueryAvailableNumberService extends BaseApiService
 {
-    protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $timeout = 15;
+    protected int $rateLimit = 30;
 
     public function __construct(
         protected readonly ReserveNumberService $reserveNumberService,
@@ -19,42 +19,97 @@ class QueryAvailableNumberService extends BaseApiService
         return config('services.query_available_number.endpoint');
     }
 
-    public function getAvailableNumberServices(string $deptId, ?int $resCnt = 100): string|bool
+    /**
+     * Get an available service number and reserve it.
+     * 
+     * @param string $deptId Department ID for querying numbers
+     * @param int|null $resCnt Number of results to fetch (default: 100)
+     * @param string $level Number level filter (default: '6')
+     * @return string|false Reserved service number or false on failure
+     */
+    public function getAvailableNumberServices(string $deptId, ?int $resCnt = 100, string $level = '6'): string|false
     {
         $data = [
             'pay_mode' => '1',
             'tele_type' => '4',
             'need_query_by_dept' => false,
             'res_cnt' => $resCnt,
-            'dept_id' => $deptId
+            'dept_id' => $deptId,
         ];
 
-        $numberList = $this->queryAvailableNumbers($data);
-        if (empty($numberList)) return false;
+        try {
+            $numberList = $this->queryAvailableNumbers($data);
 
-        $filtered = array_filter($numberList, fn($item) => $item['Level'] === '6');
-        if (empty($filtered)) return false;
-        foreach (array_column($filtered, 'ServiceNumber') as $numberService) {
-            $data = [
-                'res_type_id' => 10,
-                'oper_type' => 1029,
-                'res_code' => $numberService,
-            ];
-            return $numberService;
+            if (empty($numberList)) {
+                AppLogger::api()->warning('No available numbers returned', [
+                    'dept_id' => $deptId,
+                    'res_cnt' => $resCnt,
+                ]);
+                return false;
+            }
+
+            // Filter by level
+            $filtered = array_filter($numberList, fn($item) => $item['Level'] === $level);
+
+            if (empty($filtered)) {
+                AppLogger::api()->warning('No numbers with required level', [
+                    'dept_id' => $deptId,
+                    'level' => $level,
+                    'total_numbers' => count($numberList),
+                ]);
+                return false;
+            }
+
+            // Try to reserve each number until one succeeds
+            foreach ($filtered as $number) {
+                $serviceNumber = $number['ServiceNumber'];
+
+                if ($this->reserveNumberService($serviceNumber)) {
+                    AppLogger::api()->info('Service number reserved successfully', [
+                        'service_number' => $serviceNumber,
+                        'dept_id' => $deptId,
+                    ]);
+                    return $serviceNumber;
+                }
+
+                AppLogger::api()->debug('Failed to reserve number, trying next', [
+                    'service_number' => $serviceNumber,
+                ]);
+            }
+
+            AppLogger::api()->error('All available numbers failed to reserve', [
+                'dept_id' => $deptId,
+                'attempted_count' => count($filtered),
+            ]);
+
+            return false;
+        } catch (RuntimeException $e) {
+            AppLogger::api()->error('Query available numbers failed', [
+                'dept_id' => $deptId,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
         }
-
-        return false;
     }
 
-
+    /**
+     * Query available numbers from BSS.
+     */
     public function queryAvailableNumbers(array $data): array
     {
         $xmlPayload = $this->buildXml($data);
         $xmlResponse = $this->executeRequest($xmlPayload);
-        // Log::info($xmlResponse);
-        return  $this->parseResponse($xmlResponse);
+
+        AppLogger::api()->debug('Query available numbers response received', [
+            'dept_id' => $data['dept_id'] ?? 'unknown',
+        ]);
+
+        return $this->parseResponse($xmlResponse);
     }
 
+    /**
+     * Reserve a service number.
+     */
     public function reserveNumberService(string $numberService): bool
     {
         $data = [
@@ -66,6 +121,9 @@ class QueryAvailableNumberService extends BaseApiService
         return $this->reserveNumberService->pick($data);
     }
 
+    /**
+     * Release a previously reserved service number.
+     */
     public function releaseNumberService(string $numberService): bool
     {
         $data = [
@@ -77,54 +135,32 @@ class QueryAvailableNumberService extends BaseApiService
         return $this->reserveNumberService->unpick($data);
     }
 
+    /**
+     * Build SOAP XML request for querying available numbers.
+     */
     protected function buildXml(array $data): string
     {
-        //         $transactionId = uniqid();
-        //         $processTime = now()->format('YmdHis');
-        //         $version = $data['version'] ?? '1';
-        //         $language = $data['language'] ?? '2003';
-        //         $tenantId = config('services.query_available_number.tenant_id');
+        $config = config('services.query_available_number');
 
-        //         $accessUser = config('services.query_available_number.user');
-        //         $accessPwd = config('services.query_available_number.password');
-        //         $channelId = config('services.query_available_number.channel_id');
-        //         $techChannelId = config('services.query_available_number.tech_channel_id');
+        // Use shared helpers for dynamic values
+        $transactionId = $this->transactionId();
+        $processTime = $this->processTime();
 
-        //         $needQueryByDeptStr = $data['need_query_by_dept'] ? 'true' : 'false';
-        //         $deptId = '1766044689199549668'; //$data['dept_id'];
+        // Extract parameters with defaults
+        $payMode = $data['pay_mode'] ?? '1';
+        $teleType = $data['tele_type'] ?? '4';
+        $resCnt = $data['res_cnt'] ?? 100;
+        $needQueryByDept = ($data['need_query_by_dept'] ?? false) ? 'true' : 'false';
+        $deptId = $data['dept_id'] ?? '1766044689199549668';
 
-        //         $additionalProperty = <<<XML
-        // <ser:AdditionalProperty>
-        //     <com:Code>dept_id</com:Code>
-        //     <com:Value>{$deptId}</com:Value>
-        // </ser:AdditionalProperty>
-        // XML;
-
-        //         return <<<XML
-        // <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
-        //    <soapenv:Header/>
-        //    <soapenv:Body>
-        //       <ser:QueryAvailableNumberReqMsg>
-        //          <ser:RequestHeader>
-        //             <com:Version>{$version}</com:Version>
-        //             <com:TransactionId>{$transactionId}</com:TransactionId>
-        //             <com:ProcessTime>{$processTime}</com:ProcessTime>
-        //             <com:Language>{$language}</com:Language>
-        //             <com:ChannelId>{$channelId}</com:ChannelId>
-        //             <com:TechnicalChannelId>{$techChannelId}</com:TechnicalChannelId>
-        //             <com:TenantId>{$tenantId}</com:TenantId>
-        //             <com:AccessUser>{$accessUser}</com:AccessUser>
-        //             <com:AccessPwd>{$accessPwd}</com:AccessPwd>
-        //          </ser:RequestHeader>
-        //          <ser:PayMode>{$data['pay_mode']}</ser:PayMode>
-        //          <ser:TeleType>{$data['tele_type']}</ser:TeleType>
-        //          <ser:ResCnt>{$data['res_cnt']}</ser:ResCnt>
-        //          <ser:NeedQueryByDept>{$needQueryByDeptStr}</ser:NeedQueryByDept>
-        //          {$additionalProperty}
-        //       </ser:QueryAvailableNumberReqMsg>
-        //    </soapenv:Body>
-        // </soapenv:Envelope>
-        // XML;
+        // Config values with fallbacks
+        $version = $config['version'] ?? '1';
+        $language = $config['language'] ?? '2003';
+        $channelId = $config['channel_id'] ?? '35';
+        $techChannelId = $config['technical_channel_id'] ?? '51';
+        $tenantId = $config['tenant_id'] ?? '101';
+        $accessUser = $config['access_user'] ?? 'ecaf';
+        $accessPwd = $config['access_password'] ?? 'REDACTED_PASSWORD';
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
@@ -132,28 +168,23 @@ class QueryAvailableNumberService extends BaseApiService
    <soapenv:Body>
       <ser:QueryAvailableNumberReqMsg>
          <ser:RequestHeader>
-            <!--Optional:-->
-            <com:Version>1</com:Version>
-            <com:TransactionId>0703582086</com:TransactionId>
-            <com:ProcessTime>20211215110502</com:ProcessTime>
-            <com:Language>2003</com:Language>
-            <com:ChannelId>35</com:ChannelId>
-            <com:TechnicalChannelId>51</com:TechnicalChannelId>
-            <com:TenantId>101</com:TenantId>
-            <com:AccessUser>ecaf</com:AccessUser>
-            <com:AccessPwd>REDACTED_PASSWORD</com:AccessPwd>
-       
+            <com:Version>{$version}</com:Version>
+            <com:TransactionId>{$transactionId}</com:TransactionId>
+            <com:ProcessTime>{$processTime}</com:ProcessTime>
+            <com:Language>{$language}</com:Language>
+            <com:ChannelId>{$channelId}</com:ChannelId>
+            <com:TechnicalChannelId>{$techChannelId}</com:TechnicalChannelId>
+            <com:TenantId>{$tenantId}</com:TenantId>
+            <com:AccessUser>{$accessUser}</com:AccessUser>
+            <com:AccessPwd>{$accessPwd}</com:AccessPwd>
          </ser:RequestHeader>
-         <!--Optional:-->
-         <ser:PayMode>1</ser:PayMode>
-         <!--Optional:-->
-         <ser:TeleType>4</ser:TeleType>
-         <!--Optional:-->
-         <ser:NeedQueryByDept>false</ser:NeedQueryByDept>
-         <ser:ResCnt>100</ser:ResCnt>
+         <ser:PayMode>{$payMode}</ser:PayMode>
+         <ser:TeleType>{$teleType}</ser:TeleType>
+         <ser:NeedQueryByDept>{$needQueryByDept}</ser:NeedQueryByDept>
+         <ser:ResCnt>{$resCnt}</ser:ResCnt>
          <ser:AdditionalProperty>
             <com:Code>dept_id</com:Code>
-            <com:Value>1766044689199549668</com:Value>
+            <com:Value>{$deptId}</com:Value>
          </ser:AdditionalProperty>
       </ser:QueryAvailableNumberReqMsg>
    </soapenv:Body>
@@ -171,22 +202,37 @@ XML;
         $soap = simplexml_load_string($xml);
 
         if ($soap === false) {
+            AppLogger::api()->error('Failed to parse available numbers XML response', [
+                'xml_preview' => substr($xml, 0, 500),
+            ]);
             return [];
         }
 
         $body = $soap->children('http://schemas.xmlsoap.org/soap/envelope/')->Body;
-
         $response = $body->children('http://oss.huawei.com/webservice/bss/services')->QueryAvailableNumberRspMsg;
 
+        if (!$response) {
+            AppLogger::api()->error('Missing QueryAvailableNumberRspMsg in response');
+            return [];
+        }
+
         $header = $response->ResponseHeader;
-        $retCode = (string) $header->children('http://www.huawei.com/bss/soaif/interface/common/')->RetCode;
+        $comNs = 'http://www.huawei.com/bss/soaif/interface/common/';
+        $retCode = (string) $header->children($comNs)->RetCode;
+        $retMsg = (string) $header->children($comNs)->RetMsg;
 
         if ($retCode !== '0') {
+            AppLogger::api()->error('Query available numbers API returned error', [
+                'ret_code' => $retCode,
+                'ret_msg' => $retMsg,
+            ]);
             return [];
         }
 
         $numberList = [];
-        foreach ($response->AvailableNumberList->AvailableNumber ?? [] as $number) {
+        $availableNumbers = $response->AvailableNumberList->AvailableNumber ?? [];
+
+        foreach ($availableNumbers as $number) {
             $numberList[] = [
                 'ServiceNumber' => (string) $number->ServiceNumber,
                 'ItemCode'      => (string) $number->ItemCode,
@@ -196,6 +242,11 @@ XML;
                 'Level'         => (string) $number->Level,
             ];
         }
+
+        AppLogger::api()->debug('Available numbers parsed', [
+            'count' => count($numberList),
+        ]);
+
         return $numberList;
     }
 }

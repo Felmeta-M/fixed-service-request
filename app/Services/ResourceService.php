@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Customer;
+use App\Support\CustomerContext;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 
@@ -37,8 +37,6 @@ class ResourceService extends BaseApiService
         $processTime   = now()->format('YmdHis');
         $credentials   = config('services.check_resource');
 
-        $customer = Customer::current();
-
         $defaults = [
             'prod_spec_code' => 'C_P_UFBI_E',
             'number_line'    => '1',
@@ -47,10 +45,9 @@ class ResourceService extends BaseApiService
             'radius'         => '200',
             'combo_flag'     => '0',
 
-            'cust_id'        => $customer?->code,
-            'cust_name'      => $customer->name,
-            'cust_addr' => $customer->address_string,
-
+            'cust_id'        => $this->customerCode(),
+            'cust_name'      => $this->customerName(''),
+            'cust_addr'      => CustomerContext::addressString(''),
         ];
 
         $data = array_merge($defaults, $data);

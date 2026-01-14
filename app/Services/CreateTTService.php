@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Customer;
 use App\Models\TroubleTicket;
 use App\Services\ApiResponse;
 use App\Services\BaseApiService;
@@ -33,7 +32,7 @@ class CreateTTService extends BaseApiService
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
         } catch (\Throwable $e) {
-            return ApiResponse::exception($e, 'Create TT failed.');
+            return ApiResponse::fromException($e, 'Create TT failed.');
         }
     }
 
@@ -240,8 +239,6 @@ XML;
      */
     public function parseResponseXml(string $xml, array $payload)
     {
-        $customer = Customer::current();
-
         libxml_use_internal_errors(true);
 
         $parsed = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
@@ -271,19 +268,12 @@ XML;
         }
 
         /**
-         * ❗ Ensure customer is authenticated / resolved
-         */
-        // if (!$customer || empty($customer?->code)) {
-        //     throw new RuntimeException('Customer context missing for TT creation.');
-        // }
-
-        /**
          * ✅ Create or update ticket safely
          */
         $ticket = TroubleTicket::updateOrCreate(
             ['tt_serial_no' => $ttSerialNo],
             [
-                'customer_code'  => $customer?->code ?? '828300808', //TODO: default value
+                'customer_code'  => $this->customerCode('828300808'),
                 'access_number'  => $payload['access_number'],
                 'contact_person' => $payload['contact_person'],
                 'mobile_no'      => $payload['mobile_no'],

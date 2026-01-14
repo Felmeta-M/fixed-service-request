@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ManualSurveyOrderRequest;
 use App\Http\Requests\SurveyOrderFormRequest;
 use App\Http\Resources\SurveyOrderResource;
 use App\Models\SurveyOrder;
+use App\Services\ManualSurveyOrderService;
 use App\Services\QuerySurveyOrderService;
 use App\Services\Logging\AppLogger;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -23,7 +25,8 @@ class SurveyOrderController extends Controller
 {
     public function __construct(
         protected SurveyServiceFactory $factory,
-        protected readonly QuerySurveyOrderService $querySurveyOrderService
+        protected readonly QuerySurveyOrderService $querySurveyOrderService,
+        protected readonly ManualSurveyOrderService $manualSurveyOrderService
     ) {}
 
     /**
@@ -418,5 +421,77 @@ class SurveyOrderController extends Controller
                 'merch_order_id' => $order->payment_merch_order_id ?? null,
             ] : null,
         ];
+    }
+
+    /**
+     * Create a manual survey order via BSS IECAF.
+     *
+     * This endpoint creates survey orders manually through the ECAF system,
+     * typically used for administrative or backend survey order creation.
+     *
+     * @param ManualSurveyOrderRequest $request Validated manual survey request
+     * @return JsonResponse
+     */
+    public function storeManual(ManualSurveyOrderRequest $request): JsonResponse
+    {
+        try {
+            $data = $request->validated();
+
+            AppLogger::business()->info('Manual survey order creation started', [
+                'customer_code' => $data['customer_code'],
+                'survey_type' => $data['survey_type'],
+                'telecom_region' => $data['telecom_region'],
+            ]);
+
+            // Check for existing active survey orders for this customer (optional)
+            $hasBlockedSurvey = DB::table('survey_orders')
+                ->whereNull('deleted_at')
+                ->where('customer_code', $data['customer_code'])
+                ->whereIn('status', FFDServiceProvisionStatus::blockedForNewRequest())
+                ->exists();
+
+            if ($hasBlockedSurvey) {
+                AppLogger::business()->warning('Manual survey blocked - existing active order', [
+                    'customer_code' => $data['customer_code'],
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Customer already has an active survey order.',
+                ], Response::HTTP_CONFLICT);
+            }
+
+            // Create the manual survey order via BSS
+            $result = $this->manualSurveyOrderService->createSurveyOrder($data);
+
+            return $result;
+        } catch (ValidationException $e) {
+            AppLogger::business()->warning('Manual survey validation error', [
+                'errors' => $e->errors(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed. Please correct the highlighted errors.',
+                'errors' => $e->errors(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (QueryException $e) {
+            AppLogger::business()->error('Manual survey database error', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Database error occurred while creating manual survey order.',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (Throwable $e) {
+            AppLogger::business()->exception($e, 'Manual survey order creation failed');
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create manual survey order. Please try again later.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }

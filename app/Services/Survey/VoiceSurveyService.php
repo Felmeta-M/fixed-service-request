@@ -2,8 +2,8 @@
 
 namespace App\Services\Survey;
 
-use App\Models\Customer;
 use App\Services\ApiResponse;
+use App\Support\CustomerContext;
 use RuntimeException;
 
 class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
@@ -17,15 +17,17 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
     {
         $cfg = config('services.survey');
 
-        $customer = Customer::current();
-
+        // Use shared helpers for timestamps
         $transactionId = $this->transactionId();
         $processTime   = $this->processTime();
         $sessionId     = uniqid();
-        $contactNo     = substr($data['contact_no'], -9);
-        $completedDate = now()->format('YmdHis');
+        $completedDate = $this->completedDate();
 
-        $houseNo = $data['survey_address_info']['house_no'] ?? $customer->house_no;
+        // Use shared helpers for contact info
+        $primaryContact = $this->getPrimaryContact($data);
+        $customerCode = $this->customerCode($data['customer_code'] ?? null);
+
+        $houseNo = $data['survey_address_info']['house_no'] ?? CustomerContext::houseNo('');
 
         $depId = "1766044689199549668";
         // fetch from db;
@@ -55,7 +57,7 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
 <com:AccessPwd>{$cfg['access_password']}</com:AccessPwd>
 </ser:RequestHeader>
 <ser:HandleSurveyOrderReqBody>
-<com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
+<com:CustomerCode>{$customerCode}</com:CustomerCode>
 <com:SurveyType>{$data['survey_type']}</com:SurveyType>
 <com:TelecomRegion>{$data['telecom_region']}</com:TelecomRegion>
 <com:OperType>{$data['oper_type']}</com:OperType>
@@ -68,9 +70,9 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
 <com:HouseNo>{$houseNo}</com:HouseNo>
 <com:SupplementAddress>{$data['survey_address_info']['address']}</com:SupplementAddress>
 </com:SurveyAddressInfo>
-<com:ContactPerson>{$data['contact_person']}</com:ContactPerson>
-<com:ContactNo>{$contactNo}</com:ContactNo>
-<com:ContactEmail>{$data['contact_email']}</com:ContactEmail>
+<com:ContactPerson>{$primaryContact['contact_person']}</com:ContactPerson>
+<com:ContactNo>{$primaryContact['contact_no']}</com:ContactNo>
+<com:ContactEmail>{$primaryContact['contact_email']}</com:ContactEmail>
 <com:CompletedDate>{$completedDate}</com:CompletedDate>
 <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
 <com:ExtParamList>

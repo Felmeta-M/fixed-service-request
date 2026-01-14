@@ -302,5 +302,25 @@ return [
         'tech_channel' => env('GET_COMBINING_TECH_CHANNEL', '35'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Manual Survey Order Service (BSS IECAF)
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for manual survey order creation via the BSS IECAF endpoint.
+    | This is used for creating survey orders manually through the ECAF system.
+    |
+    */
+    'manual_survey' => [
+        'endpoint' => env('MANUAL_SURVEY_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF'),
+        'version' => env('MANUAL_SURVEY_VERSION', '1'),
+        'language' => env('MANUAL_SURVEY_LANGUAGE', '2002'),
+        'channel_id' => env('MANUAL_SURVEY_CHANNEL_ID', '59'),
+        'technical_channel_id' => env('MANUAL_SURVEY_TECHNICAL_CHANNEL_ID', '35'),
+        'tenant_id' => env('MANUAL_SURVEY_TENANT_ID', '101'),
+        'access_user' => env('MANUAL_SURVEY_ACCESS_USER', 'ecaf'),
+        'access_password' => env('MANUAL_SURVEY_ACCESS_PASSWORD', 'REDACTED_PASSWORD'),
+        'operator_id' => env('MANUAL_SURVEY_OPERATOR_ID', 'wxb'),
+    ],
 
 ];

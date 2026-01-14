@@ -4,12 +4,10 @@ namespace App\Services\Subscription;
 
 use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
-use App\Models\Customer;
 use App\Services\ApiResponse;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Traits\InteractsWithSMSGateway;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class VoiceSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
@@ -38,22 +36,11 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
 
    public function create(array $data)
    {
-      if (Auth::check()) {
-         $customer = Customer::current();
-         $data['sms_no'] = substr($customer?->phone_number, -9);
-         $data['customer_code'] = $customer?->code;
-         $data['name'] = $customer?->name;
-      } else {
-         $data['sms_no'] = substr($data['sms_no'], -9);
-         $data['customer_code'] =  $data['customer_code'];
-         $data['name'] =  $data['name'];
-      }
-
+      // Use shared helper to hydrate customer data
+      $data = $this->hydrateWithCustomerData($data);
 
       $xml = $this->buildXml($data);
-      // Log::info($xml);
       $response = $this->executeRequest($xml);
-      // Log::info($response);
       return $this->parseResponse($data, $response);
    }
 
@@ -61,37 +48,29 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
    {
       $cfg = config('services.subscriber');
 
-      // Override frontend data with customer defaults
-      //TODO: remove hardcoded values
-      $data = array_merge($data, [
-         'region'     => 1,
-         'city'       => 1,
-         'zone'       => 3,
-         'wereda'     => 10,
-         'kebele'     =>  'Kebele',
-         'house_no'   =>  '1234',
-         'sms_no'       => '121412361',
+      // Get dynamic customer profile, address, and BSS classification from logged-in user
+      $profile = $this->getCustomerProfile($data);
+      $address = $this->getCustomerAddress($data);
+      $bss = $this->getBssClassification($data);
 
-         'enterprise_name'     => 'test',
-         'credit_class'        => 'Excellent',
+      // Business defaults
+      $data = array_merge($data, [
+         'enterprise_name'     => $profile['name'] ?? 'Customer',
+         'credit_class'        => $bss['credit_class'],
          'payment_mode'        => 'CASH',
          'ext_payment_type'    => '0',
-
          'business_code'       => 'CO015',
          'external_sequence'   => uniqid(),
          'network_type'        => '4',
-         'service_number'      => '123212533',
          'sub_type'            => '1',
-         'sub_language'        => '2002',
+         'sub_language'        => $profile['primary_language'],
          'offering_id'         => '1207609454',
          'effective_mode'      => '0',
          'sla_priority'        => '6',
          'call_center_access'  => '994',
-         'external_oper_id'        => '512',
-
-         'installment_date'        => now()->format('YmdHis'),
+         'external_oper_id'    => '512',
+         'installment_date'    => $this->completedDate(),
       ]);
-
 
       $serviceNumber = SurveyOrder::query()
          ->where('customer_survey_order_id', $data['survey_order_id'])
@@ -110,7 +89,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
             <com:SessionId>1</com:SessionId>
             <com:ProcessTime>{$this->processTime()}</com:ProcessTime>
             <com:ContactId>1</com:ContactId>
-            <com:Language>2002</com:Language>
+            <com:Language>{$profile['primary_language']}</com:Language>
             <com:ChannelId>{$cfg['channel_id']}</com:ChannelId>
             <com:TechnicalChannelId>{$cfg['technical_channel_id']}</com:TechnicalChannelId>
             <com:TenantId>{$cfg['tenant_id']}</com:TenantId>
@@ -132,31 +111,31 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
                <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
 
                <com:CustomerInfo>
-                  <com:CustomerType>2</com:CustomerType>
-                  <com:CustomerCategory>5</com:CustomerCategory>
-                  <com:CustomerSubcategory>14</com:CustomerSubcategory>
-                  <com:CustomerLevel>2</com:CustomerLevel>
-                  <com:CustomerName>{$data['name']}</com:CustomerName>
+                  <com:CustomerType>{$bss['customer_type']}</com:CustomerType>
+                  <com:CustomerCategory>{$bss['customer_category']}</com:CustomerCategory>
+                  <com:CustomerSubcategory>{$bss['customer_subcategory']}</com:CustomerSubcategory>
+                  <com:CustomerLevel>{$bss['customer_level']}</com:CustomerLevel>
+                  <com:CustomerName>{$profile['name']}</com:CustomerName>
                   <com:BranchName>BranchName</com:BranchName>
-                  <com:Title>1</com:Title>
-                  <com:Nationality>1</com:Nationality>
-                  <com:IdentificationType>5</com:IdentificationType>
-                  <com:IdentificationNumber>2022112233</com:IdentificationNumber>
-                  <com:Gender>1</com:Gender>
-                  <com:DateofBirth>19660612</com:DateofBirth>
-                  <com:PrimaryLanguage>2002</com:PrimaryLanguage>
+                  <com:Title>{$profile['title']}</com:Title>
+                  <com:Nationality>{$profile['nationality']}</com:Nationality>
+                  <com:IdentificationType>{$profile['identification_type']}</com:IdentificationType>
+                  <com:IdentificationNumber>{$profile['identification_number']}</com:IdentificationNumber>
+                  <com:Gender>{$profile['gender']}</com:Gender>
+                  <com:DateofBirth>{$profile['birthdate']}</com:DateofBirth>
+                  <com:PrimaryLanguage>{$profile['primary_language']}</com:PrimaryLanguage>
 
                   <com:CustomerAddressInfo>
-                     <com:EthioZoneOrRegion>{$data['region']}</com:EthioZoneOrRegion>
-                     <com:AdministrativeRegionOrCity>{$data['city']}</com:AdministrativeRegionOrCity>
-                     <com:SubcityOrZone>{$data['zone']}</com:SubcityOrZone>
-                     <com:WeredaOrTown>{$data['wereda']}</com:WeredaOrTown>
-                     <com:Kebele>{$data['kebele']}</com:Kebele>
-                     <com:HouseNo>{$data['house_no']}</com:HouseNo>
+                     <com:EthioZoneOrRegion>{$address['region']}</com:EthioZoneOrRegion>
+                     <com:AdministrativeRegionOrCity>{$address['city']}</com:AdministrativeRegionOrCity>
+                     <com:SubcityOrZone>{$address['zone']}</com:SubcityOrZone>
+                     <com:WeredaOrTown>{$address['wereda']}</com:WeredaOrTown>
+                     <com:Kebele>{$address['kebele']}</com:Kebele>
+                     <com:HouseNo>{$address['house_no']}</com:HouseNo>
                   </com:CustomerAddressInfo>
 
                   <com:CustomerContactInfo>
-                     <com:NotificationMode>2</com:NotificationMode>
+                     <com:NotificationMode>{$bss['notification_mode']}</com:NotificationMode>
                      <com:MobileNo>{$data['sms_no']}</com:MobileNo>
                   </com:CustomerContactInfo>
                </com:CustomerInfo>
@@ -165,16 +144,16 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:PaymentType>1</com:PaymentType>
                   <com:BillCycle>01</com:BillCycle>
                   <com:InitialCredit>100</com:InitialCredit>
-                  <com:ethioZoneOrRegion>{$data['region']}</com:ethioZoneOrRegion>
+                  <com:ethioZoneOrRegion>{$address['region']}</com:ethioZoneOrRegion>
                   <com:CollectionCenter>10172</com:CollectionCenter>
-                  <com:Language>2002</com:Language>
+                  <com:Language>{$profile['primary_language']}</com:Language>
                   <com:EnterpriseCustomerName>{$data['enterprise_name']}</com:EnterpriseCustomerName>
-                  <com:CreditClass>Excellent</com:CreditClass>
-                  <com:AdministrativeRegionCity>{$data['city']}</com:AdministrativeRegionCity>
-                  <com:SubcityZone>{$data['zone']}</com:SubcityZone>
-                  <com:WeredaTown>{$data['wereda']}</com:WeredaTown>
-                  <com:Kebele>{$data['kebele']}</com:Kebele>
-                  <com:HouseNo>{$data['house_no']}</com:HouseNo>
+                  <com:CreditClass>{$bss['credit_class']}</com:CreditClass>
+                  <com:AdministrativeRegionCity>{$address['city']}</com:AdministrativeRegionCity>
+                  <com:SubcityZone>{$address['zone']}</com:SubcityZone>
+                  <com:WeredaTown>{$address['wereda']}</com:WeredaTown>
+                  <com:Kebele>{$address['kebele']}</com:Kebele>
+                  <com:HouseNo>{$address['house_no']}</com:HouseNo>
                   <com:SMSNo>{$data['sms_no']}</com:SMSNo>
                   <com:PaymentMode>
                      <com:PaymentMode>{$data['payment_mode']}</com:PaymentMode>

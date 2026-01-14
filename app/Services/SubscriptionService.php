@@ -4,12 +4,12 @@ namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\SurveyOrder;
+use App\Support\CustomerContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SubscriptionService extends BaseApiService
 {
-
    protected int $timeout = 10;
    protected int $rateLimit = 15;
 
@@ -23,10 +23,10 @@ class SubscriptionService extends BaseApiService
       return config('services.subscriber.endpoint');
    }
 
-   protected function generateSimpleEmail()
+   protected function generateSimpleEmail(): string
    {
       $prefix = Str::random(8);
-      $domain = '@qq.com';
+      $domain = 'qq.com';
 
       return strtolower($prefix . '@' . $domain);
    }
@@ -42,22 +42,25 @@ class SubscriptionService extends BaseApiService
       } catch (\RuntimeException $e) {
          return ApiResponse::error($e->getMessage(), 500);
       } catch (\Throwable $e) {
-         return ApiResponse::exception($e, 'Create new subscriber failed.');
+         return ApiResponse::fromException($e, 'Create new subscriber failed.');
       }
    }
 
    private function buildRequestXml(array $data): string
    {
-      $transactionId = uniqid();
-      $processTime   = now()->format('YmdHis');
+      // Use shared helpers from BaseApiService
+      $transactionId = $this->transactionId();
+      $processTime   = $this->processTime();
       $config = config('services.subscriber');
 
-      $data['offering_id'] = 1457567289; // voice 1207609454; //
-      $data['zone'] = 17;
-      $data['region'] = 3;
-      $data['city'] = 3;
+      // Get customer data dynamically
+      $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
+      $profile = $this->getCustomerProfile();
+      $address = $this->getCustomerAddress();
+      $nameParts = CustomerContext::nameParts();
 
-      $email = $this->generateSimpleEmail();
+      $data['offering_id'] = $data['offering_id'] ?? 1457567289;
+      $email = $data['email'] ?? $this->customerEmail() ?? $this->generateSimpleEmail();
 
       return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/" xmlns:ser="http://oss.huawei.com/webservice/bss/services">
@@ -68,7 +71,7 @@ class SubscriptionService extends BaseApiService
             <com:Version>1</com:Version>
             <com:TransactionId>{$transactionId}</com:TransactionId>
             <com:ProcessTime>{$processTime}</com:ProcessTime>
-            <com:Language>2002</com:Language>
+            <com:Language>{$profile['primary_language']}</com:Language>
             <com:ChannelId>{$config['channel_id']}</com:ChannelId>
             <com:TechnicalChannelId>{$config['technical_channel_id']}</com:TechnicalChannelId>
             <com:TenantId>{$config['tenant_id']}</com:TenantId>
@@ -82,21 +85,21 @@ class SubscriptionService extends BaseApiService
                <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
                <com:AccountInfo>
                   <com:PaymentType>1</com:PaymentType>
-                  <com:BillCycle>01</com:BillCycle>
-                  <com:ethioZoneOrRegion>{$data['region']}</com:ethioZoneOrRegion>
-                  <com:CollectionCenter>10163</com:CollectionCenter>
-                  <com:Language>2002</com:Language>
-                  <com:FirstName>{$data['first_name']}</com:FirstName>
-                  <com:MiddleOrFatherName>{$data['middle_name']}</com:MiddleOrFatherName>
-                  <com:LastName>{$data['last_name']}</com:LastName>
-                  <com:EnterpriseCustomerName>{$data['enterprise_name']}</com:EnterpriseCustomerName>
-                  <com:CreditClass>Excellent</com:CreditClass>
-                  <com:AdministrativeRegionCity>{$data['city']}</com:AdministrativeRegionCity>
-                  <com:SubcityZone>{$data['zone']}</com:SubcityZone>
-                  <com:WeredaTown>{$data['wereda']}</com:WeredaTown>
-                  <com:Kebele>{$data['kebele']}</com:Kebele>
-                  <com:HouseNo>{$data['house_no']}</com:HouseNo>
-                  <com:SMSNo>{$data['sms_no']}</com:SMSNo>
+                  <com:BillCycle>{$profile['bill_cycle']}</com:BillCycle>
+                  <com:ethioZoneOrRegion>{$address['region']}</com:ethioZoneOrRegion>
+                  <com:CollectionCenter>{$profile['collection_center']}</com:CollectionCenter>
+                  <com:Language>{$profile['primary_language']}</com:Language>
+                  <com:FirstName>{$nameParts['first_name']}</com:FirstName>
+                  <com:MiddleOrFatherName>{$nameParts['middle_name']}</com:MiddleOrFatherName>
+                  <com:LastName>{$nameParts['last_name']}</com:LastName>
+                  <com:EnterpriseCustomerName>{$profile['enterprise_customer_name']}</com:EnterpriseCustomerName>
+                  <com:CreditClass>{$profile['credit_class']}</com:CreditClass>
+                  <com:AdministrativeRegionCity>{$address['city']}</com:AdministrativeRegionCity>
+                  <com:SubcityZone>{$address['zone']}</com:SubcityZone>
+                  <com:WeredaTown>{$address['wereda']}</com:WeredaTown>
+                  <com:Kebele>{$address['kebele']}</com:Kebele>
+                  <com:HouseNo>{$address['house_no']}</com:HouseNo>
+                  <com:SMSNo>{$this->formatPhoneNumber($this->customerPhone())}</com:SMSNo>
                   <com:PaymentMode>
                      <com:PaymentMode>CASH</com:PaymentMode>
                   </com:PaymentMode>
@@ -111,10 +114,10 @@ class SubscriptionService extends BaseApiService
             <com:SubBusiOrderlist>
                <com:BusinessCode>CO015</com:BusinessCode>
                <com:SubscriberInfo>
-                  <com:ExternalSequnce>798863b45b6b4273b8a2321ebb46f6cd</com:ExternalSequnce>
+                  <com:ExternalSequnce>{$transactionId}</com:ExternalSequnce>
                   <com:NetworkType>3</com:NetworkType>
                   <com:SubType>1</com:SubType>
-                  <com:SubLanguage>2002</com:SubLanguage>
+                  <com:SubLanguage>{$profile['primary_language']}</com:SubLanguage>
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
                         <com:OfferingId>
@@ -130,7 +133,7 @@ class SubscriptionService extends BaseApiService
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>
             <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
-            <com:InstallmentCompletedDate>{$data['completed_date']}</com:InstallmentCompletedDate>
+            <com:InstallmentCompletedDate>{$this->completedDate()}</com:InstallmentCompletedDate>
          </ser:CreateNewSubscriberReqBody>
       </ser:CreateNewSubscriberReqMsg>
    </soapenv:Body>

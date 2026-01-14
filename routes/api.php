@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\v1\SubsriptionController;
 use App\Http\Controllers\Api\v1\SurveyOrderController;
 use App\Http\Controllers\Api\v1\SurveyTypeController;
 use App\Http\Controllers\Api\v1\TelebirrController;
+use App\Http\Controllers\Api\v1\TelecomRegionController;
 use App\Http\Controllers\Api\v1\TroubleTicketController;
 use App\Http\Middleware\AuthenticateServiceClient;
 use Illuminate\Http\Request;
@@ -55,6 +56,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/zones/{regionId}', [LocationController::class, 'zones'])->where('regionId', '[0-9]+');
             Route::get('/weredas/{zoneId}', [LocationController::class, 'weredas'])->where('zoneId', '[0-9]+');
         });
+
+        // Telecom regions for manual survey dropdown
+        Route::get('telecom-regions', [TelecomRegionController::class, 'index']);
+        Route::get('telecom-regions/show', [TelecomRegionController::class, 'show']);
     });
 
     Route::middleware(['auth:api'])->group(function () {
@@ -70,6 +75,7 @@ Route::prefix('v1')->group(function () {
 
             Route::prefix('survey')->group(function () {
                 Route::post('/create', [SurveyOrderController::class, 'store']);
+                Route::post('/create-manual', [SurveyOrderController::class, 'storeManual']);
             });
         });
 

@@ -17,7 +17,6 @@ class OneOffFeeService extends BaseApiService
     {
         try {
             $xmlPayload = $this->buildRequestXml($data);
-            // Log::info($xmlPayload);
             $xmlResponse = $this->executeRequest($xmlPayload);
             Log::info($xmlResponse);
             $parsedXml = $this->parseResponseXml($xmlResponse);
@@ -25,7 +24,7 @@ class OneOffFeeService extends BaseApiService
         } catch (RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
         } catch (Throwable $e) {
-            return ApiResponse::exception($e, 'One off fee xml request failed.');
+            return ApiResponse::fromException($e, 'One off fee xml request failed.');
         }
     }
 
@@ -34,10 +33,20 @@ class OneOffFeeService extends BaseApiService
      */
     protected function buildRequestXml(array $data): string
     {
-        $transactionId = uniqid();
-        $processTime = now()->format('YmdHis');
+        // Use shared helpers from BaseApiService
+        $transactionId = $this->transactionId();
+        $processTime = $this->processTime();
         $credentials = config('services.one_off_fee');
-        $sequence = uniqid(); //sequence id $data['sub_order']['external_sequence']
+        $sequence = $transactionId;
+
+        // Get dynamic customer BSS classification from logged-in customer or use request data
+        $profile = $this->getCustomerProfile();
+        $customerType = $data['customer_type'] ?? $profile['customer_type'];
+        $customerCategory = $data['customer_category'] ?? $profile['customer_category'];
+        $customerSubcategory = $data['customer_subcategory'] ?? $profile['customer_subcategory'];
+        $customerLevel = $data['customer_level'] ?? $profile['customer_level'];
+        $customerNationality = $data['customer_nationality'] ?? $profile['nationality'];
+        $customerIdType = $data['customer_id_type'] ?? $profile['identification_type'];
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -61,12 +70,12 @@ class OneOffFeeService extends BaseApiService
                 <com:BusinessCode>CO064</com:BusinessCode>
                 <com:CustomerBusiOrder>
                     <com:CustomerInfo>
-                        <com:CustomerType>{$data['customer_type']}</com:CustomerType>
-                        <com:CustomerCategory>{$data['customer_category']}</com:CustomerCategory>
-                        <com:CustomerSubcategory>{$data['customer_subcategory']}</com:CustomerSubcategory>
-                        <com:CustomerLevel>{$data['customer_level']}</com:CustomerLevel>
-                        <com:Nationality>{$data['customer_nationality']}</com:Nationality>
-                        <com:IdentificationType>{$data['customer_id_type']}</com:IdentificationType>
+                        <com:CustomerType>{$customerType}</com:CustomerType>
+                        <com:CustomerCategory>{$customerCategory}</com:CustomerCategory>
+                        <com:CustomerSubcategory>{$customerSubcategory}</com:CustomerSubcategory>
+                        <com:CustomerLevel>{$customerLevel}</com:CustomerLevel>
+                        <com:Nationality>{$customerNationality}</com:Nationality>
+                        <com:IdentificationType>{$customerIdType}</com:IdentificationType>
                     </com:CustomerInfo>
                 </com:CustomerBusiOrder>
                 <com:SubBusiOrderList>

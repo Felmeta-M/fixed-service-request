@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Customer;
+use App\Support\CustomerContext;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 
@@ -34,14 +34,12 @@ class EcafService extends BaseApiService
     {
         $credentials = config('services.ecaf');
 
-        $customer = Customer::current();
-        //TODO: check weather customer info fetched based on current logged in user
-        // logger('check weather customer info fetched based on current logged in user', [$customer]);
-        $custCode = $customer?->code;
-        $nameParts = explode(' ', trim($customer->name ?? ''));
-        $firstName = $nameParts[0] ?? null;
-        $middleName = $nameParts[1] ?? null;
-        $lastName = $nameParts[2] ?? null;
+        // Use shared customer context helpers
+        $custCode = $this->customerCode();
+        $nameParts = CustomerContext::nameParts();
+        $firstName = $nameParts['first_name'];
+        $middleName = $nameParts['middle_name'];
+        $lastName = $nameParts['last_name'];
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ecaf="http://ecaf4kiosk.ecaf.inpsur.com/">

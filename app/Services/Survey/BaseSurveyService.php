@@ -33,15 +33,7 @@ abstract class BaseSurveyService extends BaseApiService
         return config('services.survey.endpoint');
     }
 
-    protected function transactionId(): string
-    {
-        return now()->format('YmdHis');
-    }
-
-    protected function processTime(): string
-    {
-        return now()->format('YmdHis');
-    }
+    // transactionId(), processTime(), completedDate() are inherited from BaseApiService
 
     /** Same template method as Subscription */
     final public function create(array $data)
@@ -105,22 +97,25 @@ abstract class BaseSurveyService extends BaseApiService
                     : null,
             ]);
 
+            // Use dynamic customer BSS classification from BaseApiService helper
+            $profile = $this->getCustomerProfile();
+
             $requestData = [
                 'service_number' => $serviceNumber,
                 'offering_id' => $survey->main_offer_id,
                 'network_type' => 4, // Fixed network
                 'sub_type' => 0,
-                'customer_type' => 1,
-                'customer_category' => 1,
-                'customer_subcategory' => 1,
-                'customer_level' => 6,
-                'customer_nationality' => 1231,
-                'customer_id_type' => 2,
+                'customer_type' => $profile['customer_type'],
+                'customer_category' => $profile['customer_category'],
+                'customer_subcategory' => $profile['customer_subcategory'],
+                'customer_level' => $profile['customer_level'],
+                'customer_nationality' => $profile['nationality'],
+                'customer_id_type' => $profile['identification_type'],
             ];
 
             $calculator = app(PaymentCalculatorService::class);
             $fees = $calculator->calculateFees($survey, $requestData);
-            
+
             // Calculate device fee from selected device prices
             // For combo services, add both internet and voice device prices
             $deviceFee = 0;
@@ -130,14 +125,14 @@ abstract class BaseSurveyService extends BaseApiService
                     $device = \App\Models\AvailableDevice::find($survey->device_id);
                     $deviceFee += $device ? (float) $device->price : 0;
                 }
-                
+
                 // Voice device fee (for combo services)
                 if ($survey->device_voice_id) {
                     $voiceDevice = \App\Models\AvailableDevice::find($survey->device_voice_id);
                     $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
                 }
             }
-            
+
             $totalAmount = $fees['total_amount'] + $deviceFee;
             $this->payment_service->createOrUpdatePayment([
                 'customer_survey_order_id'       => $survey->customer_survey_order_id,
@@ -171,13 +166,7 @@ abstract class BaseSurveyService extends BaseApiService
         }
     }
 
-    protected function parseBandwidth(string|int $value): int
-    {
-        $value = strtolower(trim((string)$value));
-        if (preg_match('/^(\d+)m$/', $value, $m)) return $m[1] * 1024;
-        if (preg_match('/^(\d+)gbps$/', $value, $m)) return $m[1] * 1024 * 1024;
-        return (int)$value;
-    }
+    // parseBandwidth is inherited from BaseApiService
 
     /** Service-specific hooks */
     abstract protected function mainOfferId(): int;

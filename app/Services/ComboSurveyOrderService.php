@@ -34,11 +34,19 @@ class ComboSurveyOrderService extends BaseApiService
     private function buildRequestXml(array $data): string
     {
         $credentials = config('services.survey');
-        $transactionId = date('YmdHis');
-        $processTime = date('YmdHis');
+
+        // Use shared helpers for timestamps
+        $transactionId = $this->transactionId();
+        $processTime = $this->processTime();
         $sessionId = $credentials['session_id'] ?? uniqid();
-        $contactNo = substr($data['contact_no'], -9);
-        $completedDate = date('YmdHis');
+        $completedDate = $this->completedDate();
+
+        // Use shared helpers for contact info
+        $primaryContact = $this->getPrimaryContact($data);
+        $secondaryContact = $this->getSecondaryContact($data);
+
+        // Use customer context for customer code
+        $customerCode = $this->customerCode($data['customer_code'] ?? null);
 
         $mainExtParams = [
             'NEID' => '700041565830',
@@ -121,7 +129,7 @@ XML;
             <com:AccessPwd>{$credentials['access_password']}</com:AccessPwd>
          </ser:RequestHeader>
          <ser:HandleSurveyOrderReqBody>
-            <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
+            <com:CustomerCode>{$customerCode}</com:CustomerCode>
             <com:SurveyType>{$data['survey_type']}</com:SurveyType>
             <com:TelecomRegion>{$data['telecom_region']}</com:TelecomRegion>
             <com:OperType>{$data['oper_type']}</com:OperType>
@@ -136,13 +144,13 @@ XML;
             </com:SurveyAddressInfo>
             {$subSurveyXml}
             <com:bandwidth>{$data['bandwidth']}</com:bandwidth>
-            <com:ContactPerson>{$data['contact_person']}</com:ContactPerson>
-            <com:ContactNo>{$contactNo}</com:ContactNo>
-            <com:ContactEmail>{$data['contact_email']}</com:ContactEmail>
+            <com:ContactPerson>{$primaryContact['contact_person']}</com:ContactPerson>
+            <com:ContactNo>{$primaryContact['contact_no']}</com:ContactNo>
+            <com:ContactEmail>{$primaryContact['contact_email']}</com:ContactEmail>
             <com:CompletedDate>{$completedDate}</com:CompletedDate>
-            <com:SecContactPerson>{$data['sec_contact_person']}</com:SecContactPerson>
-            <com:SecContactNo>{$data['sec_contact_no']}</com:SecContactNo>
-            <com:SecContactEmail>{$data['sec_contact_email']}</com:SecContactEmail>
+            <com:SecContactPerson>{$secondaryContact['sec_contact_person']}</com:SecContactPerson>
+            <com:SecContactNo>{$secondaryContact['sec_contact_no']}</com:SecContactNo>
+            <com:SecContactEmail>{$secondaryContact['sec_contact_email']}</com:SecContactEmail>
             <com:ExternalOperid>{$data['external_operid']}</com:ExternalOperid>
             <com:ExtParamList>
                 {$mainExtParamXml}

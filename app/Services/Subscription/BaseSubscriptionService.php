@@ -25,15 +25,7 @@ abstract class BaseSubscriptionService extends BaseApiService
         return config('services.subscriber.endpoint');
     }
 
-    protected function transactionId(): string
-    {
-        return  uniqid();
-    }
-
-    protected function processTime(): string
-    {
-        return now()->format('YmdHis');
-    }
+    // transactionId(), processTime(), completedDate() are inherited from BaseApiService
 
     protected function generateEmail(): string
     {

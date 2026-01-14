@@ -37,7 +37,7 @@ class CustomerService extends BaseApiService
             AppLogger::api()->error('Customer create exception', [
                 'error' => $e->getMessage(),
             ]);
-            return ApiResponse::exception($e, 'Customer create failed.');
+            return ApiResponse::fromException($e, 'Customer create failed.');
         }
     }
 
@@ -186,12 +186,23 @@ XML;
                     'code' => $customerCode,
                     'contact' => json_encode($data['contact']),
                     'contact_persons' => json_encode($data['contact_person']),
+                    // Address fields
                     'region' => $data['address']['region'],
                     'city' => $data['address']['city'],
                     'wereda' => $data['address']['woreda'],
                     'zone' => $data['address']['zone'],
                     'kebele' => $data['address']['kebele'],
                     'house_no' => $data['address']['house_no'],
+                    'street_name' => $data['address']['street_name'] ?? null,
+                    'apartment' => $data['address']['apartment'] ?? null,
+                    // BSS Classification
+                    'customer_type' => $data['customer_type'] ?? '2',
+                    'customer_category' => $data['customer_category'] ?? '5',
+                    'customer_subcategory' => $data['customer_subcategory'] ?? '14',
+                    'customer_level' => $data['customer_level'] ?? '2',
+                    // Notification & Credit
+                    'notification_mode' => $data['contact']['notification_mode'] ?? '2',
+                    'credit_class' => $data['credit_class'] ?? 'Excellent',
                     'verified_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -280,12 +291,23 @@ XML;
                 'religion',
                 'income',
                 'primary_language',
+                // Address
                 'region',
                 'city',
                 'wereda',
                 'zone',
                 'kebele',
                 'house_no',
+                'street_name',
+                'apartment',
+                // BSS Classification
+                'customer_type',
+                'customer_category',
+                'customer_subcategory',
+                'customer_level',
+                // Notification & Credit
+                'notification_mode',
+                'credit_class',
             ])
             ->first();
     }

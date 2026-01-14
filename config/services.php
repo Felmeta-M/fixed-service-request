@@ -245,6 +245,15 @@ return [
         'access_pwd' => env('NUMBER_SERVICE_RESERVE_ACCESS_PWD', 'secret=='),
     ],
 
+    'subscription_order_status' => [
+        'endpoint' => env('SUBSCRIPTION_ORDER_STATUS_ENDPOINT', 'REDACTED_INTERNAL_ENDPOINT/SELFCARE/HWBSS_Order'),
+        'channel' => env('SUBSCRIPTION_ORDER_STATUS_CHANNEL', '70'),
+        'partner_id' => env('SUBSCRIPTION_ORDER_STATUS_PARTNER_ID', '101'),
+        'access_user' => env('SUBSCRIPTION_ORDER_STATUS_ACCESS_USER', 'esb'),
+        'access_password' => env('SUBSCRIPTION_ORDER_STATUS_ACCESS_PASSWORD', 'REDACTED_PASSWORD'),
+        'business_code' => env('SUBSCRIPTION_ORDER_STATUS_BUSINESS_CODE', 'ChangeSupplementaryOffering'),
+    ],
+
     'telebirr' => [
         'base_url' => env('TELEBIRR_BASE_URL'),
         'web_base_url' => env('WEB_TELEBIRR_BASE_URL'),

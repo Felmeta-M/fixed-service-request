@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\v1\SurveyTypeController;
 use App\Http\Controllers\Api\v1\TelebirrController;
 use App\Http\Controllers\Api\v1\TelecomRegionController;
 use App\Http\Controllers\Api\v1\TroubleTicketController;
+use App\Http\Controllers\Api\v1\SubscriptionOrderStatusController;
 use App\Http\Middleware\AuthenticateServiceClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -112,6 +113,10 @@ Route::prefix('v1')->group(function () {
             Route::post('one-off-fee', [OneOffFeeController::class, 'fee']);
 
             Route::get('payments/show', [PaymentController::class, 'show']);
+
+            // Subscription order status queries
+            Route::post('subscription-order-status', [SubscriptionOrderStatusController::class, 'query']);
+            Route::get('subscription-order-status/labels', [SubscriptionOrderStatusController::class, 'statusLabels']);
         });
 
         // Critical operations: Payments, orders, subscriptions

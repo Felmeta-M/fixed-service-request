@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Http\Controllers\Api\v1\AvailableNumberController;
 use App\Models\User;
 use Database\Seeders\CustomerTypeCategorySubcategorySeeder;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -14,10 +15,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(SurveyTypeSeeder::class);
-        $this->call(BandwidthOptionsSeeder::class);
-        $this->call(OccupationSeeder::class);
-        $this->call(CustomerTypeCategorySubcategorySeeder::class);
-        $this->call(RegionZoneWeredaSeeder::class);
+        // $this->call(SurveyTypeSeeder::class);
+        // $this->call(BandwidthOptionsSeeder::class);
+        // $this->call(OccupationSeeder::class);
+        // $this->call(CustomerTypeCategorySubcategorySeeder::class);
+        // $this->call(RegionZoneWeredaSeeder::class);
     }
 }

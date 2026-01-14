@@ -18,11 +18,11 @@ use Illuminate\Http\Request;
 class CustomerController extends Controller
 {
     public function __construct(
-        protected readonly CustomerService                     $customerService,
+        protected readonly CustomerService $customerService,
         protected readonly QueryCustomerByServiceNumberService $queryCustomerByServiceNumberService,
-        protected readonly QueryCustomerByCodeService          $queryCustomerByCodeService,
-    )
-    { }
+        protected readonly QueryCustomerByCodeService $queryCustomerByCodeService,
+    ) {
+    }
 
     /**
      * Display a listing of the resource.
@@ -109,7 +109,7 @@ class CustomerController extends Controller
 
     public function types()
     {
-        return CustomerType::all(['id', 'name', 'api_value']);
+        return CustomerType::query()->where('status', true)->get(['id', 'name', 'api_value']);
     }
 
     public function categories(Request $request)

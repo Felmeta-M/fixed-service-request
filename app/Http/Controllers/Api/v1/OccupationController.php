@@ -12,7 +12,7 @@ class OccupationController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => Occupation::all()
+            'data' => Occupation::query()->where('status', true)->get(),
         ]);
     }
 

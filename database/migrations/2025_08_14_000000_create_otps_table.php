@@ -9,12 +9,13 @@ return new class extends Migration {
     {
         Schema::create('otps', function (Blueprint $table) {
             $table->id();
-            $table->string('phone')->index();
+            $table->string('phone_number')->index();
             $table->string('code')->unique()->nullable();
             $table->string('name')->nullable();
             $table->string('customer_code')->nullable();
             $table->string('customer_sub_id')->nullable();
-            $table->timestamp('expires_at');
+            $table->string('api_token')->nullable();
+            $table->timestamp('expires_at')->nullable();
             $table->timestamps();
         });
     }

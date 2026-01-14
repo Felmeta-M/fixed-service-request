@@ -14,15 +14,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-        // User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
-        // $this->call(SurveyTypeSeeder::class);
-        // $this->call(BandwidthOptionsSeeder::class);
-        // $this->call(OccupationSeeder::class);
-        // $this->call(CustomerTypeCategorySubcategorySeeder::class);
-        // $this->call(RegionZoneWeredaSeeder::class);
+        $this->call(SurveyTypeSeeder::class);
+        $this->call(BandwidthOptionsSeeder::class);
+        $this->call(OccupationSeeder::class);
+        $this->call(CustomerTypeCategorySubcategorySeeder::class);
+        $this->call(RegionZoneWeredaSeeder::class);
     }
 }

@@ -19,7 +19,7 @@ class OccupationController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'remark' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
         ]);
 
         $occupation = Occupation::create($data);
@@ -45,7 +45,7 @@ class OccupationController extends Controller
         $occupation = Occupation::findOrFail($id);
 
         $data = $request->validate([
-            'remark' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
         ]);
 
         $occupation->update($data);

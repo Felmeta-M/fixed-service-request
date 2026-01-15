@@ -75,8 +75,8 @@ class SecurityHeaders
                 ? 'max-age=31536000; includeSubDomains; preload'
                 : null,
 
-            // Content Security Policy
-            'Content-Security-Policy' => $this->buildCsp(),
+            // Content Security Policy (only enforce strict CSP in production)
+            'Content-Security-Policy' => $isProduction ? $this->buildCsp() : null,
 
             // Permissions Policy (formerly Feature-Policy)
             'Permissions-Policy' => $this->buildPermissionsPolicy(),
@@ -85,10 +85,11 @@ class SecurityHeaders
             'Cache-Control' => 'no-store, no-cache, must-revalidate, proxy-revalidate',
             'Pragma' => 'no-cache',
 
-            // Cross-Origin policies
-            'Cross-Origin-Opener-Policy' => 'same-origin',
-            'Cross-Origin-Embedder-Policy' => 'require-corp',
-            'Cross-Origin-Resource-Policy' => 'same-origin',
+            // Cross-Origin policies (these can interfere with dev tools like Vite,
+            // so only enable them in production)
+            'Cross-Origin-Opener-Policy' => $isProduction ? 'same-origin' : null,
+            'Cross-Origin-Embedder-Policy' => $isProduction ? 'require-corp' : null,
+            'Cross-Origin-Resource-Policy' => $isProduction ? 'same-origin' : null,
         ];
     }
 
@@ -97,13 +98,40 @@ class SecurityHeaders
      */
     protected function buildCsp(): string
     {
+        $isProduction = app()->isProduction();
+        $vitePort = config('vite.port', 5173);
+        
+        // Base script sources
+        $scriptSources = ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"];
+        
+        // Base connect sources
+        $connectSources = ["'self'", "https:"];
+        
+        // In development, allow Vite dev server (both IPv4 and IPv6 localhost)
+        if (!$isProduction) {
+            $viteUrls = [
+                "http://localhost:{$vitePort}",
+                "http://127.0.0.1:{$vitePort}",
+                "http://[::1]:{$vitePort}",
+                "ws://localhost:{$vitePort}",
+                "ws://127.0.0.1:{$vitePort}",
+                "ws://[::1]:{$vitePort}",
+            ];
+            
+            // Add Vite URLs to script sources
+            $scriptSources = array_merge($scriptSources, $viteUrls);
+            
+            // Add Vite URLs to connect sources
+            $connectSources = array_merge($connectSources, $viteUrls);
+        }
+
         $directives = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
+            "script-src " . implode(' ', $scriptSources),
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com data:",
             "img-src 'self' data: https: blob:",
-            "connect-src 'self' https:",
+            "connect-src " . implode(' ', $connectSources),
             "frame-ancestors 'self'",
             "form-action 'self'",
             "base-uri 'self'",
@@ -111,7 +139,7 @@ class SecurityHeaders
         ];
 
         // Add report-uri in production
-        if (app()->isProduction() && config('security.csp_report_uri')) {
+        if ($isProduction && config('security.csp_report_uri')) {
             $directives[] = "report-uri " . config('security.csp_report_uri');
         }
 

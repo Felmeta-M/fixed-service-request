@@ -41,7 +41,7 @@ class TroubleTicketController extends Controller
                     'tt_serial_no',
                     'access_number',
                     'status',
-                    'last_checked_at',
+                    // 'last_checked_at',
                     'last_synced_status',
                     'created_at',
                     'updated_at',
@@ -85,9 +85,9 @@ class TroubleTicketController extends Controller
                 });
 
             // Batch refresh tickets and collect updates
-            if ($ticketsToRefresh->isNotEmpty()) {
-                $this->batchRefreshTickets($ticketsToRefresh);
-            }
+            // if ($ticketsToRefresh->isNotEmpty()) {
+            //     $this->batchRefreshTickets($ticketsToRefresh);
+            // }
 
             return response()->json([
                 'success' => true,
@@ -162,6 +162,7 @@ class TroubleTicketController extends Controller
 
         // Batch update last_checked_at timestamps
         if (!empty($timestampUpdates)) {
+            //TODO: remove this after testing
             DB::table('trouble_tickets')
                 ->whereIn('id', $timestampUpdates)
                 ->update(['last_checked_at' => now()]);

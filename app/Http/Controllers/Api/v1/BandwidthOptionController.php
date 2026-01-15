@@ -20,12 +20,12 @@ class BandwidthOptionController extends Controller
     {
         $options = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
             return DB::table('bandwidth_options')
-                ->select(['id', 'residential', 'enterprise', 'created_at'])
+                ->select(['id', 'residential_options', 'enterprise_options', 'created_at'])
                 ->get()
                 ->map(function ($option) {
                     // Decode JSON fields
-                    $option->residential = json_decode($option->residential, true);
-                    $option->enterprise = json_decode($option->enterprise, true);
+                    $option->residential_options = json_decode($option->residential_options, true);
+                    $option->enterprise_options = json_decode($option->enterprise_options, true);
                     return $option;
                 });
         });

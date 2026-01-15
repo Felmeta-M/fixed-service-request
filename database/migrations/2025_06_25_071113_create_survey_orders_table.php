@@ -32,6 +32,7 @@ return new class extends Migration {
             $table->text('cancel_reason')->nullable();
             $table->dateTime('completed_date')->nullable();
             $table->dateTime('subscribed_at')->nullable();
+            $table->boolean('survey_is_manual')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });

@@ -19,6 +19,7 @@ class CustomerService extends BaseApiService
     public function createCustomer(array $data)
     {
         try {
+            $data['zone'] = '21'; //TODO: remove this after testing NAAZ
             $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
 
@@ -122,8 +123,8 @@ class CustomerService extends BaseApiService
                     <com:PrimaryLanguage>{$data['primary_language']}</com:PrimaryLanguage>
 
                     <com:CustomerAddressInfo>
-                        <com:EthioZoneOrRegion>{$data['address']['region']}</com:EthioZoneOrRegion>
-                        <com:AdministrativeRegionOrCity>{$data['address']['city']}</com:AdministrativeRegionOrCity>
+                        <com:EthioZoneOrRegion>{$data['zone']}</com:EthioZoneOrRegion>
+                        <com:AdministrativeRegionOrCity>{$data['address']['region']}</com:AdministrativeRegionOrCity>
                         <com:SubcityOrZone>{$data['address']['zone']}</com:SubcityOrZone>
                         <com:WeredaOrTown>{$data['address']['woreda']}</com:WeredaOrTown>
                         <com:Kebele>{$data['address']['kebele']}</com:Kebele>

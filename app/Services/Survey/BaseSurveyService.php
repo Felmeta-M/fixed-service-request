@@ -80,6 +80,7 @@ abstract class BaseSurveyService extends BaseApiService
         DB::transaction(function () use ($surveyOrderId, $data, $resource, $serviceNumber) {
             $survey = SurveyOrder::create([
                 ...$data,
+                'completed_date' => now(),
                 'with_device' => (bool)$data['with_device'],
                 'device_id' => $data['device_id'] ?? null,
                 'device_voice_id' => $data['device_voice_id'] ?? null,

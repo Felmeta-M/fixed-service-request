@@ -19,6 +19,7 @@ use App\Services\Survey\SurveyServiceFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class SurveyOrderController extends Controller
@@ -41,27 +42,25 @@ class SurveyOrderController extends Controller
             $query = DB::table('survey_orders')
                 ->leftJoin('payments', 'survey_orders.customer_survey_order_id', '=', 'payments.customer_survey_order_id')
                 ->whereNull('survey_orders.deleted_at')
-                ->where('survey_orders.customer_code', $customer->customer_code)
+                ->where('survey_orders.customer_code', (string) $customer->customer_code)
                 ->select([
                     'survey_orders.id',
                     'survey_orders.customer_survey_order_id',
-                    'survey_orders.survey_order_no',
                     'survey_orders.customer_code',
                     'survey_orders.status',
                     'survey_orders.main_offer_id',
-                    'survey_orders.main_offer_name',
                     'survey_orders.service_number',
                     'survey_orders.with_device',
                     'survey_orders.last_checked_at',
                     'survey_orders.created_at',
                     'survey_orders.updated_at',
                     'payments.id as payment_id',
-                    'payments.amount as payment_amount',
+                    'payments.total_amount as payment_amount',
                     'payments.status as payment_status',
                 ]);
 
-            if ($request->filled('survey_order_no')) {
-                $query->where('survey_orders.survey_order_no', 'like', '%' . $request->survey_order_no . '%');
+            if ($request->filled('customer_survey_order_id')) {
+                $query->where('survey_orders.customer_survey_order_id', 'like', '%' . $request->survey_order_no . '%');
             }
 
             if ($request->filled('status')) {
@@ -69,6 +68,7 @@ class SurveyOrderController extends Controller
             }
 
             $surveyOrders = $query->latest('survey_orders.created_at')->paginate(10);
+            Log::info('surveyOrders', ['surveyOrders' => $surveyOrders]);
 
             // Collect orders that need refresh (WAITING status, not checked in last 5 minutes)
             $ordersToRefresh = collect($surveyOrders->items())
@@ -97,11 +97,10 @@ class SurveyOrderController extends Controller
                 return [
                     'id' => $item->id,
                     'customer_survey_order_id' => $item->customer_survey_order_id,
-                    'survey_order_no' => $item->survey_order_no,
                     'customer_code' => $item->customer_code,
                     'status' => $item->status,
                     'main_offer_id' => $item->main_offer_id,
-                    'main_offer_name' => $item->main_offer_name,
+                    // 'main_offer_name' => $item->main_offer_name,
                     'service_number' => $item->service_number,
                     'with_device' => (bool) $item->with_device,
                     'created_at' => $item->created_at,
@@ -297,11 +296,11 @@ class SurveyOrderController extends Controller
         $surveyRequest = DB::table('survey_orders')
             ->leftJoin('payments', 'survey_orders.customer_survey_order_id', '=', 'payments.customer_survey_order_id')
             ->whereNull('survey_orders.deleted_at')
-            ->where('survey_orders.customer_survey_order_id', $orderId)
+            ->where('survey_orders.customer_survey_order_id', (string) $orderId)
             ->select([
                 'survey_orders.*',
                 'payments.id as payment_id',
-                'payments.amount as payment_amount',
+                'payments.total_amount as payment_amount',
                 'payments.status as payment_status',
                 'payments.merch_order_id as payment_merch_order_id',
             ])
@@ -409,7 +408,7 @@ class SurveyOrderController extends Controller
             'customer_code' => $order->customer_code,
             'status' => $order->status,
             'main_offer_id' => $order->main_offer_id,
-            'main_offer_name' => $order->main_offer_name ?? null,
+            // 'main_offer_name' => $order->main_offer_name ?? null,
             'service_number' => $order->service_number ?? null,
             'with_device' => (bool) ($order->with_device ?? false),
             'created_at' => $order->created_at,

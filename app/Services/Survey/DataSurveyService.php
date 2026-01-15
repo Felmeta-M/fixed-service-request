@@ -3,7 +3,9 @@
 namespace App\Services\Survey;
 
 use App\Services\ApiResponse;
+use App\Services\Logging\AppLogger;
 use App\Support\CustomerContext;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class DataSurveyService extends BaseSurveyService implements SurveyInterface
@@ -27,8 +29,8 @@ class DataSurveyService extends BaseSurveyService implements SurveyInterface
         $primaryContact = $this->getPrimaryContact($data);
         $customerCode = $this->customerCode($data['customer_code'] ?? null);
 
-
         $bandwidth = $data['bandwidth'] ? $this->parseBandwidth($data['bandwidth']) : '';
+        Log::info('bandwidth', ['bandwidth' => $bandwidth]);
         $houseNo = $data['survey_address_info']['house_no'] ?? CustomerContext::houseNo('');
 
         return <<<XML

@@ -77,6 +77,7 @@ abstract class BaseSurveyService extends BaseApiService
     ): void {
 
         $serviceNumber = $data['service_number'] ?? $this->serviceNumber ?? null;
+        Log::info('Service Number', ['service_number' => $serviceNumber]);
         DB::transaction(function () use ($surveyOrderId, $data, $resource, $serviceNumber) {
             $survey = SurveyOrder::create([
                 ...$data,
@@ -115,7 +116,9 @@ abstract class BaseSurveyService extends BaseApiService
             ];
 
             $calculator = app(PaymentCalculatorService::class);
+            Log::info('Request Data', $requestData);
             $fees = $calculator->calculateFees($survey, $requestData);
+            Log::info('Fees', $fees);
 
             // Calculate device fee from selected device prices
             // For combo services, add both internet and voice device prices

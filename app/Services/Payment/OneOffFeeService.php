@@ -20,6 +20,7 @@ class OneOffFeeService extends BaseApiService
             $xmlResponse = $this->executeRequest($xmlPayload);
             Log::info($xmlResponse);
             $parsedXml = $this->parseResponseXml($xmlResponse);
+            Log::info('Parsed XML', $parsedXml);
             return ApiResponse::success($parsedXml);
         } catch (RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
@@ -39,14 +40,10 @@ class OneOffFeeService extends BaseApiService
         $credentials = config('services.one_off_fee');
         $sequence = $transactionId;
 
-        // Get dynamic customer BSS classification from logged-in customer or use request data
+        // Get logged-in customer profile and address (with request data as overrides)
         $profile = $this->getCustomerProfile();
-        $customerType = $data['customer_type'] ?? $profile['customer_type'];
-        $customerCategory = $data['customer_category'] ?? $profile['customer_category'];
-        $customerSubcategory = $data['customer_subcategory'] ?? $profile['customer_subcategory'];
-        $customerLevel = $data['customer_level'] ?? $profile['customer_level'];
-        $customerNationality = $data['customer_nationality'] ?? $profile['nationality'];
-        $customerIdType = $data['customer_id_type'] ?? $profile['identification_type'];
+        $address = $this->getCustomerAddress();
+        $nationality = '1231';
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -70,13 +67,21 @@ class OneOffFeeService extends BaseApiService
                 <com:BusinessCode>CO064</com:BusinessCode>
                 <com:CustomerBusiOrder>
                     <com:CustomerInfo>
-                        <com:CustomerType>{$customerType}</com:CustomerType>
-                        <com:CustomerCategory>{$customerCategory}</com:CustomerCategory>
-                        <com:CustomerSubcategory>{$customerSubcategory}</com:CustomerSubcategory>
-                        <com:CustomerLevel>{$customerLevel}</com:CustomerLevel>
-                        <com:Nationality>{$customerNationality}</com:Nationality>
-                        <com:IdentificationType>{$customerIdType}</com:IdentificationType>
+                        <com:CustomerType>{$profile['customer_type']}</com:CustomerType>
+                        <com:CustomerCategory>{$profile['customer_category']}</com:CustomerCategory>
+                        <com:CustomerSubcategory>{$profile['customer_subcategory']}</com:CustomerSubcategory>
+                        <com:CustomerLevel>{$profile['customer_level']}</com:CustomerLevel>
+                        <com:Nationality>{$nationality}</com:Nationality>
+                        <com:IdentificationType>{$profile['identification_type']}</com:IdentificationType>
                     </com:CustomerInfo>
+                    <com:AddressInfo>
+                        <com:Region>{$address['region']}</com:Region>
+                        <com:City>{$address['city']}</com:City>
+                        <com:Zone>{$address['zone']}</com:Zone>
+                        <com:Wereda>{$address['wereda']}</com:Wereda>
+                        <com:Kebele>{$address['kebele']}</com:Kebele>
+                        <com:HouseNo>{$address['house_no']}</com:HouseNo>
+                    </com:AddressInfo>
                 </com:CustomerBusiOrder>
                 <com:SubBusiOrderList>
                     <com:SubBusiOrder>

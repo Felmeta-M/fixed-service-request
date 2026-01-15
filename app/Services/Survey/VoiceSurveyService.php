@@ -4,6 +4,7 @@ namespace App\Services\Survey;
 
 use App\Services\ApiResponse;
 use App\Support\CustomerContext;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
@@ -32,7 +33,7 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
         $depId = "1766044689199549668";
         // fetch from db;
         $this->serviceNumber = $this->queryAvailableNumberService->getAvailableNumberServices($depId);
-
+    
         if (!$this->serviceNumber) {
             throw new \RuntimeException('Unable to reserve service number');
         }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\SurveyOrder;
 use App\Services\Logging\AppLogger;
 use RuntimeException;
 
@@ -18,7 +19,7 @@ use RuntimeException;
  * 
  * @see QueryPurchasedOfferingService::queryByServiceNumber()
  */
-class ChangePrimaryOfferingService extends BaseApiService
+class ChangeBandwidthService extends BaseApiService
 {
     protected int $timeout = 30;
     protected int $rateLimit = 10;
@@ -44,69 +45,50 @@ class ChangePrimaryOfferingService extends BaseApiService
      * @param int $objectIdType Object ID type (default: 4 = Subscriber)
      * @return array Change result with order ID
      */
-    public function changeOffering(
-        string $objectId,
-        string $oldOfferingId,
-        ?string $newOfferingId = null,
-        int $objectIdType = self::OBJECT_TYPE_SUBSCRIBER
+    public function changeBandwidth(
+        string $serviceNumber,
+        string $bandwidth,
     ): array {
         try {
-            $data = [
-                'object_id' => $objectId,
-                'object_id_type' => $objectIdType,
-                'old_offering_id' => $oldOfferingId,
-                'new_offering_id' => $newOfferingId,
-            ];
+
+            $surveyOrder = SurveyOrder::where('service_number', $serviceNumber)->first();
+            if (!$surveyOrder) {
+                return [
+                    'success' => false,
+                    'message' => 'Survey order not found',
+                ];
+            }
+
+            $data['object_id_type'] = self::OBJECT_TYPE_SUBSCRIBER;
+            $data['object_id'] = $serviceNumber;
+            $data['old_offering_id'] = $surveyOrder->main_offer_id;
+            $data['new_offering_id'] = $surveyOrder->main_offer_id;
+            $data['bandwidth'] = $this->parseBandwidth($bandwidth);
 
             $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
+            $result = $this->parseResponse($xmlResponse, $serviceNumber);
 
-            $result = $this->parseResponse($xmlResponse, $objectId);
+            // Return the parsed result
+            if (!$result['success']) {
+                return $result;
+            }
 
-            AppLogger::api()->info('Primary offering change requested', [
-                'object_id' => $objectId,
-                'old_offering_id' => $oldOfferingId,
-                'new_offering_id' => $newOfferingId,
+            return [
+                'success' => true,
+                'message' => 'Primary offering changed successfully',
                 'order_id' => $result['order_id'] ?? null,
-                'success' => $result['success'],
-            ]);
-
-            return $result;
+                'response_time' => $result['response_time'] ?? null,
+                'ret_code' => $result['ret_code'] ?? null,
+                'ret_msg' => $result['ret_msg'] ?? null,
+                'additional_properties' => $result['additional_properties'] ?? [],
+            ];
         } catch (RuntimeException $e) {
-            AppLogger::api()->error('Change primary offering failed', [
-                'object_id' => $objectId,
-                'old_offering_id' => $oldOfferingId,
-                'error' => $e->getMessage(),
-            ]);
-
             return [
                 'success' => false,
                 'error' => $e->getMessage(),
             ];
         }
-    }
-
-    /**
-     * Change bandwidth offering for a subscriber.
-     * Convenience method for bandwidth changes.
-     */
-    public function changeBandwidth(string $subscriberId, string $currentOfferingId, ?string $newOfferingId = null): array
-    {
-        return $this->changeOffering($subscriberId, $currentOfferingId, $newOfferingId, self::OBJECT_TYPE_SUBSCRIBER);
-    }
-
-    /**
-     * Change and return as API response.
-     */
-    public function change(string $objectId, string $oldOfferingId, ?string $newOfferingId = null)
-    {
-        $result = $this->changeOffering($objectId, $oldOfferingId, $newOfferingId);
-
-        if (!$result['success']) {
-            return ApiResponse::error($result['error'] ?? 'Change primary offering failed', 500);
-        }
-
-        return ApiResponse::success($result);
     }
 
     /**
@@ -131,16 +113,8 @@ class ChangePrimaryOfferingService extends BaseApiService
         $objectIdType = $data['object_id_type'];
         $objectId = $data['object_id'];
         $oldOfferingId = $data['old_offering_id'];
-
-        // Build new offering section if provided
-        $newOfferingXml = '';
-        if (!empty($data['new_offering_id'])) {
-            $newOfferingXml = <<<XML
-         <ser:NewPrimaryOffering>
-            <com:OfferingId>{$data['new_offering_id']}</com:OfferingId>
-         </ser:NewPrimaryOffering>
-XML;
-        }
+        $newOfferingId = $data['new_offering_id'];
+        $bandwidth = $data['bandwidth'];
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -167,7 +141,22 @@ XML;
             <ser:OldPrimaryOffering>
                 <com:OfferingId>{$oldOfferingId}</com:OfferingId>
             </ser:OldPrimaryOffering>
-{$newOfferingXml}
+            <ser:NewPrimaryOffering>
+            <com:OfferingId>{$newOfferingId}</com:OfferingId>
+            <com:InstanceProperty>
+                <com:PropertyCode>50020</com:PropertyCode>
+                <com:Value>{$bandwidth}</com:Value>
+                <ser:EffectiveMode>
+                <com:Mode>I</com:Mode>
+                </ser:EffectiveMode>
+            </com:InstanceProperty>
+         </ser:NewPrimaryOffering>
+         <ser:ExtParamList>
+            <com:ParameterInfo>
+               <com:ParamName>ActionType</com:ParamName>
+               <com:ParamValue>2</com:ParamValue>                    
+            </com:ParameterInfo>
+         </ser:ExtParamList>
         </ser:ChangePrimaryOfferingReqMsg>
     </soapenv:Body>
 </soapenv:Envelope>
@@ -176,6 +165,23 @@ XML;
 
     /**
      * Parse SOAP XML response.
+     * 
+     * Expected success response structure:
+     * <soapenv:Envelope>
+     *   <soapenv:Body>
+     *     <ser:ChangePrimaryOfferingRspMsg>
+     *       <ser:ResponseHeader>
+     *         <com:ResponseTime>20260114114315</com:ResponseTime>
+     *         <com:RetCode>0</com:RetCode>
+     *         <com:RetMsg>success</com:RetMsg>
+     *         <com:AdditionalProperty>
+     *           <com:Code>CustOrderId</com:Code>
+     *           <com:Value>20000455498250</com:Value>
+     *         </com:AdditionalProperty>
+     *       </ser:ResponseHeader>
+     *     </ser:ChangePrimaryOfferingRspMsg>
+     *   </soapenv:Body>
+     * </soapenv:Envelope>
      */
     protected function parseResponse(string $xml, string $objectId): array
     {
@@ -193,15 +199,25 @@ XML;
             ];
         }
 
-        // Register namespaces
-        $namespaces = $parsed->getNamespaces(true);
-        $soapNs = $namespaces['soapenv'] ?? 'http://schemas.xmlsoap.org/soap/envelope/';
-        $serNs = $namespaces['ser'] ?? 'http://oss.huawei.com/webservice/bss/services';
-        $comNs = $namespaces['com'] ?? 'http://www.huawei.com/bss/soaif/interface/common/';
+        // Define namespaces - use constants for reliability
+        $soapNs = 'http://schemas.xmlsoap.org/soap/envelope/';
+        $serNs = 'http://oss.huawei.com/webservice/bss/services';
+        $comNs = 'http://www.huawei.com/bss/soaif/interface/common/';
 
+        // Navigate to Body
         $body = $parsed->children($soapNs)->Body;
-        $responseMsg = $body->children($serNs)->ChangePrimaryOfferingRspMsg;
+        if (!$body) {
+            AppLogger::api()->error('Missing SOAP Body in response', [
+                'object_id' => $objectId,
+            ]);
+            return [
+                'success' => false,
+                'error' => 'Missing SOAP Body',
+            ];
+        }
 
+        // Navigate to ChangePrimaryOfferingRspMsg
+        $responseMsg = $body->children($serNs)->ChangePrimaryOfferingRspMsg;
         if (!$responseMsg) {
             AppLogger::api()->error('Missing ChangePrimaryOfferingRspMsg in response', [
                 'object_id' => $objectId,
@@ -213,9 +229,20 @@ XML;
             ];
         }
 
-        // Parse response header
+        // Parse response header (ser:ResponseHeader)
         $header = $responseMsg->children($serNs)->ResponseHeader;
-        $headerData = $header ? $header->children($comNs) : null;
+        if (!$header) {
+            AppLogger::api()->error('Missing ResponseHeader in response', [
+                'object_id' => $objectId,
+            ]);
+            return [
+                'success' => false,
+                'error' => 'Missing ResponseHeader',
+            ];
+        }
+
+        // Get header data with com namespace
+        $headerData = $header->children($comNs);
 
         $responseTime = (string) ($headerData->ResponseTime ?? '');
         $retCode = (string) ($headerData->RetCode ?? '');
@@ -225,20 +252,17 @@ XML;
         $orderId = null;
         $additionalProps = [];
 
-        $additionalProperty = $headerData->AdditionalProperty ?? $header->AdditionalProperty ?? null;
-        if ($additionalProperty) {
-            foreach ($additionalProperty as $prop) {
-                $propData = $prop->children($comNs);
-                $code = (string) ($propData->Code ?? $prop->Code ?? '');
-                $value = (string) ($propData->Value ?? $prop->Value ?? '');
+        // AdditionalProperty elements are in com namespace
+        foreach ($headerData->AdditionalProperty as $prop) {
+            $code = (string) ($prop->Code ?? '');
+            $value = (string) ($prop->Value ?? '');
 
-                if ($code) {
-                    $additionalProps[$code] = $value;
+            if ($code) {
+                $additionalProps[$code] = $value;
 
-                    // Extract order ID
-                    if ($code === 'CustOrderId') {
-                        $orderId = $value;
-                    }
+                // Extract order ID
+                if ($code === 'CustOrderId') {
+                    $orderId = $value;
                 }
             }
         }
@@ -264,6 +288,8 @@ XML;
         AppLogger::api()->info('Primary offering changed successfully', [
             'object_id' => $objectId,
             'order_id' => $orderId,
+            'ret_code' => $retCode,
+            'ret_msg' => $retMsg,
         ]);
 
         return [

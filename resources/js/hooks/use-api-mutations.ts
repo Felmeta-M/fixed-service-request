@@ -425,3 +425,40 @@ export function useCreateSubscription() {
     });
 }
 
+/**
+ * Mutation hook for changing primary offering (upgrade/downgrade bandwidth)
+ */
+export function useChangePrimaryOffering() {
+    const token = useAuthToken();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        retry: false,
+        mutationFn: async (data: { service_number: string; bandwidth: string }) => {
+            if (!token) throw new Error('Authentication token required');
+            console.log('[useChangePrimaryOffering] Calling API', { 
+                service_number: data.service_number, 
+                bandwidth: data.bandwidth,
+                timestamp: new Date().toISOString() 
+            });
+            const response = await apiClient.post<any>('/change-primary-offering', data, {
+                token,
+            });
+            
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to change primary offering');
+            }
+            
+            return response;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['surveyList'] });
+            queryClient.invalidateQueries({ queryKey: ['surveyDetail'] });
+            toast.success('Service plan changed successfully!');
+        },
+        onError: (error: Error) => {
+            toast.error(error.message || 'Failed to change service plan');
+        },
+    });
+}
+

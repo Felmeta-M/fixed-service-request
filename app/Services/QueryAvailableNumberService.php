@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\Logging\AppLogger;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class QueryAvailableNumberService extends BaseApiService
@@ -99,12 +100,13 @@ class QueryAvailableNumberService extends BaseApiService
     {
         $xmlPayload = $this->buildXml($data);
         $xmlResponse = $this->executeRequest($xmlPayload);
+        Log::info('XML Response', ['response' => $xmlResponse]);
 
         AppLogger::api()->debug('Query available numbers response received', [
             'dept_id' => $data['dept_id'] ?? 'unknown',
         ]);
 
-        return $this->parseResponse($xmlResponse);
+        return $this->parseResponse($xmlResponse);  
     }
 
     /**

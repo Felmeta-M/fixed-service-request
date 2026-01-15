@@ -272,7 +272,8 @@ class SurveyOrderController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong. Please try again later.',
+                // 'message' => 'Something went wrong. Please try again later.',
+                'message' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

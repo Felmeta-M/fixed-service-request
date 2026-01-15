@@ -8,6 +8,7 @@ use App\Services\Subscription\SubscriptionServiceFactory;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
@@ -33,6 +34,7 @@ class SubsriptionController extends Controller
     {
         try {
             $data = $request->validated();
+            Log::info('Data Subscription Request', $data);
 
             $service = $this->factory->make($data['offering_id']);
 
@@ -76,7 +78,8 @@ class SubsriptionController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong. Please try again later.',
+                // 'message' => 'Something went wrong. Please try again later.',
+                'message' => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

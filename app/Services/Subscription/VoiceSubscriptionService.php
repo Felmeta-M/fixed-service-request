@@ -41,7 +41,10 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
 
       $xml = $this->buildXml($data);
       $response = $this->executeRequest($xml);
-      return $this->parseResponse($data, $response);
+      Log::info('Huawei Voice Response', ['response' => $response]);
+      $parsedResponse = $this->parseResponse($data, $response);
+      return $parsedResponse;
+
    }
 
    protected function buildXml(array $data): string
@@ -51,7 +54,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
       // Get dynamic customer profile, address, and BSS classification from logged-in user
       $profile = $this->getCustomerProfile();
       $address = $this->getCustomerAddress();
-      $bss = $this->getBssClassification();
+      $bss = $this->getBssClassification();    
 
       // Business defaults
       $data = array_merge($data, [
@@ -75,6 +78,10 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
       $serviceNumber = SurveyOrder::query()
          ->where('customer_survey_order_id', $data['survey_order_id'])
          ->value('service_number');
+      // 🔴 release reserved number on failure
+      if ($serviceNumber) {
+         $this->queryAvailableNumberService->releaseNumberService($serviceNumber);
+      }
 
       return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -202,11 +209,6 @@ XML;
       $hdr  = $rsp->ResponseHeader->children($ns['com']);
 
       if ((string) $hdr->RetCode !== '0') {
-         // 🔴 release reserved number on failure
-         if ($this->serviceNumber) {
-            $this->queryAvailableNumberService->releaseNumberService($this->serviceNumber);
-         }
-
          return ApiResponse::error((string) $hdr->RetMsg);
       }
 

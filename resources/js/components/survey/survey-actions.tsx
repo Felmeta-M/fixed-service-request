@@ -1,7 +1,7 @@
-import { useCancelSurveyOrder, useCreateSubscription, useDeleteSurveyOrder } from '@/hooks/use-api-mutations';
+import { useCancelSurveyOrder, useChangePrimaryOffering, useCreateSubscription, useDeleteSurveyOrder } from '@/hooks/use-api-mutations';
 import { getServiceActionFlags } from '@/lib/service-action-rules';
 import { router, usePage } from '@inertiajs/react';
-import { Eye, X } from 'lucide-react';
+import { ArrowDownToLineIcon, ArrowUpToLineIcon, Eye, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
@@ -16,6 +16,7 @@ import {
 } from '../ui/alert-dialog';
 import { Button } from '../ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { BandwidthChangeDialog } from './bandwidth-change-dialog';
 import { CancelConfirmationDialog } from './cancel-confirmation-dialog';
 import DeleteConfirmationDialog from './delete-confirmation-dialog';
 import SurveyDetailModal from './survey-detail-modal';
@@ -83,6 +84,8 @@ interface SurveyActionsProps {
 export default function SurveyActions({ survey, onActionComplete, onUpdatingChange }: SurveyActionsProps) {
     const [openCancelDialog, setOpenCancelDialog] = useState(false);
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+    const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
+    const [openDowngradeDialog, setOpenDowngradeDialog] = useState(false);
     const [error, setError] = useState('');
     const [customerData, setCustomerData] = useState<AuthUser | null>(null);
     const [showErrorDialog, setShowErrorDialog] = useState(false);
@@ -94,13 +97,14 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const cancelMutation = useCancelSurveyOrder();
     const deleteMutation = useDeleteSurveyOrder();
     const createSubscriptionMutation = useCreateSubscription();
+    const changePrimaryOfferingMutation = useChangePrimaryOffering();
     
     // Track subscription submission to prevent double-clicks
     // Use state for button disabled (triggers re-render) + ref for immediate guard
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isSubmittingRef = useRef(false);
 
-    const loading = cancelMutation.isPending || deleteMutation.isPending || createSubscriptionMutation.isPending || isSubmitting;
+    const loading = cancelMutation.isPending || deleteMutation.isPending || createSubscriptionMutation.isPending || changePrimaryOfferingMutation.isPending || isSubmitting;
 
     const { main_offer_id } = survey;
 
@@ -202,13 +206,54 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     };
 
     const handleUpgrade = () => {
-        console.log('Upgrade requested for survey:', survey.customer_survey_order_id);
-        alert(`Upgrade service ${survey.customer_survey_order_id}`);
+        setOpenUpgradeDialog(true);
     };
 
     const handleDowngrade = () => {
-        console.log('Downgrade requested for survey:', survey.customer_survey_order_id);
-        alert(`Downgrade service ${survey.customer_survey_order_id}`);
+        setOpenDowngradeDialog(true);
+    };
+
+    const handleBandwidthChange = (bandwidth: string, mode: 'upgrade' | 'downgrade') => {
+        const serviceNumber = survey.service_number as string;
+        if (!serviceNumber) {
+            setError('Service number is required for bandwidth change');
+            setShowErrorDialog(true);
+            return;
+        }
+
+        onUpdatingChange(true);
+        clearErrors();
+
+        const toastId = toast.loading(`Processing ${mode}...`);
+
+        changePrimaryOfferingMutation.mutate(
+            {
+                service_number: serviceNumber,
+                bandwidth: bandwidth,
+            },
+            {
+                onSuccess: () => {
+                    toast.success(`Service ${mode} successful!`, {
+                        id: toastId,
+                        description: `Bandwidth changed to ${bandwidth}`,
+                    });
+                    if (mode === 'upgrade') {
+                        setOpenUpgradeDialog(false);
+                    } else {
+                        setOpenDowngradeDialog(false);
+                    }
+                    onActionComplete();
+                    onUpdatingChange(false);
+                },
+                onError: (error: Error) => {
+                    toast.error(error.message || `Failed to ${mode} service`, {
+                        id: toastId,
+                    });
+                    handleApiError(error, `${mode}_bandwidth`);
+                    onUpdatingChange(false);
+                },
+            },
+        );
     };
 
     const getAddressInfo = () => {
@@ -400,14 +445,14 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                            {/* <DropdownMenuItem onClick={handleUpgrade} className="flex items-center gap-2 cursor-pointer">
+                         <DropdownMenuItem onClick={handleUpgrade} className="flex items-center gap-2 cursor-pointer">
                             <ArrowUpToLineIcon className="h-4 w-4" />
                             <span>Upgrade</span>
-                        </DropdownMenuItem> */}
-                            {/* <DropdownMenuItem onClick={handleDowngrade} className="flex items-center gap-2 cursor-pointer">
+                        </DropdownMenuItem> 
+                             <DropdownMenuItem onClick={handleDowngrade} className="flex items-center gap-2 cursor-pointer">
                             <ArrowDownToLineIcon className="h-4 w-4" />
                             <span>Downgrade</span>
-                        </DropdownMenuItem> */}
+                        </DropdownMenuItem> 
                             {/* {canCancel && <DropdownMenuSeparator />} */}
                             {canCancel && (
                                 <DropdownMenuItem onClick={() => setOpenCancelDialog(true)} className="flex cursor-pointer items-center gap-2">
@@ -480,6 +525,26 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             />
 
             <SurveyDetailModal open={openDetailModal} onOpenChange={setOpenDetailModal} survey={survey} />
+
+            <BandwidthChangeDialog
+                open={openUpgradeDialog}
+                onOpenChange={setOpenUpgradeDialog}
+                onConfirm={(bandwidth) => handleBandwidthChange(bandwidth, 'upgrade')}
+                loading={changePrimaryOfferingMutation.isPending}
+                mode="upgrade"
+                currentBandwidth={(survey as { bandwidth?: string }).bandwidth}
+                serviceNumber={survey.service_number as string}
+            />
+
+            <BandwidthChangeDialog
+                open={openDowngradeDialog}
+                onOpenChange={setOpenDowngradeDialog}
+                onConfirm={(bandwidth) => handleBandwidthChange(bandwidth, 'downgrade')}
+                loading={changePrimaryOfferingMutation.isPending}
+                mode="downgrade"
+                currentBandwidth={(survey as { bandwidth?: string }).bandwidth}
+                serviceNumber={survey.service_number as string}
+            />
         </>
     );
 }

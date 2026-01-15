@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApiResponse;
-use App\Services\ChangePrimaryOfferingService;
+use App\Services\ChangeBandwidthService;
 use App\Services\Logging\AppLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,10 +23,10 @@ use Illuminate\Http\Request;
  * Note: The object_id is typically the customer's service number.
  *       Requires domain expert verification for exact ID mapping.
  */
-class ChangePrimaryOfferingController extends Controller
+class ChangeBandwidthController extends Controller
 {
     public function __construct(
-        protected readonly ChangePrimaryOfferingService $changePrimaryOfferingService,
+        protected readonly ChangeBandwidthService $changeBandwidthService,
     ) {}
 
     /**
@@ -35,68 +35,15 @@ class ChangePrimaryOfferingController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function change(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'object_id' => 'required|string',
-            'old_offering_id' => 'required|string',
-            'new_offering_id' => 'nullable|string',
-            'object_id_type' => 'nullable|integer|in:' . implode(',', [
-                ChangePrimaryOfferingService::OBJECT_TYPE_CUSTOMER,
-                ChangePrimaryOfferingService::OBJECT_TYPE_ACCOUNT,
-                ChangePrimaryOfferingService::OBJECT_TYPE_SUBSCRIBER,
-            ]),
-        ]);
-
-        try {
-            $result = $this->changePrimaryOfferingService->changeOffering(
-                $validated['object_id'],
-                $validated['old_offering_id'],
-                $validated['new_offering_id'] ?? null,
-                $validated['object_id_type'] ?? ChangePrimaryOfferingService::OBJECT_TYPE_SUBSCRIBER
-            );
-
-            if (!$result['success']) {
-                return ApiResponse::error(
-                    $result['error'] ?? 'Change primary offering failed',
-                    422,
-                    $result['error'] ?? 'Change primary offering failed'
-                );
-            }
-
-            return ApiResponse::success($result, 'Primary offering changed successfully');
-        } catch (\Throwable $e) {
-            AppLogger::api()->error('Change primary offering request failed', [
-                'object_id' => $validated['object_id'],
-                'old_offering_id' => $validated['old_offering_id'],
-                'error' => $e->getMessage(),
-            ]);
-
-            return ApiResponse::fromException($e, 'Failed to change primary offering');
-        }
-    }
-
-    /**
-     * Change bandwidth offering for a subscriber (convenience endpoint).
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function changeBandwidth(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'subscriber_id' => 'required|string',
-            'current_offering_id' => 'required|string',
-            'new_offering_id' => 'nullable|string',
+            'service_number' => 'required|string',
+            'bandwidth' => 'required|string',
         ]);
 
         try {
-            $result = $this->changePrimaryOfferingService->changeBandwidth(
-                $validated['subscriber_id'],
-                $validated['current_offering_id'],
-                $validated['new_offering_id'] ?? null
-            );
-
+            $result = $this->changeBandwidthService->changeBandwidth($validated['service_number'], $validated['bandwidth']);
             if (!$result['success']) {
                 return ApiResponse::error(
                     $result['error'] ?? 'Change bandwidth failed',
@@ -105,31 +52,22 @@ class ChangePrimaryOfferingController extends Controller
                 );
             }
 
-            return ApiResponse::success($result, 'Bandwidth changed successfully');
+            return ApiResponse::success([
+                'message' => $result['message'] ?? 'Primary offering changed successfully',
+                'order_id' => $result['order_id'] ?? null,
+                'response_time' => $result['response_time'] ?? null,
+                'ret_code' => $result['ret_code'] ?? null,
+                'ret_msg' => $result['ret_msg'] ?? null,
+            ], 'Primary offering changed successfully');
         } catch (\Throwable $e) {
-            AppLogger::api()->error('Change bandwidth request failed', [
-                'subscriber_id' => $validated['subscriber_id'],
+            AppLogger::api()->error('Change primary offering request failed', [
+                'service_number' => $validated['service_number'],
+                'bandwidth' => $validated['bandwidth'],
                 'error' => $e->getMessage(),
             ]);
 
-            return ApiResponse::fromException($e, 'Failed to change bandwidth');
+            return ApiResponse::fromException($e, 'Failed to change primary offering');
         }
     }
 
-    /**
-     * Get available object ID types.
-     * 
-     * @return JsonResponse
-     */
-    public function objectTypes(): JsonResponse
-    {
-        return ApiResponse::success([
-            'object_types' => [
-                'customer' => ChangePrimaryOfferingService::OBJECT_TYPE_CUSTOMER,
-                'account' => ChangePrimaryOfferingService::OBJECT_TYPE_ACCOUNT,
-                'subscriber' => ChangePrimaryOfferingService::OBJECT_TYPE_SUBSCRIBER,
-            ],
-            'default' => ChangePrimaryOfferingService::OBJECT_TYPE_SUBSCRIBER,
-        ]);
-    }
 }

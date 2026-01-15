@@ -2,7 +2,7 @@ import { useCancelSurveyOrder, useCreateSubscription, useDeleteSurveyOrder } fro
 import { getServiceActionFlags } from '@/lib/service-action-rules';
 import { router, usePage } from '@inertiajs/react';
 import { Eye, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import {
     AlertDialog,
@@ -94,8 +94,13 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const cancelMutation = useCancelSurveyOrder();
     const deleteMutation = useDeleteSurveyOrder();
     const createSubscriptionMutation = useCreateSubscription();
+    
+    // Track subscription submission to prevent double-clicks
+    // Use state for button disabled (triggers re-render) + ref for immediate guard
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const isSubmittingRef = useRef(false);
 
-    const loading = cancelMutation.isPending || deleteMutation.isPending || createSubscriptionMutation.isPending;
+    const loading = cancelMutation.isPending || deleteMutation.isPending || createSubscriptionMutation.isPending || isSubmitting;
 
     const { main_offer_id } = survey;
 
@@ -277,6 +282,21 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         const id = survey?.customer_survey_order_id;
         if (!id) return;
 
+        // Prevent double-click / duplicate submission using ref for immediate check
+        if (isSubmittingRef.current || isSubmitting || createSubscriptionMutation.isPending || loading) {
+            console.log('[Subscribe] Blocked duplicate call', {
+                isSubmittingRef: isSubmittingRef.current,
+                isSubmitting,
+                isPending: createSubscriptionMutation.isPending,
+                loading,
+            });
+            return;
+        }
+
+        // Set flags immediately to prevent concurrent calls (both state and ref)
+        console.log('[Subscribe] Starting subscription', { survey_order_id: id });
+        isSubmittingRef.current = true;
+        setIsSubmitting(true);
         onUpdatingChange(true);
         clearErrors();
 
@@ -309,6 +329,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
         createSubscriptionMutation.mutate(payload, {
             onSuccess: () => {
+                isSubmittingRef.current = false;
+                setIsSubmitting(false);
                 toast.success('Subscription created successfully!', {
                     id: subscribeToast,
                     description: 'Your service subscription has been activated.',
@@ -318,6 +340,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 onUpdatingChange(false);
             },
             onError: (error: Error) => {
+                isSubmittingRef.current = false;
+                setIsSubmitting(false);
                 const msg = error.message || 'Subscription failed';
                 toast.error(msg, {
                     id: subscribeToast,
@@ -352,8 +376,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 )}
 
                 {canSubscribe && (
-                    <Button onClick={onSubscribeClick} disabled={loading} className="gap-1 bg-primary px-2 text-white" size="sm">
-                        Subscribe
+                    <Button onClick={onSubscribeClick} disabled={loading || isSubmitting} className="gap-1 bg-primary px-2 text-white" size="sm">
+                        {isSubmitting || createSubscriptionMutation.isPending ? 'Subscribing...' : 'Subscribe'}
                     </Button>
                 )}
                 <Button variant="ghost" size="sm" onClick={() => handleRowClick(survey as SurveyRow)} className="h-8 w-8 p-0">

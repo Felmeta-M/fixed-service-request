@@ -54,7 +54,13 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
 
     const createSubscriptionMutation = useCreateSubscription();
     const createPaymentOrderMutation = useCreatePaymentOrder();
-    const loading = createSubscriptionMutation.isPending || createPaymentOrderMutation.isPending;
+    
+    // Track subscription submission to prevent double-clicks
+    // Use state for button disabled (triggers re-render) + ref for immediate guard
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const isSubmittingRef = useRef(false);
+    
+    const loading = createSubscriptionMutation.isPending || createPaymentOrderMutation.isPending || isSubmitting;
 
     const payment = paymentDetails?.data;
     const customer_survey_order_id = payment?.customer_survey_order_id ?? surveyDetails?.customer_survey_order_id ?? '';
@@ -135,6 +141,15 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
     };
 
     const onSubscribeConfirm = () => {
+        // Prevent double-click / duplicate submission using ref for immediate check
+        if (isSubmittingRef.current || isSubmitting || createSubscriptionMutation.isPending) {
+            return;
+        }
+
+        // Set flags immediately to prevent concurrent calls (both state and ref)
+        isSubmittingRef.current = true;
+        setIsSubmitting(true);
+
         // Show loading toast when subscribe is clicked
         const subscribeToast = toast.loading('Processing subscription...');
 
@@ -160,6 +175,8 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
 
         createSubscriptionMutation.mutate(payload, {
             onSuccess: () => {
+                isSubmittingRef.current = false;
+                setIsSubmitting(false);
                 toast.success('Subscription created successfully!', {
                     id: subscribeToast,
                     description: 'Your service subscription has been activated.',
@@ -167,6 +184,8 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                 router.visit('/services/subscription-success');
             },
             onError: (error: Error) => {
+                isSubmittingRef.current = false;
+                setIsSubmitting(false);
                 toast.error(error.message || 'Subscription failed. Please try again.', {
                     id: subscribeToast,
                     description: 'Please try again or contact support if the issue persists.',
@@ -386,7 +405,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                     {canSubscribe && isFree ? (
                                         <Button
                                             onClick={onSubscribeConfirm}
-                                            disabled={loading || !customer_survey_order_id}
+                                            disabled={loading || isSubmitting || !customer_survey_order_id}
                                             className={`hover:opacity-90 ${focusFlash && focusSafe === 'subscribe' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                                         >
                                             {loading ? (

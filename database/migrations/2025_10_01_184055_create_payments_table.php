@@ -13,10 +13,10 @@ return new class extends Migration {
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('customer_code')->index();
-            $table->bigInteger('customer_survey_order_id')->unique();
-            $table->bigInteger('merch_code')->nullable();
-            $table->bigInteger('merch_order_id')->nullable();
+            $table->string('customer_code')->index();
+            $table->string('customer_survey_order_id')->unique();
+            $table->string('merch_code')->nullable();
+            $table->string('merch_order_id')->nullable();
             $table->string('payment_order_id')->nullable();
             $table->string('trans_id')->nullable()->unique();
             $table->decimal('total_amount', 12, 4);

@@ -388,6 +388,8 @@ export function useCreateSubscription() {
     const queryClient = useQueryClient();
 
     return useMutation({
+        // Disable retry for subscription mutations to prevent duplicate API calls
+        retry: false,
         mutationFn: async (data: {
             offering_id: string;
             survey_order_id: string;
@@ -405,6 +407,7 @@ export function useCreateSubscription() {
             completed_date: string;
         }) => {
             if (!token) throw new Error('Authentication token required');
+            console.log('[useCreateSubscription] Calling API', { survey_order_id: data.survey_order_id, timestamp: new Date().toISOString() });
             const response = await apiClient.post<any>('/services/subscription', data, {
                 token,
             });

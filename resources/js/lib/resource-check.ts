@@ -100,7 +100,7 @@ export const useResourceChecker = () => {
                 return {
                     available: isAvailable,
                     message: isAvailable
-                        ? `Resource available (${availablePorts} ports)`
+                        ? `Resource available in this area`
                         : 'No available resources in this area',
                     // Always return resource data (even when not available) as it contains encrypted fields needed for survey creation
                     data: resource,

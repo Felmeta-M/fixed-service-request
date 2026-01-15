@@ -231,6 +231,7 @@ class CustomerContext
         $customer = self::customer();
 
         return [
+            'ethio_zone' => $overrides['ethio_zone'] ?? self::ethioZoneOrRegion('21'), //TODO: remove this after testing NAAZ
             'region' => $overrides['region'] ?? self::region('3'),
             'city' => $overrides['city'] ?? self::city('1'),
             'zone' => $overrides['zone'] ?? self::zone('1'),
@@ -240,6 +241,14 @@ class CustomerContext
             'street_name' => $overrides['street_name'] ?? ($customer?->street_name ?? 'StreetName'),
             'apartment' => $overrides['apartment'] ?? ($customer?->apartment ?? 'Apartment'),
         ];
+    }
+
+    /**
+     * Get ethio zone or region.
+     */
+    public static function ethioZoneOrRegion(?string $fallback = '21'): string
+    {
+        return self::customer()?->ethio_zone_or_region ?? $fallback;
     }
 
     /**

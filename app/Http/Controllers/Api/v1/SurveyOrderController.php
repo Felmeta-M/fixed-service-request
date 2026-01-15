@@ -60,7 +60,7 @@ class SurveyOrderController extends Controller
                 ]);
 
             if ($request->filled('customer_survey_order_id')) {
-                $query->where('survey_orders.customer_survey_order_id', 'like', '%' . $request->survey_order_no . '%');
+                $query->where('survey_orders.customer_survey_order_id', 'like', '%' . $request->customer_survey_order_id . '%');
             }
 
             if ($request->filled('status')) {
@@ -68,7 +68,6 @@ class SurveyOrderController extends Controller
             }
 
             $surveyOrders = $query->latest('survey_orders.created_at')->paginate(10);
-            Log::info('surveyOrders', ['surveyOrders' => $surveyOrders]);
 
             // Collect orders that need refresh (WAITING status, not checked in last 5 minutes)
             $ordersToRefresh = collect($surveyOrders->items())
@@ -167,7 +166,7 @@ class SurveyOrderController extends Controller
                 $timestampUpdates[] = $order->id;
             } catch (Throwable $e) {
                 AppLogger::business()->warning('Failed to refresh survey order', [
-                    'survey_order_no' => $order->survey_order_no ?? null,
+                    'customer_survey_order_id' => $order->customer_survey_order_id ?? null,
                     'error' => $e->getMessage(),
                 ]);
             }
@@ -404,7 +403,7 @@ class SurveyOrderController extends Controller
         return [
             'id' => $order->id,
             'customer_survey_order_id' => $order->customer_survey_order_id,
-            'survey_order_no' => $order->survey_order_no,
+            'customer_survey_order_id' => $order->customer_survey_order_id,
             'customer_code' => $order->customer_code,
             'status' => $order->status,
             'main_offer_id' => $order->main_offer_id,

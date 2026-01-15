@@ -30,12 +30,39 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
    public function create(array $data)
    {
+      // Check if survey order is already subscribed (prevent duplicate subscriptions)
+      $surveyOrder = SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
+         ->first();
+
+      if (!$surveyOrder) {
+         throw new \RuntimeException('Survey order not found: ' . $data['survey_order_id']);
+      }
+
+      if ($surveyOrder->status === FFDServiceProvisionStatus::Subscribed->value) {
+         Log::warning('Attempted duplicate subscription', [
+            'survey_order_id' => $data['survey_order_id'],
+            'current_status' => $surveyOrder->status,
+         ]);
+
+         return [
+            'success' => false,
+            'ret_code' => 'DUPLICATE',
+            'ret_msg' => 'This survey order has already been used to create a subscription.',
+            'customer_busi_order_id' => null,
+            'extra_params' => [],
+         ];
+      }
+
       // Use shared helper to hydrate customer data
       $data = $this->hydrateWithCustomerData($data);
 
       $xml = $this->buildXml($data);
+      Log::info($xml);
       $response = $this->executeRequest($xml);
-      return $this->parseResponse($response, $data);
+      Log::info('Huawei Data Response', ['response' => $response]);
+      $parsedResponse =  $this->parseResponse($response, $data);
+      Log::info('Huawei Data Parsed Response', ['parsed_response' => $parsedResponse]);
+      return $parsedResponse;
    }
 
    public function getSubscriber(array $responseData): array
@@ -62,9 +89,9 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       $cfg['default_password'] = 'REDACTED_PASSWORD';
 
       // Get dynamic customer profile, address, and BSS classification from logged-in user
-      $profile = $this->getCustomerProfile($data);
-      $address = $this->getCustomerAddress($data);
-      $bss = $this->getBssClassification($data);
+      $profile = $this->getCustomerProfile();
+      $address = $this->getCustomerAddress();
+      $bss = $this->getBssClassification();
 
       // Business defaults
       $data = array_merge($data, [
@@ -138,8 +165,8 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                   <com:PrimaryLanguage>{$profile['primary_language']}</com:PrimaryLanguage>
 
                   <com:CustomerAddressInfo>
-                     <com:EthioZoneOrRegion>{$address['region']}</com:EthioZoneOrRegion>
-                     <com:AdministrativeRegionOrCity>{$address['city']}</com:AdministrativeRegionOrCity>
+                     <com:EthioZoneOrRegion>{$address['ethio_zone']}</com:EthioZoneOrRegion>
+                     <com:AdministrativeRegionOrCity>{$address['region']}</com:AdministrativeRegionOrCity>
                      <com:SubcityOrZone>{$address['zone']}</com:SubcityOrZone>
                      <com:WeredaOrTown>{$address['wereda']}</com:WeredaOrTown>
                      <com:Kebele>{$address['kebele']}</com:Kebele>
@@ -158,7 +185,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                <com:AccountInfo>
                   <com:PaymentType>1</com:PaymentType>
                   <com:InitialCredit>100</com:InitialCredit>
-                  <com:ethioZoneOrRegion>{$address['region']}</com:ethioZoneOrRegion>
+                  <com:ethioZoneOrRegion>{$address['ethio_zone']}</com:ethioZoneOrRegion>
                   <com:CollectionCenter>10172</com:CollectionCenter>
                   <com:Language>{$profile['primary_language']}</com:Language>
                   <com:EnterpriseCustomerName>{$data['enterprise_name']}</com:EnterpriseCustomerName>
@@ -166,7 +193,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                   <com:CreditClass>{$bss['credit_class']}</com:CreditClass>
                   <com:GreenList>1</com:GreenList>
                   <com:LateFeeFlag>1</com:LateFeeFlag>
-                  <com:AdministrativeRegionCity>{$address['city']}</com:AdministrativeRegionCity>
+                  <com:AdministrativeRegionCity>{$address['region']}</com:AdministrativeRegionCity>
                   <com:SubcityZone>{$address['zone']}</com:SubcityZone>
                   <com:WeredaTown>{$address['wereda']}</com:WeredaTown>
                   <com:Kebele>{$address['kebele']}</com:Kebele>
@@ -185,24 +212,43 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                <com:BusinessCode>{$this->businessCode()}</com:BusinessCode>
                <com:SubscriberInfo>
                   <com:SubType>1</com:SubType>
+                  
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
                         <com:OfferingId>
                            <com:OfferingId>{$this->offeringId()}</com:OfferingId>
                         </com:OfferingId>
-                        <com:InstanceProperty>
+                         <com:InstanceProperty>
                            <com:PropertyCode>50135</com:PropertyCode>
                            <com:PropertyType>1</com:PropertyType>
-                           <com:Value>{$data['cpe_type']}</com:Value>
+                           <com:Value>2701DTU</com:Value>
                         </com:InstanceProperty>
                         <com:InstanceProperty>
                            <com:PropertyCode>50134</com:PropertyCode>
                            <com:PropertyType>1</com:PropertyType>
-                           <com:Value>{$data['cpe_serial']}</com:Value>
+                           <com:Value>2</com:Value>
                         </com:InstanceProperty>
-
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
+
+                  <com:SupplementaryOfferingList>
+                     <com:OfferingInstance>
+                        <com:OfferingId>
+                           <com:OfferingId>1005858159</com:OfferingId>
+                        </com:OfferingId>
+                        <com:InstanceProperty>
+                           <com:PropertyCode>50135</com:PropertyCode>
+                           <com:PropertyType>1</com:PropertyType>
+                           <com:Value>2701DTU</com:Value>
+                        </com:InstanceProperty>
+                        <com:InstanceProperty>
+                           <com:PropertyCode>50134</com:PropertyCode>
+                           <com:PropertyType>1</com:PropertyType>
+                           <com:Value>2</com:Value>
+                        </com:InstanceProperty>
+                     </com:OfferingInstance>
+                     <com:EffectiveMode>0</com:EffectiveMode>
+                  </com:SupplementaryOfferingList>
 
                   <com:SLAPriority>6</com:SLAPriority>
                   <com:InternetAccount>{$email}</com:InternetAccount>
@@ -232,45 +278,57 @@ XML;
       ];
 
       $obj = simplexml_load_string($xml);
-      if (!$obj) {
-         return $res;
-      }
 
-      $namespaces = $obj->getNamespaces(true);
+      // Use hardcoded namespace URIs for reliability (namespaces may be declared in child elements)
+      $soapNs = 'http://schemas.xmlsoap.org/soap/envelope/';
+      $serNs = 'http://oss.huawei.com/webservice/bss/services';
+      $comNs = 'http://www.huawei.com/bss/soaif/interface/common/';
 
       // SOAP Body
-      $body = $obj->children($namespaces['soapenv'])->Body ?? null;
+      $body = $obj->children($soapNs)->Body ?? null;
       if (!$body) {
+         Log::error('Missing SOAP Body in response');
          return $res;
       }
 
       // Huawei response
-      $rsp = $body->children($namespaces['ser'])->CreateNewSubscriberRspMsg ?? null;
+      $rsp = $body->children($serNs)->CreateNewSubscriberRspMsg ?? null;
       if (!$rsp) {
+         Log::error('Missing CreateNewSubscriberRspMsg in response');
          return $res;
       }
 
-      // Response header
-      $header = $rsp
-         ->children($namespaces['ser'])
-         ->ResponseHeader
-         ->children($namespaces['com']);
+      // Get ser: namespace children for accessing ResponseHeader, CustomerBusiOrderId, ExtParamList
+      $serChildren = $rsp->children($serNs);
 
-      $res['ret_code'] = (string) $header->RetCode;
-      $res['ret_msg'] = (string) $header->RetMsg;
-      $res['success'] = ($res['ret_code'] === '0');
+      // Response header (ser:ResponseHeader)
+      $header = $serChildren->ResponseHeader ?? null;
+      if (!$header) {
+         Log::error('Missing ResponseHeader in response');
+         return $res;
+      }
 
-      // Customer business order ID
-      $res['customer_busi_order_id'] =
-         (string) $rsp->children($namespaces['ser'])->CustomerBusiOrderId;
+      // Header data is in com: namespace (com:RetCode, com:RetMsg)
+      $headerData = $header->children($comNs);
+      $res['ret_code'] = (string) ($headerData->RetCode ?? '');
+      $res['ret_msg'] = (string) ($headerData->RetMsg ?? '');
+      $res['success'] = ($res['ret_code'] == '0');
 
-      // Extra parameters (FBBNUMBER, etc.)
-      if (isset($rsp->ExtParamList)) {
-         foreach (
-            $rsp->ExtParamList->children($namespaces['com'])->ParameterInfo as $p
-         ) {
-            $res['extra_params'][(string) $p->ParamName]
-               = (string) $p->ParamValue;
+      // Customer business order ID (ser:CustomerBusiOrderId)
+      $res['customer_busi_order_id'] = (string) ($serChildren->CustomerBusiOrderId ?? '');
+
+      // Extra parameters (ser:ExtParamList containing com:ParameterInfo)
+      $extParamList = $serChildren->ExtParamList ?? null;
+      if ($extParamList) {
+         $paramInfos = $extParamList->children($comNs)->ParameterInfo ?? [];
+         foreach ($paramInfos as $p) {
+            // ParamName and ParamValue are also in com: namespace
+            $pChildren = $p->children($comNs);
+            $paramName = (string) ($pChildren->ParamName ?? '');
+            $paramValue = (string) ($pChildren->ParamValue ?? '');
+            if ($paramName) {
+               $res['extra_params'][$paramName] = $paramValue;
+            }
          }
       }
 
@@ -327,6 +385,13 @@ XML;
                ]);
             }
          }
+      } else {
+         // Log Huawei error response
+         Log::warning('Huawei subscription request failed', [
+            'ret_code' => $res['ret_code'],
+            'ret_msg' => $res['ret_msg'],
+            'survey_order_id' => $data['survey_order_id'] ?? null,
+         ]);
       }
 
       return $res;

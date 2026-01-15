@@ -30,7 +30,7 @@ class DataSurveyService extends BaseSurveyService implements SurveyInterface
         $customerCode = $this->customerCode($data['customer_code'] ?? null);
 
         $bandwidth = $data['bandwidth'] ? $this->parseBandwidth($data['bandwidth']) : '';
-        Log::info('bandwidth', ['bandwidth' => $bandwidth]);
+
         $houseNo = $data['survey_address_info']['house_no'] ?? CustomerContext::houseNo('');
 
         return <<<XML

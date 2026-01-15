@@ -49,9 +49,9 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
       $cfg = config('services.subscriber');
 
       // Get dynamic customer profile, address, and BSS classification from logged-in user
-      $profile = $this->getCustomerProfile($data);
-      $address = $this->getCustomerAddress($data);
-      $bss = $this->getBssClassification($data);
+      $profile = $this->getCustomerProfile();
+      $address = $this->getCustomerAddress();
+      $bss = $this->getBssClassification();
 
       // Business defaults
       $data = array_merge($data, [
@@ -126,8 +126,8 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:PrimaryLanguage>{$profile['primary_language']}</com:PrimaryLanguage>
 
                   <com:CustomerAddressInfo>
-                     <com:EthioZoneOrRegion>{$address['region']}</com:EthioZoneOrRegion>
-                     <com:AdministrativeRegionOrCity>{$address['city']}</com:AdministrativeRegionOrCity>
+                     <com:EthioZoneOrRegion>{$address['ethio_zone']}</com:EthioZoneOrRegion>
+                     <com:AdministrativeRegionOrCity>{$address['region']}</com:AdministrativeRegionOrCity>
                      <com:SubcityOrZone>{$address['zone']}</com:SubcityOrZone>
                      <com:WeredaOrTown>{$address['wereda']}</com:WeredaOrTown>
                      <com:Kebele>{$address['kebele']}</com:Kebele>
@@ -144,7 +144,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:PaymentType>1</com:PaymentType>
                   <com:BillCycle>01</com:BillCycle>
                   <com:InitialCredit>100</com:InitialCredit>
-                  <com:ethioZoneOrRegion>{$address['region']}</com:ethioZoneOrRegion>
+                  <com:ethioZoneOrRegion>{$address['ethio_zone']}</com:ethioZoneOrRegion>
                   <com:CollectionCenter>10172</com:CollectionCenter>
                   <com:Language>{$profile['primary_language']}</com:Language>
                   <com:EnterpriseCustomerName>{$data['enterprise_name']}</com:EnterpriseCustomerName>

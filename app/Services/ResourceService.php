@@ -21,13 +21,12 @@ class ResourceService extends BaseApiService
         try {
             $xmlPayload = $this->buildRequestXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            // Log::info($xmlResponse);
             $parsedXml = $this->parseResponseXml($xmlResponse, $data);
             return $parsedXml;
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
         } catch (\Throwable $e) {
-            return ApiResponse::exception($e, 'Resource check failed.');
+            return ApiResponse::fromException($e, 'Resource check failed.');
         }
     }
 
@@ -148,9 +147,9 @@ XML;
         $shortestResource = $this->getShortestResource($resources);
 
         if ($shortestResource) {
-            return ApiResponse::success($shortestResource);
+            return ApiResponse::success($shortestResource, message: 'Resource found');
         } else {
-            return ApiResponse::success(data: $this->emptyResource($data), success: false);
+            return ApiResponse::success(data: $this->emptyResource($data), message: 'No resource found');
         }
     }
 

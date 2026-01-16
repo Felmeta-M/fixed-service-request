@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Log;
 
 class AvailableDeviceController extends Controller
 {
@@ -23,14 +24,14 @@ class AvailableDeviceController extends Controller
      * - device_type: Direct filter by device type ('broadband', 'voice', 'universal')
      * - vendor: Filter by vendor name
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         // Build cache key based on filters
         $cacheKey = $this->buildCacheKey($request);
 
         $devices = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($request) {
             $query = DB::table('available_devices')
-                ->where('is_active', true)
+                // ->where('is_active', true)
                 ->select([
                     'id',
                     'name',
@@ -43,6 +44,8 @@ class AvailableDeviceController extends Controller
                     'specifications',
                     'is_active',
                 ]);
+
+            Log::info('Devices', ['devices' => $query->get()]);
 
             // Filter by service type (maps to device type)
             if ($request->has('service_type')) {
@@ -77,6 +80,7 @@ class AvailableDeviceController extends Controller
 
             return $query->orderBy('price', 'asc')->get();
         });
+
 
         // Transform devices
         $devicesData = $devices->map(function ($device) {

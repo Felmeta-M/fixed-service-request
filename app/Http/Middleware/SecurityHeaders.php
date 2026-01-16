@@ -56,6 +56,12 @@ class SecurityHeaders
     protected function buildHeaders(): array
     {
         $isProduction = app()->isProduction();
+        $disableHttpSecurity = env('DISABLE_HTTP_SECURITY', true);
+
+        // If HTTP security is disabled, return empty headers array
+        if ($disableHttpSecurity) {
+            return [];
+        }
 
         return [
             // Prevent MIME type sniffing
@@ -100,13 +106,13 @@ class SecurityHeaders
     {
         $isProduction = app()->isProduction();
         $vitePort = config('vite.port', 5173);
-        
+
         // Base script sources
-        $scriptSources = ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"];
-        
+        $scriptSources = ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://maps.googleapis.com"];
+
         // Base connect sources
         $connectSources = ["'self'", "https:"];
-        
+
         // In development, allow Vite dev server (both IPv4 and IPv6 localhost)
         if (!$isProduction) {
             $viteUrls = [
@@ -117,10 +123,10 @@ class SecurityHeaders
                 "ws://127.0.0.1:{$vitePort}",
                 "ws://[::1]:{$vitePort}",
             ];
-            
+
             // Add Vite URLs to script sources
             $scriptSources = array_merge($scriptSources, $viteUrls);
-            
+
             // Add Vite URLs to connect sources
             $connectSources = array_merge($connectSources, $viteUrls);
         }

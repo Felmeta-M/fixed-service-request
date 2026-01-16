@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Log;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
-   public function __construct(protected readonly GetCombiningService $get_combining_service) {}
+   public function __construct(protected readonly GetCombiningService $get_combining_service)
+   {
+   }
 
    protected function offeringId(): int
    {
@@ -60,8 +62,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       Log::info($xml);
       $response = $this->executeRequest($xml);
       Log::info('Huawei Data Response', ['response' => $response]);
-      $parsedResponse =  $this->parseResponse($response, $data);
-      Log::info('Huawei Data Parsed Response', ['parsed_response' => $parsedResponse]);
+      $parsedResponse = $this->parseResponse($response, $data);
       return $parsedResponse;
    }
 
@@ -351,10 +352,10 @@ XML;
          // Update SurveyOrder
          SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
             ->update([
-               'service_number' => $serviceNo,
-               'status' => FFDServiceProvisionStatus::Subscribed->value,
-               'subscribed_at' => now(),
-            ]);
+                  'service_number' => $serviceNo,
+                  'status' => FFDServiceProvisionStatus::Subscribed->value,
+                  'subscribed_at' => now(),
+               ]);
 
          // Send SMS
          if (

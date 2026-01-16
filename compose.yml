@@ -43,28 +43,28 @@ services:
     networks:
       - app_net
 
-  queue:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: ffd_queue
-    restart: always
-    env_file:
-      - .env
-    volumes:
-      - ./:/var/www
-    depends_on:
-      redis:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    command: >
-      php artisan queue:work redis
-      --sleep=3
-      --tries=3
-      --timeout=90
-    networks:
-      - app_net
+  # queue:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/php/Dockerfile
+  #   container_name: ffd_queue
+  #   restart: always
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./:/var/www
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #     postgres:
+  #       condition: service_healthy
+  #   command: >
+  #     php artisan queue:work redis
+  #     --sleep=3
+  #     --tries=3
+  #     --timeout=90
+  #   networks:
+  #     - app_net
 
 
   nginx:

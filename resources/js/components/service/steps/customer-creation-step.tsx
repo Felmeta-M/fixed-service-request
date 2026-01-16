@@ -1781,9 +1781,9 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                             religion: customer.religion || '',
                             income: customer.income || '',
                             primary_language: customer.primary_language || '2060',
-                            customer_type: customer.customer_type || '1',
-                            customer_category: customer.customer_category || '1',
-                            customer_subcategory: customer.customer_subcategory || '1',
+                            customer_type: customer.customer_type || '1', // Default to Individual
+                            customer_category: customer.customer_category || (customer.customer_type === '1' || !customer.customer_type ? '1' : ''),
+                            customer_subcategory: customer.customer_subcategory || (customer.customer_type === '1' || !customer.customer_type ? '1' : ''),
                             contact: {
                                 notification_mode: customer.contact?.notification_mode || customer.notification_mode || '1',
                                 mobile_no: customer.contact?.mobile_no || customer.phone || customer.mobile_no || '',
@@ -1842,6 +1842,16 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                         }
                     } else {
                         console.log('No customer data found or success false:', responseData);
+                        // Ensure defaults are set when no customer data exists
+                        if (!data.customer_type || data.customer_type === '') {
+                            setData('customer_type', '1');
+                        }
+                        if (!data.customer_category || data.customer_category === '') {
+                            setData('customer_category', '1');
+                        }
+                        if (!data.customer_subcategory || data.customer_subcategory === '') {
+                            setData('customer_subcategory', '1');
+                        }
                         toast.info('Starting with new customer form', {
                             description: 'No existing customer data found',
                             duration: 3000,
@@ -1849,16 +1859,47 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                     }
                 } else if (customerError) {
                     console.error('Error loading customer data:', customerError);
+                    // Ensure defaults are set even on error
+                    if (!data.customer_type || data.customer_type === '') {
+                        setData('customer_type', '1');
+                    }
+                    if (!data.customer_category || data.customer_category === '') {
+                        setData('customer_category', '1');
+                    }
+                    if (!data.customer_subcategory || data.customer_subcategory === '') {
+                        setData('customer_subcategory', '1');
+                    }
                     toast.error('Failed to load customer data', {
                         description: customerError.message || 'Please try again',
                         duration: 5000,
                     });
                 } else if (!isLoadingCustomer && user?.customer_sub_id) {
                     console.log('No customer data received for ID:', user.customer_sub_id);
+                    // Ensure defaults are set when no customer data is received
+                    if (!data.customer_type || data.customer_type === '') {
+                        setData('customer_type', '1');
+                    }
+                    if (!data.customer_category || data.customer_category === '') {
+                        setData('customer_category', '1');
+                    }
+                    if (!data.customer_subcategory || data.customer_subcategory === '') {
+                        setData('customer_subcategory', '1');
+                    }
                     toast.info('Starting with new customer form', {
                         description: 'No existing customer data found',
                         duration: 3000,
                     });
+                } else if (!isLoadingCustomer && !user?.customer_sub_id) {
+                    // New user - ensure defaults are set
+                    if (!data.customer_type || data.customer_type === '') {
+                        setData('customer_type', '1');
+                    }
+                    if (!data.customer_category || data.customer_category === '') {
+                        setData('customer_category', '1');
+                    }
+                    if (!data.customer_subcategory || data.customer_subcategory === '') {
+                        setData('customer_subcategory', '1');
+                    }
                 }
             } catch (error) {
                 console.error('Error in prefill data loading:', error);
@@ -1886,16 +1927,16 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
 
     // Initialize defaults on mount - ensure Individual is selected with Residential defaults
     useEffect(() => {
-        // Ensure customer_type defaults to '1' (Individual)
-        if (!data.customer_type) {
+        // Always ensure customer_type defaults to '1' (Individual) if not set
+        if (!data.customer_type || data.customer_type === '') {
             setData('customer_type', '1');
         }
         // When customer_type is '1' (Individual), set defaults to Residential
         if (data.customer_type === '1') {
-            if (!data.customer_category || data.customer_category !== '1') {
+            if (!data.customer_category || data.customer_category === '') {
                 setData('customer_category', '1');
             }
-            if (!data.customer_subcategory || data.customer_subcategory !== '1') {
+            if (!data.customer_subcategory || data.customer_subcategory === '') {
                 setData('customer_subcategory', '1');
             }
         }
@@ -2442,7 +2483,7 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                 label="Customer Type"
                                 required
                                 id="customer_type"
-                                value={data.customer_type || '1'}
+                                value={data.customer_type || '1'} // Always default to '1' (Individual)
                                 onChange={(val) => {
                                     setData('customer_type', val);
                                     // When Individual (value '1') is selected, set defaults to Residential

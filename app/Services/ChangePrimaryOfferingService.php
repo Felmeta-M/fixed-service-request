@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\SurveyOrder;
 use App\Services\Logging\AppLogger;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
@@ -19,7 +20,7 @@ use RuntimeException;
  * 
  * @see QueryPurchasedOfferingService::queryByServiceNumber()
  */
-class ChangeBandwidthService extends BaseApiService
+class ChangePrimaryOfferingService extends BaseApiService
 {
     protected int $timeout = 30;
     protected int $rateLimit = 10;
@@ -45,7 +46,7 @@ class ChangeBandwidthService extends BaseApiService
      * @param int $objectIdType Object ID type (default: 4 = Subscriber)
      * @return array Change result with order ID
      */
-    public function changeBandwidth(
+    public function changePrimaryOffering(
         string $serviceNumber,
         string $bandwidth,
     ): array {
@@ -64,9 +65,10 @@ class ChangeBandwidthService extends BaseApiService
             $data['old_offering_id'] = $surveyOrder->main_offer_id;
             $data['new_offering_id'] = $surveyOrder->main_offer_id;
             $data['bandwidth'] = $this->parseBandwidth($bandwidth);
-
             $xmlPayload = $this->buildXml($data);
+            Log::info('XML Payload', ['xml_payload' => $xmlPayload]);
             $xmlResponse = $this->executeRequest($xmlPayload);
+            Log::info('XML Response', ['xml_response' => $xmlResponse]);
             $result = $this->parseResponse($xmlResponse, $serviceNumber);
 
             // Return the parsed result

@@ -9,6 +9,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -401,7 +402,6 @@ export function LocationSetupStep({
     const handleManualCoordinateSubmit = async () => {
         const lat = parseCoordinate(manualLat);
         const lng = parseCoordinate(manualLng);
-        setShowUpdateBtn(false);
 
         if (!lat || !lng) {
             setLocationError('Please enter valid coordinates');
@@ -418,8 +418,11 @@ export function LocationSetupStep({
             return;
         }
 
+        setLocationError('');
         const address = await getGoogleAddressFromCoordinates(lat, lng);
         await handleLocationSelect(lat, lng, address);
+        // Hide button after successful update
+        setShowUpdateBtn(false);
     };
 
     const handleAddressSearch = async (address: string) => {
@@ -599,6 +602,30 @@ export function LocationSetupStep({
                                             </Field>
                                         </div>
                                     </FieldGroup>
+
+                                    {/* Update Location Button */}
+                                    {showUpdateBtn && (
+                                        <div className="flex justify-end">
+                                            <Button
+                                                type="button"
+                                                onClick={handleManualCoordinateSubmit}
+                                                disabled={locationLoading || isGeocoding || isMapAnimating}
+                                                className="h-9 px-4"
+                                            >
+                                                {locationLoading || isGeocoding ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        Updating...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <MapPin className="mr-2 h-4 w-4" />
+                                                        Update Location
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    )}
 
                                     {/* Address Display (if available) */}
                                     {mapLocation?.address && (

@@ -27,7 +27,7 @@ use App\Http\Controllers\Api\v1\TelecomRegionController;
 use App\Http\Controllers\Api\v1\TroubleTicketController;
 use App\Http\Controllers\Api\v1\SubscriptionOrderStatusController;
 use App\Http\Controllers\Api\v1\PurchasedOfferingController;
-use App\Http\Controllers\Api\v1\ChangeBandwidthController;
+use App\Http\Controllers\Api\v1\ChangePrimaryOfferingController;
 use App\Http\Middleware\AuthenticateServiceClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -126,7 +126,7 @@ Route::prefix('v1')->group(function () {
             Route::get('purchased-offering/object-types', [PurchasedOfferingController::class, 'objectTypes']);
 
             // Change primary offering (bandwidth/plan upgrade/downgrade)
-            Route::post('change-primary-offering', [ChangeBandwidthController::class, 'changeBandwidth']);
+            Route::post('change-primary-offering', [ChangePrimaryOfferingController::class, 'changePrimaryOffering']);
         });
 
         // Critical operations: Payments, orders, subscriptions

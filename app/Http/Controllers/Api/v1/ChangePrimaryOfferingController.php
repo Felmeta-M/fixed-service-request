@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Services\ApiResponse;
-use App\Services\ChangeBandwidthService;
+use App\Services\ChangePrimaryOfferingService;
 use App\Services\Logging\AppLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Change Primary Offering Controller
@@ -23,10 +24,10 @@ use Illuminate\Http\Request;
  * Note: The object_id is typically the customer's service number.
  *       Requires domain expert verification for exact ID mapping.
  */
-class ChangeBandwidthController extends Controller
+class ChangePrimaryOfferingController extends Controller
 {
     public function __construct(
-        protected readonly ChangeBandwidthService $changeBandwidthService,
+        protected readonly ChangePrimaryOfferingService $changePrimaryOfferingService,
     ) {}
 
     /**
@@ -35,7 +36,7 @@ class ChangeBandwidthController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function changeBandwidth(Request $request): JsonResponse
+    public function changePrimaryOffering(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'service_number' => 'required|string',
@@ -43,7 +44,7 @@ class ChangeBandwidthController extends Controller
         ]);
 
         try {
-            $result = $this->changeBandwidthService->changeBandwidth($validated['service_number'], $validated['bandwidth']);
+            $result = $this->changePrimaryOfferingService->changePrimaryOffering($validated['service_number'], $validated['bandwidth']);
             if (!$result['success']) {
                 return ApiResponse::error(
                     $result['error'] ?? 'Change bandwidth failed',

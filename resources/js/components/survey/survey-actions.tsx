@@ -429,7 +429,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                     <Eye className="h-4 w-4" />
                     <span className="sr-only">View details</span>
                 </Button>
-                {canCancel && (
+                {/* {canCancel && ( */}
+                
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={loading}>
@@ -462,7 +463,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                             )}
                         </DropdownMenuContent>
                     </DropdownMenu>
-                )}
+                {/* )} */}
 
                 {/* {canCancel && (
                     <Button

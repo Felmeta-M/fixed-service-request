@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Enums\ErrorCode;
 use App\Http\Controllers\Controller;
 use App\Services\ApiResponse;
 use App\Services\ChangePrimaryOfferingService;
@@ -47,9 +48,14 @@ class ChangePrimaryOfferingController extends Controller
             $result = $this->changePrimaryOfferingService->changePrimaryOffering($validated['service_number'], $validated['bandwidth']);
             if (!$result['success']) {
                 return ApiResponse::error(
-                    $result['error'] ?? 'Change bandwidth failed',
-                    422,
-                    $result['error'] ?? 'Change bandwidth failed'
+                    message: $result['error'] ?? $result['ret_msg'] ?? 'Change bandwidth failed',
+                    errorCode: ErrorCode::EXTERNAL_SERVICE_ERROR,
+                    status: 422,
+                    context: [
+                        'ret_code' => $result['ret_code'] ?? null,
+                        'ret_msg' => $result['ret_msg'] ?? null,
+                        'response_time' => $result['response_time'] ?? null,
+                    ]
                 );
             }
 

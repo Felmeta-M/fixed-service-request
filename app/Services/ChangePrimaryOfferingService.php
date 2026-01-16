@@ -61,7 +61,7 @@ class ChangePrimaryOfferingService extends BaseApiService
             }
 
             $data['object_id_type'] = self::OBJECT_TYPE_SUBSCRIBER;
-            $data['object_id'] = $serviceNumber;
+            $data['object_id'] = 291018719; // $serviceNumber; //TODO: change to $serviceNumber
             $data['old_offering_id'] = $surveyOrder->main_offer_id;
             $data['new_offering_id'] = $surveyOrder->main_offer_id;
             $data['bandwidth'] = $this->parseBandwidth($bandwidth);
@@ -143,16 +143,23 @@ class ChangePrimaryOfferingService extends BaseApiService
             <ser:OldPrimaryOffering>
                 <com:OfferingId>{$oldOfferingId}</com:OfferingId>
             </ser:OldPrimaryOffering>
+
             <ser:NewPrimaryOffering>
-            <com:OfferingId>{$newOfferingId}</com:OfferingId>
-            <com:InstanceProperty>
-                <com:PropertyCode>50020</com:PropertyCode>
-                <com:Value>{$bandwidth}</com:Value>
-                <ser:EffectiveMode>
-                <com:Mode>I</com:Mode>
-                </ser:EffectiveMode>
-            </com:InstanceProperty>
-         </ser:NewPrimaryOffering>
+                    <com:OfferingId>
+                        <com:OfferingId>{$newOfferingId}</com:OfferingId>
+                        </com:OfferingId>       
+                        <com:InstanceProperty>
+                        <com:PropertyCode>50020</com:PropertyCode>
+                        <!--Optional:-->
+                        <com:OldValue>?</com:OldValue>
+                        <!--You have a CHOICE of the next 2 items at this level-->
+                        <com:Value>{$bandwidth}</com:Value>
+                        </com:InstanceProperty>
+                        <ser:EffectiveMode>
+                        <com:Mode>I</com:Mode>
+                        </ser:EffectiveMode>
+            </ser:NewPrimaryOffering>
+
          <ser:ExtParamList>
             <com:ParameterInfo>
                <com:ParamName>ActionType</com:ParamName>
@@ -180,6 +187,19 @@ XML;
      *           <com:Code>CustOrderId</com:Code>
      *           <com:Value>20000455498250</com:Value>
      *         </com:AdditionalProperty>
+     *       </ser:ResponseHeader>
+     *     </ser:ChangePrimaryOfferingRspMsg>
+     *   </soapenv:Body>
+     * </soapenv:Envelope>
+     * 
+     * Error response structure (e.g., pending order):
+     * <soapenv:Envelope>
+     *   <soapenv:Body>
+     *     <ser:ChangePrimaryOfferingRspMsg>
+     *       <ser:ResponseHeader>
+     *         <com:ResponseTime>20260116125509</com:ResponseTime>
+     *         <com:RetCode>1219000165</com:RetCode>
+     *         <com:RetMsg>Error! The subscriber has pending order@149504001</com:RetMsg>
      *       </ser:ResponseHeader>
      *     </ser:ChangePrimaryOfferingRspMsg>
      *   </soapenv:Body>
@@ -277,12 +297,14 @@ XML;
                 'object_id' => $objectId,
                 'ret_code' => $retCode,
                 'ret_msg' => $retMsg,
+                'response_time' => $responseTime,
             ]);
 
             return [
                 'success' => false,
                 'ret_code' => $retCode,
                 'ret_msg' => $retMsg,
+                'response_time' => $responseTime,
                 'error' => $retMsg ?: "Change failed with code: {$retCode}",
             ];
         }

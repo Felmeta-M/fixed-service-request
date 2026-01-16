@@ -4,16 +4,6 @@ import { router, usePage } from '@inertiajs/react';
 import { ArrowDownToLineIcon, ArrowUpToLineIcon, Eye, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '../ui/alert-dialog';
 import { Button } from '../ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { BandwidthChangeDialog } from './bandwidth-change-dialog';
@@ -88,7 +78,6 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const [openDowngradeDialog, setOpenDowngradeDialog] = useState(false);
     const [error, setError] = useState('');
     const [customerData, setCustomerData] = useState<AuthUser | null>(null);
-    const [showErrorDialog, setShowErrorDialog] = useState(false);
     const [openDetailModal, setOpenDetailModal] = useState(false);
     const [apiErrors, setApiErrors] = useState<{ [key: string]: string }>({});
 
@@ -98,7 +87,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const deleteMutation = useDeleteSurveyOrder();
     const createSubscriptionMutation = useCreateSubscription();
     const changePrimaryOfferingMutation = useChangePrimaryOffering();
-    
+
     // Track subscription submission to prevent double-clicks
     // Use state for button disabled (triggers re-render) + ref for immediate guard
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,7 +105,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         }
     }, [user]);
 
-    const handleApiError = (result: unknown, context: string = '') => {
+    const handleApiError = (result: unknown, context: string = '', toastId?: string | number) => {
         console.error(`API Error in ${context}:`, result);
 
         let errorMessage = 'An unexpected error occurred. Please try again.';
@@ -142,7 +131,17 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             ...prev,
             [context]: errorMessage,
         }));
-        setShowErrorDialog(true);
+
+        // Show toast with bigger text
+        toast.error('Payment Setup Error', {
+            id: toastId,
+            description: errorMessage,
+            duration: 8000,
+            className: 'text-lg [&>div]:text-lg [&>div>div]:text-lg',
+            style: {
+                fontSize: '18px',
+            },
+        });
 
         return errorMessage;
     };
@@ -150,13 +149,20 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const clearErrors = () => {
         setError('');
         setApiErrors({});
-        setShowErrorDialog(false);
     };
 
     const handleCancel = (cancellationReason?: string) => {
         if (!cancellationReason) {
-            setError('Please provide a reason for cancellation.');
-            setShowErrorDialog(true);
+            const errorMsg = 'Please provide a reason for cancellation.';
+            setError(errorMsg);
+            toast.error('Cancellation Error', {
+                description: errorMsg,
+                duration: 5000,
+                className: 'text-lg [&>div]:text-lg [&>div>div]:text-lg',
+                style: {
+                    fontSize: '18px',
+                },
+            });
             return;
         }
 
@@ -216,8 +222,16 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const handleBandwidthChange = (bandwidth: string, mode: 'upgrade' | 'downgrade') => {
         const serviceNumber = survey.service_number as string;
         if (!serviceNumber) {
-            setError('Service number is required for bandwidth change');
-            setShowErrorDialog(true);
+            const errorMsg = 'Service number is required for bandwidth change';
+            setError(errorMsg);
+            toast.error('Bandwidth Change Error', {
+                description: errorMsg,
+                duration: 5000,
+                className: 'text-lg [&>div]:text-lg [&>div>div]:text-lg',
+                style: {
+                    fontSize: '18px',
+                },
+            });
             return;
         }
 
@@ -246,10 +260,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                     onUpdatingChange(false);
                 },
                 onError: (error: Error) => {
-                    toast.error(error.message || `Failed to ${mode} service`, {
-                        id: toastId,
-                    });
-                    handleApiError(error, `${mode}_bandwidth`);
+                    handleApiError(error, `${mode}_bandwidth`, toastId);
                     onUpdatingChange(false);
                 },
             },
@@ -388,12 +399,16 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 isSubmittingRef.current = false;
                 setIsSubmitting(false);
                 const msg = error.message || 'Subscription failed';
-                toast.error(msg, {
-                    id: subscribeToast,
-                    description: 'Please try again or contact support if the issue persists.',
-                });
                 setError(msg);
-                setShowErrorDialog(true);
+                toast.error('Payment Setup Error', {
+                    id: subscribeToast,
+                    description: msg,
+                    duration: 8000,
+                    className: 'text-lg [&>div]:text-lg [&>div>div]:text-lg',
+                    style: {
+                        fontSize: '18px',
+                    },
+                });
                 onUpdatingChange(false);
             },
         });
@@ -430,39 +445,39 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                     <span className="sr-only">View details</span>
                 </Button>
                 {/* {canCancel && ( */}
-                
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={loading}>
-                                <span className="sr-only">Open menu</span>
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                                    />
-                                </svg>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                         <DropdownMenuItem onClick={handleUpgrade} className="flex items-center gap-2 cursor-pointer">
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={loading}>
+                            <span className="sr-only">Open menu</span>
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                                />
+                            </svg>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem onClick={handleUpgrade} className="flex items-center gap-2 cursor-pointer">
                             <ArrowUpToLineIcon className="h-4 w-4" />
                             <span>Upgrade</span>
-                        </DropdownMenuItem> 
-                             <DropdownMenuItem onClick={handleDowngrade} className="flex items-center gap-2 cursor-pointer">
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleDowngrade} className="flex items-center gap-2 cursor-pointer">
                             <ArrowDownToLineIcon className="h-4 w-4" />
                             <span>Downgrade</span>
-                        </DropdownMenuItem> 
-                            {/* {canCancel && <DropdownMenuSeparator />} */}
-                            {canCancel && (
-                                <DropdownMenuItem onClick={() => setOpenCancelDialog(true)} className="flex cursor-pointer items-center gap-2">
-                                    <X className="h-4 w-4" />
-                                    <span>Cancel Service</span>
-                                </DropdownMenuItem>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        </DropdownMenuItem>
+                        {/* {canCancel && <DropdownMenuSeparator />} */}
+                        {canCancel && (
+                            <DropdownMenuItem onClick={() => setOpenCancelDialog(true)} className="flex cursor-pointer items-center gap-2">
+                                <X className="h-4 w-4" />
+                                <span>Cancel Service</span>
+                            </DropdownMenuItem>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
                 {/* )} */}
 
                 {/* {canCancel && (
@@ -477,31 +492,6 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                     </Button>
                 )} */}
             </div>
-
-            <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                                <X className="h-5 w-5 text-red-600" />
-                            </div>
-                            <AlertDialogTitle>Payment Setup Error</AlertDialogTitle>
-                        </div>
-                        <AlertDialogDescription>
-                            {error || 'Failed to setup payment. Please try again.'}
-                            {apiErrors.payment_setup && (
-                                <div className="mt-2 text-sm">
-                                    <strong>Details:</strong> {apiErrors.payment_setup}
-                                </div>
-                            )}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={clearErrors}>Close</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => window.location.reload()}>Try Again</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
 
             <CancelConfirmationDialog
                 open={openCancelDialog}

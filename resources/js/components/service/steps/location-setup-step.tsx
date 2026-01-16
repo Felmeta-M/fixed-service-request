@@ -425,25 +425,6 @@ export function LocationSetupStep({
         setShowUpdateBtn(false);
     };
 
-    const handleAddressSearch = async (address: string) => {
-        console.log('🔍 Search triggered for:', address);
-        setLocationLoading(true);
-        setLocationError('');
-
-        try {
-            const location = await getCoordinatesFromAddress(address);
-            if (location) {
-                await handleLocationSelect(location.lat, location.lng, location.address);
-            } else {
-                setLocationError('Address not found. Please try a different search term or be more specific.');
-            }
-        } catch (error) {
-            setLocationError('Failed to search address. Please check your connection and try again.');
-        } finally {
-            setLocationLoading(false);
-        }
-    };
-
     const handleManualAddressUpdate = async () => {
         if (!manualAddress.trim()) return;
 
@@ -485,7 +466,6 @@ export function LocationSetupStep({
                     <div className="pointer-events-none absolute inset-0 z-10" />
                     <GoogleLocationMap
                         onLocationSelect={handleLocationSelect}
-                        onAddressSearch={handleAddressSearch}
                         initialLat={mapLocation?.lat || 9.0192}
                         initialLng={mapLocation?.lng || 38.7525}
                         selectedLocation={mapLocation}

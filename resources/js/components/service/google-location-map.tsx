@@ -443,7 +443,7 @@ export function GoogleLocationMap({
                     ) : (
                         <>
                             <MapPin className="h-4 w-4" />
-                            <span className="hidden sm:inline">Location Me</span>
+                            <span className="hidden sm:inline">Locate Me</span>
                             <span className="sm:hidden">Locate Me</span>
                         </>
                     )}

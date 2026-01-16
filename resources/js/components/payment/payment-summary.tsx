@@ -6,6 +6,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { CheckCircle2, User, FileText, Phone, Mail, Calendar, Hash } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
 import { getServiceActionFlags, type ServiceActionFocus } from '@/lib/service-action-rules';
 import { useCreateSubscription, useCreatePaymentOrder } from '@/hooks/use-api-mutations';
 
@@ -115,7 +116,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
 
     const onPaymentConfirm = () => {
         if (!customer_survey_order_id || !user.customer_code || !totalAmountNumber) {
-            toast.error('Missing required information for payment');
+            showErrorToast('Missing required information for payment');
             return;
         }
 
@@ -130,11 +131,11 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                     if ((result as any).rawRequest) {
                         window.location.href = (result as any).rawRequest;
                     } else {
-                        toast.error('Payment order created but redirect URL not found');
+                        showErrorToast('Payment order created but redirect URL not found');
                     }
                 },
                 onError: (error: Error) => {
-                    toast.error(error.message || 'Failed to process payment. Please try again.');
+                    showErrorToast(error.message || 'Failed to process payment. Please try again.');
                 },
             }
         );
@@ -151,7 +152,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
         setIsSubmitting(true);
 
         // Show loading toast when subscribe is clicked
-        const subscribeToast = toast.loading('Processing subscription...');
+        const subscribeToast = showLoadingToast('Processing subscription...');
 
         const payload = {
             offering_id: surveyDetails?.main_offer_id || '',
@@ -177,7 +178,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
             onSuccess: () => {
                 isSubmittingRef.current = false;
                 setIsSubmitting(false);
-                toast.success('Subscription created successfully!', {
+                showSuccessToast('Subscription created successfully!', {
                     id: subscribeToast,
                     description: 'Your service subscription has been activated.',
                 });
@@ -186,9 +187,8 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
             onError: (error: Error) => {
                 isSubmittingRef.current = false;
                 setIsSubmitting(false);
-                toast.error(error.message || 'Subscription failed. Please try again.', {
+                showErrorToast(error.message || 'Subscription failed. Please try again.', {
                     id: subscribeToast,
-                    description: 'Please try again or contact support if the issue persists.',
                 });
             },
         });

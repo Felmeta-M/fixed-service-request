@@ -4,6 +4,7 @@ import { router, usePage } from '@inertiajs/react';
 import { ArrowDownToLineIcon, ArrowUpToLineIcon, Eye, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
 import { Button } from '../ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { BandwidthChangeDialog } from './bandwidth-change-dialog';
@@ -133,15 +134,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         }));
 
         // Show toast with bigger text
-        toast.error('Payment Setup Error', {
-            id: toastId,
-            description: errorMessage,
-            duration: 8000,
-            className: 'text-lg [&>div]:text-lg [&>div>div]:text-lg',
-            style: {
-                fontSize: '18px',
-            },
-        });
+        showErrorToast(errorMessage, { id: toastId });
 
         return errorMessage;
     };
@@ -155,14 +148,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         if (!cancellationReason) {
             const errorMsg = 'Please provide a reason for cancellation.';
             setError(errorMsg);
-            toast.error('Cancellation Error', {
-                description: errorMsg,
-                duration: 5000,
-                className: 'text-lg [&>div]:text-lg [&>div>div]:text-lg',
-                style: {
-                    fontSize: '18px',
-                },
-            });
+            showErrorToast(errorMsg);
             return;
         }
 
@@ -224,21 +210,14 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         if (!serviceNumber) {
             const errorMsg = 'Service number is required for bandwidth change';
             setError(errorMsg);
-            toast.error('Bandwidth Change Error', {
-                description: errorMsg,
-                duration: 5000,
-                className: 'text-lg [&>div]:text-lg [&>div>div]:text-lg',
-                style: {
-                    fontSize: '18px',
-                },
-            });
+            showErrorToast(errorMsg);
             return;
         }
 
         onUpdatingChange(true);
         clearErrors();
 
-        const toastId = toast.loading(`Processing ${mode}...`);
+        const toastId = showLoadingToast(`Processing ${mode}...`);
 
         changePrimaryOfferingMutation.mutate(
             {
@@ -247,7 +226,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             },
             {
                 onSuccess: () => {
-                    toast.success(`Service ${mode} successful!`, {
+                    showSuccessToast(`Service ${mode} successful!`, {
                         id: toastId,
                         description: `Bandwidth changed to ${bandwidth}`,
                     });
@@ -357,7 +336,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         clearErrors();
 
         // Show loading toast when subscribe is clicked
-        const subscribeToast = toast.loading('Processing subscription...');
+        const subscribeToast = showLoadingToast('Processing subscription...');
 
         const addressInfo = getAddressInfo();
         const contactInfo = getContactInfo();
@@ -387,7 +366,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             onSuccess: () => {
                 isSubmittingRef.current = false;
                 setIsSubmitting(false);
-                toast.success('Subscription created successfully!', {
+                showSuccessToast('Subscription created successfully!', {
                     id: subscribeToast,
                     description: 'Your service subscription has been activated.',
                 });
@@ -400,15 +379,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 setIsSubmitting(false);
                 const msg = error.message || 'Subscription failed';
                 setError(msg);
-                toast.error('Payment Setup Error', {
-                    id: subscribeToast,
-                    description: msg,
-                    duration: 8000,
-                    className: 'text-lg [&>div]:text-lg [&>div>div]:text-lg',
-                    style: {
-                        fontSize: '18px',
-                    },
-                });
+                showErrorToast(msg, { id: subscribeToast });
                 onUpdatingChange(false);
             },
         });

@@ -5,7 +5,7 @@ import MainLayout from '@/layouts/main-layout';
 import { Link, usePage } from '@inertiajs/react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useEffect } from 'react';
-import { toast } from 'sonner';
+import { showSuccessToast } from '@/lib/toast-helpers';
 import { useSurveyDetail } from '@/hooks/use-surveys';
 
 type SurveyDetails = {
@@ -50,11 +50,11 @@ export default function ServiceShowPage() {
         const params = new URLSearchParams(query);
 
         if (params.get('created') === '1') {
-            toast.success('Service request created successfully');
+            showSuccessToast('Service request created successfully');
         }
 
         if (params.get('subscribed') === '1') {
-            toast.success('Subscription completed successfully');
+            showSuccessToast('Subscription completed successfully');
         }
     };
 
@@ -73,16 +73,16 @@ export default function ServiceShowPage() {
     // Transform query data to component format
     const surveyDetails: SurveyDetails | null = surveyDetailQuery.data?.data
         ? {
-              customer_survey_order_id: surveyDetailQuery.data.data.customer_survey_order_id,
-              customer_type: surveyDetailQuery.data.data.customer_type,
-              survey_type: surveyDetailQuery.data.data.survey_type,
-              main_offer_id: surveyDetailQuery.data.data.main_offer_id,
-              bandwidth: surveyDetailQuery.data.data.bandwidth,
-              status: surveyDetailQuery.data.data.status,
-              service_number: surveyDetailQuery.data.data.service_number,
-              created_at: surveyDetailQuery.data.data.created_at,
-              updated_at: surveyDetailQuery.data.data.updated_at,
-          }
+            customer_survey_order_id: surveyDetailQuery.data.data.customer_survey_order_id,
+            customer_type: surveyDetailQuery.data.data.customer_type,
+            survey_type: surveyDetailQuery.data.data.survey_type,
+            main_offer_id: surveyDetailQuery.data.data.main_offer_id,
+            bandwidth: surveyDetailQuery.data.data.bandwidth,
+            status: surveyDetailQuery.data.data.status,
+            service_number: surveyDetailQuery.data.data.service_number,
+            created_at: surveyDetailQuery.data.data.created_at,
+            updated_at: surveyDetailQuery.data.data.updated_at,
+        }
         : null;
 
     // Normalize nested payment resource

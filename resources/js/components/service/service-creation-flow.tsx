@@ -6,6 +6,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, ChevronRight, FileText, Loader2, MoveLeftIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
 import { CustomerCreationStep } from './steps/customer-creation-step';
 import { LocationSetupStep } from './steps/location-setup-step';
 import { ManualSurveyStep } from './steps/manual-survey-step';
@@ -156,7 +157,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         // Reset dialog state when checking a new location
         setHasSeenResourceDialog(false);
         setShowManualStep(false);
-        const toastId = toast.loading('Checking resource availability...');
+        const toastId = showLoadingToast('Checking resource availability...');
 
         try {
             const result = await checkResourceAvailability(
@@ -179,7 +180,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             });
 
             if (result.available) {
-                toast.success(result.message || 'Resource available!', { id: toastId });
+                showSuccessToast(result.message || 'Resource available!', { id: toastId });
                 nextStep();
             } else {
                 // Don't show error toast here - the modal will be shown in location-setup-step
@@ -189,7 +190,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             }
         } catch (error) {
             console.error('Resource check error:', error);
-            toast.error('An unexpected error occurred during resource check.', { id: toastId });
+            showErrorToast('An unexpected error occurred during resource check.', { id: toastId });
             updateFormData({
                 resourceAvailable: false,
                 resourceMessage: 'Resource check failed',

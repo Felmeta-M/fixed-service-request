@@ -8,6 +8,7 @@ import MainLayout from '@/layouts/main-layout';
 import { ComplaintFormValues, complaintSchema, TroubleReasons } from '@/types/complaint';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { toast } from 'sonner';
+import { showErrorToast } from '@/lib/toast-helpers';
 
 export default function CreateComplaintPage() {
     const { auth } = usePage().props as any;
@@ -46,11 +47,11 @@ export default function CreateComplaintPage() {
             onError: (error: Error & { parsed?: { type: string; text: string } }) => {
                 if (error.parsed?.type === 'field') {
                     setError('mobile_no', error.parsed.text);
-                    toast.error('Please correct the highlighted field.');
+                    showErrorToast('Please correct the highlighted field.');
                 } else if (error.parsed?.type === 'business') {
-                    toast.error(error.parsed.text);
+                    showErrorToast(error.parsed.text);
                 } else {
-                    toast.error(error.message || 'Network error. Please try again.');
+                    showErrorToast(error.message || 'Network error. Please try again.');
                 }
             },
             onSuccess: () => {

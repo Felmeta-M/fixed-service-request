@@ -6,6 +6,7 @@ import { apiClient } from '@/lib/api-client';
 import { useAuthToken } from './use-auth-token';
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
+import { showErrorToast, showSuccessToast } from '@/lib/toast-helpers';
 
 /**
  * Parse API error messages for complaints
@@ -47,7 +48,7 @@ export function useCreateComplaint() {
         mutationFn: async (data: any) => {
             if (!token) throw new Error('Authentication required');
             const response = await apiClient.post<any>('/tt/create', data, { token });
-            
+
             // Check for API-level failure (success: false)
             if (response?.success === false) {
                 const parsed = parseApiError(response.message);
@@ -55,13 +56,13 @@ export function useCreateComplaint() {
                 (error as any).parsed = parsed;
                 throw error;
             }
-            
+
             return response;
         },
         onSuccess: () => {
             // Invalidate related queries - use the correct query key
             queryClient.invalidateQueries({ queryKey: ['localTTs'] });
-            toast.success('Complaint submitted successfully!');
+            showSuccessToast('Complaint submitted successfully!');
             setTimeout(() => {
                 router.visit('/complaints', { preserveScroll: false });
             }, 1000);
@@ -72,7 +73,7 @@ export function useCreateComplaint() {
                 // Don't show toast here, let component handle it
                 return;
             }
-            toast.error(error.message || 'Failed to submit complaint');
+            showErrorToast(error.message || 'Failed to submit complaint');
         },
     });
 }
@@ -109,17 +110,17 @@ export function useCreateCustomer() {
                 date_of_birth: data.date_of_birth ? data.date_of_birth.replace(/-/g, '') : null,
             };
             const response = await apiClient.post<any>('/customer/create', payload, { token });
-            
+
             // Check for nested error structure
             if (!response.success) {
                 throw new Error(response.message || 'Customer creation failed');
             }
-            
+
             // Check for nested error in data.original
             if ((response as any).data?.original && (response as any).data.original.success === false) {
                 throw new Error((response as any).data.original.message || 'Customer creation failed');
             }
-            
+
             return (response as any).data?.original?.data || (response as any).data;
         },
         onSuccess: () => {
@@ -176,7 +177,7 @@ export function useResourceCheck() {
             }>('/resource-check', data, { token });
         },
         onError: (error: Error) => {
-            toast.error(error.message || 'Failed to check resource availability');
+            showErrorToast(error.message || 'Failed to check resource availability');
         },
     });
 }
@@ -197,10 +198,10 @@ export function useUploadEcaf() {
             return apiClient.post('/ecaf-upload', data, { token });
         },
         onSuccess: () => {
-            toast.success('Document uploaded successfully!');
+            showSuccessToast('Document uploaded successfully!');
         },
         onError: (error: Error) => {
-            toast.error(error.message || 'Failed to upload document');
+            showErrorToast(error.message || 'Failed to upload document');
         },
     });
 }
@@ -213,13 +214,13 @@ export function useNidOtp() {
         mutationFn: async (data: { individual_id: string }) => {
             const response = await apiClient.post<any>('/nid/otp', data);
             const otpData = response?.data?.original?.data;
-            
+
             if (!otpData || otpData.ret_code !== '0') {
                 const error = new Error(otpData?.ret_msg || 'Failed to send verification code');
                 (error as any).ret_code = otpData?.ret_code;
                 throw error;
             }
-            
+
             return otpData;
         },
     });
@@ -232,13 +233,13 @@ export function useNidKyc() {
     return useMutation({
         mutationFn: async (data: { individual_id: string; otp_value: string; transaction_id: string }) => {
             const response = await apiClient.post<any>('/nid/kyc', data);
-            
+
             if (!response.success || response.ret_code !== '0') {
                 const error = new Error(response.message || 'Verification failed');
                 (error as any).ret_code = response.ret_code;
                 throw error;
             }
-            
+
             return response;
         },
         onSuccess: (data) => {
@@ -274,10 +275,10 @@ export function useConfirmFeedback() {
             queryClient.invalidateQueries({ queryKey: ['localTTs'] });
             queryClient.invalidateQueries({ queryKey: ['localTT'] });
             queryClient.invalidateQueries({ queryKey: ['externalTTDetail'] });
-            toast.success('Feedback confirmed successfully');
+            showSuccessToast('Feedback confirmed successfully');
         },
         onError: (error: Error) => {
-            toast.error(error.message || 'Failed to confirm feedback');
+            showErrorToast(error.message || 'Failed to confirm feedback');
         },
     });
 }
@@ -301,10 +302,10 @@ export function useCancelSurveyOrder() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['surveyList'] });
             queryClient.invalidateQueries({ queryKey: ['surveyDetail'] });
-            toast.success('Survey order cancelled successfully');
+            showSuccessToast('Survey order cancelled successfully');
         },
         onError: (error: Error) => {
-            toast.error(error.message || 'Failed to cancel survey order');
+            showErrorToast(error.message || 'Failed to cancel survey order');
         },
     });
 }
@@ -331,10 +332,10 @@ export function useDeleteSurveyOrder() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['surveyList'] });
             queryClient.invalidateQueries({ queryKey: ['surveyDetail'] });
-            toast.success('Survey order deleted successfully');
+            showSuccessToast('Survey order deleted successfully');
         },
         onError: (error: Error) => {
-            toast.error(error.message || 'Failed to delete survey order');
+            showErrorToast(error.message || 'Failed to delete survey order');
         },
     });
 }
@@ -411,11 +412,11 @@ export function useCreateSubscription() {
             const response = await apiClient.post<any>('/services/subscription', data, {
                 token,
             });
-            
+
             if (!response.success) {
                 throw new Error(response.message || 'Failed to create subscription');
             }
-            
+
             return response;
         },
         onSuccess: () => {
@@ -436,28 +437,25 @@ export function useChangePrimaryOffering() {
         retry: false,
         mutationFn: async (data: { service_number: string; bandwidth: string }) => {
             if (!token) throw new Error('Authentication token required');
-            console.log('[useChangePrimaryOffering] Calling API', { 
-                service_number: data.service_number, 
+            console.log('[useChangePrimaryOffering] Calling API', {
+                service_number: data.service_number,
                 bandwidth: data.bandwidth,
-                timestamp: new Date().toISOString() 
+                timestamp: new Date().toISOString()
             });
             const response = await apiClient.post<any>('/change-primary-offering', data, {
                 token,
             });
-            
+
             if (!response.success) {
                 throw new Error(response.message || 'Failed to change primary offering');
             }
-            
+
             return response;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['surveyList'] });
             queryClient.invalidateQueries({ queryKey: ['surveyDetail'] });
-            toast.success('Service plan changed successfully!');
-        },
-        onError: (error: Error) => {
-            toast.error(error.message || 'Failed to change service plan');
+            queryClient.invalidateQueries({ queryKey: ['survey'] });
         },
     });
 }

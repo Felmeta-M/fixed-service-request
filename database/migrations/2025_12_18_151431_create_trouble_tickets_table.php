@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         Schema::create('trouble_tickets', function (Blueprint $table) {
@@ -20,6 +19,7 @@ return new class extends Migration
             $table->string('tt_serial_no')->unique();
             $table->enum('status', ['pending', 'in_progress', 'resolved', 'closed'])->default('pending');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

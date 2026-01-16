@@ -17,7 +17,8 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
    public function __construct(
       protected readonly QueryAvailableNumberService $queryAvailableNumberService,
       protected readonly ReserveNumberService $reserveNumberService,
-   ) {}
+   ) {
+   }
 
    protected function offeringId(): int
    {
@@ -54,31 +55,31 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
       // Get dynamic customer profile, address, and BSS classification from logged-in user
       $profile = $this->getCustomerProfile();
       $address = $this->getCustomerAddress();
-      $bss = $this->getBssClassification();    
+      $bss = $this->getBssClassification();
 
       // Business defaults
       $data = array_merge($data, [
-         'enterprise_name'     => $profile['name'] ?? 'Customer',
-         'credit_class'        => $bss['credit_class'],
-         'payment_mode'        => 'CASH',
-         'ext_payment_type'    => '0',
-         'business_code'       => 'CO015',
-         'external_sequence'   => uniqid(),
-         'network_type'        => '4',
-         'sub_type'            => '1',
-         'sub_language'        => $profile['primary_language'],
-         'offering_id'         => '1207609454',
-         'effective_mode'      => '0',
-         'sla_priority'        => '6',
-         'call_center_access'  => '994',
-         'external_oper_id'    => '512',
-         'installment_date'    => $this->completedDate(),
+         'enterprise_name' => $profile['name'] ?? 'Customer',
+         'credit_class' => $bss['credit_class'],
+         'payment_mode' => 'CASH',
+         'ext_payment_type' => '0',
+         'business_code' => 'CO015',
+         'external_sequence' => uniqid(),
+         'network_type' => '4',
+         'sub_type' => '1',
+         'sub_language' => $profile['primary_language'],
+         'offering_id' => '1207609454',
+         'effective_mode' => '0',
+         'sla_priority' => '6',
+         'call_center_access' => '994',
+         'external_oper_id' => '512',
+         'installment_date' => $this->completedDate(),
       ]);
 
       $serviceNumber = SurveyOrder::query()
          ->where('customer_survey_order_id', $data['survey_order_id'])
          ->value('service_number');
-      // 🔴 release reserved number on failure
+      // 🔴 release reserved number for subscription
       if ($serviceNumber) {
          $this->queryAvailableNumberService->releaseNumberService($serviceNumber);
       }
@@ -205,8 +206,8 @@ XML;
       $ns = $parsed->getNamespaces(true);
 
       $body = $parsed->children($ns['soapenv'])->Body;
-      $rsp  = $body->children($ns['ser'])->CreateNewSubscriberRspMsg;
-      $hdr  = $rsp->ResponseHeader->children($ns['com']);
+      $rsp = $body->children($ns['ser'])->CreateNewSubscriberRspMsg;
+      $hdr = $rsp->ResponseHeader->children($ns['com']);
 
       if ((string) $hdr->RetCode !== '0') {
          return ApiResponse::error((string) $hdr->RetMsg);
@@ -217,16 +218,15 @@ XML;
       // create survey order request and initia payment
       SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
          ->update([
-            'service_number' => $this->serviceNumber,
             'status' => FFDServiceProvisionStatus::Subscribed->value,
             'subscribed_at' => now(),
          ]);
 
       // ✅ Send SMS to customer
-      if (! empty($data['sms_no']) && InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])) {
+      if (!empty($data['sms_no']) && InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])) {
 
          $phone = $data['sms_no'];
-         $name  = trim(explode(' ', $data['name'] ?? '')[0] ?? 'Customer');
+         $name = trim(explode(' ', $data['name'] ?? '')[0] ?? 'Customer');
 
          $message = sprintf(
             'Dear %s, thank you for choosing Ethio telecom. Your subscription has been successfully created. For support or to submit a TT/complaint, please visit https://fixedservices.ethiotelecom.et/services.',
@@ -238,14 +238,14 @@ XML;
          } catch (\RuntimeException $e) {
             // Business-level failure (rate limit, gateway reject)
             Log::warning('Subscription SMS blocked or rejected', [
-               'phone'   => $phone,
-               'reason'  => $e->getMessage(),
+               'phone' => $phone,
+               'reason' => $e->getMessage(),
             ]);
          } catch (\Throwable $e) {
             // System-level failure
             Log::error('Subscription SMS failed unexpectedly', [
-               'phone'  => $phone,
-               'error'  => $e->getMessage(),
+               'phone' => $phone,
+               'error' => $e->getMessage(),
             ]);
          }
       }

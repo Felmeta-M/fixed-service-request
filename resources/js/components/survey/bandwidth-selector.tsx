@@ -43,7 +43,7 @@ export function BandwidthSelector({
     return (
         <div className="flex flex-col space-y-6">
             {/* Customer Type Selector */}
-            <div>
+            {/* <div>
                 <Label className="mb-2 block text-sm font-medium text-gray-900">
                     Customer Type <span className="ml-1 text-red-500">*</span>
                 </Label>
@@ -57,7 +57,7 @@ export function BandwidthSelector({
                         Enterprise
                     </label>
                 </RadioGroup>
-            </div>
+            </div> */}
 
             {/* Bandwidth Selector */}
             <div className="w-full sm:max-w-72">

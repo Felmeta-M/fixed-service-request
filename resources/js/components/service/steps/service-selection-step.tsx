@@ -84,7 +84,6 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                             onClick={() => !hasActiveSurvey && handleServiceSelect(service.value)}
                             className={`group relative flex cursor-pointer flex-col rounded-lg border bg-white p-5 transition ${hasActiveSurvey ? 'cursor-not-allowed border-gray-300 bg-gray-100 opacity-50' : ''} ${isSelected ? 'border-gray-300 ring-1 ring-primary' : 'border-gray-300 hover:border-gray-400 hover:shadow-md'} `}
                         >
-                            {/* hidden input for accessibility */}
                             <input
                                 type="radio"
                                 name="serviceType"

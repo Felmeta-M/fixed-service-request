@@ -172,6 +172,16 @@ abstract class BaseApiService
     }
 
     /**
+     * Get service name for logging (defaults to class name without namespace)
+     */
+    protected function getServiceName(): string
+    {
+        $className = get_class($this);
+        $parts = explode('\\', $className);
+        return end($parts);
+    }
+
+    /**
      * Each concrete service must define its endpoint
      */
     abstract protected function endpoint(): string;
@@ -208,8 +218,11 @@ abstract class BaseApiService
 
         RateLimiter::hit($key, $this->decaySeconds);
 
+        $serviceName = $this->getServiceName();
+
         /** @var Response $response */
-        $response = Http::withHeaders($this->headers())
+        $response = Http::logged($serviceName, 'api')
+            ->withHeaders($this->headers())
             ->timeout($this->timeout)
             ->retry($this->maxRetries, 200, throw: false)
             ->withOptions([
@@ -320,10 +333,13 @@ abstract class BaseApiService
 
             RateLimiter::hit($key, $this->decaySeconds);
 
-            $requests[] = Http::withHeaders(array_merge(
-                $this->headers(),
-                ['Idempotency-Key' => $this->idempotencyKey()]
-            ))
+            $serviceName = $this->getServiceName();
+
+            $requests[] = Http::logged($serviceName, 'api')
+                ->withHeaders(array_merge(
+                    $this->headers(),
+                    ['Idempotency-Key' => $this->idempotencyKey()]
+                ))
                 ->timeout($this->timeout)
                 ->retry($this->maxRetries, 200, throw: false)
                 ->withBody($payload, 'text/xml')

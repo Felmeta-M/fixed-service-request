@@ -149,7 +149,10 @@ trait InteractsWithSMSGateway
     protected static function sendRequest(string $url): bool
     {
         try {
-            return Http::timeout(10)->get($url)->successful();
+            return Http::logged('SMSGateway', 'api')
+                ->timeout(10)
+                ->get($url)
+                ->successful();
         } catch (Throwable $e) {
             Log::error('SMS gateway request failed', [
                 'error' => $e->getMessage(),

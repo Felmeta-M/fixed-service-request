@@ -6,9 +6,25 @@ use App\Services\ApiResponse;
 use App\Support\CustomerContext;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
+use App\Services\QueryAvailableNumberService;
+use App\Services\ReserveNumberService;
+use App\Services\Payment\PaymentService;
+
 
 class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
 {
+    public function __construct(
+        PaymentService $payment_service,
+        QueryAvailableNumberService $queryAvailableNumberService,
+        ReserveNumberService $reserveNumberService,
+    ) {
+        parent::__construct(
+            $payment_service,
+            $queryAvailableNumberService,
+            $reserveNumberService
+        );
+    }
+
     protected function mainOfferId(): int
     {
         return 1207609454;
@@ -20,8 +36,8 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
 
         // Use shared helpers for timestamps
         $transactionId = $this->transactionId();
-        $processTime   = $this->processTime();
-        $sessionId     = uniqid();
+        $processTime = $this->processTime();
+        $sessionId = uniqid();
         $completedDate = $this->completedDate();
 
         // Use shared helpers for contact info
@@ -33,7 +49,7 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
         $depId = "1766044689199549668";
         // fetch from db;
         $this->serviceNumber = $this->queryAvailableNumberService->getAvailableNumberServices($depId);
-    
+
         if (!$this->serviceNumber) {
             throw new \RuntimeException('Unable to reserve service number');
         }
@@ -97,14 +113,14 @@ XML;
 
         $ns = $parsed->getNamespaces(true);
         $body = $parsed->children($ns['soapenv'])->Body;
-        $rsp  = $body->children($ns['ser'])->HandleSurveyOrderRspMsg;
-        $hdr  = $rsp->ResponseHeader->children($ns['com']);
+        $rsp = $body->children($ns['ser'])->HandleSurveyOrderRspMsg;
+        $hdr = $rsp->ResponseHeader->children($ns['com']);
 
-        if ((string)$hdr->RetCode !== '0') {
-            return ApiResponse::error((string)$hdr->RetMsg);
+        if ((string) $hdr->RetCode !== '0') {
+            return ApiResponse::error((string) $hdr->RetMsg);
         }
 
-        $surveyOrderId = (string)$rsp->HandleSurveyOrderRespBody
+        $surveyOrderId = (string) $rsp->HandleSurveyOrderRespBody
             ->children($ns['com'])->CustomerSurveyOrderId;
 
         $this->persistSurvey($surveyOrderId, $data, $resource);

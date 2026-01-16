@@ -120,15 +120,17 @@ class EsignetService
         }
 
         try {
-            $response = Http::asForm()->post($this->tokenEndpoint, [
-                'grant_type' => 'authorization_code',
-                'code' => $code,
-                'redirect_uri' => $this->redirectUri,
-                'client_id' => $this->clientId,
-                'code_verifier' => $verifier,
-                'client_assertion' => $assertion,
-                'client_assertion_type' => $this->clientAssertionType,
-            ]);
+            $response = Http::logged('EsignetService', 'auth')
+                ->asForm()
+                ->post($this->tokenEndpoint, [
+                    'grant_type' => 'authorization_code',
+                    'code' => $code,
+                    'redirect_uri' => $this->redirectUri,
+                    'client_id' => $this->clientId,
+                    'code_verifier' => $verifier,
+                    'client_assertion' => $assertion,
+                    'client_assertion_type' => $this->clientAssertionType,
+                ]);
 
             $json = $response->json();
 
@@ -197,9 +199,11 @@ class EsignetService
     public function getUserInfo(string $accessToken): array
     {
         try {
-            $response = Http::withHeaders([
-                'Authorization' => "Bearer {$accessToken}",
-            ])->get($this->userinfoEndpoint);
+            $response = Http::logged('EsignetService', 'auth')
+                ->withHeaders([
+                    'Authorization' => "Bearer {$accessToken}",
+                ])
+                ->get($this->userinfoEndpoint);
 
             if ($response->status() !== 200) {
                 return ['status' => 'error', 'message' => 'Failed to fetch user info'];

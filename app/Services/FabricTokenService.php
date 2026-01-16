@@ -28,10 +28,11 @@ class FabricTokenService
      */
     public function applyFabricToken()
     {
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-            'X-APP-Key'    => $this->fabricAppId,
-        ])
+        $response = Http::logged('FabricTokenService', 'payment')
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+                'X-APP-Key'    => $this->fabricAppId,
+            ])
             ->timeout(30)
             ->withOptions([
                 'verify' => false, // app()->isProduction()

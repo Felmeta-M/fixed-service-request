@@ -148,11 +148,12 @@ class CreateOrderService
 
         $payload = self::createQueryObject($data);
 
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-            'X-APP-Key' => $this->fabricAppId,
-            'Authorization' => $fabricToken,
-        ])
+        $response = Http::logged('CreateOrderService', 'payment')
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+                'X-APP-Key' => $this->fabricAppId,
+                'Authorization' => $fabricToken,
+            ])
             ->withOptions([
                 'verify' => false, // app()->isProduction()
             ])

@@ -2,7 +2,7 @@ import { formatCoordinate, parseCoordinate } from '@/lib/coordinate-utils';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useEffect, useRef, useState } from 'react';
-import { ProfessionalSearch } from './service/map-search';
+import { AutocompleteSearch } from './service/map-search';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -21,7 +21,6 @@ const LocationMap: React.FC<LocationMapProps> = ({ onLocationSelect, initialLat 
     const mapRef = useRef<HTMLDivElement>(null);
     const [map, setMap] = useState<L.Map | null>(null);
     const [marker, setMarker] = useState<L.Marker | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
     const [coordinates, setCoordinates] = useState({
         lat: parseCoordinate(initialLat),
         lng: parseCoordinate(initialLng),
@@ -185,55 +184,36 @@ const LocationMap: React.FC<LocationMapProps> = ({ onLocationSelect, initialLat 
         }
     }, [initialLat, initialLng, map, marker]);
 
-    const handleSearch = async () => {
-        if (!searchQuery.trim()) return;
-
+    const handlePlaceSelect = async (lat: number, lng: number, address: string) => {
         setIsLoading(true);
         try {
-            const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&addressdetails=1`,
-            );
-            const data = await response.json();
+            const { preciseLat, preciseLng } = await handleCoordinateSelection(lat, lng);
 
-            if (data && data.length > 0) {
-                const { lat, lon, display_name } = data[0];
-                const rawLat = parseFloat(lat);
-                const rawLng = parseFloat(lon);
-                const { preciseLat, preciseLng } = await handleCoordinateSelection(rawLat, rawLng);
+            if (map && marker) {
+                map.setView([preciseLat, preciseLng], 16);
+                marker.setLatLng([preciseLat, preciseLng]);
+                setAddress(address);
 
-                if (map && marker) {
-                    map.setView([preciseLat, preciseLng], 16);
-                    marker.setLatLng([preciseLat, preciseLng]);
-                    setAddress(display_name);
-
-                    // Update popup with formatted coordinates
-                    marker
-                        .setPopupContent(
-                            `
+                // Update popup with formatted coordinates
+                marker
+                    .setPopupContent(
+                        `
                         <div class="p-2">
                             <strong>Selected Location</strong><br>
                             Lat: ${formatCoordinate(preciseLat)}<br>
                             Lng: ${formatCoordinate(preciseLng)}<br>
-                            Address: ${display_name}
+                            Address: ${address}
                         </div>
                     `,
-                        )
-                        .openPopup();
+                    )
+                    .openPopup();
 
-                    onLocationSelect(preciseLat, preciseLng, display_name);
-                }
+                onLocationSelect(preciseLat, preciseLng, address);
             }
         } catch (error) {
-            console.error('Geocoding error:', error);
+            console.error('Error handling place selection:', error);
         } finally {
             setIsLoading(false);
-        }
-    };
-
-    const handleKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleSearch();
         }
     };
 
@@ -243,10 +223,8 @@ const LocationMap: React.FC<LocationMapProps> = ({ onLocationSelect, initialLat 
 
     return (
         <div className="space-y-1">
-            <ProfessionalSearch
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                onSearch={handleSearch}
+            <AutocompleteSearch
+                onPlaceSelect={handlePlaceSelect}
                 isLoading={isLoading}
                 placeholder="Search for an address, place, or landmark..."
                 className=""

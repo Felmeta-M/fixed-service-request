@@ -58,10 +58,13 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       // Use shared helper to hydrate customer data
       $data = $this->hydrateWithCustomerData($data);
 
+      // Add with_device flag from survey order for conditional XML generation
+      $data['with_device'] = $surveyOrder->with_device ?? false;
+
       $xml = $this->buildXml($data);
-      Log::info($xml);
+      // Log::info($xml);
       $response = $this->executeRequest($xml);
-      Log::info('Huawei Data Response', ['response' => $response]);
+      // Log::info('Huawei Data Response', ['response' => $response]);
       $parsedResponse = $this->parseResponse($response, $data);
       return $parsedResponse;
    }
@@ -119,24 +122,6 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          'installment_date' => $this->completedDate(),
       ]);
 
-      //    <com:SupplementaryOfferingList>
-      //    <com:OfferingInstance>
-      //       <com:OfferingId>
-      //          <com:OfferingId>1827012365</com:OfferingId>
-      //       </com:OfferingId>
-      //       <com:InstanceProperty>
-      //          <com:PropertyCode>50135</com:PropertyCode>
-      //          <com:PropertyType>1</com:PropertyType>
-      //          <com:Value>2701DTU</com:Value>
-      //       </com:InstanceProperty>
-      //       <com:InstanceProperty>
-      //          <com:PropertyCode>50134</com:PropertyCode>
-      //          <com:PropertyType>1</com:PropertyType>
-      //          <com:Value>2</com:Value>
-      //       </com:InstanceProperty>
-      //    </com:OfferingInstance>
-      //    <com:EffectiveMode>0</com:EffectiveMode>
-      // </com:SupplementaryOfferingList>
 
       return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -251,6 +236,8 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
 
+                  {$this->buildSupplementaryOfferingList($data)}
+
                   <com:SLAPriority>6</com:SLAPriority>
                   <com:InternetAccount>{$email}</com:InternetAccount>
                   <com:InternetPassword>{$cfg['default_password']}</com:InternetPassword>
@@ -267,6 +254,42 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 XML;
    }
 
+
+   /**
+    * Builds the SupplementaryOfferingList XML section conditionally based on with_device flag.
+    *
+    * @param array $data
+    * @return string
+    */
+   protected function buildSupplementaryOfferingList(array $data): string
+   {
+      $withDevice = (bool) ($data['with_device'] ?? false);
+
+      if (!$withDevice) {
+         return '';
+      }
+
+      return <<<XML
+                  <com:SupplementaryOfferingList>
+                     <com:OfferingInstance>
+                        <com:OfferingId>
+                           <com:OfferingId>1827012365</com:OfferingId>
+                        </com:OfferingId>
+                        <com:InstanceProperty>
+                           <com:PropertyCode>50135</com:PropertyCode>
+                           <com:PropertyType>1</com:PropertyType>
+                           <com:Value>2701DTU</com:Value>
+                        </com:InstanceProperty>
+                        <com:InstanceProperty>
+                           <com:PropertyCode>50134</com:PropertyCode>
+                           <com:PropertyType>1</com:PropertyType>
+                           <com:Value>2</com:Value>
+                        </com:InstanceProperty>
+                     </com:OfferingInstance>
+                     <com:EffectiveMode>0</com:EffectiveMode>
+                  </com:SupplementaryOfferingList>
+XML;
+   }
 
    protected function parseResponse(string $xml, array $data): array
    {
@@ -352,10 +375,10 @@ XML;
          // Update SurveyOrder
          SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
             ->update([
-                  'service_number' => $serviceNo,
-                  'status' => FFDServiceProvisionStatus::Subscribed->value,
-                  'subscribed_at' => now(),
-               ]);
+               'service_number' => $serviceNo,
+               'status' => FFDServiceProvisionStatus::Subscribed->value,
+               'subscribed_at' => now(),
+            ]);
 
          // Send SMS
          if (

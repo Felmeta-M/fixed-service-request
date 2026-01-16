@@ -350,6 +350,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/use-translation';
 import GuestLayout from '@/layouts/GuestLayout';
+import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowRight, CheckCircle, ChevronDown, MapPin, Package, Phone, Star, Users, Wifi } from 'lucide-react';
 import { useRef } from 'react';
@@ -357,7 +358,7 @@ import fixedHeroImage from '../images/fixed-hero.png';
 import telebirrLogo from '../images/telebirr-logo-1.png';
 
 export default function HomePage() {
-    const { auth } = usePage().props;
+    const { auth } = usePage<SharedData>().props;
     const demoRef = useRef<HTMLDivElement>(null);
     const { t } = useTranslation();
 
@@ -470,7 +471,7 @@ export default function HomePage() {
                             </p>
                         </div>
                         <div className="mt-16 flex flex-col justify-center gap-4 sm:flex-row">
-                            <Link href={route('otp.phone')}>
+                            <Link href={auth?.user ? route('services') : route('otp.phone')}>
                                 <Button
                                     size="lg"
                                     className="bg-primary px-8 py-6 text-lg font-semibold text-white shadow-xl transition-all duration-200 hover:opacity-90 hover:shadow-2xl"

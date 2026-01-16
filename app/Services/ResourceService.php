@@ -33,20 +33,20 @@ class ResourceService extends BaseApiService
     protected function buildRequestXml(array $data): string
     {
         $transactionId = uniqid();
-        $processTime   = now()->format('YmdHis');
-        $credentials   = config('services.check_resource');
+        $processTime = now()->format('YmdHis');
+        $credentials = config('services.check_resource');
 
         $defaults = [
             'prod_spec_code' => 'C_P_UFBI_E',
-            'number_line'    => '1',
-            'acc_nbr'        => '-1',
-            'event_code'     => '101',
-            'radius'         => '200',
-            'combo_flag'     => '0',
+            'number_line' => '1',
+            'acc_nbr' => '-1',
+            'event_code' => '101',
+            'radius' => '200',
+            'combo_flag' => '0',
 
-            'cust_id'        => $this->customerCode(),
-            'cust_name'      => $this->customerName(''),
-            'cust_addr'      => CustomerContext::addressString(''),
+            'cust_id' => $this->customerCode(),
+            'cust_name' => $this->customerName(''),
+            'cust_addr' => CustomerContext::addressString(''),
         ];
 
         $data = array_merge($defaults, $data);
@@ -117,33 +117,41 @@ XML;
             throw new \Exception('ResourceCheckResponse not found');
         }
         $response = $responses[0];
-        // \Log::info('ResourceCheckResponse found', ['children' => array_keys((array)$response)]);
+
+        // Check result code
+        $resultCode = (string) ($response->RESULT_CODE ?? '');
+        $resultDesc = (string) ($response->RESULT_DESC ?? '');
+
+        if ($resultCode !== '0') {
+            \Log::warning('Resource check failed', [
+                'result_code' => $resultCode,
+                'result_desc' => $resultDesc
+            ]);
+        }
+
         // Step 6: Trace each RESOURCE element
         $resources = [];
         if (isset($response->RESOURCE_LIST->RESOURCE)) {
             foreach ($response->RESOURCE_LIST->RESOURCE as $i => $res) {
-                // \Log::info("RESOURCE #{$i}", ['xml' => $res->asXML()]);
                 $resources[] = [
-                    'distance' => (string)$res->DISTANCE,
-                    'ava_port' => (string)$res->AVAPORT,
-                    'neid' => (string)$res->NEID,
-                    'nename' => (string)$res->NENAME, //vendor 
-                    'typeid' => (string)$res->TYPEID,
-                    'longitude' => (string)$data['longitude'],
-                    'latitude' => (string)$data['latitude'],
-                    'cable_type' => (string)$res->CABLETYPE,
-                    'cable_type_desc' => (string)$res->CABLETYPEDESC,
+                    'distance' => (string) $res->DISTANCE,
+                    'ava_port' => (string) $res->AVAPORT,
+                    'neid' => (string) $res->NEID,
+                    'nename' => (string) $res->NENAME,
+                    'typeid' => (string) $res->TYPEID,
+                    'longitude' => (string) ($res->LONGITUDE ?? $data['longitude'] ?? ''),
+                    'latitude' => (string) ($res->LATITUDE ?? $data['latitude'] ?? ''),
+                    'cable_type' => (string) $res->CABLETYPE,
+                    'cable_type_desc' => (string) $res->CABLETYPEDESC,
+                    'area_code' => (string) ($res->AREACODE ?? ''),
+                    'area_name' => (string) ($res->AREANAME ?? ''),
                 ];
             }
         } else {
             \Log::warning('No RESOURCE elements found in RESOURCE_LIST');
         }
 
-        // Step 7: Log final parsed info
-        // \Log::info('Number of resources parsed', $resources);
-        $shortestResource =  $this->getShortestResource($resources);
-        // Store latest shortest resource in session
-        // session(['latest_resource' => $shortestResource]);
+        // Step 7: Get shortest resource
         $shortestResource = $this->getShortestResource($resources);
 
         if ($shortestResource) {
@@ -165,11 +173,11 @@ XML;
             }
 
             // Encrypt sensitive fields
-            $resource['neid'] = Crypt::encryptString((string)$resource['neid']);
-            $resource['distance'] = Crypt::encryptString((string)$resource['distance']);
-            $resource['cable_type'] = Crypt::encryptString((string)$resource['cable_type']);
-            $resource['longitude'] = Crypt::encryptString((string)$resource['longitude']);
-            $resource['latitude'] = Crypt::encryptString((string)$resource['latitude']);
+            $resource['neid'] = Crypt::encryptString((string) $resource['neid']);
+            $resource['distance'] = Crypt::encryptString((string) $resource['distance']);
+            $resource['cable_type'] = Crypt::encryptString((string) $resource['cable_type']);
+            $resource['longitude'] = Crypt::encryptString((string) $resource['longitude']);
+            $resource['latitude'] = Crypt::encryptString((string) $resource['latitude']);
 
 
             return $resource;
@@ -183,15 +191,17 @@ XML;
     private function emptyResource(array $data = []): array
     {
         return [
-            'distance' => Crypt::encryptString((string)($data['cable_type'] ?? '0')),
+            'distance' => Crypt::encryptString((string) ($data['cable_type'] ?? '0')),
             'ava_port' => '',
-            'neid' => Crypt::encryptString((string)($data['longitude'] ?? '7000')),
+            'neid' => Crypt::encryptString((string) ($data['longitude'] ?? '7000')),
             'nename' => '',
             'typeid' => '',
-            'longitude' => Crypt::encryptString((string)($data['longitude'] ?? '')),
-            'latitude' => Crypt::encryptString((string)($data['latitude'] ?? '')),
-            'cable_type' => Crypt::encryptString((string)($data['cable_type'] ?? '3')),
+            'longitude' => Crypt::encryptString((string) ($data['longitude'] ?? '')),
+            'latitude' => Crypt::encryptString((string) ($data['latitude'] ?? '')),
+            'cable_type' => Crypt::encryptString((string) ($data['cable_type'] ?? '3')),
             'cable_type_desc' => '',
+            'area_code' => '',
+            'area_name' => '',
         ];
     }
 }

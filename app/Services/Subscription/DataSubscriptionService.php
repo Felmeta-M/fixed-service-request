@@ -119,6 +119,25 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          'installment_date' => $this->completedDate(),
       ]);
 
+      //    <com:SupplementaryOfferingList>
+      //    <com:OfferingInstance>
+      //       <com:OfferingId>
+      //          <com:OfferingId>1827012365</com:OfferingId>
+      //       </com:OfferingId>
+      //       <com:InstanceProperty>
+      //          <com:PropertyCode>50135</com:PropertyCode>
+      //          <com:PropertyType>1</com:PropertyType>
+      //          <com:Value>2701DTU</com:Value>
+      //       </com:InstanceProperty>
+      //       <com:InstanceProperty>
+      //          <com:PropertyCode>50134</com:PropertyCode>
+      //          <com:PropertyType>1</com:PropertyType>
+      //          <com:Value>2</com:Value>
+      //       </com:InstanceProperty>
+      //    </com:OfferingInstance>
+      //    <com:EffectiveMode>0</com:EffectiveMode>
+      // </com:SupplementaryOfferingList>
+
       return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                   xmlns:com="http://www.huawei.com/bss/soaif/interface/common/"
@@ -231,25 +250,6 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                         </com:InstanceProperty>
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
-
-                  <com:SupplementaryOfferingList>
-                     <com:OfferingInstance>
-                        <com:OfferingId>
-                           <com:OfferingId>1827012365</com:OfferingId>
-                        </com:OfferingId>
-                        <com:InstanceProperty>
-                           <com:PropertyCode>50135</com:PropertyCode>
-                           <com:PropertyType>1</com:PropertyType>
-                           <com:Value>2701DTU</com:Value>
-                        </com:InstanceProperty>
-                        <com:InstanceProperty>
-                           <com:PropertyCode>50134</com:PropertyCode>
-                           <com:PropertyType>1</com:PropertyType>
-                           <com:Value>2</com:Value>
-                        </com:InstanceProperty>
-                     </com:OfferingInstance>
-                     <com:EffectiveMode>0</com:EffectiveMode>
-                  </com:SupplementaryOfferingList>
 
                   <com:SLAPriority>6</com:SLAPriority>
                   <com:InternetAccount>{$email}</com:InternetAccount>

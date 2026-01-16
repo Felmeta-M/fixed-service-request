@@ -4,11 +4,10 @@ import { GoogleMap, LoadScript } from '@react-google-maps/api';
 import { Loader2, MapPin } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { ProfessionalSearch } from './map-search';
+import { AutocompleteSearch } from './map-search';
 
 interface GoogleLocationMapProps {
     onLocationSelect: (lat: number, lng: number, address?: string) => void;
-    onAddressSearch: (address: string) => void;
     initialLat?: number;
     initialLng?: number;
     selectedLocation?: { lat: number; lng: number; address: string } | null;
@@ -37,7 +36,6 @@ const LIBRARIES: ('places' | 'drawing' | 'geometry' | 'localContext' | 'visualiz
 
 export function GoogleLocationMap({
     onLocationSelect,
-    onAddressSearch,
     initialLat = 9.0192,
     initialLng = 38.7525,
     selectedLocation,
@@ -47,7 +45,6 @@ export function GoogleLocationMap({
 }: GoogleLocationMapProps) {
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
     const [isGeocoding, setIsGeocoding] = useState(false);
     const [internalAnimating, setInternalAnimating] = useState(false);
     const [isGettingLocation, setIsGettingLocation] = useState(false);
@@ -279,79 +276,6 @@ export function GoogleLocationMap({
         }
     }, [map, selectedLocation, smoothPanTo, internalAnimating, updateMarkerPosition]);
 
-    // const handleSearch = async () => {
-    //     const query = searchQuery.trim();
-    //     if (!query || internalAnimating) return;
-
-    //     // Prefer Maps JS Geocoder when available (works well with browser-restricted keys).
-    //     if (map && typeof google !== 'undefined' && google.maps?.Geocoder) {
-    //         try {
-    //             setIsGeocoding(true);
-    //             const geocoder = new google.maps.Geocoder();
-
-    //             const results = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
-    //                 geocoder.geocode({ address: query }, (results, status) => {
-    //                     if (status === 'OK' && results && results.length > 0) {
-    //                         resolve(results);
-    //                         return;
-    //                     }
-    //                     reject(new Error(status));
-    //                 });
-    //             });
-
-    //             const first = results[0];
-    //             const location = first.geometry.location;
-    //             onLocationSelect(location.lat(), location.lng(), first.formatted_address);
-    //             return;
-    //         } catch {
-    //             // Fall back to the parent handler (which already reports errors in the UI).
-    //         } finally {
-    //             setIsGeocoding(false);
-    //         }
-    //     }
-
-    //     onAddressSearch(query);
-    // };
-    const handleSearch = async () => {
-        const query = searchQuery.trim();
-        if (!query || internalAnimating) return;
-
-        if (map && typeof google !== 'undefined' && google.maps?.Geocoder) {
-            try {
-                setIsGeocoding(true);
-                const geocoder = new google.maps.Geocoder();
-
-                const results = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
-                    geocoder.geocode({ address: query }, (results, status) => {
-                        if (status === 'OK' && results && results.length > 0) {
-                            resolve(results);
-                            return;
-                        }
-                        reject(new Error(`Geocoding failed: ${status}`));
-                    });
-                });
-
-                const first = results[0];
-                const location = first.geometry.location;
-
-                // Call the parent handler with coordinates AND address
-                onLocationSelect(location.lat(), location.lng(), first.formatted_address);
-
-                // Clear search query after successful search
-                setSearchQuery('');
-            } catch (error) {
-                console.error('Geocoding failed:', error);
-                // Fall back to the parent handler for error display
-                onAddressSearch(query);
-            } finally {
-                setIsGeocoding(false);
-            }
-        } else {
-            // Fallback to parent handler if Geocoder not available
-            onAddressSearch(query);
-        }
-    };
-
     // Check geolocation permission status
     const checkGeolocationPermission = async (): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> => {
         if ('permissions' in navigator && 'query' in navigator.permissions) {
@@ -494,33 +418,33 @@ export function GoogleLocationMap({
     return (
         <div className="space-y-2">
             {/* Search Bar and Get Location Button */}
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="flex-1">
-                    <ProfessionalSearch
-                        searchQuery={searchQuery}
-                        setSearchQuery={setSearchQuery}
-                        onSearch={handleSearch}
-                        isLoading={isGeocoding || isCurrentlyAnimating}
-                        placeholder="Search for an address, place, or landmark..."
+                    <AutocompleteSearch
+                        onPlaceSelect={(lat, lng, address) => {
+                            smoothPanTo(lat, lng, 16);
+                            updateMarkerPosition(lat, lng);
+                            onLocationSelect(lat, lng, address);
+                        }}
+                        isLoading={isCurrentlyAnimating}
+                        placeholder="Search location..."
+                        disabled={!map}
                     />
                 </div>
                 <Button
                     type="button"
                     onClick={getCurrentLocation}
                     disabled={isGettingLocation || isCurrentlyAnimating || !map}
-                    // variant="outline"
-                    className="flex h-8 items-center gap-2"
+                    size="sm"
+                    className="h-9 shrink-0"
                 >
                     {isGettingLocation ? (
-                        <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="hidden sm:inline">Locating...</span>
-                        </>
+                        <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                         <>
-                            {/* <Navigation className="h-4 w-4" /> */}
-                            <MapPin className="h-4 w-4" />
-                            <span className="">Get My Location</span>
+                            <MapPin className="mr-1.5 h-4 w-4" />
+                            <span className="hidden sm:inline">My Location</span>
+                            <span className="sm:hidden">Locate Me</span>
                         </>
                     )}
                 </Button>

@@ -143,21 +143,21 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 const responseData = response.data;
                 console.log("🚀 ~ handleSubmit ~ responseData:", responseData)
 
-            const { customer_survey_order_id: surveyId } = responseData;
-            console.log("🚀 ~ handleSubmit ~ surveyId:", surveyId)
+                const { customer_survey_order_id: surveyId } = responseData;
+                console.log("🚀 ~ handleSubmit ~ surveyId:", surveyId)
 
-            const newSurvey = {
-                id: surveyId,
-                type: serviceInfo?.name || 'Service Request',
-                status: 'waiting',
-                createdAt: new Date().toISOString(),
-                main_offer_id: formData.serviceType,
-            };
+                const newSurvey = {
+                    id: surveyId,
+                    type: serviceInfo?.name || 'Service Request',
+                    status: 'waiting',
+                    createdAt: new Date().toISOString(),
+                    main_offer_id: formData.serviceType,
+                };
 
-            // Save to local storage
-            const existingSurveys = JSON.parse(localStorage.getItem('userSurveys') || '[]');
-            existingSurveys.push(newSurvey);
-            localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
+                // Save to local storage
+                const existingSurveys = JSON.parse(localStorage.getItem('userSurveys') || '[]');
+                existingSurveys.push(newSurvey);
+                localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
 
                 toast.success('Service request created successfully!', {
                     id: submissionToast,

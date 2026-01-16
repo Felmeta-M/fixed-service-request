@@ -64,7 +64,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
     const [address, setAddress] = useState(formData.address || '');
     const [manualFlowErrors, setManualFlowErrors] = useState<Record<string, string>>({});
     const [submitting, setSubmitting] = useState(false);
-    
+
     const createSurveyMutation = useCreateSurvey();
 
     // Sync address with formData when it changes
@@ -244,7 +244,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                 if (errorData?.errors) {
                     validationErrors = parseValidationErrors(errorData.errors);
                     setManualFlowErrors(validationErrors);
-                    
+
                     errorMessage = 'Please correct the validation errors below.';
                     errorDescription = Object.keys(validationErrors).length > 0
                         ? `${Object.keys(validationErrors).length} field${Object.keys(validationErrors).length > 1 ? 's' : ''} need${Object.keys(validationErrors).length > 1 ? '' : 's'} attention.`
@@ -344,74 +344,74 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                         <div className="text-sm text-gray-500">Your selected location details - you can edit the address to be more specific</div>
                     </div> */}
                     <div className="flex flex-col gap-4 w-1/2   ">
-                            <Field>
-                                <FieldLabel htmlFor="manual-phone">
-                                    Contact Phone Number <span className="text-red-500">*</span>
-                                </FieldLabel>
-                                <Input
-                                    id="manual-phone"
-                                    type="tel"
-                                    placeholder="+251 9XX XXX XXX"
-                                    value={manualFlowData.phone}
-                                    onChange={(e) => {
-                                        setManualFlowData({ ...manualFlowData, phone: e.target.value });
-                                        if (manualFlowErrors.phone) {
-                                            setManualFlowErrors({ ...manualFlowErrors, phone: '' });
-                                        }
-                                    }}
-                                    className={
-                                        manualFlowErrors.phone
-                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
-                                            : ''
+                        <Field>
+                            <FieldLabel htmlFor="manual-phone">
+                                Contact Phone Number <span className="text-red-500">*</span>
+                            </FieldLabel>
+                            <Input
+                                id="manual-phone"
+                                type="tel"
+                                placeholder="+251 9XX XXX XXX"
+                                value={manualFlowData.phone}
+                                onChange={(e) => {
+                                    setManualFlowData({ ...manualFlowData, phone: e.target.value });
+                                    if (manualFlowErrors.phone) {
+                                        setManualFlowErrors({ ...manualFlowErrors, phone: '' });
                                     }
-                                    disabled={submitting}
-                                    required
-                                />
-                                {manualFlowErrors.phone && (
-                                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                                        <AlertCircle className="h-4 w-4" />
-                                        {manualFlowErrors.phone}
-                                    </p>
-                                )}
-                            </Field>
+                                }}
+                                className={
+                                    manualFlowErrors.phone
+                                        ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
+                                        : ''
+                                }
+                                disabled={submitting}
+                                required
+                            />
+                            {manualFlowErrors.phone && (
+                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                    <AlertCircle className="h-4 w-4" />
+                                    {manualFlowErrors.phone}
+                                </p>
+                            )}
+                        </Field>
 
-                            
-                            <Field>
-                                <FieldLabel htmlFor="manual-address">
-                                    Address <span className="text-red-500">*</span>
-                                </FieldLabel>
-                                <Textarea
-                                    id="manual-address"
-                                    rows={3}
-                                    placeholder="Enter your specific location address"
-                                    value={address}
-                                    onChange={(e) => {
-                                        const newAddress = e.target.value;
-                                        setAddress(newAddress);
-                                        // Update parent formData
-                                        if (onUpdate) {
-                                            onUpdate({ address: newAddress });
-                                        }
-                                        // Clear error if exists
-                                        if (manualFlowErrors.address) {
-                                            setManualFlowErrors({ ...manualFlowErrors, address: '' });
-                                        }
-                                    }}
-                                    className={
-                                        manualFlowErrors.address
-                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
-                                            : ''
+
+                        <Field>
+                            <FieldLabel htmlFor="manual-address">
+                                Address <span className="text-red-500">*</span>
+                            </FieldLabel>
+                            <Textarea
+                                id="manual-address"
+                                rows={3}
+                                placeholder="Enter your specific location address"
+                                value={address}
+                                onChange={(e) => {
+                                    const newAddress = e.target.value;
+                                    setAddress(newAddress);
+                                    // Update parent formData
+                                    if (onUpdate) {
+                                        onUpdate({ address: newAddress });
                                     }
-                                    disabled={submitting}
-                                    required
-                                />
-                                {manualFlowErrors.address && (
-                                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                                        <AlertCircle className="h-4 w-4" />
-                                        {manualFlowErrors.address}
-                                    </p>
-                                )}
-                            </Field>
+                                    // Clear error if exists
+                                    if (manualFlowErrors.address) {
+                                        setManualFlowErrors({ ...manualFlowErrors, address: '' });
+                                    }
+                                }}
+                                className={
+                                    manualFlowErrors.address
+                                        ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
+                                        : ''
+                                }
+                                disabled={submitting}
+                                required
+                            />
+                            {manualFlowErrors.address && (
+                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                    <AlertCircle className="h-4 w-4" />
+                                    {manualFlowErrors.address}
+                                </p>
+                            )}
+                        </Field>
                     </div>
                 </div>
 

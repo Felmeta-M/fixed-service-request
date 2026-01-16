@@ -1884,19 +1884,43 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
         }, obj);
     };
 
-    // Set default customer category when customer_type is residential
+    // Initialize defaults on mount - ensure Individual is selected with Residential defaults
     useEffect(() => {
-        if (data.customer_type === '1' && !data.customer_category) {
-            setData('customer_category', '1');
+        // Ensure customer_type defaults to '1' (Individual)
+        if (!data.customer_type) {
+            setData('customer_type', '1');
         }
-    }, [data.customer_type, data.customer_category, setData]);
+        // When customer_type is '1' (Individual), set defaults to Residential
+        if (data.customer_type === '1') {
+            if (!data.customer_category || data.customer_category !== '1') {
+                setData('customer_category', '1');
+            }
+            if (!data.customer_subcategory || data.customer_subcategory !== '1') {
+                setData('customer_subcategory', '1');
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Only run on mount
 
-    // Set default customer subcategory when customer_category is residential
+    // Set default customer category when customer_type is Individual (residential)
     useEffect(() => {
-        if (data.customer_category === '1' && !data.customer_subcategory) {
-            setData('customer_subcategory', '1');
+        if (data.customer_type === '1') {
+            // Always set to '1' (Residential) when Individual is selected
+            if (data.customer_category !== '1') {
+                setData('customer_category', '1');
+            }
         }
-    }, [data.customer_category, data.customer_subcategory, setData]);
+    }, [data.customer_type, setData]);
+
+    // Set default customer subcategory when customer_category is Residential
+    useEffect(() => {
+        if (data.customer_category === '1') {
+            // Always set to '1' (Residential) when category is Residential
+            if (data.customer_subcategory !== '1') {
+                setData('customer_subcategory', '1');
+            }
+        }
+    }, [data.customer_category, setData]);
 
     const { types, loading: typesLoading, error: typesError } = useCustomerTypes();
     const { categories, loading: categoriesLoading, error: categoriesError } = useCustomerCategories(data.customer_type);
@@ -2418,23 +2442,22 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                 label="Customer Type"
                                 required
                                 id="customer_type"
-                                value={data.customer_type}
+                                value={data.customer_type || '1'}
                                 onChange={(val) => {
                                     setData('customer_type', val);
+                                    // When Individual (value '1') is selected, set defaults to Residential
                                     if (val === '1') {
                                         setData('customer_category', '1');
                                         setData('customer_subcategory', '1');
-                                    }
-                                    if (val === '2') {
+                                        clearFieldError('customer_category');
+                                        clearFieldError('customer_subcategory');
+                                    } else {
+                                        // For other types (like Enterprise), clear the defaults
                                         setData('customer_category', '');
                                         setData('customer_subcategory', '');
                                     }
                                     clearFieldError('customer_type');
                                 }}
-                                // options={[
-                                //     { label: 'Residential', value: '1' },
-                                //     { label: 'Enterprise', value: '2' },
-                                // ]}
                                 options={types}
                                 placeholder="Select customer type"
                                 error={formErrors.customer_type}
@@ -2446,10 +2469,16 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                 label="Customer Category"
                                 required
                                 id="customer_category"
-                                value={data?.customer_category}
+                                value={data?.customer_category || (data.customer_type === '1' ? '1' : '')}
                                 onChange={(val) => {
                                     setData('customer_category', val);
-                                    setData('customer_subcategory', val === '1' ? '1' : '');
+                                    // When Residential category (value '1') is selected, set subcategory to Residential
+                                    if (val === '1') {
+                                        setData('customer_subcategory', '1');
+                                        clearFieldError('customer_subcategory');
+                                    } else {
+                                        setData('customer_subcategory', '');
+                                    }
                                     clearFieldError('customer_category');
                                 }}
                                 options={categories}
@@ -2462,7 +2491,7 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                 label="Customer Subcategory"
                                 required
                                 id="customer_subcategory"
-                                value={data?.customer_subcategory}
+                                value={data?.customer_subcategory || (data.customer_category === '1' ? '1' : '')}
                                 onChange={(val) => {
                                     setData('customer_subcategory', val);
                                     clearFieldError('customer_subcategory');
@@ -2771,11 +2800,11 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                     { label: 'Diploma/certificate', value: '4' },
                                     { label: "Bachelor's degree", value: '5' },
                                     { label: "Master's degree and above", value: '6' },
-                                    { label: 'Unknown', value: '70' },
-                                    { label: 'Master', value: '90' },
-                                    { label: 'Doctor', value: '100' },
-                                    { label: 'Others', value: '110' },
-                                    { label: 'Bachelor', value: '80' },
+                                    // { label: 'Unknown', value: '70' },
+                                    // { label: 'Master', value: '90' },
+                                    // { label: 'Doctor', value: '100' },
+                                    // { label: 'Others', value: '110' },
+                                    // { label: 'Bachelor', value: '80' },
                                 ]}
                                 placeholder="Select education level"
                                 error={formErrors.education}

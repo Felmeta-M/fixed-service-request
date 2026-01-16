@@ -3,16 +3,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePage } from '@inertiajs/react';
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { router } from '@inertiajs/react';
-import { useCreateSurvey } from '@/hooks/use-api-mutations';
+import { useCreateSurvey, useGetCustomer } from '@/hooks/use-api-mutations';
+import { useRegions, useWoredas, useZones } from '@/hooks/use-regions';
 
 interface AuthUser {
     id?: number;
     customer_code?: string | number;
+    customer_sub_id?: string | number;
     name?: string;
     phone?: string;
     email?: string;
@@ -24,6 +27,7 @@ type FormData = {
     bandwidth?: string;
     customerType?: string;
     withDevice?: boolean;
+    deviceId?: string | null;
     latitude?: number;
     longitude?: number;
     address?: string;
@@ -65,7 +69,62 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
     const [manualFlowErrors, setManualFlowErrors] = useState<Record<string, string>>({});
     const [submitting, setSubmitting] = useState(false);
 
+    // Address selection state
+    const [selectedAddress, setSelectedAddress] = useState({
+        region: '',
+        zone: '',
+        woreda: '',
+        kebele: '',
+    });
+
     const createSurveyMutation = useCreateSurvey();
+    
+    // Fetch customer data to get address information for fallback
+    const { data: customerData, isLoading: isLoadingCustomer } = useGetCustomer(
+        (user as AuthUser)?.customer_sub_id
+    );
+
+    // Address dropdown hooks
+    const { regions: regionOptions, loading: loadingRegions } = useRegions();
+    const { zones: zoneOptions, loading: loadingZones } = useZones(selectedAddress.region);
+    const { woredas: woredaOptions, loading: loadingWoredas } = useWoredas(selectedAddress.zone);
+
+    // Check if kebele is required based on region (not required for Addis Ababa)
+    const isKebeleRequired = useMemo(() => {
+        if (!selectedAddress.region) return false;
+        
+        // Find the region name from the region options
+        const selectedRegion = regionOptions.find((r) => r.value === selectedAddress.region);
+        const regionName = selectedRegion?.label?.toLowerCase() || '';
+        
+        // Addis Ababa region names (case-insensitive check)
+        const addisAbabaNames = ['addis ababa', 'addisababa', 'addis_ababa'];
+        const isAddisAbaba = addisAbabaNames.some((name) => regionName.includes(name));
+        
+        return !isAddisAbaba; // Required for all regions except Addis Ababa
+    }, [selectedAddress.region, regionOptions]);
+
+    // Initialize address from customer data if available
+    useEffect(() => {
+        if (customerData && !selectedAddress.region) {
+            const customer = customerData?.data || customerData;
+            if (customer) {
+                const customerRegion = customer.region || customer.address?.region || '';
+                const customerZone = customer.zone || customer.address?.zone || '';
+                const customerWoreda = customer.woreda || customer.address?.woreda || '';
+                const customerKebele = customer.kebele || customer.address?.kebele || '';
+
+                if (customerRegion || customerZone || customerWoreda || customerKebele) {
+                    setSelectedAddress({
+                        region: customerRegion,
+                        zone: customerZone,
+                        woreda: customerWoreda,
+                        kebele: customerKebele,
+                    });
+                }
+            }
+        }
+    }, [customerData]);
 
     // Sync address with formData when it changes
     useEffect(() => {
@@ -157,6 +216,19 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
         // Build survey creation payload (same structure as review-submit-step)
         const encryptedResource = formData.resourceData;
 
+        // Get customer address data for fallback
+        const customer = customerData?.data || customerData;
+        const customerRegion = customer?.region || customer?.address?.region || '';
+        const customerZone = customer?.zone || customer?.address?.zone || '';
+        const customerWoreda = customer?.woreda || customer?.address?.woreda || '';
+        const customerKebele = customer?.kebele || customer?.address?.kebele || '';
+
+        // Use selected address if available, otherwise fallback to customer address
+        const finalRegion = selectedAddress.region || customerRegion || '2';
+        const finalZone = selectedAddress.zone || customerZone || '11';
+        const finalWoreda = selectedAddress.woreda || customerWoreda || '141';
+        const finalKebele = selectedAddress.kebele || customerKebele || '';
+
         const submitData = {
             customer_code: (user as AuthUser)?.customer_code?.toString() || '',
             customer_type: formData.customerType || 'residential',
@@ -169,10 +241,11 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             contact_no: manualFlowData.phone.trim() || formData.contactNo || (user as AuthUser)?.phone || '',
             contact_email: formData.contactEmail || (user as AuthUser)?.email || '',
             survey_address_info: {
-                region_city: '2',
-                subcity_zone: '11',
-                wereda_town: '141',
-                kebele: '',
+                // Use selected address or fallback to customer address
+                region_city: finalRegion,
+                subcity_zone: finalZone,
+                wereda_town: finalWoreda,
+                kebele: finalKebele,
                 // Use encrypted values from resource-check (required by BaseSurveyService::decrypt)
                 latitude: encryptedResource?.latitude ?? String(formData.latitude),
                 longitude: encryptedResource?.longitude ?? String(formData.longitude),
@@ -309,7 +382,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 </Field>
                             )}
 
-                            <Field>
+                            {/* <Field>
                                 <FieldLabel>Customer Type</FieldLabel>
                                 <Input
                                     type="text"
@@ -317,7 +390,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                     disabled
                                     className="bg-gray-50"
                                 />
-                            </Field>
+                            </Field> */}
 
                             <Field>
                                 <FieldLabel>Device Option</FieldLabel>
@@ -334,17 +407,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                     className="bg-gray-50"
                                 />
                             </Field>
-                        </FieldGroup>
-                    </div>
-                </div>
-
-                <div className="mt-2">
-                    {/* <div>
-                        <div className="font-semibold text-lg">Location Information</div>
-                        <div className="text-sm text-gray-500">Your selected location details - you can edit the address to be more specific</div>
-                    </div> */}
-                    <div className="flex flex-col gap-4 w-1/2   ">
-                        <Field>
+                            <Field>
                             <FieldLabel htmlFor="manual-phone">
                                 Contact Phone Number <span className="text-red-500">*</span>
                             </FieldLabel>
@@ -374,9 +437,49 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 </p>
                             )}
                         </Field>
+                        </FieldGroup>
+                    </div>
+                </div>
+
+                <div className="mt-2">
+                    {/* <div>
+                        <div className="font-semibold text-lg">Location Information</div>
+                        <div className="text-sm text-gray-500">Your selected location details - you can edit the address to be more specific</div>
+                    </div> */}
+                    <div className="flex flex-col gap-4 w-1/2   ">
+                        {/* <Field>
+                            <FieldLabel htmlFor="manual-phone">
+                                Contact Phone Number <span className="text-red-500">*</span>
+                            </FieldLabel>
+                            <Input
+                                id="manual-phone"
+                                type="tel"
+                                placeholder="+251 9XX XXX XXX"
+                                value={manualFlowData.phone}
+                                onChange={(e) => {
+                                    setManualFlowData({ ...manualFlowData, phone: e.target.value });
+                                    if (manualFlowErrors.phone) {
+                                        setManualFlowErrors({ ...manualFlowErrors, phone: '' });
+                                    }
+                                }}
+                                className={
+                                    manualFlowErrors.phone
+                                        ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
+                                        : ''
+                                }
+                                disabled={submitting}
+                                required
+                            />
+                            {manualFlowErrors.phone && (
+                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                    <AlertCircle className="h-4 w-4" />
+                                    {manualFlowErrors.phone}
+                                </p>
+                            )}
+                        </Field> */}
 
 
-                        <Field>
+                        {/* <Field>
                             <FieldLabel htmlFor="manual-address">
                                 Address <span className="text-red-500">*</span>
                             </FieldLabel>
@@ -411,8 +514,199 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                     {manualFlowErrors.address}
                                 </p>
                             )}
-                        </Field>
+                        </Field> */}
                     </div>
+                </div>
+
+                {/* Address Selection Dropdowns */}
+                <div className="mt-6">
+                    <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900">Address Details</h3>
+                        <p className="text-sm text-gray-500">
+                            Select address details or use your saved customer address (pre-filled below)
+                        </p>
+                    </div>
+                    <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Field>
+                            <FieldLabel htmlFor="manual-region">
+                                Region {selectedAddress.region ? '' : <span className="text-red-500">*</span>}
+                            </FieldLabel>
+                            <Select
+                                value={selectedAddress.region}
+                                onValueChange={(value) => {
+                                    setSelectedAddress({
+                                        region: value,
+                                        zone: '',
+                                        woreda: '',
+                                        kebele: '',
+                                    });
+                                    if (manualFlowErrors.region) {
+                                        setManualFlowErrors({ ...manualFlowErrors, region: '' });
+                                    }
+                                }}
+                                disabled={submitting || loadingRegions}
+                            >
+                                <SelectTrigger
+                                    className={
+                                        manualFlowErrors.region
+                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
+                                            : ''
+                                    }
+                                >
+                                    <SelectValue placeholder={loadingRegions ? 'Loading regions...' : 'Select region'} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {regionOptions.map((region) => (
+                                        <SelectItem key={region.value} value={region.value}>
+                                            {region.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {manualFlowErrors.region && (
+                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                    <AlertCircle className="h-4 w-4" />
+                                    {manualFlowErrors.region}
+                                </p>
+                            )}
+                        </Field>
+
+                        <Field>
+                            <FieldLabel htmlFor="manual-zone">
+                                Zone {selectedAddress.zone ? '' : <span className="text-red-500">*</span>}
+                            </FieldLabel>
+                            <Select
+                                value={selectedAddress.zone}
+                                onValueChange={(value) => {
+                                    setSelectedAddress({
+                                        ...selectedAddress,
+                                        zone: value,
+                                        woreda: '',
+                                        kebele: '',
+                                    });
+                                    if (manualFlowErrors.zone) {
+                                        setManualFlowErrors({ ...manualFlowErrors, zone: '' });
+                                    }
+                                }}
+                                disabled={submitting || loadingZones || !selectedAddress.region}
+                            >
+                                <SelectTrigger
+                                    className={
+                                        manualFlowErrors.zone
+                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
+                                            : ''
+                                    }
+                                >
+                                    <SelectValue
+                                        placeholder={
+                                            !selectedAddress.region
+                                                ? 'First select region'
+                                                : loadingZones
+                                                  ? 'Loading zones...'
+                                                  : 'Select zone'
+                                        }
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {zoneOptions.map((zone) => (
+                                        <SelectItem key={zone.value} value={zone.value}>
+                                            {zone.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {manualFlowErrors.zone && (
+                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                    <AlertCircle className="h-4 w-4" />
+                                    {manualFlowErrors.zone}
+                                </p>
+                            )}
+                        </Field>
+
+                        <Field>
+                            <FieldLabel htmlFor="manual-woreda">
+                                Woreda {selectedAddress.woreda ? '' : <span className="text-red-500">*</span>}
+                            </FieldLabel>
+                            <Select
+                                value={selectedAddress.woreda}
+                                onValueChange={(value) => {
+                                    setSelectedAddress({
+                                        ...selectedAddress,
+                                        woreda: value,
+                                    });
+                                    if (manualFlowErrors.woreda) {
+                                        setManualFlowErrors({ ...manualFlowErrors, woreda: '' });
+                                    }
+                                }}
+                                disabled={submitting || loadingWoredas || !selectedAddress.zone}
+                            >
+                                <SelectTrigger
+                                    className={
+                                        manualFlowErrors.woreda
+                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
+                                            : ''
+                                    }
+                                >
+                                    <SelectValue
+                                        placeholder={
+                                            !selectedAddress.zone
+                                                ? 'First select zone'
+                                                : loadingWoredas
+                                                  ? 'Loading woredas...'
+                                                  : 'Select woreda'
+                                        }
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {woredaOptions.map((woreda) => (
+                                        <SelectItem key={woreda.value} value={woreda.value}>
+                                            {woreda.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {manualFlowErrors.woreda && (
+                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                    <AlertCircle className="h-4 w-4" />
+                                    {manualFlowErrors.woreda}
+                                </p>
+                            )}
+                        </Field>
+
+                        <Field>
+                            <FieldLabel htmlFor="manual-kebele">
+                                Kebele {isKebeleRequired && !selectedAddress.kebele ? <span className="text-red-500">*</span> : ''}
+                            </FieldLabel>
+                            <Input
+                                id="manual-kebele"
+                                type="text"
+                                placeholder={isKebeleRequired ? 'Enter kebele' : 'Optional (not required for Addis Ababa)'}
+                                value={selectedAddress.kebele}
+                                onChange={(e) => {
+                                    setSelectedAddress({
+                                        ...selectedAddress,
+                                        kebele: e.target.value,
+                                    });
+                                    if (manualFlowErrors.kebele) {
+                                        setManualFlowErrors({ ...manualFlowErrors, kebele: '' });
+                                    }
+                                }}
+                                className={
+                                    manualFlowErrors.kebele
+                                        ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
+                                        : ''
+                                }
+                                disabled={submitting}
+                                required={isKebeleRequired}
+                            />
+                            {manualFlowErrors.kebele && (
+                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                    <AlertCircle className="h-4 w-4" />
+                                    {manualFlowErrors.kebele}
+                                </p>
+                            )}
+                        </Field>
+                    </FieldGroup>
                 </div>
 
                 {/* Submit Button */}

@@ -107,7 +107,7 @@ class ManualSurveyOrderService extends BaseApiService
         $customerCode = $this->customerCode($data['customer_code'] ?? '');
 
         // Resolve telecom region: accept name and convert to area_id
-        $telecomRegion = $this->resolveTelecomRegion($data['telecom_region'] ?? '');
+        $telecomRegion = 104; // $this->resolveTelecomRegion($data['telecom_region'] ?? ''); //TODO: Add oper_type to the request
         $operType = $data['oper_type'] ?? 'A';
 
         // Convert bandwidth from MB to KB (BSS expects KB)

@@ -187,6 +187,17 @@ XML;
                     'code' => $customerCode,
                     'contact' => json_encode($data['contact']),
                     'contact_persons' => json_encode($data['contact_person']),
+                    'gender' => $data['gender'],
+                    'nationality' => $data['nationality'],
+                    'identification_type' => $data['identification_type'],
+                    'identification_number' => $data['identification_number'],
+                    'birthdate' => $data['date_of_birth'],
+                    'place_of_birth' => $data['place_of_birth'],
+                    'occupation' => $data['occupation'],
+                    'education' => $data['education'],
+                    'religion' => $data['religion'],
+                    'income' => $data['income'],
+                    'primary_language' => $data['primary_language'],
                     // Address fields
                     'region' => $data['address']['region'],
                     'city' => $data['address']['city'],
@@ -196,6 +207,7 @@ XML;
                     'house_no' => $data['address']['house_no'],
                     'street_name' => $data['address']['street_name'] ?? null,
                     'apartment' => $data['address']['apartment'] ?? null,
+
                     // BSS Classification
                     'customer_type' => $data['customer_type'] ?? '2',
                     'customer_category' => $data['customer_category'] ?? '5',

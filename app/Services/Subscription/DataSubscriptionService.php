@@ -235,7 +235,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                   <com:SupplementaryOfferingList>
                      <com:OfferingInstance>
                         <com:OfferingId>
-                           <com:OfferingId>1005858159</com:OfferingId>
+                           <com:OfferingId>1827012365</com:OfferingId>
                         </com:OfferingId>
                         <com:InstanceProperty>
                            <com:PropertyCode>50135</com:PropertyCode>

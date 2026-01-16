@@ -352,11 +352,42 @@ export function GoogleLocationMap({
         }
     };
 
+    // Check geolocation permission status
+    const checkGeolocationPermission = async (): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> => {
+        if ('permissions' in navigator && 'query' in navigator.permissions) {
+            try {
+                const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+                return result.state;
+            } catch (error) {
+                console.warn('Permissions API query failed:', error);
+                return 'unknown';
+            }
+        }
+        return 'unknown';
+    };
+
     // Get user's current location
-    const getCurrentLocation = useCallback(() => {
+    const getCurrentLocation = useCallback(async () => {
         if (!navigator.geolocation || !map) {
-            alert('Geolocation is not supported by your browser');
+            toast.error('Geolocation is not supported by your browser');
             return;
+        }
+
+        // Check permission status first
+        const permissionStatus = await checkGeolocationPermission();
+        console.log('📍 Permission status before request:', permissionStatus);
+
+        if (permissionStatus === 'denied') {
+            toast.error('Location access is blocked. Please enable location permissions in your browser settings and refresh the page.', {
+                duration: 6000,
+            });
+            setIsGettingLocation(false);
+            return;
+        }
+
+        // Check if we're on HTTPS (required for geolocation in many browsers)
+        if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            console.warn('⚠️ Geolocation may require HTTPS in production');
         }
 
         setIsGettingLocation(true);
@@ -383,26 +414,59 @@ export function GoogleLocationMap({
                 setIsGettingLocation(false);
             },
             (error) => {
-                console.error('Error getting location:', error);
+                // Log detailed error information for debugging
+                console.error('❌ Geolocation error details:', {
+                    error,
+                    code: error.code,
+                    message: error.message,
+                    type: error.constructor?.name,
+                    stringified: JSON.stringify(error),
+                });
 
                 // Dismiss loading toast
                 toast.dismiss(toastId);
 
                 let errorMessage = 'Unable to retrieve your location.';
 
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage = 'Location access denied. Please enable location permissions.';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage = 'Location information is unavailable.';
-                        break;
-                    case error.TIMEOUT:
-                        errorMessage = 'Location request timed out.';
-                        break;
+                // Check if error has a code property (GeolocationPositionError)
+                if (typeof error.code === 'number') {
+                    // Use numeric constants: PERMISSION_DENIED = 1, POSITION_UNAVAILABLE = 2, TIMEOUT = 3
+                    switch (error.code) {
+                        case 1: // GeolocationPositionError.PERMISSION_DENIED
+                            errorMessage = 'Location access denied. Please enable location permissions in your browser settings.';
+                            break;
+                        case 2: // GeolocationPositionError.POSITION_UNAVAILABLE
+                            errorMessage = 'Location information is unavailable. Please check your device location services are enabled.';
+                            break;
+                        case 3: // GeolocationPositionError.TIMEOUT
+                            errorMessage = 'Location request timed out. Please check your internet connection and try again.';
+                            break;
+                    }
+                } else {
+                    // Fallback: Check error message for permission-related keywords
+                    const errorMsg = (error.message || '').toLowerCase();
+                    const errorStr = JSON.stringify(error).toLowerCase();
+                    
+                    if (
+                        errorMsg.includes('permission') ||
+                        errorMsg.includes('denied') ||
+                        errorMsg.includes('blocked') ||
+                        errorStr.includes('permission') ||
+                        errorStr.includes('denied') ||
+                        errorStr.includes('blocked')
+                    ) {
+                        errorMessage = 'Location access denied. Please enable location permissions in your browser settings.';
+                    } else if (errorMsg.includes('timeout') || errorStr.includes('timeout')) {
+                        errorMessage = 'Location request timed out. Please check your internet connection and try again.';
+                    } else if (errorMsg.includes('unavailable') || errorStr.includes('unavailable')) {
+                        errorMessage = 'Location information is unavailable. Please check your device location services are enabled.';
+                    }
                 }
 
-                alert(errorMessage);
+                // Use toast instead of alert for better UX
+                toast.error(errorMessage, {
+                    duration: 5000,
+                });
                 setIsGettingLocation(false);
             },
             {

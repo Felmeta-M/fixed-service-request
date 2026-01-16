@@ -162,25 +162,74 @@ export function LocationSetupStep({
         }
     };
 
+    const checkGeolocationPermission = async (): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> => {
+        // Check if Permissions API is available
+        if ('permissions' in navigator && 'query' in navigator.permissions) {
+            try {
+                const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+                return result.state;
+            } catch (error) {
+                console.warn('Permissions API query failed:', error);
+                return 'unknown';
+            }
+        }
+        return 'unknown';
+    };
+
     const getCurrentLocationWithTimeout = (): Promise<GeolocationPosition> => {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             if (!navigator.geolocation) {
                 reject(new Error('Geolocation is not supported by this browser'));
                 return;
             }
 
-            const timeout = setTimeout(() => {
-                reject(new Error('Location request timed out'));
-            }, 10000);
+            // Check permission status first (non-blocking, just for logging)
+            const permissionStatus = await checkGeolocationPermission();
+            console.log('📍 Geolocation permission status:', permissionStatus);
+
+            let timeoutId: NodeJS.Timeout | null = null;
+            let isResolved = false;
+
+            // Set a timeout wrapper (longer than geolocation timeout to let it handle its own timeout first)
+            timeoutId = setTimeout(() => {
+                if (!isResolved) {
+                    isResolved = true;
+                    // Create an error that mimics GeolocationPositionError.TIMEOUT
+                    const timeoutError: any = new Error('Location request timed out');
+                    timeoutError.code = 3; // TIMEOUT code
+                    reject(timeoutError);
+                }
+            }, 20000); // 20 seconds - longer than geolocation's 15 second timeout
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    clearTimeout(timeout);
-                    resolve(position);
+                    if (!isResolved) {
+                        isResolved = true;
+                        if (timeoutId) clearTimeout(timeoutId);
+                        console.log('✅ Location obtained successfully');
+                        resolve(position);
+                    }
                 },
                 (error) => {
-                    clearTimeout(timeout);
-                    reject(error);
+                    if (!isResolved) {
+                        isResolved = true;
+                        if (timeoutId) clearTimeout(timeoutId);
+                        // Log the actual geolocation error with full details
+                        console.error('❌ Geolocation API error:', {
+                            code: error.code,
+                            message: error.message,
+                            error: error,
+                        });
+                        // Ensure the error object has the code property
+                        if (error && typeof error.code === 'number') {
+                            reject(error);
+                        } else {
+                            // If error doesn't have code, create a proper error object
+                            const geolocationError: any = new Error(error.message || 'Geolocation error');
+                            geolocationError.code = error.code ?? 0; // Default to 0 if code is missing
+                            reject(geolocationError);
+                        }
+                    }
                 },
                 {
                     enableHighAccuracy: true,
@@ -298,16 +347,55 @@ export function LocationSetupStep({
     };
 
     const getGeolocationErrorMessage = (error: any): string => {
-        switch (error.code) {
-            case error.PERMISSION_DENIED:
-                return 'Location access denied. Please allow location permissions in your browser settings and refresh the page.';
-            case error.POSITION_UNAVAILABLE:
-                return 'Location information unavailable. Please check your device location services are enabled.';
-            case error.TIMEOUT:
-                return 'Location request timed out. Please check your internet connection and try again.';
-            default:
-                return error.message || 'Failed to get your location. Please try again.';
+        // Log error details for debugging
+        console.error('Geolocation error details:', {
+            error,
+            code: error.code,
+            message: error.message,
+            type: error.constructor?.name,
+            stringified: JSON.stringify(error),
+        });
+
+        const errorMessage = error.message?.toLowerCase() || '';
+        const errorString = JSON.stringify(error).toLowerCase();
+
+        // Check if error has a code property (GeolocationPositionError)
+        if (typeof error.code === 'number') {
+            // Use numeric constants: PERMISSION_DENIED = 1, POSITION_UNAVAILABLE = 2, TIMEOUT = 3
+            switch (error.code) {
+                case 1: // GeolocationPositionError.PERMISSION_DENIED
+                    return 'Location access denied. Please allow location permissions in your browser settings and refresh the page.';
+                case 2: // GeolocationPositionError.POSITION_UNAVAILABLE
+                    return 'Location information unavailable. Please check your device location services are enabled.';
+                case 3: // GeolocationPositionError.TIMEOUT
+                    return 'Location request timed out. Please check your internet connection and try again.';
+            }
         }
+
+        // Fallback: Check error message for permission-related keywords
+        if (
+            errorMessage.includes('permission') ||
+            errorMessage.includes('denied') ||
+            errorMessage.includes('blocked') ||
+            errorString.includes('permission') ||
+            errorString.includes('denied') ||
+            errorString.includes('blocked')
+        ) {
+            return 'Location access denied. Please allow location permissions in your browser settings and refresh the page.';
+        }
+
+        // Handle timeout errors from our wrapper
+        if (errorMessage.includes('timed out') || errorString.includes('timed out')) {
+            return 'Location request timed out. Please check your internet connection and try again.';
+        }
+
+        // Check for unavailable errors
+        if (errorMessage.includes('unavailable') || errorString.includes('unavailable')) {
+            return 'Location information unavailable. Please check your device location services are enabled.';
+        }
+
+        // Default error message
+        return error.message || 'Failed to get your location. Please try again.';
     };
 
     const handleManualCoordinateSubmit = async () => {

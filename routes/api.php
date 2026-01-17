@@ -104,8 +104,8 @@ Route::prefix('v1')->group(function () {
             Route::delete('survey-requests/delete', [SurveyOrderController::class, 'destroy']);
 
             Route::post('account-list', [AccountController::class, 'getAccount']);
-            Route::post('primary-offers', [PrimaryOfferingController::class, 'getPrimaryOffer']);
-            Route::post('change-offer', [ChangeOfferController::class, 'changePrimaryOffering']);
+            // Route::post('primary-offers', [PrimaryOfferingController::class, 'getPrimaryOffer']);
+            // Route::post('change-offer', [ChangeOfferController::class, 'changePrimaryOffering']);
             Route::post('avaiable-number', [AvailableNumberController::class, 'getAvaiableNumber']);
             Route::post('cancel-survey-order', [CancelSurveyOrderController::class, 'cancel']);
             Route::post('resource-check', [ResourceCheckController::class, 'check']);

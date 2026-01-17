@@ -6,21 +6,19 @@ use App\Enums\FFDServiceProvisionStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ManualSurveyOrderRequest;
 use App\Http\Requests\SurveyOrderFormRequest;
-use App\Http\Resources\SurveyOrderResource;
 use App\Models\SurveyOrder;
 use App\Services\ManualSurveyOrderService;
 use App\Services\QuerySurveyOrderService;
 use App\Services\QuerySubscriptionOrderStatusService;
 use App\Services\Logging\AppLogger;
+use App\Services\Survey\SurveyServiceFactory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
-use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpFoundation\Response;
-use App\Services\Survey\SurveyServiceFactory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 class SurveyOrderController extends Controller
@@ -83,27 +81,14 @@ class SurveyOrderController extends Controller
 
             // Collect orders that need refresh (WAITING status, not checked in last 5 minutes)
             $ordersToRefresh = collect($surveyOrders->items())
-                ->filter(function ($order) {
-                    if ($order->status !== (string) FFDServiceProvisionStatus::Waiting->value) {
-                        return false;
-                    }
-
-                    if ($order->last_checked_at) {
-                        $lastChecked = \Carbon\Carbon::parse($order->last_checked_at);
-                        if ($lastChecked->diffInMinutes(now()) < 5) {
-                            return false;
-                        }
-                    }
-
-                    return true;
-                });
+                ->filter(fn($order) => SurveyOrder::needsRefresh($order));
 
             // Batch refresh orders
             if ($ordersToRefresh->isNotEmpty()) {
                 $this->batchRefreshOrders($ordersToRefresh);
             }
 
-            // Transform raw data to match SurveyOrderResource format
+            // Transform raw data to API format
             $transformedItems = collect($surveyOrders->items())->map(fn($item) => $this->transformOrder($item));
 
             return response()->json([
@@ -152,7 +137,7 @@ class SurveyOrderController extends Controller
                     // Auto survey: Use subscription order status service with customer_subscription_order_id
                     $subscriptionResponse = $this->querySubscriptionOrderStatusService
                         ->queryStatus($order->customer_subscription_order_id);
-                    Log::info('subscriptionResponse', [$subscriptionResponse]);
+
                     if (!empty($subscriptionResponse['success']) && isset($subscriptionResponse['status']) && $subscriptionResponse['status'] > 0) {
                         // Map subscription order status to survey order status (vendor status codes 1-8)
                         // Convert to integer to match database storage
@@ -265,13 +250,8 @@ class SurveyOrderController extends Controller
             $data = $request->validated();
             $customer = auth()->user();
 
-            // Use Query Builder for existence check - much faster than Eloquent
-            $hasBlockedSurvey = DB::table('survey_orders')
-                ->whereNull('deleted_at')
-                ->where('customer_code', $customer?->customer_code)
-                ->whereIn('status', FFDServiceProvisionStatus::blockedForNewRequest())
-                ->exists();
-
+            // Uncomment to enable blocking duplicate requests:
+            // $hasBlockedSurvey = SurveyOrder::blockedForNewRequest($customer?->customer_code)->exists();
             // if ($hasBlockedSurvey) {
             //     return response()->json([
             //         'success' => false,
@@ -374,35 +354,20 @@ class SurveyOrderController extends Controller
     }
 
     /**
-     * Transform raw order data to resource format
+     * Transform raw order data to API response format.
      */
-    protected function transformOrder($order): array
+    protected function transformOrder(object $order): array
     {
-        // Convert survey order status to label
-        $surveyStatusValue = (int) ($order->status ?? 0);
-        $surveyStatusEnum = FFDServiceProvisionStatus::tryFrom($surveyStatusValue);
-        $surveyStatusLabel = $surveyStatusEnum ? $surveyStatusEnum->label() : FFDServiceProvisionStatus::Processing->label();
-
-        // Modify labels based on subscription order ID presence
-        if (empty($order->customer_subscription_order_id)) {
-            // Manual surveys - no subscription order ID
-            if ($surveyStatusEnum === FFDServiceProvisionStatus::Waiting) {
-                $surveyStatusLabel = 'Waiting Survey';
-            } elseif ($surveyStatusEnum === FFDServiceProvisionStatus::Completed) {
-                $surveyStatusLabel = 'Survey Completed';
-            }
-        } else {
-            // Auto surveys - subscription order ID present
-            if ($surveyStatusEnum === FFDServiceProvisionStatus::Waiting) {
-                $surveyStatusLabel = 'Order Waiting';
-            } elseif ($surveyStatusEnum === FFDServiceProvisionStatus::Completed) {
-                $surveyStatusLabel = 'Order Completed';
-            }
-        }
+        $status = (int) ($order->status ?? 0);
+        $paymentAmount = (float) ($order->payment_amount ?? 0);
+        $paymentTransId = $order->payment_trans_id ?? null;
+        $subscriptionOrderId = $order->customer_subscription_order_id ?? null;
+        $paymentId = $order->payment_id ?? null;
+        $paymentStatus = (int) ($order->payment_status ?? 0);
 
         return [
             'customer_survey_order_id' => $order->customer_survey_order_id,
-            'customer_subscription_order_id' => $order->customer_subscription_order_id ?? null,
+            'customer_subscription_order_id' => $subscriptionOrderId,
             'survey_type' => $order->survey_type ?? '',
             'customer_code' => $order->customer_code,
             'main_offer_id' => $order->main_offer_id,
@@ -410,31 +375,42 @@ class SurveyOrderController extends Controller
             'with_device' => (bool) ($order->with_device ?? false),
             'created_at' => $order->created_at,
             'updated_at' => $order->updated_at,
-            'payment' => $order->payment_id ? [
+            'payment' => $paymentId ? [
                 'total_amount' => $order->payment_amount,
                 'merch_order_id' => $order->payment_merch_order_id ?? null,
             ] : null,
-            'status' => $surveyStatusLabel,
-
-            'is_paid' => $order->payment_id ? (($order->payment_status == FFDServiceProvisionStatus::Waiting->value) && !empty($order->payment_trans_id)) : false,
-
-            'can_pay' => ($surveyStatusValue == FFDServiceProvisionStatus::Completed->value)
-                && ((float) ($order->payment_amount ?? 0)) > 0
-                && empty($order->payment_trans_id),
-
-            'can_subscribe' => (
-                ($surveyStatusValue == FFDServiceProvisionStatus::Completed->value && ((float) ($order->payment_amount ?? 0)) < 1 && empty($order->customer_subscription_order_id))
-                || ($surveyStatusValue == FFDServiceProvisionStatus::Waiting->value && ((float) ($order->payment_amount ?? 0)) > 0 && !empty($order->payment_trans_id))
-            ),
-
-            'can_change_offer' => ($surveyStatusValue == FFDServiceProvisionStatus::Completed->value)
-                && !empty($order->customer_subscription_order_id),
-
-            'can_cancel' => (
-                ($surveyStatusValue == FFDServiceProvisionStatus::Completed->value && empty($order->customer_subscription_order_id))
-                || ($surveyStatusValue == FFDServiceProvisionStatus::Waiting->value && empty($order->payment_trans_id))
-            ),
+            'status' => $this->getStatusLabel($status, $subscriptionOrderId),
+            'is_paid' => SurveyOrder::checkIsPaid($paymentId, $paymentStatus, $paymentTransId),
+            'can_pay' => SurveyOrder::checkCanPay($status, $paymentAmount, $paymentTransId),
+            'can_subscribe' => SurveyOrder::checkCanSubscribe($status, $paymentAmount, $paymentTransId, $subscriptionOrderId),
+            'can_change_offer' => SurveyOrder::checkCanChangeOffer($status, $subscriptionOrderId),
+            'can_cancel' => SurveyOrder::checkCanCancel($status, $subscriptionOrderId, $paymentTransId),
         ];
+    }
+
+    /**
+     * Get status label based on status and subscription order presence.
+     */
+    protected function getStatusLabel(int $status, ?string $subscriptionOrderId): string
+    {
+        $statusEnum = FFDServiceProvisionStatus::tryFrom($status);
+        $label = $statusEnum?->label() ?? FFDServiceProvisionStatus::Processing->label();
+
+        if (empty($subscriptionOrderId)) {
+            if ($statusEnum === FFDServiceProvisionStatus::Waiting) {
+                return 'Waiting Survey';
+            } elseif ($statusEnum === FFDServiceProvisionStatus::Completed) {
+                return 'Survey Completed';
+            }
+        } else {
+            if ($statusEnum === FFDServiceProvisionStatus::Waiting) {
+                return 'Order Waiting';
+            } elseif ($statusEnum === FFDServiceProvisionStatus::Completed) {
+                return 'Order Completed';
+            }
+        }
+
+        return $label;
     }
 
     /**
@@ -457,12 +433,8 @@ class SurveyOrderController extends Controller
                 'telecom_region' => $data['telecom_region'],
             ]);
 
-            // Check for existing active survey orders for this customer (optional)
-            $hasBlockedSurvey = DB::table('survey_orders')
-                ->whereNull('deleted_at')
-                ->where('customer_code', $data['customer_code'])
-                ->whereIn('status', FFDServiceProvisionStatus::blockedForNewRequest())
-                ->exists();
+            // Check for existing active survey orders for this customer
+            $hasBlockedSurvey = SurveyOrder::blockedForNewRequest($data['customer_code'])->exists();
 
             if ($hasBlockedSurvey) {
                 AppLogger::business()->warning('Manual survey blocked - existing active order', [

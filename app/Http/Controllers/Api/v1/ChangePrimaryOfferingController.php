@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Enums\ErrorCode;
 use App\Http\Controllers\Controller;
+use App\Models\SurveyOrder;
 use App\Services\ApiResponse;
 use App\Services\ChangePrimaryOfferingService;
 use App\Services\Logging\AppLogger;
@@ -43,6 +44,25 @@ class ChangePrimaryOfferingController extends Controller
             'service_number' => 'required|string',
             'bandwidth' => 'required|string',
         ]);
+
+        $surveyOrder = SurveyOrder::where('service_number', $validated['service_number'])
+            ->whereNotNull('customer_subscription_order_id')
+            ->latest()
+            ->first();
+
+        if (!$surveyOrder) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No active subscription found for this service number.',
+            ], 404);
+        }
+
+        if (!$surveyOrder->canChangeOffer()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Offer change is not available for this order in its current state.',
+            ], 422);
+        }
 
         try {
             $result = $this->changePrimaryOfferingService->changePrimaryOffering($validated['service_number'], $validated['bandwidth']);

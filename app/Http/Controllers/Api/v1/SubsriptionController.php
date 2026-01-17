@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSubscriptionRequest;
+use App\Models\SurveyOrder;
 use App\Services\Subscription\SubscriptionServiceFactory;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -35,6 +36,23 @@ class SubsriptionController extends Controller
         try {
             $data = $request->validated();
             Log::info('Data Subscription Request', $data);
+
+            $surveyOrder = SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
+                ->first();
+
+            if (!$surveyOrder) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Survey order not found.',
+                ], 404);
+            }
+
+            if (!$surveyOrder->canSubscribe()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Subscription is not available for this order in its current state.',
+                ], 422);
+            }
 
             $service = $this->factory->make($data['offering_id']);
 

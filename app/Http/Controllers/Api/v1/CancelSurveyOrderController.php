@@ -2,17 +2,13 @@
 
 namespace App\Http\Controllers\Api\v1;
 
-use App\Enums\FFDServiceProvisionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\SurveyOrder;
-use App\Services\ApiResponse;
 use App\Services\CancelSurveyOrderService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class CancelSurveyOrderController extends Controller
 {
-
     public function __construct(protected readonly CancelSurveyOrderService $cancelSurveyOrderService) {}
 
     /**
@@ -24,6 +20,23 @@ class CancelSurveyOrderController extends Controller
             'customer_survey_order_id' => 'required|string',
             'cancel_reason' => 'required|string'
         ]);
+
+        $surveyOrder = SurveyOrder::where('customer_survey_order_id', $request->customer_survey_order_id)
+            ->first();
+
+        if (!$surveyOrder) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Survey order not found.',
+            ], 404);
+        }
+
+        if (!$surveyOrder->canCancel()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This order cannot be cancelled in its current state.',
+            ], 422);
+        }
 
         $data = $request->only(['customer_survey_order_id', 'cancel_reason']);
 

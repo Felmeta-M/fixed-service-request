@@ -125,4 +125,129 @@ class SurveyOrder extends Model
     {
         return $this->belongsTo(AvailableDevice::class, 'device_voice_id');
     }
+
+    // ==========================================
+    // Query Scopes
+    // ==========================================
+
+    /**
+     * Scope: Orders that block new requests for a customer.
+     */
+    public function scopeBlockedForNewRequest($query, string $customerCode)
+    {
+        return $query->where('customer_code', $customerCode)
+            ->whereIn('status', FFDServiceProvisionStatus::blockedForNewRequest());
+    }
+
+    /**
+     * Scope: Orders that need status refresh.
+     */
+    public function scopeNeedsRefresh($query, int $minutesThreshold = 5)
+    {
+        return $query->where('status', FFDServiceProvisionStatus::Waiting->value)
+            ->where(function ($q) use ($minutesThreshold) {
+                $q->whereNull('last_checked_at')
+                    ->orWhere('last_checked_at', '<', now()->subMinutes($minutesThreshold));
+            });
+    }
+
+    // ==========================================
+    // Permission Methods - Single Source of Truth
+    // Static methods contain the logic, instance methods are wrappers
+    // ==========================================
+
+    public function canPay(): bool
+    {
+        $p = $this->payment;
+        return self::checkCanPay((int) $this->status, (float) ($p?->total_amount ?? 0), $p?->trans_id);
+    }
+
+    public function canSubscribe(): bool
+    {
+        $p = $this->payment;
+        return self::checkCanSubscribe((int) $this->status, (float) ($p?->total_amount ?? 0), $p?->trans_id, $this->customer_subscription_order_id);
+    }
+
+    public function canChangeOffer(): bool
+    {
+        return self::checkCanChangeOffer((int) $this->status, $this->customer_subscription_order_id);
+    }
+
+    public function canCancel(): bool
+    {
+        return self::checkCanCancel((int) $this->status, $this->customer_subscription_order_id, $this->payment?->trans_id);
+    }
+
+    public function isPaid(): bool
+    {
+        $p = $this->payment;
+        return self::checkIsPaid($p?->id, (int) ($p?->status ?? 0), $p?->trans_id);
+    }
+
+    // ==========================================
+    // Static Permission Logic (Single Source of Truth)
+    // ==========================================
+
+    /**
+     * Completed + payment > 0 + no trans_id yet
+     */
+    public static function checkCanPay(int $status, float $paymentAmount, ?string $paymentTransId): bool
+    {
+        return $status === FFDServiceProvisionStatus::Completed->value
+            && $paymentAmount > 0
+            && empty($paymentTransId);
+    }
+
+    /**
+     * (Completed + no payment + no subscription) OR (Waiting + paid)
+     */
+    public static function checkCanSubscribe(int $status, float $paymentAmount, ?string $paymentTransId, ?string $subscriptionOrderId): bool
+    {
+        return ($status === FFDServiceProvisionStatus::Completed->value && $paymentAmount < 1 && empty($subscriptionOrderId))
+            || ($status === FFDServiceProvisionStatus::Waiting->value && $paymentAmount > 0 && !empty($paymentTransId));
+    }
+
+    /**
+     * Completed + has subscription
+     */
+    public static function checkCanChangeOffer(int $status, ?string $subscriptionOrderId): bool
+    {
+        return $status === FFDServiceProvisionStatus::Completed->value && !empty($subscriptionOrderId);
+    }
+
+    /**
+     * (Completed + no subscription) OR (Waiting + no payment)
+     */
+    public static function checkCanCancel(int $status, ?string $subscriptionOrderId, ?string $paymentTransId): bool
+    {
+        return ($status === FFDServiceProvisionStatus::Completed->value && empty($subscriptionOrderId))
+            || ($status === FFDServiceProvisionStatus::Waiting->value && empty($paymentTransId));
+    }
+
+    /**
+     * Has payment + Waiting status + has trans_id
+     */
+    public static function checkIsPaid(?int $paymentId, int $paymentStatus, ?string $paymentTransId): bool
+    {
+        return $paymentId && $paymentStatus === FFDServiceProvisionStatus::Waiting->value && !empty($paymentTransId);
+    }
+
+    /**
+     * Check if order needs status refresh (for raw Query Builder data).
+     */
+    public static function needsRefresh(object $order, int $minutesThreshold = 5): bool
+    {
+        if ((int) $order->status !== FFDServiceProvisionStatus::Waiting->value) {
+            return false;
+        }
+
+        if (!empty($order->last_checked_at)) {
+            $lastChecked = \Carbon\Carbon::parse($order->last_checked_at);
+            if ($lastChecked->diffInMinutes(now()) < $minutesThreshold) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

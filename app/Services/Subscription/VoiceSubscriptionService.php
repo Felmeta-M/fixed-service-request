@@ -266,8 +266,7 @@ XML;
             $errors = array_map(fn($e) => $e->message, libxml_get_errors());
             libxml_clear_errors();
 
-            // Try to re-reserve the number if subscription failed after release
-            $this->reReserveNumberIfNeeded($data);
+
 
             AppLogger::api()->error('Failed to parse voice subscription XML response', [
                'xml_preview' => substr($xml, 0, 500),
@@ -398,7 +397,7 @@ XML;
          return ApiResponse::success([
             'customer_busi_order_id' => $customerBusiOrderId,
             'service_number' => $this->serviceNumber,
-         ]);
+         ], 'Subscription created successfully');
 
       } catch (\Throwable $e) {
          // Try to re-reserve the number on any unexpected error

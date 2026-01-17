@@ -26,11 +26,7 @@ class ReserveNumberService extends BaseApiService
 
             $result = $this->parseResponseXml($xmlResponse, $data['res_code']);
 
-            if ($result) {
-                AppLogger::api()->info('Number reserved (picked) successfully', [
-                    'res_code' => $data['res_code'],
-                ]);
-            }
+            // Logging is handled in parseResponseXml where we have the result value
 
             return $result;
 
@@ -154,12 +150,23 @@ XML;
         $responseBody = $responseMsg->UniqueResourceOperationResponseBody?->children($namespaces['com']) ?? null;
         $result = (string) ($responseBody->Result ?? '');
 
-        AppLogger::api()->debug('Reserve number response parsed', [
-            'res_code' => $resCode,
-            'result' => $result,
-        ]);
+        // Result: 1 = success (newly reserved), -1 = already reserved (by external system, e.g., subscription API)
+        // Both are considered success from our perspective
+        if ($result === '1') {
+            AppLogger::api()->info('Number reserved (picked) successfully', [
+                'res_code' => $resCode,
+            ]);
+        } elseif ($result === '-1') {
+            AppLogger::api()->info('Number is already reserved (likely reserved by external subscription API - this is expected if subscription succeeded)', [
+                'res_code' => $resCode,
+            ]);
+        } else {
+            AppLogger::api()->warning('Reserve number operation failed or returned unexpected result', [
+                'res_code' => $resCode,
+                'result' => $result,
+            ]);
+        }
 
-        // Result: 1 = success, -1 = already reserved (still considered success)
         return match ($result) {
             '1', '-1' => true,
             default => false,

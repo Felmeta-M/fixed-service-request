@@ -187,7 +187,8 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
             onError: (error: Error) => {
                 isSubmittingRef.current = false;
                 setIsSubmitting(false);
-                showErrorToast(error.message || 'Subscription failed. Please try again.', {
+                // Always use English messages for toasts, ignore API response messages that might be in other languages
+                showErrorToast('Subscription failed. Please try again.', {
                     id: subscribeToast,
                 });
             },

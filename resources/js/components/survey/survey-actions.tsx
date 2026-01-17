@@ -377,9 +377,9 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
             onError: (error: Error) => {
                 isSubmittingRef.current = false;
                 setIsSubmitting(false);
-                const msg = error.message || 'Subscription failed';
-                setError(msg);
-                showErrorToast(msg, { id: subscribeToast });
+                // Always use English messages for toasts, ignore API response messages that might be in other languages
+                setError('Subscription failed. Please try again.');
+                showErrorToast('Subscription failed. Please try again.', { id: subscribeToast });
                 onUpdatingChange(false);
             },
         });

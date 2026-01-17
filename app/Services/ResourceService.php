@@ -123,31 +123,9 @@ class ResourceService extends BaseApiService
             );
         }
 
-        // Location is within Ethiopia - check if within Addis Ababa
-        $addisBounds = self::ADDIS_ABABA_BOUNDS;
-        $isWithinAddisAbaba = (
-            $lat >= $addisBounds['latitude_min'] &&
-            $lat <= $addisBounds['latitude_max'] &&
-            $lng >= $addisBounds['longitude_min'] &&
-            $lng <= $addisBounds['longitude_max']
-        );
-
-        // For now, all locations in Ethiopia (including Addis Ababa) require manual review
-        // Return special response for manual review
-        $locationType = $isWithinAddisAbaba ? 'Addis Ababa' : 'Ethiopia (outside Addis Ababa)';
-        AppLogger::api()->info('Resource check: Coordinates in Ethiopia - manual review needed', [
-            'latitude' => $lat,
-            'longitude' => $lng,
-            'location_type' => $locationType,
-            'operation' => 'geo_fencing_validation',
-        ]);
-        return ApiResponse::error(
-            'LOCATION_REVIEW_NEEDED: Your location is in Ethiopia. Please continue with manual request for review.',
-            ErrorCode::VALIDATION_ERROR,
-            422
-        );
-
-        return null; // Validation passed
+        // Validation passed - coordinates are within Ethiopia
+        // Resource availability will be checked in parseResponseXml
+        return null;
     }
 
     protected function buildRequestXml(array $data): string
@@ -281,7 +259,17 @@ XML;
         if ($shortestResource) {
             return ApiResponse::success($shortestResource, message: 'Resource found');
         } else {
-            return ApiResponse::success(data: $this->emptyResource($data), message: 'No resource found');
+            // No resource found - return LOCATION_REVIEW_NEEDED for manual review
+            AppLogger::api()->info('Resource check: No resource found - manual review needed', [
+                'latitude' => $data['latitude'] ?? null,
+                'longitude' => $data['longitude'] ?? null,
+                'operation' => 'resource_check',
+            ]);
+            return ApiResponse::error(
+                'LOCATION_REVIEW_NEEDED: No resource found at this location. Please continue with manual request for review.',
+                ErrorCode::VALIDATION_ERROR,
+                422
+            );
         }
     }
 

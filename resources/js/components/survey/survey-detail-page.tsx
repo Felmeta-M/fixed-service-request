@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ServiceProvisionStatus } from '@/lib/status-map';
+import { getStatusInfo } from '@/lib/status-map';
 import { Link } from '@inertiajs/react';
 import { format } from 'date-fns';
 import {
@@ -137,11 +137,8 @@ export default function SurveyDetailPage({ survey, onBack, showBackButton = true
     const SurveyTypeIcon = surveyTypeInfo.icon;
 
 
-    const statusInfo = ServiceProvisionStatus[Number(survey.status)] || {
-        label: 'Unknown',
-        text: 'text-gray-700',
-        bg: 'bg-gray-200',
-    };
+    // Backend now sends status as a string label (e.g., "Waiting", "Completed")
+    const statusInfo = getStatusInfo(survey.status);
 
     const formatDate = (dateString: string) => {
         if (!dateString) return 'N/A';
@@ -152,35 +149,38 @@ export default function SurveyDetailPage({ survey, onBack, showBackButton = true
         }
     };
 
-    const getStatusIcon = (status: number) => {
-        if ([4, 5, 9, 13].includes(status))
+    // Get status icon based on string status label from backend
+    const getStatusIcon = (status: string | number | null | undefined) => {
+        const statusStr = String(status ?? '');
+        
+        // Completed/Success states
+        if (['Completed', 'Paid', 'Ready'].includes(statusStr)) {
             return (
                 <span className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-primary" />
                 </span>
             );
+        }
 
-        if ([1, 3, 6, 11].includes(status))
+        // In-progress/Waiting states
+        if (['Processing', 'Waiting', 'Created'].includes(statusStr)) {
             return (
                 <span className="flex items-center">
                     <Clock className="h-4 w-4 text-orange-500" />
                 </span>
             );
+        }
 
-        if ([0, 10].includes(status))
-            return (
-                <span className="flex items-center">
-                    <Clock className="h-4 w-4 text-blue-500" />
-                </span>
-            );
-
-        if ([2].includes(status))
+        // Error/Failed states
+        if (['Failed', 'Cancelled', 'Suspended'].includes(statusStr)) {
             return (
                 <span className="flex items-center">
                     <AlertCircle className="h-4 w-4 text-red-500" />
                 </span>
             );
+        }
 
+        // Default
         return (
             <span className="flex items-center">
                 <Clock className="h-4 w-4 text-blue-500" />
@@ -272,7 +272,7 @@ export default function SurveyDetailPage({ survey, onBack, showBackButton = true
                                 <div className="space-y-1">
                                     <p className="text-sm font-medium text-muted-foreground">Status</p>
                                     <div className="flex items-center gap-2">
-                                        {getStatusIcon(Number(survey.status))}
+                                        {getStatusIcon(survey.status)}
                                         <span className="font-medium">{statusInfo.label}</span>
                                     </div>
                                 </div>

@@ -7,7 +7,7 @@ import { CheckCircle2, User, FileText, Phone, Mail, Calendar, Hash } from 'lucid
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
-import { getServiceActionFlags, type ServiceActionFocus } from '@/lib/service-action-rules';
+import { type ServiceActionFocus } from '@/lib/service-action-rules';
 import { useCreateSubscription, useCreatePaymentOrder } from '@/hooks/use-api-mutations';
 
 
@@ -30,6 +30,11 @@ type SurveyDetails = {
     cable_length?: string | number | null;
     cable_type?: string | null;
     status?: string | number | null;
+    // Backend-provided action flags (single source of truth)
+    is_paid?: boolean;
+    can_pay?: boolean;
+    can_subscribe?: boolean;
+    can_cancel?: boolean;
 };
 
 type PaymentDetailsData = {
@@ -76,11 +81,10 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
     const totalAmount = (totalAmountNumber ?? 0).toFixed(2);
     const isFree = totalAmountNumber !== undefined && totalAmountNumber <= 0;
 
-    const { canPay, canSubscribe } = getServiceActionFlags({
-        status: surveyDetails?.status,
-        mainOfferId: surveyDetails?.main_offer_id,
-        totalAmount: totalAmountNumber,
-    });
+    // Use backend-provided action flags (single source of truth)
+    // These flags are computed on the server based on business rules
+    const canPay = surveyDetails?.can_pay ?? false;
+    const canSubscribe = surveyDetails?.can_subscribe ?? false;
 
     const focusSafe = useMemo<ServiceActionFocus | null>(() => {
         if (focus === 'payment' || focus === 'subscribe') return focus;

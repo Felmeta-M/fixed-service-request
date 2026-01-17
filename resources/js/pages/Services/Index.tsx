@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/c
 import { Input } from '@/components/ui/input';
 import { useSurveyList } from '@/hooks/use-surveys';
 import MainLayout from '@/layouts/main-layout';
-import { ServiceProvisionStatus } from '@/lib/status-map';
+import { statusOptions, getStatusInfo } from '@/lib/status-map';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -48,12 +48,12 @@ interface RecentActivity {
     status: string;
 }
 
-// Define status categories
+// Define status categories using string labels from backend
 const STATUS_CATEGORIES = {
-    ACTIVE: [1, 3, 6, 11], // Processing, Waiting, Ready, Paid
-    PENDING: [0, 10], // Created, Pending Payment
-    COMPLETED: [4, 5, 9, 13, 14], // Failed, Survey Completed, Cancelled, Refund, Subscription Completed
-    SUSPENDED: [2], // Suspended
+    ACTIVE: ['Processing', 'Waiting', 'Ready', 'Paid'],
+    PENDING: ['Created'],
+    COMPLETED: ['Completed', 'Failed', 'Cancelled', 'Refund'],
+    SUSPENDED: ['Suspended'],
 } as const;
 
 export default function CustomerDashboard() {
@@ -102,7 +102,7 @@ export default function CustomerDashboard() {
         // Initial fetch is handled by the query
     }, []);
 
-    // Calculate dashboard stats from survey data
+    // Calculate dashboard stats from survey data using string-based status labels
     const dashboardStats = useMemo((): DashboardStats => {
         if (!surveys?.length) {
             return {
@@ -117,20 +117,20 @@ export default function CustomerDashboard() {
 
         // Active services: Processing, Waiting, Ready, Paid
         const activeServices = surveys.filter((survey) => {
-            const statusNum = Number(survey.status);
-            return STATUS_CATEGORIES.ACTIVE.includes(statusNum);
+            const status = String(survey.status ?? '');
+            return STATUS_CATEGORIES.ACTIVE.includes(status as typeof STATUS_CATEGORIES.ACTIVE[number]);
         })?.length;
 
-        // Pending requests: Created, Pending Payment
+        // Pending requests: Created
         const pendingRequests = surveys.filter((survey) => {
-            const statusNum = Number(survey.status);
-            return STATUS_CATEGORIES.PENDING.includes(statusNum);
+            const status = String(survey.status ?? '');
+            return STATUS_CATEGORIES.PENDING.includes(status as typeof STATUS_CATEGORIES.PENDING[number]);
         })?.length;
 
-        // Completed services: Failed, Survey Completed, Cancelled, Refund
+        // Completed services: Completed, Failed, Cancelled, Refund
         const completedServices = surveys.filter((survey) => {
-            const statusNum = Number(survey.status);
-            return STATUS_CATEGORIES.COMPLETED.includes(statusNum);
+            const status = String(survey.status ?? '');
+            return STATUS_CATEGORIES.COMPLETED.includes(status as typeof STATUS_CATEGORIES.COMPLETED[number]);
         })?.length;
 
         return {
@@ -141,7 +141,7 @@ export default function CustomerDashboard() {
         };
     }, [surveys]);
 
-    // Generate recent activities from survey data
+    // Generate recent activities from survey data using string-based status
     const recentActivities = useMemo((): RecentActivity[] => {
         if (!surveys?.length) return [];
 
@@ -149,14 +149,14 @@ export default function CustomerDashboard() {
             .slice(0, 5) // Show only 5 most recent
             .map((survey) => {
                 const serviceType = typeMap[survey.main_offer_id as keyof typeof typeMap]?.label || 'Service';
-                const statusInfo = ServiceProvisionStatus[Number(survey.status)] || { label: 'Updated' };
+                const statusInfo = getStatusInfo(survey.status);
 
                 return {
                     id: survey.id,
                     type: 'service_update',
                     message: `${serviceType} request ${survey.customer_survey_order_id} - ${statusInfo.label}`,
                     time: formatTimeAgo(survey.updated_at || survey.created_at),
-                    status: getActivityStatus(Number(survey.status)),
+                    status: getActivityStatus(survey.status),
                 };
             });
     }, [surveys]);
@@ -209,10 +209,11 @@ export default function CustomerDashboard() {
         return date.toLocaleDateString();
     }
 
-    // Determine activity status based on survey status
-    function getActivityStatus(status: number): string {
-        if (STATUS_CATEGORIES.COMPLETED.includes(status)) return 'completed';
-        if (STATUS_CATEGORIES.ACTIVE.includes(status)) return 'in-progress';
+    // Determine activity status based on survey status (string-based)
+    function getActivityStatus(status: string | number | null | undefined): string {
+        const statusStr = String(status ?? '');
+        if (STATUS_CATEGORIES.COMPLETED.includes(statusStr as typeof STATUS_CATEGORIES.COMPLETED[number])) return 'completed';
+        if (STATUS_CATEGORIES.ACTIVE.includes(statusStr as typeof STATUS_CATEGORIES.ACTIVE[number])) return 'in-progress';
         return 'pending';
     }
 
@@ -402,9 +403,9 @@ export default function CustomerDashboard() {
                                                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                                             >
                                                 <option value="">All Status</option>
-                                                {Object.values(ServiceProvisionStatus).map((s, i) => (
-                                                    <option key={i} value={s.label.toLowerCase()}>
-                                                        {s.label}
+                                                {statusOptions.map((status) => (
+                                                    <option key={status} value={status}>
+                                                        {status}
                                                     </option>
                                                 ))}
                                             </select>

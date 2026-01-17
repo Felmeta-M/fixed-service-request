@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ServiceProvisionStatus } from '@/lib/status-map';
+import { getStatusInfo, getStatusBadgeVariant } from '@/lib/status-map';
 import { router } from '@inertiajs/react';
 import {
     ColumnDef,
@@ -43,6 +43,11 @@ type SurveyRow = {
     status?: string;
     created_at?: string;
     updated_at?: string;
+    // Backend-provided action flags (single source of truth)
+    is_paid?: boolean;
+    can_pay?: boolean;
+    can_subscribe?: boolean;
+    can_cancel?: boolean;
     [key: string]: unknown;
 };
 
@@ -165,28 +170,16 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                 accessorKey: 'status',
                 header: 'Status',
                 cell: ({ getValue }) => {
-                    const raw = Number(getValue());
-                    const mapped = ServiceProvisionStatus[raw as keyof typeof ServiceProvisionStatus] ?? {
-                        label: 'Unknown',
-                        text: 'text-gray-700',
-                        bg: 'bg-gray-200',
-                    };
-
-                    const getStatusVariant = (status: number) => {
-                        // Badge supports: default | secondary | destructive | outline
-                        if (status === 9) return 'destructive';
-                        if (status === 3) return 'warning';
-                        if (status === 5) return 'success';
-                        if (status === 11) return 'success';
-                        if (status === 14) return 'success';
-                        return 'default';
-                    };
+                    // Backend now sends status as a string label (e.g., "Waiting", "Completed")
+                    const statusStr = getValue<string>();
+                    const statusInfo = getStatusInfo(statusStr);
+                    const variant = getStatusBadgeVariant(statusStr);
 
                     return (
                         <div>
-                            <Badge variant={getStatusVariant(raw)} className="flex items-center gap-2">
-                                <div className={`h-2 w-2 rounded-full ${mapped.bg}`} />
-                                <span className="text-xs">{mapped.label}</span>
+                            <Badge variant={variant} className="flex items-center gap-2">
+                                <div className={`h-2 w-2 rounded-full ${statusInfo.bg}`} />
+                                <span className="text-xs">{statusInfo.label}</span>
                             </Badge>
                         </div>
                     );

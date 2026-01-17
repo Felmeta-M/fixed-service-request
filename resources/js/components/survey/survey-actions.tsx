@@ -1,5 +1,4 @@
 import { useCancelSurveyOrder, useChangePrimaryOffering, useCreateSubscription, useDeleteSurveyOrder } from '@/hooks/use-api-mutations';
-import { getServiceActionFlags } from '@/lib/service-action-rules';
 import { router, usePage } from '@inertiajs/react';
 import { ArrowDownToLineIcon, ArrowUpToLineIcon, Eye, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -65,6 +64,11 @@ type Survey = {
         total_amount?: number | string;
         status?: string;
     };
+    // Backend-provided action flags (single source of truth)
+    is_paid?: boolean;
+    can_pay?: boolean;
+    can_subscribe?: boolean;
+    can_cancel?: boolean;
     [key: string]: unknown;
 };
 
@@ -302,11 +306,11 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         };
     };
 
-    const { canPay, canSubscribe, canCancel } = getServiceActionFlags({
-        status: survey.status,
-        mainOfferId: main_offer_id,
-        totalAmount: survey.payment?.total_amount ? Number(survey.payment.total_amount) : undefined,
-    });
+    // Use backend-provided action flags (single source of truth)
+    // These flags are computed on the server based on business rules
+    const canPay = survey.can_pay ?? false;
+    const canSubscribe = survey.can_subscribe ?? false;
+    const canCancel = survey.can_cancel ?? false;
 
     // Helper: Get primary order ID (customer_subscription_order_id for auto, customer_survey_order_id for manual)
     const getPrimaryOrderId = () => {

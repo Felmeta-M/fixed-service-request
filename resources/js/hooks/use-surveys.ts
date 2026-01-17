@@ -17,11 +17,17 @@ interface Survey {
     contact_person?: string;
     main_offer_id?: string;
     service_type?: string;
+    service_number?: string | null;
     cancellation_reason?: string;
     payment?: {
         total_amount?: number | string;
         status?: string;
     };
+    // Backend-provided action flags (single source of truth)
+    is_paid?: boolean;
+    can_pay?: boolean;
+    can_subscribe?: boolean;
+    can_cancel?: boolean;
 }
 
 interface SurveyListResponse {
@@ -66,6 +72,11 @@ interface SurveyDetailResponse {
             customer_survey_order_id?: string;
             customer_subscription_order_id?: string | null;
         };
+        // Backend-provided action flags (single source of truth)
+        is_paid?: boolean;
+        can_pay?: boolean;
+        can_subscribe?: boolean;
+        can_cancel?: boolean;
     };
     message?: string;
 }

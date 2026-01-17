@@ -19,6 +19,11 @@ type SurveyDetails = {
     service_number?: string | null;
     created_at?: string;
     updated_at?: string;
+    // Backend-provided action flags (single source of truth)
+    is_paid?: boolean;
+    can_pay?: boolean;
+    can_subscribe?: boolean;
+    can_cancel?: boolean;
 };
 
 type PaymentDetailsData = {
@@ -94,6 +99,11 @@ export default function ServiceShowPage() {
             service_number: surveyDetailQuery.data.data.service_number,
             created_at: surveyDetailQuery.data.data.created_at,
             updated_at: surveyDetailQuery.data.data.updated_at,
+            // Backend-provided action flags (single source of truth)
+            is_paid: surveyDetailQuery.data.data.is_paid,
+            can_pay: surveyDetailQuery.data.data.can_pay,
+            can_subscribe: surveyDetailQuery.data.data.can_subscribe,
+            can_cancel: surveyDetailQuery.data.data.can_cancel,
         }
         : null;
 

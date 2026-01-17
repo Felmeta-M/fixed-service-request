@@ -1,3 +1,22 @@
+/**
+ * Service Action Rules
+ * 
+ * NOTE: As of 2026-01, the backend now provides action flags directly in the API response:
+ * - can_pay: boolean
+ * - can_subscribe: boolean  
+ * - can_cancel: boolean
+ * - is_paid: boolean
+ * 
+ * The backend is now the single source of truth for these business rules.
+ * Use the backend-provided flags from the survey/service response instead of this function.
+ * 
+ * This file is kept for:
+ * 1. Type exports (ServiceActionFocus, ServiceActionFlags)
+ * 2. Legacy fallback if backend flags are not available (edge cases)
+ * 
+ * @deprecated Use backend-provided can_pay, can_subscribe, can_cancel flags instead
+ */
+
 export type ServiceActionFocus = 'payment' | 'subscribe';
 
 export type ServiceActionFlags = {
@@ -22,6 +41,13 @@ const isPaymentRequired = (totalAmount: number | undefined) => {
     return totalAmount > 0;
 };
 
+/**
+ * @deprecated Use backend-provided can_pay, can_subscribe, can_cancel flags instead.
+ * The backend is now the single source of truth for action permissions.
+ * 
+ * This function is kept as a fallback for edge cases where backend flags
+ * might not be available (e.g., offline mode, legacy API responses).
+ */
 export const getServiceActionFlags = ({ status, mainOfferId, totalAmount }: GetServiceActionFlagsInput): ServiceActionFlags => {
     const statusNum = toFiniteNumberOrNull(status);
 
@@ -51,7 +77,7 @@ export const getServiceActionFlags = ({ status, mainOfferId, totalAmount }: GetS
         return { canPay: true, canSubscribe: false, canCancel };
     }
 
-    // Survey completed is the common “next action” point.
+    // Survey completed is the common "next action" point.
     if (statusNum === 5) {
         // If payment is explicitly NOT required (amount === 0), go to subscribe.
         if (paymentRequired === false) {

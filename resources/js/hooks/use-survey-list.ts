@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 interface Survey {
     id: string;
     customer_survey_order_id: string;
+    customer_subscription_order_id?: string | null;
     survey_type: string;
     status: string;
     created_at: string;
@@ -13,11 +14,17 @@ interface Survey {
     contact_person?: string;
     main_offer_id?: string;
     service_type?: string;
+    service_number?: string | null;
     cancellation_reason?: string;
     payment?: {
         total_amount?: number | string;
         status?: string;
     };
+    // Backend-provided action flags (single source of truth)
+    is_paid?: boolean;
+    can_pay?: boolean;
+    can_subscribe?: boolean;
+    can_cancel?: boolean;
 }
 
 interface UseSurveyListReturn {

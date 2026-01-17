@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { Link, usePage } from '@inertiajs/react';
 import { LayoutDashboard, LogIn, LogOut, Menu, X } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import logo from '../images/ethio_logo_full.png';
 
 type Props = {
@@ -16,6 +16,23 @@ export default function GuestLayout({ children }: Props) {
     const { auth } = usePage().props as { auth?: { user?: any } };
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { t, locale } = useTranslation();
+
+    // Smooth scroll to section
+    const scrollToSection = useCallback((sectionId: string) => {
+        setIsMobileMenuOpen(false);
+        
+        // Check if we're on the home page
+        if (window.location.pathname === '/') {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        } else {
+            // Navigate to home page with hash
+            window.location.href = `/#${sectionId}`;
+        }
+    }, []);
+
     return (
         <div className="mx-auto ">
             <header key={locale} className="sticky top-0 z-50 mx-auto w-full bg-gradient-to-r from-[#F5FBF6] via-[#FEFFFE] to-[#F4F7FB]">
@@ -33,15 +50,18 @@ export default function GuestLayout({ children }: Props) {
                         <div className="hidden items-center space-x-6 md:flex">
                             <div className="flex items-center space-x-4">
                                 <nav className="flex items-center space-x-6">
-                                    {/* <Link href="#services" className="text-sm font-medium text-gray-700 transition-colors hover:text-gray-900">
-                                        Services
-                                    </Link> */}
-                                    {/* <Link
-                                        href={route('terms')}
-                                        className="cursor-pointer text-sm transition-all duration-200 hover:text-primary hover:underline"
+                                    <button
+                                        onClick={() => scrollToSection('services')}
+                                        className="text-sm font-medium text-gray-700 transition-colors hover:text-primary"
                                     >
-                                        Terms and Conditions
-                                    </Link> */}
+                                        {t('nav.services')}
+                                    </button>
+                                    <button
+                                        onClick={() => scrollToSection('coverage')}
+                                        className="text-sm font-medium text-gray-700 transition-colors hover:text-primary"
+                                    >
+                                        {t('nav.coverage')}
+                                    </button>
 
                                     <LocaleSwitcher variant="compact" />
                                 </nav>
@@ -83,24 +103,22 @@ export default function GuestLayout({ children }: Props) {
                 </div>
                 {isMobileMenuOpen && (
                     <div className="border-t bg-gradient-to-r from-[#F5FBF6] via-[#FEFFFE] to-[#F4F7FB] backdrop-blur-sm md:hidden">
-                        <div className="mx-auto max-w-7xl space-y-4 px-4 py-4">
-                            <Link
-                                href="#services"
-                                className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-                                onClick={() => setIsMobileMenuOpen(false)}
+                        <div className="mx-auto max-w-7xl space-y-2 px-4 py-4">
+                            <button
+                                onClick={() => scrollToSection('services')}
+                                className="block w-full py-2 text-left text-sm font-medium text-gray-700 hover:text-primary"
                             >
                                 {t('nav.services')}
-                            </Link>
-                            <Link
-                                href={route('terms')}
-                                className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-                                onClick={() => setIsMobileMenuOpen(false)}
+                            </button>
+                            <button
+                                onClick={() => scrollToSection('coverage')}
+                                className="block w-full py-2 text-left text-sm font-medium text-gray-700 hover:text-primary"
                             >
-                                {t('footer.terms')}
-                            </Link>
+                                {t('nav.coverage')}
+                            </button>
 
                             {/* Language Switcher */}
-                            <div className="py-2">
+                            <div className="py-2 border-t border-gray-100">
                                 <LocaleSwitcher />
                             </div>
 

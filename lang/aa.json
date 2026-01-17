@@ -30,6 +30,7 @@
     "nav.profile": "Akkatino",
     "nav.settings": "Daddali",
     "nav.login_to_account": "Akka gali",
+    "nav.coverage": "Daxxe",
 
     "locale.en": "English",
     "locale.am": "አማርኛ",
@@ -155,6 +156,19 @@
 
     "service_type.broadband": "Broadband",
     "service_type.voice": "Qaddi",
-    "service_type.combo": "Xiqo"
+    "service_type.combo": "Xiqo",
+    "home.coverage.title": "Afal Daxxe",
+    "home.coverage.heading": "Tajaajila Daxxe Kee Ayla",
+    "home.coverage.subtitle": "Bakka kee tajaajila zonah keessa ta'uu isaa ilaaluuf afal daxxe kee sakatta'aa. Naannowwan ifaan mul'atan bakka tajaajilli sarara dhaabbataa kee argamu agarsiisu.",
+    "home.coverage.cta_text": "Qunnamuuf qophii dha? Tajaajila gaaffii kee amma jalqabi.",
+    "home.coverage.cta_button": "Bakka Kee Ayla",
+    "coverage_map.badge": "Afal Daxxe Tajaajila",
+    "coverage_map.badge_short": "Daxxe",
+    "coverage_map.view_full": "Daxxe Guutuu Ayla",
+    "coverage_map.loading_map": "Kaartaa abba...",
+    "coverage_map.loading_coverage": "Afal daxxe abba...",
+    "coverage_map.initializing": "Kaartaa diyaarisa...",
+    "coverage_map.load_failed": "Afal daxxe abbo macafirne",
+    "coverage_map.retry": "Caddab dagay"
 }
 

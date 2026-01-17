@@ -29,6 +29,7 @@
     "nav.profile": "መገለጫ",
     "nav.settings": "ቅንብሮች",
     "nav.login_to_account": "ወደ መለያ ግባ",
+    "nav.coverage": "ሽፋን",
     "locale.en": "English",
     "locale.am": "አማርኛ",
     "locale.om": "Afaan Oromoo",
@@ -136,5 +137,18 @@
     "status.active": "ንቁ",
     "service_type.broadband": "ብሮድባንድ",
     "service_type.voice": "ድምጽ",
-    "service_type.combo": "ኮምቦ"
+    "service_type.combo": "ኮምቦ",
+    "home.coverage.title": "የሽፋን አካባቢ",
+    "home.coverage.heading": "የአገልግሎት ሽፋናችንን ይመልከቱ",
+    "home.coverage.subtitle": "ቦታዎ በአገልግሎት ዞናችን ውስጥ መሆኑን ለማየት የሽፋን አካባቢያችንን ያስሱ። ጎልተው የሚታዩ አካባቢዎች የቋሚ መስመር አገልግሎቶቻችን የሚገኙበትን ያሳያሉ።",
+    "home.coverage.cta_text": "ለመገናኘት ዝግጁ ነዎት? የአገልግሎት ጥያቄዎን አሁን ይጀምሩ።",
+    "home.coverage.cta_button": "ቦታዎን ያረጋግጡ",
+    "coverage_map.badge": "የአገልግሎት ሽፋን አካባቢ",
+    "coverage_map.badge_short": "ሽፋን",
+    "coverage_map.view_full": "ሙሉ ሽፋን ይመልከቱ",
+    "coverage_map.loading_map": "ካርታ በመጫን ላይ...",
+    "coverage_map.loading_coverage": "የሽፋን አካባቢ በመጫን ላይ...",
+    "coverage_map.initializing": "ካርታ በማዘጋጀት ላይ...",
+    "coverage_map.load_failed": "የሽፋን አካባቢ መጫን አልተሳካም",
+    "coverage_map.retry": "እንደገና ሞክር"
 }

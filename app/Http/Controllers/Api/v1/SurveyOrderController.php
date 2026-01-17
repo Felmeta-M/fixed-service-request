@@ -148,9 +148,9 @@ class SurveyOrderController extends Controller
 
                     'is_paid' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Waiting->value) && !empty($item->payment_trans_id)) : false,
 
-                    'can_pay' => ($surveyStatusValue == (string) FFDServiceProvisionStatus::Completed->value) && !empty($item->payment_amount) && empty($item->customer_subscription_order_id),
+                    'can_pay' => ($surveyStatusValue == (string) FFDServiceProvisionStatus::Completed->value) && ((float) $item->payment_amount ?? 0) > 0 && empty($item->customer_subscription_order_id),
 
-                    'can_subscribe' => ($surveyStatusValue == (string) FFDServiceProvisionStatus::Waiting->value) && !empty($item->payment_trans_id),
+                    'can_subscribe' => ($surveyStatusValue == (string) FFDServiceProvisionStatus::Waiting->value) && ((float) $item->payment_amount ?? 0) > 0 && !empty($item->payment_trans_id),
 
                     'can_cancel' => empty($item->customer_subscription_order_id),
                 ];
@@ -547,9 +547,9 @@ class SurveyOrderController extends Controller
 
             'is_paid' => $order->payment_id ? (($order->payment_status == FFDServiceProvisionStatus::Waiting->value) && !empty($order->payment_trans_id)) : false,
 
-            'can_pay' => ($surveyStatusValue == (string) FFDServiceProvisionStatus::Completed->value) && !empty($order->payment_amount) && empty($order->customer_subscription_order_id),
+            'can_pay' => ($surveyStatusValue == (string) FFDServiceProvisionStatus::Completed->value) && ((float) $order->payment_amount ?? 0) > 0 && empty($order->customer_subscription_order_id),
 
-            'can_subscribe' => ($surveyStatusValue == (string) FFDServiceProvisionStatus::Waiting->value) && !empty($order->payment_trans_id),
+            'can_subscribe' => ($surveyStatusValue == (string) FFDServiceProvisionStatus::Waiting->value) && ((float) $order->payment_amount ?? 0) > 0 && !empty($order->payment_trans_id),
 
             'can_cancel' => empty($order->customer_subscription_order_id),
         ];

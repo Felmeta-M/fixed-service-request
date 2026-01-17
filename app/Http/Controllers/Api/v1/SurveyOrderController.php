@@ -106,13 +106,10 @@ class SurveyOrderController extends Controller
 
             // Transform raw data to match SurveyOrderResource format
             $transformedItems = collect($surveyOrders->items())->map(function ($item) {
-                // Convert payment status to label
-                $paymentStatusLabel = null;
-                if ($item->payment_id && ($item->payment_status !== null)) {
-                    $statusValue = (int) $item->payment_status;
-                    $statusEnum = FFDServiceProvisionStatus::tryFrom($statusValue);
-                    $paymentStatusLabel = $statusEnum ? $statusEnum->label() : 'Unknown';
-                }
+                // Convert survey order status to label
+                $surveyStatusValue = (int) ($item->status ?? 0);
+                $surveyStatusEnum = FFDServiceProvisionStatus::tryFrom($surveyStatusValue);
+                $surveyStatusLabel = $surveyStatusEnum ? $surveyStatusEnum->label() : 'Unknown';
 
                 return [
                     'id' => (string) $item->id,
@@ -130,11 +127,11 @@ class SurveyOrderController extends Controller
                         'id' => $item->payment_id,
                         'total_amount' => $item->payment_amount,
                     ] : null,
-                    'status' => $paymentStatusLabel,
+                    'status' => $surveyStatusLabel,
                     'is_paid' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Paid->value) && !empty($item->payment_trans_id)) : false,
-                    'can_pay' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Completed->value) || empty($item->customer_subscription_order_id)) : false,
-                    'can_subscribe' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Waiting->value) || empty($item->customer_subscription_order_id)) : false,
-                    'can_cancel' => $item->payment_id ? empty($item->customer_subscription_order_id) : false,
+                    'can_pay' => ($surveyStatusValue == FFDServiceProvisionStatus::Completed->value) || empty($item->customer_subscription_order_id),
+                    'can_subscribe' => ($surveyStatusValue == FFDServiceProvisionStatus::Waiting->value) || empty($item->customer_subscription_order_id),
+                    'can_cancel' => !empty($item->customer_subscription_order_id),
                 ];
             });
 
@@ -477,13 +474,10 @@ class SurveyOrderController extends Controller
      */
     protected function transformOrder($order): array
     {
-        // Convert payment status to label
-        $paymentStatusLabel = null;
-        if (isset($order->payment_id) && ($order->payment_status !== null)) {
-            $statusValue = (int) $order->payment_status;
-            $statusEnum = FFDServiceProvisionStatus::tryFrom($statusValue);
-            $paymentStatusLabel = $statusEnum ? $statusEnum->label() : 'Unknown';
-        }
+        // Convert survey order status to label
+        $surveyStatusValue = (int) ($order->status ?? 0);
+        $surveyStatusEnum = FFDServiceProvisionStatus::tryFrom($surveyStatusValue);
+        $surveyStatusLabel = $surveyStatusEnum ? $surveyStatusEnum->label() : 'Unknown';
 
         return [
             'id' => (string) $order->id,
@@ -502,12 +496,12 @@ class SurveyOrderController extends Controller
                 'total_amount' => $order->payment_amount,
                 'merch_order_id' => $order->payment_merch_order_id ?? null,
             ] : null,
-            // Status at root level (payment status label)
-            'status' => $paymentStatusLabel,
+            // Status at root level (survey order status label)
+            'status' => $surveyStatusLabel,
             'is_paid' => isset($order->payment_id) ? (($order->payment_status == FFDServiceProvisionStatus::Paid->value) && !empty($order->payment_trans_id)) : false,
-            'can_pay' => isset($order->payment_id) ? (($order->payment_status == FFDServiceProvisionStatus::Completed->value) || empty($order->customer_subscription_order_id)) : false,
-            'can_subscribe' => isset($order->payment_id) ? (($order->payment_status == FFDServiceProvisionStatus::Waiting->value) || empty($order->customer_subscription_order_id)) : false,
-            'can_cancel' => isset($order->payment_id) ? empty($order->customer_subscription_order_id) : false,
+            'can_pay' => ($surveyStatusValue == FFDServiceProvisionStatus::Completed->value) || empty($order->customer_subscription_order_id),
+            'can_subscribe' => ($surveyStatusValue == FFDServiceProvisionStatus::Waiting->value) || empty($order->customer_subscription_order_id),
+            'can_cancel' => !empty($order->customer_subscription_order_id),
         ];
     }
 

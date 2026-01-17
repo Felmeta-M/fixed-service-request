@@ -85,7 +85,7 @@ class SurveyOrderController extends Controller
             // Collect orders that need refresh (WAITING status, not checked in last 5 minutes)
             $ordersToRefresh = collect($surveyOrders->items())
                 ->filter(function ($order) {
-                    if ($order->status !== FFDServiceProvisionStatus::Waiting->value) {
+                    if ((int) $order->status !== FFDServiceProvisionStatus::Waiting->value) {
                         return false;
                     }
 

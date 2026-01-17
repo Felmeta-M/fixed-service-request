@@ -57,8 +57,6 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
         $data['service_number'] = $this->serviceNumber;
 
 
-
-
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
 <soapenv:Body>
@@ -78,7 +76,7 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
 <ser:HandleSurveyOrderReqBody>
 <com:CustomerCode>{$customerCode}</com:CustomerCode>
 <com:SurveyType>{$data['survey_type']}</com:SurveyType>
-<com:TelecomRegion>{$resource['area_code']}</com:TelecomRegion>
+<com:TelecomRegion>{$data['telecom_region']}</com:TelecomRegion>
 <com:OperType>{$data['oper_type']}</com:OperType>
 <com:MainOfferId>{$this->mainOfferId()}</com:MainOfferId>
 <com:SurveyAddressInfo>
@@ -250,7 +248,6 @@ XML;
             return ApiResponse::success([
                 'customer_survey_order_id' => $surveyOrderId
             ]);
-
         } catch (\Throwable $e) {
             // Final cleanup: release service number on any unexpected error
             if ($this->serviceNumber) {

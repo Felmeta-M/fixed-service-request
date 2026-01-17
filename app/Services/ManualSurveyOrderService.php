@@ -8,7 +8,10 @@ use App\Models\Customer;
 use App\Models\SurveyOrder;
 use App\Models\TelecomRegion;
 use App\Services\Logging\AppLogger;
+use App\Services\Payment\PaymentCalculatorService;
+use App\Services\Payment\PaymentService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use RuntimeException;
 use Throwable;
 
@@ -30,8 +33,10 @@ class ManualSurveyOrderService extends BaseApiService
      */
     protected array $config;
 
-    public function __construct()
-    {
+    public function __construct(
+        protected PaymentCalculatorService $paymentCalculator,
+        protected PaymentService $paymentService
+    ) {
         $this->config = config('services.manual_survey');
     }
 
@@ -100,11 +105,11 @@ class ManualSurveyOrderService extends BaseApiService
     protected function buildRequestXml(array $data): string
     {
         $transactionId = $this->generateTransactionId();
-        $processTime = $this->processTime() . '000';
+        $processTime = $this->processTime();
         $completedDate = $this->completedDate();
 
         // Use shared customer context helpers
-        $customerCode = $this->customerCode($data['customer_code'] ?? '');
+        $customerCode = $this->customerCode();
 
         // Resolve telecom region: accept name and convert to area_id
         $telecomRegion = 104; // $this->resolveTelecomRegion($data['telecom_region'] ?? ''); //TODO: Add oper_type to the request
@@ -222,7 +227,7 @@ XML;
         $customerSurveyOrderId = (string) ($responseBodyData->CustomerSurveyOrderId ?? '');
 
         // Create local survey order record
-        $this->createLocalSurveyOrder($customerSurveyOrderId, $data);
+        $this->persistSurvey($customerSurveyOrderId, $data);
 
         return [
             'success' => true,
@@ -234,13 +239,13 @@ XML;
     }
 
     /**
-     * Create a local survey order record.
+     * Persist local survey order record.
      *
      * @param string $customerSurveyOrderId BSS survey order ID
      * @param array $data Survey order data
      * @return SurveyOrder
      */
-    protected function createLocalSurveyOrder(string $customerSurveyOrderId, array $data): SurveyOrder
+    protected function persistSurvey(string $customerSurveyOrderId, array $data): SurveyOrder
     {
         // Use shared customer context helpers
         $customerCode = $this->customerCode($data['customer_code'] ?? '');
@@ -249,7 +254,7 @@ XML;
         // Resolve telecom region to area_id for storage
         $telecomRegionAreaId = $this->resolveTelecomRegion($data['telecom_region'] ?? null);
 
-        return SurveyOrder::create([
+        $survey = SurveyOrder::create([
             'customer_code' => $customerCode,
             'customer_survey_order_id' => $customerSurveyOrderId,
             'main_offer_id' => $data['main_offer_id'],
@@ -263,6 +268,62 @@ XML;
             'contact_email' => $primaryContact['contact_email'],
             'status' => FFDServiceProvisionStatus::Waiting->value,
             'survey_is_manual' => true,
+        ]);
+
+        // Persist payment for manual survey (without cable charge)
+        $this->persistPayment($survey, $data);
+
+        return $survey;
+    }
+
+    /**
+     * Persist payment for manual survey order (without cable charge).
+     *
+     * @param SurveyOrder $survey
+     * @param array $data Original request data
+     * @return void
+     */
+    protected function persistPayment(SurveyOrder $survey, array $data): void
+    {
+        $customer = Auth::guard('api')->user();
+        if (!$customer) {
+            AppLogger::api()->warning('Cannot calculate payment - no authenticated customer', [
+                'customer_survey_order_id' => $survey->customer_survey_order_id,
+            ]);
+            return;
+        }
+
+        // Build request data for subscription fee calculation
+        $profile = $this->getCustomerProfile();
+        $requestData = [
+            'service_number' => $data['service_number'] ?? null,
+            'offering_id' => $survey->main_offer_id,
+            'network_type' => 4, // Fixed network
+            'sub_type' => 0,
+            'customer_type' => $profile['customer_type'],
+            'customer_category' => $profile['customer_category'],
+            'customer_subcategory' => $profile['customer_subcategory'],
+            'customer_level' => $profile['customer_level'],
+            'customer_nationality' => $profile['nationality'],
+            'customer_id_type' => $profile['identification_type'],
+        ];
+
+        // Calculate fees without cable charge for manual survey
+        $fees = $this->paymentCalculator->calculateFeesWithoutCable($survey, $requestData);
+
+        $this->paymentService->createOrUpdatePayment([
+            'customer_survey_order_id' => $survey->customer_survey_order_id,
+            'service_number' => $data['service_number'] ?? null,
+            'subscription_fee' => $fees['subscription_fee'],
+            'cable_charge' => 0,
+            'device_fee' => 0,
+            'total_amount' => $fees['total_amount'],
+        ]);
+
+        AppLogger::api()->info('Manual survey payment stored', [
+            'customer_survey_order_id' => $survey->customer_survey_order_id,
+            'subscription_fee' => $fees['subscription_fee'],
+            'total_amount' => $fees['total_amount'],
         ]);
     }
 

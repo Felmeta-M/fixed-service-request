@@ -52,7 +52,7 @@ class DataSurveyService extends BaseSurveyService implements SurveyInterface
 <ser:HandleSurveyOrderReqBody>
 <com:CustomerCode>{$customerCode}</com:CustomerCode>
 <com:SurveyType>{$data['survey_type']}</com:SurveyType>
-<com:TelecomRegion>{$resource['area_code']}</com:TelecomRegion>
+<com:TelecomRegion>{$data['telecom_region']}</com:TelecomRegion>
 <com:OperType>{$data['oper_type']}</com:OperType>
 <com:MainOfferId>{$this->mainOfferId()}</com:MainOfferId>
 <com:SurveyAddressInfo>

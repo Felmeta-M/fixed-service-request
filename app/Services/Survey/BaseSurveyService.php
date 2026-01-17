@@ -27,8 +27,7 @@ abstract class BaseSurveyService extends BaseApiService
         protected readonly PaymentService $payment_service,
         protected readonly QueryAvailableNumberService $queryAvailableNumberService,
         protected readonly ReserveNumberService $reserveNumberService,
-    ) {
-    }
+    ) {}
 
     protected function endpoint(): string
     {
@@ -51,6 +50,8 @@ abstract class BaseSurveyService extends BaseApiService
         ];
 
         $resource = self::decrypt($resource);
+
+        $data['telecom_region'] = $resource['area_code'] ?? null;
 
         if ($resource === null) {
             AppLogger::api()->error('Resource data validation failed - invalid or tampered information', [

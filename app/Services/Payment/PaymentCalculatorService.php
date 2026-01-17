@@ -33,6 +33,24 @@ class PaymentCalculatorService
     }
 
     /**
+     * Calculate fees for manual survey requests (without cable charge).
+     *
+     * @param SurveyOrder $survey
+     * @param array|null $requestData Optional request data for third-party fee calculation
+     * @return array ['subscription_fee', 'cable_charge', 'total_amount']
+     */
+    public function calculateFeesWithoutCable(SurveyOrder $survey, ?array $requestData = null): array
+    {
+        $subscriptionFee = $this->calculateSubscriptionFee($survey, $requestData);
+
+        return [
+            'subscription_fee' => $subscriptionFee,
+            'cable_charge'     => 0,
+            'total_amount'     => $subscriptionFee,
+        ];
+    }
+
+    /**
      * Determine subscription / one-off fee.
      */
     protected function calculateSubscriptionFee(SurveyOrder $survey, ?array $requestData = null): int

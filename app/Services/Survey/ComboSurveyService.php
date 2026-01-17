@@ -98,7 +98,7 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
             <ser:HandleSurveyOrderReqBody>
                 <com:CustomerCode>{$customerCode}</com:CustomerCode>
                 <com:SurveyType>{$surveyType}</com:SurveyType>
-                <com:TelecomRegion>{$resource['area_code']}</com:TelecomRegion>
+                <com:TelecomRegion>{$data['telecom_region']}</com:TelecomRegion>
                 <com:OperType>{$operType}</com:OperType>
                 <com:MainOfferId>{$mainOfferId}</com:MainOfferId>
 

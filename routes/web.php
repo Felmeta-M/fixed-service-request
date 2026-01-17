@@ -32,7 +32,9 @@ Route::post('/locale', function (Request $request) {
     return response()->json(['success' => true, 'locale' => $locale]);
 })->name('locale.switch');
 
-Route::get('/', fn() => Inertia::render('Home'))->name('home');
+Route::get('/', fn() => Inertia::render('Home', [
+    'googleMapsApiKey' => config('services.google.google_api_key'),
+]))->name('home');
 Route::get('/terms', fn() => Inertia::render('Terms'))->name('terms');
 Route::get('/verification', fn() => Inertia::render('Verification'))->name('verification');
 

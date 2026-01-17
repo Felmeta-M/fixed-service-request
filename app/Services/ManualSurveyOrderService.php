@@ -261,7 +261,7 @@ XML;
             'contact_person' => $primaryContact['contact_person'],
             'contact_no' => $primaryContact['contact_no'],
             'contact_email' => $primaryContact['contact_email'],
-            'status' => FFDServiceProvisionStatus::Pending->value,
+            'status' => FFDServiceProvisionStatus::Waiting->value,
             'survey_is_manual' => true,
         ]);
     }

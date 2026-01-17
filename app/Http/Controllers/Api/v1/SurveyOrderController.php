@@ -63,6 +63,7 @@ class SurveyOrderController extends Controller
                     'payments.id as payment_id',
                     'payments.total_amount as payment_amount',
                     'payments.status as payment_status',
+                    'payments.trans_id as payment_trans_id',
                 ]);
 
             // Handle search parameter - search in both customer_survey_order_id and customer_subscription_order_id
@@ -111,7 +112,6 @@ class SurveyOrderController extends Controller
                     'customer_subscription_order_id' => $item->customer_subscription_order_id ?? null,
                     'survey_type' => $item->survey_type ?? '',
                     'customer_code' => $item->customer_code,
-                    'status' => $item->status,
                     'main_offer_id' => $item->main_offer_id,
                     // 'main_offer_name' => $item->main_offer_name,
                     'service_number' => $item->service_number,
@@ -121,8 +121,16 @@ class SurveyOrderController extends Controller
                     'payment' => $item->payment_id ? [
                         'id' => $item->payment_id,
                         'total_amount' => $item->payment_amount,
-                        'status' => $item->payment_status,
                     ] : null,
+                    'status' => $item->payment_id ? (
+                        is_int($item->payment_status) || is_string($item->payment_status)
+                        ? (FFDServiceProvisionStatus::tryFrom((int) $item->payment_status)?->label() ?? (string) $item->payment_status)
+                        : (string) $item->payment_status
+                    ) : null,
+                    'is_paid' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Paid->value) && !empty($item->payment_trans_id)) : false,
+                    'can_pay' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Completed->value) || empty($item->customer_subscription_order_id)) : false,
+                    'can_subscribe' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Waiting->value) || empty($item->customer_subscription_order_id)) : false,
+                    'can_cancel' => $item->payment_id ? empty($item->customer_subscription_order_id) : false,
                 ];
             });
 
@@ -255,20 +263,16 @@ class SurveyOrderController extends Controller
     }
 
     /**
-     * Map subscription order status code to survey order status value
+     * Use vendor subscription order status code directly (1-8)
+     * Vendor status codes: 1=Created, 2=Ready, 3=Suspended, 4=Processing, 5=Cancelled, 6=Waiting, 7=Failed, 8=Completed
      * 
-     * @param int $subscriptionStatus Subscription order status code from QuerySubscriptionOrderStatusService
-     * @return string Survey order status value (FFDServiceProvisionStatus enum value)
+     * @param int $vendorStatusCode Vendor-specific BSS subscription order status code (1-8)
+     * @return string Vendor status code as string for survey_orders table
      */
-    protected function mapSubscriptionStatusToSurveyStatus(int $subscriptionStatus): string
+    protected function mapSubscriptionStatusToSurveyStatus(int $vendorStatusCode): string
     {
-        return match ($subscriptionStatus) {
-            QuerySubscriptionOrderStatusService::STATUS_WAITING => FFDServiceProvisionStatus::Waiting->value,
-            QuerySubscriptionOrderStatusService::STATUS_FAILED => FFDServiceProvisionStatus::Failed->value,
-            QuerySubscriptionOrderStatusService::STATUS_COMPLETED => FFDServiceProvisionStatus::Completed->value,
-            QuerySubscriptionOrderStatusService::STATUS_CANCELLED => FFDServiceProvisionStatus::Failed->value,
-            default => FFDServiceProvisionStatus::Waiting->value, // Default to waiting for unknown statuses
-        };
+        // Use vendor status code directly (no mapping)
+        return (string) $vendorStatusCode;
     }
 
     /**
@@ -370,6 +374,7 @@ class SurveyOrderController extends Controller
                 'payments.total_amount as payment_amount',
                 'payments.status as payment_status',
                 'payments.merch_order_id as payment_merch_order_id',
+                'payments.trans_id as payment_trans_id',
             ])
             ->first();
 
@@ -474,7 +479,6 @@ class SurveyOrderController extends Controller
             'customer_subscription_order_id' => $order->customer_subscription_order_id ?? null,
             'survey_type' => $order->survey_type ?? '',
             'customer_code' => $order->customer_code,
-            'status' => $order->status,
             'main_offer_id' => $order->main_offer_id,
             // 'main_offer_name' => $order->main_offer_name ?? null,
             'service_number' => $order->service_number ?? null,
@@ -484,9 +488,18 @@ class SurveyOrderController extends Controller
             'payment' => isset($order->payment_id) ? [
                 'id' => $order->payment_id,
                 'total_amount' => $order->payment_amount,
-                'status' => $order->payment_status,
                 'merch_order_id' => $order->payment_merch_order_id ?? null,
             ] : null,
+            // Status at root level (payment status label)
+            'status' => isset($order->payment_id) ? (
+                is_int($order->payment_status) || is_string($order->payment_status)
+                ? (FFDServiceProvisionStatus::tryFrom((int) $order->payment_status)?->label() ?? (string) $order->payment_status)
+                : (string) $order->payment_status
+            ) : null,
+            'is_paid' => isset($order->payment_id) ? (($order->payment_status == FFDServiceProvisionStatus::Paid->value) && !empty($order->payment_trans_id)) : false,
+            'can_pay' => isset($order->payment_id) ? (($order->payment_status == FFDServiceProvisionStatus::Completed->value) || empty($order->customer_subscription_order_id)) : false,
+            'can_subscribe' => isset($order->payment_id) ? (($order->payment_status == FFDServiceProvisionStatus::Waiting->value) || empty($order->customer_subscription_order_id)) : false,
+            'can_cancel' => isset($order->payment_id) ? empty($order->customer_subscription_order_id) : false,
         ];
     }
 

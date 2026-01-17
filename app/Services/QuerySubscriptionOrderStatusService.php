@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\FFDServiceProvisionStatus;
 use App\Services\Logging\AppLogger;
 use RuntimeException;
 
@@ -15,32 +16,6 @@ class QuerySubscriptionOrderStatusService extends BaseApiService
 {
     protected int $timeout = 15;
     protected int $rateLimit = 30;
-
-    /**
-     * Subscription order status codes from BSS.
-     */
-    public const STATUS_CREATED = 1;
-    public const STATUS_READY = 2;
-    public const STATUS_SUSPENDED = 3;
-    public const STATUS_PROCESSING = 4;
-    public const STATUS_CANCELLED = 5;
-    public const STATUS_WAITING = 6;
-    public const STATUS_FAILED = 7;
-    public const STATUS_COMPLETED = 8;
-
-    /**
-     * Status code to label mapping.
-     */
-    public const STATUS_LABELS = [
-        self::STATUS_CREATED => 'Created',
-        self::STATUS_READY => 'Ready',
-        self::STATUS_SUSPENDED => 'Suspended',
-        self::STATUS_PROCESSING => 'Processing',
-        self::STATUS_CANCELLED => 'Cancelled',
-        self::STATUS_WAITING => 'Waiting',
-        self::STATUS_FAILED => 'Failed',
-        self::STATUS_COMPLETED => 'Completed',
-    ];
 
     protected function endpoint(): string
     {
@@ -104,12 +79,27 @@ class QuerySubscriptionOrderStatusService extends BaseApiService
     }
 
     /**
+     * Get status label for vendor status code.
+     * Uses FFDServiceProvisionStatus as single source of truth.
+     */
+    public static function getVendorStatusLabel(int $vendorStatusCode): string
+    {
+        try {
+            $status = FFDServiceProvisionStatus::from($vendorStatusCode);
+            return $status->label();
+        } catch (\ValueError $e) {
+            return 'Unknown';
+        }
+    }
+
+    /**
      * Check if a subscription order is completed.
      */
     public function isCompleted(string $orderId): bool
     {
         $result = $this->queryStatus($orderId);
-        return ($result['status'] ?? 0) === self::STATUS_COMPLETED;
+        $vendorStatus = $result['status'] ?? 0;
+        return $vendorStatus === FFDServiceProvisionStatus::Completed->value;
     }
 
     /**
@@ -118,7 +108,8 @@ class QuerySubscriptionOrderStatusService extends BaseApiService
     public function isFailed(string $orderId): bool
     {
         $result = $this->queryStatus($orderId);
-        return ($result['status'] ?? 0) === self::STATUS_FAILED;
+        $vendorStatus = $result['status'] ?? 0;
+        return $vendorStatus === FFDServiceProvisionStatus::Failed->value;
     }
 
     /**
@@ -127,7 +118,8 @@ class QuerySubscriptionOrderStatusService extends BaseApiService
     public function isCancelled(string $orderId): bool
     {
         $result = $this->queryStatus($orderId);
-        return ($result['status'] ?? 0) === self::STATUS_CANCELLED;
+        $vendorStatus = $result['status'] ?? 0;
+        return $vendorStatus === FFDServiceProvisionStatus::Cancelled->value;
     }
 
     /**
@@ -136,22 +128,14 @@ class QuerySubscriptionOrderStatusService extends BaseApiService
     public function isProcessing(string $orderId): bool
     {
         $result = $this->queryStatus($orderId);
-        $status = $result['status'] ?? 0;
+        $vendorStatus = $result['status'] ?? 0;
 
-        return in_array($status, [
-            self::STATUS_CREATED,
-            self::STATUS_READY,
-            self::STATUS_PROCESSING,
-            self::STATUS_WAITING,
+        return in_array($vendorStatus, [
+            FFDServiceProvisionStatus::Created->value,
+            FFDServiceProvisionStatus::Ready->value,
+            FFDServiceProvisionStatus::Processing->value,
+            FFDServiceProvisionStatus::Waiting->value,
         ]);
-    }
-
-    /**
-     * Get status label from status code.
-     */
-    public static function getStatusLabel(int $status): string
-    {
-        return self::STATUS_LABELS[$status] ?? 'Unknown';
     }
 
     /**
@@ -267,16 +251,17 @@ XML;
         $statusData = $queryOrderStatus->children($comNs);
 
         $responseOrderId = (string) ($statusData->OrderId ?? '');
-        $status = (int) ($statusData->Status ?? 0);
+        $vendorStatusCode = (int) ($statusData->Status ?? 0);
 
+        // Return vendor status code as-is (these are vendor-specific statuses)
         return [
             'success' => true,
             'return_code' => $returnCode,
             'return_msg' => $returnMsg,
             'response_time' => $rspTime,
             'order_id' => $responseOrderId,
-            'status' => $status,
-            'status_label' => self::getStatusLabel($status),
+            'status' => $vendorStatusCode, // Vendor status code (1-8)
+            'status_label' => self::getVendorStatusLabel($vendorStatusCode),
         ];
     }
 }

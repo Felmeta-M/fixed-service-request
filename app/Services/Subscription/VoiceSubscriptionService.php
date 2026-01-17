@@ -7,6 +7,7 @@ use App\Enums\FFDServiceProvisionStatus;
 use App\Services\ApiResponse;
 use App\Services\Logging\AppLogger;
 use App\Services\QueryAvailableNumberService;
+use App\Services\QuerySubscriptionOrderStatusService;
 use App\Services\ReserveNumberService;
 use App\Traits\InteractsWithSMSGateway;
 use Illuminate\Support\Facades\DB;
@@ -327,58 +328,12 @@ XML;
          }
 
          // Update survey order status - subscription successful
-         try {
-            $updated = SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
-               ->update([
-                  'status' => FFDServiceProvisionStatus::Subscribed->value,
-                  'subscribed_at' => now(),
-                  'customer_subscription_order_id' => $customerBusiOrderId,
-               ]);
-
-            if (!$updated) {
-               AppLogger::api()->warning('Failed to update survey order status after voice subscription', [
-                  'survey_order_id' => $data['survey_order_id'] ?? null,
-                  'customer_subscription_order_id' => $customerBusiOrderId,
-                  'service_type' => 'voice',
-               ]);
-               // Don't fail the entire request - subscription was successful
-            } else {
-               AppLogger::api()->info('Survey order updated after voice subscription', [
-                  'survey_order_id' => $data['survey_order_id'] ?? null,
-                  'customer_subscription_order_id' => $customerBusiOrderId,
-                  'service_number' => $this->serviceNumber,
-                  'service_type' => 'voice',
-               ]);
-            }
-
-            // Update payment table with customer_subscription_order_id (important for manual subscriptions)
-            try {
-               DB::table('payments')
-                  ->where('customer_survey_order_id', $data['survey_order_id'])
-                  ->update(['customer_subscription_order_id' => $customerBusiOrderId]);
-
-               AppLogger::api()->info('Payment updated with customer_subscription_order_id after voice subscription', [
-                  'survey_order_id' => $data['survey_order_id'] ?? null,
-                  'customer_subscription_order_id' => $customerBusiOrderId,
-                  'service_type' => 'voice',
-               ]);
-            } catch (\Throwable $e) {
-               AppLogger::api()->warning('Failed to update payment with customer_subscription_order_id', [
-                  'survey_order_id' => $data['survey_order_id'] ?? null,
-                  'customer_subscription_order_id' => $customerBusiOrderId,
-                  'error' => $e->getMessage(),
-                  'service_type' => 'voice',
-               ]);
-               // Don't fail - subscription was successful
-            }
-         } catch (\Throwable $e) {
-            AppLogger::api()->exception($e, 'Exception updating survey order status after voice subscription', [
-               'survey_order_id' => $data['survey_order_id'] ?? null,
-               'customer_subscription_order_id' => $customerBusiOrderId,
-               'service_type' => 'voice',
-            ]);
-            // Don't fail the entire request - subscription was successful
-         }
+         $this->persistSubscription(
+            $data['survey_order_id'],
+            $customerBusiOrderId,
+            null, // Voice subscription doesn't update service_number here
+            'voice'
+         );
 
          // ✅ Send SMS to customer (non-blocking - failures are logged but don't affect response)
          if (!empty($data['sms_no']) && InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])) {

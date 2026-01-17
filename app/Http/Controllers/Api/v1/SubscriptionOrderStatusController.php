@@ -52,14 +52,20 @@ class SubscriptionOrderStatusController extends Controller
     }
 
     /**
-     * Get status labels mapping.
+     * Get vendor status labels mapping (BSS subscription order status codes 1-8).
      *
      * @return JsonResponse
      */
     public function statusLabels(): JsonResponse
     {
+        // Return vendor-specific status labels (BSS subscription order status codes)
+        $statusLabels = [];
+        for ($i = 1; $i <= 8; $i++) {
+            $statusLabels[$i] = QuerySubscriptionOrderStatusService::getVendorStatusLabel($i);
+        }
+
         return ApiResponse::success([
-            'status_codes' => QuerySubscriptionOrderStatusService::STATUS_LABELS,
+            'status_codes' => $statusLabels,
         ]);
     }
 }

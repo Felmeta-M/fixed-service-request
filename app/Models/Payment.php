@@ -41,6 +41,9 @@ class Payment extends Model
         'trans_id',
         'total_amount',
         'cable_charge',
+        'subscription_fee',
+        'device_fee',
+        'service_number',
         'status',
         'service_details',
         'payload',
@@ -57,13 +60,13 @@ class Payment extends Model
 
     protected $casts = [
         'payload' => 'array',
-        'status'  => FFDServiceProvisionStatus::class,
+        'status' => FFDServiceProvisionStatus::class,
     ];
 
 
     public function scopePending($query)
     {
-        return $query->where('status', FFDServiceProvisionStatus::Pending->value);
+        return $query->where('status', FFDServiceProvisionStatus::Waiting->value);
     }
 
     public function scopePaid($query)

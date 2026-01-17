@@ -7,6 +7,7 @@ use App\Enums\FFDServiceProvisionStatus;
 use App\Services\ApiResponse;
 use App\Services\GetCombiningService;
 use App\Services\Logging\AppLogger;
+use App\Services\QuerySubscriptionOrderStatusService;
 use App\Traits\InteractsWithSMSGateway;
 use Illuminate\Support\Facades\DB;
 
@@ -41,7 +42,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          throw new \RuntimeException('Survey order not found: ' . $data['survey_order_id']);
       }
 
-      if ($surveyOrder->status === FFDServiceProvisionStatus::Subscribed->value) {
+      if ($surveyOrder->status === FFDServiceProvisionStatus::Completed->value) {
          AppLogger::api()->warning('Attempted duplicate subscription', [
             'survey_order_id' => $data['survey_order_id'],
             'current_status' => $surveyOrder->status,
@@ -407,7 +408,7 @@ XML;
                $updated = SurveyOrder::where('customer_survey_order_id', $surveyOrderId)
                   ->update([
                      'service_number' => $serviceNo,
-                     'status' => FFDServiceProvisionStatus::Subscribed->value,
+                     'status' => FFDServiceProvisionStatus::Waiting->value,
                      'subscribed_at' => now(),
                      'customer_subscription_order_id' => $res['customer_busi_order_id'],
                   ]);

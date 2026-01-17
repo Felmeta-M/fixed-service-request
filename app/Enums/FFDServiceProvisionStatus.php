@@ -4,34 +4,31 @@ namespace App\Enums;
 
 enum FFDServiceProvisionStatus: int
 {
-    case Created    = 0;
-    case Processing = 1;
-    case Suspended  = 2;
-    case Waiting    = 3;
-    case Failed     = 4;
-    case Completed  = 5;
-    case Ready      = 6;
-    case Cancelled  = 9;
-    case Pending    = 10;
-    case Paid       = 11;
-    case Refund     = 13;
-    case Subscribed = 14;
+    // Vendor subscription order status codes (1-8)
+    case Created = 1;
+    case Ready = 2;
+    case Suspended = 3;
+    case Processing = 4;
+    case Cancelled = 5;
+    case Waiting = 6;
+    case Failed = 7;
+    case Completed = 8;
+
+    // Internal status codes
+    case Paid = 11; // Payment status: Paid
 
     public function label(): string
     {
         return match ($this) {
-            self::Created    => 'Created',
+            self::Created => 'Created',
+            self::Ready => 'Ready',
+            self::Suspended => 'Suspended',
             self::Processing => 'Processing',
-            self::Suspended  => 'Suspended',
-            self::Waiting    => 'Waiting',
-            self::Failed     => 'Failed',
-            self::Completed  => 'Completed',
-            self::Ready      => 'Ready',
-            self::Cancelled  => 'Cancelled',
-            self::Pending    => 'Pending for payment',
-            self::Paid       => 'Paid',
-            self::Refund     => 'Refund',
-            self::Subscribed => 'Subscribed',
+            self::Cancelled => 'Cancelled',
+            self::Waiting => 'Waiting',
+            self::Failed => 'Failed',
+            self::Completed => 'Completed',
+            self::Paid => 'Paid',
         };
     }
 
@@ -46,15 +43,8 @@ enum FFDServiceProvisionStatus: int
     public static function blockedForNewRequest(): array
     {
         return [
-            self::Created->value,
-            self::Processing->value,
-            self::Suspended->value,
             self::Waiting->value,
-            self::Completed->value,
-            self::Ready->value,
-            self::Pending->value,
             self::Paid->value,
-            self::Subscribed->value,
         ];
     }
 
@@ -62,12 +52,8 @@ enum FFDServiceProvisionStatus: int
     {
         return [
             self::Created->value,
-            self::Processing->value,
             self::Suspended->value,
             self::Waiting->value,
-            self::Completed->value,
-            self::Ready->value,
-            self::Pending->value,
         ];
     }
 
@@ -78,5 +64,10 @@ enum FFDServiceProvisionStatus: int
             1,
             0
         );
+    }
+
+    public static function fromValue(int $value): self
+    {
+        return self::tryFrom($value) ?? throw new \InvalidArgumentException("Invalid status value: $value");
     }
 }

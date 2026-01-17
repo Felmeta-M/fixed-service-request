@@ -184,7 +184,7 @@ class CreateOrderService
 
         $payment = $this->paymentService->find($data['customerSurveyOrderId']);
 
-        if ($payment->status === FFDServiceProvisionStatus::Paid) {
+        if ($payment->status === 11) { // Payment status: Paid
             throw new RuntimeException("Your payment has already been processed. No further action is needed.");
         }
 
@@ -246,7 +246,7 @@ class CreateOrderService
 
         $payment = $this->paymentService->find($data['customerSurveyOrderId']);
 
-        if ($payment->status === FFDServiceProvisionStatus::Paid) {
+        if ($payment->status === 11) { // Payment status: Paid
             throw new RuntimeException("Your payment has already been processed. No further action is needed.");
         }
 

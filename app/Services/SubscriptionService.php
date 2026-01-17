@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\SurveyOrder;
+use App\Services\QuerySubscriptionOrderStatusService;
 use App\Support\CustomerContext;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -199,7 +200,7 @@ XML;
          // 3. Save new service number to DB
          $surveyRequest->update([
             'service_number' => $numberService,
-            'status' => FFDServiceProvisionStatus::Subscribed->value,
+            'status' => FFDServiceProvisionStatus::Completed->value,
             'subscribed_at' => now(),
             // TODO: update completed_date based on survey result
          ]);

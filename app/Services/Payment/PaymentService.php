@@ -30,7 +30,7 @@ class PaymentService
                     'customer_survey_order_id' => $data['customer_survey_order_id'],
                     'total_amount' => $data['total_amount'] ?? 0,
                     'payload' => $data['payload'] ?? [],
-                    'status' => $data['status'] ?? FFDServiceProvisionStatus::Pending->value,
+                    'status' => $data['status'] ?? FFDServiceProvisionStatus::Waiting->value,
                 ]
             );
         });
@@ -60,7 +60,7 @@ class PaymentService
                     'cable_charge' => $data['cable_charge'] ?? 0,
                     'device_fee' => $data['device_fee'] ?? 0,
                     'customer_subscription_order_id' => $data['customer_subscription_order_id'] ?? null,
-                    'status' => FFDServiceProvisionStatus::Pending->value,
+                    'status' => FFDServiceProvisionStatus::Waiting->value,
                     'updated_at' => now(),
                     'created_at' => now(),
                 ]
@@ -87,7 +87,7 @@ class PaymentService
      */
     public function markAsPaid(Payment $payment): Payment
     {
-        $payment->update(['status' => FFDServiceProvisionStatus::Paid->value]);
+        $payment->update(['status' => 11]); // Payment status: Paid
         return $payment;
     }
 
@@ -114,7 +114,7 @@ class PaymentService
         array $providerPayload
     ): void {
         // Idempotency guard
-        if ($payment->status === FFDServiceProvisionStatus::Paid->value) {
+        if ($payment->status === 11) { // Payment status: Paid
             AppLogger::payment()->info('Payment already confirmed, skipping', [
                 'order_id' => $payment->customer_survey_order_id,
             ]);
@@ -155,7 +155,7 @@ class PaymentService
                 'payment_confirmed',
                 $payment->customer_survey_order_id,
                 (float) ($providerPayload['total_amount'] ?? $payment->total_amount),
-                FFDServiceProvisionStatus::Paid->value,
+                11, // Payment status: Paid
                 ['trans_id' => $providerPayload['transId'] ?? null]
             );
 

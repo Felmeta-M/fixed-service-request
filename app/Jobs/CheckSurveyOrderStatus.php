@@ -32,7 +32,7 @@ class CheckSurveyOrderStatus implements ShouldQueue
         // Only select columns we need
         DB::table('survey_orders')
             ->whereNull('deleted_at')
-            ->where('status', FFDServiceProvisionStatus::Pending->value)
+            ->where('status', FFDServiceProvisionStatus::Waiting->value)
             ->select(['id', 'customer_survey_order_id', 'status'])
             ->orderBy('id')
             ->chunk(100, function ($orders) use ($queryDataSurveyOrderService) {

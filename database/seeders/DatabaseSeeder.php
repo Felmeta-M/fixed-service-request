@@ -21,5 +21,6 @@ class DatabaseSeeder extends Seeder
         $this->call(CustomerTypeCategorySubcategorySeeder::class);
         $this->call(RegionZoneWeredaSeeder::class);
         $this->call(AvailableDeviceSeeder::class);
+        $this->call(EthioZonalAreaSeeder::class);
     }
 }

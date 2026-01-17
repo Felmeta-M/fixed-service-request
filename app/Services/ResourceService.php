@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\Logging\AppLogger;
 use App\Support\CustomerContext;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Log;
 
 class ResourceService extends BaseApiService
 {
@@ -95,7 +95,6 @@ XML;
         $parsed = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
         // Step 2: Get namespaces
         $namespaces = $parsed->getNamespaces(true);
-        // \Log::info('Namespaces found', $namespaces);
 
         // Step 3: Register namespaces for XPath
         $parsed->registerXPathNamespace('soapenv', $namespaces['soapenv'] ?? '');
@@ -104,16 +103,18 @@ XML;
         // Step 4: Trace the SOAP Body
         $bodyNodes = $parsed->xpath('//soapenv:Body');
         if (empty($bodyNodes)) {
-            \Log::error('SOAP Body not found');
+            AppLogger::api()->error('SOAP Body not found in resource check response', [
+                'operation' => 'resource_check',
+            ]);
             throw new \Exception('SOAP Body not found');
         }
-        // $soapBody = $bodyNodes[0];
-        // \Log::info('SOAP Body found', ['children' => array_keys((array)$soapBody)]);
 
         // Step 5: Trace ResourceCheckResponse
         $responses = $parsed->xpath('//soapenv:Body/ns1:ResourceCheckResponse');
         if (empty($responses)) {
-            \Log::error('ResourceCheckResponse not found');
+            AppLogger::api()->error('ResourceCheckResponse not found in resource check response', [
+                'operation' => 'resource_check',
+            ]);
             throw new \Exception('ResourceCheckResponse not found');
         }
         $response = $responses[0];
@@ -123,9 +124,10 @@ XML;
         $resultDesc = (string) ($response->RESULT_DESC ?? '');
 
         if ($resultCode !== '0') {
-            \Log::warning('Resource check failed', [
+            AppLogger::api()->warning('Resource check returned error code', [
                 'result_code' => $resultCode,
-                'result_desc' => $resultDesc
+                'result_desc' => $resultDesc,
+                'operation' => 'resource_check',
             ]);
         }
 
@@ -148,7 +150,9 @@ XML;
                 ];
             }
         } else {
-            \Log::warning('No RESOURCE elements found in RESOURCE_LIST');
+            AppLogger::api()->warning('No RESOURCE elements found in RESOURCE_LIST', [
+                'operation' => 'resource_check',
+            ]);
         }
 
         // Step 7: Get shortest resource
@@ -178,12 +182,15 @@ XML;
             $resource['cable_type'] = Crypt::encryptString((string) $resource['cable_type']);
             $resource['longitude'] = Crypt::encryptString((string) $resource['longitude']);
             $resource['latitude'] = Crypt::encryptString((string) $resource['latitude']);
+            $resource['area_code'] = Crypt::encryptString((string) ($resource['area_code'] ?? ''));
+            $resource['area_name'] = Crypt::encryptString((string) ($resource['area_name'] ?? ''));
 
 
             return $resource;
         } catch (\Exception $e) {
-            // Log the error for debugging
-            Log::error('Failed to process resource: ' . $e->getMessage());
+            AppLogger::api()->exception($e, 'Failed to process resource', [
+                'operation' => 'get_shortest_resource',
+            ]);
             return null; // Or throw custom exception if needed
         }
     }
@@ -200,8 +207,8 @@ XML;
             'latitude' => Crypt::encryptString((string) ($data['latitude'] ?? '')),
             'cable_type' => Crypt::encryptString((string) ($data['cable_type'] ?? '3')),
             'cable_type_desc' => '',
-            'area_code' => '',
-            'area_name' => '',
+            'area_code' => Crypt::encryptString((string) ($data['area_code'] ?? '')),
+            'area_name' => Crypt::encryptString((string) ($data['area_name'] ?? '')),
         ];
     }
 }

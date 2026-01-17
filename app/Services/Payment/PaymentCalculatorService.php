@@ -22,7 +22,6 @@ class PaymentCalculatorService
      */
     public function calculateFees(SurveyOrder $survey, ?array $requestData = null): array
     {
-        Log::info('Calculate Fees', ['survey' => $survey, 'requestData' => $requestData]);
         $subscriptionFee = $this->calculateSubscriptionFee($survey, $requestData);
         $cableCharge     = $this->calculateCableCharge($survey);
 

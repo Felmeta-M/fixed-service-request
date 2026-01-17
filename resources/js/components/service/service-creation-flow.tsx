@@ -48,6 +48,8 @@ interface ServiceFormData {
         latitude: string;
         cable_type: string;
         cable_type_desc: string;
+        area_code: string;
+        area_name: string;
     };
     bandwidthNumericValue?: number;
     resourceMessage?: string;
@@ -167,7 +169,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
             updateFormData({
                 resourceAvailable: result.available,
-                // Store resourceData even when available=false, as it contains encrypted fields (distance, cable_type, latitude, longitude, neid, nename)
+                // Store resourceData even when available=false, as it contains encrypted fields (distance, cable_type, latitude, longitude, neid, nename, area_code, area_name)
                 // that must be forwarded to survey/create API for both normal and manual flows
                 resourceData: result.data,
                 resourceMessage: result.message,

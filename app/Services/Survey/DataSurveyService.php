@@ -21,8 +21,8 @@ class DataSurveyService extends BaseSurveyService implements SurveyInterface
 
         // Use shared helpers for timestamps
         $transactionId = $this->transactionId();
-        $processTime   = $this->processTime();
-        $sessionId     = $cfg['session_id'] ?? uniqid();
+        $processTime = $this->processTime();
+        $sessionId = $cfg['session_id'] ?? uniqid();
         $completedDate = $this->completedDate();
 
         // Use shared helpers for contact info
@@ -52,7 +52,7 @@ class DataSurveyService extends BaseSurveyService implements SurveyInterface
 <ser:HandleSurveyOrderReqBody>
 <com:CustomerCode>{$customerCode}</com:CustomerCode>
 <com:SurveyType>{$data['survey_type']}</com:SurveyType>
-<com:TelecomRegion>{$data['telecom_region']}</com:TelecomRegion>
+<com:TelecomRegion>{$resource['area_code']}</com:TelecomRegion>
 <com:OperType>{$data['oper_type']}</com:OperType>
 <com:MainOfferId>{$this->mainOfferId()}</com:MainOfferId>
 <com:SurveyAddressInfo>
@@ -89,14 +89,14 @@ XML;
 
         $ns = $parsed->getNamespaces(true);
         $body = $parsed->children($ns['soapenv'])->Body;
-        $rsp  = $body->children($ns['ser'])->HandleSurveyOrderRspMsg;
-        $hdr  = $rsp->ResponseHeader->children($ns['com']);
+        $rsp = $body->children($ns['ser'])->HandleSurveyOrderRspMsg;
+        $hdr = $rsp->ResponseHeader->children($ns['com']);
 
-        if ((string)$hdr->RetCode !== '0') {
-            return ApiResponse::error((string)$hdr->RetMsg);
+        if ((string) $hdr->RetCode !== '0') {
+            return ApiResponse::error((string) $hdr->RetMsg);
         }
 
-        $surveyOrderId = (string)$rsp->HandleSurveyOrderRespBody
+        $surveyOrderId = (string) $rsp->HandleSurveyOrderRespBody
             ->children($ns['com'])->CustomerSurveyOrderId;
 
         $this->persistSurvey($surveyOrderId, $data, $resource);

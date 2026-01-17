@@ -32,6 +32,8 @@ export interface ResourceCheckResponse {
         latitude: string;
         cable_type: string;
         cable_type_desc: string;
+        area_code: string;
+        area_name: string;
     };
 }
 
@@ -91,7 +93,7 @@ export const useResourceChecker = () => {
                 const resource = response.data;
                 const availablePorts = parseInt(resource.ava_port) || 0;
 
-                // `distance`, `cable_type`, `latitude`, `longitude`, `neid` are encrypted by the backend (Crypt::encryptString),
+                // `distance`, `cable_type`, `latitude`, `longitude`, `neid`, `area_code`, `area_name` are encrypted by the backend (Crypt::encryptString),
                 // and the SOAP call already receives `radius=200`, so we treat ports>0 as availability.
                 // IMPORTANT: Even when ports <= 0 (resource not available), we still return the encrypted resource data
                 // because it contains encrypted fields that must be forwarded to survey/create API.

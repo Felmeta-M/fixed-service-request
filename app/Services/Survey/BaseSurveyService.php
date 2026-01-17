@@ -2,6 +2,7 @@
 
 namespace App\Services\Survey;
 
+use App\Services\ApiResponse;
 use App\Services\BaseApiService;
 use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
@@ -10,9 +11,9 @@ use App\Services\Payment\PaymentService;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Services\ResourceService;
+use App\Services\Logging\AppLogger;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 abstract class BaseSurveyService extends BaseApiService
@@ -26,7 +27,8 @@ abstract class BaseSurveyService extends BaseApiService
         protected readonly PaymentService $payment_service,
         protected readonly QueryAvailableNumberService $queryAvailableNumberService,
         protected readonly ReserveNumberService $reserveNumberService,
-    ) {}
+    ) {
+    }
 
     protected function endpoint(): string
     {
@@ -43,13 +45,29 @@ abstract class BaseSurveyService extends BaseApiService
             'distance' => $data['survey_address_info']['distance'] ?? null,
             'cable_type' => $data['survey_address_info']['cable_type'] ?? null,
             'longitude' => $data['survey_address_info']['longitude'] ?? null,
-            'latitude'  => $data['survey_address_info']['latitude'] ?? null,
+            'latitude' => $data['survey_address_info']['latitude'] ?? null,
+            'area_code' => $data['survey_address_info']['area_code'] ?? null,
+            'area_name' => $data['survey_address_info']['area_name'] ?? null,
         ];
-        // $this->resourceCheck($data);
+
         $resource = self::decrypt($resource);
+
+        if ($resource === null) {
+            AppLogger::api()->error('Resource data validation failed - invalid or tampered information', [
+                'operation' => 'survey_create',
+                'survey_type' => $this->mainOfferId(),
+            ]);
+            return ApiResponse::error(
+                'Invalid location information provided. Please select your location again and try submitting your request.',
+                \App\Enums\ErrorCode::VALIDATION_ERROR,
+                422
+            );
+        }
+
         $xml = $this->buildXml($data, $resource);
+
         $response = $this->executeRequest($xml);
-        // Log::info($response);
+
         return $this->parseResponse($data, $response, $resource);
     }
 
@@ -58,7 +76,7 @@ abstract class BaseSurveyService extends BaseApiService
         $response = app(ResourceService::class)->check([
             'bandwidth' => $data['bandwidth'] ?? null,
             'longitude' => $data['survey_address_info']['longitude'],
-            'latitude'  => $data['survey_address_info']['latitude'],
+            'latitude' => $data['survey_address_info']['latitude'],
         ]);
 
         $resource = $response->getData(true)['data'] ?? null;
@@ -77,26 +95,25 @@ abstract class BaseSurveyService extends BaseApiService
     ): void {
 
         $serviceNumber = $data['service_number'] ?? $this->serviceNumber ?? null;
-        Log::info('Service Number', ['service_number' => $serviceNumber]);
         DB::transaction(function () use ($surveyOrderId, $data, $resource, $serviceNumber) {
             $survey = SurveyOrder::create([
                 ...$data,
                 'completed_date' => now(),
-                'with_device' => (bool)$data['with_device'],
+                'with_device' => (bool) $data['with_device'],
                 'device_id' => $data['device_id'] ?? null,
                 'device_voice_id' => $data['device_voice_id'] ?? null,
                 'service_number' => $serviceNumber,
                 'customer_survey_order_id' => $surveyOrderId,
                 'status' => $data['survey_is_manual'] ? FFDServiceProvisionStatus::Waiting->value : FFDServiceProvisionStatus::Completed->value,
                 'cable_length' => $resource['distance'] ?? null,
-                'cable_type'   => $resource['cable_type'] ?? null,
-                $data['lat']  = isset($resource['latitude'])
-                    ? round((float) $resource['latitude'], 8)
-                    : null,
+                'cable_type' => $resource['cable_type'] ?? null,
+                $data['lat'] = isset($resource['latitude'])
+                ? round((float) $resource['latitude'], 8)
+                : null,
 
                 $data['long'] = isset($resource['longitude'])
-                    ? round((float) $resource['longitude'], 8)
-                    : null,
+                ? round((float) $resource['longitude'], 8)
+                : null,
             ]);
 
             // Use dynamic customer BSS classification from BaseApiService helper
@@ -116,9 +133,7 @@ abstract class BaseSurveyService extends BaseApiService
             ];
 
             $calculator = app(PaymentCalculatorService::class);
-            Log::info('Request Data', $requestData);
             $fees = $calculator->calculateFees($survey, $requestData);
-            Log::info('Fees', $fees);
 
             // Calculate device fee from selected device prices
             // For combo services, add both internet and voice device prices
@@ -138,36 +153,60 @@ abstract class BaseSurveyService extends BaseApiService
             }
 
             $totalAmount = $fees['total_amount'] + $deviceFee;
+
             $this->payment_service->createOrUpdatePayment([
-                'customer_survey_order_id'       => $survey->customer_survey_order_id,
-                'service_number'                 => $survey->service_number,
+                'customer_survey_order_id' => $survey->customer_survey_order_id,
+                'service_number' => $survey->service_number,
                 'subscription_fee' => $fees['subscription_fee'],
-                'cable_charge'     => $fees['cable_charge'],
-                'device_fee'      => $deviceFee,
-                'total_amount'     => $totalAmount,
-                'cable_charge'  => $fees['cable_charge'],
+                'cable_charge' => $fees['cable_charge'],
+                'device_fee' => $deviceFee,
+                'total_amount' => $totalAmount,
             ]);
         });
     }
 
+    /**
+     * Decrypt resource fields with strict validation.
+     * 
+     * All resource fields are critical and required. If any encrypted field
+     * cannot be decrypted (indicating tampered or invalid data), the operation
+     * is stopped immediately for security reasons.
+     * 
+     * @param array $data Encrypted resource data
+     * @return array|null Decrypted data, or null if validation fails (tampered/invalid data)
+     */
     public static function decrypt(array $data): ?array
     {
-        try {
-            $decrypted = $data;
-            // List of fields to decrypt
-            $fieldsToDecrypt = ['neid', 'distance', 'cable_type', 'latitude', 'longitude'];
+        $decrypted = [];
 
-            foreach ($fieldsToDecrypt as $field) {
-                if (isset($data[$field]) && !is_null($data[$field])) {
+        // All fields are critical and required - no field should be tampered
+        $criticalFields = ['neid', 'distance', 'cable_type', 'latitude', 'longitude', 'area_code', 'area_name'];
+
+        // Validate and decrypt all critical fields
+        foreach ($criticalFields as $field) {
+            if (isset($data[$field]) && !is_null($data[$field]) && $data[$field] !== '') {
+                try {
                     $decrypted[$field] = Crypt::decryptString($data[$field]);
+                } catch (\Exception $e) {
+                    // Invalid or tampered encrypted data - stop processing immediately
+                    AppLogger::api()->error('Failed to decrypt critical resource field - possible tampering detected', [
+                        'field' => $field,
+                        'operation' => 'decrypt_resource_fields',
+                        'error' => $e->getMessage(),
+                    ]);
+                    return null;
                 }
+            } else {
+                // Critical field is missing - stop processing
+                AppLogger::api()->error('Critical resource field is missing', [
+                    'field' => $field,
+                    'operation' => 'decrypt_resource_fields',
+                ]);
+                return null;
             }
-
-            return $decrypted;
-        } catch (\Exception $e) {
-            Log::error('Decryption failed: ' . $e->getMessage());
-            return null; // Or throw a custom exception if you prefer
         }
+
+        return $decrypted;
     }
 
     // parseBandwidth is inherited from BaseApiService

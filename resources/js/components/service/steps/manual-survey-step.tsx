@@ -44,6 +44,8 @@ type FormData = {
         latitude: string;
         cable_type: string;
         cable_type_desc: string;
+        area_code: string;
+        area_name: string;
     };
     distance?: string;
     cable_type?: string;
@@ -78,7 +80,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
     });
 
     const createSurveyMutation = useCreateSurvey();
-    
+
     // Fetch customer data to get address information for fallback
     const { data: customerData, isLoading: isLoadingCustomer } = useGetCustomer(
         (user as AuthUser)?.customer_sub_id
@@ -92,15 +94,15 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
     // Check if kebele is required based on region (not required for Addis Ababa)
     const isKebeleRequired = useMemo(() => {
         if (!selectedAddress.region) return false;
-        
+
         // Find the region name from the region options
         const selectedRegion = regionOptions.find((r) => r.value === selectedAddress.region);
         const regionName = selectedRegion?.label?.toLowerCase() || '';
-        
+
         // Addis Ababa region names (case-insensitive check)
         const addisAbabaNames = ['addis ababa', 'addisababa', 'addis_ababa'];
         const isAddisAbaba = addisAbabaNames.some((name) => regionName.includes(name));
-        
+
         return !isAddisAbaba; // Required for all regions except Addis Ababa
     }, [selectedAddress.region, regionOptions]);
 
@@ -201,19 +203,24 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
 
         // Validate address
         if (!address || !address.trim()) {
-            setManualFlowErrors({ address: 'Location address is required' });
             setSubmitting(false);
+            toast.error('Location address is required', {
+                description: 'Please enter a valid address for the service installation location.',
+            });
             return;
         }
 
         // Validate location coordinates
         if (!formData.latitude || !formData.longitude || formData.latitude === 0 || formData.longitude === 0) {
-            setManualFlowErrors({ address: 'Please select a valid location on the map' });
             setSubmitting(false);
+            toast.error('Please select a valid location on the map', {
+                description: 'Please click on the map to select your installation location.',
+            });
             return;
         }
 
-        // Build survey creation payload (same structure as review-submit-step)
+        // Build survey creation payload for manual survey
+        // Manual surveys don't require encrypted resource fields - they use different backend service
         const encryptedResource = formData.resourceData;
 
         // Get customer address data for fallback
@@ -246,15 +253,16 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                 subcity_zone: finalZone,
                 wereda_town: finalWoreda,
                 kebele: finalKebele,
-                // Use encrypted values from resource-check (required by BaseSurveyService::decrypt)
+                address: address.trim(), // Use edited address
+                // Manual surveys: use encrypted resource fields if available, otherwise use form data or empty strings
                 latitude: encryptedResource?.latitude ?? String(formData.latitude),
                 longitude: encryptedResource?.longitude ?? String(formData.longitude),
-                address: address.trim(), // Use edited address
-                // Forward exact encrypted resource-check data
-                distance: encryptedResource?.distance ?? formData.distance,
-                cable_type: encryptedResource?.cable_type ?? formData.cable_type,
-                neid: encryptedResource?.neid,
-                nename: encryptedResource?.nename,
+                distance: encryptedResource?.distance ?? formData.distance ?? '',
+                cable_type: encryptedResource?.cable_type ?? formData.cable_type ?? '',
+                neid: encryptedResource?.neid ?? '',
+                nename: encryptedResource?.nename ?? '',
+                area_code: encryptedResource?.area_code ?? '',
+                area_name: encryptedResource?.area_name ?? '',
             },
             with_device: formData.withDevice,
             device_id: formData.deviceId || null,
@@ -408,35 +416,35 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 />
                             </Field>
                             <Field>
-                            <FieldLabel htmlFor="manual-phone">
-                                Contact Phone Number <span className="text-red-500">*</span>
-                            </FieldLabel>
-                            <Input
-                                id="manual-phone"
-                                type="tel"
-                                placeholder="+251 9XX XXX XXX"
-                                value={manualFlowData.phone}
-                                onChange={(e) => {
-                                    setManualFlowData({ ...manualFlowData, phone: e.target.value });
-                                    if (manualFlowErrors.phone) {
-                                        setManualFlowErrors({ ...manualFlowErrors, phone: '' });
+                                <FieldLabel htmlFor="manual-phone">
+                                    Contact Phone Number <span className="text-red-500">*</span>
+                                </FieldLabel>
+                                <Input
+                                    id="manual-phone"
+                                    type="tel"
+                                    placeholder="+251 9XX XXX XXX"
+                                    value={manualFlowData.phone}
+                                    onChange={(e) => {
+                                        setManualFlowData({ ...manualFlowData, phone: e.target.value });
+                                        if (manualFlowErrors.phone) {
+                                            setManualFlowErrors({ ...manualFlowErrors, phone: '' });
+                                        }
+                                    }}
+                                    className={
+                                        manualFlowErrors.phone
+                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
+                                            : ''
                                     }
-                                }}
-                                className={
-                                    manualFlowErrors.phone
-                                        ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
-                                        : ''
-                                }
-                                disabled={submitting}
-                                required
-                            />
-                            {manualFlowErrors.phone && (
-                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                                    <AlertCircle className="h-4 w-4" />
-                                    {manualFlowErrors.phone}
-                                </p>
-                            )}
-                        </Field>
+                                    disabled={submitting}
+                                    required
+                                />
+                                {manualFlowErrors.phone && (
+                                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                        <AlertCircle className="h-4 w-4" />
+                                        {manualFlowErrors.phone}
+                                    </p>
+                                )}
+                            </Field>
                         </FieldGroup>
                     </div>
                 </div>
@@ -602,8 +610,8 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                             !selectedAddress.region
                                                 ? 'First select region'
                                                 : loadingZones
-                                                  ? 'Loading zones...'
-                                                  : 'Select zone'
+                                                    ? 'Loading zones...'
+                                                    : 'Select zone'
                                         }
                                     />
                                 </SelectTrigger>
@@ -652,8 +660,8 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                             !selectedAddress.zone
                                                 ? 'First select zone'
                                                 : loadingWoredas
-                                                  ? 'Loading woredas...'
-                                                  : 'Select woreda'
+                                                    ? 'Loading woredas...'
+                                                    : 'Select woreda'
                                         }
                                     />
                                 </SelectTrigger>

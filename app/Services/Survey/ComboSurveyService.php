@@ -24,8 +24,8 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
 
       // Use shared helpers for timestamps
       $transactionId = $this->transactionId();
-      $processTime   = $this->processTime();
-      $sessionId     = $cfg['session_id'] ?? uniqid();
+      $processTime = $this->processTime();
+      $sessionId = $cfg['session_id'] ?? uniqid();
       $completedDate = $this->completedDate();
 
       // Use shared helpers for customer and contact info
@@ -98,7 +98,7 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
             <ser:HandleSurveyOrderReqBody>
                 <com:CustomerCode>{$customerCode}</com:CustomerCode>
                 <com:SurveyType>{$surveyType}</com:SurveyType>
-                <com:TelecomRegion>{$telecomRegion}</com:TelecomRegion>
+                <com:TelecomRegion>{$resource['area_code']}</com:TelecomRegion>
                 <com:OperType>{$operType}</com:OperType>
                 <com:MainOfferId>{$mainOfferId}</com:MainOfferId>
 
@@ -155,7 +155,7 @@ XML;
       $parsed = simplexml_load_string($xml);
       $ns = $parsed->getNamespaces(true);
       $body = $parsed->children($ns['soapenv'])->Body;
-      $rsp  = $body->children($ns['ser'])->HandleSurveyOrderRspMsg ?? null;
+      $rsp = $body->children($ns['ser'])->HandleSurveyOrderRspMsg ?? null;
 
       if (!$rsp) {
          return ApiResponse::error('Invalid XML response');
@@ -163,11 +163,11 @@ XML;
 
       $hdr = $rsp->ResponseHeader->children($ns['com'] ?? []);
 
-      if ((string)($hdr->RetCode ?? '1') !== '0') {
-         return ApiResponse::error((string)($hdr->RetMsg ?? 'Unknown error'));
+      if ((string) ($hdr->RetCode ?? '1') !== '0') {
+         return ApiResponse::error((string) ($hdr->RetMsg ?? 'Unknown error'));
       }
 
-      $surveyOrderId = (string)$rsp->HandleSurveyOrderRespBody
+      $surveyOrderId = (string) $rsp->HandleSurveyOrderRespBody
          ->children($ns['com'])->CustomerSurveyOrderId;
 
       $this->persistSurvey($surveyOrderId, $data, $resource);

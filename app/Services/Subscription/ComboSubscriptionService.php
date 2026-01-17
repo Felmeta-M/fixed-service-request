@@ -4,10 +4,10 @@ namespace App\Services\Subscription;
 
 use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
+use App\Services\Logging\AppLogger;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Support\CustomerContext;
-use Illuminate\Support\Facades\Log;
 
 class ComboSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
@@ -38,11 +38,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
 
       $xml = $this->buildXml($payload);
 
-      Log::info('Huawei Combo Request', ['xml' => $xml]);
-
       $response = $this->executeRequest($xml);
-
-      Log::info('Huawei Combo Response', ['xml' => $response]);
 
       return $this->parseResponse($response, $payload);
    }
@@ -348,10 +344,9 @@ XML;
                   ]);
             }
          } catch (\Throwable $e) {
-            Log::error('Failed to update survey order after combo subscription', [
+            AppLogger::api()->exception($e, 'Failed to update survey order after combo subscription', [
                'customer_busi_order_id' => $res['customer_busi_order_id'],
                'survey_order_id' => $data['survey_order_id'] ?? null,
-               'error' => $e->getMessage(),
             ]);
             // Don't fail the entire request - subscription was successful
          }

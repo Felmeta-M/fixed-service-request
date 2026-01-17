@@ -1,4 +1,3 @@
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { usePage } from '@inertiajs/react';
@@ -58,6 +57,8 @@ interface ReviewSubmitStepProps {
             latitude: string;
             cable_type: string;
             cable_type_desc: string;
+            area_code: string;
+            area_name: string;
         };
     };
     onBack: () => void;
@@ -84,18 +85,43 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
     console.log('user:', user);
     console.log('formData in ReviewSubmitStep:', formData);
     const [submitting, setSubmitting] = useState(false);
-    const [error, setError] = useState('');
 
     const serviceInfo = serviceTypes[formData.serviceType as keyof typeof serviceTypes];
     const createSurveyMutation = useCreateSurvey();
 
     const handleSubmit = async () => {
         setSubmitting(true);
-        setError('');
 
-        // The backend expects encrypted resource fields (distance/cable_type/latitude/longitude)
-        // exactly as returned from `/api/v1/resource-check`.
+        // The backend expects ALL encrypted resource fields exactly as returned from `/api/v1/resource-check`.
+        // All fields are critical and required - no fallbacks allowed.
         const encryptedResource = formData.resourceData;
+
+        // Validate that all required encrypted fields are present
+        const requiredEncryptedFields = ['neid', 'distance', 'cable_type', 'latitude', 'longitude', 'area_code', 'area_name'];
+        const missingFields: string[] = [];
+
+        if (!encryptedResource) {
+            setSubmitting(false);
+            toast.error('Location information is required', {
+                description: 'Please go back and select your location again.',
+            });
+            return;
+        }
+
+        for (const field of requiredEncryptedFields) {
+            const fieldValue = (encryptedResource as any)[field];
+            if (!fieldValue || fieldValue === '') {
+                missingFields.push(field);
+            }
+        }
+
+        if (missingFields.length > 0) {
+            setSubmitting(false);
+            toast.error('Invalid location information', {
+                description: 'Please go back and select your location again to ensure all required information is available.',
+            });
+            return;
+        }
 
         const submitData = {
             customer_code: user.customer_code.toString(),
@@ -113,15 +139,19 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 subcity_zone: '11',
                 wereda_town: '141',
                 kebele: '',
-                // Use encrypted values from resource-check (required by BaseSurveyService::decrypt)
-                latitude: encryptedResource?.latitude ?? String(formData.latitude),
-                longitude: encryptedResource?.longitude ?? String(formData.longitude),
+                house_no: '', // Backend has fallback if not provided
                 address: formData.address || '',
-                // Forward exact encrypted resource-check data
-                distance: encryptedResource?.distance ?? formData.distance,
-                cable_type: encryptedResource?.cable_type ?? formData.cable_type,
-                neid: encryptedResource?.neid,
-                nename: encryptedResource?.nename,
+                // All fields are critical and must be encrypted from resource-check response
+                // No fallbacks - validation ensures all fields are present above
+                latitude: encryptedResource.latitude,
+                longitude: encryptedResource.longitude,
+                distance: encryptedResource.distance,
+                cable_type: encryptedResource.cable_type,
+                neid: encryptedResource.neid,
+                nename: encryptedResource.nename || '',
+                // Ensure area_code and area_name are always included (even if empty string)
+                area_code: (encryptedResource as any).area_code ?? '',
+                area_name: (encryptedResource as any).area_name ?? '',
             },
             with_device: formData.withDevice,
             device_id: formData.deviceId || null,
@@ -172,7 +202,6 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 console.error('Submission error:', err);
                 setSubmitting(false);
                 const errorMessage = err.message || 'Failed to create your service request. Please try again.';
-                setError(errorMessage);
                 toast.error(errorMessage, {
                     id: submissionToast,
                     duration: 5000,
@@ -348,11 +377,6 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
             {/*    </Card>*/}
             {/*)}*/}
 
-            {error && (
-                <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                </Alert>
-            )}
 
             {/* Submit Actions */}
             <div className="flex justify-between border-t pt-6">

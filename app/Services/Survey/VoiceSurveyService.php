@@ -57,6 +57,8 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
         $data['service_number'] = $this->serviceNumber;
 
 
+
+
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
 <soapenv:Body>
@@ -76,7 +78,7 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
 <ser:HandleSurveyOrderReqBody>
 <com:CustomerCode>{$customerCode}</com:CustomerCode>
 <com:SurveyType>{$data['survey_type']}</com:SurveyType>
-<com:TelecomRegion>{$data['telecom_region']}</com:TelecomRegion>
+<com:TelecomRegion>{$resource['area_code']}</com:TelecomRegion>
 <com:OperType>{$data['oper_type']}</com:OperType>
 <com:MainOfferId>{$this->mainOfferId()}</com:MainOfferId>
 <com:SurveyAddressInfo>
@@ -116,7 +118,7 @@ XML;
             if ($parsed === false) {
                 $errors = array_map(fn($e) => $e->message, libxml_get_errors());
                 libxml_clear_errors();
-                
+
                 // Cleanup: release service number if survey creation failed
                 if ($this->serviceNumber) {
                     try {
@@ -128,18 +130,18 @@ XML;
                         ]);
                     }
                 }
-                
+
                 Log::error('Failed to parse survey order XML response', [
                     'xml_preview' => substr($xml, 0, 500),
                     'errors' => $errors,
                 ]);
-                
+
                 return ApiResponse::error('Invalid response from survey service. Please try again.');
             }
 
             $ns = $parsed->getNamespaces(true);
             $body = $parsed->children($ns['soapenv'])->Body ?? null;
-            
+
             if (!$body) {
                 if ($this->serviceNumber) {
                     try {
@@ -152,9 +154,9 @@ XML;
                 }
                 return ApiResponse::error('Invalid response structure from survey service.');
             }
-            
+
             $rsp = $body->children($ns['ser'])->HandleSurveyOrderRspMsg ?? null;
-            
+
             if (!$rsp) {
                 if ($this->serviceNumber) {
                     try {
@@ -167,9 +169,9 @@ XML;
                 }
                 return ApiResponse::error('Invalid response message from survey service.');
             }
-            
+
             $hdr = $rsp->ResponseHeader->children($ns['com']) ?? null;
-            
+
             if (!$hdr) {
                 if ($this->serviceNumber) {
                     try {
@@ -199,7 +201,7 @@ XML;
                         ]);
                     }
                 }
-                
+
                 return ApiResponse::error($retMsg);
             }
 
@@ -217,7 +219,7 @@ XML;
                         ]);
                     }
                 }
-                
+
                 return ApiResponse::error('Survey order ID not found in response.');
             }
 
@@ -236,19 +238,19 @@ XML;
                         ]);
                     }
                 }
-                
+
                 Log::error('Failed to persist survey order', [
                     'survey_order_id' => $surveyOrderId,
                     'error' => $e->getMessage(),
                 ]);
-                
+
                 return ApiResponse::error('Failed to save survey order. Please try again.');
             }
 
             return ApiResponse::success([
                 'customer_survey_order_id' => $surveyOrderId
             ]);
-            
+
         } catch (\Throwable $e) {
             // Final cleanup: release service number on any unexpected error
             if ($this->serviceNumber) {
@@ -262,12 +264,12 @@ XML;
                     ]);
                 }
             }
-            
+
             Log::error('Unexpected error in survey order processing', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            
+
             return ApiResponse::error('An unexpected error occurred. Please try again.');
         }
     }

@@ -100,7 +100,6 @@ class QueryAvailableNumberService extends BaseApiService
     {
         $xmlPayload = $this->buildXml($data);
         $xmlResponse = $this->executeRequest($xmlPayload);
-        Log::info('XML Response', ['response' => $xmlResponse]);
 
         AppLogger::api()->debug('Query available numbers response received', [
             'dept_id' => $data['dept_id'] ?? 'unknown',

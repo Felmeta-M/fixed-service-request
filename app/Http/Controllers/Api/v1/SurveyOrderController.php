@@ -30,8 +30,7 @@ class SurveyOrderController extends Controller
         protected readonly QuerySurveyOrderService $querySurveyOrderService,
         protected readonly QuerySubscriptionOrderStatusService $querySubscriptionOrderStatusService,
         protected readonly ManualSurveyOrderService $manualSurveyOrderService
-    ) {
-    }
+    ) {}
 
     /**
      * Display a listing of the resource - optimized with Query Builder
@@ -105,87 +104,7 @@ class SurveyOrderController extends Controller
             }
 
             // Transform raw data to match SurveyOrderResource format
-            $transformedItems = collect($surveyOrders->items())->map(function ($item) {
-                // Convert survey order status to label
-                $surveyStatusValue = (int) ($item->status ?? 0);
-                $surveyStatusEnum = FFDServiceProvisionStatus::tryFrom($surveyStatusValue);
-                $surveyStatusLabel = $surveyStatusEnum ? $surveyStatusEnum->label() : FFDServiceProvisionStatus::Processing->label();
-
-                // Modify labels based on subscription order ID presence
-                if (empty($item->customer_subscription_order_id)) {
-                    // Manual surveys - no subscription order ID
-                    if ($surveyStatusEnum === FFDServiceProvisionStatus::Waiting) {
-                        $surveyStatusLabel = 'Waiting Survey';
-                    } elseif ($surveyStatusEnum === FFDServiceProvisionStatus::Completed) {
-                        $surveyStatusLabel = 'Survey Completed';
-                    }
-                } else {
-                    // Auto surveys - subscription order ID present
-                    if ($surveyStatusEnum === FFDServiceProvisionStatus::Waiting) {
-                        $surveyStatusLabel = 'Order Waiting';
-                    } elseif ($surveyStatusEnum === FFDServiceProvisionStatus::Completed) {
-                        $surveyStatusLabel = 'Order Completed';
-                    }
-                }
-
-                $surveyStatusValue = (int) ($item->status ?? 0);
-                $canPay = false;
-                $canSubscribe = false;
-                $canChangeOffer = false;
-                if ($surveyStatusValue == (string) FFDServiceProvisionStatus::Completed->value) {
-                    $canPay = ((float) $item->payment_amount ?? 0) > 0 && empty($item->payment_trans_id);
-                }
-
-                if ($surveyStatusValue == (string) FFDServiceProvisionStatus::Completed->value) {
-                    $canSubscribe = ((float) $item->payment_amount ?? 0) < 1 && empty($item->customer_subscription_order_id);
-                }
-
-                if ($surveyStatusValue == (string) FFDServiceProvisionStatus::Waiting->value) {
-                    $canSubscribe = ((float) $item->payment_amount ?? 0) > 0 && !empty($item->payment_trans_id);
-                }
-
-                if ($surveyStatusValue == (string) FFDServiceProvisionStatus::Completed->value) {
-                    $canChangeOffer = !empty($item->customer_subscription_order_id);
-                }
-
-                $isPaid = $item->payment_id ? (($item->payment_status == (string) FFDServiceProvisionStatus::Waiting->value) && !empty($item->payment_trans_id)) : false;
-
-                if ($surveyStatusValue == (string) FFDServiceProvisionStatus::Completed->value) {
-                    $canCancel = empty($item->customer_subscription_order_id);
-                } else if ($surveyStatusValue == (string) FFDServiceProvisionStatus::Waiting->value && empty($item->payment_trans_id)) {
-                    $canCancel = true;
-                }
-
-                return [
-                    // 'id' => (string) $item->id,
-                    'customer_survey_order_id' => $item->customer_survey_order_id,
-                    'customer_subscription_order_id' => $item->customer_subscription_order_id ?? null,
-                    'survey_type' => $item->survey_type ?? '',
-                    'customer_code' => $item->customer_code,
-                    'main_offer_id' => $item->main_offer_id,
-                    // 'main_offer_name' => $item->main_offer_name,
-                    'service_number' => $item->service_number,
-                    'with_device' => (bool) $item->with_device,
-                    'created_at' => $item->created_at,
-                    'updated_at' => $item->updated_at,
-                    'payment' => $item->payment_id ? [
-                        // 'id' => $item->payment_id,
-                        'total_amount' => $item->payment_amount,
-                    ] : null,
-
-                    'status' => $surveyStatusLabel,
-
-                    'is_paid' => $isPaid,
-
-                    'can_pay' => $canPay,
-
-                    'can_subscribe' => $canSubscribe,
-
-                    'can_change_offer' => $canChangeOffer,
-
-                    'can_cancel' => $canCancel,
-                ];
-            });
+            $transformedItems = collect($surveyOrders->items())->map(fn($item) => $this->transformOrder($item));
 
             return response()->json([
                 'data' => $transformedItems,
@@ -558,19 +477,16 @@ class SurveyOrderController extends Controller
         }
 
         return [
-            'id' => (string) $order->id,
             'customer_survey_order_id' => $order->customer_survey_order_id,
             'customer_subscription_order_id' => $order->customer_subscription_order_id ?? null,
             'survey_type' => $order->survey_type ?? '',
             'customer_code' => $order->customer_code,
             'main_offer_id' => $order->main_offer_id,
-            // 'main_offer_name' => $order->main_offer_name ?? null,
             'service_number' => $order->service_number ?? null,
             'with_device' => (bool) ($order->with_device ?? false),
             'created_at' => $order->created_at,
             'updated_at' => $order->updated_at,
             'payment' => $order->payment_id ? [
-                'id' => $order->payment_id,
                 'total_amount' => $order->payment_amount,
                 'merch_order_id' => $order->payment_merch_order_id ?? null,
             ] : null,
@@ -578,11 +494,22 @@ class SurveyOrderController extends Controller
 
             'is_paid' => $order->payment_id ? (($order->payment_status == FFDServiceProvisionStatus::Waiting->value) && !empty($order->payment_trans_id)) : false,
 
-            'can_pay' => ($surveyStatusValue == (string) FFDServiceProvisionStatus::Completed->value) && ((float) $order->payment_amount ?? 0) > 0 && empty($order->customer_subscription_order_id),
+            'can_pay' => ($surveyStatusValue == FFDServiceProvisionStatus::Completed->value)
+                && ((float) ($order->payment_amount ?? 0)) > 0
+                && empty($order->payment_trans_id),
 
-            'can_subscribe' => ($surveyStatusValue == (string) FFDServiceProvisionStatus::Waiting->value) && ((float) $order->payment_amount ?? 0) > 0 && !empty($order->payment_trans_id),
+            'can_subscribe' => (
+                ($surveyStatusValue == FFDServiceProvisionStatus::Completed->value && ((float) ($order->payment_amount ?? 0)) < 1 && empty($order->customer_subscription_order_id))
+                || ($surveyStatusValue == FFDServiceProvisionStatus::Waiting->value && ((float) ($order->payment_amount ?? 0)) > 0 && !empty($order->payment_trans_id))
+            ),
 
-            'can_cancel' => empty($order->customer_subscription_order_id),
+            'can_change_offer' => ($surveyStatusValue == FFDServiceProvisionStatus::Completed->value)
+                && !empty($order->customer_subscription_order_id),
+
+            'can_cancel' => (
+                ($surveyStatusValue == FFDServiceProvisionStatus::Completed->value && empty($order->customer_subscription_order_id))
+                || ($surveyStatusValue == FFDServiceProvisionStatus::Waiting->value && empty($order->payment_trans_id))
+            ),
         ];
     }
 

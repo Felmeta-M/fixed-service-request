@@ -106,6 +106,14 @@ class SurveyOrderController extends Controller
 
             // Transform raw data to match SurveyOrderResource format
             $transformedItems = collect($surveyOrders->items())->map(function ($item) {
+                // Convert payment status to label
+                $paymentStatusLabel = null;
+                if ($item->payment_id && ($item->payment_status !== null)) {
+                    $statusValue = (int) $item->payment_status;
+                    $statusEnum = FFDServiceProvisionStatus::tryFrom($statusValue);
+                    $paymentStatusLabel = $statusEnum ? $statusEnum->label() : 'Unknown';
+                }
+
                 return [
                     'id' => (string) $item->id,
                     'customer_survey_order_id' => $item->customer_survey_order_id,
@@ -122,11 +130,7 @@ class SurveyOrderController extends Controller
                         'id' => $item->payment_id,
                         'total_amount' => $item->payment_amount,
                     ] : null,
-                    'status' => $item->payment_id ? (
-                        is_int($item->payment_status) || is_string($item->payment_status)
-                        ? (FFDServiceProvisionStatus::tryFrom((int) $item->payment_status)?->label() ?? (string) $item->payment_status)
-                        : (string) $item->payment_status
-                    ) : null,
+                    'status' => $paymentStatusLabel,
                     'is_paid' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Paid->value) && !empty($item->payment_trans_id)) : false,
                     'can_pay' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Completed->value) || empty($item->customer_subscription_order_id)) : false,
                     'can_subscribe' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Waiting->value) || empty($item->customer_subscription_order_id)) : false,
@@ -473,6 +477,14 @@ class SurveyOrderController extends Controller
      */
     protected function transformOrder($order): array
     {
+        // Convert payment status to label
+        $paymentStatusLabel = null;
+        if (isset($order->payment_id) && ($order->payment_status !== null)) {
+            $statusValue = (int) $order->payment_status;
+            $statusEnum = FFDServiceProvisionStatus::tryFrom($statusValue);
+            $paymentStatusLabel = $statusEnum ? $statusEnum->label() : 'Unknown';
+        }
+
         return [
             'id' => (string) $order->id,
             'customer_survey_order_id' => $order->customer_survey_order_id,
@@ -491,11 +503,7 @@ class SurveyOrderController extends Controller
                 'merch_order_id' => $order->payment_merch_order_id ?? null,
             ] : null,
             // Status at root level (payment status label)
-            'status' => isset($order->payment_id) ? (
-                is_int($order->payment_status) || is_string($order->payment_status)
-                ? (FFDServiceProvisionStatus::tryFrom((int) $order->payment_status)?->label() ?? (string) $order->payment_status)
-                : (string) $order->payment_status
-            ) : null,
+            'status' => $paymentStatusLabel,
             'is_paid' => isset($order->payment_id) ? (($order->payment_status == FFDServiceProvisionStatus::Paid->value) && !empty($order->payment_trans_id)) : false,
             'can_pay' => isset($order->payment_id) ? (($order->payment_status == FFDServiceProvisionStatus::Completed->value) || empty($order->customer_subscription_order_id)) : false,
             'can_subscribe' => isset($order->payment_id) ? (($order->payment_status == FFDServiceProvisionStatus::Waiting->value) || empty($order->customer_subscription_order_id)) : false,

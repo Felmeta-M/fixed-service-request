@@ -154,7 +154,7 @@ export default function SurveyDetailPage({ survey, onBack, showBackButton = true
         const statusStr = String(status ?? '');
         
         // Completed/Success states
-        if (['Completed', 'Paid', 'Ready'].includes(statusStr)) {
+        if (['Survey Completed', 'Order Completed', 'Paid', 'Ready'].includes(statusStr)) {
             return (
                 <span className="flex items-center">
                     <CheckCircle className="h-4 w-4 text-primary" />
@@ -163,7 +163,7 @@ export default function SurveyDetailPage({ survey, onBack, showBackButton = true
         }
 
         // In-progress/Waiting states
-        if (['Processing', 'Waiting', 'Created'].includes(statusStr)) {
+        if (['Processing', 'Waiting', 'Waiting Survey', 'Created', 'Pending Payment'].includes(statusStr)) {
             return (
                 <span className="flex items-center">
                     <Clock className="h-4 w-4 text-orange-500" />

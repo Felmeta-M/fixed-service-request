@@ -138,7 +138,7 @@ class PaymentService
                     'customer_survey_order_id',
                     $payment->customer_survey_order_id
                 )->update([
-                            'status' => FFDServiceProvisionStatus::Paid->value,
+                            'status' => FFDServiceProvisionStatus::Waiting->value,
                         ]);
             } else {
                 $payment->update([

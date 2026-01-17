@@ -198,11 +198,6 @@ class HttpClientLogger
      */
     protected static function extractResponseInfo($response, int $statusCode): ?array
     {
-        // Don't log response body for successful requests (too verbose)
-        if ($statusCode < 400) {
-            return null;
-        }
-
         $body = (string) $response->getBody();
 
         if (empty($body)) {
@@ -213,12 +208,19 @@ class HttpClientLogger
         $decoded = json_decode($body, true);
 
         if (json_last_error() === JSON_ERROR_NONE) {
+            // For successful requests, return full decoded response (but mask sensitive data)
+            // For error requests, limit array size to first 20 items to avoid verbosity
+            if ($statusCode < 400) {
+                return self::maskSensitiveData($decoded);
+            }
             return self::maskSensitiveData(
                 is_array($decoded) ? array_slice($decoded, 0, 20) : $decoded
             );
         }
 
-        return ['_raw' => Str::limit($body, 1000)];
+        // For XML or other text responses, limit size based on status
+        $limit = $statusCode < 400 ? 5000 : 1000;
+        return ['_raw' => Str::limit($body, $limit)];
     }
 
     /**

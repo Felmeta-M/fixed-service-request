@@ -70,4 +70,10 @@ enum FFDServiceProvisionStatus: int
     {
         return self::tryFrom($value) ?? throw new \InvalidArgumentException("Invalid status value: $value");
     }
+
+    public static function fromLabel(string $label): self
+    {
+        return self::fromValue(array_search($label, self::options()));
+    }
+
 }

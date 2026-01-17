@@ -122,9 +122,9 @@ class SurveyOrderController extends Controller
                 } else {
                     // Auto surveys - subscription order ID present
                     if ($surveyStatusEnum === FFDServiceProvisionStatus::Waiting) {
-                        $surveyStatusLabel = 'Subscription Waiting';
+                        $surveyStatusLabel = 'Order Waiting';
                     } elseif ($surveyStatusEnum === FFDServiceProvisionStatus::Completed) {
-                        $surveyStatusLabel = 'Subscription Completed';
+                        $surveyStatusLabel = 'Order Completed';
                     }
                 }
 
@@ -145,10 +145,10 @@ class SurveyOrderController extends Controller
                         'total_amount' => $item->payment_amount,
                     ] : null,
                     'status' => $surveyStatusLabel,
-                    'is_paid' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Paid->value) && !empty($item->payment_trans_id)) : false,
+                    'is_paid' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Waiting->value) && !empty($item->payment_trans_id)) : false,
                     'can_pay' => ($surveyStatusValue == FFDServiceProvisionStatus::Completed->value) || empty($item->customer_subscription_order_id),
                     'can_subscribe' => ($surveyStatusValue == FFDServiceProvisionStatus::Waiting->value) || empty($item->customer_subscription_order_id),
-                    'can_cancel' => !empty($item->customer_subscription_order_id),
+                    'can_cancel' => empty($item->customer_subscription_order_id),
                 ];
             });
 
@@ -198,10 +198,11 @@ class SurveyOrderController extends Controller
                     // Auto survey: Use subscription order status service with customer_subscription_order_id
                     $subscriptionResponse = $this->querySubscriptionOrderStatusService
                         ->queryStatus($order->customer_subscription_order_id);
-
-                    if (!empty($subscriptionResponse['success']) && isset($subscriptionResponse['status'])) {
-                        // Map subscription order status to survey order status
-                        $newStatus = $this->mapSubscriptionStatusToSurveyStatus($subscriptionResponse['status']);
+                    Log::info('subscriptionResponse', [$subscriptionResponse]);
+                    if (!empty($subscriptionResponse['success']) && isset($subscriptionResponse['status']) && $subscriptionResponse['status'] > 0) {
+                        // Map subscription order status to survey order status (vendor status codes 1-8)
+                        // Convert to integer to match database storage
+                        $newStatus = (int) $subscriptionResponse['status'];
                         $response = [
                             'success' => true,
                             'status' => $newStatus,
@@ -211,8 +212,26 @@ class SurveyOrderController extends Controller
                     }
                 } else {
                     // Manual survey: Use survey order service with customer_survey_order_id
-                    $response = $this->querySurveyOrderService
+                    $surveyResponse = $this->querySurveyOrderService
                         ->querySurveyOrderDetail($order->customer_survey_order_id);
+
+                    // Extract data from JsonResponse if needed
+                    $responseData = $surveyResponse instanceof \Illuminate\Http\JsonResponse
+                        ? $surveyResponse->getData(true)
+                        : $surveyResponse;
+
+                    // Handle nested structure: ApiResponse::success() wraps data in 'data' key
+                    if (!empty($responseData['success']) && isset($responseData['data']['status'])) {
+                        $response = [
+                            'success' => true,
+                            'status' => $responseData['data']['status'],
+                        ];
+                    } elseif (!empty($responseData['success']) && isset($responseData['status'])) {
+                        // Already in correct format (direct array response)
+                        $response = $responseData;
+                    } else {
+                        $response = null;
+                    }
                 }
 
                 if (empty($response['success']) || empty($response['status'])) {
@@ -234,6 +253,8 @@ class SurveyOrderController extends Controller
                     'survey_is_manual' => $order->survey_is_manual ?? null,
                     'error' => $e->getMessage(),
                 ]);
+                // Still update last_checked_at even if there was an error
+                $timestampUpdates[] = $order->id;
             }
         }
 
@@ -272,25 +293,13 @@ class SurveyOrderController extends Controller
             );
         }
 
-        // Batch update timestamps
+        // Batch update timestamps - ensure unique IDs
         if (!empty($timestampUpdates)) {
+            $uniqueIds = array_unique($timestampUpdates);
             DB::table('survey_orders')
-                ->whereIn('id', $timestampUpdates)
+                ->whereIn('id', $uniqueIds)
                 ->update(['last_checked_at' => now()]);
         }
-    }
-
-    /**
-     * Use vendor subscription order status code directly (1-8)
-     * Vendor status codes: 1=Created, 2=Ready, 3=Suspended, 4=Processing, 5=Cancelled, 6=Waiting, 7=Failed, 8=Completed
-     * 
-     * @param int $vendorStatusCode Vendor-specific BSS subscription order status code (1-8)
-     * @return string Vendor status code as string for survey_orders table
-     */
-    protected function mapSubscriptionStatusToSurveyStatus(int $vendorStatusCode): string
-    {
-        // Use vendor status code directly (no mapping)
-        return (string) $vendorStatusCode;
     }
 
     /**

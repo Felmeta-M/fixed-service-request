@@ -19,7 +19,7 @@ use RuntimeException;
 abstract class BaseSurveyService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 30;
 
     protected ?string $serviceNumber = null;
 

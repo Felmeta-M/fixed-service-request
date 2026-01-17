@@ -345,19 +345,23 @@
 //     );
 // }
 
-import { Badge } from '@/components/ui/badge';
+import { CoverageAreaMap } from '@/components/service/coverage-area-map';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from '@/hooks/use-translation';
 import GuestLayout from '@/layouts/GuestLayout';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { ArrowRight, CheckCircle, ChevronDown, MapPin, Package, Phone, Star, Users, Wifi } from 'lucide-react';
+import { ArrowRight, CheckCircle, MapPin, Package, Phone, Users, Wifi } from 'lucide-react';
 import { useRef } from 'react';
 import fixedHeroImage from '../images/fixed-hero.png';
 import telebirrLogo from '../images/telebirr-logo-1.png';
 
-export default function HomePage() {
+interface HomePageProps {
+    googleMapsApiKey: string;
+}
+
+export default function HomePage({ googleMapsApiKey }: HomePageProps) {
     const { auth } = usePage<SharedData>().props;
     const demoRef = useRef<HTMLDivElement>(null);
     const { t } = useTranslation();
@@ -566,6 +570,45 @@ export default function HomePage() {
                                     </CardContent>
                                 </Card>
                             ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Coverage Area Section */}
+                <section id="coverage" className="bg-gradient-to-b from-gray-50 to-white px-4 py-20 sm:px-6 lg:px-8">
+                    <div className="mx-auto max-w-screen-xl">
+                        <div className="mb-12 text-center">
+                            <h3 className="mb-4 px-4 py-1 font-semibold text-primary">Coverage Area</h3>
+                            <h2 className="mb-4 text-4xl font-bold text-gray-900">Check Our Service Coverage</h2>
+                            <p className="mx-auto max-w-2xl text-lg text-gray-600">
+                                Explore our coverage area to see if your location is within our service zone. 
+                                The highlighted areas show where our fixed line services are available.
+                            </p>
+                        </div>
+
+                        {/* Coverage Map */}
+                        <div className="mx-auto max-w-5xl">
+                            <CoverageAreaMap 
+                                googleMapsApiKey={googleMapsApiKey} 
+                                height="500px"
+                            />
+                        </div>
+
+                        {/* CTA below map */}
+                        <div className="mt-10 text-center">
+                            <p className="mb-6 text-gray-600">
+                                Ready to get connected? Start your service request now.
+                            </p>
+                            <Link href={auth?.user ? route('services') : route('otp.phone')}>
+                                <Button
+                                    size="lg"
+                                    className="bg-primary px-8 py-6 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:opacity-90 hover:shadow-xl"
+                                >
+                                    <MapPin className="mr-2 h-5 w-5" />
+                                    Check Your Location
+                                    <ArrowRight className="ml-2 h-5 w-5" />
+                                </Button>
+                            </Link>
                         </div>
                     </div>
                 </section>

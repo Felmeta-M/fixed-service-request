@@ -85,7 +85,7 @@ class SurveyOrderController extends Controller
             // Collect orders that need refresh (WAITING status, not checked in last 5 minutes)
             $ordersToRefresh = collect($surveyOrders->items())
                 ->filter(function ($order) {
-                    if ((int) $order->status !== FFDServiceProvisionStatus::Waiting->value) {
+                    if ($order->status !== (string) FFDServiceProvisionStatus::Waiting->value) {
                         return false;
                     }
 
@@ -129,7 +129,7 @@ class SurveyOrderController extends Controller
                 }
 
                 return [
-                    'id' => (string) $item->id,
+                    // 'id' => (string) $item->id,
                     'customer_survey_order_id' => $item->customer_survey_order_id,
                     'customer_subscription_order_id' => $item->customer_subscription_order_id ?? null,
                     'survey_type' => $item->survey_type ?? '',
@@ -141,13 +141,17 @@ class SurveyOrderController extends Controller
                     'created_at' => $item->created_at,
                     'updated_at' => $item->updated_at,
                     'payment' => $item->payment_id ? [
-                        'id' => $item->payment_id,
+                        // 'id' => $item->payment_id,
                         'total_amount' => $item->payment_amount,
                     ] : null,
                     'status' => $surveyStatusLabel,
+
                     'is_paid' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Waiting->value) && !empty($item->payment_trans_id)) : false,
-                    'can_pay' => ($surveyStatusValue == FFDServiceProvisionStatus::Completed->value) || empty($item->customer_subscription_order_id),
-                    'can_subscribe' => ($surveyStatusValue == FFDServiceProvisionStatus::Waiting->value) || empty($item->customer_subscription_order_id),
+
+                    'can_pay' => ($surveyStatusValue == (string) FFDServiceProvisionStatus::Completed->value) && !empty($item->payment_amount) && empty($item->customer_subscription_order_id),
+
+                    'can_subscribe' => ($surveyStatusValue == (string) FFDServiceProvisionStatus::Waiting->value) && !empty($item->payment_trans_id),
+
                     'can_cancel' => empty($item->customer_subscription_order_id),
                 ];
             });
@@ -543,7 +547,7 @@ class SurveyOrderController extends Controller
             'status' => $surveyStatusLabel,
             'is_paid' => isset($order->payment_id) ? (($order->payment_status == FFDServiceProvisionStatus::Paid->value) && !empty($order->payment_trans_id)) : false,
             'can_pay' => ($surveyStatusValue == FFDServiceProvisionStatus::Completed->value) || empty($order->customer_subscription_order_id),
-            'can_subscribe' => ($surveyStatusValue == FFDServiceProvisionStatus::Waiting->value) || empty($order->customer_subscription_order_id),
+            'can_subscribe' => ($surveyStatusValue == FFDServiceProvisionStatus::Waiting->value) || !empty($order->payment_trans_id),
             'can_cancel' => !empty($order->customer_subscription_order_id),
         ];
     }

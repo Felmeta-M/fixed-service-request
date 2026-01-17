@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Enums\FFDServiceProvisionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Models\SurveyOrder;
 use App\Services\CreateOrderService;
 use App\Services\Payment\PaymentService;
 use App\Services\RsaSignatureService;
@@ -27,6 +29,25 @@ class TelebirrController extends Controller
             $validated = $request->validate([
                 'customerSurveyOrderId' => 'required|exists:survey_orders,customer_survey_order_id',
             ]);
+
+            // Validate survey status and subscription order ID
+            $surveyOrder = SurveyOrder::where('customer_survey_order_id', $validated['customerSurveyOrderId'])
+                ->firstOrFail();
+
+            // Fence: Only allow payment for completed surveys without subscription order ID
+            if ($surveyOrder->status !== (string) FFDServiceProvisionStatus::Completed->value) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment is only available for completed survey orders.',
+                ], 422);
+            }
+
+            if ($surveyOrder->customer_subscription_order_id !== null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment is not available for orders that already have a subscription.',
+                ], 422);
+            }
 
             $rawRequest = $this->createOrderService->createOrder($validated);
 

@@ -472,6 +472,7 @@ export function LocationSetupStep({
                         googleMapsApiKey={googleMapsApiKey}
                         isAnimating={isMapAnimating}
                         onAnimationStateChange={setIsMapAnimating}
+                        showCoverageArea={true}
                     />
                 </div>
 

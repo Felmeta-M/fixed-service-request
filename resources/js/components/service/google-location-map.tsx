@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { formatCoordinate } from '@/lib/coordinate-utils';
 import { GoogleMap, LoadScript } from '@react-google-maps/api';
-import { Loader2, MapPin } from 'lucide-react';
+import { Layers, Loader2, MapPin } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { AutocompleteSearch } from './map-search';
@@ -14,6 +14,7 @@ interface GoogleLocationMapProps {
     googleMapsApiKey: string;
     isAnimating?: boolean;
     onAnimationStateChange?: (isAnimating: boolean) => void;
+    showCoverageArea?: boolean;
 }
 
 const mapContainerStyle = {
@@ -42,16 +43,20 @@ export function GoogleLocationMap({
     googleMapsApiKey,
     isAnimating,
     onAnimationStateChange,
+    showCoverageArea = true,
 }: GoogleLocationMapProps) {
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isGeocoding, setIsGeocoding] = useState(false);
     const [internalAnimating, setInternalAnimating] = useState(false);
     const [isGettingLocation, setIsGettingLocation] = useState(false);
+    const [isCoverageVisible, setIsCoverageVisible] = useState(showCoverageArea);
+    const [isCoverageLoaded, setIsCoverageLoaded] = useState(false);
     const markerRef = useRef<google.maps.Marker | null>(null);
     const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
     const animationRef = useRef<number | null>(null);
     const hasInitialized = useRef(false);
+    const coverageDataRef = useRef<google.maps.Data.Feature[]>([]);
 
     // Sync animation state with parent
     useEffect(() => {
@@ -59,6 +64,64 @@ export function GoogleLocationMap({
             onAnimationStateChange(internalAnimating);
         }
     }, [internalAnimating, onAnimationStateChange]);
+
+    // Get primary color from CSS variable
+    const getPrimaryColor = useCallback(() => {
+        const rootStyles = getComputedStyle(document.documentElement);
+        const primaryColor = rootStyles.getPropertyValue('--primary').trim();
+        // Convert OKLCH to a usable color - fallback to brand lime-green
+        // The primary color oklch(0.761 0.1736 129.58) ≈ #84cc16
+        return primaryColor ? '#84cc16' : '#84cc16';
+    }, []);
+
+    // Load coverage area GeoJSON
+    const loadCoverageArea = useCallback(
+        (map: google.maps.Map) => {
+            if (isCoverageLoaded) return;
+
+            const primaryColor = getPrimaryColor();
+
+            // Load the GeoJSON file
+            map.data.loadGeoJson('/data/coverage_area.geojson', undefined, (features) => {
+                coverageDataRef.current = features;
+                setIsCoverageLoaded(true);
+
+                // Apply styling to coverage polygons using primary brand color
+                map.data.setStyle({
+                    fillColor: primaryColor,
+                    fillOpacity: 0.1,
+                    strokeColor: primaryColor,
+                    strokeWeight: 1.5,
+                    clickable: false,
+                });
+
+                // Set initial visibility based on prop
+                if (!isCoverageVisible) {
+                    map.data.setStyle({ visible: false });
+                }
+            });
+        },
+        [isCoverageLoaded, isCoverageVisible, getPrimaryColor],
+    );
+
+    // Toggle coverage area visibility
+    const toggleCoverageVisibility = useCallback(() => {
+        if (!map) return;
+
+        const newVisibility = !isCoverageVisible;
+        setIsCoverageVisible(newVisibility);
+
+        const primaryColor = getPrimaryColor();
+
+        map.data.setStyle({
+            fillColor: primaryColor,
+            fillOpacity: 0.15,
+            strokeColor: primaryColor,
+            strokeWeight: 1.5,
+            clickable: false,
+            visible: newVisibility,
+        });
+    }, [map, isCoverageVisible, getPrimaryColor]);
 
     // Initialize map
     const onLoad = useCallback(
@@ -75,8 +138,13 @@ export function GoogleLocationMap({
                 map.setCenter({ lat: selectedLocation.lat, lng: selectedLocation.lng });
                 map.setZoom(16);
             }
+
+            // Load coverage area if enabled
+            if (showCoverageArea) {
+                loadCoverageArea(map);
+            }
         },
-        [selectedLocation],
+        [selectedLocation, showCoverageArea, loadCoverageArea],
     );
 
     const onUnmount = useCallback(() => {
@@ -92,9 +160,19 @@ export function GoogleLocationMap({
         if (infoWindowRef.current) {
             infoWindowRef.current.close();
         }
+
+        // Clean up coverage area data
+        if (map && coverageDataRef.current.length > 0) {
+            coverageDataRef.current.forEach((feature) => {
+                map.data.remove(feature);
+            });
+            coverageDataRef.current = [];
+        }
+
         setMap(null);
         hasInitialized.current = false;
-    }, []);
+        setIsCoverageLoaded(false);
+    }, [map]);
 
     // Smooth pan to location with animation
     const smoothPanTo = useCallback(
@@ -448,6 +526,22 @@ export function GoogleLocationMap({
                         </>
                     )}
                 </Button>
+                {showCoverageArea && (
+                    <Button
+                        type="button"
+                        onClick={toggleCoverageVisibility}
+                        disabled={!map || !isCoverageLoaded}
+                        size="sm"
+                        variant={isCoverageVisible ? 'default' : 'outline'}
+                        className="h-9 shrink-0"
+                        title={isCoverageVisible ? 'Hide coverage area' : 'Show coverage area'}
+                    >
+                        <Layers className="h-4 w-4" />
+                        <span className="hidden sm:inline">
+                            {isCoverageVisible ? 'Hide Coverage' : 'Show Coverage'}
+                        </span>
+                    </Button>
+                )}
             </div>
 
             {/* Status Indicators */}

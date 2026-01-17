@@ -29,6 +29,7 @@
     "nav.profile": "Profile",
     "nav.settings": "Settings",
     "nav.login_to_account": "Login to Account",
+    "nav.coverage": "Coverage",
     "locale.en": "English",
     "locale.am": "አማርኛ",
     "locale.om": "Afaan Oromoo",
@@ -136,5 +137,18 @@
     "status.active": "Active",
     "service_type.broadband": "Broadband",
     "service_type.voice": "Voice",
-    "service_type.combo": "Combo"
+    "service_type.combo": "Combo",
+    "home.coverage.title": "Coverage Area",
+    "home.coverage.heading": "Check Our Service Coverage",
+    "home.coverage.subtitle": "Explore our coverage area to see if your location is within our service zone. The highlighted areas show where our fixed line services are available.",
+    "home.coverage.cta_text": "Ready to get connected? Start your service request now.",
+    "home.coverage.cta_button": "Check Your Location",
+    "coverage_map.badge": "Service Coverage Area",
+    "coverage_map.badge_short": "Coverage",
+    "coverage_map.view_full": "View Full Coverage",
+    "coverage_map.loading_map": "Loading map...",
+    "coverage_map.loading_coverage": "Loading coverage area...",
+    "coverage_map.initializing": "Initializing map...",
+    "coverage_map.load_failed": "Failed to load coverage area",
+    "coverage_map.retry": "Retry"
 }

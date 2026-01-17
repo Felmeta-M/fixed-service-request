@@ -528,7 +528,7 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
         </div> */}
 
                 {/* Services Section */}
-                <section id="services" className="bg-white px-4 py-20 sm:px-6 lg:px-8">
+                <section id="services" className="scroll-mt-20 bg-white px-4 py-20 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-screen-2xl">
                         <div className="mb-16 text-center">
                             <h3 className='"mb-4 pb-4 px-4 py-1 text-primary font-semibold'>{t('home.services.title')}</h3>
@@ -575,14 +575,13 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
                 </section>
 
                 {/* Coverage Area Section */}
-                <section id="coverage" className="bg-gradient-to-b from-gray-50 to-white px-4 py-20 sm:px-6 lg:px-8">
+                <section id="coverage" className="scroll-mt-20 bg-gradient-to-b from-gray-50 to-white px-4 py-20 sm:px-6 lg:px-8">
                     <div className="mx-auto max-w-screen-xl">
                         <div className="mb-12 text-center">
-                            <h3 className="mb-4 px-4 py-1 font-semibold text-primary">Coverage Area</h3>
-                            <h2 className="mb-4 text-4xl font-bold text-gray-900">Check Our Service Coverage</h2>
+                            <h3 className="mb-4 px-4 py-1 font-semibold text-primary">{t('home.coverage.title')}</h3>
+                            <h2 className="mb-4 text-4xl font-bold text-gray-900">{t('home.coverage.heading')}</h2>
                             <p className="mx-auto max-w-2xl text-lg text-gray-600">
-                                Explore our coverage area to see if your location is within our service zone. 
-                                The highlighted areas show where our fixed line services are available.
+                                {t('home.coverage.subtitle')}
                             </p>
                         </div>
 
@@ -597,7 +596,7 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
                         {/* CTA below map */}
                         <div className="mt-10 text-center">
                             <p className="mb-6 text-gray-600">
-                                Ready to get connected? Start your service request now.
+                                {t('home.coverage.cta_text')}
                             </p>
                             <Link href={auth?.user ? route('services') : route('otp.phone')}>
                                 <Button
@@ -605,7 +604,7 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
                                     className="bg-primary px-8 py-6 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:opacity-90 hover:shadow-xl"
                                 >
                                     <MapPin className="mr-2 h-5 w-5" />
-                                    Check Your Location
+                                    {t('home.coverage.cta_button')}
                                     <ArrowRight className="ml-2 h-5 w-5" />
                                 </Button>
                             </Link>

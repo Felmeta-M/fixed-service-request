@@ -29,6 +29,7 @@
     "nav.profile": "ፕሮፋይል",
     "nav.settings": "ቅጥዕታት",
     "nav.login_to_account": "ናብ ኣካውንት እቶ",
+    "nav.coverage": "ሽፋን",
     "locale.en": "English",
     "locale.am": "አማርኛ",
     "locale.om": "Afaan Oromoo",
@@ -136,5 +137,18 @@
     "status.active": "ንጡፍ",
     "service_type.broadband": "ብሮድባንድ",
     "service_type.voice": "ድምጺ",
-    "service_type.combo": "ኮምቦ"
+    "service_type.combo": "ኮምቦ",
+    "home.coverage.title": "ከባቢ ሽፋን",
+    "home.coverage.heading": "ናይ ኣገልግሎት ሽፋንና ርኣዩ",
+    "home.coverage.subtitle": "ቦታኹም ኣብ ውሽጢ ዞን ኣገልግሎትና ምዃኑ ንምርኣይ ናይ ሽፋን ከባቢና ድለዩ። እቲ ዝበርሀ ከባቢታት ናይ ቋሚ መስመር ኣገልግሎታትና ዝርከበሉ ቦታ የርኢ።",
+    "home.coverage.cta_text": "ክትራኸቡ ድሉዋት ዲኹም? ናይ ኣገልግሎት ጠለብኩም ሕጂ ጀምሩ።",
+    "home.coverage.cta_button": "ቦታኹም ኣረጋግጹ",
+    "coverage_map.badge": "ናይ ኣገልግሎት ሽፋን ከባቢ",
+    "coverage_map.badge_short": "ሽፋን",
+    "coverage_map.view_full": "ምሉእ ሽፋን ርኣዩ",
+    "coverage_map.loading_map": "ካርታ ይጸዓን ኣሎ...",
+    "coverage_map.loading_coverage": "ናይ ሽፋን ከባቢ ይጸዓን ኣሎ...",
+    "coverage_map.initializing": "ካርታ ይዳሎ ኣሎ...",
+    "coverage_map.load_failed": "ናይ ሽፋን ከባቢ ምጽዓን ኣይተኻእለን",
+    "coverage_map.retry": "ደጊምካ ፈትን"
 }

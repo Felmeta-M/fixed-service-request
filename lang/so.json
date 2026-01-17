@@ -29,6 +29,7 @@
     "nav.profile": "Astaan",
     "nav.settings": "Dejinta",
     "nav.login_to_account": "Gal Xisaabtaada",
+    "nav.coverage": "Daboolid",
     "locale.en": "English",
     "locale.am": "አማርኛ",
     "locale.om": "Afaan Oromoo",
@@ -136,5 +137,18 @@
     "status.active": "Firfircoon",
     "service_type.broadband": "Broadband",
     "service_type.voice": "Codka",
-    "service_type.combo": "Isku-dhafan"
+    "service_type.combo": "Isku-dhafan",
+    "home.coverage.title": "Aagga Daboolida",
+    "home.coverage.heading": "Eeg Dabooliddayada Adeegga",
+    "home.coverage.subtitle": "Baaritaan aagga dabooliddayada si aad u aragto in goobtuadu ay ku jirto aagga adeegayaga. Meelaha iftiimsan waxay muujinayaan halka adeegyadeena khadka joogtada ah laga heli karo.",
+    "home.coverage.cta_text": "Ma diyaar baad u tahay inaad isku xidho? Hadda bilow codsiga adeegaaga.",
+    "home.coverage.cta_button": "Hubi Goobta",
+    "coverage_map.badge": "Aagga Daboolida Adeegga",
+    "coverage_map.badge_short": "Daboolid",
+    "coverage_map.view_full": "Arag Daboolida Oo Dhan",
+    "coverage_map.loading_map": "Khariidadda waa la soo rareyaa...",
+    "coverage_map.loading_coverage": "Aagga daboolida waa la soo rareyaa...",
+    "coverage_map.initializing": "Khariidadda waa la diyaarinayaa...",
+    "coverage_map.load_failed": "Ma suurtogelin in la soo raro aagga daboolida",
+    "coverage_map.retry": "Mar kale isku day"
 }

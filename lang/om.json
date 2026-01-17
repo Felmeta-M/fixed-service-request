@@ -29,6 +29,7 @@
     "nav.profile": "Profaayilii",
     "nav.settings": "Qindaa'ina",
     "nav.login_to_account": "Gara Herrega Seeni",
+    "nav.coverage": "Uwwisa",
     "locale.en": "English",
     "locale.am": "አማርኛ",
     "locale.om": "Afaan Oromoo",
@@ -136,5 +137,18 @@
     "status.active": "Hojii irra jira",
     "service_type.broadband": "Broadband",
     "service_type.voice": "Sagalee",
-    "service_type.combo": "Walitti Makamee"
+    "service_type.combo": "Walitti Makamee",
+    "home.coverage.title": "Naannoo Uwwisaa",
+    "home.coverage.heading": "Uwwisa Tajaajila Keenyaa Ilaalaa",
+    "home.coverage.subtitle": "Bakki keessan zoonii tajaajila keenyaa keessa ta'uu isaa ilaaluuf naannoo uwwisaa keenyaa sakatta'aa. Naannoowwan ifaan mul'atan bakka tajaajilli sarara dhaabbataa keenyaa argamu agarsiisu.",
+    "home.coverage.cta_text": "Walqunnamuuf qophii dha? Gaaffii tajaajila keessanii amma jalqabaa.",
+    "home.coverage.cta_button": "Bakka Keessan Ilaalaa",
+    "coverage_map.badge": "Naannoo Uwwisa Tajaajilaa",
+    "coverage_map.badge_short": "Uwwisa",
+    "coverage_map.view_full": "Uwwisa Guutuu Ilaalaa",
+    "coverage_map.loading_map": "Kaartaa fe'aa jira...",
+    "coverage_map.loading_coverage": "Naannoo uwwisaa fe'aa jira...",
+    "coverage_map.initializing": "Kaartaa jalqabsiisaa jira...",
+    "coverage_map.load_failed": "Naannoo uwwisaa fe'uun hin danda'amne",
+    "coverage_map.retry": "Irra deebi'i yaali"
 }

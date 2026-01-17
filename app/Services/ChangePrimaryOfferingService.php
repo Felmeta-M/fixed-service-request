@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\BandwidthOption;
 use App\Models\SurveyOrder;
 use App\Services\Logging\AppLogger;
-use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
@@ -51,12 +51,39 @@ class ChangePrimaryOfferingService extends BaseApiService
         string $bandwidth,
     ): array {
         try {
+            AppLogger::api()->info('Change primary offering request initiated', [
+                'service_number' => $serviceNumber,
+                'bandwidth' => $bandwidth,
+                'operation' => 'change_primary_offering',
+            ]);
+
+            // Validate bandwidth against database options
+            if (!$this->isValidBandwidthOption($bandwidth)) {
+                AppLogger::api()->warning('Invalid bandwidth option provided for upgrade', [
+                    'service_number' => $serviceNumber,
+                    'bandwidth' => $bandwidth,
+                    'operation' => 'change_primary_offering',
+                ]);
+                
+                return [
+                    'success' => false,
+                    'error' => 'Invalid bandwidth option. Please select a valid bandwidth from the available options.',
+                    'message' => 'The selected bandwidth is not available. Please choose from the valid options.',
+                ];
+            }
 
             $surveyOrder = SurveyOrder::where('service_number', $serviceNumber)->first();
             if (!$surveyOrder) {
+                AppLogger::api()->error('Survey order not found for bandwidth change', [
+                    'service_number' => $serviceNumber,
+                    'bandwidth' => $bandwidth,
+                    'operation' => 'change_primary_offering',
+                ]);
+                
                 return [
                     'success' => false,
                     'message' => 'Survey order not found',
+                    'error' => 'Survey order not found for the provided service number',
                 ];
             }
 
@@ -65,16 +92,38 @@ class ChangePrimaryOfferingService extends BaseApiService
             $data['old_offering_id'] = $surveyOrder->main_offer_id;
             $data['new_offering_id'] = $surveyOrder->main_offer_id;
             $data['bandwidth'] = $this->parseBandwidth($bandwidth);
+            
             $xmlPayload = $this->buildXml($data);
-            Log::info('XML Payload', ['xml_payload' => $xmlPayload]);
+            
+            AppLogger::api()->debug('Change primary offering XML request', [
+                'service_number' => $serviceNumber,
+                'bandwidth' => $bandwidth,
+                'parsed_bandwidth' => $data['bandwidth'],
+                'xml_preview' => substr($xmlPayload, 0, 500),
+                'operation' => 'change_primary_offering',
+            ]);
+            
             $xmlResponse = $this->executeRequest($xmlPayload);
-            Log::info('XML Response', ['xml_response' => $xmlResponse]);
+            
+            AppLogger::api()->debug('Change primary offering API response received', [
+                'service_number' => $serviceNumber,
+                'response_preview' => substr($xmlResponse, 0, 500),
+                'operation' => 'change_primary_offering',
+            ]);
+            
             $result = $this->parseResponse($xmlResponse, $serviceNumber);
 
             // Return the parsed result
             if (!$result['success']) {
                 return $result;
             }
+
+            AppLogger::api()->info('Primary offering changed successfully', [
+                'service_number' => $serviceNumber,
+                'bandwidth' => $bandwidth,
+                'order_id' => $result['order_id'] ?? null,
+                'operation' => 'change_primary_offering',
+            ]);
 
             return [
                 'success' => true,
@@ -86,10 +135,75 @@ class ChangePrimaryOfferingService extends BaseApiService
                 'additional_properties' => $result['additional_properties'] ?? [],
             ];
         } catch (RuntimeException $e) {
+            AppLogger::api()->exception($e, 'Runtime exception in change primary offering', [
+                'service_number' => $serviceNumber,
+                'bandwidth' => $bandwidth,
+                'operation' => 'change_primary_offering',
+            ]);
+            
             return [
                 'success' => false,
                 'error' => $e->getMessage(),
             ];
+        } catch (\Throwable $e) {
+            AppLogger::api()->exception($e, 'Unexpected error in change primary offering', [
+                'service_number' => $serviceNumber,
+                'bandwidth' => $bandwidth,
+                'operation' => 'change_primary_offering',
+            ]);
+            
+            return [
+                'success' => false,
+                'error' => 'An unexpected error occurred. Please try again.',
+            ];
+        }
+    }
+
+    /**
+     * Validate if bandwidth option exists in the database.
+     * 
+     * @param string $bandwidth The bandwidth value to validate (e.g., "10M", "100M")
+     * @return bool True if bandwidth is valid, false otherwise
+     */
+    protected function isValidBandwidthOption(string $bandwidth): bool
+    {
+        try {
+            // Fetch bandwidth options from database
+            $bandwidthOption = BandwidthOption::first();
+            
+            if (!$bandwidthOption) {
+                AppLogger::api()->warning('Bandwidth options not found in database', [
+                    'bandwidth' => $bandwidth,
+                    'operation' => 'validate_bandwidth',
+                ]);
+                // If no options in DB, allow the request to proceed (graceful degradation)
+                return true;
+            }
+
+            // Get all valid options (residential + enterprise)
+            $residentialOptions = $bandwidthOption->residential_options ?? [];
+            $enterpriseOptions = $bandwidthOption->enterprise_options ?? [];
+            $allValidOptions = array_merge($residentialOptions, $enterpriseOptions);
+
+            // Check if the provided bandwidth exists in the valid options
+            $isValid = in_array($bandwidth, $allValidOptions, true);
+
+            if (!$isValid) {
+                AppLogger::api()->debug('Bandwidth validation failed', [
+                    'bandwidth' => $bandwidth,
+                    'valid_options' => $allValidOptions,
+                    'operation' => 'validate_bandwidth',
+                ]);
+            }
+
+            return $isValid;
+        } catch (\Throwable $e) {
+            AppLogger::api()->exception($e, 'Exception validating bandwidth option', [
+                'bandwidth' => $bandwidth,
+                'operation' => 'validate_bandwidth',
+            ]);
+            // On error, allow the request to proceed (graceful degradation)
+            return true;
         }
     }
 
@@ -207,122 +321,149 @@ XML;
      */
     protected function parseResponse(string $xml, string $objectId): array
     {
-        $parsed = simplexml_load_string($xml);
+        try {
+            libxml_use_internal_errors(true);
+            $parsed = simplexml_load_string($xml);
 
-        if ($parsed === false) {
-            AppLogger::api()->error('Failed to parse change offering XML response', [
-                'object_id' => $objectId,
-                'xml_preview' => substr($xml, 0, 500),
-            ]);
+            if ($parsed === false) {
+                $errors = array_map(fn($e) => $e->message, libxml_get_errors());
+                libxml_clear_errors();
+                
+                AppLogger::api()->error('Failed to parse change offering XML response', [
+                    'service_number' => $objectId,
+                    'xml_preview' => substr($xml, 0, 500),
+                    'errors' => $errors,
+                    'operation' => 'change_primary_offering',
+                ]);
 
-            return [
-                'success' => false,
-                'error' => 'Invalid XML response',
-            ];
-        }
+                return [
+                    'success' => false,
+                    'error' => 'Invalid XML response from service',
+                ];
+            }
 
-        // Define namespaces - use constants for reliability
-        $soapNs = 'http://schemas.xmlsoap.org/soap/envelope/';
-        $serNs = 'http://oss.huawei.com/webservice/bss/services';
-        $comNs = 'http://www.huawei.com/bss/soaif/interface/common/';
+            // Define namespaces - use constants for reliability
+            $soapNs = 'http://schemas.xmlsoap.org/soap/envelope/';
+            $serNs = 'http://oss.huawei.com/webservice/bss/services';
+            $comNs = 'http://www.huawei.com/bss/soaif/interface/common/';
 
-        // Navigate to Body
-        $body = $parsed->children($soapNs)->Body;
-        if (!$body) {
-            AppLogger::api()->error('Missing SOAP Body in response', [
-                'object_id' => $objectId,
-            ]);
-            return [
-                'success' => false,
-                'error' => 'Missing SOAP Body',
-            ];
-        }
+            // Navigate to Body
+            $body = $parsed->children($soapNs)->Body ?? null;
+            if (!$body) {
+                AppLogger::api()->error('Missing SOAP Body in change offering response', [
+                    'service_number' => $objectId,
+                    'operation' => 'change_primary_offering',
+                ]);
+                return [
+                    'success' => false,
+                    'error' => 'Invalid response structure from service',
+                ];
+            }
 
-        // Navigate to ChangePrimaryOfferingRspMsg
-        $responseMsg = $body->children($serNs)->ChangePrimaryOfferingRspMsg;
-        if (!$responseMsg) {
-            AppLogger::api()->error('Missing ChangePrimaryOfferingRspMsg in response', [
-                'object_id' => $objectId,
-            ]);
+            // Navigate to ChangePrimaryOfferingRspMsg
+            $responseMsg = $body->children($serNs)->ChangePrimaryOfferingRspMsg ?? null;
+            if (!$responseMsg) {
+                AppLogger::api()->error('Missing ChangePrimaryOfferingRspMsg in change offering response', [
+                    'service_number' => $objectId,
+                    'operation' => 'change_primary_offering',
+                ]);
 
-            return [
-                'success' => false,
-                'error' => 'Invalid response structure',
-            ];
-        }
+                return [
+                    'success' => false,
+                    'error' => 'Invalid response message from service',
+                ];
+            }
 
-        // Parse response header (ser:ResponseHeader)
-        $header = $responseMsg->children($serNs)->ResponseHeader;
-        if (!$header) {
-            AppLogger::api()->error('Missing ResponseHeader in response', [
-                'object_id' => $objectId,
-            ]);
-            return [
-                'success' => false,
-                'error' => 'Missing ResponseHeader',
-            ];
-        }
+            // Parse response header (ser:ResponseHeader)
+            $header = $responseMsg->children($serNs)->ResponseHeader ?? null;
+            if (!$header) {
+                AppLogger::api()->error('Missing ResponseHeader in change offering response', [
+                    'service_number' => $objectId,
+                    'operation' => 'change_primary_offering',
+                ]);
+                return [
+                    'success' => false,
+                    'error' => 'Invalid response header from service',
+                ];
+            }
 
-        // Get header data with com namespace
-        $headerData = $header->children($comNs);
+            // Get header data with com namespace
+            $headerData = $header->children($comNs);
 
-        $responseTime = (string) ($headerData->ResponseTime ?? '');
-        $retCode = (string) ($headerData->RetCode ?? '');
-        $retMsg = (string) ($headerData->RetMsg ?? '');
+            $responseTime = (string) ($headerData->ResponseTime ?? '');
+            $retCode = (string) ($headerData->RetCode ?? '');
+            $retMsg = (string) ($headerData->RetMsg ?? 'Unknown error');
 
-        // Parse additional properties (contains CustOrderId)
-        $orderId = null;
-        $additionalProps = [];
+            // Parse additional properties (contains CustOrderId)
+            $orderId = null;
+            $additionalProps = [];
 
-        // AdditionalProperty elements are in com namespace
-        foreach ($headerData->AdditionalProperty as $prop) {
-            $code = (string) ($prop->Code ?? '');
-            $value = (string) ($prop->Value ?? '');
+            // AdditionalProperty elements are in com namespace
+            if (isset($headerData->AdditionalProperty)) {
+                foreach ($headerData->AdditionalProperty as $prop) {
+                    $code = (string) ($prop->Code ?? '');
+                    $value = (string) ($prop->Value ?? '');
 
-            if ($code) {
-                $additionalProps[$code] = $value;
+                    if ($code) {
+                        $additionalProps[$code] = $value;
 
-                // Extract order ID
-                if ($code === 'CustOrderId') {
-                    $orderId = $value;
+                        // Extract order ID
+                        if ($code === 'CustOrderId') {
+                            $orderId = $value;
+                        }
+                    }
                 }
             }
-        }
 
-        // Check for success (0 = success)
-        $isSuccess = $retCode === '0' || $retCode === '0000';
+            // Check for success (0 = success)
+            $isSuccess = $retCode === '0' || $retCode === '0000';
 
-        if (!$isSuccess) {
-            AppLogger::api()->error('Change primary offering API returned error', [
-                'object_id' => $objectId,
+            if (!$isSuccess) {
+                AppLogger::api()->warning('Change primary offering API returned error', [
+                    'service_number' => $objectId,
+                    'ret_code' => $retCode,
+                    'ret_msg' => $retMsg,
+                    'response_time' => $responseTime,
+                    'operation' => 'change_primary_offering',
+                ]);
+
+                return [
+                    'success' => false,
+                    'ret_code' => $retCode,
+                    'ret_msg' => $retMsg,
+                    'response_time' => $responseTime,
+                    'error' => $retMsg ?: "Change failed with code: {$retCode}",
+                ];
+            }
+
+            AppLogger::api()->info('Change primary offering API call successful', [
+                'service_number' => $objectId,
+                'order_id' => $orderId,
                 'ret_code' => $retCode,
                 'ret_msg' => $retMsg,
                 'response_time' => $responseTime,
+                'operation' => 'change_primary_offering',
             ]);
 
             return [
-                'success' => false,
+                'success' => true,
                 'ret_code' => $retCode,
                 'ret_msg' => $retMsg,
                 'response_time' => $responseTime,
-                'error' => $retMsg ?: "Change failed with code: {$retCode}",
+                'order_id' => $orderId,
+                'additional_properties' => $additionalProps,
+            ];
+            
+        } catch (\Throwable $e) {
+            AppLogger::api()->exception($e, 'Unexpected error parsing change offering response', [
+                'service_number' => $objectId,
+                'operation' => 'change_primary_offering',
+            ]);
+            
+            return [
+                'success' => false,
+                'error' => 'An unexpected error occurred while processing the response.',
             ];
         }
-
-        AppLogger::api()->info('Primary offering changed successfully', [
-            'object_id' => $objectId,
-            'order_id' => $orderId,
-            'ret_code' => $retCode,
-            'ret_msg' => $retMsg,
-        ]);
-
-        return [
-            'success' => true,
-            'ret_code' => $retCode,
-            'ret_msg' => $retMsg,
-            'response_time' => $responseTime,
-            'order_id' => $orderId,
-            'additional_properties' => $additionalProps,
-        ];
     }
 }

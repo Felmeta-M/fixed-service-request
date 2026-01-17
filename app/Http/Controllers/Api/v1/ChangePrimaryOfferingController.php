@@ -9,7 +9,6 @@ use App\Services\ChangePrimaryOfferingService;
 use App\Services\Logging\AppLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Change Primary Offering Controller
@@ -29,7 +28,8 @@ class ChangePrimaryOfferingController extends Controller
 {
     public function __construct(
         protected readonly ChangePrimaryOfferingService $changePrimaryOfferingService,
-    ) {}
+    ) {
+    }
 
     /**
      * Change primary offering for a subscriber.

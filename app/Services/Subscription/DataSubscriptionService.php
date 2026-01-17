@@ -6,8 +6,8 @@ use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Services\ApiResponse;
 use App\Services\GetCombiningService;
+use App\Services\Logging\AppLogger;
 use App\Traits\InteractsWithSMSGateway;
-use Illuminate\Support\Facades\Log;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
@@ -41,7 +41,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       }
 
       if ($surveyOrder->status === FFDServiceProvisionStatus::Subscribed->value) {
-         Log::warning('Attempted duplicate subscription', [
+         AppLogger::api()->warning('Attempted duplicate subscription', [
             'survey_order_id' => $data['survey_order_id'],
             'current_status' => $surveyOrder->status,
          ]);
@@ -62,9 +62,9 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       $data['with_device'] = $surveyOrder->with_device ?? false;
 
       $xml = $this->buildXml($data);
-      // Log::info($xml);
+      // AppLogger::api()->info($xml);
       $response = $this->executeRequest($xml);
-      // Log::info('Huawei Data Response', ['response' => $response]);
+      AppLogger::api()->info('Huawei Data Response', ['response' => $response]);
       $parsedResponse = $this->parseResponse($response, $data);
       return $parsedResponse;
    }
@@ -76,7 +76,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       }
 
       $subscriber = data_get($responseData, 'data');
-      // Log::info($subscriber);
+      // AppLogger::api()->info($subscriber);
 
       if (empty($subscriber)) {
          throw new \RuntimeException('Subscriber not found in API response.');
@@ -301,122 +301,193 @@ XML;
          'extra_params' => [],
       ];
 
-      $obj = simplexml_load_string($xml);
+      $surveyOrderId = $data['survey_order_id'] ?? null;
 
-      // Use hardcoded namespace URIs for reliability (namespaces may be declared in child elements)
-      $soapNs = 'http://schemas.xmlsoap.org/soap/envelope/';
-      $serNs = 'http://oss.huawei.com/webservice/bss/services';
-      $comNs = 'http://www.huawei.com/bss/soaif/interface/common/';
+      try {
+         libxml_use_internal_errors(true);
+         $obj = simplexml_load_string($xml);
 
-      // SOAP Body
-      $body = $obj->children($soapNs)->Body ?? null;
-      if (!$body) {
-         Log::error('Missing SOAP Body in response');
-         return $res;
-      }
+         if ($obj === false) {
+            $errors = array_map(fn($e) => $e->message, libxml_get_errors());
+            libxml_clear_errors();
 
-      // Huawei response
-      $rsp = $body->children($serNs)->CreateNewSubscriberRspMsg ?? null;
-      if (!$rsp) {
-         Log::error('Missing CreateNewSubscriberRspMsg in response');
-         return $res;
-      }
-
-      // Get ser: namespace children for accessing ResponseHeader, CustomerBusiOrderId, ExtParamList
-      $serChildren = $rsp->children($serNs);
-
-      // Response header (ser:ResponseHeader)
-      $header = $serChildren->ResponseHeader ?? null;
-      if (!$header) {
-         Log::error('Missing ResponseHeader in response');
-         return $res;
-      }
-
-      // Header data is in com: namespace (com:RetCode, com:RetMsg)
-      $headerData = $header->children($comNs);
-      $res['ret_code'] = (string) ($headerData->RetCode ?? '');
-      $res['ret_msg'] = (string) ($headerData->RetMsg ?? '');
-      $res['success'] = ($res['ret_code'] == '0');
-
-      // Customer business order ID (ser:CustomerBusiOrderId)
-      $res['customer_busi_order_id'] = (string) ($serChildren->CustomerBusiOrderId ?? '');
-
-      // Extra parameters (ser:ExtParamList containing com:ParameterInfo)
-      $extParamList = $serChildren->ExtParamList ?? null;
-      if ($extParamList) {
-         $paramInfos = $extParamList->children($comNs)->ParameterInfo ?? [];
-         foreach ($paramInfos as $p) {
-            // ParamName and ParamValue are also in com: namespace
-            $pChildren = $p->children($comNs);
-            $paramName = (string) ($pChildren->ParamName ?? '');
-            $paramValue = (string) ($pChildren->ParamValue ?? '');
-            if ($paramName) {
-               $res['extra_params'][$paramName] = $paramValue;
-            }
-         }
-      }
-
-      /**
-       * ✅ POST-SUCCESS BUSINESS LOGIC
-       * Runs BEFORE return $res;
-       */
-      if ($res['success']) {
-
-         $serviceNo = $res['extra_params']['FBBNUMBER'] ?? null;
-
-         if (empty($serviceNo)) {
-            Log::error('Huawei success response missing FBBNUMBER', [
-               'response' => $res,
+            AppLogger::api()->error('Failed to parse data subscription XML response', [
+               'xml_preview' => substr($xml, 0, 500),
+               'errors' => $errors,
+               'survey_order_id' => $surveyOrderId,
+               'service_type' => 'data',
             ]);
-
             return $res;
          }
 
-         // Update SurveyOrder
-         SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
-            ->update([
-               'service_number' => $serviceNo,
-               'status' => FFDServiceProvisionStatus::Subscribed->value,
-               'subscribed_at' => now(),
+         // Use hardcoded namespace URIs for reliability (namespaces may be declared in child elements)
+         $soapNs = 'http://schemas.xmlsoap.org/soap/envelope/';
+         $serNs = 'http://oss.huawei.com/webservice/bss/services';
+         $comNs = 'http://www.huawei.com/bss/soaif/interface/common/';
+
+         // SOAP Body
+         $body = $obj->children($soapNs)->Body ?? null;
+         if (!$body) {
+            AppLogger::api()->error('Missing SOAP Body in data subscription response', [
+               'survey_order_id' => $surveyOrderId,
+               'service_type' => 'data',
             ]);
+            return $res;
+         }
 
-         // Send SMS
-         if (
-            !empty($data['sms_no']) &&
-            InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])
-         ) {
-            $phone = $data['sms_no'];
+         // Huawei response
+         $rsp = $body->children($serNs)->CreateNewSubscriberRspMsg ?? null;
+         if (!$rsp) {
+            AppLogger::api()->error('Missing CreateNewSubscriberRspMsg in data subscription response', [
+               'survey_order_id' => $surveyOrderId,
+               'service_type' => 'data',
+            ]);
+            return $res;
+         }
 
-            try {
-               $name = trim(explode(' ', $data['name'] ?? 'Customer')[0]);
+         // Get ser: namespace children for accessing ResponseHeader, CustomerBusiOrderId, ExtParamList
+         $serChildren = $rsp->children($serNs);
 
-               $message = "Dear {$name}, thank you for choosing Ethio Telecom. "
-                  . "We are pleased to inform you that your subscription has been successfully created. "
-                  . "Your service number is {$serviceNo}. "
-                  . "For support or to submit a TT/complaint, please visit "
-                  . "https://fixedservices.ethiotelecom.et/services.";
+         // Response header (ser:ResponseHeader)
+         $header = $serChildren->ResponseHeader ?? null;
+         if (!$header) {
+            AppLogger::api()->error('Missing ResponseHeader in data subscription response', [
+               'survey_order_id' => $surveyOrderId,
+               'service_type' => 'data',
+            ]);
+            return $res;
+         }
 
-               InteractsWithSMSGateway::sendSmsOnly($phone, $message);
-            } catch (\RuntimeException $e) {
-               Log::warning('Subscription SMS blocked or rate-limited', [
-                  'phone' => $phone,
-                  'reason' => $e->getMessage(),
-               ]);
-            } catch (\Throwable $e) {
-               Log::error('Failed to send subscription SMS', [
-                  'phone' => $phone,
-                  'error' => $e->getMessage(),
-               ]);
+         // Header data is in com: namespace (com:RetCode, com:RetMsg)
+         $headerData = $header->children($comNs);
+         $res['ret_code'] = (string) ($headerData->RetCode ?? '');
+         $res['ret_msg'] = (string) ($headerData->RetMsg ?? '');
+         $res['success'] = ($res['ret_code'] == '0');
+
+         // Customer business order ID (ser:CustomerBusiOrderId)
+         $res['customer_busi_order_id'] = (string) ($serChildren->CustomerBusiOrderId ?? '');
+
+         // Extra parameters (ser:ExtParamList containing com:ParameterInfo)
+         $extParamList = $serChildren->ExtParamList ?? null;
+         if ($extParamList) {
+            $paramInfos = $extParamList->children($comNs)->ParameterInfo ?? [];
+            foreach ($paramInfos as $p) {
+               // ParamName and ParamValue are also in com: namespace
+               $pChildren = $p->children($comNs);
+               $paramName = (string) ($pChildren->ParamName ?? '');
+               $paramValue = (string) ($pChildren->ParamValue ?? '');
+               if ($paramName) {
+                  $res['extra_params'][$paramName] = $paramValue;
+               }
             }
          }
-      } else {
-         // Log Huawei error response
-         Log::warning('Huawei subscription request failed', [
-            'ret_code' => $res['ret_code'],
-            'ret_msg' => $res['ret_msg'],
-            'survey_order_id' => $data['survey_order_id'] ?? null,
+
+         /**
+          * ✅ POST-SUCCESS BUSINESS LOGIC
+          * Runs BEFORE return $res;
+          */
+         if ($res['success']) {
+
+            $serviceNo = $res['extra_params']['FBBNUMBER'] ?? null;
+
+            if (empty($serviceNo)) {
+               AppLogger::api()->error('Data subscription success response missing FBBNUMBER', [
+                  'ret_code' => $res['ret_code'],
+                  'customer_busi_order_id' => $res['customer_busi_order_id'],
+                  'survey_order_id' => $surveyOrderId,
+                  'service_type' => 'data',
+               ]);
+
+               return $res;
+            }
+
+            // Update SurveyOrder
+            try {
+               $updated = SurveyOrder::where('customer_survey_order_id', $surveyOrderId)
+                  ->update([
+                     'service_number' => $serviceNo,
+                     'status' => FFDServiceProvisionStatus::Subscribed->value,
+                     'subscribed_at' => now(),
+                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
+                  ]);
+
+               if ($updated) {
+                  AppLogger::api()->info('Survey order updated after data subscription', [
+                     'survey_order_id' => $surveyOrderId,
+                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
+                     'service_number' => $serviceNo,
+                     'service_type' => 'data',
+                  ]);
+               } else {
+                  AppLogger::api()->warning('Failed to update survey order after data subscription', [
+                     'survey_order_id' => $surveyOrderId,
+                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
+                     'service_type' => 'data',
+                  ]);
+               }
+            } catch (\Throwable $e) {
+               AppLogger::api()->exception($e, 'Exception updating survey order after data subscription', [
+                  'survey_order_id' => $surveyOrderId,
+                  'customer_subscription_order_id' => $res['customer_busi_order_id'],
+                  'service_type' => 'data',
+               ]);
+               // Don't fail the entire request - subscription was successful
+            }
+
+            // Send SMS
+            if (
+               !empty($data['sms_no']) &&
+               InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])
+            ) {
+               $phone = $data['sms_no'];
+
+               try {
+                  $name = trim(explode(' ', $data['name'] ?? 'Customer')[0]);
+
+                  $message = "Dear {$name}, thank you for choosing Ethio Telecom. "
+                     . "We are pleased to inform you that your subscription has been successfully created. "
+                     . "Your service number is {$serviceNo}. "
+                     . "For support or to submit a TT/complaint, please visit "
+                     . "https://fixedservices.ethiotelecom.et/services.";
+
+                  InteractsWithSMSGateway::sendSmsOnly($phone, $message);
+                  AppLogger::api()->info('Data subscription SMS sent successfully', [
+                     'phone' => substr($phone, -4), // Last 4 digits only
+                     'survey_order_id' => $surveyOrderId,
+                     'service_type' => 'data',
+                  ]);
+               } catch (\RuntimeException $e) {
+                  AppLogger::api()->warning('Data subscription SMS blocked or rate-limited', [
+                     'phone' => substr($phone, -4), // Last 4 digits only
+                     'reason' => $e->getMessage(),
+                     'survey_order_id' => $surveyOrderId,
+                     'service_type' => 'data',
+                  ]);
+               } catch (\Throwable $e) {
+                  AppLogger::api()->exception($e, 'Data subscription SMS failed unexpectedly', [
+                     'phone' => substr($phone, -4), // Last 4 digits only
+                     'survey_order_id' => $surveyOrderId,
+                     'service_type' => 'data',
+                  ]);
+               }
+            }
+         } else {
+            // Log Huawei error response
+            AppLogger::api()->warning('Data subscription request failed', [
+               'ret_code' => $res['ret_code'],
+               'ret_msg' => $res['ret_msg'],
+               'survey_order_id' => $surveyOrderId,
+               'service_type' => 'data',
+            ]);
+         }
+
+      } catch (\Throwable $e) {
+         AppLogger::api()->exception($e, 'Unexpected error parsing data subscription response', [
+            'survey_order_id' => $surveyOrderId,
+            'service_type' => 'data',
          ]);
       }
+
 
       return $res;
    }

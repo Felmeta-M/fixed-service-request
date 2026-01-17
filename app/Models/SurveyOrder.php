@@ -38,6 +38,7 @@ class SurveyOrder extends Model
         'customer_id',
         'customer_code',
         'customer_survey_order_id',
+        'customer_subscription_order_id',
         'main_offer_id',
         'service_number',
         'survey_type',

@@ -5,10 +5,10 @@ namespace App\Services\Subscription;
 use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Services\ApiResponse;
+use App\Services\Logging\AppLogger;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Traits\InteractsWithSMSGateway;
-use Illuminate\Support\Facades\Log;
 
 class VoiceSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
@@ -37,15 +37,36 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
 
    public function create(array $data)
    {
-      // Use shared helper to hydrate customer data
-      $data = $this->hydrateWithCustomerData($data);
+      try {
+         // Use shared helper to hydrate customer data
+         $data = $this->hydrateWithCustomerData($data);
 
-      $xml = $this->buildXml($data);
-      $response = $this->executeRequest($xml);
-      Log::info('Huawei Voice Response', ['response' => $response]);
-      $parsedResponse = $this->parseResponse($data, $response);
-      return $parsedResponse;
+         $surveyOrderId = $data['survey_order_id'] ?? null;
 
+         AppLogger::api()->info('Voice subscription request initiated', [
+            'survey_order_id' => $surveyOrderId,
+            'service_type' => 'voice',
+         ]);
+
+         $xml = $this->buildXml($data);
+         $response = $this->executeRequest($xml);
+
+         AppLogger::api()->debug('Voice subscription API response received', [
+            'survey_order_id' => $surveyOrderId,
+            'response_preview' => substr($response, 0, 500),
+         ]);
+
+         $parsedResponse = $this->parseResponse($data, $response);
+
+         return $parsedResponse;
+      } catch (\Throwable $e) {
+         AppLogger::api()->exception($e, 'Voice subscription request failed unexpectedly', [
+            'survey_order_id' => $data['survey_order_id'] ?? null,
+            'service_type' => 'voice',
+         ]);
+
+         return ApiResponse::error('An unexpected error occurred during subscription. Please try again.');
+      }
    }
 
    protected function buildXml(array $data): string
@@ -79,9 +100,44 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
       $serviceNumber = SurveyOrder::query()
          ->where('customer_survey_order_id', $data['survey_order_id'])
          ->value('service_number');
-      // 🔴 release reserved number for subscription
-      if ($serviceNumber) {
-         $this->queryAvailableNumberService->releaseNumberService($serviceNumber);
+
+      if (!$serviceNumber) {
+         AppLogger::api()->error('Service number not found in survey order', [
+            'survey_order_id' => $data['survey_order_id'] ?? null,
+            'service_type' => 'voice',
+         ]);
+         throw new \RuntimeException('Service number not found in survey order');
+      }
+
+      // Store service number for later use
+      $this->serviceNumber = $serviceNumber;
+
+      // Unpick (release) the number from survey order reservation
+      // The subscription API will automatically pick/reserve it when creating the subscription
+      // When subscription is successful, the number is already attached/subscribed
+      try {
+         $released = $this->queryAvailableNumberService->releaseNumberService($serviceNumber);
+         if (!$released) {
+            AppLogger::api()->warning('Failed to release service number before subscription', [
+               'service_number' => $serviceNumber,
+               'survey_order_id' => $data['survey_order_id'] ?? null,
+               'service_type' => 'voice',
+            ]);
+            // Continue anyway - the subscription API might still work
+         } else {
+            AppLogger::api()->info('Service number released before subscription', [
+               'service_number' => $serviceNumber,
+               'survey_order_id' => $data['survey_order_id'] ?? null,
+               'service_type' => 'voice',
+            ]);
+         }
+      } catch (\Throwable $e) {
+         AppLogger::api()->exception($e, 'Exception while releasing service number before subscription', [
+            'service_number' => $serviceNumber,
+            'survey_order_id' => $data['survey_order_id'] ?? null,
+            'service_type' => 'voice',
+         ]);
+         // Continue anyway - the subscription API might still work
       }
 
       return <<<XML
@@ -202,57 +258,210 @@ XML;
 
    protected function parseResponse(array $data, string $xml)
    {
-      $parsed = simplexml_load_string($xml);
-      $ns = $parsed->getNamespaces(true);
+      try {
+         libxml_use_internal_errors(true);
+         $parsed = simplexml_load_string($xml);
 
-      $body = $parsed->children($ns['soapenv'])->Body;
-      $rsp = $body->children($ns['ser'])->CreateNewSubscriberRspMsg;
-      $hdr = $rsp->ResponseHeader->children($ns['com']);
+         if ($parsed === false) {
+            $errors = array_map(fn($e) => $e->message, libxml_get_errors());
+            libxml_clear_errors();
 
-      if ((string) $hdr->RetCode !== '0') {
-         return ApiResponse::error((string) $hdr->RetMsg);
-      }
+            // Try to re-reserve the number if subscription failed after release
+            $this->reReserveNumberIfNeeded($data);
 
-      $customerBusiOrderId = (string) $rsp->CustomerBusiOrderId;
+            AppLogger::api()->error('Failed to parse voice subscription XML response', [
+               'xml_preview' => substr($xml, 0, 500),
+               'errors' => $errors,
+               'survey_order_id' => $data['survey_order_id'] ?? null,
+               'service_type' => 'voice',
+            ]);
 
-      // create survey order request and initia payment
-      SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
-         ->update([
-            'status' => FFDServiceProvisionStatus::Subscribed->value,
-            'subscribed_at' => now(),
+            return ApiResponse::error('Invalid response from subscription service. Please try again.');
+         }
+
+         $ns = $parsed->getNamespaces(true);
+         $body = $parsed->children($ns['soapenv'])->Body ?? null;
+
+         if (!$body) {
+            $this->reReserveNumberIfNeeded($data);
+            return ApiResponse::error('Invalid response structure from subscription service.');
+         }
+
+         $rsp = $body->children($ns['ser'])->CreateNewSubscriberRspMsg ?? null;
+
+         if (!$rsp) {
+            $this->reReserveNumberIfNeeded($data);
+            return ApiResponse::error('Invalid response message from subscription service.');
+         }
+
+         $hdr = $rsp->ResponseHeader->children($ns['com']) ?? null;
+
+         if (!$hdr) {
+            $this->reReserveNumberIfNeeded($data);
+            return ApiResponse::error('Invalid response header from subscription service.');
+         }
+
+         $retCode = (string) ($hdr->RetCode ?? '');
+         $retMsg = (string) ($hdr->RetMsg ?? 'Unknown error');
+
+         if ($retCode !== '0') {
+            // Try to re-reserve the number if subscription failed
+            $this->reReserveNumberIfNeeded($data);
+
+            AppLogger::api()->warning('Voice subscription failed', [
+               'ret_code' => $retCode,
+               'ret_msg' => $retMsg,
+               'survey_order_id' => $data['survey_order_id'] ?? null,
+               'service_number' => $this->serviceNumber,
+               'service_type' => 'voice',
+            ]);
+
+            return ApiResponse::error($retMsg);
+         }
+
+         $customerBusiOrderId = (string) ($rsp->CustomerBusiOrderId ?? '');
+
+         if (empty($customerBusiOrderId)) {
+            $this->reReserveNumberIfNeeded($data);
+            return ApiResponse::error('Business order ID not found in response.');
+         }
+
+         // Update survey order status - subscription successful
+         try {
+            $updated = SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
+               ->update([
+                  'status' => FFDServiceProvisionStatus::Subscribed->value,
+                  'subscribed_at' => now(),
+                  'customer_subscription_order_id' => $customerBusiOrderId,
+               ]);
+
+            if (!$updated) {
+               AppLogger::api()->warning('Failed to update survey order status after voice subscription', [
+                  'survey_order_id' => $data['survey_order_id'] ?? null,
+                  'customer_subscription_order_id' => $customerBusiOrderId,
+                  'service_type' => 'voice',
+               ]);
+               // Don't fail the entire request - subscription was successful
+            } else {
+               AppLogger::api()->info('Survey order updated after voice subscription', [
+                  'survey_order_id' => $data['survey_order_id'] ?? null,
+                  'customer_subscription_order_id' => $customerBusiOrderId,
+                  'service_number' => $this->serviceNumber,
+                  'service_type' => 'voice',
+               ]);
+            }
+         } catch (\Throwable $e) {
+            AppLogger::api()->exception($e, 'Exception updating survey order status after voice subscription', [
+               'survey_order_id' => $data['survey_order_id'] ?? null,
+               'customer_subscription_order_id' => $customerBusiOrderId,
+               'service_type' => 'voice',
+            ]);
+            // Don't fail the entire request - subscription was successful
+         }
+
+         // ✅ Send SMS to customer (non-blocking - failures are logged but don't affect response)
+         if (!empty($data['sms_no']) && InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])) {
+
+            $phone = $data['sms_no'];
+            $name = trim(explode(' ', $data['name'] ?? '')[0] ?? 'Customer');
+
+            $message = sprintf(
+               'Dear %s, thank you for choosing Ethio telecom. Your subscription has been successfully created. For support or to submit a TT/complaint, please visit https://fixedservices.ethiotelecom.et/services.',
+               $name
+            );
+
+            try {
+               InteractsWithSMSGateway::sendSmsOnly($phone, $message);
+               AppLogger::api()->info('Subscription SMS sent successfully', [
+                  'phone' => substr($phone, -4), // Last 4 digits only
+                  'survey_order_id' => $data['survey_order_id'] ?? null,
+                  'service_type' => 'voice',
+               ]);
+            } catch (\RuntimeException $e) {
+               // Business-level failure (rate limit, gateway reject)
+               AppLogger::api()->warning('Voice subscription SMS blocked or rejected', [
+                  'phone' => substr($phone, -4), // Last 4 digits only
+                  'reason' => $e->getMessage(),
+                  'survey_order_id' => $data['survey_order_id'] ?? null,
+                  'service_type' => 'voice',
+               ]);
+            } catch (\Throwable $e) {
+               // System-level failure
+               AppLogger::api()->exception($e, 'Voice subscription SMS failed unexpectedly', [
+                  'phone' => substr($phone, -4), // Last 4 digits only
+                  'survey_order_id' => $data['survey_order_id'] ?? null,
+                  'service_type' => 'voice',
+               ]);
+            }
+         }
+
+         return ApiResponse::success([
+            'customer_busi_order_id' => $customerBusiOrderId,
+            'service_number' => $this->serviceNumber,
          ]);
 
-      // ✅ Send SMS to customer
-      if (!empty($data['sms_no']) && InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])) {
+      } catch (\Throwable $e) {
+         // Try to re-reserve the number on any unexpected error
+         $this->reReserveNumberIfNeeded($data);
 
-         $phone = $data['sms_no'];
-         $name = trim(explode(' ', $data['name'] ?? '')[0] ?? 'Customer');
+         AppLogger::api()->exception($e, 'Unexpected error in voice subscription processing', [
+            'survey_order_id' => $data['survey_order_id'] ?? null,
+            'service_type' => 'voice',
+         ]);
 
-         $message = sprintf(
-            'Dear %s, thank you for choosing Ethio telecom. Your subscription has been successfully created. For support or to submit a TT/complaint, please visit https://fixedservices.ethiotelecom.et/services.',
-            $name
-         );
+         return ApiResponse::error('An unexpected error occurred. Please try again.');
+      }
+   }
 
-         try {
-            InteractsWithSMSGateway::sendSmsOnly($phone, $message);
-         } catch (\RuntimeException $e) {
-            // Business-level failure (rate limit, gateway reject)
-            Log::warning('Subscription SMS blocked or rejected', [
-               'phone' => $phone,
-               'reason' => $e->getMessage(),
-            ]);
-         } catch (\Throwable $e) {
-            // System-level failure
-            Log::error('Subscription SMS failed unexpectedly', [
-               'phone' => $phone,
-               'error' => $e->getMessage(),
-            ]);
-         }
+   /**
+    * Attempt to re-reserve the service number if subscription failed.
+    * This prevents the number from being lost if subscription fails after we released it.
+    */
+   protected function reReserveNumberIfNeeded(array $data): void
+   {
+      if (!$this->serviceNumber) {
+         return;
       }
 
-      return ApiResponse::success([
-         'customer_busi_order_id' => $customerBusiOrderId,
-         'service_number' => $this->serviceNumber,
-      ]);
+      try {
+         // Try to re-reserve the number so it's not lost
+         $reserved = $this->reserveNumberService->pick([
+            'res_type_id' => 10,
+            'oper_type' => 1029,
+            'res_code' => $this->serviceNumber,
+         ]);
+
+         if ($reserved) {
+            AppLogger::api()->info('Successfully re-reserved service number after voice subscription failure', [
+               'service_number' => $this->serviceNumber,
+               'survey_order_id' => $data['survey_order_id'] ?? null,
+               'service_type' => 'voice',
+            ]);
+
+            // Update the survey order to keep the number
+            try {
+               SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'] ?? null)
+                  ->update(['service_number' => $this->serviceNumber]);
+            } catch (\Throwable $e) {
+               AppLogger::api()->exception($e, 'Failed to update survey order with re-reserved number', [
+                  'service_number' => $this->serviceNumber,
+                  'survey_order_id' => $data['survey_order_id'] ?? null,
+                  'service_type' => 'voice',
+               ]);
+            }
+         } else {
+            AppLogger::api()->warning('Failed to re-reserve service number after voice subscription failure', [
+               'service_number' => $this->serviceNumber,
+               'survey_order_id' => $data['survey_order_id'] ?? null,
+               'service_type' => 'voice',
+            ]);
+         }
+      } catch (\Throwable $e) {
+         AppLogger::api()->exception($e, 'Exception while re-reserving service number after voice subscription failure', [
+            'service_number' => $this->serviceNumber,
+            'survey_order_id' => $data['survey_order_id'] ?? null,
+            'service_type' => 'voice',
+         ]);
+      }
    }
 }

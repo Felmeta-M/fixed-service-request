@@ -2,6 +2,8 @@
 
 namespace App\Services\Subscription;
 
+use App\Models\SurveyOrder;
+use App\Enums\FFDServiceProvisionStatus;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Support\CustomerContext;
@@ -12,7 +14,8 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
    public function __construct(
       protected readonly QueryAvailableNumberService $queryAvailableNumberService,
       protected readonly ReserveNumberService $reserveNumberService,
-   ) {}
+   ) {
+   }
 
    protected function offeringId(): int
    {
@@ -41,7 +44,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
 
       Log::info('Huawei Combo Response', ['xml' => $response]);
 
-      return $this->parseResponse($response);
+      return $this->parseResponse($response, $payload);
    }
 
    protected function buildXml(array $data)
@@ -273,7 +276,8 @@ XML;
 
    /**
     * Namespace-safe response parsing
-    */ protected function parseResponse(string $xml): array
+    */
+   protected function parseResponse(string $xml, array $data = []): array
    {
       $res = [
          'success' => false,
@@ -310,8 +314,8 @@ XML;
          ->children($namespaces['com']);
 
       $res['ret_code'] = (string) $header->RetCode;
-      $res['ret_msg']  = (string) $header->RetMsg;
-      $res['success']  = ((string) $header->RetCode === '0');
+      $res['ret_msg'] = (string) $header->RetMsg;
+      $res['success'] = ((string) $header->RetCode === '0');
 
       // Customer order ID
       $res['customer_busi_order_id'] =
@@ -324,6 +328,32 @@ XML;
          ) {
             $res['extra_params'][(string) $p->ParamName]
                = (string) $p->ParamValue;
+         }
+      }
+
+      /**
+       * ✅ POST-SUCCESS BUSINESS LOGIC
+       * Update survey order when subscription is successful
+       */
+      if ($res['success'] && !empty($res['customer_busi_order_id'])) {
+         try {
+            $surveyOrderId = $data['survey_order_id'] ?? null;
+
+            if ($surveyOrderId) {
+               SurveyOrder::where('customer_survey_order_id', $surveyOrderId)
+                  ->update([
+                     'status' => FFDServiceProvisionStatus::Subscribed->value,
+                     'subscribed_at' => now(),
+                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
+                  ]);
+            }
+         } catch (\Throwable $e) {
+            Log::error('Failed to update survey order after combo subscription', [
+               'customer_busi_order_id' => $res['customer_busi_order_id'],
+               'survey_order_id' => $data['survey_order_id'] ?? null,
+               'error' => $e->getMessage(),
+            ]);
+            // Don't fail the entire request - subscription was successful
          }
       }
 

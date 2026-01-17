@@ -109,24 +109,166 @@ XML;
 
     protected function parseResponse(array $data, string $xml, ?array $resource)
     {
-        $parsed = simplexml_load_string($xml);
+        try {
+            libxml_use_internal_errors(true);
+            $parsed = simplexml_load_string($xml);
 
-        $ns = $parsed->getNamespaces(true);
-        $body = $parsed->children($ns['soapenv'])->Body;
-        $rsp = $body->children($ns['ser'])->HandleSurveyOrderRspMsg;
-        $hdr = $rsp->ResponseHeader->children($ns['com']);
+            if ($parsed === false) {
+                $errors = array_map(fn($e) => $e->message, libxml_get_errors());
+                libxml_clear_errors();
+                
+                // Cleanup: release service number if survey creation failed
+                if ($this->serviceNumber) {
+                    try {
+                        $this->queryAvailableNumberService->releaseNumberService($this->serviceNumber);
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to release service number after XML parse error', [
+                            'service_number' => $this->serviceNumber,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+                
+                Log::error('Failed to parse survey order XML response', [
+                    'xml_preview' => substr($xml, 0, 500),
+                    'errors' => $errors,
+                ]);
+                
+                return ApiResponse::error('Invalid response from survey service. Please try again.');
+            }
 
-        if ((string) $hdr->RetCode !== '0') {
-            return ApiResponse::error((string) $hdr->RetMsg);
+            $ns = $parsed->getNamespaces(true);
+            $body = $parsed->children($ns['soapenv'])->Body ?? null;
+            
+            if (!$body) {
+                if ($this->serviceNumber) {
+                    try {
+                        $this->queryAvailableNumberService->releaseNumberService($this->serviceNumber);
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to release service number after missing SOAP Body', [
+                            'service_number' => $this->serviceNumber,
+                        ]);
+                    }
+                }
+                return ApiResponse::error('Invalid response structure from survey service.');
+            }
+            
+            $rsp = $body->children($ns['ser'])->HandleSurveyOrderRspMsg ?? null;
+            
+            if (!$rsp) {
+                if ($this->serviceNumber) {
+                    try {
+                        $this->queryAvailableNumberService->releaseNumberService($this->serviceNumber);
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to release service number after missing response message', [
+                            'service_number' => $this->serviceNumber,
+                        ]);
+                    }
+                }
+                return ApiResponse::error('Invalid response message from survey service.');
+            }
+            
+            $hdr = $rsp->ResponseHeader->children($ns['com']) ?? null;
+            
+            if (!$hdr) {
+                if ($this->serviceNumber) {
+                    try {
+                        $this->queryAvailableNumberService->releaseNumberService($this->serviceNumber);
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to release service number after missing response header', [
+                            'service_number' => $this->serviceNumber,
+                        ]);
+                    }
+                }
+                return ApiResponse::error('Invalid response header from survey service.');
+            }
+
+            $retCode = (string) ($hdr->RetCode ?? '');
+            $retMsg = (string) ($hdr->RetMsg ?? 'Unknown error');
+
+            if ($retCode !== '0') {
+                // Cleanup: release service number if survey creation failed
+                if ($this->serviceNumber) {
+                    try {
+                        $this->queryAvailableNumberService->releaseNumberService($this->serviceNumber);
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to release service number after survey order failed', [
+                            'service_number' => $this->serviceNumber,
+                            'ret_code' => $retCode,
+                            'ret_msg' => $retMsg,
+                        ]);
+                    }
+                }
+                
+                return ApiResponse::error($retMsg);
+            }
+
+            $surveyOrderId = (string) ($rsp->HandleSurveyOrderRespBody
+                ->children($ns['com'])->CustomerSurveyOrderId ?? '');
+
+            if (empty($surveyOrderId)) {
+                // Cleanup: release service number if survey order ID is missing
+                if ($this->serviceNumber) {
+                    try {
+                        $this->queryAvailableNumberService->releaseNumberService($this->serviceNumber);
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to release service number after missing survey order ID', [
+                            'service_number' => $this->serviceNumber,
+                        ]);
+                    }
+                }
+                
+                return ApiResponse::error('Survey order ID not found in response.');
+            }
+
+            try {
+                $this->persistSurvey($surveyOrderId, $data, $resource);
+            } catch (\Throwable $e) {
+                // Cleanup: release service number if persistence fails
+                if ($this->serviceNumber) {
+                    try {
+                        $this->queryAvailableNumberService->releaseNumberService($this->serviceNumber);
+                    } catch (\Throwable $releaseError) {
+                        Log::error('Failed to release service number after persistence failure', [
+                            'service_number' => $this->serviceNumber,
+                            'persist_error' => $e->getMessage(),
+                            'release_error' => $releaseError->getMessage(),
+                        ]);
+                    }
+                }
+                
+                Log::error('Failed to persist survey order', [
+                    'survey_order_id' => $surveyOrderId,
+                    'error' => $e->getMessage(),
+                ]);
+                
+                return ApiResponse::error('Failed to save survey order. Please try again.');
+            }
+
+            return ApiResponse::success([
+                'customer_survey_order_id' => $surveyOrderId
+            ]);
+            
+        } catch (\Throwable $e) {
+            // Final cleanup: release service number on any unexpected error
+            if ($this->serviceNumber) {
+                try {
+                    $this->queryAvailableNumberService->releaseNumberService($this->serviceNumber);
+                } catch (\Throwable $releaseError) {
+                    Log::error('Failed to release service number after exception', [
+                        'service_number' => $this->serviceNumber,
+                        'exception' => $e->getMessage(),
+                        'release_error' => $releaseError->getMessage(),
+                    ]);
+                }
+            }
+            
+            Log::error('Unexpected error in survey order processing', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return ApiResponse::error('An unexpected error occurred. Please try again.');
         }
-
-        $surveyOrderId = (string) $rsp->HandleSurveyOrderRespBody
-            ->children($ns['com'])->CustomerSurveyOrderId;
-
-        $this->persistSurvey($surveyOrderId, $data, $resource);
-
-        return ApiResponse::success([
-            'customer_survey_order_id' => $surveyOrderId
-        ]);
     }
 }

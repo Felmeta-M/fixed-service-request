@@ -37,6 +37,7 @@ interface SurveyTableProps {
 
 type SurveyRow = {
     customer_survey_order_id?: string;
+    customer_subscription_order_id?: string | null;
     service_number?: string | null;
     main_offer_id?: string;
     status?: string;
@@ -70,9 +71,12 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
     }, [surveys, typeFilter, statusFilter, globalFilter]);
 
     const handleRowClick = (survey: SurveyRow) => {
-        const id = survey?.customer_survey_order_id;
+        // Use subscription order ID for auto surveys, survey order ID for manual surveys
+        const id = survey?.customer_subscription_order_id || survey?.customer_survey_order_id;
         if (!id) return;
-        router.visit(`/services/${id}`);
+        const isSubscription = !!survey?.customer_subscription_order_id;
+        const orderIdParam = isSubscription ? `customer_subscription_order_id=${id}` : `customer_survey_order_id=${id}`;
+        router.visit(`/services/${id}?${orderIdParam}`);
     };
 
     const columns = React.useMemo<ColumnDef<SurveyRow>[]>(
@@ -85,19 +89,36 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                         className="!hover:text-primary px-0 font-medium"
                         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                     >
-                        Order ID
+                        Survey Order Number
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 ),
-                cell: (info) => (
-                    <button
-                        type="button"
-                        className="relative z-10 text-sm font-medium text-gray-900 hover:text-primary hover:underline"
-                        onClick={() => handleRowClick(info.row.original)}
-                    >
-                        {String(info.getValue() ?? '-')}
-                    </button>
-                ),
+                cell: (info) => {
+                    const surveyOrderId = String(info.getValue() ?? '-');
+                    return (
+                        <button
+                            type="button"
+                            className="relative z-10 text-sm font-medium text-gray-900 hover:text-primary hover:underline"
+                            onClick={() => handleRowClick(info.row.original)}
+                        >
+                            {surveyOrderId}
+                        </button>
+                    );
+                },
+            },
+            {
+                accessorKey: 'customer_subscription_order_id',
+                header: 'Subscription Order Number',
+                cell: ({ getValue, row }) => {
+                    const subscriptionOrderId = getValue<string | null>();
+                    // Only show if it exists (auto surveys have this)
+                    if (!subscriptionOrderId) {
+                        return <span className="text-xs text-gray-400">—</span>;
+                    }
+                    return (
+                        <span className="text-sm font-medium text-gray-900">{subscriptionOrderId}</span>
+                    );
+                },
             },
             {
                 accessorKey: 'service_number',

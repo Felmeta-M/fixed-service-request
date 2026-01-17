@@ -10,6 +10,7 @@ import { useSurveyDetail } from '@/hooks/use-surveys';
 
 type SurveyDetails = {
     customer_survey_order_id: string;
+    customer_subscription_order_id?: string | null;
     customer_type?: string | null;
     survey_type?: string | null;
     main_offer_id: string;
@@ -84,6 +85,7 @@ export default function ServiceShowPage() {
     const surveyDetails: SurveyDetails | null = surveyDetailQuery.data?.data
         ? {
             customer_survey_order_id: surveyDetailQuery.data.data.customer_survey_order_id,
+            customer_subscription_order_id: surveyDetailQuery.data.data.customer_subscription_order_id,
             customer_type: surveyDetailQuery.data.data.customer_type,
             survey_type: surveyDetailQuery.data.data.survey_type,
             main_offer_id: surveyDetailQuery.data.data.main_offer_id,

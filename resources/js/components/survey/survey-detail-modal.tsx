@@ -24,11 +24,25 @@ export default function SurveyDetailModal({ open, onOpenChange, survey }: Survey
                 <DialogHeader>
                     <DialogTitle className="text-lg font-semibold text-gray-900">Survey Details</DialogTitle>
                     <DialogDescription className="text-sm text-gray-600">
-                        Detailed information for survey order <strong>{survey.customer_survey_order_id}</strong>.
+                        Detailed information for survey order <strong>{survey.customer_survey_order_id}</strong>
+                        {survey.customer_subscription_order_id && (
+                            <> and subscription order <strong>{survey.customer_subscription_order_id}</strong></>
+                        )}
+                        .
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="mt-4 space-y-3 text-sm text-gray-700">
+                    <div className="flex justify-between">
+                        <span className="font-medium">Survey Order Number:</span>
+                        <span className="font-mono">{survey.customer_survey_order_id || 'N/A'}</span>
+                    </div>
+                    {survey.customer_subscription_order_id && (
+                        <div className="flex justify-between">
+                            <span className="font-medium">Subscription Order Number:</span>
+                            <span className="font-mono text-primary">{survey.customer_subscription_order_id}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between">
                         <span className="font-medium">Service Type:</span>
                         <span>{survey.service_type || 'N/A'}</span>

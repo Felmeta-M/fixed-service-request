@@ -48,10 +48,10 @@ class SurveyOrderController extends Controller
                 ->where('survey_orders.customer_code', (string) $customer->customer_code)
                 ->select([
                     'survey_orders.id',
-                    'survey_orders.id',
                     'survey_orders.customer_survey_order_id',
                     'survey_orders.customer_subscription_order_id',
                     'survey_orders.survey_is_manual',
+                    'survey_orders.survey_type',
                     'survey_orders.customer_code',
                     'survey_orders.status',
                     'survey_orders.main_offer_id',
@@ -74,9 +74,6 @@ class SurveyOrderController extends Controller
                 });
             }
 
-            if ($request->filled('customer_survey_order_id')) {
-                $query->where('survey_orders.customer_survey_order_id', 'like', '%' . $request->customer_survey_order_id . '%');
-            }
 
             if ($request->filled('status')) {
                 $query->where('survey_orders.status', $request->status);
@@ -109,9 +106,10 @@ class SurveyOrderController extends Controller
             // Transform raw data to match SurveyOrderResource format
             $transformedItems = collect($surveyOrders->items())->map(function ($item) {
                 return [
-                    'id' => $item->id,
+                    'id' => (string) $item->id,
                     'customer_survey_order_id' => $item->customer_survey_order_id,
                     'customer_subscription_order_id' => $item->customer_subscription_order_id ?? null,
+                    'survey_type' => $item->survey_type ?? '',
                     'customer_code' => $item->customer_code,
                     'status' => $item->status,
                     'main_offer_id' => $item->main_offer_id,
@@ -122,7 +120,7 @@ class SurveyOrderController extends Controller
                     'updated_at' => $item->updated_at,
                     'payment' => $item->payment_id ? [
                         'id' => $item->payment_id,
-                        'amount' => $item->payment_amount,
+                        'total_amount' => $item->payment_amount,
                         'status' => $item->payment_status,
                     ] : null,
                 ];
@@ -471,9 +469,10 @@ class SurveyOrderController extends Controller
     protected function transformOrder($order): array
     {
         return [
-            'id' => $order->id,
+            'id' => (string) $order->id,
             'customer_survey_order_id' => $order->customer_survey_order_id,
             'customer_subscription_order_id' => $order->customer_subscription_order_id ?? null,
+            'survey_type' => $order->survey_type ?? '',
             'customer_code' => $order->customer_code,
             'status' => $order->status,
             'main_offer_id' => $order->main_offer_id,
@@ -484,7 +483,7 @@ class SurveyOrderController extends Controller
             'updated_at' => $order->updated_at,
             'payment' => isset($order->payment_id) ? [
                 'id' => $order->payment_id,
-                'amount' => $order->payment_amount,
+                'total_amount' => $order->payment_amount,
                 'status' => $order->payment_status,
                 'merch_order_id' => $order->payment_merch_order_id ?? null,
             ] : null,

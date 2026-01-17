@@ -185,17 +185,43 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 showSuccessToast(result.message || 'Resource available!', { id: toastId });
                 nextStep();
             } else {
-                // Don't show error toast here - the modal will be shown in location-setup-step
-                // Just dismiss the loading toast
-                toast.dismiss(toastId);
-                // The modal will be shown automatically via useEffect in location-setup-step when resourceAvailable is false
+                // Check if this is a location review needed (Ethiopia but outside Addis Ababa)
+                const isLocationReviewNeeded = result.message && result.message.includes('LOCATION_REVIEW_NEEDED');
+                
+                // Check if this is a validation error (e.g., geo-fencing) that should be shown as a toast
+                const isValidationError = result.message && (
+                    result.message.includes('Addis Ababa') ||
+                    result.message.includes('available within') ||
+                    result.message.includes('city limits') ||
+                    result.message.includes('Invalid') ||
+                    result.message.includes('required')
+                );
+
+                if (isLocationReviewNeeded) {
+                    // For Ethiopia locations outside Addis Ababa, show manual step dialog
+                    // Don't show error toast - let the Location Review Needed dialog handle it
+                    toast.dismiss(toastId);
+                    // The modal will be shown automatically via useEffect in location-setup-step when resourceAvailable is false
+                } else if (isValidationError) {
+                    // Show error toast for validation errors (outside Ethiopia, invalid coordinates, etc.)
+                    showErrorToast(result.message, { id: toastId });
+                } else {
+                    // Don't show error toast here - the modal will be shown in location-setup-step
+                    // Just dismiss the loading toast
+                    toast.dismiss(toastId);
+                    // The modal will be shown automatically via useEffect in location-setup-step when resourceAvailable is false
+                }
             }
         } catch (error) {
             console.error('Resource check error:', error);
-            showErrorToast('An unexpected error occurred during resource check.', { id: toastId });
+            // Extract error message from API error
+            const errorMessage = error instanceof Error 
+                ? error.message 
+                : 'An unexpected error occurred during resource check.';
+            showErrorToast(errorMessage, { id: toastId });
             updateFormData({
                 resourceAvailable: false,
-                resourceMessage: 'Resource check failed',
+                resourceMessage: errorMessage,
             });
         } finally {
             setCheckingResource(false);

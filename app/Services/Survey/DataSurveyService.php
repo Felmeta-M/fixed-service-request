@@ -72,8 +72,8 @@ class DataSurveyService extends BaseSurveyService implements SurveyInterface
 <com:ExtParamList>
 <com:ParameterInfo><com:ParamName>NEID</com:ParamName><com:ParamValue>{$resource['neid']}</com:ParamValue></com:ParameterInfo>
 <com:ParameterInfo><com:ParamName>CABLETYPE</com:ParamName><com:ParamValue>3</com:ParamValue></com:ParameterInfo>
-<com:ParameterInfo><com:ParamName>LONGITUDE</com:ParamName><com:ParamValue>{$resource['longitude']}</com:ParamValue></com:ParameterInfo>
-<com:ParameterInfo><com:ParamName>LATITUDE</com:ParamName><com:ParamValue>{$resource['latitude']}</com:ParamValue></com:ParameterInfo>
+<com:ParameterInfo><com:ParamName>LONGITUDE</com:ParamName><com:ParamValue>{$this->formatCoordinate($resource['longitude'])}</com:ParamValue></com:ParameterInfo>
+<com:ParameterInfo><com:ParamName>LATITUDE</com:ParamName><com:ParamValue>{$this->formatCoordinate($resource['latitude'])}</com:ParamValue></com:ParameterInfo>
 <com:ParameterInfo><com:ParamName>GIS_FLAG</com:ParamName><com:ParamValue>True</com:ParamValue></com:ParameterInfo>
 </com:ExtParamList>
 </ser:HandleSurveyOrderReqBody>

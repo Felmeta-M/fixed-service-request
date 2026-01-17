@@ -109,7 +109,7 @@ class SurveyOrderController extends Controller
                 // Convert survey order status to label
                 $surveyStatusValue = (int) ($item->status ?? 0);
                 $surveyStatusEnum = FFDServiceProvisionStatus::tryFrom($surveyStatusValue);
-                $surveyStatusLabel = $surveyStatusEnum ? $surveyStatusEnum->label() : 'Unknown';
+                $surveyStatusLabel = $surveyStatusEnum ? $surveyStatusEnum->label() : FFDServiceProvisionStatus::Processing->label();
 
                 // Modify labels based on subscription order ID presence
                 if (empty($item->customer_subscription_order_id)) {

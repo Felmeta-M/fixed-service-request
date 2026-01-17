@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ErrorCode;
 use App\Services\Logging\AppLogger;
 use App\Support\CustomerContext;
 use Illuminate\Support\Facades\Crypt;
@@ -16,9 +17,37 @@ class ResourceService extends BaseApiService
         return config('services.check_resource.endpoint');
     }
 
+    /**
+     * Geo-fencing bounds for Addis Ababa, Ethiopia
+     * Only coordinates within these bounds are allowed for automatic provisioning
+     */
+    private const ADDIS_ABABA_BOUNDS = [
+        'latitude_min' => 8.8,
+        'latitude_max' => 9.1,
+        'longitude_min' => 38.6,
+        'longitude_max' => 38.9,
+    ];
+
+    /**
+     * Geo-fencing bounds for Ethiopia
+     * Used to determine if location is in Ethiopia but outside Addis Ababa
+     */
+    private const ETHIOPIA_BOUNDS = [
+        'latitude_min' => 3.4,
+        'latitude_max' => 14.9,
+        'longitude_min' => 32.9,
+        'longitude_max' => 48.0,
+    ];
+
     public function check(array $data)
     {
         try {
+            // Validate coordinates are within Addis Ababa bounds
+            $validationError = $this->validateCoordinates($data['latitude'] ?? null, $data['longitude'] ?? null);
+            if ($validationError) {
+                return $validationError;
+            }
+
             $xmlPayload = $this->buildRequestXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedXml = $this->parseResponseXml($xmlResponse, $data);
@@ -28,6 +57,97 @@ class ResourceService extends BaseApiService
         } catch (\Throwable $e) {
             return ApiResponse::fromException($e, 'Resource check failed.');
         }
+    }
+
+    /**
+     * Validate coordinates are within Addis Ababa, Ethiopia bounds
+     * 
+     * @param string|float|null $latitude The latitude value
+     * @param string|float|null $longitude The longitude value
+     * @return \Illuminate\Http\JsonResponse|null Returns error response if validation fails, null if valid
+     */
+    private function validateCoordinates($latitude, $longitude): ?\Illuminate\Http\JsonResponse
+    {
+        // Check if coordinates are provided
+        if (empty($latitude) || empty($longitude)) {
+            AppLogger::api()->warning('Resource check: Missing latitude or longitude', [
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'operation' => 'geo_fencing_validation',
+            ]);
+            return ApiResponse::error(
+                'Latitude and longitude are required for resource checking.',
+                ErrorCode::VALIDATION_ERROR,
+                422
+            );
+        }
+
+        // Convert to float for comparison
+        $lat = (float) $latitude;
+        $lng = (float) $longitude;
+
+        // Validate numeric values
+        if (!is_numeric($latitude) || !is_numeric($longitude)) {
+            AppLogger::api()->warning('Resource check: Invalid coordinate format', [
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'operation' => 'geo_fencing_validation',
+            ]);
+            return ApiResponse::error(
+                'Invalid latitude or longitude format. Please provide valid numeric coordinates.',
+                ErrorCode::VALIDATION_ERROR,
+                422
+            );
+        }
+
+        // Check if coordinates are within Ethiopia bounds
+        $ethiopiaBounds = self::ETHIOPIA_BOUNDS;
+        $isWithinEthiopia = (
+            $lat >= $ethiopiaBounds['latitude_min'] &&
+            $lat <= $ethiopiaBounds['latitude_max'] &&
+            $lng >= $ethiopiaBounds['longitude_min'] &&
+            $lng <= $ethiopiaBounds['longitude_max']
+        );
+
+        if (!$isWithinEthiopia) {
+            // Location is outside Ethiopia entirely
+            AppLogger::api()->warning('Resource check: Coordinates outside Ethiopia bounds', [
+                'latitude' => $lat,
+                'longitude' => $lng,
+                'operation' => 'geo_fencing_validation',
+            ]);
+            return ApiResponse::error(
+                'No service provided outside Ethiopia. Please select a location within Ethiopia.',
+                ErrorCode::VALIDATION_ERROR,
+                422
+            );
+        }
+
+        // Location is within Ethiopia - check if within Addis Ababa
+        $addisBounds = self::ADDIS_ABABA_BOUNDS;
+        $isWithinAddisAbaba = (
+            $lat >= $addisBounds['latitude_min'] &&
+            $lat <= $addisBounds['latitude_max'] &&
+            $lng >= $addisBounds['longitude_min'] &&
+            $lng <= $addisBounds['longitude_max']
+        );
+
+        // For now, all locations in Ethiopia (including Addis Ababa) require manual review
+        // Return special response for manual review
+        $locationType = $isWithinAddisAbaba ? 'Addis Ababa' : 'Ethiopia (outside Addis Ababa)';
+        AppLogger::api()->info('Resource check: Coordinates in Ethiopia - manual review needed', [
+            'latitude' => $lat,
+            'longitude' => $lng,
+            'location_type' => $locationType,
+            'operation' => 'geo_fencing_validation',
+        ]);
+        return ApiResponse::error(
+            'LOCATION_REVIEW_NEEDED: Your location is in Ethiopia. Please continue with manual request for review.',
+            ErrorCode::VALIDATION_ERROR,
+            422
+        );
+
+        return null; // Validation passed
     }
 
     protected function buildRequestXml(array $data): string

@@ -107,13 +107,8 @@ abstract class BaseSurveyService extends BaseApiService
                 'status' => $data['survey_is_manual'] ? FFDServiceProvisionStatus::Completed->value : FFDServiceProvisionStatus::Waiting->value,
                 'cable_length' => $resource['distance'] ?? null,
                 'cable_type' => $resource['cable_type'] ?? null,
-                $data['lat'] = isset($resource['latitude'])
-                ? round((float) $resource['latitude'], 8)
-                : null,
-
-                $data['long'] = isset($resource['longitude'])
-                ? round((float) $resource['longitude'], 8)
-                : null,
+                'lat' => isset($resource['latitude']) ? round((float) $resource['latitude'], 8) : null,
+                'long' => isset($resource['longitude']) ? round((float) $resource['longitude'], 8) : null,
             ]);
 
             // Use dynamic customer BSS classification from BaseApiService helper
@@ -210,6 +205,35 @@ abstract class BaseSurveyService extends BaseApiService
     }
 
     // parseBandwidth is inherited from BaseApiService
+
+    /**
+     * Format coordinate value for XML (longitude/latitude)
+     * Ensures the value is properly formatted as a numeric string
+     * 
+     * @param string|null $coordinate The coordinate value (decrypted)
+     * @return string Formatted coordinate value
+     */
+    protected function formatCoordinate(?string $coordinate): string
+    {
+        if (empty($coordinate)) {
+            return '0';
+        }
+
+        // Remove any unexpected characters (whitespace, newlines, etc.)
+        $coordinate = trim($coordinate);
+
+        // Ensure it's a valid numeric value
+        if (!is_numeric($coordinate)) {
+            AppLogger::api()->warning('Invalid coordinate value detected', [
+                'coordinate' => $coordinate,
+                'operation' => 'format_coordinate',
+            ]);
+            return '0';
+        }
+
+        // Format as decimal with up to 8 decimal places
+        return (string) round((float) $coordinate, 8);
+    }
 
     /** Service-specific hooks */
     abstract protected function mainOfferId(): int;

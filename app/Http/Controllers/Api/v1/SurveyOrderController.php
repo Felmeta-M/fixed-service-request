@@ -111,6 +111,23 @@ class SurveyOrderController extends Controller
                 $surveyStatusEnum = FFDServiceProvisionStatus::tryFrom($surveyStatusValue);
                 $surveyStatusLabel = $surveyStatusEnum ? $surveyStatusEnum->label() : 'Unknown';
 
+                // Modify labels based on subscription order ID presence
+                if (empty($item->customer_subscription_order_id)) {
+                    // Manual surveys - no subscription order ID
+                    if ($surveyStatusEnum === FFDServiceProvisionStatus::Waiting) {
+                        $surveyStatusLabel = 'Waiting Survey';
+                    } elseif ($surveyStatusEnum === FFDServiceProvisionStatus::Completed) {
+                        $surveyStatusLabel = 'Survey Completed';
+                    }
+                } else {
+                    // Auto surveys - subscription order ID present
+                    if ($surveyStatusEnum === FFDServiceProvisionStatus::Waiting) {
+                        $surveyStatusLabel = 'Subscription Waiting';
+                    } elseif ($surveyStatusEnum === FFDServiceProvisionStatus::Completed) {
+                        $surveyStatusLabel = 'Subscription Completed';
+                    }
+                }
+
                 return [
                     'id' => (string) $item->id,
                     'customer_survey_order_id' => $item->customer_survey_order_id,
@@ -478,6 +495,23 @@ class SurveyOrderController extends Controller
         $surveyStatusValue = (int) ($order->status ?? 0);
         $surveyStatusEnum = FFDServiceProvisionStatus::tryFrom($surveyStatusValue);
         $surveyStatusLabel = $surveyStatusEnum ? $surveyStatusEnum->label() : 'Unknown';
+
+        // Modify labels based on subscription order ID presence
+        if (empty($order->customer_subscription_order_id)) {
+            // Manual surveys - no subscription order ID
+            if ($surveyStatusEnum === FFDServiceProvisionStatus::Waiting) {
+                $surveyStatusLabel = 'Waiting Survey';
+            } elseif ($surveyStatusEnum === FFDServiceProvisionStatus::Completed) {
+                $surveyStatusLabel = 'Survey Completed';
+            }
+        } else {
+            // Auto surveys - subscription order ID present
+            if ($surveyStatusEnum === FFDServiceProvisionStatus::Waiting) {
+                $surveyStatusLabel = 'Subscription Waiting';
+            } elseif ($surveyStatusEnum === FFDServiceProvisionStatus::Completed) {
+                $surveyStatusLabel = 'Subscription Completed';
+            }
+        }
 
         return [
             'id' => (string) $order->id,

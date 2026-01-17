@@ -54,7 +54,17 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
         });
 
         if (hasFeatures) {
-            targetMap.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
+            // Use minimal padding to maximize coverage visibility
+            targetMap.fitBounds(bounds, { top: 20, right: 20, bottom: 20, left: 20 });
+            
+            // After fitting bounds, zoom in by 1 level for a closer view
+            // while still keeping all coverage areas visible
+            setTimeout(() => {
+                const currentZoom = targetMap.getZoom();
+                if (currentZoom && currentZoom < 14) {
+                    targetMap.setZoom(currentZoom + 0.4);
+                }
+            }, 100);
         }
     }, []);
 

@@ -150,7 +150,11 @@ class SurveyOrderController extends Controller
 
                 $isPaid = $item->payment_id ? (($item->payment_status == (string) FFDServiceProvisionStatus::Waiting->value) && !empty($item->payment_trans_id)) : false;
 
-                $canCancel = empty($item->customer_subscription_order_id);
+                if ($surveyStatusValue == (string) FFDServiceProvisionStatus::Completed->value) {
+                    $canCancel = empty($item->customer_subscription_order_id);
+                } else if ($surveyStatusValue == (string) FFDServiceProvisionStatus::Waiting->value && empty($item->payment_trans_id)) {
+                    $canCancel = true;
+                }
 
                 return [
                     // 'id' => (string) $item->id,

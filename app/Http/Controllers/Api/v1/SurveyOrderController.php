@@ -131,6 +131,7 @@ class SurveyOrderController extends Controller
                 $surveyStatusValue = (int) ($item->status ?? 0);
                 $canPay = false;
                 $canSubscribe = false;
+                $canChangeOffer = false;
                 if ($surveyStatusValue == (string) FFDServiceProvisionStatus::Completed->value) {
                     $canPay = ((float) $item->payment_amount ?? 0) > 0 && empty($item->payment_trans_id);
                 }
@@ -143,6 +144,13 @@ class SurveyOrderController extends Controller
                     $canSubscribe = ((float) $item->payment_amount ?? 0) > 0 && !empty($item->payment_trans_id);
                 }
 
+                if ($surveyStatusValue == (string) FFDServiceProvisionStatus::Completed->value) {
+                    $canChangeOffer = !empty($item->customer_subscription_order_id);
+                }
+
+                $isPaid = $item->payment_id ? (($item->payment_status == (string) FFDServiceProvisionStatus::Waiting->value) && !empty($item->payment_trans_id)) : false;
+
+                $canCancel = empty($item->customer_subscription_order_id);
 
                 return [
                     // 'id' => (string) $item->id,
@@ -160,15 +168,18 @@ class SurveyOrderController extends Controller
                         // 'id' => $item->payment_id,
                         'total_amount' => $item->payment_amount,
                     ] : null,
+
                     'status' => $surveyStatusLabel,
 
-                    'is_paid' => $item->payment_id ? (($item->payment_status == FFDServiceProvisionStatus::Waiting->value) && !empty($item->payment_trans_id)) : false,
+                    'is_paid' => $isPaid,
 
                     'can_pay' => $canPay,
 
                     'can_subscribe' => $canSubscribe,
 
-                    'can_cancel' => empty($item->customer_subscription_order_id),
+                    'can_change_offer' => $canChangeOffer,
+
+                    'can_cancel' => $canCancel,
                 ];
             });
 

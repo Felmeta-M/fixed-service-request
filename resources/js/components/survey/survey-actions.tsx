@@ -28,6 +28,7 @@ type Contact = {
 };
 type SurveyRow = {
     customer_survey_order_id?: string;
+    customer_subscription_order_id?: string | null;
     service_number?: string | null;
     main_offer_id?: string;
     status?: string;
@@ -54,6 +55,7 @@ type AuthUser = {
 
 type Survey = {
     customer_survey_order_id?: string | number;
+    customer_subscription_order_id?: string | null;
     status?: string | number | null;
     main_offer_id?: string;
     offering_id?: string;
@@ -306,15 +308,26 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         totalAmount: survey.payment?.total_amount ? Number(survey.payment.total_amount) : undefined,
     });
 
+    // Helper: Get primary order ID (customer_subscription_order_id for auto, customer_survey_order_id for manual)
+    const getPrimaryOrderId = () => {
+        return survey?.customer_subscription_order_id || survey?.customer_survey_order_id;
+    };
+
+    // Helper: Check if using subscription order ID
+    const isSubscriptionOrderId = () => {
+        return !!survey?.customer_subscription_order_id;
+    };
+
     const navigateToDetails = (focus?: 'payment' | 'subscribe') => {
-        const id = survey?.customer_survey_order_id;
+        const id = getPrimaryOrderId();
         if (!id) return;
         const q = focus ? `?focus=${focus}` : '';
-        router.visit(`/services/${id}${q}`);
+        const orderIdParam = isSubscriptionOrderId() ? `customer_subscription_order_id=${id}` : `customer_survey_order_id=${id}`;
+        router.visit(`/services/${id}?${orderIdParam}${focus ? `&focus=${focus}` : ''}`);
     };
 
     const onSubscribeClick = async () => {
-        const id = survey?.customer_survey_order_id;
+        const id = survey?.customer_survey_order_id; // Still use customer_survey_order_id for subscription API
         if (!id) return;
 
         // Prevent double-click / duplicate submission using ref for immediate check
@@ -385,9 +398,11 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         });
     };
     const handleRowClick = (survey: SurveyRow) => {
-        const id = survey?.customer_survey_order_id;
+        const id = survey?.customer_subscription_order_id || survey?.customer_survey_order_id;
         if (!id) return;
-        router.visit(`/services/${id}`);
+        const isSubscription = !!survey?.customer_subscription_order_id;
+        const orderIdParam = isSubscription ? `customer_subscription_order_id=${id}` : `customer_survey_order_id=${id}`;
+        router.visit(`/services/${id}?${orderIdParam}`);
     };
 
     return (

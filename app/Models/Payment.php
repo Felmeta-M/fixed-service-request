@@ -34,6 +34,7 @@ class Payment extends Model
     protected $fillable = [
         'customer_code',
         'customer_survey_order_id',
+        'customer_subscription_order_id',
         'merch_code',
         'merch_order_id',
         'payment_order_id',

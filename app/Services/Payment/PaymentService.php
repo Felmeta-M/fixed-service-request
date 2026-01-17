@@ -59,6 +59,7 @@ class PaymentService
                     'subscription_fee' => $data['subscription_fee'] ?? 0,
                     'cable_charge' => $data['cable_charge'] ?? 0,
                     'device_fee' => $data['device_fee'] ?? 0,
+                    'customer_subscription_order_id' => $data['customer_subscription_order_id'] ?? null,
                     'status' => FFDServiceProvisionStatus::Pending->value,
                     'updated_at' => now(),
                     'created_at' => now(),

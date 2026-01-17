@@ -8,6 +8,7 @@ use App\Services\Logging\AppLogger;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Support\CustomerContext;
+use Illuminate\Support\Facades\DB;
 
 class ComboSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
@@ -342,6 +343,27 @@ XML;
                      'subscribed_at' => now(),
                      'customer_subscription_order_id' => $res['customer_busi_order_id'],
                   ]);
+
+               // Update payment table with customer_subscription_order_id (important for manual subscriptions)
+               try {
+                  DB::table('payments')
+                     ->where('customer_survey_order_id', $surveyOrderId)
+                     ->update(['customer_subscription_order_id' => $res['customer_busi_order_id']]);
+
+                  AppLogger::api()->info('Payment updated with customer_subscription_order_id after combo subscription', [
+                     'survey_order_id' => $surveyOrderId,
+                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
+                     'service_type' => 'combo',
+                  ]);
+               } catch (\Throwable $e) {
+                  AppLogger::api()->warning('Failed to update payment with customer_subscription_order_id', [
+                     'survey_order_id' => $surveyOrderId,
+                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
+                     'error' => $e->getMessage(),
+                     'service_type' => 'combo',
+                  ]);
+                  // Don't fail - subscription was successful
+               }
             }
          } catch (\Throwable $e) {
             AppLogger::api()->exception($e, 'Failed to update survey order after combo subscription', [

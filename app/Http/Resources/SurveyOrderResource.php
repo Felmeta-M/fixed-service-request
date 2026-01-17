@@ -11,6 +11,7 @@ class SurveyOrderResource extends JsonResource
     {
         return [
             'customer_survey_order_id' => $this->customer_survey_order_id,
+            'customer_subscription_order_id' => $this->customer_subscription_order_id,
             // 'customer_code' => $this->customer_code,
             // 'customer_type' => $this->customer_type,
             'survey_type' => $this->survey_type,

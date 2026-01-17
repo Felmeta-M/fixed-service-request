@@ -24,6 +24,7 @@ type AuthUser = {
 
 type SurveyDetails = {
     customer_survey_order_id?: string;
+    customer_subscription_order_id?: string | null;
     main_offer_id?: string;
     service_number?: string | null;
     cable_length?: string | number | null;
@@ -33,6 +34,7 @@ type SurveyDetails = {
 
 type PaymentDetailsData = {
     customer_survey_order_id?: string;
+    customer_subscription_order_id?: string | null;
     service_number?: string | null;
     amount?: string | number | null;
     total_amount?: string | number | null;
@@ -65,6 +67,7 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
 
     const payment = paymentDetails?.data;
     const customer_survey_order_id = payment?.customer_survey_order_id ?? surveyDetails?.customer_survey_order_id ?? '';
+    const customer_subscription_order_id = payment?.customer_subscription_order_id ?? surveyDetails?.customer_subscription_order_id ?? null;
     const service_number = surveyDetails?.service_number ?? payment?.service_number ?? '-';
 
     const amountRaw = payment?.amount ?? payment?.total_amount;
@@ -285,6 +288,12 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                                         <p className="text-sm font-medium text-gray-500">Order Reference</p>
                                         <p className="font-mono text-gray-900">{customer_survey_order_id}</p>
                                     </div>
+                                    {customer_subscription_order_id && (
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-500">Service Order Number</p>
+                                            <p className="font-mono text-lg font-semibold text-gray-900">{customer_subscription_order_id}</p>
+                                        </div>
+                                    )}
                                     <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
                                         <span className="text-sm text-gray-600">Service Type</span>
                                         <Badge variant="outline">New Connection</Badge>

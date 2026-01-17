@@ -29,6 +29,7 @@ type PaymentDetailsData = {
     amount?: string | number | null;
     service_number?: string | null;
     customer_survey_order_id?: string;
+    customer_subscription_order_id?: string | null;
 };
 
 type PaymentDetailsResource = { data: PaymentDetailsData } | null;
@@ -41,7 +42,16 @@ export default function ServiceShowPage() {
     const { props, url } = usePage<ServiceShowProps>();
     const { customerSurveyOrderId } = props;
 
-    const surveyDetailQuery = useSurveyDetail(customerSurveyOrderId);
+    // Extract order ID from URL query params if present, otherwise use route param
+    const urlParams = new URLSearchParams(url.includes('?') ? url.split('?')[1] : '');
+    const subscriptionOrderId = urlParams.get('customer_subscription_order_id');
+    const surveyOrderIdFromUrl = urlParams.get('customer_survey_order_id');
+    
+    // Priority: customer_subscription_order_id (from URL) > customer_survey_order_id (from URL) > route param
+    const orderId = subscriptionOrderId || surveyOrderIdFromUrl || customerSurveyOrderId;
+    const isSubscriptionOrderId = !!subscriptionOrderId;
+
+    const surveyDetailQuery = useSurveyDetail(orderId, isSubscriptionOrderId);
     const loading = surveyDetailQuery.isLoading;
     const error = surveyDetailQuery.error?.message || null;
 

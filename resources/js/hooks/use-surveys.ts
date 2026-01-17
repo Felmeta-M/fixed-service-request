@@ -7,6 +7,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL;
 interface Survey {
     id: string;
     customer_survey_order_id: string;
+    customer_subscription_order_id?: string | null;
     survey_type: string;
     status: string;
     created_at: string;
@@ -38,6 +39,7 @@ interface SurveyDetailResponse {
     success: boolean;
     data: {
         customer_survey_order_id: string;
+        customer_subscription_order_id?: string | null;
         customer_type?: string | null;
         survey_type?: string | null;
         main_offer_id: string;
@@ -55,6 +57,7 @@ interface SurveyDetailResponse {
             amount?: string | number | null;
             service_number?: string | null;
             customer_survey_order_id?: string;
+            customer_subscription_order_id?: string | null;
         };
     };
     message?: string;
@@ -105,19 +108,24 @@ export function useSurveyList(filters?: SurveyListFilters) {
 
 /**
  * Query hook for fetching a single survey/service detail
+ * Accepts either customer_subscription_order_id (preferred) or customer_survey_order_id (fallback)
  */
-export function useSurveyDetail(customerSurveyOrderId: string) {
+export function useSurveyDetail(orderId: string, isSubscriptionOrderId?: boolean) {
     const token = useAuthToken();
 
     return useQuery<SurveyDetailResponse, Error>({
-        queryKey: ['surveyDetail', customerSurveyOrderId, token],
+        queryKey: ['surveyDetail', orderId, isSubscriptionOrderId, token],
         queryFn: async () => {
             if (!token) throw new Error('Authentication token required');
-            return apiClient.get<SurveyDetailResponse>(`/survey-requests/show?customer_survey_order_id=${customerSurveyOrderId}`, {
+            // Use customer_subscription_order_id when provided, otherwise fallback to customer_survey_order_id
+            const param = isSubscriptionOrderId 
+                ? `customer_subscription_order_id=${orderId}` 
+                : `customer_survey_order_id=${orderId}`;
+            return apiClient.get<SurveyDetailResponse>(`/survey-requests/show?${param}`, {
                 token,
             });
         },
-        enabled: !!token && !!customerSurveyOrderId,
+        enabled: !!token && !!orderId,
     });
 }
 

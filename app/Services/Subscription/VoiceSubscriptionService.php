@@ -9,6 +9,7 @@ use App\Services\Logging\AppLogger;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Traits\InteractsWithSMSGateway;
+use Illuminate\Support\Facades\DB;
 
 class VoiceSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
@@ -348,6 +349,27 @@ XML;
                   'service_number' => $this->serviceNumber,
                   'service_type' => 'voice',
                ]);
+            }
+
+            // Update payment table with customer_subscription_order_id (important for manual subscriptions)
+            try {
+               DB::table('payments')
+                  ->where('customer_survey_order_id', $data['survey_order_id'])
+                  ->update(['customer_subscription_order_id' => $customerBusiOrderId]);
+
+               AppLogger::api()->info('Payment updated with customer_subscription_order_id after voice subscription', [
+                  'survey_order_id' => $data['survey_order_id'] ?? null,
+                  'customer_subscription_order_id' => $customerBusiOrderId,
+                  'service_type' => 'voice',
+               ]);
+            } catch (\Throwable $e) {
+               AppLogger::api()->warning('Failed to update payment with customer_subscription_order_id', [
+                  'survey_order_id' => $data['survey_order_id'] ?? null,
+                  'customer_subscription_order_id' => $customerBusiOrderId,
+                  'error' => $e->getMessage(),
+                  'service_type' => 'voice',
+               ]);
+               // Don't fail - subscription was successful
             }
          } catch (\Throwable $e) {
             AppLogger::api()->exception($e, 'Exception updating survey order status after voice subscription', [

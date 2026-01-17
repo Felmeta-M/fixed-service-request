@@ -10,6 +10,7 @@ use App\Http\Resources\SurveyOrderResource;
 use App\Models\SurveyOrder;
 use App\Services\ManualSurveyOrderService;
 use App\Services\QuerySurveyOrderService;
+use App\Services\QuerySubscriptionOrderStatusService;
 use App\Services\Logging\AppLogger;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
@@ -27,8 +28,10 @@ class SurveyOrderController extends Controller
     public function __construct(
         protected SurveyServiceFactory $factory,
         protected readonly QuerySurveyOrderService $querySurveyOrderService,
+        protected readonly QuerySubscriptionOrderStatusService $querySubscriptionOrderStatusService,
         protected readonly ManualSurveyOrderService $manualSurveyOrderService
-    ) {}
+    ) {
+    }
 
     /**
      * Display a listing of the resource - optimized with Query Builder
@@ -45,7 +48,10 @@ class SurveyOrderController extends Controller
                 ->where('survey_orders.customer_code', (string) $customer->customer_code)
                 ->select([
                     'survey_orders.id',
+                    'survey_orders.id',
                     'survey_orders.customer_survey_order_id',
+                    'survey_orders.customer_subscription_order_id',
+                    'survey_orders.survey_is_manual',
                     'survey_orders.customer_code',
                     'survey_orders.status',
                     'survey_orders.main_offer_id',
@@ -58,6 +64,15 @@ class SurveyOrderController extends Controller
                     'payments.total_amount as payment_amount',
                     'payments.status as payment_status',
                 ]);
+
+            // Handle search parameter - search in both customer_survey_order_id and customer_subscription_order_id
+            if ($request->filled('search')) {
+                $searchTerm = $request->input('search');
+                $query->where(function ($q) use ($searchTerm) {
+                    $q->where('survey_orders.customer_survey_order_id', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('survey_orders.customer_subscription_order_id', 'like', '%' . $searchTerm . '%');
+                });
+            }
 
             if ($request->filled('customer_survey_order_id')) {
                 $query->where('survey_orders.customer_survey_order_id', 'like', '%' . $request->customer_survey_order_id . '%');
@@ -96,6 +111,7 @@ class SurveyOrderController extends Controller
                 return [
                     'id' => $item->id,
                     'customer_survey_order_id' => $item->customer_survey_order_id,
+                    'customer_subscription_order_id' => $item->customer_subscription_order_id ?? null,
                     'customer_code' => $item->customer_code,
                     'status' => $item->status,
                     'main_offer_id' => $item->main_offer_id,
@@ -141,6 +157,8 @@ class SurveyOrderController extends Controller
 
     /**
      * Batch refresh multiple orders and update efficiently
+     * For auto surveys (survey_is_manual = false): Uses QuerySubscriptionOrderStatusService with customer_subscription_order_id
+     * For manual surveys (survey_is_manual = true): Uses QuerySurveyOrderService with customer_survey_order_id
      */
     protected function batchRefreshOrders($orders): void
     {
@@ -149,8 +167,29 @@ class SurveyOrderController extends Controller
 
         foreach ($orders as $order) {
             try {
-                $response = $this->querySurveyOrderService
-                    ->querySurveyOrderDetail($order->customer_survey_order_id);
+                $isManual = (bool) ($order->survey_is_manual ?? true);
+                $response = null;
+
+                if (!$isManual && !empty($order->customer_subscription_order_id)) {
+                    // Auto survey: Use subscription order status service with customer_subscription_order_id
+                    $subscriptionResponse = $this->querySubscriptionOrderStatusService
+                        ->queryStatus($order->customer_subscription_order_id);
+
+                    if (!empty($subscriptionResponse['success']) && isset($subscriptionResponse['status'])) {
+                        // Map subscription order status to survey order status
+                        $newStatus = $this->mapSubscriptionStatusToSurveyStatus($subscriptionResponse['status']);
+                        $response = [
+                            'success' => true,
+                            'status' => $newStatus,
+                        ];
+                    } else {
+                        $response = null;
+                    }
+                } else {
+                    // Manual survey: Use survey order service with customer_survey_order_id
+                    $response = $this->querySurveyOrderService
+                        ->querySurveyOrderDetail($order->customer_survey_order_id);
+                }
 
                 if (empty($response['success']) || empty($response['status'])) {
                     $timestampUpdates[] = $order->id;
@@ -167,6 +206,8 @@ class SurveyOrderController extends Controller
             } catch (Throwable $e) {
                 AppLogger::business()->warning('Failed to refresh survey order', [
                     'customer_survey_order_id' => $order->customer_survey_order_id ?? null,
+                    'customer_subscription_order_id' => $order->customer_subscription_order_id ?? null,
+                    'survey_is_manual' => $order->survey_is_manual ?? null,
                     'error' => $e->getMessage(),
                 ]);
             }
@@ -213,6 +254,23 @@ class SurveyOrderController extends Controller
                 ->whereIn('id', $timestampUpdates)
                 ->update(['last_checked_at' => now()]);
         }
+    }
+
+    /**
+     * Map subscription order status code to survey order status value
+     * 
+     * @param int $subscriptionStatus Subscription order status code from QuerySubscriptionOrderStatusService
+     * @return string Survey order status value (FFDServiceProvisionStatus enum value)
+     */
+    protected function mapSubscriptionStatusToSurveyStatus(int $subscriptionStatus): string
+    {
+        return match ($subscriptionStatus) {
+            QuerySubscriptionOrderStatusService::STATUS_WAITING => FFDServiceProvisionStatus::Waiting->value,
+            QuerySubscriptionOrderStatusService::STATUS_FAILED => FFDServiceProvisionStatus::Failed->value,
+            QuerySubscriptionOrderStatusService::STATUS_COMPLETED => FFDServiceProvisionStatus::Completed->value,
+            QuerySubscriptionOrderStatusService::STATUS_CANCELLED => FFDServiceProvisionStatus::Failed->value,
+            default => FFDServiceProvisionStatus::Waiting->value, // Default to waiting for unknown statuses
+        };
     }
 
     /**
@@ -280,23 +338,34 @@ class SurveyOrderController extends Controller
 
     /**
      * Display the specified resource - optimized with Query Builder
+     * Accepts customer_subscription_order_id (primary) or customer_survey_order_id (fallback)
      */
     public function show(Request $request)
     {
-        $orderId = $request->input('customer_survey_order_id');
+        // Priority: customer_subscription_order_id (for auto surveys) > customer_survey_order_id (for manual surveys)
+        $subscriptionOrderId = $request->input('customer_subscription_order_id');
+        $surveyOrderId = $request->input('customer_survey_order_id');
 
-        if (!$orderId) {
+        if (!$subscriptionOrderId && !$surveyOrderId) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order ID is required.',
+                'message' => 'Order ID is required (customer_subscription_order_id or customer_survey_order_id).',
             ], 400);
         }
 
         // Use Query Builder with join for single query
-        $surveyRequest = DB::table('survey_orders')
+        $query = DB::table('survey_orders')
             ->leftJoin('payments', 'survey_orders.customer_survey_order_id', '=', 'payments.customer_survey_order_id')
-            ->whereNull('survey_orders.deleted_at')
-            ->where('survey_orders.customer_survey_order_id', (string) $orderId)
+            ->whereNull('survey_orders.deleted_at');
+
+        // Prioritize customer_subscription_order_id if provided
+        if ($subscriptionOrderId) {
+            $query->where('survey_orders.customer_subscription_order_id', (string) $subscriptionOrderId);
+        } else {
+            $query->where('survey_orders.customer_survey_order_id', (string) $surveyOrderId);
+        }
+
+        $surveyRequest = $query
             ->select([
                 'survey_orders.*',
                 'payments.id as payment_id',
@@ -404,7 +473,7 @@ class SurveyOrderController extends Controller
         return [
             'id' => $order->id,
             'customer_survey_order_id' => $order->customer_survey_order_id,
-            'customer_survey_order_id' => $order->customer_survey_order_id,
+            'customer_subscription_order_id' => $order->customer_subscription_order_id ?? null,
             'customer_code' => $order->customer_code,
             'status' => $order->status,
             'main_offer_id' => $order->main_offer_id,

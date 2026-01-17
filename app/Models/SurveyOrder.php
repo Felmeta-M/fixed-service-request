@@ -234,6 +234,7 @@ class SurveyOrder extends Model
 
     /**
      * Check if order needs status refresh (for raw Query Builder data).
+     * For WAITING orders - check if status changed.
      */
     public static function needsRefresh(object $order, int $minutesThreshold = 5): bool
     {

@@ -8,6 +8,7 @@ use App\Http\Requests\ManualSurveyOrderRequest;
 use App\Http\Requests\SurveyOrderFormRequest;
 use App\Models\SurveyOrder;
 use App\Services\ManualSurveyOrderService;
+use App\Services\QueryPurchasedOfferingService;
 use App\Services\QuerySurveyOrderService;
 use App\Services\QuerySubscriptionOrderStatusService;
 use App\Services\Logging\AppLogger;
@@ -27,6 +28,7 @@ class SurveyOrderController extends Controller
         protected SurveyServiceFactory $factory,
         protected readonly QuerySurveyOrderService $querySurveyOrderService,
         protected readonly QuerySubscriptionOrderStatusService $querySubscriptionOrderStatusService,
+        protected readonly QueryPurchasedOfferingService $queryPurchasedOfferingService,
         protected readonly ManualSurveyOrderService $manualSurveyOrderService
     ) {}
 
@@ -53,6 +55,7 @@ class SurveyOrderController extends Controller
                     'survey_orders.status',
                     'survey_orders.main_offer_id',
                     'survey_orders.service_number',
+                    'survey_orders.bandwidth',
                     'survey_orders.with_device',
                     'survey_orders.last_checked_at',
                     'survey_orders.created_at',
@@ -83,7 +86,7 @@ class SurveyOrderController extends Controller
             $ordersToRefresh = collect($surveyOrders->items())
                 ->filter(fn($order) => SurveyOrder::needsRefresh($order));
 
-            // Batch refresh orders
+            // Batch refresh orders (for WAITING status - check order status)
             if ($ordersToRefresh->isNotEmpty()) {
                 $this->batchRefreshOrders($ordersToRefresh);
             }
@@ -305,7 +308,6 @@ class SurveyOrderController extends Controller
      */
     public function show(Request $request)
     {
-        // Priority: customer_subscription_order_id (for auto surveys) > customer_survey_order_id (for manual surveys)
         $subscriptionOrderId = $request->input('customer_subscription_order_id');
         $surveyOrderId = $request->input('customer_survey_order_id');
 
@@ -316,28 +318,8 @@ class SurveyOrderController extends Controller
             ], 400);
         }
 
-        // Use Query Builder with join for single query
-        $query = DB::table('survey_orders')
-            ->leftJoin('payments', 'survey_orders.customer_survey_order_id', '=', 'payments.customer_survey_order_id')
-            ->whereNull('survey_orders.deleted_at');
-
-        // Prioritize customer_subscription_order_id if provided
-        if ($subscriptionOrderId) {
-            $query->where('survey_orders.customer_subscription_order_id', (string) $subscriptionOrderId);
-        } else {
-            $query->where('survey_orders.customer_survey_order_id', (string) $surveyOrderId);
-        }
-
-        $surveyRequest = $query
-            ->select([
-                'survey_orders.*',
-                'payments.id as payment_id',
-                'payments.total_amount as payment_amount',
-                'payments.status as payment_status',
-                'payments.merch_order_id as payment_merch_order_id',
-                'payments.trans_id as payment_trans_id',
-            ])
-            ->first();
+        // Fetch survey order with payment data
+        $surveyRequest = $this->fetchSurveyOrder($subscriptionOrderId, $surveyOrderId);
 
         if (!$surveyRequest) {
             return response()->json([
@@ -346,11 +328,97 @@ class SurveyOrderController extends Controller
             ], 404);
         }
 
+        // Refresh offering for completed orders (check if bandwidth changed)
+        // If updated, re-fetch to get fresh data
+        if ($this->refreshOfferingIfNeeded($surveyRequest)) {
+            $surveyRequest = $this->fetchSurveyOrder($subscriptionOrderId, $surveyOrderId);
+        }
+
         // Transform to resource format
         return response()->json([
             'success' => true,
             'data' => $this->transformOrder($surveyRequest),
         ]);
+    }
+
+    /**
+     * Fetch survey order with payment data.
+     */
+    protected function fetchSurveyOrder(?string $subscriptionOrderId, ?string $surveyOrderId): ?object
+    {
+        $query = DB::table('survey_orders')
+            ->leftJoin('payments', 'survey_orders.customer_survey_order_id', '=', 'payments.customer_survey_order_id')
+            ->whereNull('survey_orders.deleted_at')
+            ->select([
+                'survey_orders.*',
+                'payments.id as payment_id',
+                'payments.total_amount as payment_amount',
+                'payments.status as payment_status',
+                'payments.merch_order_id as payment_merch_order_id',
+                'payments.trans_id as payment_trans_id',
+            ]);
+
+        if ($subscriptionOrderId) {
+            $query->where('survey_orders.customer_subscription_order_id', (string) $subscriptionOrderId);
+        } else {
+            $query->where('survey_orders.customer_survey_order_id', (string) $surveyOrderId);
+        }
+
+        return $query->first();
+    }
+
+    /**
+     * Refresh offering for a completed order if needed.
+     * Checks if bandwidth changed via other channels.
+     * Returns true if data was updated (caller should re-fetch).
+     */
+    protected function refreshOfferingIfNeeded(object $order): bool
+    {
+        // Only for completed orders with subscription and service_number
+        if ((int) $order->status !== FFDServiceProvisionStatus::Completed->value) {
+            return false;
+        }
+
+        if (empty($order->customer_subscription_order_id) || empty($order->service_number)) {
+            return false;
+        }
+
+        try {
+            // Query current purchased offering
+            $response = $this->queryPurchasedOfferingService
+                ->queryByServiceNumber($order->service_number);
+
+            if (empty($response['success'])) {
+                return false;
+            }
+
+            // Check if bandwidth changed
+            $currentBandwidth = $response['bandwidth'] ?? null;
+            if ($currentBandwidth && $currentBandwidth !== $order->bandwidth) {
+                DB::table('survey_orders')
+                    ->where('id', $order->id)
+                    ->update([
+                        'bandwidth' => $currentBandwidth,
+                        'updated_at' => now(),
+                    ]);
+
+                AppLogger::business()->info('Offering bandwidth updated on show', [
+                    'customer_survey_order_id' => $order->customer_survey_order_id,
+                    'service_number' => $order->service_number,
+                    'old_bandwidth' => $order->bandwidth,
+                    'new_bandwidth' => $currentBandwidth,
+                ]);
+
+                return true;
+            }
+        } catch (Throwable $e) {
+            AppLogger::business()->warning('Failed to refresh offering on show', [
+                'customer_survey_order_id' => $order->customer_survey_order_id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return false;
     }
 
     /**

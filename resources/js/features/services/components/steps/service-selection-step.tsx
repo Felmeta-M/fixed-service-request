@@ -60,7 +60,22 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
 
     const handleServiceSelect = (serviceId: string) => {
         if (hasActiveSurvey) return; // Prevent selection if there's an active survey
-        onUpdate({ serviceType: serviceId });
+        
+        // Clear device data when switching to Voice service (no device option for Voice)
+        const isVoiceService = serviceId === '1207609454';
+        if (isVoiceService) {
+            onUpdate({ 
+                serviceType: serviceId,
+                withDevice: false,
+                selectedDevice: null,
+                selectedDeviceInternet: null,
+                selectedDeviceVoice: null,
+                deviceId: null,
+                deviceVoiceId: null,
+            });
+        } else {
+            onUpdate({ serviceType: serviceId });
+        }
     };
 
     const handleBandwidthChange = (value: string, numericValue: number, type: string) => {
@@ -123,58 +138,61 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                 </div>
             )}
 
-            <DeviceOptionSelector
-                value={formData.withDevice}
-                serviceType={formData.serviceType}
-                onChange={(val) => {
-                    const isCombo = formData.serviceType === '180427974';
-                    // If switching to "without device", clear all selected devices
-                    if (!val) {
-                        if (isCombo) {
-                            onUpdate({
-                                withDevice: false,
-                                selectedDeviceInternet: null,
-                                selectedDeviceVoice: null,
-                                deviceId: null,
-                                deviceVoiceId: null,
-                            });
+            {/* Device selection only available for Internet and Combo services */}
+            {(formData.serviceType === '1457567289' || formData.serviceType === '180427974') && (
+                <DeviceOptionSelector
+                    value={formData.withDevice}
+                    serviceType={formData.serviceType}
+                    onChange={(val) => {
+                        const isCombo = formData.serviceType === '180427974';
+                        // If switching to "without device", clear all selected devices
+                        if (!val) {
+                            if (isCombo) {
+                                onUpdate({
+                                    withDevice: false,
+                                    selectedDeviceInternet: null,
+                                    selectedDeviceVoice: null,
+                                    deviceId: null,
+                                    deviceVoiceId: null,
+                                });
+                            } else {
+                                onUpdate({
+                                    withDevice: false,
+                                    selectedDevice: null,
+                                    deviceId: null,
+                                });
+                            }
                         } else {
-                            onUpdate({
-                                withDevice: false,
-                                selectedDevice: null,
-                                deviceId: null,
-                            });
+                            onUpdate({ withDevice: true });
                         }
-                    } else {
-                        onUpdate({ withDevice: true });
-                    }
-                }}
-                selectedDevice={formData.selectedDevice}
-                selectedDeviceInternet={formData.selectedDeviceInternet}
-                selectedDeviceVoice={formData.selectedDeviceVoice}
-                onDeviceSelect={(device) => {
-                    // Single service device selection
-                    onUpdate({
-                        selectedDevice: device,
-                        deviceId: device.id,
-                    });
-                }}
-                onInternetDeviceSelect={(device) => {
-                    // Combo internet device selection
-                    onUpdate({
-                        selectedDeviceInternet: device,
-                        deviceId: device.id,
-                    });
-                }}
-                onVoiceDeviceSelect={(device) => {
-                    // Combo voice device selection
-                    onUpdate({
-                        selectedDeviceVoice: device,
-                        deviceVoiceId: device.id,
-                    });
-                }}
-                disabled={hasActiveSurvey}
-            />
+                    }}
+                    selectedDevice={formData.selectedDevice}
+                    selectedDeviceInternet={formData.selectedDeviceInternet}
+                    selectedDeviceVoice={formData.selectedDeviceVoice}
+                    onDeviceSelect={(device) => {
+                        // Single service device selection
+                        onUpdate({
+                            selectedDevice: device,
+                            deviceId: device.id,
+                        });
+                    }}
+                    onInternetDeviceSelect={(device) => {
+                        // Combo internet device selection
+                        onUpdate({
+                            selectedDeviceInternet: device,
+                            deviceId: device.id,
+                        });
+                    }}
+                    onVoiceDeviceSelect={(device) => {
+                        // Combo voice device selection
+                        onUpdate({
+                            selectedDeviceVoice: device,
+                            deviceVoiceId: device.id,
+                        });
+                    }}
+                    disabled={hasActiveSurvey}
+                />
+            )}
 
             {/* Terms and Conditions Checkbox */}
             <div>

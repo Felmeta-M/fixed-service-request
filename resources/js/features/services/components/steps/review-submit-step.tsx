@@ -223,69 +223,75 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                 <span className="text-sm text-gray-600">Service Type</span>
                                 <p className="font-semibold">{serviceInfo?.name}</p>
                             </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Bandwidth</span>
-                                <p className="font-semibold">{formData.bandwidth || '-'}</p>
-                            </div>
+                            {/* Bandwidth - only for Internet and Combo services */}
+                            {(formData.serviceType === '1457567289' || formData.serviceType === '180427974') && (
+                                <div>
+                                    <span className="text-sm text-gray-600">Bandwidth</span>
+                                    <p className="font-semibold">{formData.bandwidth || '-'}</p>
+                                </div>
+                            )}
                             <div>
                                 <span className="text-sm text-gray-600">Customer Type</span>
                                 <p className="font-semibold capitalize">{formData.customerType || 'residential'}</p>
                             </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Device</span>
-                                <div className="font-semibold">
-                                    {formData.withDevice === undefined ? (
-                                        <p>Not selected</p>
-                                    ) : formData.withDevice ? (
-                                        formData.serviceType === '180427974' ? (
-                                            // Combo service - show both devices
-                                            <div className="space-y-1">
-                                                {formData.selectedDeviceInternet ? (
-                                                    <p>
-                                                        Internet: {formData.selectedDeviceInternet.name} ({formData.selectedDeviceInternet.vendor}) -{' '}
-                                                        {new Intl.NumberFormat('en-ET', {
-                                                            style: 'currency',
-                                                            currency: 'ETB',
-                                                            minimumFractionDigits: 0,
-                                                            maximumFractionDigits: 2,
-                                                        }).format(formData.selectedDeviceInternet.price)}
-                                                    </p>
-                                                ) : (
-                                                    <p className="text-orange-600">Internet: Not selected</p>
-                                                )}
-                                                {formData.selectedDeviceVoice ? (
-                                                    <p>
-                                                        Voice: {formData.selectedDeviceVoice.name} ({formData.selectedDeviceVoice.vendor}) -{' '}
-                                                        {new Intl.NumberFormat('en-ET', {
-                                                            style: 'currency',
-                                                            currency: 'ETB',
-                                                            minimumFractionDigits: 0,
-                                                            maximumFractionDigits: 2,
-                                                        }).format(formData.selectedDeviceVoice.price)}
-                                                    </p>
-                                                ) : (
-                                                    <p className="text-orange-600">Voice: Not selected</p>
-                                                )}
-                                            </div>
-                                        ) : formData.selectedDevice ? (
-                                            // Single service device
-                                            <p>
-                                                {formData.selectedDevice.name} ({formData.selectedDevice.vendor}) -{' '}
-                                                {new Intl.NumberFormat('en-ET', {
-                                                    style: 'currency',
-                                                    currency: 'ETB',
-                                                    minimumFractionDigits: 0,
-                                                    maximumFractionDigits: 2,
-                                                }).format(formData.selectedDevice.price)}
-                                            </p>
+                            {/* Device info - only for Internet and Combo services */}
+                            {(formData.serviceType === '1457567289' || formData.serviceType === '180427974') && (
+                                <div>
+                                    <span className="text-sm text-gray-600">Device</span>
+                                    <div className="font-semibold">
+                                        {formData.withDevice === undefined ? (
+                                            <p>Not selected</p>
+                                        ) : formData.withDevice ? (
+                                            formData.serviceType === '180427974' ? (
+                                                // Combo service - show both devices
+                                                <div className="space-y-1">
+                                                    {formData.selectedDeviceInternet ? (
+                                                        <p>
+                                                            Internet: {formData.selectedDeviceInternet.name} ({formData.selectedDeviceInternet.vendor}) -{' '}
+                                                            {new Intl.NumberFormat('en-ET', {
+                                                                style: 'currency',
+                                                                currency: 'ETB',
+                                                                minimumFractionDigits: 0,
+                                                                maximumFractionDigits: 2,
+                                                            }).format(formData.selectedDeviceInternet.price)}
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-orange-600">Internet: Not selected</p>
+                                                    )}
+                                                    {formData.selectedDeviceVoice ? (
+                                                        <p>
+                                                            Voice: {formData.selectedDeviceVoice.name} ({formData.selectedDeviceVoice.vendor}) -{' '}
+                                                            {new Intl.NumberFormat('en-ET', {
+                                                                style: 'currency',
+                                                                currency: 'ETB',
+                                                                minimumFractionDigits: 0,
+                                                                maximumFractionDigits: 2,
+                                                            }).format(formData.selectedDeviceVoice.price)}
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-orange-600">Voice: Not selected</p>
+                                                    )}
+                                                </div>
+                                            ) : formData.selectedDevice ? (
+                                                // Single service device
+                                                <p>
+                                                    {formData.selectedDevice.name} ({formData.selectedDevice.vendor}) -{' '}
+                                                    {new Intl.NumberFormat('en-ET', {
+                                                        style: 'currency',
+                                                        currency: 'ETB',
+                                                        minimumFractionDigits: 0,
+                                                        maximumFractionDigits: 2,
+                                                    }).format(formData.selectedDevice.price)}
+                                                </p>
+                                            ) : (
+                                                <p className="text-orange-600">With Device (Not selected)</p>
+                                            )
                                         ) : (
-                                            <p className="text-orange-600">With Device (Not selected)</p>
-                                        )
-                                    ) : (
-                                        <p>Without Device</p>
-                                    )}
+                                            <p>Without Device</p>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/*<div>*/}
                             {/*    <span className="text-sm text-gray-600">Main Offer ID</span>*/}

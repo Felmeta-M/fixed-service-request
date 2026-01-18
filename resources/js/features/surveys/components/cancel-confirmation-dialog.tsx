@@ -8,7 +8,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { AlertCircle } from 'lucide-react';
+import { AlertTriangle, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
 
 interface CancelConfirmationDialogProps {
@@ -28,9 +28,9 @@ export function CancelConfirmationDialog({
     onOpenChange,
     onConfirm,
     loading = false,
-    title = 'Cancel Survey Order',
-    description = 'Are you sure you want to cancel this survey order? This action cannot be undone.',
-    confirmText = 'Yes, Cancel',
+    title = 'Cancel Service Request',
+    description = 'You are about to cancel this service request. Please read the warning carefully before proceeding.',
+    confirmText = 'Yes, Cancel Service',
     cancelText = 'No, Keep It',
     showReasonInput = true,
 }: CancelConfirmationDialogProps) {
@@ -46,14 +46,28 @@ export function CancelConfirmationDialog({
             <AlertDialogContent className="max-w-md">
                 <AlertDialogHeader>
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full ">
-                            <AlertCircle className="h-5 w-5 text-orange-600" />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                            <ShieldAlert className="h-6 w-6 text-red-600" />
                         </div>
-                        <AlertDialogTitle>{title}</AlertDialogTitle>
+                        <AlertDialogTitle className="text-lg text-red-700">{title}</AlertDialogTitle>
                     </div>
 
-                    <AlertDialogDescription>{description}</AlertDialogDescription>
+                    <AlertDialogDescription className="text-gray-600">{description}</AlertDialogDescription>
                 </AlertDialogHeader>
+
+                {/* Critical Warning Box */}
+                <div className="mt-4 rounded-lg border-2 border-red-200 bg-red-50 p-4">
+                    <div className="flex items-start gap-3">
+                        <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
+                        <div className="space-y-1">
+                            <p className="text-sm font-semibold text-red-800">⚠️ Warning: This action is irreversible!</p>
+                            <ul className="list-inside list-disc space-y-1 text-xs text-red-700">
+                                <li>Your service request will be permanently cancelled</li>
+                                <li>You will need to create a new request if you change your mind</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Reason Input */}
                 {showReasonInput && (
@@ -63,35 +77,28 @@ export function CancelConfirmationDialog({
                         </label>
                         <textarea
                             rows={3}
-                            minLength={20}
+                            minLength={10}
                             maxLength={500}
                             value={cancellationReason}
                             onChange={(e) => setCancellationReason(e.target.value)}
-                            placeholder="Please provide a reason for cancelling this survey..."
                             disabled={loading}
-                            className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus-visible:ring-orange-500"
+                            className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 focus:outline-none"
                         />
-                        <p className="text-xs text-gray-500">{cancellationReason.length}/500</p>
+                        <p className="text-xs text-gray-500">{cancellationReason.length}/500 characters</p>
                     </div>
                 )}
 
-                {/* Warning Note */}
-                <div className="mt-4 rounded-md border p-3">
-                    <div className="flex items-start gap-2">
-                        <AlertCircle className="h-4 w-4 text-orange-600" />
-                        <p className="text-xs text-orange-700">
-                            <strong>Note:</strong> Once cancelled, this survey order cannot be reactivated.
-                        </p>
-                    </div>
-                </div>
-
                 {/* Footer Buttons */}
-                <AlertDialogFooter>
-                    <AlertDialogCancel disabled={loading} onClick={() => onOpenChange(false)}>
+                <AlertDialogFooter className="mt-4">
+                    <AlertDialogCancel disabled={loading} onClick={() => onOpenChange(false)} className="font-medium">
                         {cancelText}
                     </AlertDialogCancel>
 
-                    <AlertDialogAction disabled={showReasonInput && cancellationReason.length < 2} onClick={handleConfirm}>
+                    <AlertDialogAction 
+                        disabled={(showReasonInput && cancellationReason.length < 10) || loading} 
+                        onClick={handleConfirm}
+                        className="bg-red-600 text-white hover:bg-red-700 focus:ring-red-500"
+                    >
                         {loading ? (
                             <div className="flex items-center gap-2">
                                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

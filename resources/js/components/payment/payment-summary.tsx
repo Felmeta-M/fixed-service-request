@@ -1,17 +1,29 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { getStatusInfo } from '@/lib/status-map';
 import { Link, router, usePage } from '@inertiajs/react';
-import { CheckCircle2, User, FileText, Phone, Mail, Calendar, Hash } from 'lucide-react';
+import { format } from 'date-fns';
+import {
+    ArrowLeft,
+    CheckCircle2,
+    CreditCard,
+    FileText,
+    Gauge,
+    Mail,
+    Package,
+    Phone,
+    User,
+    Wifi,
+    Zap,
+    Calendar,
+    Hash,
+} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
 import { type ServiceActionFocus } from '@/lib/service-action-rules';
 import { useCreateSubscription, useCreatePaymentOrder } from '@/hooks/use-api-mutations';
-
-
-// type BadgeVariant = 'default' | 'success' | 'destructive' | 'outline';
 
 type AuthUser = {
     api_token: string;
@@ -27,10 +39,14 @@ type SurveyDetails = {
     customer_subscription_order_id?: string | null;
     main_offer_id?: string;
     service_number?: string | null;
+    bandwidth?: string | null;
     cable_length?: string | number | null;
     cable_type?: string | null;
     status?: string | number | null;
-    // Backend-provided action flags (single source of truth)
+    survey_type?: string | null;
+    customer_type?: string | null;
+    created_at?: string;
+    updated_at?: string;
     is_paid?: boolean;
     can_pay?: boolean;
     can_subscribe?: boolean;
@@ -57,23 +73,31 @@ type PaymentSummaryProps = {
     focus?: ServiceActionFocus;
 };
 
+const serviceTypeMap = {
+    '1457567289': { label: 'Internet', icon: Wifi, color: 'text-blue-600' },
+    '1207609454': { label: 'Voice', icon: Phone, color: 'text-violet-600' },
+    '180427974': { label: 'Combo', icon: Package, color: 'text-emerald-600' },
+};
+
+const surveyTypeMap = {
+    EIC08: { label: 'New Connection', description: 'New service installation' },
+};
+
 export function PaymentSummary({ paymentDetails, surveyDetails, focus }: PaymentSummaryProps) {
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
 
     const createSubscriptionMutation = useCreateSubscription();
     const createPaymentOrderMutation = useCreatePaymentOrder();
-    
-    // Track subscription submission to prevent double-clicks
-    // Use state for button disabled (triggers re-render) + ref for immediate guard
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isSubmittingRef = useRef(false);
-    
+
     const loading = createSubscriptionMutation.isPending || createPaymentOrderMutation.isPending || isSubmitting;
 
     const payment = paymentDetails?.data;
     const customer_survey_order_id = payment?.customer_survey_order_id ?? surveyDetails?.customer_survey_order_id ?? '';
     const customer_subscription_order_id = payment?.customer_subscription_order_id ?? surveyDetails?.customer_subscription_order_id ?? null;
-    const service_number = surveyDetails?.service_number ?? payment?.service_number ?? '-';
+    const service_number = surveyDetails?.service_number ?? payment?.service_number ?? null;
 
     const amountRaw = payment?.amount ?? payment?.total_amount;
     const amount = Number(amountRaw);
@@ -81,10 +105,22 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
     const totalAmount = (totalAmountNumber ?? 0).toFixed(2);
     const isFree = totalAmountNumber !== undefined && totalAmountNumber <= 0;
 
-    // Use backend-provided action flags (single source of truth)
-    // These flags are computed on the server based on business rules
     const canPay = surveyDetails?.can_pay ?? false;
     const canSubscribe = surveyDetails?.can_subscribe ?? false;
+
+    const statusInfo = getStatusInfo(surveyDetails?.status);
+
+    const serviceType = serviceTypeMap[surveyDetails?.main_offer_id as keyof typeof serviceTypeMap] || {
+        label: 'Service',
+        icon: FileText,
+        color: 'text-gray-600',
+    };
+    const ServiceIcon = serviceType.icon;
+
+    const surveyTypeInfo = surveyTypeMap[surveyDetails?.survey_type as keyof typeof surveyTypeMap] || {
+        label: surveyDetails?.survey_type || 'Request',
+        description: 'Service request',
+    };
 
     const focusSafe = useMemo<ServiceActionFocus | null>(() => {
         if (focus === 'payment' || focus === 'subscribe') return focus;
@@ -96,14 +132,11 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
 
     useEffect(() => {
         if (!focusSafe) return;
-
         setFocusFlash(true);
         const raf = requestAnimationFrame(() => {
             actionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
-
         const t = window.setTimeout(() => setFocusFlash(false), 3000);
-
         return () => {
             cancelAnimationFrame(raf);
             window.clearTimeout(t);
@@ -120,6 +153,40 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
     const devicePrice = toNumber(payment?.device_price);
     const cableLengthRaw = surveyDetails?.cable_length;
     const cableLength = cableLengthRaw === null || cableLengthRaw === undefined || cableLengthRaw === '' ? null : String(cableLengthRaw);
+
+    const hasPaymentItems = subscriptionFee > 0 || cableCharge > 0 || devicePrice > 0;
+
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return 'N/A';
+        try {
+            return format(new Date(dateString), 'PPp');
+        } catch {
+            return dateString;
+        }
+    };
+
+    const formatBandwidth = (bandwidth?: string | null) => {
+        if (!bandwidth) return null;
+        if (bandwidth.endsWith('M')) {
+            const mbps = parseInt(bandwidth);
+            if (mbps >= 1000) {
+                return `${(mbps / 1000).toFixed(mbps % 1000 === 0 ? 0 : 1)} Gbps`;
+            }
+            return `${mbps} Mbps`;
+        }
+        return bandwidth;
+    };
+
+    const getStatusBadgeVariant = (status?: string | number | null) => {
+        const statusStr = String(status ?? '');
+        if (['Survey Completed', 'Order Completed', 'Paid', 'Ready'].includes(statusStr)) {
+            return 'default';
+        }
+        if (['Failed', 'Cancelled', 'Suspended'].includes(statusStr)) {
+            return 'destructive';
+        }
+        return 'secondary';
+    };
 
     const onPaymentConfirm = () => {
         if (!customer_survey_order_id || !user.customer_code || !totalAmountNumber) {
@@ -149,16 +216,13 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
     };
 
     const onSubscribeConfirm = () => {
-        // Prevent double-click / duplicate submission using ref for immediate check
         if (isSubmittingRef.current || isSubmitting || createSubscriptionMutation.isPending) {
             return;
         }
 
-        // Set flags immediately to prevent concurrent calls (both state and ref)
         isSubmittingRef.current = true;
         setIsSubmitting(true);
 
-        // Show loading toast when subscribe is clicked
         const subscribeToast = showLoadingToast('Processing subscription...');
 
         const payload = {
@@ -191,282 +255,341 @@ export function PaymentSummary({ paymentDetails, surveyDetails, focus }: Payment
                 });
                 router.visit('/services/subscription-success');
             },
-            onError: (error: Error) => {
+            onError: () => {
                 isSubmittingRef.current = false;
                 setIsSubmitting(false);
-                // Always use English messages for toasts, ignore API response messages that might be in other languages
                 showErrorToast('Subscription failed. Please try again.', {
                     id: subscribeToast,
                 });
             },
         });
     };
-// <｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-// read_file
+
+    const bandwidthDisplay = formatBandwidth(surveyDetails?.bandwidth);
 
     return (
-        <div className="px-4">
-            <div className="mx-auto bg-white max-w-4xl px-4">
-                {/* Invoice Header */}
-                <div className="mb-2 rounded-lg bg-white pt-4 shadow-xs">
-                    <div className="flex flex-col justify-between md:flex-row md:items-start">
-                        <div>
-                            <div className="mb-2 flex items-center gap-2">
-
-                                <div>
-                                    {/* <h1 className="text-2xl font-bold text-gray-900">Service and Payment Details</h1> */}
-                                    <p className="text-lg font-bold">Order Summary & Payment Details</p>
-                                </div>
-                            </div>
-                            {/* <div className="mt-4 space-y-2"> */}
-                            {/* <div className="flex items-center gap-2 text-sm">
-                                    <Calendar className="h-4 w-4 text-gray-400" />
-                                    <span className="text-gray-600">Date: {formattedDate}</span>
-                                </div> */}
-                            {/* <div className="flex items-center gap-2 text-sm">
-                                    <Hash className="h-4 w-4 text-gray-400" />
-                                    <span className="text-gray-600">Order Id: {customer_survey_order_id || 'Pending'}</span>
-                                </div> */}
-                            {/* </div> */}
-                        </div>
-                        {/* <div className="mt-4 md:mt-0 md:text-right">
-                            <Badge variant={isFree ? "outline" : "default"} className="mb-1">
-                                {isFree ? "No Payment Required" : "Payment Required"}
-                            </Badge>
-                            <div className="text-3xl font-bold text-primary">{totalAmount} ETB</div>
-                            <p className="text-sm text-gray-500">Total Amount</p>
-                        </div> */}
-                    </div>
+        <div className="w-full space-y-4 px-4 py-4 lg:px-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Link href="/services">
+                        <Button variant="ghost" size="sm" className="gap-1">
+                            <ArrowLeft className="h-4 w-4" />
+                            Back
+                        </Button>
+                    </Link>
+                    <p className="text-muted-foreground">
+                        Survey Details
+                    </p>
                 </div>
+            </div>
 
-                <div className="space-y-6">
-                    {/* Customer & Service Information */}
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* Customer Information */}
-                        <div className="border-none shadow-none pt-0">
-                            <div className="">
-                                <div className="flex items-center gap-2">
-                                    <User className="h-5 w-5 text-gray-500" />
-                                    <div className="text-lg">Customer Information</div>
-                                </div>
+            {/* Title Card */}
+            <Card className="border-none shadow-xs">
+                <CardHeader className="pb-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${serviceType.label === 'Internet' ? 'from-blue-500 to-cyan-500' :
+                                serviceType.label === 'Voice' ? 'from-violet-500 to-purple-500' :
+                                    'from-emerald-500 to-teal-500'
+                                }`}>
+                                <ServiceIcon className="h-6 w-6 text-white" />
                             </div>
                             <div>
-                                <div className="space-y-3">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Name</p>
-                                        <p className="text-lg font-semibold text-gray-900">{user.name}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Phone className="h-4 w-4 text-gray-400" />
-                                        <span className="text-gray-700">{user.phone}</span>
-                                    </div>
-                                    {user.email && (
-                                        <div className="flex items-center gap-2">
-                                            <Mail className="h-4 w-4 text-gray-400" />
-                                            <span className="text-gray-700">{user.email}</span>
-                                        </div>
-                                    )}
-                                    {/* <div>
-                                        <p className="text-sm font-medium text-gray-500">Customer Code</p>
-                                        <p className="font-mono text-gray-900">{user.customer_code}</p>
-                                    </div> */}
-                                </div>
+                                <CardTitle className="text-xl">{serviceType.label} Service</CardTitle>
+                                <p className="text-sm text-muted-foreground">{surveyTypeInfo.label}</p>
                             </div>
                         </div>
-
-                        {/* Service Information */}
-                        <div className="border-none shadow-none pt-0">
-                            <div className="">
-                                <div className="flex items-center gap-2">
-                                    <FileText className="h-5 w-5 text-gray-500" />
-                                    <div className="text-lg">Service Details</div>
-                                </div>
-                            </div>
-                            <div>
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Service Number</p>
-                                        <p className="text-lg font-semibold text-gray-900">{service_number}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Order Reference</p>
-                                        <p className="font-mono text-gray-900">{customer_survey_order_id}</p>
-                                    </div>
-                                    {customer_subscription_order_id && (
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-500">Service Order Number</p>
-                                            <p className="font-mono text-lg font-semibold text-gray-900">{customer_subscription_order_id}</p>
-                                        </div>
-                                    )}
-                                    <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
-                                        <span className="text-sm text-gray-600">Service Type</span>
-                                        <Badge variant="outline">New Connection</Badge>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <Badge
+                            variant={getStatusBadgeVariant(surveyDetails?.status) as 'default' | 'secondary' | 'destructive'}
+                            className="w-fit"
+                        >
+                            {statusInfo.label}
+                        </Badge>
                     </div>
+                </CardHeader>
+            </Card>
 
-                    {/* Invoice Items Table */}
-                    <div className="border-none shadow-none pt-0">
-                        <div>
-                            <div>Payment Details</div>
-                            <div>Breakdown of charges and fees</div>
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+                {/* Survey Information */}
+                <Card className="border-none shadow-xs">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <Hash className="h-4 w-4" />
+                            Survey Information
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Survey Number</span>
+                            <span className="font-mono font-medium">{customer_survey_order_id || 'N/A'}</span>
                         </div>
-                        <div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b border-gray-200">
-                                            <th className="px-2  py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">FEE </th>
-                                            <th className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">DESCRIPTION</th>
-                                            <th className="px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-900">AMOUNT</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100">
-                                        {subscriptionFee > 0 && (
-                                            <tr>
-                                                <td className="px-4 py-4 text-xs sm:text-sm font-medium text-gray-900">Subscription</td>
-                                                <td className="px-4 py-4 text-xs sm:text-sm text-gray-600">
-                                                    Service subscription fee
-                                                </td>
-                                                <td className="px-4 py-4 text-xs sm:text-sm font-semibold text-gray-900">{subscriptionFee.toFixed(2)} ETB</td>
-                                            </tr>
-                                        )}
-                                        {cableCharge > 0 && (
-                                            <tr>
-                                                <td className="px-4 py-4 text-xs sm:text-sm font-medium text-gray-900">Cable Installation</td>
-                                                <td className="px-4 py-4 text-xs sm:text-sm text-gray-600">
-                                                    Physical cable installation{cableLength ? ` (${cableLength} meters)` : ''}
-                                                </td>
-                                                <td className="px-4 py-4 text-xs sm:text-sm font-semibold text-gray-900">{cableCharge.toFixed(2)} ETB</td>
-                                            </tr>
-                                        )}
-                                        {devicePrice > 0 && (
-                                            <tr>
-                                                <td className="px-4 py-4 text-xs sm:text-sm font-medium text-gray-900">Device</td>
-                                                <td className="px-4 py-4 text-xs sm:text-sm text-gray-600">
-                                                    Required device and hardware
-                                                </td>
-                                                <td className="px-4 py-4 text-xs sm:text-sm font-semibold text-gray-900">{devicePrice.toFixed(2)} ETB</td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Totals Section */}
-                            <div className=" space-y-3">
+                        <Separator />
+                        <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Service Type</span>
+                            <span className="flex items-center gap-2 font-medium">
+                                <ServiceIcon className={`h-4 w-4 ${serviceType.color}`} />
+                                {serviceType.label}
+                            </span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Request Type</span>
+                            <span className="font-medium">{surveyTypeInfo.label}</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Created</span>
+                            <span className="font-medium">{formatDate(surveyDetails?.created_at)}</span>
+                        </div>
+                        {surveyDetails?.updated_at && surveyDetails.updated_at !== surveyDetails.created_at && (
+                            <>
                                 <Separator />
                                 <div className="flex justify-between">
-                                    <span className="text-lg font-semibold text-gray-900">Total Amount</span>
-                                    <span className="text-lg font-semibold text-gray-900">{totalAmount} ETB</span>
+                                    <span className="text-sm text-muted-foreground">Last Updated</span>
+                                    <span className="font-medium">{formatDate(surveyDetails?.updated_at)}</span>
                                 </div>
+                            </>
+                        )}
+                    </CardContent>
+                </Card>
 
-                                {/* {!isFree && (
-                                    <>
-                                        <div className="flex justify-between text-sm text-gray-600">
-                                            <span>Includes:</span>
-                                            <span>
-                                                {[
-                                                    subscriptionFee > 0 && 'Subscription',
-                                                    cableCharge > 0 && 'Cable Installation',
-                                                    devicePrice > 0 && 'Device'
-                                                ].filter(Boolean).join(', ')}
-                                            </span>
-                                        </div> */}
-                                {/* <div className="rounded-lg bg-primary/5 p-4">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <p className="font-semibold text-gray-900">Total Amount Due</p>
-                                                    <p className="text-sm text-gray-600">Payment is required to activate service</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="text-2xl font-bold text-primary">{totalAmount} ETB</div>
-                                                    <p className="text-sm text-gray-500">Includes all applicable charges</p>
-                                                </div>
-                                            </div>
-                                        </div> */}
-                                {/* </>
-                                )} */}
-                            </div>
+                {/* Subscription Information */}
+                <Card className="border-none shadow-xs">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <Zap className="h-4 w-4" />
+                            Subscription Information
+                            {!customer_subscription_order_id && (
+                                <Badge variant="outline" className="ml-auto text-xs">Pending</Badge>
+                            )}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Order Number</span>
+                            <span className="font-mono font-medium">
+                                {customer_subscription_order_id || <span className="text-muted-foreground">—</span>}
+                            </span>
                         </div>
-                    </div>
+                        <Separator />
+                        <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Service Number</span>
+                            <span className="font-medium">
+                                {service_number || <span className="text-muted-foreground">Awaiting</span>}
+                            </span>
+                        </div>
+                        {bandwidthDisplay && (
+                            <>
+                                <Separator />
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-muted-foreground">Bandwidth</span>
+                                    <span className="flex items-center gap-2 font-medium">
+                                        <Gauge className="h-4 w-4 text-muted-foreground" />
+                                        {bandwidthDisplay}
+                                    </span>
+                                </div>
+                            </>
+                        )}
+                        <Separator />
+                        <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Status</span>
+                            <span className="font-medium">{statusInfo.label}</span>
+                        </div>
+                    </CardContent>
+                </Card>
 
-                    {/* Payment Action */}
-                    <div ref={actionRef} />
-                    <div className={`pt-0 border-none shadow-none ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
-                        <div className="">
-                            <div className="flex flex-col-reverse items-center justify-between gap-4 sm:flex-row">
-                                {/* <div>
-                                    <h3 className="font-semibold text-gray-900">Ready to proceed?</h3>
-                                    <p className="text-sm text-gray-600">
-                                        {isFree 
-                                            ? 'Click subscribe to activate your service at no cost'
-                                            : 'Complete payment to activate your service'}
-                                    </p>
-                                </div> */}
+                {/* Customer Information */}
+                <Card className="border-none shadow-xs">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <User className="h-4 w-4" />
+                            Customer Information
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Name</span>
+                            <span className="font-medium">{user.name}</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Phone</span>
+                            <span className="flex items-center gap-2 font-medium">
+                                <Phone className="h-4 w-4 text-muted-foreground" />
+                                {user.phone}
+                            </span>
+                        </div>
+                        {user.email && (
+                            <>
+                                <Separator />
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-muted-foreground">Email</span>
+                                    <span className="flex items-center gap-2 font-medium">
+                                        <Mail className="h-4 w-4 text-muted-foreground" />
+                                        {user.email}
+                                    </span>
+                                </div>
+                            </>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Payment Information - Only show if there are charges */}
+                {!isFree && hasPaymentItems ? (
+                    <Card className="border-none shadow-xs">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <CreditCard className="h-4 w-4" />
+                                Payment Summary
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {subscriptionFee > 0 && (
+                                <>
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-muted-foreground">Subscription Fee</span>
+                                        <span className="font-medium">{subscriptionFee.toFixed(2)} ETB</span>
+                                    </div>
+                                    <Separator />
+                                </>
+                            )}
+                            {cableCharge > 0 && (
+                                <>
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-muted-foreground">
+                                            Cable Installation{cableLength ? ` (${cableLength}m)` : ''}
+                                        </span>
+                                        <span className="font-medium">{cableCharge.toFixed(2)} ETB</span>
+                                    </div>
+                                    <Separator />
+                                </>
+                            )}
+                            {devicePrice > 0 && (
+                                <>
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-muted-foreground">Device & Hardware</span>
+                                        <span className="font-medium">{devicePrice.toFixed(2)} ETB</span>
+                                    </div>
+                                    <Separator />
+                                </>
+                            )}
+                            <div className="flex justify-between pt-2">
+                                <span className="font-semibold">Total Amount</span>
+                                <span className="text-lg font-bold text-primary">{totalAmount} ETB</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <Card className="border-none shadow-xs">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <CreditCard className="h-4 w-4" />
+                                Payment Summary
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-center gap-3 rounded-lg bg-emerald-50 p-4 dark:bg-emerald-950/20">
+                                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                                 <div>
-                                    <Link href="/services" className="text-sm text-gray-600 underline hover:text-gray-800">
-                                        <Button variant="outline" className="gap-2">
-                                            Cancel
-                                        </Button>
-                                    </Link>
+                                    <p className="font-medium text-emerald-800 dark:text-emerald-200">No Payment Required</p>
+                                    <p className="text-sm text-emerald-600 dark:text-emerald-400">This service has no charges</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+
+            {/* Action Section */}
+            {(canPay || canSubscribe) && (
+                <>
+                    <div ref={actionRef} />
+                    <Card className={`border-none shadow-xs ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
+                        <CardContent className="py-5">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <p className="font-medium">
+                                        {canSubscribe && isFree
+                                            ? 'Ready to activate your service?'
+                                            : canPay && !isFree
+                                                ? 'Complete payment to activate'
+                                                : 'Next Steps'}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {canSubscribe && isFree
+                                            ? 'Click Subscribe to activate your service'
+                                            : canPay && !isFree
+                                                ? `Amount due: ${totalAmount} ETB`
+                                                : 'Choose an action below'}
+                                    </p>
                                 </div>
 
-                                <div className="flex gap-3">
-                                    {/* {canSubscribe ? ( */}
-                                    {canSubscribe && isFree ? (
+                                <div className="flex flex-col-reverse gap-3 sm:flex-row">
+                                    <Link href="/services">
+                                        <Button variant="outline" className="w-full sm:w-auto">Back to List</Button>
+                                    </Link>
+
+                                    {canSubscribe && isFree && (
                                         <Button
                                             onClick={onSubscribeConfirm}
                                             disabled={loading || isSubmitting || !customer_survey_order_id}
-                                            className={`hover:opacity-90 ${focusFlash && focusSafe === 'subscribe' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                                            className={`w-full gap-2 sm:w-auto ${focusFlash && focusSafe === 'subscribe' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                                         >
                                             {loading ? (
-                                                <div className="flex items-center gap-2">
+                                                <>
                                                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                                     Processing...
-                                                </div>
+                                                </>
                                             ) : (
-                                                <div className="flex items-center gap-2">
+                                                <>
                                                     <CheckCircle2 className="h-5 w-5" />
                                                     Subscribe
-                                                </div>
+                                                </>
                                             )}
                                         </Button>
-                                    ) : null}
+                                    )}
 
-                                    {/* {canPay ? ( */}
-                                    {canPay && !isFree ? (
+                                    {canPay && !isFree && (
                                         <Button
                                             onClick={onPaymentConfirm}
                                             disabled={loading || !customer_survey_order_id}
-                                            className={`min-w-[220px] bg-primary px-8 font-semibold hover:opacity-90 ${focusFlash && focusSafe === 'payment' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                                             size="lg"
+                                            className={`w-full gap-2 sm:w-auto ${focusFlash && focusSafe === 'payment' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                                         >
                                             {loading ? (
-                                                <div className="flex items-center gap-2">
+                                                <>
                                                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                                     Processing...
-                                                </div>
+                                                </>
                                             ) : (
-                                                <div className="flex items-center gap-2">
-                                                    {/* <img src={logo} alt="ID" className="mr-2 h-5 w-10" /> */}
+                                                <>
+                                                    <CreditCard className="h-5 w-5" />
                                                     Pay {totalAmount} ETB
-                                                </div>
+                                                </>
                                             )}
                                         </Button>
-                                    ) : null}
-
-                                    {!canPay && !canSubscribe ? (
-                                        <div className="text-sm text-gray-600">No action required.</div>
-                                    ) : null}
+                                    )}
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
+                </>
+            )}
+
+            {/* No Actions Available */}
+            {!canPay && !canSubscribe && (
+                <div className="flex justify-center pt-4">
+                    <Link href="/services">
+                        <Button variant="outline" className="gap-2">
+                            <ArrowLeft className="h-4 w-4" />
+                            Back to Services
+                        </Button>
+                    </Link>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

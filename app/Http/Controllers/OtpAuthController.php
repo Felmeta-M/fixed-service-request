@@ -30,7 +30,7 @@ class OtpAuthController extends Controller
 
     public function showPhoneForm()
     {
-        return inertia('Auth/EnterPhone');
+        return inertia('auth/enter-phone');
     }
 
     /**
@@ -93,7 +93,7 @@ class OtpAuthController extends Controller
     public function showVerifyForm()
     {
         $phone = session('phone');
-        return Inertia::render('Auth/VerifyOtp', [
+        return Inertia::render('auth/verify-otp', [
             'phone' => $phone,
         ]);
     }

@@ -1,4 +1,4 @@
-import { LocaleSwitcher } from '@/components/locale-switcher';
+import { LocaleSwitcher } from '@/components/common/locale-switcher';
 import { useTranslation } from '@/hooks/use-translation';
 import { useActiveCustomer } from '@/store/customer-store';
 import { Link } from '@inertiajs/react';

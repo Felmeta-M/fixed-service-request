@@ -32,10 +32,10 @@ Route::post('/locale', function (Request $request) {
     return response()->json(['success' => true, 'locale' => $locale]);
 })->name('locale.switch');
 
-Route::get('/', fn() => Inertia::render('Home', [
+Route::get('/', fn() => Inertia::render('home', [
     'googleMapsApiKey' => config('services.google.google_api_key'),
 ]))->name('home');
-Route::get('/terms', fn() => Inertia::render('Terms'))->name('terms');
+Route::get('/terms', fn() => Inertia::render('terms'))->name('terms');
 Route::get('/verification', fn() => Inertia::render('Verification'))->name('verification');
 
 Route::get('/login/esignet', [EsignetController::class, 'redirectToEsignet'])
@@ -44,7 +44,7 @@ Route::get('/login/esignet', [EsignetController::class, 'redirectToEsignet'])
 Route::get('/callback', [EsignetController::class, 'handleEsignetCallback'])->name('esignet.callback');
 
 Route::get('/auth/error', function () {
-    return Inertia::render('Auth/Error', [
+    return Inertia::render('auth/error', [
         'error' => session('error'),
     ]);
 })->name('auth.error');
@@ -66,11 +66,11 @@ Route::middleware('guest:otp')->group(function () {
 
 // OTP protected pages
 Route::middleware(['otp.auth'])->group(function () {
-    Route::get('/services', action: fn() => Inertia::render('Services/Index'))->name('services');
-    Route::get('/services/subscription-success', fn() => Inertia::render('Services/SubscriptionSuccess'))->name('services.subscription-success');
+    Route::get('/services', fn() => Inertia::render('services/index'))->name('services');
+    Route::get('/services/subscription-success', fn() => Inertia::render('services/subscription-success'))->name('services.subscription-success');
 
     Route::get('/services/create', function () {
-        return Inertia::render('Services/Create', [
+        return Inertia::render('services/create', [
             'googleMapsApiKey' => config('services.google.google_api_key'),
         ]);
     })->name('services.create');
@@ -83,14 +83,14 @@ Route::middleware(['otp.auth'])->group(function () {
                 $formData = json_decode($formDataJson, true);
             }
         }
-        return Inertia::render('Services/ManualCreate', [
+        return Inertia::render('services/manual-create', [
             'googleMapsApiKey' => config('services.google.google_api_key'),
             'formData' => $formData,
         ]);
     })->name('services.manual-create');
 
     Route::get('/services/{customerSurveyOrderId}', function (string $customerSurveyOrderId) {
-        return Inertia::render('Services/Show', [
+        return Inertia::render('services/show', [
             'customerSurveyOrderId' => $customerSurveyOrderId,
         ]);
     })->name('services.show');
@@ -99,7 +99,7 @@ Route::middleware(['otp.auth'])->group(function () {
         $payment_details = new PaymentResource(Payment::query()->where('customer_survey_order_id', $request->query('customerSurveyOrderId'))->latest()->first());
         $survey_details = SurveyOrder::query()->where('customer_survey_order_id', $request->query('customerSurveyOrderId'))->latest()
             ->first(['customer_type', 'survey_type', 'main_offer_id', 'bandwidth']);
-        return Inertia::render('Subscriber/PaymentSummary', [
+        return Inertia::render('subscriber/payment-summary', [
             'payment_details' => $payment_details,
             'survey_details' => $survey_details,
         ]);
@@ -107,21 +107,21 @@ Route::middleware(['otp.auth'])->group(function () {
 
     Route::get('/support-request', [SupportRequestController::class, 'index'])->name('support.request');
     Route::post('/logout', [OtpAuthController::class, 'logout'])->name('logout');
-    Route::get('/create-customer', fn() => Inertia::render('Customers/Create'))->name('customers.create');
+    Route::get('/create-customer', fn() => Inertia::render('customers/create'))->name('customers.create');
 
-    Route::get('/complaints', fn() => Inertia::render('Complaints/Index'))->name('complaints.index');
-    Route::get('/complaints/create', fn() => Inertia::render('Complaints/Create'))->name('complaints.create');
+    Route::get('/complaints', fn() => Inertia::render('complaints/index'))->name('complaints.index');
+    Route::get('/complaints/create', fn() => Inertia::render('complaints/create'))->name('complaints.create');
     Route::get('/complaints/{ttNumber}', function (string $ttNumber) {
-        return Inertia::render('Complaints/Show', [
+        return Inertia::render('complaints/show', [
             'ttNumber' => $ttNumber,
         ]);
     })->name('complaints.show');
 
 
-    Route::get('/create-survey-requests', fn() => Inertia::render('SurveyOrders/Create'))->name('survey.create');
+    Route::get('/create-survey-requests', fn() => Inertia::render('survey-requests/create'))->name('survey.create');
 
     Route::get('/survey-requests/create-subscriber/{id}', function ($id) {
-        return Inertia::render('Subscriber/Create', [
+        return Inertia::render('subscriber/create', [
             'surveyOrderId' => $id,
             'customerCode' => request('customer_code'),
             'offeringId' => request('offering_id'),
@@ -135,7 +135,7 @@ Route::middleware(['otp.auth'])->group(function () {
         ->middleware('web');
 
     Route::get('/profile', function () {
-        return Inertia::render('Profile/Index');
+        return Inertia::render('profile/index');
     })->name('profile');
 
     Route::get('/latest-resource', function () {
@@ -152,7 +152,7 @@ Route::middleware(['otp.auth'])->group(function () {
 Route::post('/telebirr/notify', [TelebirrController::class, 'notify'])->name('telebirr.notify');
 
 Route::get('/payment/success', function () {
-    return Inertia::render('PaymentSuccess', [
+    return Inertia::render('payment-success', [
         'amount' => '49.99',
         'currency' => 'USD',
         'reference' => 'PAY-123456',

@@ -427,9 +427,6 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                         <CardTitle className="flex items-center gap-2 text-base">
                             <Zap className="h-4 w-4" />
                             Subscription Information
-                            {!customer_subscription_order_id && (
-                                <Badge variant="outline" className="ml-auto text-xs">Pending</Badge>
-                            )}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -453,11 +450,6 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                 <Gauge className="h-4 w-4 text-muted-foreground" />
                                 {bandwidthDisplay || <span className="text-muted-foreground">Not available</span>}
                             </span>
-                        </div>
-                        <Separator />
-                        <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Status</span>
-                            <span className="font-medium">{statusInfo.label}</span>
                         </div>
                     </CardContent>
                 </Card>

@@ -264,10 +264,10 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                 });
                 router.visit('/services/subscription-success');
             },
-            onError: () => {
+            onError: (error: Error) => {
                 isSubmittingRef.current = false;
                 setIsSubmitting(false);
-                showErrorToast('Subscription failed. Please try again.', {
+                showErrorToast(error.message || 'Subscription failed. Please try again.', {
                     id: subscribeToast,
                 });
             },
@@ -293,8 +293,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                     setOpenCancelDialog(false);
                     router.visit('/services');
                 },
-                onError: () => {
-                    showErrorToast('Cancellation failed. Please try again.', { id: toastId });
+                onError: (error: Error) => {
+                    // Show backend error message
+                    showErrorToast(error.message || 'Cancellation failed. Please try again.', { id: toastId });
                 },
             },
         );
@@ -326,8 +327,8 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                     }
                     router.reload();
                 },
-                onError: () => {
-                    showErrorToast(`${mode} failed. Please try again.`, { id: toastId });
+                onError: (error: Error) => {
+                    showErrorToast(error.message || `${mode} failed. Please try again.`, { id: toastId });
                 },
             },
         );

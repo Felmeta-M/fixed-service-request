@@ -6,7 +6,7 @@ import { apiClient } from '@/lib/api-client';
 import { useAuthToken } from './use-auth-token';
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
-import { showErrorToast, showSuccessToast } from '@/lib/toast-helpers';
+import { showSuccessToast } from '@/lib/toast-helpers';
 
 /**
  * Parse API error messages for complaints
@@ -67,14 +67,7 @@ export function useCreateComplaint() {
                 router.visit('/complaints', { preserveScroll: false });
             }, 1000);
         },
-        onError: (error: Error & { parsed?: ReturnType<typeof parseApiError> }) => {
-            // Error is handled in the component for field-specific errors
-            if (error.parsed?.type === 'field') {
-                // Don't show toast here, let component handle it
-                return;
-            }
-            showErrorToast(error.message || 'Failed to submit complaint');
-        },
+        // Error toast handled by component to show backend error message
     });
 }
 
@@ -176,9 +169,7 @@ export function useResourceCheck() {
                 data?: any;
             }>('/resource-check', data, { token });
         },
-        onError: (error: Error) => {
-            showErrorToast(error.message || 'Failed to check resource availability');
-        },
+        // Error toast handled by component to show backend error message
     });
 }
 
@@ -197,12 +188,7 @@ export function useUploadEcaf() {
             }
             return apiClient.post('/ecaf-upload', data, { token });
         },
-        onSuccess: () => {
-            showSuccessToast('Document uploaded successfully!');
-        },
-        onError: (error: Error) => {
-            showErrorToast(error.message || 'Failed to upload document');
-        },
+        // Toast handled by component
     });
 }
 
@@ -275,11 +261,9 @@ export function useConfirmFeedback() {
             queryClient.invalidateQueries({ queryKey: ['localTTs'] });
             queryClient.invalidateQueries({ queryKey: ['localTT'] });
             queryClient.invalidateQueries({ queryKey: ['externalTTDetail'] });
-            showSuccessToast('Feedback confirmed successfully');
+            // Toast handled by component
         },
-        onError: (error: Error) => {
-            showErrorToast(error.message || 'Failed to confirm feedback');
-        },
+        // Error toast handled by component to show backend error message
     });
 }
 
@@ -302,11 +286,9 @@ export function useCancelSurveyOrder() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['surveyList'] });
             queryClient.invalidateQueries({ queryKey: ['surveyDetail'] });
-            showSuccessToast('Survey order cancelled successfully');
+            // Toast handled by component for proper loading toast replacement
         },
-        onError: (error: Error) => {
-            showErrorToast(error.message || 'Failed to cancel survey order');
-        },
+        // Error toast handled by component to show backend error message
     });
 }
 
@@ -332,11 +314,9 @@ export function useDeleteSurveyOrder() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['surveyList'] });
             queryClient.invalidateQueries({ queryKey: ['surveyDetail'] });
-            showSuccessToast('Survey order deleted successfully');
+            // Toast handled by component
         },
-        onError: (error: Error) => {
-            showErrorToast(error.message || 'Failed to delete survey order');
-        },
+        // Error toast handled by component to show backend error message
     });
 }
 

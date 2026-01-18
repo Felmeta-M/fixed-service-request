@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\FFDServiceProvisionStatus;
 use App\Models\SurveyOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -33,13 +32,8 @@ class CancelSurveyOrderService extends BaseApiService
                 return ApiResponse::error(message: 'Survey order not found.');
             }
 
-            /**
-             * 🚫 Cancel only if status = WAITING
-             */
-
-            if (!in_array($order->status, FFDServiceProvisionStatus::canCancelSurveyOrder())) {
-                return ApiResponse::error(message: 'Only waiting survey orders can be cancelled.');
-            }
+            // Business rules check is done in controller via $surveyOrder->canCancel()
+            // No duplicate check needed here
 
             $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);

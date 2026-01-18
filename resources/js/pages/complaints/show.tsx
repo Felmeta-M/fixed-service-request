@@ -6,11 +6,11 @@ import { TTDetail, TTActivity, LocalTroubleTicket } from '@/types/tt';
 import { Calendar, MapPin, Phone, User, FileText, Clock, AlertCircle, CheckCircle2, XCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
 import { usePage, router } from '@inertiajs/react';
 import MainLayout from '@/layouts/main-layout';
 import { useExternalTTDetail, useLocalTT } from '@/features/complaints/hooks/use-complaints';
 import { useConfirmFeedback } from '@/hooks/use-api-mutations';
+import { showSuccessToast, showErrorToast } from '@/lib/toast-helpers';
 
 interface ShowProps {
   ttNumber: string;
@@ -106,9 +106,9 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
     if (externalQuery.error && localQuery.error) {
       const error = localQuery.error;
       if ((error as any).status !== 404) {
-        toast.error(error.message || 'Failed to load TT details');
+        showErrorToast(error.message || 'Failed to load TT details');
       } else {
-        toast.error('Trouble ticket not found');
+        showErrorToast('Trouble ticket not found');
       }
     }
   }, [externalQuery.error, localQuery.error]);
@@ -137,12 +137,12 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
 
   const handleConfirmFeedback = () => {
     if (!detail?.ttNumber) {
-      toast.error('TT number is required');
+      showErrorToast('TT number is required');
       return;
     }
 
     if (!feedbackDesc.trim()) {
-      toast.error('Please provide feedback description');
+      showErrorToast('Please provide feedback description');
       return;
     }
 
@@ -154,11 +154,15 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
       },
       {
         onSuccess: () => {
+          showSuccessToast('Feedback confirmed successfully');
           setShowFeedbackForm(false);
           setFeedbackDesc('');
           // Refetch both queries to get updated data
           externalQuery.refetch();
           localQuery.refetch();
+        },
+        onError: (error: Error) => {
+          showErrorToast(error.message || 'Failed to confirm feedback');
         },
       }
     );

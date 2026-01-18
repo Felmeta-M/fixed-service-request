@@ -133,7 +133,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         loadUserData();
     }, [user?.id, user?.name, user?.phone, user?.email]);
 
-    const hasActiveSurvey = surveys?.some((s) => ['waiting', 'approved'].includes(s.status?.toLowerCase()));
+    const hasActiveSurvey = false; //surveys?.some((s) => ['waiting', 'approved'].includes(s.status?.toLowerCase()));
 
     const updateFormData = (newData: Partial<ServiceFormData>) => {
         setFormData((prev) => ({ ...prev, ...newData }));
@@ -166,7 +166,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
         try {
             const result = await checkResourceAvailability(
-                { latitude: formData.latitude, longitude: formData.longitude},
+                { latitude: formData.latitude, longitude: formData.longitude },
                 formData.contactPerson || 'Customer',
             );
 
@@ -190,7 +190,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             } else {
                 // Check if this is a location review needed (Ethiopia but outside Addis Ababa)
                 const isLocationReviewNeeded = result.message && result.message.includes('LOCATION_REVIEW_NEEDED');
-                
+
                 // Check if this is a validation error (e.g., geo-fencing) that should be shown as a toast
                 const isValidationError = result.message && (
                     result.message.includes('Addis Ababa') ||
@@ -218,8 +218,8 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         } catch (error) {
             console.error('Resource check error:', error);
             // Extract error message from API error
-            const errorMessage = error instanceof Error 
-                ? error.message 
+            const errorMessage = error instanceof Error
+                ? error.message
                 : 'An unexpected error occurred during resource check.';
             showErrorToast(errorMessage, { id: toastId });
             updateFormData({
@@ -251,10 +251,10 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             case 0: // Service Selection
                 const hasValidService = formData.serviceType && (!formData.serviceType.includes('1457567289') || formData.bandwidth);
                 const hasAcceptedTerms = formData.termsAccepted === true; // Terms acceptance is required
-                
+
                 // Device selection validation
                 let hasDeviceSelection = true; // Default to true (no device needed)
-                
+
                 // If device option hasn't been selected yet, disable next button
                 if (formData.withDevice === undefined) {
                     hasDeviceSelection = false;
@@ -263,7 +263,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                     if (formData.serviceType === '180427974') {
                         // Combo service: need both internet and voice devices with IDs
                         hasDeviceSelection = !!(
-                            formData.selectedDeviceInternet?.id && 
+                            formData.selectedDeviceInternet?.id &&
                             formData.selectedDeviceVoice?.id
                         );
                     } else {
@@ -272,7 +272,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                     }
                 }
                 // If withDevice === false, hasDeviceSelection remains true (no device needed)
-                
+
                 return hasValidService && hasDeviceSelection && hasAcceptedTerms;
             case 1: // Location Setup
                 return formData.latitude !== 0 && formData.longitude !== 0 && formData.address;
@@ -381,7 +381,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const showNavigation = !(isNewCustomer && currentStep === 0) && !shouldShowManualStep && adjustedStep < 2;
 
     return (
-            <div className="w-full space-y-6 px-4 py-2 lg:px-6">            
+        <div className="w-full space-y-6 px-4 py-2 lg:px-6">
             <div className="bg-white pb-0 pt-0">
                 <div className="flex items-center justify-between">
                     <div>

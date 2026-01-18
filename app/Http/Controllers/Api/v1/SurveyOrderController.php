@@ -191,14 +191,15 @@ class SurveyOrderController extends Controller
                     }
                 }
 
-                if (empty($response['success']) || empty($response['status'])) {
+                if (empty($response['success']) || !isset($response['status'])) {
                     $timestampUpdates[] = $order->id;
                     continue;
                 }
 
-                $newStatus = $response['status'];
-
-                if ($order->status !== $newStatus) {
+                // Third party API status always has priority - overwrite local DB status
+                // Only accept valid status codes (1-8 matching FFDServiceProvisionStatus enum)
+                $newStatus = (int) $response['status'];
+                if ($newStatus >= 1 && $newStatus <= 8) {
                     $statusUpdates[$order->id] = $newStatus;
                 }
 

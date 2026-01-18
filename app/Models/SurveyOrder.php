@@ -199,12 +199,24 @@ class SurveyOrder extends Model
     }
 
     /**
-     * (Completed + no payment + no subscription) OR (Waiting + paid)
+     * Can subscribe only if:
+     * - (Completed + free service + no subscription yet) OR
+     * - (Waiting + paid + no subscription yet)
      */
     public static function checkCanSubscribe(int $status, float $paymentAmount, ?string $paymentTransId, ?string $subscriptionOrderId): bool
     {
-        return ($status === FFDServiceProvisionStatus::Completed->value && $paymentAmount < 1 && empty($subscriptionOrderId))
-            || ($status === FFDServiceProvisionStatus::Waiting->value && $paymentAmount > 0 && !empty($paymentTransId));
+        // Already subscribed - can't subscribe again
+        if (!empty($subscriptionOrderId)) {
+            return false;
+        }
+
+        // Free service: Completed + no payment required
+        $isFreeAndReady = $status === FFDServiceProvisionStatus::Completed->value && $paymentAmount < 1;
+
+        // Paid service: Waiting + already paid
+        $isPaidAndReady = $status === FFDServiceProvisionStatus::Waiting->value && $paymentAmount > 0 && !empty($paymentTransId);
+
+        return $isFreeAndReady || $isPaidAndReady;
     }
 
     /**

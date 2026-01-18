@@ -313,6 +313,12 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const canSubscribe = survey.can_subscribe ?? false;
     const canChangeOffer = survey.can_change_offer ?? false;
     const canCancel = survey.can_cancel ?? false;
+    
+    // Upgrade/Downgrade is only available for Internet and Combo services
+    const INTERNET_OFFER_ID = '1457567289';
+    const COMBO_OFFER_ID = '180427974';
+    const isInternetOrCombo = survey.main_offer_id === INTERNET_OFFER_ID || survey.main_offer_id === COMBO_OFFER_ID;
+    const canUpgradeDowngrade = canChangeOffer && isInternetOrCombo;
 
     // Helper: Get primary order ID (customer_subscription_order_id for auto, customer_survey_order_id for manual)
     const getPrimaryOrderId = () => {
@@ -439,7 +445,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 {/* {canCancel && ( */}
 
                 {/* Show dropdown only if there are actions available */}
-                {(canChangeOffer || canCancel) && (
+                {(canUpgradeDowngrade || canCancel) && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={loading}>
@@ -455,7 +461,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
-                            {canChangeOffer && (
+                            {canUpgradeDowngrade && (
                                 <>
                                     <DropdownMenuItem onClick={handleUpgrade} className="flex items-center gap-2 cursor-pointer">
                                         <ArrowUpToLineIcon className="h-4 w-4" />

@@ -79,10 +79,13 @@ type SurveyDetailProps = {
     focus?: ServiceActionFocus;
 };
 
+const INTERNET_OFFER_ID = '1457567289';
+const COMBO_OFFER_ID = '180427974';
+
 const serviceTypeMap = {
-    '1457567289': { label: 'Internet', icon: Wifi, color: 'text-blue-600' },
+    [INTERNET_OFFER_ID]: { label: 'Internet', icon: Wifi, color: 'text-blue-600' },
     '1207609454': { label: 'Voice', icon: Phone, color: 'text-violet-600' },
-    '180427974': { label: 'Combo', icon: Package, color: 'text-emerald-600' },
+    [COMBO_OFFER_ID]: { label: 'Combo', icon: Package, color: 'text-emerald-600' },
 };
 
 const surveyTypeMap = {
@@ -116,10 +119,13 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
     const totalAmount = (totalAmountNumber ?? 0).toFixed(2);
     const isFree = totalAmountNumber !== undefined && totalAmountNumber <= 0;
 
+    const isPaid = surveyDetails?.is_paid ?? false;
     const canPay = surveyDetails?.can_pay ?? false;
     const canSubscribe = surveyDetails?.can_subscribe ?? false;
     const canChangeOffer = surveyDetails?.can_change_offer ?? false;
     const canCancel = surveyDetails?.can_cancel ?? false;
+    const isInternetOrCombo = surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID;
+    const canUpgradeDowngrade = canChangeOffer && isInternetOrCombo;
 
     const statusInfo = getStatusInfo(surveyDetails?.status);
 
@@ -440,18 +446,14 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                 {service_number || <span className="text-muted-foreground">Awaiting</span>}
                             </span>
                         </div>
-                        {bandwidthDisplay && (
-                            <>
-                                <Separator />
-                                <div className="flex justify-between">
-                                    <span className="text-sm text-muted-foreground">Bandwidth</span>
-                                    <span className="flex items-center gap-2 font-medium">
-                                        <Gauge className="h-4 w-4 text-muted-foreground" />
-                                        {bandwidthDisplay}
-                                    </span>
-                                </div>
-                            </>
-                        )}
+                        <Separator />
+                        <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Bandwidth</span>
+                            <span className="flex items-center gap-2 font-medium">
+                                <Gauge className="h-4 w-4 text-muted-foreground" />
+                                {bandwidthDisplay || <span className="text-muted-foreground">Not available</span>}
+                            </span>
+                        </div>
                         <Separator />
                         <div className="flex justify-between">
                             <span className="text-sm text-muted-foreground">Status</span>
@@ -505,11 +507,16 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                     <CreditCard className="h-4 w-4" />
                                     Payment Summary
                                 </CardTitle>
-                                {payment?.merch_order_id && (
-                                    <span className="rounded bg-muted px-2 py-1 text-xs font-medium">
-                                        Invoice #{payment.merch_order_id}
+                                <div className="flex items-center gap-2">
+                                    <span className={`inline-flex items-center rounded-md px-3 py-1 text-sm font-semibold ${isPaid ? 'bg-et-green text-white' : 'bg-et-yellow text-gray-900'}`}>
+                                        {isPaid ? 'Paid' : 'Pending'}
                                     </span>
-                                )}
+                                    {payment?.merch_order_id && (
+                                        <span className="rounded bg-muted px-2 py-1 text-xs font-medium">
+                                            Invoice #{payment.merch_order_id}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -582,7 +589,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
             </div>
 
             {/* Action Section */}
-            {(canPay || canSubscribe || canChangeOffer || canCancel) && (
+            {(canPay || canSubscribe || canUpgradeDowngrade || canCancel) && (
                 <>
                     <div ref={actionRef} />
                     <Card className={`border-none shadow-xs ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
@@ -594,7 +601,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                             ? 'Ready to activate your service?'
                                             : canPay
                                                 ? 'Complete payment to activate'
-                                                : canChangeOffer
+                                                : canUpgradeDowngrade
                                                     ? 'Manage your service'
                                                     : 'Actions'}
                                     </p>
@@ -603,7 +610,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                             ? 'Click Subscribe to activate your service'
                                             : canPay
                                                 ? `Amount due: ${totalAmount} ETB`
-                                                : canChangeOffer
+                                                : canUpgradeDowngrade
                                                     ? 'Upgrade or downgrade your bandwidth'
                                                     : 'Choose an action below'}
                                     </p>
@@ -655,7 +662,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                         </Button>
                                     )}
 
-                                    {canChangeOffer && (
+                                    {canUpgradeDowngrade && (
                                         <>
                                             <Button
                                                 onClick={() => setOpenUpgradeDialog(true)}
@@ -697,7 +704,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
             )}
 
             {/* No Actions Available */}
-            {!canPay && !canSubscribe && !canChangeOffer && !canCancel && (
+            {!canPay && !canSubscribe && !canUpgradeDowngrade && !canCancel && (
                 <div className="flex justify-center pt-4">
                     <Link href="/services">
                         <Button variant="outline" className="gap-2">

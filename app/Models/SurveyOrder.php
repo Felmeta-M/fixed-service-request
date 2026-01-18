@@ -82,6 +82,7 @@ class SurveyOrder extends Model
 
     protected $casts = [
         'with_device' => 'boolean',
+        'survey_is_manual' => 'boolean',
         // 'status'  => FFDServiceProvisionStatus::class,
     ];
 

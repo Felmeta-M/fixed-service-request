@@ -251,6 +251,9 @@ XML;
             'contact_email' => $primaryContact['contact_email'],
             'status' => FFDServiceProvisionStatus::Waiting->value,
             'survey_is_manual' => true,
+            'with_device' => (bool) ($data['with_device'] ?? false),
+            'device_id' => $data['device_id'] ?? null,
+            'device_voice_id' => $data['device_voice_id'] ?? null,
         ]);
 
         // Persist payment for manual survey (without cable charge)
@@ -260,7 +263,7 @@ XML;
     }
 
     /**
-     * Persist payment for manual survey order (without cable charge).
+     * Persist payment for manual survey order (without cable charge, but includes device fee).
      *
      * @param SurveyOrder $survey
      * @param array $data Original request data
@@ -294,13 +297,31 @@ XML;
         // Calculate fees without cable charge for manual survey
         $fees = $this->paymentCalculator->calculateFeesWithoutCable($survey, $requestData);
 
+        // Calculate device fee from selected device prices
+        $deviceFee = 0;
+        if ($survey->with_device) {
+            // Internet/Data device fee
+            if ($survey->device_id) {
+                $device = \App\Models\AvailableDevice::find($survey->device_id);
+                $deviceFee += $device ? (float) $device->price : 0;
+            }
+
+            // Voice device fee (for combo services)
+            if ($survey->device_voice_id) {
+                $voiceDevice = \App\Models\AvailableDevice::find($survey->device_voice_id);
+                $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
+            }
+        }
+
+        $totalAmount = $fees['total_amount'] + $deviceFee;
+
         $this->paymentService->createOrUpdatePayment([
             'customer_survey_order_id' => $survey->customer_survey_order_id,
             'service_number' => $data['service_number'] ?? null,
             'subscription_fee' => $fees['subscription_fee'],
             'cable_charge' => 0,
-            'device_fee' => 0,
-            'total_amount' => $fees['total_amount'],
+            'device_fee' => $deviceFee,
+            'total_amount' => $totalAmount,
         ]);
     }
 

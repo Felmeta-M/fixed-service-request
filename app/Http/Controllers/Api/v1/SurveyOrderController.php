@@ -88,7 +88,7 @@ class SurveyOrderController extends Controller
 
             // Accept per_page from request (default 10, max 100)
             $perPage = min((int) $request->input('per_page', 10), 100);
-            
+
             $surveyOrders = $query->latest('survey_orders.created_at')->paginate($perPage);
 
             // Collect orders that need refresh (WAITING status, not checked in last 5 minutes)
@@ -142,7 +142,9 @@ class SurveyOrderController extends Controller
 
         foreach ($orders as $order) {
             try {
-                $isManual = (bool) ($order->survey_is_manual ?? true);
+                // Handle PostgreSQL boolean values (can be true, false, 't', 'f', '1', '0', 1, 0)
+                $rawManual = $order->survey_is_manual ?? true;
+                $isManual = $rawManual === true || $rawManual === 't' || $rawManual === 1 || $rawManual === '1';
                 $response = null;
 
                 //subscription order
@@ -259,6 +261,7 @@ class SurveyOrderController extends Controller
 
     /**
      * Store a newly created resource - optimized existence check
+     * Routes to manual service when survey_is_manual is true (skips geo-fencing validation)
      */
     public function store(SurveyOrderFormRequest $request): JsonResponse
     {
@@ -275,6 +278,12 @@ class SurveyOrderController extends Controller
             //     ], Response::HTTP_CONFLICT);
             // }
 
+            // For manual surveys, use the manual service (no geo-fencing/resource validation)
+            if (!empty($data['survey_is_manual'])) {
+                return $this->manualSurveyOrderService->createSurveyOrder($data);
+            }
+
+            // For auto surveys, use the factory-based service (requires encrypted resource data)
             $service = $this->factory->make($data['main_offer_id']);
 
             return $service->create($data);
@@ -479,16 +488,20 @@ class SurveyOrderController extends Controller
     }
 
     /**
-     * Get status label based on order phase and payment status.
+     * Get status label based on order phase, payment status, and survey type.
      * 
-     * Phase 1 (Survey): No subscription order yet
-     *   - Waiting → "Waiting Survey"
-     *   - Completed + has payment + not paid → "Pending Payment"
-     *   - Completed + free or paid → "Survey Completed"
+     * Manual Survey (survey_is_manual = true):
+     *   - Waiting → "Waiting" (pending physical survey by field team)
      * 
-     * Phase 2 (Subscription): Has subscription order
-     *   - Waiting → "Order Waiting"
-     *   - Completed → "Order Completed"
+     * Auto Survey (survey_is_manual = false):
+     *   Phase 1 (Survey): No subscription order yet
+     *     - Waiting → "Waiting Survey"
+     *     - Completed + has payment + not paid → "Pending Payment"
+     *     - Completed + free or paid → "Survey Completed"
+     *   
+     *   Phase 2 (Subscription): Has subscription order
+     *     - Waiting → "Order Waiting"
+     *     - Completed → "Order Completed"
      */
     protected function getStatusLabel(object $order): string
     {
@@ -498,13 +511,26 @@ class SurveyOrderController extends Controller
         $paymentTransId = $order->payment_trans_id ?? null;
         $isPaid = !empty($paymentTransId);
         $hasPayment = $paymentAmount > 0;
+        // Handle PostgreSQL boolean values (can be true, false, 't', 'f', '1', '0', 1, 0)
+        $rawManual = $order->survey_is_manual ?? false;
+        $isManual = $rawManual === true || $rawManual === 't' || $rawManual === 1 || $rawManual === '1';
+
+        // In-progress statuses for manual survey (Created, Waiting, Processing)
+        $manualInProgress = in_array($statusEnum, [
+            FFDServiceProvisionStatus::Created,
+            FFDServiceProvisionStatus::Waiting,
+            FFDServiceProvisionStatus::Processing,
+        ], true);
 
         return match (true) {
+            // Manual survey: In progress (Created/Waiting/Processing) - pending physical survey by field team
+            $isManual && $manualInProgress && !$hasSubscription => 'Waiting',
+
             // Phase 2: Subscription phase (has subscription order)
             $statusEnum === FFDServiceProvisionStatus::Waiting && $hasSubscription => 'Order Waiting',
             $statusEnum === FFDServiceProvisionStatus::Completed && $hasSubscription => 'Order Completed',
 
-            // Phase 1: Survey phase (no subscription order)
+            // Phase 1: Survey phase (no subscription order) - Auto survey only
             // Paid but not yet subscribed (status becomes Waiting after payment)
             $statusEnum === FFDServiceProvisionStatus::Waiting && !$hasSubscription && $isPaid => 'Paid',
             // Survey in progress

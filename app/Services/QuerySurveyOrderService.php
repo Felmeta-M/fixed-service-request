@@ -83,14 +83,15 @@ XML;
 
         if (isset($responseBody->SubOrderList)) {
             foreach ($responseBody->SubOrderList->children($namespaces['com']) as $subOrder) {
-                $status = strtolower((string) $subOrder->OrderStatus);
+                // Status is a numeric code matching FFDServiceProvisionStatus enum values
+                $statusCode = (int) $subOrder->OrderStatus;
 
-                $statuses[] = $status;
+                $statuses[] = $statusCode;
 
                 $subOrders[] = [
                     'sub_survey_order_id' => (string) $subOrder->SubSurveyOrderId,
                     'order_type'          => (string) $subOrder->OrderType,
-                    'order_status'        => $status,
+                    'order_status'        => $statusCode,
                     'primary_offer_id'    => (string) $subOrder->PrimaryOfferid,
                     'telecom_region'      => (string) $subOrder->TelecomRegion,
                     'contact_person'      => (string) $subOrder->ContactPerson,
@@ -100,7 +101,7 @@ XML;
             }
         }
 
-        /** 🔑 Compute MAIN survey order status */
+        /** 🔑 Compute MAIN survey order status from sub-order statuses */
         $mainStatus = $this->resolveSurveyOrderStatus($statuses);
 
         return [
@@ -109,25 +110,56 @@ XML;
             'ret_msg' => $retMsg,
             'response_time' => (string) $responseHeader->ResponseTime,
             'customer_survey_order_id' => $customerSurveyOrderId,
-            'status' => $mainStatus,           // ✅ IMPORTANT
+            'status' => $mainStatus,
             'sub_orders' => $subOrders,
         ];
     }
 
-    private function resolveSurveyOrderStatus(array $statuses): string
+    /**
+     * Resolve main survey order status from sub-order status codes.
+     * 
+     * Status codes match FFDServiceProvisionStatus enum:
+     *   1 = Created, 2 = Ready, 3 = Suspended, 4 = Processing,
+     *   5 = Cancelled, 6 = Waiting, 7 = Failed, 8 = Completed
+     * 
+     * Priority: Failed/Cancelled > Waiting/Processing/Created > Completed
+     */
+    private function resolveSurveyOrderStatus(array $statuses): int
     {
         if (empty($statuses)) {
             return FFDServiceProvisionStatus::Waiting->value;
         }
 
-        if (in_array('waiting', $statuses, true)) {
-            return FFDServiceProvisionStatus::Waiting->value;
-        }
-
-        if (in_array('failed', $statuses, true) || in_array('rejected', $statuses, true)) {
+        // If any sub-order failed or cancelled, the main order is failed/cancelled
+        if (in_array(FFDServiceProvisionStatus::Failed->value, $statuses, true)) {
             return FFDServiceProvisionStatus::Failed->value;
         }
+        if (in_array(FFDServiceProvisionStatus::Cancelled->value, $statuses, true)) {
+            return FFDServiceProvisionStatus::Cancelled->value;
+        }
 
-        return FFDServiceProvisionStatus::Completed->value;
+        // If any sub-order is still in progress (Created, Processing, Waiting, Suspended)
+        $inProgressStatuses = [
+            FFDServiceProvisionStatus::Created->value,
+            FFDServiceProvisionStatus::Processing->value,
+            FFDServiceProvisionStatus::Waiting->value,
+            FFDServiceProvisionStatus::Suspended->value,
+        ];
+        foreach ($inProgressStatuses as $inProgress) {
+            if (in_array($inProgress, $statuses, true)) {
+                return $inProgress;
+            }
+        }
+
+        // If all sub-orders are completed or ready
+        if (in_array(FFDServiceProvisionStatus::Completed->value, $statuses, true)) {
+            return FFDServiceProvisionStatus::Completed->value;
+        }
+        if (in_array(FFDServiceProvisionStatus::Ready->value, $statuses, true)) {
+            return FFDServiceProvisionStatus::Ready->value;
+        }
+
+        // Fallback: return first status
+        return $statuses[0];
     }
 }

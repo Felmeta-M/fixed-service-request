@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getStatusInfo, getStatusBadgeVariant } from '@/lib/status-map';
+import { getStatusInfo } from '@/lib/status-map';
 import { router } from '@inertiajs/react';
 import {
     ColumnDef,
@@ -174,12 +174,10 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                     // Backend now sends status as a string label (e.g., "Waiting", "Completed")
                     const statusStr = getValue<string>();
                     const statusInfo = getStatusInfo(statusStr);
-                    const variant = getStatusBadgeVariant(statusStr);
 
                     return (
                         <div>
-                            <Badge variant={variant} className="flex items-center gap-2">
-                                <div className={`h-2 w-2 rounded-full ${statusInfo.bg}`} />
+                            <Badge className={`flex items-center gap-2 border-transparent ${statusInfo.bg} ${statusInfo.text}`}>
                                 <span className="text-xs">{statusInfo.label}</span>
                             </Badge>
                         </div>

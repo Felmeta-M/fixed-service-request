@@ -85,6 +85,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
     console.log('user:', user);
     console.log('formData in ReviewSubmitStep:', formData);
     const [submitting, setSubmitting] = useState(false);
+    const [waitingForProcessing, setWaitingForProcessing] = useState(false);
 
     const serviceInfo = serviceTypes[formData.serviceType as keyof typeof serviceTypes];
     const createSurveyMutation = useCreateSurvey();
@@ -195,8 +196,15 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                     duration: 5000,
                 });
 
+                // Reset submitting since API call is complete
                 setSubmitting(false);
-                onNext?.(String(surveyId));
+                // Show waiting state while third-party processes the order
+                setWaitingForProcessing(true);
+                // Wait 7.5 seconds for third-party processing before transitioning
+                setTimeout(() => {
+                    setWaitingForProcessing(false);
+                    onNext?.(String(surveyId));
+                }, 7500); // 7.5 seconds - middle of 5-10 second range
             },
             onError: (err: Error) => {
                 console.error('Submission error:', err);
@@ -377,11 +385,11 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                     Back
                 </Button>
 
-                <Button onClick={handleSubmit} disabled={submitting || createSurveyMutation.isPending || !formData.resourceAvailable} className="bg-primary hover:bg-primary/80">
-                    {(submitting || createSurveyMutation.isPending) ? (
+                <Button onClick={handleSubmit} disabled={submitting || createSurveyMutation.isPending || waitingForProcessing || !formData.resourceAvailable} className="bg-primary hover:bg-primary/80">
+                    {(submitting || createSurveyMutation.isPending || waitingForProcessing) ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
+                            {waitingForProcessing ? 'Preparing subscription...' : 'Processing...'}
                         </>
                     ) : (
                         <>

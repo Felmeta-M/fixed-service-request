@@ -216,12 +216,11 @@ class SurveyOrder extends Model
     }
 
     /**
-     * (Completed + no subscription) OR (Waiting + no payment)
+     * Completed + has subscription (can only cancel after service is subscribed)
      */
     public static function checkCanCancel(int $status, ?string $subscriptionOrderId, ?string $paymentTransId): bool
     {
-        return ($status === FFDServiceProvisionStatus::Completed->value && empty($subscriptionOrderId))
-            || ($status === FFDServiceProvisionStatus::Waiting->value && empty($paymentTransId));
+        return $status === FFDServiceProvisionStatus::Completed->value && !empty($subscriptionOrderId);
     }
 
     /**

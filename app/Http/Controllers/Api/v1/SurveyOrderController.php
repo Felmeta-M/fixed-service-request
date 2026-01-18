@@ -466,7 +466,7 @@ class SurveyOrderController extends Controller
                 'total_amount' => (float) ($order->payment_total_amount ?? 0),
                 'merch_order_id' => $order->payment_merch_order_id ?? null,
             ] : null,
-            'status' => $this->getStatusLabel($status, $subscriptionOrderId),
+            'status' => $this->getStatusLabel($order),
             'is_paid' => SurveyOrder::checkIsPaid($paymentStatus, $paymentTransId),
             'can_pay' => SurveyOrder::checkCanPay($status, $paymentAmount, $paymentTransId),
             'can_subscribe' => SurveyOrder::checkCanSubscribe($status, $paymentAmount, $paymentTransId, $subscriptionOrderId),
@@ -476,28 +476,44 @@ class SurveyOrderController extends Controller
     }
 
     /**
-     * Get status label based on status and subscription order presence.
+     * Get status label based on order phase and payment status.
+     * 
+     * Phase 1 (Survey): No subscription order yet
+     *   - Waiting → "Waiting Survey"
+     *   - Completed + has payment + not paid → "Pending Payment"
+     *   - Completed + free or paid → "Survey Completed"
+     * 
+     * Phase 2 (Subscription): Has subscription order
+     *   - Waiting → "Order Waiting"
+     *   - Completed → "Order Completed"
      */
-    protected function getStatusLabel(int $status, ?string $subscriptionOrderId): string
+    protected function getStatusLabel(object $order): string
     {
-        $statusEnum = FFDServiceProvisionStatus::tryFrom($status);
-        $label = $statusEnum?->label() ?? FFDServiceProvisionStatus::Processing->label();
+        $statusEnum = FFDServiceProvisionStatus::tryFrom((int) ($order->status ?? 0));
+        $hasSubscription = !empty($order->customer_subscription_order_id);
+        $paymentAmount = (float) ($order->payment_total_amount ?? 0);
+        $paymentTransId = $order->payment_trans_id ?? null;
+        $isPaid = !empty($paymentTransId);
+        $hasPayment = $paymentAmount > 0;
 
-        if (empty($subscriptionOrderId)) {
-            if ($statusEnum === FFDServiceProvisionStatus::Waiting) {
-                return 'Waiting Survey';
-            } elseif ($statusEnum === FFDServiceProvisionStatus::Completed) {
-                return 'Survey Completed';
-            }
-        } else {
-            if ($statusEnum === FFDServiceProvisionStatus::Waiting) {
-                return 'Order Waiting';
-            } elseif ($statusEnum === FFDServiceProvisionStatus::Completed) {
-                return 'Order Completed';
-            }
-        }
+        return match (true) {
+            // Phase 2: Subscription phase (has subscription order)
+            $statusEnum === FFDServiceProvisionStatus::Waiting && $hasSubscription => 'Order Waiting',
+            $statusEnum === FFDServiceProvisionStatus::Completed && $hasSubscription => 'Order Completed',
 
-        return $label;
+            // Phase 1: Survey phase (no subscription order)
+            // Paid but not yet subscribed (status becomes Waiting after payment)
+            $statusEnum === FFDServiceProvisionStatus::Waiting && !$hasSubscription && $isPaid => 'Paid',
+            // Survey in progress
+            $statusEnum === FFDServiceProvisionStatus::Waiting && !$hasSubscription => 'Waiting Survey',
+            // Survey completed but payment pending
+            $statusEnum === FFDServiceProvisionStatus::Completed && !$hasSubscription && $hasPayment && !$isPaid => 'Pending Payment',
+            // Survey completed (free or ready to subscribe)
+            $statusEnum === FFDServiceProvisionStatus::Completed && !$hasSubscription => 'Survey Completed',
+
+            // Default: Use enum label
+            default => $statusEnum?->label() ?? FFDServiceProvisionStatus::Processing->label(),
+        };
     }
 
     /**

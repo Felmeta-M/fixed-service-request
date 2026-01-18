@@ -368,7 +368,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                 <p className="text-sm text-muted-foreground">{surveyTypeInfo.label}</p>
                             </div>
                         </div>
-                        <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium ${statusInfo.bg} ${statusInfo.text}`}>
+                        <span className={`inline-flex items-center rounded-lg px-4 py-1.5 text-sm font-semibold ${statusInfo.bg} ${statusInfo.text}`}>
                             {statusInfo.label}
                         </span>
                     </div>
@@ -498,8 +498,8 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                     </CardContent>
                 </Card>
 
-                {/* Payment Information - Invoice Style */}
-                {!isFree && hasPaymentItems ? (
+                {/* Payment Information - Invoice Style (only show if there's payment info) */}
+                {hasPaymentItems && (
                     <Card className="border-none shadow-xs">
                         <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
@@ -565,24 +565,6 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                     Payment Reference: {payment.payment_order_id}
                                 </p>
                             )}
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <Card className="border-none shadow-xs">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                <CreditCard className="h-4 w-4" />
-                                Payment Summary
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center gap-3 rounded-lg bg-emerald-50 p-4 dark:bg-emerald-950/20">
-                                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                                <div>
-                                    <p className="font-medium text-emerald-800 dark:text-emerald-200">No Payment Required</p>
-                                    <p className="text-sm text-emerald-600 dark:text-emerald-400">This service has no charges</p>
-                                </div>
-                            </div>
                         </CardContent>
                     </Card>
                 )}

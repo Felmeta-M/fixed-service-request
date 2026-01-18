@@ -15,6 +15,7 @@ type SurveyDetails = {
     survey_type?: string | null;
     main_offer_id: string;
     bandwidth?: string | null;
+    cable_length?: string | number | null;
     status?: string | number | null;
     service_number?: string | null;
     created_at?: string;
@@ -28,15 +29,12 @@ type SurveyDetails = {
 };
 
 type PaymentDetailsData = {
-    status?: string;
-    cable_charge?: string | number | null;
     subscription_fee?: string | number | null;
-    device_price?: string | number | null;
+    device_fee?: string | number | null;
+    cable_charge?: string | number | null;
     total_amount?: string | number | null;
-    amount?: string | number | null;
-    service_number?: string | null;
-    customer_survey_order_id?: string;
-    customer_subscription_order_id?: string | null;
+    payment_order_id?: string | null;
+    merch_order_id?: string | null;
 };
 
 type PaymentDetailsResource = { data: PaymentDetailsData } | null;
@@ -96,6 +94,7 @@ export default function ServiceShowPage() {
             survey_type: surveyDetailQuery.data.data.survey_type,
             main_offer_id: surveyDetailQuery.data.data.main_offer_id,
             bandwidth: surveyDetailQuery.data.data.bandwidth,
+            cable_length: surveyDetailQuery.data.data.cable_length,
             status: surveyDetailQuery.data.data.status,
             service_number: surveyDetailQuery.data.data.service_number,
             created_at: surveyDetailQuery.data.data.created_at,

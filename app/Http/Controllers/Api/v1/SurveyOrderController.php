@@ -56,12 +56,16 @@ class SurveyOrderController extends Controller
                     'survey_orders.main_offer_id',
                     'survey_orders.service_number',
                     'survey_orders.bandwidth',
+                    'survey_orders.cable_length',
                     'survey_orders.with_device',
                     'survey_orders.last_checked_at',
                     'survey_orders.created_at',
                     'survey_orders.updated_at',
                     'payments.id as payment_id',
-                    'payments.total_amount as payment_amount',
+                    'payments.subscription_fee as payment_subscription_fee',
+                    'payments.device_fee as payment_device_fee',
+                    'payments.cable_charge as payment_cable_charge',
+                    'payments.total_amount as payment_total_amount',
                     'payments.status as payment_status',
                     'payments.trans_id as payment_trans_id',
                     'payments.merch_order_id as payment_merch_order_id',
@@ -358,8 +362,12 @@ class SurveyOrderController extends Controller
             ->select([
                 'survey_orders.*',
                 'payments.id as payment_id',
-                'payments.total_amount as payment_amount',
+                'payments.subscription_fee as payment_subscription_fee',
+                'payments.device_fee as payment_device_fee',
+                'payments.cable_charge as payment_cable_charge',
+                'payments.total_amount as payment_total_amount',
                 'payments.status as payment_status',
+                'payments.payment_order_id as payment_payment_order_id',
                 'payments.merch_order_id as payment_merch_order_id',
                 'payments.trans_id as payment_trans_id',
             ]);
@@ -433,7 +441,7 @@ class SurveyOrderController extends Controller
     protected function transformOrder(object $order): array
     {
         $status = (int) ($order->status ?? 0);
-        $paymentAmount = (float) ($order->payment_amount ?? 0);
+        $paymentAmount = (float) ($order->payment_total_amount ?? 0);
         $paymentTransId = $order->payment_trans_id ?? null;
         $subscriptionOrderId = $order->customer_subscription_order_id ?? null;
         $paymentId = $order->payment_id ?? null;
@@ -446,11 +454,16 @@ class SurveyOrderController extends Controller
             'customer_code' => $order->customer_code,
             'main_offer_id' => $order->main_offer_id,
             'service_number' => $order->service_number ?? null,
+            'bandwidth' => $order->bandwidth ?? null,
+            'cable_length' => $order->cable_length ?? null,
             'with_device' => (bool) ($order->with_device ?? false),
             'created_at' => $order->created_at,
             'updated_at' => $order->updated_at,
             'payment' => $paymentId ? [
-                'total_amount' => $order->payment_amount,
+                'subscription_fee' => (float) ($order->payment_subscription_fee ?? 0),
+                'device_fee' => (float) ($order->payment_device_fee ?? 0),
+                'cable_charge' => (float) ($order->payment_cable_charge ?? 0),
+                'total_amount' => (float) ($order->payment_total_amount ?? 0),
                 'merch_order_id' => $order->payment_merch_order_id ?? null,
             ] : null,
             'status' => $this->getStatusLabel($status, $subscriptionOrderId),

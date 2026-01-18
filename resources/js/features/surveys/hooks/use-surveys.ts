@@ -20,13 +20,19 @@ interface Survey {
     service_number?: string | null;
     cancellation_reason?: string;
     payment?: {
+        subscription_fee?: number | string;
+        device_fee?: number | string;
+        cable_charge?: number | string;
         total_amount?: number | string;
+        payment_order_id?: string | null;
+        merch_order_id?: string | null;
         status?: string;
     };
     // Backend-provided action flags (single source of truth)
     is_paid?: boolean;
     can_pay?: boolean;
     can_subscribe?: boolean;
+    can_change_offer?: boolean;
     can_cancel?: boolean;
 }
 
@@ -57,25 +63,24 @@ interface SurveyDetailResponse {
         survey_type?: string | null;
         main_offer_id: string;
         bandwidth?: string | null;
+        cable_length?: string | number | null;
         status?: string | number | null;
         service_number?: string | null;
         created_at?: string;
         updated_at?: string;
         payment?: {
-            status?: string;
-            cable_charge?: string | number | null;
             subscription_fee?: string | number | null;
-            device_price?: string | number | null;
+            device_fee?: string | number | null;
+            cable_charge?: string | number | null;
             total_amount?: string | number | null;
-            amount?: string | number | null;
-            service_number?: string | null;
-            customer_survey_order_id?: string;
-            customer_subscription_order_id?: string | null;
+            payment_order_id?: string | null;
+            merch_order_id?: string | null;
         };
         // Backend-provided action flags (single source of truth)
         is_paid?: boolean;
         can_pay?: boolean;
         can_subscribe?: boolean;
+        can_change_offer?: boolean;
         can_cancel?: boolean;
     };
     message?: string;

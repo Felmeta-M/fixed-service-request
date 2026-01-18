@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getStatusInfo } from '@/lib/status-map';
@@ -138,16 +137,6 @@ export default function SurveyDetailPage({ survey, onBack, showBackButton = true
         return bandwidth;
     };
 
-    const getStatusBadgeVariant = (status?: string | number | null) => {
-        const statusStr = String(status ?? '');
-        if (['Survey Completed', 'Order Completed', 'Paid', 'Ready'].includes(statusStr)) {
-            return 'default';
-        }
-        if (['Failed', 'Cancelled', 'Suspended'].includes(statusStr)) {
-            return 'destructive';
-        }
-        return 'secondary';
-    };
 
     const hasSecondaryContact = survey.sec_contact_person || survey.sec_contact_no || survey.sec_contact_email;
 
@@ -177,9 +166,9 @@ export default function SurveyDetailPage({ survey, onBack, showBackButton = true
                                 <CardTitle className="text-lg">{serviceType.label} Service</CardTitle>
                                 <CardDescription>{surveyTypeInfo.label} Request</CardDescription>
                             </div>
-                            <Badge variant={getStatusBadgeVariant(survey.status) as 'default' | 'secondary' | 'destructive'}>
+                            <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium ${statusInfo.bg} ${statusInfo.text}`}>
                                 {statusInfo.label}
-                            </Badge>
+                            </span>
                         </div>
                         {/* Actions - consistent with table actions */}
                         <SurveyActions

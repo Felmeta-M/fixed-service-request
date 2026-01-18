@@ -23,7 +23,10 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
 import { type ServiceActionFocus } from '@/lib/service-action-rules';
-import { useCreateSubscription, useCreatePaymentOrder } from '@/hooks/use-api-mutations';
+import { useCreateSubscription, useCreatePaymentOrder, useCancelSurveyOrder, useChangePrimaryOffering } from '@/hooks/use-api-mutations';
+import { BandwidthChangeDialog } from './bandwidth-change-dialog';
+import { CancelConfirmationDialog } from './cancel-confirmation-dialog';
+import { ArrowUpToLineIcon, ArrowDownToLineIcon, X } from 'lucide-react';
 
 type AuthUser = {
     api_token: string;
@@ -63,7 +66,9 @@ type PaymentDetailsData = {
     status?: string;
     cable_charge?: string | number | null;
     subscription_fee?: string | number | null;
-    device_price?: string | number | null;
+    device_fee?: string | number | null;
+    payment_order_id?: string | null;
+    merch_order_id?: string | null;
 };
 
 type PaymentDetailsResource = { data?: PaymentDetailsData } | null;
@@ -89,11 +94,16 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
 
     const createSubscriptionMutation = useCreateSubscription();
     const createPaymentOrderMutation = useCreatePaymentOrder();
+    const cancelMutation = useCancelSurveyOrder();
+    const changePrimaryOfferingMutation = useChangePrimaryOffering();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isSubmittingRef = useRef(false);
+    const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
+    const [openDowngradeDialog, setOpenDowngradeDialog] = useState(false);
+    const [openCancelDialog, setOpenCancelDialog] = useState(false);
 
-    const loading = createSubscriptionMutation.isPending || createPaymentOrderMutation.isPending || isSubmitting;
+    const loading = createSubscriptionMutation.isPending || createPaymentOrderMutation.isPending || cancelMutation.isPending || changePrimaryOfferingMutation.isPending || isSubmitting;
 
     const payment = paymentDetails?.data;
     const customer_survey_order_id = payment?.customer_survey_order_id ?? surveyDetails?.customer_survey_order_id ?? '';
@@ -108,6 +118,8 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
 
     const canPay = surveyDetails?.can_pay ?? false;
     const canSubscribe = surveyDetails?.can_subscribe ?? false;
+    const canChangeOffer = surveyDetails?.can_change_offer ?? false;
+    const canCancel = surveyDetails?.can_cancel ?? false;
 
     const statusInfo = getStatusInfo(surveyDetails?.status);
 
@@ -151,11 +163,11 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
 
     const subscriptionFee = toNumber(payment?.subscription_fee);
     const cableCharge = toNumber(payment?.cable_charge);
-    const devicePrice = toNumber(payment?.device_price);
+    const deviceFee = toNumber(payment?.device_fee);
     const cableLengthRaw = surveyDetails?.cable_length;
     const cableLength = cableLengthRaw === null || cableLengthRaw === undefined || cableLengthRaw === '' ? null : String(cableLengthRaw);
 
-    const hasPaymentItems = subscriptionFee > 0 || cableCharge > 0 || devicePrice > 0;
+    const hasPaymentItems = subscriptionFee > 0 || cableCharge > 0 || deviceFee > 0;
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return 'N/A';
@@ -178,16 +190,6 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
         return bandwidth;
     };
 
-    const getStatusBadgeVariant = (status?: string | number | null) => {
-        const statusStr = String(status ?? '');
-        if (['Survey Completed', 'Order Completed', 'Paid', 'Ready'].includes(statusStr)) {
-            return 'default';
-        }
-        if (['Failed', 'Cancelled', 'Suspended'].includes(statusStr)) {
-            return 'destructive';
-        }
-        return 'secondary';
-    };
 
     const onPaymentConfirm = () => {
         if (!customer_survey_order_id || !user.customer_code || !totalAmountNumber) {
@@ -266,6 +268,65 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
         });
     };
 
+    const handleCancel = (cancellationReason?: string) => {
+        if (!cancellationReason) {
+            showErrorToast('Please provide a reason for cancellation.');
+            return;
+        }
+
+        const toastId = showLoadingToast('Processing cancellation...');
+
+        cancelMutation.mutate(
+            {
+                customer_survey_order_id: customer_survey_order_id,
+                cancel_reason: cancellationReason,
+            },
+            {
+                onSuccess: () => {
+                    showSuccessToast('Order cancelled successfully!', { id: toastId });
+                    setOpenCancelDialog(false);
+                    router.visit('/services');
+                },
+                onError: () => {
+                    showErrorToast('Cancellation failed. Please try again.', { id: toastId });
+                },
+            },
+        );
+    };
+
+    const handleBandwidthChange = (bandwidth: string, mode: 'upgrade' | 'downgrade') => {
+        if (!service_number) {
+            showErrorToast('Service number is required for bandwidth change');
+            return;
+        }
+
+        const toastId = showLoadingToast(`Processing ${mode}...`);
+
+        changePrimaryOfferingMutation.mutate(
+            {
+                service_number: service_number,
+                bandwidth: bandwidth,
+            },
+            {
+                onSuccess: () => {
+                    showSuccessToast(`Service ${mode} successful!`, {
+                        id: toastId,
+                        description: `Bandwidth changed to ${bandwidth}`,
+                    });
+                    if (mode === 'upgrade') {
+                        setOpenUpgradeDialog(false);
+                    } else {
+                        setOpenDowngradeDialog(false);
+                    }
+                    router.reload();
+                },
+                onError: () => {
+                    showErrorToast(`${mode} failed. Please try again.`, { id: toastId });
+                },
+            },
+        );
+    };
+
     const bandwidthDisplay = formatBandwidth(surveyDetails?.bandwidth);
 
     return (
@@ -301,12 +362,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                 <p className="text-sm text-muted-foreground">{surveyTypeInfo.label}</p>
                             </div>
                         </div>
-                        <Badge
-                            variant={getStatusBadgeVariant(surveyDetails?.status) as 'default' | 'secondary' | 'destructive'}
-                            className="w-fit"
-                        >
+                        <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium ${statusInfo.bg} ${statusInfo.text}`}>
                             {statusInfo.label}
-                        </Badge>
+                        </span>
                     </div>
                 </CardHeader>
             </Card>
@@ -438,49 +496,68 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                     </CardContent>
                 </Card>
 
-                {/* Payment Information - Only show if there are charges */}
+                {/* Payment Information - Invoice Style */}
                 {!isFree && hasPaymentItems ? (
                     <Card className="border-none shadow-xs">
                         <CardHeader className="pb-3">
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                <CreditCard className="h-4 w-4" />
-                                Payment Summary
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            {subscriptionFee > 0 && (
-                                <>
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-muted-foreground">Subscription Fee</span>
-                                        <span className="font-medium">{subscriptionFee.toFixed(2)} ETB</span>
-                                    </div>
-                                    <Separator />
-                                </>
-                            )}
-                            {cableCharge > 0 && (
-                                <>
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-muted-foreground">
-                                            Cable Installation{cableLength ? ` (${cableLength}m)` : ''}
-                                        </span>
-                                        <span className="font-medium">{cableCharge.toFixed(2)} ETB</span>
-                                    </div>
-                                    <Separator />
-                                </>
-                            )}
-                            {devicePrice > 0 && (
-                                <>
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-muted-foreground">Device & Hardware</span>
-                                        <span className="font-medium">{devicePrice.toFixed(2)} ETB</span>
-                                    </div>
-                                    <Separator />
-                                </>
-                            )}
-                            <div className="flex justify-between pt-2">
-                                <span className="font-semibold">Total Amount</span>
-                                <span className="text-lg font-bold text-primary">{totalAmount} ETB</span>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <CreditCard className="h-4 w-4" />
+                                    Payment Summary
+                                </CardTitle>
+                                {payment?.merch_order_id && (
+                                    <span className="rounded bg-muted px-2 py-1 text-xs font-medium">
+                                        Invoice #{payment.merch_order_id}
+                                    </span>
+                                )}
                             </div>
+                        </CardHeader>
+                        <CardContent>
+                            {/* Invoice Table */}
+                            <div className="rounded-lg border bg-muted/30">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b bg-muted/50">
+                                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Description</th>
+                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Amount (ETB)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y">
+                                        {subscriptionFee > 0 && (
+                                            <tr>
+                                                <td className="px-4 py-3 text-sm">Subscription Fee</td>
+                                                <td className="px-4 py-3 text-right font-medium tabular-nums">{subscriptionFee.toFixed(2)}</td>
+                                            </tr>
+                                        )}
+                                        {cableCharge > 0 && (
+                                            <tr>
+                                                <td className="px-4 py-3 text-sm">
+                                                    Cable Charge
+                                                    {cableLength && <span className="ml-1 text-muted-foreground">({cableLength}m)</span>}
+                                                </td>
+                                                <td className="px-4 py-3 text-right font-medium tabular-nums">{cableCharge.toFixed(2)}</td>
+                                            </tr>
+                                        )}
+                                        {deviceFee > 0 && (
+                                            <tr>
+                                                <td className="px-4 py-3 text-sm">Device Fee</td>
+                                                <td className="px-4 py-3 text-right font-medium tabular-nums">{deviceFee.toFixed(2)}</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr className="border-t-2 bg-muted/50">
+                                            <td className="px-4 py-4 text-sm font-semibold">Total Amount</td>
+                                            <td className="px-4 py-4 text-right text-lg font-bold text-primary tabular-nums">{totalAmount}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            {payment?.payment_order_id && (
+                                <p className="mt-3 text-center text-xs text-muted-foreground">
+                                    Payment Reference: {payment.payment_order_id}
+                                </p>
+                            )}
                         </CardContent>
                     </Card>
                 ) : (
@@ -505,7 +582,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
             </div>
 
             {/* Action Section */}
-            {(canPay || canSubscribe) && (
+            {(canPay || canSubscribe || canChangeOffer || canCancel) && (
                 <>
                     <div ref={actionRef} />
                     <Card className={`border-none shadow-xs ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
@@ -513,33 +590,37 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <p className="font-medium">
-                                        {canSubscribe && isFree
+                                        {canSubscribe
                                             ? 'Ready to activate your service?'
-                                            : canPay && !isFree
+                                            : canPay
                                                 ? 'Complete payment to activate'
-                                                : 'Next Steps'}
+                                                : canChangeOffer
+                                                    ? 'Manage your service'
+                                                    : 'Actions'}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                        {canSubscribe && isFree
+                                        {canSubscribe
                                             ? 'Click Subscribe to activate your service'
-                                            : canPay && !isFree
+                                            : canPay
                                                 ? `Amount due: ${totalAmount} ETB`
-                                                : 'Choose an action below'}
+                                                : canChangeOffer
+                                                    ? 'Upgrade or downgrade your bandwidth'
+                                                    : 'Choose an action below'}
                                     </p>
                                 </div>
 
-                                <div className="flex flex-col-reverse gap-3 sm:flex-row">
+                                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
                                     <Link href="/services">
                                         <Button variant="outline" className="w-full sm:w-auto">Back to List</Button>
                                     </Link>
 
-                                    {canSubscribe && isFree && (
+                                    {canSubscribe && (
                                         <Button
                                             onClick={onSubscribeConfirm}
                                             disabled={loading || isSubmitting || !customer_survey_order_id}
                                             className={`w-full gap-2 sm:w-auto ${focusFlash && focusSafe === 'subscribe' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                                         >
-                                            {loading ? (
+                                            {loading && createSubscriptionMutation.isPending ? (
                                                 <>
                                                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                                     Processing...
@@ -553,14 +634,14 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                         </Button>
                                     )}
 
-                                    {canPay && !isFree && (
+                                    {canPay && (
                                         <Button
                                             onClick={onPaymentConfirm}
                                             disabled={loading || !customer_survey_order_id}
                                             size="lg"
                                             className={`w-full gap-2 sm:w-auto ${focusFlash && focusSafe === 'payment' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                                         >
-                                            {loading ? (
+                                            {loading && createPaymentOrderMutation.isPending ? (
                                                 <>
                                                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                                     Processing...
@@ -573,6 +654,41 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                             )}
                                         </Button>
                                     )}
+
+                                    {canChangeOffer && (
+                                        <>
+                                            <Button
+                                                onClick={() => setOpenUpgradeDialog(true)}
+                                                disabled={loading}
+                                                variant="outline"
+                                                className="w-full gap-2 sm:w-auto"
+                                            >
+                                                <ArrowUpToLineIcon className="h-4 w-4" />
+                                                Upgrade
+                                            </Button>
+                                            <Button
+                                                onClick={() => setOpenDowngradeDialog(true)}
+                                                disabled={loading}
+                                                variant="outline"
+                                                className="w-full gap-2 sm:w-auto"
+                                            >
+                                                <ArrowDownToLineIcon className="h-4 w-4" />
+                                                Downgrade
+                                            </Button>
+                                        </>
+                                    )}
+
+                                    {canCancel && (
+                                        <Button
+                                            onClick={() => setOpenCancelDialog(true)}
+                                            disabled={loading}
+                                            variant="destructive"
+                                            className="w-full gap-2 sm:w-auto"
+                                        >
+                                            <X className="h-4 w-4" />
+                                            Cancel
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         </CardContent>
@@ -581,7 +697,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
             )}
 
             {/* No Actions Available */}
-            {!canPay && !canSubscribe && (
+            {!canPay && !canSubscribe && !canChangeOffer && !canCancel && (
                 <div className="flex justify-center pt-4">
                     <Link href="/services">
                         <Button variant="outline" className="gap-2">
@@ -591,6 +707,38 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                     </Link>
                 </div>
             )}
+
+            {/* Dialogs */}
+            <CancelConfirmationDialog
+                open={openCancelDialog}
+                onOpenChange={setOpenCancelDialog}
+                onConfirm={handleCancel}
+                loading={cancelMutation.isPending}
+                title="Cancel Survey Order"
+                description="Are you sure you want to cancel this survey order? This action cannot be undone."
+                confirmText={cancelMutation.isPending ? 'Cancelling...' : 'Yes, Cancel'}
+                cancelText="No, Keep It"
+            />
+
+            <BandwidthChangeDialog
+                open={openUpgradeDialog}
+                onOpenChange={setOpenUpgradeDialog}
+                onConfirm={(bandwidth) => handleBandwidthChange(bandwidth, 'upgrade')}
+                loading={changePrimaryOfferingMutation.isPending}
+                mode="upgrade"
+                currentBandwidth={surveyDetails?.bandwidth ?? undefined}
+                serviceNumber={service_number ?? ''}
+            />
+
+            <BandwidthChangeDialog
+                open={openDowngradeDialog}
+                onOpenChange={setOpenDowngradeDialog}
+                onConfirm={(bandwidth) => handleBandwidthChange(bandwidth, 'downgrade')}
+                loading={changePrimaryOfferingMutation.isPending}
+                mode="downgrade"
+                currentBandwidth={surveyDetails?.bandwidth ?? undefined}
+                serviceNumber={service_number ?? ''}
+            />
         </div>
     );
 }

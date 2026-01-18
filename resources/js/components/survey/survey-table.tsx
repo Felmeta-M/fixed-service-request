@@ -47,6 +47,7 @@ type SurveyRow = {
     is_paid?: boolean;
     can_pay?: boolean;
     can_subscribe?: boolean;
+    can_change_offer?: boolean;
     can_cancel?: boolean;
     [key: string]: unknown;
 };
@@ -68,8 +69,8 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
             const matchesStatus = statusFilter ? status.toLowerCase() === statusFilter.toLowerCase() : true;
             const matchesGlobal = globalFilter
                 ? s.customer_survey_order_id?.toString().includes(globalFilter) ||
-                  offerId.includes(globalFilter) ||
-                  status.toLowerCase().includes(globalFilter.toLowerCase())
+                offerId.includes(globalFilter) ||
+                status.toLowerCase().includes(globalFilter.toLowerCase())
                 : true;
             return matchesType && matchesStatus && matchesGlobal;
         });
@@ -94,7 +95,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                         className="!hover:text-primary px-0 font-medium"
                         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                     >
-                        Survey Order Number
+                        Survey Number
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 ),
@@ -113,7 +114,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
             },
             {
                 accessorKey: 'customer_subscription_order_id',
-                header: 'Subscription Order Number',
+                header: 'Order Number',
                 cell: ({ getValue, row }) => {
                     const subscriptionOrderId = getValue<string | null>();
                     // Only show if it exists (auto surveys have this)

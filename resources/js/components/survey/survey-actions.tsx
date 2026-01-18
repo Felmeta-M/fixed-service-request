@@ -68,6 +68,7 @@ type Survey = {
     is_paid?: boolean;
     can_pay?: boolean;
     can_subscribe?: boolean;
+    can_change_offer?: boolean;
     can_cancel?: boolean;
     [key: string]: unknown;
 };
@@ -310,6 +311,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     // These flags are computed on the server based on business rules
     const canPay = survey.can_pay ?? false;
     const canSubscribe = survey.can_subscribe ?? false;
+    const canChangeOffer = survey.can_change_offer ?? false;
     const canCancel = survey.can_cancel ?? false;
 
     // Helper: Get primary order ID (customer_subscription_order_id for auto, customer_survey_order_id for manual)
@@ -436,38 +438,44 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 </Button>
                 {/* {canCancel && ( */}
 
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={loading}>
-                            <span className="sr-only">Open menu</span>
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                                />
-                            </svg>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onClick={handleUpgrade} className="flex items-center gap-2 cursor-pointer">
-                            <ArrowUpToLineIcon className="h-4 w-4" />
-                            <span>Upgrade</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleDowngrade} className="flex items-center gap-2 cursor-pointer">
-                            <ArrowDownToLineIcon className="h-4 w-4" />
-                            <span>Downgrade</span>
-                        </DropdownMenuItem>
-                        {/* {canCancel && <DropdownMenuSeparator />} */}
-                        {canCancel && (
-                            <DropdownMenuItem onClick={() => setOpenCancelDialog(true)} className="flex cursor-pointer items-center gap-2">
-                                <X className="h-4 w-4" />
-                                <span>Cancel Service</span>
-                            </DropdownMenuItem>
-                        )}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                {/* Show dropdown only if there are actions available */}
+                {(canChangeOffer || canCancel) && (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={loading}>
+                                <span className="sr-only">Open menu</span>
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                                    />
+                                </svg>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                            {canChangeOffer && (
+                                <>
+                                    <DropdownMenuItem onClick={handleUpgrade} className="flex items-center gap-2 cursor-pointer">
+                                        <ArrowUpToLineIcon className="h-4 w-4" />
+                                        <span>Upgrade</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={handleDowngrade} className="flex items-center gap-2 cursor-pointer">
+                                        <ArrowDownToLineIcon className="h-4 w-4" />
+                                        <span>Downgrade</span>
+                                    </DropdownMenuItem>
+                                </>
+                            )}
+                            {canCancel && (
+                                <DropdownMenuItem onClick={() => setOpenCancelDialog(true)} className="flex cursor-pointer items-center gap-2 text-destructive">
+                                    <X className="h-4 w-4" />
+                                    <span>Cancel Service</span>
+                                </DropdownMenuItem>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
                 {/* )} */}
 
                 {/* {canCancel && (

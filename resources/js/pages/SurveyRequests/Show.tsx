@@ -70,7 +70,13 @@ export default function SurveyShowPage() {
                         </CardContent>
                     </Card>
                 ) : survey ? (
-                    <SurveyDetailPage survey={survey} onBack={handleBack} showBackButton={true} customerData={auth.user} />
+                    <SurveyDetailPage 
+                        survey={survey} 
+                        onBack={handleBack} 
+                        showBackButton={true} 
+                        customerData={auth.user}
+                        onSurveyUpdate={handleRefresh}
+                    />
                 ) : null}
             </div>
         </MainLayout>

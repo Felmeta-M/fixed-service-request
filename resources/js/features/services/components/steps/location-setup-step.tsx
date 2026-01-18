@@ -61,18 +61,26 @@ export function LocationSetupStep({
     const [showUpdateBtn, setShowUpdateBtn] = useState(false);
 
     const hasInitialLocationLoaded = useRef(false);
+    const isFirstMount = useRef(true);
 
     const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
 
-    const getInitialLocation = useCallback(async () => {
-        if (hasInitialLocationLoaded.current) return;
+    const getInitialLocation = useCallback(async (forceRefresh = false) => {
+        // If already loaded and not forcing refresh, skip
+        if (hasInitialLocationLoaded.current && !forceRefresh) return;
+        
+        // Reset flag if forcing refresh
+        if (forceRefresh) {
+            hasInitialLocationLoaded.current = false;
+        }
+        
         hasInitialLocationLoaded.current = true;
 
         setLocationLoading(true);
         setLocationError('');
 
         try {
-            console.log('🔄 Getting current location...');
+            console.log('🔄 Getting current location...', forceRefresh ? '(forced refresh)' : '');
             const position = await getCurrentLocationWithTimeout();
             const { latitude, longitude } = position.coords;
             const preciseLat = parseFloat(latitude.toFixed(6));
@@ -106,37 +114,30 @@ export function LocationSetupStep({
             const errorMessage = getGeolocationErrorMessage(error);
             setLocationError(errorMessage);
 
+            // Only keep the flag as true if we successfully loaded, otherwise allow retry
+            if (forceRefresh) {
+                hasInitialLocationLoaded.current = false;
+            }
             setLocationLoading(false);
-            hasInitialLocationLoaded.current = true;
         } finally {
             setLocationLoading(false);
         }
     }, [googleMapsApiKey, onUpdate]);
 
     useEffect(() => {
-        if (!hasInitialLocationLoaded.current && (formData.latitude === 0 || formData.longitude === 0)) {
-            getInitialLocation();
-        } else {
-            if (formData.latitude && formData.longitude) {
-                setCurrentLocation({
-                    lat: formData.latitude,
-                    lng: formData.longitude,
-                    address: formData.address || 'Location selected',
-                });
-            }
-            if (formData.address) {
-                setManualAddress(formData.address);
-            }
-            if (formData.latitude) {
-                setManualLat(formData.latitude.toString());
-            }
-            if (formData.longitude) {
-                setManualLng(formData.longitude.toString());
-            }
-            hasInitialLocationLoaded.current = true;
-            setLocationLoading(false);
+        // Always reset and get fresh location when component mounts (when navigating to this step)
+        // This ensures we always try to get the user's actual current location
+        if (isFirstMount.current) {
+            isFirstMount.current = false;
+            
+            // Reset the flag to allow fresh location detection
+            hasInitialLocationLoaded.current = false;
+            
+            // Always try to get fresh location when entering this step
+            // Don't rely on potentially stale coordinates from formData
+            getInitialLocation(true);
         }
-    }, []); // Empty dependency array - run only once
+    }, []); // Empty dependency array - run only once on mount
 
     // Show modal when resource is not available, but only if user hasn't seen it yet
     useEffect(() => {
@@ -328,6 +329,9 @@ export function LocationSetupStep({
     };
 
     const handleRefreshLocation = async () => {
+        // Reset the flag to force fresh location
+        hasInitialLocationLoaded.current = false;
+        
         setLocationLoading(true);
         setLocationError('');
 
@@ -343,10 +347,15 @@ export function LocationSetupStep({
             const address = await getGoogleAddressFromCoordinates(preciseLat, preciseLng);
 
             await handleLocationSelect(preciseLat, preciseLng, address);
+            
+            // Mark as loaded after successful refresh
+            hasInitialLocationLoaded.current = true;
         } catch (error) {
             const errorMessage = getGeolocationErrorMessage(error);
             setLocationError(errorMessage);
             console.error('❌ Location refresh failed:', error);
+            // Don't mark as loaded on error to allow retry
+            hasInitialLocationLoaded.current = false;
         } finally {
             setLocationLoading(false);
         }

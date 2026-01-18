@@ -89,6 +89,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const [createdSurveyId, setCreatedSurveyId] = useState<string | null>(null);
     const [showManualStep, setShowManualStep] = useState(false);
     const [hasSeenResourceDialog, setHasSeenResourceDialog] = useState(false); // Track if user has seen the dialog
+    const [isTransitioningToSubscription, setIsTransitioningToSubscription] = useState(false); // Track transition to subscription step
     const surveyListQuery = useSurveyList();
     const surveys = useMemo(() => {
         return surveyListQuery.data?.pages.flatMap(page => page.data) ?? [];
@@ -337,6 +338,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                         onBack={prevStep}
                         onNext={(surveyId: string) => {
                             setCreatedSurveyId(surveyId);
+                            setIsTransitioningToSubscription(true);
                             nextStep();
                         }}
                     />
@@ -345,8 +347,15 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 return (
                     <SubscriptionPaymentStep
                         surveyId={createdSurveyId}
-                        onBack={() => onStepChange(isNewCustomer ? 3 : 2)}
-                        onComplete={() => onStepChange(0)}
+                        onBack={() => {
+                            setIsTransitioningToSubscription(false);
+                            onStepChange(isNewCustomer ? 3 : 2);
+                        }}
+                        onComplete={() => {
+                            setIsTransitioningToSubscription(false);
+                            onStepChange(0);
+                        }}
+                        onLoadComplete={() => setIsTransitioningToSubscription(false)}
                     />
                 );
             default:
@@ -416,8 +425,19 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                     </div>
                 </div>
             </div>
-            <div className=" ">
+            <div className="relative">
                 {renderStepContent()}
+
+                {/* Loading Overlay for Step 3 to 4 Transition */}
+                {isTransitioningToSubscription && (
+                    <div className="absolute inset-0 z-50 flex min-h-[400px] items-center justify-center bg-white/90 backdrop-blur-sm">
+                        <div className="flex flex-col items-center gap-4">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <p className="text-sm font-medium text-gray-700">Loading subscription details...</p>
+                            <p className="text-xs text-gray-500">Please wait while we fetch your payment information</p>
+                        </div>
+                    </div>
+                )}
 
                 {/* Navigation Buttons */}
                 {showNavigation && !isLastStep && (

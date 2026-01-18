@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SurveyDetail } from '@/features/surveys/components/survey-detail';
 import { usePage } from '@inertiajs/react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import { useSurveyDetail } from '@/features/surveys/hooks/use-surveys';
@@ -11,9 +11,10 @@ interface SubscriptionPaymentStepProps {
     surveyId: string | null;
     onBack: () => void;
     onComplete: () => void;
+    onLoadComplete?: () => void;
 }
 
-export function SubscriptionPaymentStep({ surveyId, onBack, onComplete }: SubscriptionPaymentStepProps) {
+export function SubscriptionPaymentStep({ surveyId, onBack, onComplete, onLoadComplete }: SubscriptionPaymentStepProps) {
     type AuthUser = {
         api_token: string;
     };
@@ -101,12 +102,27 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete }: Subscr
         surveyDetailQuery.refetch();
     };
 
+    // Notify parent when loading completes (success or error)
+    useEffect(() => {
+        if (!loading && onLoadComplete) {
+            // Small delay to ensure UI has rendered
+            const timer = setTimeout(() => {
+                onLoadComplete();
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [loading, onLoadComplete]);
+
     if (loading) {
         return (
             <Card>
                 <CardContent className="p-6">
-                    <div className="flex h-32 items-center justify-center">
-                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+                    <div className="flex flex-col items-center justify-center gap-4 py-12">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <div className="text-center">
+                            <p className="text-sm font-medium text-gray-700">Loading subscription details...</p>
+                            <p className="mt-1 text-xs text-gray-500">Please wait while we fetch your payment information</p>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

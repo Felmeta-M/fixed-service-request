@@ -183,8 +183,8 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                             deviceId: device.id,
                         });
                     }}
-                    onVoiceDeviceSelect={(device) => {
-                        // Combo voice device selection
+                    onVoiceDeviceSelect={formData.serviceType === '180427974' ? undefined : (device) => {
+                        // Voice device selection (not used for combo)
                         onUpdate({
                             selectedDeviceVoice: device,
                             deviceVoiceId: device.id,

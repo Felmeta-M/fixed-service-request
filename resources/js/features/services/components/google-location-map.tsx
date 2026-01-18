@@ -273,8 +273,11 @@ export function GoogleLocationMap({
             markerRef.current.addListener('dragend', async (event: google.maps.MapMouseEvent) => {
                 if (!event.latLng || internalAnimating) return;
 
-                const newLat = event.latLng.lat();
-                const newLng = event.latLng.lng();
+                // Round to 6 decimal places for precision
+                const rawLat = event.latLng.lat();
+                const rawLng = event.latLng.lng();
+                const newLat = parseFloat(rawLat.toFixed(6));
+                const newLng = parseFloat(rawLng.toFixed(6));
 
                 // Smooth pan to dragged location
                 smoothPanTo(newLat, newLng);
@@ -310,8 +313,11 @@ export function GoogleLocationMap({
         async (event: google.maps.MapMouseEvent) => {
             if (!event.latLng || !map || internalAnimating) return;
 
-            const lat = event.latLng.lat();
-            const lng = event.latLng.lng();
+            // Round to 6 decimal places for precision
+            const rawLat = event.latLng.lat();
+            const rawLng = event.latLng.lng();
+            const lat = parseFloat(rawLat.toFixed(6));
+            const lng = parseFloat(rawLng.toFixed(6));
 
             // Smooth pan to clicked location
             smoothPanTo(lat, lng, 16);
@@ -397,8 +403,16 @@ export function GoogleLocationMap({
 
         navigator.geolocation.getCurrentPosition(
             async (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
+                // Round to 6 decimal places for precision
+                const rawLat = position.coords.latitude;
+                const rawLng = position.coords.longitude;
+                const lat = parseFloat(rawLat.toFixed(6));
+                const lng = parseFloat(rawLng.toFixed(6));
+
+                console.log('📍 Locate Me - Current location obtained:', { 
+                    raw: { lat: rawLat, lng: rawLng },
+                    precise: { lat, lng }
+                });
 
                 // Dismiss loading toast
                 toast.dismiss(toastId);
@@ -411,6 +425,8 @@ export function GoogleLocationMap({
 
                 // Get address for current location
                 const address = await getAddressFromCoordinates(lat, lng);
+                
+                // Use precise coordinates
                 onLocationSelect(lat, lng, address);
 
                 setIsGettingLocation(false);
@@ -473,8 +489,8 @@ export function GoogleLocationMap({
             },
             {
                 enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0,
+                timeout: 15000, // Increase timeout to match location-setup-step
+                maximumAge: 0, // Always get fresh location, never use cached
             },
         );
     }, [map, smoothPanTo, updateMarkerPosition, getAddressFromCoordinates, onLocationSelect]);

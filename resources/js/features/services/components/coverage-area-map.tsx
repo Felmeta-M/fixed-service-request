@@ -26,6 +26,7 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
     const [loadError, setLoadError] = useState(false);
     const coverageDataRef = useRef<google.maps.Data.Feature[]>([]);
     const loadAttemptRef = useRef(0);
+    const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const mapContainerStyle = {
         width: '100%',
@@ -75,6 +76,12 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
 
             setIsCoverageLoading(true);
             setLoadError(false);
+            
+            // Clear any existing timeout
+            if (loadingTimeoutRef.current) {
+                clearTimeout(loadingTimeoutRef.current);
+            }
+            
             const primaryColor = getPrimaryColor();
 
             // First, apply the style so it's ready when data loads
@@ -86,11 +93,21 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                 clickable: false,
             });
 
+            let loadingCompleted = false;
+
             // Load the GeoJSON file
             targetMap.data.loadGeoJson(
                 '/data/coverage_area.geojson',
                 undefined,
                 (features) => {
+                    loadingCompleted = true;
+                    
+                    // Clear the timeout since we got a response
+                    if (loadingTimeoutRef.current) {
+                        clearTimeout(loadingTimeoutRef.current);
+                        loadingTimeoutRef.current = null;
+                    }
+                    
                     if (features && features.length > 0) {
                         coverageDataRef.current = features;
                         setIsCoverageLoaded(true);
@@ -110,10 +127,11 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
             );
 
             // Set a timeout for loading - if it takes too long, show error state
-            setTimeout(() => {
-                if (!isCoverageLoaded && isCoverageLoading) {
+            loadingTimeoutRef.current = setTimeout(() => {
+                if (!loadingCompleted) {
                     setIsCoverageLoading(false);
                     setLoadError(true);
+                    loadingTimeoutRef.current = null;
                 }
             }, 10000);
         },
@@ -151,6 +169,12 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
     }, [map, isMapReady, isCoverageLoaded, isCoverageLoading, loadCoverageArea]);
 
     const onUnmount = useCallback(() => {
+        // Clear any pending timeouts
+        if (loadingTimeoutRef.current) {
+            clearTimeout(loadingTimeoutRef.current);
+            loadingTimeoutRef.current = null;
+        }
+        
         // Clean up coverage area data
         if (map && coverageDataRef.current.length > 0) {
             coverageDataRef.current.forEach((feature) => {
@@ -172,21 +196,34 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
         }
     }, [map, fitToCoverageBounds]);
 
-    // Show loading state
-    const isLoading = !isMapReady || isCoverageLoading;
+    // Show loading state - only show overlay when map is not ready
+    // Once map is ready, let it show even while coverage is loading
+    const isLoading = !isMapReady;
 
     return (
         <div 
             className="relative overflow-hidden rounded-xl shadow-lg bg-gray-100"
             style={{ minHeight: height }}
         >
-            {/* Loading overlay */}
+            {/* Loading overlay - only show when map script is loading */}
             {isLoading && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-gray-100">
                     <div className="text-center">
                         <Loader2 className="mx-auto mb-3 h-10 w-10 animate-spin text-primary" />
                         <p className="text-sm font-medium text-gray-700">
-                            {!isMapReady ? t('coverage_map.loading_map') : t('coverage_map.loading_coverage')}
+                            {t('coverage_map.loading_map')}
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Coverage loading indicator - subtle, doesn't block map */}
+            {isMapReady && isCoverageLoading && !loadError && (
+                <div className="absolute top-20 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-white/95 px-4 py-2 shadow-md backdrop-blur-sm sm:top-24">
+                    <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        <p className="text-xs font-medium text-gray-700 sm:text-sm">
+                            {t('coverage_map.loading_coverage')}
                         </p>
                     </div>
                 </div>

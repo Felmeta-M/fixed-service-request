@@ -303,48 +303,71 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                 </div>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between px-4 pt-4">
-                    <div className="hidden flex-1 text-sm text-muted-foreground lg:flex">
-                        Showing {table.getRowModel().rows.length} of {filteredSurveys.length} requests
-                    </div>
-                    <div className="flex w-full items-center gap-8 lg:w-fit">
-                        <div className="flex w-fit items-center justify-center text-sm font-medium text-gray-700">
-                            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                <div className="flex items-center justify-between px-4 py-4">
+                    <div className="flex items-center gap-4">
+                        <div className="hidden text-sm text-muted-foreground lg:flex">
+                            Showing {table.getRowModel().rows.length} of {filteredSurveys.length} requests
                         </div>
-                        <div className="ml-auto flex items-center gap-2 lg:ml-0">
-                            <Button
-                                variant="outline"
-                                className="hidden h-8 w-8 p-0 lg:flex"
-                                onClick={() => table.setPageIndex(0)}
-                                disabled={!table.getCanPreviousPage()}
+                        {/* Per Page Selector */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">Per page:</span>
+                            <select
+                                value={pagination.pageSize}
+                                onChange={(e) => {
+                                    const newSize = Number(e.target.value);
+                                    setPagination({ pageIndex: 0, pageSize: newSize });
+                                }}
+                                className="h-8 rounded-md border border-gray-300 px-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
                             >
-                                <span className="sr-only">Go to first page</span>
-                                <ChevronsLeft className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="h-8 w-8 p-0"
-                                onClick={() => table.previousPage()}
-                                disabled={!table.getCanPreviousPage()}
-                            >
-                                <span className="sr-only">Go to previous page</span>
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" className="h-8 w-8 p-0" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-                                <span className="sr-only">Go to next page</span>
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="hidden h-8 w-8 p-0 lg:flex"
-                                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                                disabled={!table.getCanNextPage()}
-                            >
-                                <span className="sr-only">Go to last page</span>
-                                <ChevronsRight className="h-4 w-4" />
-                            </Button>
+                                {[10, 20, 50, 100].map((size) => (
+                                    <option key={size} value={size}>
+                                        {size}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
+                    {/* Page Navigation - only show if records exceed page size */}
+                    {filteredSurveys.length > pagination.pageSize && (
+                        <div className="flex items-center gap-8">
+                            <div className="flex items-center justify-center text-sm font-medium text-gray-700">
+                                Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    className="hidden h-8 w-8 p-0 lg:flex"
+                                    onClick={() => table.setPageIndex(0)}
+                                    disabled={!table.getCanPreviousPage()}
+                                >
+                                    <span className="sr-only">Go to first page</span>
+                                    <ChevronsLeft className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => table.previousPage()}
+                                    disabled={!table.getCanPreviousPage()}
+                                >
+                                    <span className="sr-only">Go to previous page</span>
+                                    <ChevronLeft className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" className="h-8 w-8 p-0" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+                                    <span className="sr-only">Go to next page</span>
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="hidden h-8 w-8 p-0 lg:flex"
+                                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                                    disabled={!table.getCanNextPage()}
+                                >
+                                    <span className="sr-only">Go to last page</span>
+                                    <ChevronsRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

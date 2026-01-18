@@ -105,7 +105,7 @@ abstract class BaseSurveyService extends BaseApiService
                 'device_voice_id' => $data['device_voice_id'] ?? null,
                 'service_number' => $serviceNumber,
                 'customer_survey_order_id' => $surveyOrderId,
-                'status' => $data['survey_is_manual'] ? FFDServiceProvisionStatus::Completed->value : FFDServiceProvisionStatus::Waiting->value,
+                'status' => $data['survey_is_manual'] ? FFDServiceProvisionStatus::Waiting->value : FFDServiceProvisionStatus::Completed->value,
                 'cable_length' => $resource['distance'] ?? null,
                 'cable_type' => $resource['cable_type'] ?? null,
                 'lat' => isset($resource['latitude']) ? round((float) $resource['latitude'], 8) : null,

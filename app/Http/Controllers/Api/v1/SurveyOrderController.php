@@ -86,7 +86,10 @@ class SurveyOrderController extends Controller
                 $query->where('survey_orders.status', $request->status);
             }
 
-            $surveyOrders = $query->latest('survey_orders.created_at')->paginate(10);
+            // Accept per_page from request (default 10, max 100)
+            $perPage = min((int) $request->input('per_page', 10), 100);
+            
+            $surveyOrders = $query->latest('survey_orders.created_at')->paginate($perPage);
 
             // Collect orders that need refresh (WAITING status, not checked in last 5 minutes)
             $ordersToRefresh = collect($surveyOrders->items())

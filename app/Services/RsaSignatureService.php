@@ -17,11 +17,7 @@ class RsaSignatureService
             Log::error('Invalid order parameters', ['trade_code' => $trade_code, 'amount' => $amount]);
             throw new \InvalidArgumentException('Trade code and amount cannot be empty');
         }
-        // Log the trade code and amount before processing
-        Log::info('Creating order', ['trade_code' => $trade_code, 'amount' => $amount]);
-
         $result = json_decode(self::applyFabricToken());
-        \Log::info("apply token", [$result]);
 
         if (isset($result->error)) {
             Log::error('Failed to retrieve fabric token', ['error' => $result->error]);
@@ -29,7 +25,6 @@ class RsaSignatureService
         }
 
         $fabricToken = $result->token;
-        Log::info('Fabric token retrieved', ['fabric_token' => $fabricToken]);
         $createOrderResult = self::requestCreateOrder($fabricToken, $trade_code, $amount);
         $prepayId = json_decode($createOrderResult)->biz_content->prepay_id;
         $rawRequest =  self::createRawRequest($prepayId);
@@ -52,7 +47,6 @@ class RsaSignatureService
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, 'https://developerportal.ethiotelebirr.et:38443/apiaccess/payment/gateway' . '/payment/v1/merchant/preOrder');
         curl_setopt($ch, CURLOPT_POST, 1);
-        \Log::info($fabricToken);
         $headers = ['Content-Type: application/json', 'X-APP-Key:REDACTED_APP_KEY', 'Authorization:' . $fabricToken];
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 

@@ -51,12 +51,13 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
          ]);
 
          $xml = $this->buildXml($data);
+         
          $response = $this->executeRequest($xml);
 
-         AppLogger::api()->debug('Voice subscription API response received', [
-            'survey_order_id' => $surveyOrderId,
-            'response_preview' => substr($response, 0, 500),
-         ]);
+         // AppLogger::api()->debug('Voice subscription API response received', [
+         //    'survey_order_id' => $surveyOrderId,
+         //    'response_preview' => substr($response, 0, 500),
+         // ]);
 
          $parsedResponse = $this->parseResponse($data, $response);
 

@@ -23,7 +23,6 @@ class QueryTTJob implements ShouldQueue
     public function handle(QueryTTService $service)
     {
         $ticket = TroubleTicket::find($this->ticketId);
-        Log::info('response', ['ticket' => $ticket]);
         if (!$ticket) return;
 
         $response = $service->queryTT([
@@ -31,7 +30,6 @@ class QueryTTJob implements ShouldQueue
         ]);
 
         if (!$response['success'] || empty($response['tt_list'])) return;
-        Log::info('response', ['tt response at query tt job class' => $response]);
         $tt = $response['tt_list'][0]; // assume 1 TT per access_number
         $newStatus = strtolower($tt['tt_status']); // match your enum
         Log::channel('tt')->info('TT status updated', [

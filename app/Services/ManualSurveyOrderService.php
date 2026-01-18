@@ -57,26 +57,9 @@ class ManualSurveyOrderService extends BaseApiService
     public function createSurveyOrder(array $data): JsonResponse
     {
         try {
-            AppLogger::api()->info('Manual survey order creation initiated', [
-                'customer_code' => $data['customer_code'] ?? null,
-                'survey_type' => $data['survey_type'] ?? null,
-                'endpoint' => $this->endpoint(),
-            ]);
-
             $xmlPayload = $this->buildRequestXml($data);
-
-            AppLogger::api()->debug('Manual survey SOAP request built', [
-                'customer_code' => $data['customer_code'] ?? null,
-            ]);
-
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedResponse = $this->parseResponseXml($data, $xmlResponse);
-
-            AppLogger::api()->info('Manual survey order created successfully', [
-                'customer_code' => $data['customer_code'] ?? null,
-                'customer_survey_order_id' => $parsedResponse['customer_survey_order_id'] ?? null,
-                'ret_code' => $parsedResponse['ret_code'] ?? null,
-            ]);
 
             return ApiResponse::success($parsedResponse, 'Manual survey order created successfully');
         } catch (RuntimeException $e) {
@@ -317,12 +300,6 @@ XML;
             'subscription_fee' => $fees['subscription_fee'],
             'cable_charge' => 0,
             'device_fee' => 0,
-            'total_amount' => $fees['total_amount'],
-        ]);
-
-        AppLogger::api()->info('Manual survey payment stored', [
-            'customer_survey_order_id' => $survey->customer_survey_order_id,
-            'subscription_fee' => $fees['subscription_fee'],
             'total_amount' => $fees['total_amount'],
         ]);
     }

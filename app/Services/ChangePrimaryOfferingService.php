@@ -51,12 +51,6 @@ class ChangePrimaryOfferingService extends BaseApiService
         string $bandwidth,
     ): array {
         try {
-            AppLogger::api()->info('Change primary offering request initiated', [
-                'service_number' => $serviceNumber,
-                'bandwidth' => $bandwidth,
-                'operation' => 'change_primary_offering',
-            ]);
-
             // Validate bandwidth against database options
             if (!$this->isValidBandwidthOption($bandwidth)) {
                 AppLogger::api()->warning('Invalid bandwidth option provided for upgrade', [
@@ -94,36 +88,13 @@ class ChangePrimaryOfferingService extends BaseApiService
             $data['bandwidth'] = $this->parseBandwidth($bandwidth);
             
             $xmlPayload = $this->buildXml($data);
-            
-            AppLogger::api()->debug('Change primary offering XML request', [
-                'service_number' => $serviceNumber,
-                'bandwidth' => $bandwidth,
-                'parsed_bandwidth' => $data['bandwidth'],
-                'xml_preview' => substr($xmlPayload, 0, 500),
-                'operation' => 'change_primary_offering',
-            ]);
-            
             $xmlResponse = $this->executeRequest($xmlPayload);
-            
-            AppLogger::api()->debug('Change primary offering API response received', [
-                'service_number' => $serviceNumber,
-                'response_preview' => substr($xmlResponse, 0, 500),
-                'operation' => 'change_primary_offering',
-            ]);
-            
             $result = $this->parseResponse($xmlResponse, $serviceNumber);
 
             // Return the parsed result
             if (!$result['success']) {
                 return $result;
             }
-
-            AppLogger::api()->info('Primary offering changed successfully', [
-                'service_number' => $serviceNumber,
-                'bandwidth' => $bandwidth,
-                'order_id' => $result['order_id'] ?? null,
-                'operation' => 'change_primary_offering',
-            ]);
 
             return [
                 'success' => true,
@@ -435,15 +406,6 @@ XML;
                     'error' => $retMsg ?: "Change failed with code: {$retCode}",
                 ];
             }
-
-            AppLogger::api()->info('Change primary offering API call successful', [
-                'service_number' => $objectId,
-                'order_id' => $orderId,
-                'ret_code' => $retCode,
-                'ret_msg' => $retMsg,
-                'response_time' => $responseTime,
-                'operation' => 'change_primary_offering',
-            ]);
 
             return [
                 'success' => true,

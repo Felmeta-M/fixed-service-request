@@ -227,9 +227,9 @@ class SurveyOrder extends Model
     /**
      * Has payment + Waiting status + has trans_id
      */
-    public static function checkIsPaid(?int $paymentId, int $paymentStatus, ?string $paymentTransId): bool
+    public static function checkIsPaid(?int $paymentStatus, ?string $paymentTransId): bool
     {
-        return $paymentId && $paymentStatus === FFDServiceProvisionStatus::Waiting->value && !empty($paymentTransId);
+        return  $paymentStatus === FFDServiceProvisionStatus::Paid->value && !empty($paymentTransId);
     }
 
     /**

@@ -6,7 +6,6 @@ use App\Enums\FFDServiceProvisionStatus;
 use App\Models\SurveyOrder;
 use App\Services\QuerySubscriptionOrderStatusService;
 use App\Support\CustomerContext;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SubscriptionService extends BaseApiService
@@ -37,7 +36,6 @@ class SubscriptionService extends BaseApiService
       try {
          $xmlPayload = $this->buildRequestXml($data);
          $xmlResponse = $this->executeRequest($xmlPayload);
-         Log::info($xmlResponse);
          $parsedXml = $this->parseResponseXml($data, $xmlResponse);
          return ApiResponse::success($parsedXml);
       } catch (\RuntimeException $e) {

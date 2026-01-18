@@ -112,7 +112,7 @@ class HttpClientLogger
                         $level = match (true) {
                             $statusCode >= 500 => 'error',
                             $statusCode >= 400 => 'warning',
-                            default => 'info',
+                            default => 'debug',
                         };
 
                         $logger->$level(

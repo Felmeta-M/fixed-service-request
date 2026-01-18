@@ -23,6 +23,7 @@ type SurveyDetails = {
     is_paid?: boolean;
     can_pay?: boolean;
     can_subscribe?: boolean;
+    can_change_offer?: boolean;
     can_cancel?: boolean;
 };
 
@@ -103,6 +104,7 @@ export default function ServiceShowPage() {
             is_paid: surveyDetailQuery.data.data.is_paid,
             can_pay: surveyDetailQuery.data.data.can_pay,
             can_subscribe: surveyDetailQuery.data.data.can_subscribe,
+            can_change_offer: surveyDetailQuery.data.data.can_change_offer,
             can_cancel: surveyDetailQuery.data.data.can_cancel,
         }
         : null;

@@ -66,13 +66,6 @@ class QueryPurchasedOfferingService extends BaseApiService
 
             $result = $this->parseResponse($xmlResponse, $objectId);
 
-            AppLogger::api()->info('Purchased offering queried', [
-                'object_id' => $objectId,
-                'object_id_type' => $objectIdType,
-                'offering_id' => $result['offering_id'] ?? null,
-                'offering_name' => $result['offering_name'] ?? null,
-            ]);
-
             return $result;
         } catch (RuntimeException $e) {
             AppLogger::api()->error('Query purchased offering failed', [

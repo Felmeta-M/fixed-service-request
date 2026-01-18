@@ -12,8 +12,6 @@ class DashboardController extends Controller
     {
         $user = Auth::guard('otp')->user();
 
-        \Log::info($user);
-
         return Inertia::render('Dashboard', [
             'user' => $user,
             'stats' => [

@@ -11,8 +11,6 @@ class MapController extends Controller
 
     public function create()
     {
-        \Log::info(config('services.google.google_api_key'));
-
         return Inertia::render('ServiceRequest/Create', [
             'googleMapsApiKey' => config('services.google.google_api_key'),
         ]);

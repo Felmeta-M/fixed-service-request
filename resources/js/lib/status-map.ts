@@ -19,6 +19,7 @@ export const ServiceProvisionStatus = {
     'Survey Completed': { label: 'Survey Completed', text: 'text-et-green', bg: 'bg-et-green', variant: 'success' as const },
     'Order Completed': { label: 'Order Completed', text: 'text-et-green', bg: 'bg-et-green', variant: 'success' as const },
     'Waiting Survey': { label: 'Waiting Survey', text: 'text-yellow-700', bg: 'bg-yellow-400', variant: 'warning' as const },
+    'Order Waiting': { label: 'Order Waiting', text: 'text-yellow-700', bg: 'bg-yellow-400', variant: 'warning' as const },
     'Pending Payment': { label: 'Pending Payment', text: 'text-purple-700', bg: 'bg-purple-400', variant: 'warning' as const },
     // Fallback for unknown status
     'Unknown': { label: 'Unknown', text: 'text-gray-700', bg: 'bg-gray-200', variant: 'default' as const },
@@ -32,14 +33,14 @@ export type StatusKey = keyof typeof ServiceProvisionStatus;
  */
 export const getStatusInfo = (status: string | number | null | undefined) => {
     if (status == null) return ServiceProvisionStatus['Unknown'];
-    
+
     const statusStr = String(status);
-    
+
     // Direct match with backend label
     if (statusStr in ServiceProvisionStatus) {
         return ServiceProvisionStatus[statusStr as StatusKey];
     }
-    
+
     // Fallback for unknown status
     return ServiceProvisionStatus['Unknown'];
 };

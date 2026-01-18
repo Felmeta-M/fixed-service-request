@@ -50,7 +50,7 @@ interface RecentActivity {
 
 // Define status categories using string labels from backend
 const STATUS_CATEGORIES = {
-    ACTIVE: ['Processing', 'Waiting', 'Waiting Survey', 'Ready', 'Paid', 'Pending Payment'],
+    ACTIVE: ['Processing', 'Waiting', 'Waiting Survey', 'Order Waiting', 'Ready', 'Paid', 'Pending Payment'],
     PENDING: ['Created'],
     COMPLETED: ['Survey Completed', 'Order Completed', 'Failed', 'Cancelled', 'Refund'],
     SUSPENDED: ['Suspended'],

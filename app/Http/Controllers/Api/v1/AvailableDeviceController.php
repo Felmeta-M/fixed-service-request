@@ -45,8 +45,6 @@ class AvailableDeviceController extends Controller
                     'is_active',
                 ]);
 
-            Log::info('Devices', ['devices' => $query->get()]);
-
             // Filter by service type (maps to device type)
             if ($request->has('service_type')) {
                 $serviceType = $request->service_type;

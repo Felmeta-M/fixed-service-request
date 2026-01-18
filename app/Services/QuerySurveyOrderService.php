@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
-use Illuminate\Support\Facades\Log;
 
 class QuerySurveyOrderService extends BaseApiService
 {
@@ -21,7 +20,6 @@ class QuerySurveyOrderService extends BaseApiService
             $xmlPayload = $this->buildRequestXml($surveyOrderId);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedXml = $this->parseResponseXml($xmlResponse);
-            Log::info($parsedXml);
             return ApiResponse::success($parsedXml);
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);

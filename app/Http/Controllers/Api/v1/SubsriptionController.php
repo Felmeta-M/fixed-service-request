@@ -35,7 +35,6 @@ class SubsriptionController extends Controller
     {
         try {
             $data = $request->validated();
-            Log::info('Data Subscription Request', $data);
 
             $surveyOrder = SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
                 ->first();

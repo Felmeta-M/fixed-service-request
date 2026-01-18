@@ -44,12 +44,6 @@ class QuerySubscriptionOrderStatusService extends BaseApiService
 
             $result = $this->parseResponse($xmlResponse, $orderId);
 
-            AppLogger::api()->info('Subscription order status queried', [
-                'order_id' => $orderId,
-                'status' => $result['status'] ?? null,
-                'status_label' => $result['status_label'] ?? null,
-            ]);
-
             return $result;
         } catch (RuntimeException $e) {
             AppLogger::api()->error('Query subscription order status failed', [

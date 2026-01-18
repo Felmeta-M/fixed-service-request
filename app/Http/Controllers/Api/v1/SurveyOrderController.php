@@ -64,6 +64,8 @@ class SurveyOrderController extends Controller
                     'payments.total_amount as payment_amount',
                     'payments.status as payment_status',
                     'payments.trans_id as payment_trans_id',
+                    'payments.merch_order_id as payment_merch_order_id',
+                    'payments.payment_order_id as payment_payment_order_id',
                 ]);
 
             // Handle search parameter - search in both customer_survey_order_id and customer_subscription_order_id
@@ -136,7 +138,8 @@ class SurveyOrderController extends Controller
                 $isManual = (bool) ($order->survey_is_manual ?? true);
                 $response = null;
 
-                if (!$isManual && !empty($order->customer_subscription_order_id)) {
+                //subscription order
+                if (!empty($order->customer_subscription_order_id)) {
                     // Auto survey: Use subscription order status service with customer_subscription_order_id
                     $subscriptionResponse = $this->querySubscriptionOrderStatusService
                         ->queryStatus($order->customer_subscription_order_id);
@@ -152,7 +155,10 @@ class SurveyOrderController extends Controller
                     } else {
                         $response = null;
                     }
-                } else {
+                }
+
+                //manual survey order
+                if ($isManual && empty($order->customer_subscription_order_id)) {
                     // Manual survey: Use survey order service with customer_survey_order_id
                     $surveyResponse = $this->querySurveyOrderService
                         ->querySurveyOrderDetail($order->customer_survey_order_id);
@@ -402,12 +408,12 @@ class SurveyOrderController extends Controller
                         'updated_at' => now(),
                     ]);
 
-                AppLogger::business()->info('Offering bandwidth updated on show', [
-                    'customer_survey_order_id' => $order->customer_survey_order_id,
-                    'service_number' => $order->service_number,
-                    'old_bandwidth' => $order->bandwidth,
-                    'new_bandwidth' => $currentBandwidth,
-                ]);
+                // AppLogger::business()->info('Offering bandwidth updated on show', [
+                //     'customer_survey_order_id' => $order->customer_survey_order_id,
+                //     'service_number' => $order->service_number,
+                //     'old_bandwidth' => $order->bandwidth,
+                //     'new_bandwidth' => $currentBandwidth,
+                // ]);
 
                 return true;
             }
@@ -448,7 +454,7 @@ class SurveyOrderController extends Controller
                 'merch_order_id' => $order->payment_merch_order_id ?? null,
             ] : null,
             'status' => $this->getStatusLabel($status, $subscriptionOrderId),
-            'is_paid' => SurveyOrder::checkIsPaid($paymentId, $paymentStatus, $paymentTransId),
+            'is_paid' => SurveyOrder::checkIsPaid($paymentStatus, $paymentTransId),
             'can_pay' => SurveyOrder::checkCanPay($status, $paymentAmount, $paymentTransId),
             'can_subscribe' => SurveyOrder::checkCanSubscribe($status, $paymentAmount, $paymentTransId, $subscriptionOrderId),
             'can_change_offer' => SurveyOrder::checkCanChangeOffer($status, $subscriptionOrderId),
@@ -495,11 +501,11 @@ class SurveyOrderController extends Controller
         try {
             $data = $request->validated();
 
-            AppLogger::business()->info('Manual survey order creation started', [
-                'customer_code' => $data['customer_code'],
-                'survey_type' => $data['survey_type'],
-                'telecom_region' => $data['telecom_region'],
-            ]);
+            // AppLogger::business()->info('Manual survey order creation started', [
+            //     'customer_code' => $data['customer_code'],
+            //     'survey_type' => $data['survey_type'],
+            //     'telecom_region' => $data['telecom_region'],
+            // ]);
 
             // Check for existing active survey orders for this customer
             $hasBlockedSurvey = SurveyOrder::blockedForNewRequest($data['customer_code'])->exists();

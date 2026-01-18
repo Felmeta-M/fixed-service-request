@@ -64,9 +64,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       $data['with_device'] = $surveyOrder->with_device ?? false;
 
       $xml = $this->buildXml($data);
-      // AppLogger::api()->info($xml);
       $response = $this->executeRequest($xml);
-      AppLogger::api()->info('Huawei Data Response', ['response' => $response]);
       $parsedResponse = $this->parseResponse($response, $data);
       return $parsedResponse;
    }

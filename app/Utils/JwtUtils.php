@@ -23,7 +23,6 @@ class JwtUtils
     {
         try {
             $privateKey = self::loadPrivateKeyFromString($_ENV['FAYDA_PRIVATE_KEY']);
-            Log::info($privateKey);
             $payload = [
                 'iss' => $_ENV['FAYDA_CLIENT_ID'],
                 'sub' => $_ENV['FAYDA_CLIENT_ID'],

@@ -4,7 +4,6 @@ namespace App\Services\Payment;
 
 use App\Services\ApiResponse;
 use App\Services\BaseApiService;
-use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Throwable;
 
@@ -18,9 +17,7 @@ class OneOffFeeService extends BaseApiService
         try {
             $xmlPayload = $this->buildRequestXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            Log::info($xmlResponse);
             $parsedXml = $this->parseResponseXml($xmlResponse);
-            Log::info('Parsed XML', $parsedXml);
             return ApiResponse::success($parsedXml);
         } catch (RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);

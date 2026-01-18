@@ -50,6 +50,7 @@ type SurveyDetails = {
     is_paid?: boolean;
     can_pay?: boolean;
     can_subscribe?: boolean;
+    can_change_offer?: boolean;
     can_cancel?: boolean;
 };
 

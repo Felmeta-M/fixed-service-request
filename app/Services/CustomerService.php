@@ -56,7 +56,7 @@ class CustomerService extends BaseApiService
         $data['customer_type'] = $data['customer_type'] ?? '1';           // Default: Residential
         $data['customer_category'] = $data['customer_category'] ?? '1';   // Default: Category 1
         $data['customer_subcategory'] = $data['customer_subcategory'] ?? '1'; // Default: Subcategory 1
-        $data['customer_level'] = $data['customer_level'] ?? '6';         // Default: Level 1
+        $data['customer_level'] = $data['customer_level'] ?? '8';         // Default: Copper
 
         $data['identification_number'] = random_int(100000, 999999); //TODO: remove this after testing
         $data['income'] = $data['income'] ?? '6'; // Default income level
@@ -219,7 +219,7 @@ XML;
                     'customer_type' => $data['customer_type'] ?? '1',
                     'customer_category' => $data['customer_category'] ?? '1',
                     'customer_subcategory' => $data['customer_subcategory'] ?? '1',
-                    'customer_level' => $data['customer_level'] ?? '1',
+                    'customer_level' => $data['customer_level'] ?? '8',
                     // Notification & Credit
                     'notification_mode' => $data['contact']['notification_mode'] ?? '2',
                     'credit_class' => $data['credit_class'] ?? 'Excellent',

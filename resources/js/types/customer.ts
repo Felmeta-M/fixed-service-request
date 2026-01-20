@@ -343,7 +343,7 @@ export const customerSchema = z.object({
     customer_type: z.string().optional().default('1'),
     customer_category: z.string().optional().default('1'),
     customer_subcategory: z.string().optional().default('1'),
-    customer_level: z.string().optional().default('6'),
+    customer_level: z.string().optional().default('8'),
 });
 
 export type CustomerFormValues = z.infer<typeof customerSchema>;

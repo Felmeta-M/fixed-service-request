@@ -325,7 +325,7 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
         customer_type: '1',
         customer_category: '1',
         customer_subcategory: '1',
-        customer_level: '6',
+        customer_level: '8',
     });
 
     // Enhanced prefill data loading with better error handling - FIXED
@@ -396,7 +396,7 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                 house_no: customer.address?.house_no || customer.house_no || '',
                             },
                             contact_person: customer.contact_person || [],
-                            customer_level: customer.customer_level || '6',
+                            customer_level: customer.customer_level || '8',
                         };
 
                         // Update form data

@@ -104,7 +104,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                     return (
                         <button
                             type="button"
-                            className="relative z-10 text-sm font-medium text-gray-900 hover:text-primary hover:underline"
+                            className="relative z-10 text-sm font-normal text-gray-900 hover:text-primary hover:underline"
                             onClick={() => handleRowClick(info.row.original)}
                         >
                             {surveyOrderId}
@@ -122,7 +122,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                         return <span className="text-xs text-gray-400">—</span>;
                     }
                     return (
-                        <span className="text-sm font-medium text-gray-900">{subscriptionOrderId}</span>
+                        <span className="text-sm font-normal text-gray-900">{subscriptionOrderId}</span>
                     );
                 },
             },
@@ -138,7 +138,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                                 variant="outline"
                                 className="flex items-center gap-1.5 bg-white"
                             > */}
-                            <span className="text-xs font-medium">{serviceNumber || '—'}</span>
+                            <span className="text-sm font-medium">{serviceNumber || '—'}</span>
                             {/* </Badge> */}
                         </div>
                     );

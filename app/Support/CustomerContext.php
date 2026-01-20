@@ -274,7 +274,7 @@ class CustomerContext
             'customer_type' => $overrides['customer_type'] ?? self::customerType('2'),
             'customer_category' => $overrides['customer_category'] ?? self::customerCategory('5'),
             'customer_subcategory' => $overrides['customer_subcategory'] ?? self::customerSubcategory('14'),
-            'customer_level' => $overrides['customer_level'] ?? self::customerLevel('2'),
+            'customer_level' => $overrides['customer_level'] ?? self::customerLevel('6'),
             'branch_name' => $overrides['branch_name'] ?? ($customer?->branch_name ?? 'BranchName'),
             'notification_mode' => $overrides['notification_mode'] ?? self::notificationMode('2'),
             'vat_reg_no' => $overrides['vat_reg_no'] ?? ($customer?->vat_reg_no ?? '123456'),

@@ -45,11 +45,6 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
 
          $surveyOrderId = $data['survey_order_id'] ?? null;
 
-         AppLogger::api()->info('Voice subscription request initiated', [
-            'survey_order_id' => $surveyOrderId,
-            'service_type' => 'voice',
-         ]);
-
          $xml = $this->buildXml($data);
 
          $response = $this->executeRequest($xml);

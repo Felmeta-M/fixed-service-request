@@ -35,8 +35,8 @@ class QuerySubscriptionOrderStatusService extends BaseApiService
         try {
             $data = [
                 'order_id' => $orderId,
-                'start_time' => $startTime ?? now()->subDays(30)->format('YmdHis') . '00',
-                'end_time' => $endTime ?? now()->format('YmdHis') . '00',
+                'start_time' => $startTime ?? now()->subDays(30)->format('YmdHis'),
+                'end_time' => $endTime ?? now()->format('YmdHis'),
             ];
 
             $xmlPayload = $this->buildXml($data);

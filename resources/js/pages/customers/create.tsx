@@ -238,7 +238,7 @@ export default function Create() {
         customer_type: '1',
         customer_category: '1',
         customer_subcategory: '1',
-        customer_level: '6',
+        customer_level: '8',
     });
 
     const API_READONLY_FIELDS = [
@@ -331,7 +331,7 @@ export default function Create() {
                         '',
                 },
                 contact_person: customer.contact_person || [],
-                customer_level: customer.customer_level || '6',
+                customer_level: customer.customer_level || '8',
             };
             console.log('transfored data', transform);
 

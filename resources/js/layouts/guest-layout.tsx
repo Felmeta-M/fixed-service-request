@@ -56,12 +56,12 @@ export default function GuestLayout({ children }: Props) {
                                     >
                                         {t('nav.services')}
                                     </button>
-                                    <button
+                                    {/* <button
                                         onClick={() => scrollToSection('coverage')}
                                         className="text-sm font-medium text-gray-700 transition-colors hover:text-primary"
                                     >
                                         {t('nav.coverage')}
-                                    </button>
+                                    </button> */}
 
                                     <LocaleSwitcher variant="compact" />
                                 </nav>
@@ -110,12 +110,12 @@ export default function GuestLayout({ children }: Props) {
                             >
                                 {t('nav.services')}
                             </button>
-                            <button
+                            {/* <button
                                 onClick={() => scrollToSection('coverage')}
                                 className="block w-full py-2 text-left text-sm font-medium text-gray-700 hover:text-primary"
                             >
                                 {t('nav.coverage')}
-                            </button>
+                            </button> */}
 
                             {/* Language Switcher */}
                             <div className="py-2 border-t border-gray-100">

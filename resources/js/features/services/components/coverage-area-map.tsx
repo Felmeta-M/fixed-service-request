@@ -24,9 +24,20 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
     const [isCoverageLoaded, setIsCoverageLoaded] = useState(false);
     const [isCoverageLoading, setIsCoverageLoading] = useState(false);
     const [loadError, setLoadError] = useState(false);
+    const [scriptLoadError, setScriptLoadError] = useState<string | null>(null);
     const coverageDataRef = useRef<google.maps.Data.Feature[]>([]);
     const loadAttemptRef = useRef(0);
     const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Validate API key
+    useEffect(() => {
+        if (!googleMapsApiKey || googleMapsApiKey.trim() === '') {
+            console.error('Google Maps API key is missing or empty');
+            setScriptLoadError('Google Maps API key is missing');
+        } else {
+            console.log('Google Maps API key provided:', googleMapsApiKey.substring(0, 10) + '...');
+        }
+    }, [googleMapsApiKey]);
 
     const mapContainerStyle = {
         width: '100%',
@@ -57,13 +68,14 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
         if (hasFeatures) {
             // Use minimal padding to maximize coverage visibility
             targetMap.fitBounds(bounds, { top: 20, right: 20, bottom: 20, left: 20 });
-            
-            // After fitting bounds, zoom in by 1 level for a closer view
+
+            // After fitting bounds, zoom in a bit more for better detail
             // while still keeping all coverage areas visible
             setTimeout(() => {
                 const currentZoom = targetMap.getZoom();
-                if (currentZoom && currentZoom < 14) {
-                    targetMap.setZoom(currentZoom + 0.4);
+                if (currentZoom) {
+                    const targetZoom = Math.min(currentZoom + 0.2, 12);
+                    targetMap.setZoom(targetZoom);
                 }
             }, 100);
         }
@@ -71,7 +83,7 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
 
     // Load coverage area GeoJSON
     const loadCoverageArea = useCallback(
-        (targetMap: google.maps.Map) => {
+        async (targetMap: google.maps.Map) => {
             if (isCoverageLoaded || isCoverageLoading) return;
 
             setIsCoverageLoading(true);
@@ -84,56 +96,98 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
             
             const primaryColor = getPrimaryColor();
 
-            // First, apply the style so it's ready when data loads
-            targetMap.data.setStyle({
-                fillColor: primaryColor,
-                fillOpacity: 0.2,
-                strokeColor: primaryColor,
-                strokeWeight: 1.5,
-                clickable: false,
-            });
+            try {
+                // Fetch the GeoJSON file first for better error handling
+                // Add timeout to prevent hanging
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-            let loadingCompleted = false;
+                const response = await fetch('/data/coverage_area.geojson', {
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    signal: controller.signal,
+                });
 
-            // Load the GeoJSON file
-            targetMap.data.loadGeoJson(
-                '/data/coverage_area.geojson',
-                undefined,
-                (features) => {
-                    loadingCompleted = true;
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch coverage area: ${response.status} ${response.statusText}`);
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    console.warn('GeoJSON file may not have correct content-type header');
+                }
+
+                const geoJsonData = await response.json();
+
+                // Validate GeoJSON structure
+                if (!geoJsonData || !geoJsonData.type || !geoJsonData.features || !Array.isArray(geoJsonData.features)) {
+                    throw new Error('Invalid GeoJSON format');
+                }
+
+                if (geoJsonData.features.length === 0) {
+                    throw new Error('No features found in GeoJSON');
+                }
+
+                // Clear any existing data
+                targetMap.data.forEach((feature) => {
+                    targetMap.data.remove(feature);
+                });
+
+                // Add the GeoJSON data to the map
+                const features = targetMap.data.addGeoJson(geoJsonData);
+
+                if (features && features.length > 0) {
+                    coverageDataRef.current = features;
                     
-                    // Clear the timeout since we got a response
-                    if (loadingTimeoutRef.current) {
-                        clearTimeout(loadingTimeoutRef.current);
-                        loadingTimeoutRef.current = null;
-                    }
-                    
-                    if (features && features.length > 0) {
-                        coverageDataRef.current = features;
-                        setIsCoverageLoaded(true);
-                        setIsCoverageLoading(false);
-                        setLoadError(false);
+                    // Apply styling
+                    targetMap.data.setStyle({
+                        fillColor: primaryColor,
+                        fillOpacity: 0.2,
+                        strokeColor: primaryColor,
+                        strokeWeight: 1.5,
+                        clickable: false,
+                    });
 
-                        // Fit map to coverage bounds after a small delay to ensure rendering
-                        setTimeout(() => {
-                            fitToCoverageBounds(targetMap);
-                        }, 100);
-                    } else {
-                        // No features loaded, might be an error
-                        setIsCoverageLoading(false);
-                        setLoadError(true);
-                    }
-                },
-            );
-
-            // Set a timeout for loading - if it takes too long, show error state
-            loadingTimeoutRef.current = setTimeout(() => {
-                if (!loadingCompleted) {
+                    setIsCoverageLoaded(true);
                     setIsCoverageLoading(false);
-                    setLoadError(true);
+                    setLoadError(false);
+
+                    // Fit map to coverage bounds after a small delay to ensure rendering
+                    setTimeout(() => {
+                        fitToCoverageBounds(targetMap);
+                    }, 100);
+                } else {
+                    throw new Error('No features were added to the map');
+                }
+            } catch (error) {
+                console.error('Error loading coverage area:', error);
+                
+                let errorMessage = 'Failed to load coverage area';
+                if (error instanceof Error) {
+                    if (error.name === 'AbortError') {
+                        errorMessage = 'Request timed out. The coverage area file may be too large.';
+                    } else {
+                        errorMessage = error.message || errorMessage;
+                    }
+                }
+                
+                console.error('Coverage area load error details:', {
+                    message: errorMessage,
+                    error,
+                });
+                
+                setIsCoverageLoading(false);
+                setLoadError(true);
+                
+                // Clear timeout if it exists
+                if (loadingTimeoutRef.current) {
+                    clearTimeout(loadingTimeoutRef.current);
                     loadingTimeoutRef.current = null;
                 }
-            }, 10000);
+            }
         },
         [getPrimaryColor, fitToCoverageBounds, isCoverageLoaded, isCoverageLoading],
     );
@@ -151,8 +205,10 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
     // Initialize map
     const onLoad = useCallback(
         (loadedMap: google.maps.Map) => {
+            console.log('Google Map loaded successfully');
             setMap(loadedMap);
             setIsMapReady(true);
+            setScriptLoadError(null);
         },
         [],
     );
@@ -200,13 +256,47 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
     // Once map is ready, let it show even while coverage is loading
     const isLoading = !isMapReady;
 
+    // Check if Google Maps script loaded successfully
+    useEffect(() => {
+        if (!googleMapsApiKey) return;
+
+        const checkScriptLoad = setTimeout(() => {
+            if (!isMapReady && typeof window !== 'undefined' && !(window as any).google) {
+                console.error('Google Maps script failed to load after timeout');
+                setScriptLoadError('Failed to load Google Maps. Please check your API key and network connection.');
+            }
+        }, 15000); // 15 second timeout
+
+        return () => clearTimeout(checkScriptLoad);
+    }, [googleMapsApiKey, isMapReady]);
+
+    const containerStyle = {
+        width: '100%',
+        height: height === '100%' ? '100%' : height,
+        minHeight: height === '100%' ? '400px' : undefined,
+    };
+
     return (
         <div 
             className="relative overflow-hidden rounded-xl shadow-lg bg-gray-100"
-            style={{ minHeight: height }}
+            style={containerStyle}
         >
+            {/* Script load error */}
+            {scriptLoadError && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-gray-100">
+                    <div className="text-center px-4">
+                        <p className="mb-3 text-sm font-medium text-red-600">
+                            {scriptLoadError}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                            Please check your Google Maps API key configuration.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Loading overlay - only show when map script is loading */}
-            {isLoading && (
+            {isLoading && !scriptLoadError && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-gray-100">
                     <div className="text-center">
                         <Loader2 className="mx-auto mb-3 h-10 w-10 animate-spin text-primary" />
@@ -249,17 +339,10 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                 </div>
             )}
 
-            {/* Map info badge - responsive */}
-            <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 rounded-md bg-white/95 px-2 py-1.5 shadow-md backdrop-blur-sm sm:top-4 sm:left-4 sm:gap-2 sm:rounded-lg sm:px-4 sm:py-2">
-                <div className="h-2 w-2 rounded-full bg-primary opacity-60 sm:h-3 sm:w-3"></div>
-                <span className="text-xs font-medium text-gray-700 sm:text-sm">
-                    <span className="hidden sm:inline">{t('coverage_map.badge')}</span>
-                    <span className="sm:hidden">{t('coverage_map.badge_short')}</span>
-                </span>
-            </div>
+            
 
             {/* Center button - responsive */}
-            {isCoverageLoaded && !loadError && (
+            {/* {isCoverageLoaded && !loadError && (
                 <Button
                     type="button"
                     onClick={centerOnCoverage}
@@ -270,23 +353,24 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                     <MapPin className="h-3 w-3 sm:mr-1 sm:h-4 sm:w-4" />
                     <span className="hidden sm:inline">{t('coverage_map.view_full')}</span>
                 </Button>
-            )}
+            )} */}
 
-            <LoadScript
-                googleMapsApiKey={googleMapsApiKey}
-                libraries={LIBRARIES}
-                loadingElement={
-                    <div
-                        className="flex w-full items-center justify-center bg-gray-100"
-                        style={{ height }}
-                    >
-                        <div className="text-center">
-                            <Loader2 className="mx-auto mb-3 h-10 w-10 animate-spin text-primary" />
-                            <p className="text-sm text-gray-600">{t('coverage_map.initializing')}</p>
+            {!scriptLoadError && googleMapsApiKey && (
+                <LoadScript
+                    googleMapsApiKey={googleMapsApiKey}
+                    libraries={LIBRARIES}
+                    loadingElement={
+                        <div
+                            className="flex w-full items-center justify-center bg-gray-100"
+                            style={{ height }}
+                        >
+                            <div className="text-center">
+                                <Loader2 className="mx-auto mb-3 h-10 w-10 animate-spin text-primary" />
+                                <p className="text-sm text-gray-600">{t('coverage_map.initializing')}</p>
+                            </div>
                         </div>
-                    </div>
-                }
-            >
+                    }
+                >
                 <GoogleMap
                     mapContainerStyle={mapContainerStyle}
                     center={defaultCenter}
@@ -313,7 +397,8 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                         ],
                     }}
                 />
-            </LoadScript>
+                </LoadScript>
+            )}
         </div>
     );
 }

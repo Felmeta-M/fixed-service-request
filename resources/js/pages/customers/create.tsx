@@ -238,7 +238,7 @@ export default function Create() {
         customer_type: '1',
         customer_category: '1',
         customer_subcategory: '1',
-        customer_level: '1',
+        customer_level: '6',
     });
 
     const API_READONLY_FIELDS = [

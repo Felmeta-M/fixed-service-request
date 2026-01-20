@@ -325,7 +325,7 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
         customer_type: '1',
         customer_category: '1',
         customer_subcategory: '1',
-        customer_level: '1',
+        customer_level: '6',
     });
 
     // Enhanced prefill data loading with better error handling - FIXED

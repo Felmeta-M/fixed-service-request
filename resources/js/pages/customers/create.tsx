@@ -6,6 +6,7 @@ import { useOccupations } from '@/hooks/use-occupations';
 import { useEducationLevels } from '@/hooks/use-education-levels';
 import { useReligions } from '@/hooks/use-religions';
 import { useIncomeLevels } from '@/hooks/use-income-levels';
+import { useLanguages } from '@/hooks/use-languages';
 import { useRegions, useWoredas, useZones } from '@/hooks/use-regions';
 import SimpleLayout from '@/layouts/simple-layout';
 import { cn } from '@/lib/utils';
@@ -181,6 +182,7 @@ export default function Create() {
     const { educationLevels, loading: educationLoading, error: educationError } = useEducationLevels();
     const { religions, loading: religionsLoading, error: religionsError } = useReligions();
     const { incomeLevels, loading: incomeLevelsLoading, error: incomeLevelsError } = useIncomeLevels();
+    const { languages, loading: languagesLoading, error: languagesError } = useLanguages();
     // const [step, setStep] = useState(1);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [submissionState, setSubmissionState] = useState<SubmissionState>({
@@ -1044,16 +1046,11 @@ export default function Create() {
                                 required
                                 value={data.primary_language || ''}
                                 onChange={(value) => handleSelectChange('primary_language', value)}
-                                options={[
-                                    { label: 'English', value: '2002' },
-                                    { label: 'Amharic', value: '2060' },
-                                    { label: 'Oromigna', value: '2061' },
-                                    { label: 'Tigrigna', value: '2062' },
-                                    { label: 'Somali', value: '2063' },
-                                ]}
-                                placeholder=""
-                                error={formErrors.primary_language}
-                                disabled={isFieldReadOnly('primary_language')}
+                                options={languages}
+                                placeholder={languagesLoading ? 'Loading...' : 'Select language'}
+                                error={formErrors.primary_language || (languagesError ? languagesError : undefined)}
+                                loading={languagesLoading}
+                                disabled={languagesLoading || isFieldReadOnly('primary_language')}
                             />
                         </div>
                     </CardContent>

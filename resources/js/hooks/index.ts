@@ -13,6 +13,8 @@ export { useServiceTypes } from './use-service-types';
 export { useEducationLevels } from './use-education-levels';
 export { useReligions } from './use-religions';
 export { useIncomeLevels } from './use-income-levels';
+export { useLanguages } from './use-languages';
+export { useCustomerLevels } from './use-customer-levels';
 
 // API mutations
 export * from './use-api-mutations';

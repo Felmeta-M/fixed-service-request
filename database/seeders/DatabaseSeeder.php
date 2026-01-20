@@ -26,5 +26,7 @@ class DatabaseSeeder extends Seeder
         // $this->call(EducationLevelSeeder::class);
         // $this->call(ReligionSeeder::class);
         // $this->call(IncomeLevelSeeder::class);
+        // $this->call(LanguageSeeder::class);
+        // $this->call(CustomerLevelSeeder::class);
     }
 }

@@ -21,6 +21,8 @@ use App\Http\Controllers\Api\v1\ResourceCheckController;
 use App\Http\Controllers\Api\v1\ServiceClientController;
 use App\Http\Controllers\Api\v1\EducationLevelController;
 use App\Http\Controllers\Api\v1\IncomeLevelController;
+use App\Http\Controllers\Api\v1\LanguageController;
+use App\Http\Controllers\Api\v1\CustomerLevelController;
 use App\Http\Controllers\Api\v1\ReligionController;
 use App\Http\Controllers\Api\v1\ServiceTypeController;
 use App\Http\Controllers\Api\v1\SubsriptionController;
@@ -59,6 +61,8 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('education-levels', EducationLevelController::class);
         Route::apiResource('religions', ReligionController::class);
         Route::apiResource('income-levels', IncomeLevelController::class);
+        Route::apiResource('languages', LanguageController::class);
+        Route::apiResource('customer-levels', CustomerLevelController::class);
         Route::get('available-devices', [AvailableDeviceController::class, 'index']);
         Route::get('available-devices/{id}', [AvailableDeviceController::class, 'show']);
 

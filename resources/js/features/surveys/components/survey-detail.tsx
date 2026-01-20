@@ -55,6 +55,7 @@ type SurveyDetails = {
     can_subscribe?: boolean;
     can_change_offer?: boolean;
     can_cancel?: boolean;
+    can_terminate?: boolean;
 };
 
 type PaymentDetailsData = {
@@ -105,6 +106,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
     const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
     const [openDowngradeDialog, setOpenDowngradeDialog] = useState(false);
     const [openCancelDialog, setOpenCancelDialog] = useState(false);
+    const [isTerminateAction, setIsTerminateAction] = useState(false);
 
     const loading = createSubscriptionMutation.isPending || createPaymentOrderMutation.isPending || cancelMutation.isPending || changePrimaryOfferingMutation.isPending || isSubmitting;
 
@@ -124,6 +126,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
     const canSubscribe = surveyDetails?.can_subscribe ?? false;
     const canChangeOffer = surveyDetails?.can_change_offer ?? false;
     const canCancel = surveyDetails?.can_cancel ?? false;
+    const canTerminate = surveyDetails?.can_terminate ?? false;
     const isInternetOrCombo = surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID;
     const canUpgradeDowngrade = canChangeOffer && isInternetOrCombo;
 
@@ -564,7 +567,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
             </div>
 
             {/* Action Section */}
-            {(canPay || canSubscribe || canUpgradeDowngrade || canCancel) && (
+            {(canPay || canSubscribe || canUpgradeDowngrade || canCancel || canTerminate) && (
                 <>
                     <div ref={actionRef} />
                     <Card className={`border-none shadow-xs ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
@@ -662,13 +665,25 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
 
                                     {canCancel && (
                                         <Button
-                                            onClick={() => setOpenCancelDialog(true)}
+                                            onClick={() => { setIsTerminateAction(false); setOpenCancelDialog(true); }}
                                             disabled={loading}
                                             variant="destructive"
                                             className="w-full gap-2 sm:w-auto"
                                         >
                                             <X className="h-4 w-4" />
                                             Cancel
+                                        </Button>
+                                    )}
+
+                                    {canTerminate && (
+                                        <Button
+                                            onClick={() => { setIsTerminateAction(true); setOpenCancelDialog(true); }}
+                                            disabled={loading}
+                                            variant="destructive"
+                                            className="w-full gap-2 sm:w-auto"
+                                        >
+                                            <X className="h-4 w-4" />
+                                            Terminate
                                         </Button>
                                     )}
                                 </div>
@@ -679,7 +694,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
             )}
 
             {/* No Actions Available */}
-            {!canPay && !canSubscribe && !canUpgradeDowngrade && !canCancel && (
+            {!canPay && !canSubscribe && !canUpgradeDowngrade && !canCancel && !canTerminate && (
                 <div className="flex justify-center pt-4">
                     <Link href="/services">
                         <Button variant="outline" className="gap-2">
@@ -696,9 +711,12 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                 onOpenChange={setOpenCancelDialog}
                 onConfirm={handleCancel}
                 loading={cancelMutation.isPending}
-                title="Cancel Survey Order"
-                description="Are you sure you want to cancel this survey order? This action cannot be undone."
-                confirmText={cancelMutation.isPending ? 'Cancelling...' : 'Yes, Cancel'}
+                title={isTerminateAction ? "Terminate Service" : "Cancel Survey Order"}
+                description={isTerminateAction 
+                    ? "Are you sure you want to terminate this service? This action cannot be undone."
+                    : "Are you sure you want to cancel this survey order? This action cannot be undone."
+                }
+                confirmText={cancelMutation.isPending ? (isTerminateAction ? 'Terminating...' : 'Cancelling...') : (isTerminateAction ? 'Yes, Terminate' : 'Yes, Cancel')}
                 cancelText="No, Keep It"
             />
 

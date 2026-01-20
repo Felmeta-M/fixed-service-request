@@ -49,6 +49,7 @@ type SurveyRow = {
     can_subscribe?: boolean;
     can_change_offer?: boolean;
     can_cancel?: boolean;
+    can_terminate?: boolean;
     [key: string]: unknown;
 };
 

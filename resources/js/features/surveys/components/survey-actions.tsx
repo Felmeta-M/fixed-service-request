@@ -70,6 +70,7 @@ type Survey = {
     can_subscribe?: boolean;
     can_change_offer?: boolean;
     can_cancel?: boolean;
+    can_terminate?: boolean;
     [key: string]: unknown;
 };
 
@@ -84,6 +85,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
     const [openDowngradeDialog, setOpenDowngradeDialog] = useState(false);
+    const [isTerminateAction, setIsTerminateAction] = useState(false);
     const [error, setError] = useState('');
     const [customerData, setCustomerData] = useState<AuthUser | null>(null);
     const [openDetailModal, setOpenDetailModal] = useState(false);
@@ -313,6 +315,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const canSubscribe = survey.can_subscribe ?? false;
     const canChangeOffer = survey.can_change_offer ?? false;
     const canCancel = survey.can_cancel ?? false;
+    const canTerminate = survey.can_terminate ?? false;
     
     // Upgrade/Downgrade is only available for Internet and Combo services
     const INTERNET_OFFER_ID = '1457567289';
@@ -445,7 +448,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 {/* {canCancel && ( */}
 
                 {/* Show dropdown only if there are actions available */}
-                {(canUpgradeDowngrade || canCancel) && (
+                {(canUpgradeDowngrade || canCancel || canTerminate) && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={loading}>
@@ -474,9 +477,15 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                                 </>
                             )}
                             {canCancel && (
-                                <DropdownMenuItem onClick={() => setOpenCancelDialog(true)} className="flex cursor-pointer items-center gap-2 text-destructive">
+                                <DropdownMenuItem onClick={() => { setIsTerminateAction(false); setOpenCancelDialog(true); }} className="flex cursor-pointer items-center gap-2 text-destructive">
                                     <X className="h-4 w-4" />
-                                    <span>Cancel Service</span>
+                                    <span>Cancel Survey</span>
+                                </DropdownMenuItem>
+                            )}
+                            {canTerminate && (
+                                <DropdownMenuItem onClick={() => { setIsTerminateAction(true); setOpenCancelDialog(true); }} className="flex cursor-pointer items-center gap-2 text-destructive">
+                                    <X className="h-4 w-4" />
+                                    <span>Terminate Service</span>
                                 </DropdownMenuItem>
                             )}
                         </DropdownMenuContent>
@@ -502,9 +511,12 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 onOpenChange={setOpenCancelDialog}
                 onConfirm={handleCancel}
                 loading={loading}
-                title="Cancel Survey Order"
-                description="Are you sure you want to cancel this survey order? This action cannot be undone."
-                confirmText={loading ? 'Cancelling...' : 'Yes, Cancel'}
+                title={isTerminateAction ? "Terminate Service" : "Cancel Survey Order"}
+                description={isTerminateAction 
+                    ? "Are you sure you want to terminate this service? This action cannot be undone."
+                    : "Are you sure you want to cancel this survey order? This action cannot be undone."
+                }
+                confirmText={loading ? (isTerminateAction ? 'Terminating...' : 'Cancelling...') : (isTerminateAction ? 'Yes, Terminate' : 'Yes, Cancel')}
                 cancelText="No, Keep It"
             />
 

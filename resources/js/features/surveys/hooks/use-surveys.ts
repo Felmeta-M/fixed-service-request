@@ -34,6 +34,7 @@ interface Survey {
     can_subscribe?: boolean;
     can_change_offer?: boolean;
     can_cancel?: boolean;
+    can_terminate?: boolean;
 }
 
 interface SurveyListResponse {
@@ -82,6 +83,7 @@ interface SurveyDetailResponse {
         can_subscribe?: boolean;
         can_change_offer?: boolean;
         can_cancel?: boolean;
+        can_terminate?: boolean;
     };
     message?: string;
 }

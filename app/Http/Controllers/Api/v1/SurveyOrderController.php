@@ -486,6 +486,7 @@ class SurveyOrderController extends Controller
             'can_subscribe' => SurveyOrder::checkCanSubscribe($status, $paymentAmount, $paymentTransId, $subscriptionOrderId),
             'can_change_offer' => SurveyOrder::checkCanChangeOffer($status, $subscriptionOrderId),
             'can_cancel' => SurveyOrder::checkCanCancel($status, $subscriptionOrderId, $paymentTransId),
+            'can_terminate' => SurveyOrder::checkCanTerminate($status, $subscriptionOrderId),
         ];
     }
 

@@ -179,10 +179,15 @@ class SurveyOrder extends Model
         return self::checkCanCancel((int) $this->status, $this->customer_subscription_order_id, $this->payment?->trans_id);
     }
 
+    public function canTerminate(): bool
+    {
+        return self::checkCanTerminate((int) $this->status, $this->customer_subscription_order_id);
+    }
+
     public function isPaid(): bool
     {
         $p = $this->payment;
-        return self::checkIsPaid($p?->id, (int) ($p?->status ?? 0), $p?->trans_id);
+        return self::checkIsPaid((int) ($p?->status ?? 0), $p?->trans_id);
     }
 
     // ==========================================
@@ -229,11 +234,35 @@ class SurveyOrder extends Model
     }
 
     /**
-     * Completed + has subscription (can only cancel after service is subscribed)
+     * Can cancel survey order if:
+     * - Survey is Completed but NOT yet subscribed (no subscription order ID)
+     * - Has not been paid yet (no trans_id) OR payment can be refunded
      */
     public static function checkCanCancel(int $status, ?string $subscriptionOrderId, ?string $paymentTransId): bool
     {
-        return $status === FFDServiceProvisionStatus::Completed->value && !empty($subscriptionOrderId);
+        // Cannot cancel if already subscribed - use terminate instead
+        if (!empty($subscriptionOrderId)) {
+            return false;
+        }
+
+        // Can cancel completed surveys that haven't been subscribed yet
+        return $status === FFDServiceProvisionStatus::Completed->value;
+    }
+
+    /**
+     * Can terminate service if:
+     * - Service has been subscribed (has subscription order ID)
+     * - Subscription is Completed (fully provisioned)
+     */
+    public static function checkCanTerminate(int $status, ?string $subscriptionOrderId): bool
+    {
+        // Must have a subscription to terminate
+        if (empty($subscriptionOrderId)) {
+            return false;
+        }
+
+        // Can only terminate completed subscriptions
+        return $status === FFDServiceProvisionStatus::Completed->value;
     }
 
     /**
@@ -252,14 +281,14 @@ class SurveyOrder extends Model
     {
         $status = (int) $order->status;
 
-        if (
-            !in_array($status, [
-                FFDServiceProvisionStatus::Waiting->value,
-                FFDServiceProvisionStatus::Processing->value,
-            ], true)
-        ) {
-            return false;
-        }
+        // if (
+        //     in_array($status, [
+        //         FFDServiceProvisionStatus::Completed->value,
+        //         FFDServiceProvisionStatus::Processing->value,
+        //     ], true)
+        // ) {
+        //     return false;
+        // }
 
 
         if (!empty($order->last_checked_at)) {

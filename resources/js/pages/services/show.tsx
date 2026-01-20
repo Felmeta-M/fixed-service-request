@@ -26,6 +26,7 @@ type SurveyDetails = {
     can_subscribe?: boolean;
     can_change_offer?: boolean;
     can_cancel?: boolean;
+    can_terminate?: boolean;
 };
 
 type PaymentDetailsData = {
@@ -105,6 +106,7 @@ export default function ServiceShowPage() {
             can_subscribe: surveyDetailQuery.data.data.can_subscribe,
             can_change_offer: surveyDetailQuery.data.data.can_change_offer,
             can_cancel: surveyDetailQuery.data.data.can_cancel,
+            can_terminate: surveyDetailQuery.data.data.can_terminate,
         }
         : null;
 

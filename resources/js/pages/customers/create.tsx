@@ -799,7 +799,133 @@ export default function Create() {
                 {/* Error Summary */}
                 {renderErrorSummary()}
 
-                {/* {step === 1 && ( */}
+                {/* Verified Customer Information - Read-only fields from NID */}
+                {hasPrefilledData && (
+                    <Card className="border-2 border-green-200 bg-green-50/50">
+                        <CardHeader className="pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+                                    <CheckCircle className="h-5 w-5 text-green-600" />
+                                </div>
+                                <div>
+                                    <CardTitle className="text-lg text-green-800">Verified Customer Information</CardTitle>
+                                    <CardDescription className="text-green-600">
+                                        This information has been verified and cannot be edited
+                                    </CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <FormInput
+                                    label="First Name"
+                                    id="first_name_verified"
+                                    required
+                                    value={data.first_name ?? ''}
+                                    onChange={(e) => handleInputChange('first_name', e.target.value)}
+                                    placeholder=""
+                                    error={formErrors.first_name}
+                                    readOnly={true}
+                                    disabled={true}
+                                />
+                                <FormInput
+                                    label="Middle Name"
+                                    id="middle_name_verified"
+                                    required
+                                    value={data.middle_name}
+                                    onChange={(e) => handleInputChange('middle_name', e.target.value)}
+                                    placeholder=""
+                                    error={formErrors.middle_name}
+                                    readOnly={true}
+                                    disabled={true}
+                                />
+                                <FormInput
+                                    label="Last Name"
+                                    id="last_name_verified"
+                                    required
+                                    value={data.last_name}
+                                    onChange={(e) => handleInputChange('last_name', e.target.value)}
+                                    placeholder=""
+                                    error={formErrors.last_name}
+                                    readOnly={true}
+                                    disabled={true}
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <FormSelect
+                                    label="Gender"
+                                    id="gender_verified"
+                                    required
+                                    value={data.gender || ''}
+                                    onChange={(value) => handleSelectChange('gender', value)}
+                                    options={[
+                                        { label: 'Male', value: '1' },
+                                        { label: 'Female', value: '2' },
+                                    ]}
+                                    placeholder=""
+                                    error={formErrors.gender}
+                                    disabled={true}
+                                />
+                                <FormInput
+                                    label="Date of Birth"
+                                    id="date_of_birth_verified"
+                                    required
+                                    type="date"
+                                    value={data.date_of_birth}
+                                    onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                                    placeholder=""
+                                    error={formErrors.date_of_birth}
+                                    readOnly={true}
+                                    disabled={true}
+                                />
+                                <FormSelect
+                                    label="Nationality"
+                                    id="nationality_verified"
+                                    required
+                                    value={data.nationality || ''}
+                                    onChange={(value) => handleSelectChange('nationality', value)}
+                                    options={[
+                                        { label: 'Ethiopian', value: '1231' },
+                                        { label: 'Other', value: '1000' },
+                                    ]}
+                                    placeholder=""
+                                    error={formErrors.nationality}
+                                    disabled={true}
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <FormInput
+                                    label="Identification Number"
+                                    id="identification_number_verified"
+                                    required
+                                    value={data.identification_number}
+                                    onChange={(e) => handleInputChange('identification_number', e.target.value)}
+                                    placeholder=""
+                                    error={formErrors.identification_number}
+                                    readOnly={true}
+                                    disabled={true}
+                                />
+                                <FormSelect
+                                    label="Identification Type"
+                                    id="identification_type_verified"
+                                    required
+                                    value={data.identification_type || ''}
+                                    onChange={(value) => handleSelectChange('identification_type', value)}
+                                    options={[
+                                        { label: 'National ID', value: '2' },
+                                        { label: 'Passport', value: '1' },
+                                        { label: 'Driving License', value: '3' },
+                                    ]}
+                                    placeholder=""
+                                    error={formErrors.identification_type}
+                                    disabled={true}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Additional/Personal Information */}
                 <Card className="">
                     <CardHeader className="">
                         <CardTitle className="flex items-center gap-3 text-gray-800">
@@ -807,15 +933,93 @@ export default function Create() {
                                 <User className="h-5 w-5" />
                             </div>
                             <div>
-                                <h2 className="text-xl">Personal Information</h2>
+                                <h2 className="text-xl">{hasPrefilledData ? 'Additional Information' : 'Personal Information'}</h2>
                                 <CardDescription className="text-gray-500">
-                                    {hasPrefilledData ? 'Identity details and additional information' : 'Basic personal details of the customer'}
+                                    {hasPrefilledData ? 'Please complete the following details' : 'Basic personal details of the customer'}
                                 </CardDescription>
                             </div>
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6 p-6">
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            {/* Show these fields only when NOT pre-filled */}
+                            {!hasPrefilledData && (
+                                <>
+                                    <FormInput
+                                        label="First Name"
+                                        id="first_name"
+                                        required
+                                        value={data.first_name ?? ''}
+                                        onChange={(e) => handleInputChange('first_name', e.target.value)}
+                                        placeholder="Enter first name"
+                                        error={formErrors.first_name}
+                                        readOnly={!!isFieldReadOnly('first_name')}
+                                        disabled={isFieldReadOnly('first_name')}
+                                    />
+                                    <FormInput
+                                        label="Middle Name"
+                                        id="middle_name"
+                                        required
+                                        value={data.middle_name}
+                                        onChange={(e) => handleInputChange('middle_name', e.target.value)}
+                                        placeholder=""
+                                        error={formErrors.middle_name}
+                                        readOnly={isFieldReadOnly('middle_name')}
+                                        disabled={isFieldReadOnly('middle_name')}
+                                    />
+                                    <FormInput
+                                        label="Last Name"
+                                        id="last_name"
+                                        required
+                                        value={data.last_name}
+                                        onChange={(e) => handleInputChange('last_name', e.target.value)}
+                                        placeholder=""
+                                        error={formErrors.last_name}
+                                        readOnly={isFieldReadOnly('last_name')}
+                                        disabled={isFieldReadOnly('last_name')}
+                                    />
+                                    <FormSelect
+                                        label="Gender"
+                                        id="gender"
+                                        required
+                                        value={data.gender || ''}
+                                        onChange={(value) => handleSelectChange('gender', value)}
+                                        options={[
+                                            { label: 'Male', value: '1' },
+                                            { label: 'Female', value: '2' },
+                                        ]}
+                                        placeholder="Select gender"
+                                        error={formErrors.gender}
+                                        disabled={isFieldReadOnly('gender')}
+                                    />
+                                    <FormInput
+                                        label="Date of Birth"
+                                        id="date_of_birth"
+                                        required
+                                        type="date"
+                                        value={data.date_of_birth}
+                                        onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                                        placeholder=""
+                                        error={formErrors.date_of_birth}
+                                        readOnly={isFieldReadOnly('date_of_birth')}
+                                        disabled={isFieldReadOnly('date_of_birth')}
+                                    />
+                                    <FormSelect
+                                        label="Nationality"
+                                        id="nationality"
+                                        required
+                                        value={data.nationality || ''}
+                                        onChange={(value) => handleSelectChange('nationality', value)}
+                                        options={[
+                                            { label: 'Ethiopian', value: '1231' },
+                                            { label: 'Other', value: '1000' },
+                                        ]}
+                                        placeholder=""
+                                        error={formErrors.nationality}
+                                        disabled={isFieldReadOnly('nationality')}
+                                    />
+                                </>
+                            )}
                             <FormSelect
                                 label="Title"
                                 id="title"
@@ -833,81 +1037,6 @@ export default function Create() {
                                 placeholder="Select title"
                                 error={formErrors.title}
                                 disabled={isFieldReadOnly('title')}
-                            />
-
-                            <FormInput
-                                label="First Name"
-                                id="first_name"
-                                required
-                                value={data.first_name ?? ''}
-                                onChange={(e) => handleInputChange('first_name', e.target.value)}
-                                placeholder="Enter first name"
-                                error={formErrors.first_name}
-                                readOnly={!!isFieldReadOnly('first_name')}
-                                disabled={isFieldReadOnly('first_name')}
-                            />
-
-                            <FormInput
-                                label="Middle Name"
-                                id="middle_name"
-                                required
-                                value={data.middle_name}
-                                onChange={(e) => handleInputChange('middle_name', e.target.value)}
-                                placeholder=""
-                                error={formErrors.middle_name}
-                                readOnly={isFieldReadOnly('middle_name')}
-                                disabled={isFieldReadOnly('middle_name')}
-                            />
-                            <FormInput
-                                label="Last Name "
-                                id="last_name"
-                                required
-                                value={data.last_name}
-                                onChange={(e) => handleInputChange('last_name', e.target.value)}
-                                placeholder=""
-                                error={formErrors.last_name}
-                                readOnly={isFieldReadOnly('last_name')}
-                                disabled={isFieldReadOnly('last_name')}
-                            />
-                            <FormSelect
-                                label="Gender"
-                                id="gender"
-                                required
-                                value={data.gender || ''}
-                                onChange={(value) => handleSelectChange('gender', value)}
-                                options={[
-                                    { label: 'Male', value: '1' },
-                                    { label: 'Female', value: '2' },
-                                ]}
-                                placeholder="Select gender"
-                                error={formErrors.gender}
-                                disabled={isFieldReadOnly('gender')}
-                            />
-                            <FormInput
-                                label="Date of Birth"
-                                id="date_of_birth"
-                                required
-                                type="date"
-                                value={data.date_of_birth}
-                                onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                                placeholder=""
-                                error={formErrors.date_of_birth}
-                                readOnly={isFieldReadOnly('date_of_birth')}
-                                disabled={isFieldReadOnly('date_of_birth')}
-                            />
-                            <FormSelect
-                                label="Nationality"
-                                id="nationality"
-                                required
-                                value={data.nationality || ''}
-                                onChange={(value) => handleSelectChange('nationality', value)}
-                                options={[
-                                    { label: 'Ethiopian', value: '1231' },
-                                    { label: 'Other', value: '1000' },
-                                ]}
-                                placeholder=""
-                                error={formErrors.nationality}
-                                disabled={isFieldReadOnly('nationality')}
                             />
                             <FormSelect
                                 label="Primary Language"

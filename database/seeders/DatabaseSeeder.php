@@ -15,16 +15,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(SurveyTypeSeeder::class);
-        $this->call(BandwidthOptionsSeeder::class);
-        $this->call(OccupationSeeder::class);
-        $this->call(CustomerTypeCategorySubcategorySeeder::class);
-        $this->call(RegionZoneWeredaSeeder::class);
-        $this->call(AvailableDeviceSeeder::class);
-        $this->call(EthioZonalAreaSeeder::class);
-        $this->call(ServiceTypeSeeder::class);
-        $this->call(EducationLevelSeeder::class);
-        $this->call(ReligionSeeder::class);
-        $this->call(IncomeLevelSeeder::class);
+        // $this->call(SurveyTypeSeeder::class);
+        // $this->call(BandwidthOptionsSeeder::class);
+        // $this->call(OccupationSeeder::class);
+        // $this->call(CustomerTypeCategorySubcategorySeeder::class);
+        // $this->call(RegionZoneWeredaSeeder::class);
+        // $this->call(AvailableDeviceSeeder::class);
+        // $this->call(EthioZonalAreaSeeder::class);
+        // $this->call(ServiceTypeSeeder::class);
+        // $this->call(EducationLevelSeeder::class);
+        // $this->call(ReligionSeeder::class);
+        // $this->call(IncomeLevelSeeder::class);
     }
 }

@@ -331,7 +331,7 @@ export default function Create() {
                         '',
                 },
                 contact_person: customer.contact_person || [],
-                customer_level: customer.customer_level || '1',
+                customer_level: customer.customer_level || '6',
             };
             console.log('transfored data', transform);
 

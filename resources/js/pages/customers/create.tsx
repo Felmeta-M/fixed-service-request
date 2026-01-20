@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCustomerCategories, useCustomerSubcategories, useCustomerTypes } from '@/features/customers/hooks/use-customer-types';
 import { useOccupations } from '@/hooks/use-occupations';
 import { useEducationLevels } from '@/hooks/use-education-levels';
 import { useReligions } from '@/hooks/use-religions';
@@ -207,16 +206,16 @@ export default function Create() {
         middle_name: '',
         last_name: '',
         title: '1',
-        gender: undefined,
+        gender: '',
         nationality: '1231',
         identification_type: '2',
         identification_number: '',
         date_of_birth: '',
         place_of_birth: '',
-        occupation: undefined,
-        education: undefined,
-        religion: undefined,
-        income: undefined,
+        occupation: '',
+        education: '',
+        religion: '',
+        income: '',
         primary_language: '2060',
         address: {
             region: '',
@@ -239,7 +238,7 @@ export default function Create() {
         customer_type: '1',
         customer_category: '1',
         customer_subcategory: '1',
-        customer_level: '2',
+        customer_level: '1',
     });
 
     const API_READONLY_FIELDS = [
@@ -275,8 +274,8 @@ export default function Create() {
                     customer.gender?.toLowerCase() === 'male'
                         ? '1'
                         : customer.gender?.toLowerCase() === 'female'
-                        ? '2'
-                        : '',
+                            ? '2'
+                            : '',
                 nationality:
                     customer.nationality?.toLowerCase() === 'ethiopian'
                         ? '1231'
@@ -332,7 +331,7 @@ export default function Create() {
                         '',
                 },
                 contact_person: customer.contact_person || [],
-                customer_level: customer.customer_level || '2',
+                customer_level: customer.customer_level || '1',
             };
             console.log('transfored data', transform);
 
@@ -377,23 +376,6 @@ export default function Create() {
         }
     }, [customerData, isLoadingCustomer, user?.customer_sub_id]);
 
-    // Set default customer category when customer_type is residential
-    useEffect(() => {
-        if (data.customer_type === '1' && !data.customer_category) {
-            setData('customer_category', '1');
-        }
-    }, [data.customer_type, data.customer_category, setData]);
-
-    // Set default customer subcategory when customer_category is residential
-    useEffect(() => {
-        if (data.customer_category === '1' && !data.customer_subcategory) {
-            setData('customer_subcategory', '1');
-        }
-    }, [data.customer_category, data.customer_subcategory, setData]);
-
-    const { types, loading: typesLoading, error: typesError } = useCustomerTypes();
-    const { categories, loading: categoriesLoading, error: categoriesError } = useCustomerCategories(data.customer_type);
-    const { subcategories, loading: subcategoriesLoading, error: subcategoriesError } = useCustomerSubcategories(data.customer_category);
 
     const { regions: regionOptions, loading: loadingRegions } = useRegions();
     const { zones: zoneOptions, loading: loadingZones } = useZones(data.address?.region);
@@ -404,15 +386,15 @@ export default function Create() {
         data.contact_person && data.contact_person.length > 0
             ? data.contact_person[0]
             : {
-                  first_name: '',
-                  middle_name: '',
-                  last_name: '',
-                  title: undefined,
-                  mobile_no: '',
-                  office_no: '',
-                  home_no: '',
-                  fax_no: '',
-              },
+                first_name: '',
+                middle_name: '',
+                last_name: '',
+                title: undefined,
+                mobile_no: '',
+                office_no: '',
+                home_no: '',
+                fax_no: '',
+            },
     );
 
     // Update contact person
@@ -492,7 +474,7 @@ export default function Create() {
             id: submissionToast,
         });
         console.log('🚀 ~ submit ~ submissionToast:', submissionToast);
-        
+
         // Step 2: Create customer
         createCustomerMutation.mutate(
             {
@@ -834,66 +816,6 @@ export default function Create() {
                     </CardHeader>
                     <CardContent className="space-y-6 p-6">
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <FormSelect
-                                    label="Customer Type"
-                                    required
-                                    id="customer_type"
-                                    value={data.customer_type}
-                                    onChange={(val) => {
-                                        setData('customer_type', val);
-                                        if (val === '1') {
-                                            setData('customer_category', '1');
-                                            setData('customer_subcategory', '1');
-                                        }
-                                        if (val === '2') {
-                                            setData('customer_category', '');
-                                            setData('customer_subcategory', '');
-                                        }
-                                        clearFieldError('customer_type');
-                                    }}
-                                    options={[
-                                        { label: 'Residential', value: '1' },
-                                        { label: 'Enterprise', value: '2' },
-                                    ]}
-                                    placeholder="Select customer type"
-                                    error={formErrors.customer_type}
-                                    disabled={isFieldReadOnly('customer_type')}
-                                />
-                            </div>
-                            <>
-                                <FormSelect
-                                    label="Customer Category"
-                                    required
-                                    id="customer_category"
-                                    value={data?.customer_category}
-                                    onChange={(val) => {
-                                        setData('customer_category', val);
-                                        setData('customer_subcategory', val === '1' ? '1' : '');
-                                        clearFieldError('customer_category');
-                                    }}
-                                    options={categories}
-                                    placeholder="Select category"
-                                    error={formErrors.customer_category || categoriesError}
-                                    loading={categoriesLoading}
-                                    disabled={isFieldReadOnly('customer_category')}
-                                />
-                                <FormSelect
-                                    label="Customer Subcategory"
-                                    required
-                                    id="customer_subcategory"
-                                    value={data?.customer_subcategory}
-                                    onChange={(val) => {
-                                        setData('customer_subcategory', val);
-                                        clearFieldError('customer_subcategory');
-                                    }}
-                                    options={subcategories}
-                                    placeholder="Select subcategory"
-                                    error={formErrors.customer_subcategory || subcategoriesError}
-                                    loading={subcategoriesLoading}
-                                    disabled={isFieldReadOnly('customer_subcategory')}
-                                />
-                            </>
                             <FormSelect
                                 label="Title"
                                 id="title"
@@ -1003,17 +925,6 @@ export default function Create() {
                                 placeholder=""
                                 error={formErrors.primary_language}
                                 disabled={isFieldReadOnly('primary_language')}
-                            />
-                            <FormInput
-                                label="Place of Birth"
-                                id="place_of_birth"
-                                // required
-                                autoFocus
-                                value={data.place_of_birth}
-                                onChange={(e) => handleInputChange('place_of_birth', e.target.value)}
-                                placeholder=""
-                                error={formErrors.place_of_birth}
-                                readOnly={isFieldReadOnly('place_of_birth')}
                             />
                         </div>
                     </CardContent>
@@ -1359,9 +1270,8 @@ export default function Create() {
                         type="button"
                         onClick={handleSubmit}
                         disabled={submissionState.isSubmitting || submissionState.isUploadingPhoto}
-                        className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${
-                            submissionState.isSubmitting || submissionState.isUploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
-                        }`}
+                        className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${submissionState.isSubmitting || submissionState.isUploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
+                            }`}
                     >
                         {submissionState.isSubmitting || submissionState.isUploadingPhoto ? (
                             <>

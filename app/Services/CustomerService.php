@@ -51,8 +51,14 @@ class CustomerService extends BaseApiService
         $this->transactionId = uniqid();
         $processTime = now()->format('YmdHis');
 
+        // Set default values for customer classification (used by third-party API)
+        $data['customer_type'] = $data['customer_type'] ?? '1';           // Default: Residential
+        $data['customer_category'] = $data['customer_category'] ?? '1';   // Default: Category 1
+        $data['customer_subcategory'] = $data['customer_subcategory'] ?? '1'; // Default: Subcategory 1
+        $data['customer_level'] = $data['customer_level'] ?? '1';         // Default: Level 1
+
         $data['identification_number'] = random_int(100000, 999999); //TODO: remove this after testing
-        $data['income'] = "6"; //TODO: remove this after testing
+        $data['income'] = $data['income'] ?? '6'; // Default income level
 
         // Safely handle optional contact person info (may be empty array from frontend)
         $contactPerson = $data['contact_person'][0] ?? null;
@@ -208,11 +214,11 @@ XML;
                     'street_name' => $data['address']['street_name'] ?? null,
                     'apartment' => $data['address']['apartment'] ?? null,
 
-                    // BSS Classification
-                    'customer_type' => $data['customer_type'] ?? '2',
-                    'customer_category' => $data['customer_category'] ?? '5',
-                    'customer_subcategory' => $data['customer_subcategory'] ?? '14',
-                    'customer_level' => $data['customer_level'] ?? '2',
+                    // BSS Classification (defaults match third-party API defaults)
+                    'customer_type' => $data['customer_type'] ?? '1',
+                    'customer_category' => $data['customer_category'] ?? '1',
+                    'customer_subcategory' => $data['customer_subcategory'] ?? '1',
+                    'customer_level' => $data['customer_level'] ?? '1',
                     // Notification & Credit
                     'notification_mode' => $data['contact']['notification_mode'] ?? '2',
                     'credit_class' => $data['credit_class'] ?? 'Excellent',

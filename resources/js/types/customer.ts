@@ -340,10 +340,10 @@ export const customerSchema = z.object({
             fax_no: z.string().nullable().optional(),
         }),
     ).optional(), // Made optional
-    customer_type: z.string().min(1, 'Customer type is required'),
-    customer_category: z.string().min(1, 'Category is required'),
-    customer_subcategory: z.string().min(1, 'Subcategory is required'),
-    customer_level: z.string().min(1, 'Level is required'),
+    customer_type: z.string().optional().default('1'),
+    customer_category: z.string().optional().default('1'),
+    customer_subcategory: z.string().optional().default('1'),
+    customer_level: z.string().optional().default('1'),
 });
 
 export type CustomerFormValues = z.infer<typeof customerSchema>;

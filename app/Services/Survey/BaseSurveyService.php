@@ -66,6 +66,9 @@ abstract class BaseSurveyService extends BaseApiService
         }
 
         $xml = $this->buildXml($data, $resource);
+        AppLogger::api()->info('Survey XML', [
+            'xml' => $xml,
+        ]);
 
         $response = $this->executeRequest($xml);
 

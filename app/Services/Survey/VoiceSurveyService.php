@@ -66,7 +66,7 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
 <com:TransactionId>{$transactionId}</com:TransactionId>
 <com:SessionId>{$sessionId}</com:SessionId>
 <com:ProcessTime>{$processTime}</com:ProcessTime>
-<com:Language>{$cfg['language']}</com:Language>
+<com:Language>2002</com:Language>
 <com:ChannelId>{$cfg['channel_id']}</com:ChannelId>
 <com:TechnicalChannelId>{$cfg['technical_channel_id']}</com:TechnicalChannelId>
 <com:TenantId>{$cfg['tenant_id']}</com:TenantId>

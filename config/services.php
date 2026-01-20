@@ -237,7 +237,7 @@ return [
     'number_service_reserve' => [
         'endpoint' => env('NUMBER_SERVICE_RESERVE_ENDPOINT'),
         'version' => env('NUMBER_SERVICE_RESERVE_VERSION', '1'),
-        'language' => env('NUMBER_SERVICE_RESERVE_LANGUAGE', '2022'),
+        'language' => env('NUMBER_SERVICE_RESERVE_LANGUAGE', '2002'),
         'channel_id' => env('NUMBER_SERVICE_RESERVE_CHANNEL_ID', '61'),
         'technical_channel_id' => env('NUMBER_SERVICE_RESERVE_TECHNICAL_CHANNEL_ID', '55'),
         'tenant_id' => env('NUMBER_SERVICE_RESERVE_TENANT_ID', '101'),

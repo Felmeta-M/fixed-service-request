@@ -96,9 +96,9 @@ class SurveyOrderController extends Controller
                 ->filter(fn($order) => SurveyOrder::needsRefresh($order));
 
             // Batch refresh orders (for WAITING status - check order status)
-            if ($ordersToRefresh->isNotEmpty()) {
-                $this->batchRefreshOrders($ordersToRefresh);
-            }
+            // if ($ordersToRefresh->isNotEmpty()) {
+            //     $this->batchRefreshOrders($ordersToRefresh);
+            // }
 
             // Transform raw data to API format
             $transformedItems = collect($surveyOrders->items())->map(fn($item) => $this->transformOrder($item));

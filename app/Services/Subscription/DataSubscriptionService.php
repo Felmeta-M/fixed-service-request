@@ -116,7 +116,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          'cpe_type' => '2701DTU',
          'cpe_serial' => '2',
          'sub_type' => '1',
-         'sub_language' => $profile['primary_language'],
+         'sub_language' => '2002',
          'offering_id' => '1457567289',
          'effective_mode' => '0',
          'sla_priority' => '6',
@@ -126,6 +126,8 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          'external_oper_id' => '512',
          'installment_date' => $this->completedDate(),
       ]);
+
+      $profileLanguage =  '2002'; //$profile['primary_language']
 
 
       return <<<XML
@@ -141,7 +143,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
             <com:SessionId>1</com:SessionId>
             <com:ProcessTime>{$this->processTime()}</com:ProcessTime>
             <com:ContactId>1</com:ContactId>
-            <com:Language>{$profile['primary_language']}</com:Language>
+            <com:Language>2002</com:Language>
             <com:ChannelId>{$cfg['channel_id']}</com:ChannelId>
             <com:TechnicalChannelId>{$cfg['technical_channel_id']}</com:TechnicalChannelId>
             <com:TenantId>{$cfg['tenant_id']}</com:TenantId>
@@ -172,7 +174,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                   <com:IdentificationNumber>{$profile['identification_number']}</com:IdentificationNumber>
                   <com:Gender>{$profile['gender']}</com:Gender>
                   <com:DateofBirth>{$profile['birthdate']}</com:DateofBirth>
-                  <com:PrimaryLanguage>{$profile['primary_language']}</com:PrimaryLanguage>
+                  <com:PrimaryLanguage>{$profileLanguage}</com:PrimaryLanguage>
 
                   <com:CustomerAddressInfo>
                      <com:EthioZoneOrRegion>{$address['ethio_zone']}</com:EthioZoneOrRegion>
@@ -197,7 +199,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                   <com:InitialCredit>100</com:InitialCredit>
                   <com:ethioZoneOrRegion>{$address['ethio_zone']}</com:ethioZoneOrRegion>
                   <com:CollectionCenter>10172</com:CollectionCenter>
-                  <com:Language>{$profile['primary_language']}</com:Language>
+                  <com:Language>{$profileLanguage}</com:Language>
                   <com:EnterpriseCustomerName>{$data['enterprise_name']}</com:EnterpriseCustomerName>
                   <com:Title>{$profile['title']}</com:Title>
                   <com:CreditClass>{$bss['credit_class']}</com:CreditClass>

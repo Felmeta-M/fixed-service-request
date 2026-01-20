@@ -241,7 +241,7 @@ class SurveyOrder extends Model
      */
     public static function checkIsPaid(?int $paymentStatus, ?string $paymentTransId): bool
     {
-        return  $paymentStatus === FFDServiceProvisionStatus::Paid->value && !empty($paymentTransId);
+        return $paymentStatus === FFDServiceProvisionStatus::Paid->value && !empty($paymentTransId);
     }
 
     /**
@@ -250,9 +250,17 @@ class SurveyOrder extends Model
      */
     public static function needsRefresh(object $order, int $minutesThreshold = 5): bool
     {
-        if ((int) $order->status !== FFDServiceProvisionStatus::Waiting->value) {
+        $status = (int) $order->status;
+
+        if (
+            !in_array($status, [
+                FFDServiceProvisionStatus::Waiting->value,
+                FFDServiceProvisionStatus::Processing->value,
+            ], true)
+        ) {
             return false;
         }
+
 
         if (!empty($order->last_checked_at)) {
             $lastChecked = \Carbon\Carbon::parse($order->last_checked_at);

@@ -77,7 +77,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
             <com:SessionId>1</com:SessionId>
             <com:ProcessTime>{$this->processTime()}</com:ProcessTime>
             <com:ContactId>1</com:ContactId>
-            <com:Language>{$profile['primary_language']}</com:Language>
+            <com:Language>2002</com:Language>
             <com:ChannelId>35</com:ChannelId>
             <com:TechnicalChannelId>53</com:TechnicalChannelId>
             <com:TenantId>101</com:TenantId>
@@ -246,6 +246,8 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                <com:SubscriberInfo>
                   <!--Optional:  0:Prepaid  1:Postpaid  3:Hybrid.-->
                   <com:SubType>0</com:SubType>
+                  <com:SubLanguage>{$profile['primary_language']}</com:SubLanguage>
+
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
                         <com:OfferingId>

@@ -51,7 +51,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
          ]);
 
          $xml = $this->buildXml($data);
-         
+
          $response = $this->executeRequest($xml);
 
          // AppLogger::api()->debug('Voice subscription API response received', [
@@ -156,7 +156,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
             <com:SessionId>1</com:SessionId>
             <com:ProcessTime>{$this->processTime()}</com:ProcessTime>
             <com:ContactId>1</com:ContactId>
-            <com:Language>{$profile['primary_language']}</com:Language>
+            <com:Language>2002</com:Language>
             <com:ChannelId>{$cfg['channel_id']}</com:ChannelId>
             <com:TechnicalChannelId>{$cfg['technical_channel_id']}</com:TechnicalChannelId>
             <com:TenantId>{$cfg['tenant_id']}</com:TenantId>
@@ -234,6 +234,8 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:ServiceNumber>{$serviceNumber}</com:ServiceNumber>
                   <com:NetworkType>{$this->networkType()}</com:NetworkType>
                   <com:SubType>0</com:SubType>
+                  <com:SubLanguage>{$profile['primary_language']}</com:SubLanguage>
+
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
                         <com:OfferingId>

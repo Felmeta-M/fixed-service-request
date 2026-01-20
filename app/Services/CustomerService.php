@@ -49,13 +49,14 @@ class CustomerService extends BaseApiService
         $credentials = config('services.customer');
 
         $this->transactionId = uniqid();
+
         $processTime = now()->format('YmdHis');
 
         // Set default values for customer classification (used by third-party API)
         $data['customer_type'] = $data['customer_type'] ?? '1';           // Default: Residential
         $data['customer_category'] = $data['customer_category'] ?? '1';   // Default: Category 1
         $data['customer_subcategory'] = $data['customer_subcategory'] ?? '1'; // Default: Subcategory 1
-        $data['customer_level'] = $data['customer_level'] ?? '1';         // Default: Level 1
+        $data['customer_level'] = $data['customer_level'] ?? '6';         // Default: Level 1
 
         $data['identification_number'] = random_int(100000, 999999); //TODO: remove this after testing
         $data['income'] = $data['income'] ?? '6'; // Default income level

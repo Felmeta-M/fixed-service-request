@@ -127,8 +127,6 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          'installment_date' => $this->completedDate(),
       ]);
 
-      $profileLanguage =  '2002'; //$profile['primary_language']
-
 
       return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -174,7 +172,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                   <com:IdentificationNumber>{$profile['identification_number']}</com:IdentificationNumber>
                   <com:Gender>{$profile['gender']}</com:Gender>
                   <com:DateofBirth>{$profile['birthdate']}</com:DateofBirth>
-                  <com:PrimaryLanguage>{$profileLanguage}</com:PrimaryLanguage>
+                  <com:PrimaryLanguage>{$profile['primary_language']}</com:PrimaryLanguage>
 
                   <com:CustomerAddressInfo>
                      <com:EthioZoneOrRegion>{$address['ethio_zone']}</com:EthioZoneOrRegion>
@@ -199,7 +197,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                   <com:InitialCredit>100</com:InitialCredit>
                   <com:ethioZoneOrRegion>{$address['ethio_zone']}</com:ethioZoneOrRegion>
                   <com:CollectionCenter>10172</com:CollectionCenter>
-                  <com:Language>{$profileLanguage}</com:Language>
+                  <com:Language>{$profile['primary_language']}</com:Language>
                   <com:EnterpriseCustomerName>{$data['enterprise_name']}</com:EnterpriseCustomerName>
                   <com:Title>{$profile['title']}</com:Title>
                   <com:CreditClass>{$bss['credit_class']}</com:CreditClass>
@@ -224,6 +222,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                <com:BusinessCode>{$this->businessCode()}</com:BusinessCode>
                <com:SubscriberInfo>
                   <com:SubType>1</com:SubType>
+                  <com:SubLanguage>{$profile['primary_language']}</com:SubLanguage>
                   
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>

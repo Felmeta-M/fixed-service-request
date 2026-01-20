@@ -22,5 +22,9 @@ class DatabaseSeeder extends Seeder
         $this->call(RegionZoneWeredaSeeder::class);
         $this->call(AvailableDeviceSeeder::class);
         $this->call(EthioZonalAreaSeeder::class);
+        $this->call(ServiceTypeSeeder::class);
+        $this->call(EducationLevelSeeder::class);
+        $this->call(ReligionSeeder::class);
+        $this->call(IncomeLevelSeeder::class);
     }
 }

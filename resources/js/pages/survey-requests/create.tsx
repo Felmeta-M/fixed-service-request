@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useBandwidthOptions } from '@/hooks/use-bandwidth-options';
+import { useServiceTypes } from '@/hooks/use-service-types';
 import SimpleLayout from '@/layouts/simple-layout';
 import { formatCoordinate, formatCoordinatesForAPI, parseCoordinate } from '@/lib/coordinate-utils';
 import { useResourceChecker } from '@/lib/resource-check';
@@ -27,7 +28,14 @@ import {
     Search,
     Wifi
 } from 'lucide-react';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+
+// Icon mapping for dynamic service types
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    Wifi: Wifi,
+    Phone: Phone,
+    Package: Package,
+};
 
 export default function Create() {
     const isAuthenticated = true;
@@ -79,27 +87,19 @@ export default function Create() {
         customer_type: '',
     });
 
-    const serviceOptions = [
-        {
-            id: '1457567289',
-            name: 'Fixed Broadband',
-            description: 'High-speed internet connection',
-            icon: Wifi,
-            recommended: true,
-        },
-        {
-            id: '1207609454',
-            name: 'Fixed Voice',
-            description: 'Telephone service with reliable connectivity',
-            icon: Phone,
-        },
-        {
-            id: '1207609454',
-            name: 'Combo Services',
-            description: 'Bundle of internet and voice services (only for residential)',
-            icon: Package,
-        },
-    ];
+    // Fetch dynamic service types
+    const { serviceTypes, loading: loadingServiceTypes } = useServiceTypes();
+
+    // Transform service types for rendering
+    const serviceOptions = useMemo(() => {
+        return serviceTypes.map((st) => ({
+            id: st.code,
+            name: st.name,
+            description: st.description || '',
+            icon: iconMap[st.icon || 'Wifi'] || Wifi,
+            recommended: st.recommended,
+        }));
+    }, [serviceTypes]);
 
     // Enhanced location method options with better styling
     const locationMethods = [
@@ -587,29 +587,13 @@ export default function Create() {
     };
 
     const getServiceIcon = (serviceType: string) => {
-        switch (serviceType) {
-            case '1457567289':
-                return Wifi;
-            case '1207609454':
-                return Phone;
-            case '1122464948':
-                return Package;
-            default:
-                return Wifi;
-        }
+        const found = serviceTypes.find((st) => st.code === serviceType);
+        return iconMap[found?.icon || 'Wifi'] || Wifi;
     };
 
     const getServiceName = (serviceType: string) => {
-        switch (serviceType) {
-            case '1457567289':
-                return 'Fixed Broadband';
-            case '1207609454':
-                return 'Fixed Voice';
-            case '1122464948':
-                return 'Combo Services';
-            default:
-                return 'Survey';
-        }
+        const found = serviceTypes.find((st) => st.code === serviceType);
+        return found?.name || 'Survey';
     };
 
     const getSurveyType = (surveyType: string) => {
@@ -709,6 +693,12 @@ export default function Create() {
                                         <Wifi className="h-5 w-5 text-primary" />
                                         <Label className="text-lg font-semibold text-gray-900">Service Type *</Label>
                                     </div>
+                                    {loadingServiceTypes ? (
+                                        <div className="flex items-center justify-center py-8">
+                                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                            <span className="ml-2 text-gray-600">Loading service types...</span>
+                                        </div>
+                                    ) : (
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                                         {serviceOptions.map((service) => {
                                             const IconComponent = service.icon;
@@ -752,6 +742,7 @@ export default function Create() {
                                             );
                                         })}
                                     </div>
+                                    )}
                                     {formErrors.serviceType && <p className="mt-2 text-sm text-red-600">{formErrors.serviceType}</p>}
                                 </div>
 

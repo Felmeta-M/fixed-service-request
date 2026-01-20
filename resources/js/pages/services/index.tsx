@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useSurveyList } from '@/features/surveys/hooks/use-surveys';
+import { useServiceTypes } from '@/hooks/use-service-types';
 import MainLayout from '@/layouts/main-layout';
 import { statusOptions, getStatusInfo } from '@/lib/status-map';
 import { Link, router, usePage } from '@inertiajs/react';
@@ -67,6 +68,9 @@ export default function CustomerDashboard() {
     });
 
     const { auth } = usePage().props;
+    
+    // Fetch dynamic service types
+    const { serviceTypes, loading: loadingServiceTypes } = useServiceTypes();
 
     if (auth.user.customer_code) {
         // return create customer page
@@ -387,11 +391,14 @@ export default function CustomerDashboard() {
                                                 value={appliedFilters.type}
                                                 onChange={(e) => handleTypeFilterChange(e.target.value)}
                                                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                                                disabled={loadingServiceTypes}
                                             >
                                                 <option value="">All Types</option>
-                                                <option value="1943913918">Internet</option>
-                                                <option value="1207609454">Voice</option>
-                                                <option value="180427974">Combo</option>
+                                                {serviceTypes.map((st) => (
+                                                    <option key={st.code} value={st.code}>
+                                                        {st.name}
+                                                    </option>
+                                                ))}
                                             </select>
                                         </div>
 
@@ -432,11 +439,7 @@ export default function CustomerDashboard() {
                                     {appliedFilters.type && (
                                         <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
                                             Type:{' '}
-                                            {appliedFilters.type === '1943913918'
-                                                ? 'Internet'
-                                                : appliedFilters.type === '1207609454'
-                                                  ? 'Voice'
-                                                  : 'Combo'}
+                                            {serviceTypes.find((st) => st.code === appliedFilters.type)?.name || appliedFilters.type}
                                             <button onClick={() => handleTypeFilterChange('')} className="ml-1 rounded-full hover:bg-primary/20">
                                                 <X className="h-3 w-3" />
                                             </button>

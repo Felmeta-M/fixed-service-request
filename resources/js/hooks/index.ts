@@ -9,6 +9,10 @@ export { useBandwidthOptions } from './use-bandwidth-options';
 export { useAvailableDevices } from './use-available-devices';
 export { useOccupations } from './use-occupations';
 export { useRegions, useZones, useWoredas } from './use-regions';
+export { useServiceTypes } from './use-service-types';
+export { useEducationLevels } from './use-education-levels';
+export { useReligions } from './use-religions';
+export { useIncomeLevels } from './use-income-levels';
 
 // API mutations
 export * from './use-api-mutations';

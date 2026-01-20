@@ -3,9 +3,10 @@ import { DeviceOptionSelector } from '@/features/surveys/components/device-optio
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useBandwidthOptions } from '@/hooks/use-bandwidth-options';
+import { useServiceTypes } from '@/hooks/use-service-types';
 import { Link } from '@inertiajs/react';
-import { AlertCircle, CheckCircle, Package, Phone, Wifi } from 'lucide-react';
-import { useEffect } from 'react';
+import { AlertCircle, CheckCircle, Loader2, Package, Phone, Wifi } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
 
 interface ServiceSelectionStepProps {
     formData: any;
@@ -13,32 +14,28 @@ interface ServiceSelectionStepProps {
     hasActiveSurvey: boolean;
 }
 
-const serviceTypes = [
-    {
-        value: '1457567289',
-        name: 'Fixed Broadband',
-        description: 'High-speed internet connection',
-        icon: Wifi,
-        color: 'blue',
-    },
-    {
-        value: '1207609454',
-        name: 'Fixed Voice',
-        description: 'Reliable telephone service connectivity',
-        icon: Phone,
-        color: 'green',
-    },
-    {
-        value: '180427974',
-        name: 'Combo Services',
-        description: 'Bundle of internet and voice services',
-        icon: Package,
-        color: 'purple',
-    },
-];
+// Icon mapping for dynamic service types
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    Wifi: Wifi,
+    Phone: Phone,
+    Package: Package,
+};
 
 export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: ServiceSelectionStepProps) {
     const { residentialOptions, enterpriseOptions, loading: loadingBandwidths } = useBandwidthOptions();
+    const { serviceTypes, loading: loadingServiceTypes } = useServiceTypes();
+
+    // Transform service types for rendering
+    const transformedServiceTypes = useMemo(() => {
+        return serviceTypes.map((st) => ({
+            value: st.code,
+            name: st.name,
+            description: st.description || '',
+            icon: iconMap[st.icon || 'Wifi'] || Wifi,
+            color: st.color || 'blue',
+            recommended: st.recommended,
+        }));
+    }, [serviceTypes]);
 
     // Set default bandwidth to "5M" when options are loaded and bandwidth is empty
     useEffect(() => {
@@ -86,10 +83,19 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
         });
     };
 
+    if (loadingServiceTypes) {
+        return (
+            <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span className="ml-2 text-gray-600">Loading service types...</span>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full space-y-6">
             <div className="grid grid-cols-1 gap-2 gap-y-4 sm:grid-cols-2 md:gap-x-4 lg:grid-cols-3">
-                {serviceTypes.map((service) => {
+                {transformedServiceTypes.map((service) => {
                     const Icon = service.icon;
                     const isSelected = formData.serviceType === service.value;
 

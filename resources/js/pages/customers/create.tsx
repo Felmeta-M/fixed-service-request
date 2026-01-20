@@ -4,6 +4,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCustomerCategories, useCustomerSubcategories, useCustomerTypes } from '@/features/customers/hooks/use-customer-types';
 import { useOccupations } from '@/hooks/use-occupations';
+import { useEducationLevels } from '@/hooks/use-education-levels';
+import { useReligions } from '@/hooks/use-religions';
+import { useIncomeLevels } from '@/hooks/use-income-levels';
 import { useRegions, useWoredas, useZones } from '@/hooks/use-regions';
 import SimpleLayout from '@/layouts/simple-layout';
 import { cn } from '@/lib/utils';
@@ -176,6 +179,9 @@ export default function Create() {
     const { user } = auth;
 
     const { occupations, loading: occupationsLoading, error: occupationError } = useOccupations();
+    const { educationLevels, loading: educationLoading, error: educationError } = useEducationLevels();
+    const { religions, loading: religionsLoading, error: religionsError } = useReligions();
+    const { incomeLevels, loading: incomeLevelsLoading, error: incomeLevelsError } = useIncomeLevels();
     // const [step, setStep] = useState(1);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [submissionState, setSubmissionState] = useState<SubmissionState>({
@@ -1220,22 +1226,10 @@ export default function Create() {
                                     required
                                     value={data.education || ''}
                                     onChange={(value) => handleSelectChange('education', value)}
-                                    options={[
-                                        { label: 'Illiterate', value: '1' },
-                                        { label: 'Primary school', value: '2' },
-                                        { label: 'Secondary school', value: '3' },
-                                        { label: 'Diploma/certificate', value: '4' },
-                                        { label: "Bachelor's degree", value: '5' },
-                                        { label: "Master's degree and above", value: '6' },
-                                        { label: 'Unknown', value: '70' },
-                                        { label: 'Master', value: '90' },
-                                        { label: 'Doctor', value: '100' },
-                                        { label: 'Others', value: '110' },
-                                        { label: 'Bachelor', value: '80' },
-                                    ]}
-                                    placeholder="Select education level"
-                                    error={formErrors.education}
-                                    disabled={isFieldReadOnly('education')}
+                                    options={educationLevels}
+                                    placeholder={educationLoading ? 'Loading education levels...' : 'Select education level'}
+                                    error={formErrors.education || (educationError ? educationError : undefined)}
+                                    disabled={educationLoading || isFieldReadOnly('education')}
                                 />
                                 <FormSelect
                                     label="Religion"
@@ -1243,36 +1237,20 @@ export default function Create() {
                                     required
                                     value={data.religion || ''}
                                     onChange={(value) => handleSelectChange('religion', value)}
-                                    options={[
-                                        { label: 'Christianity', value: '1' },
-                                        { label: 'Islam', value: '2' },
-                                        { label: 'Catholics', value: '4' },
-                                        { label: 'Orthodox', value: '5' },
-                                        { label: 'Protestant', value: '6' },
-                                        { label: 'Other', value: '3' },
-                                    ]}
-                                    placeholder="Select religion"
-                                    error={formErrors.religion}
-                                    disabled={isFieldReadOnly('religion')}
+                                    options={religions}
+                                    placeholder={religionsLoading ? 'Loading religions...' : 'Select religion'}
+                                    error={formErrors.religion || (religionsError ? religionsError : undefined)}
+                                    disabled={religionsLoading || isFieldReadOnly('religion')}
                                 />
                                 {/* <FormSelect
                                     label="Income Level"
                                     id="income"
-                                    // required
                                     value={data.income}
                                     onChange={(value) => handleSelectChange('income', value)}
-                                    options={[
-                                        { label: 'Birr 0-999', value: '1' },
-                                        { label: 'Birr 1,000-1,999', value: '2' },
-                                        { label: 'Birr 2,000-3,499', value: '3' },
-                                        { label: 'Birr 3,500-4,999', value: '4' },
-                                        { label: 'Birr 5,000-7,999', value: '5' },
-                                        { label: 'Birr 8,000-15,000', value: '6' },
-                                        { label: 'Above Birr 15,000', value: '7' },
-                                    ]}
-                                    placeholder="Select income level"
-                                    error={formErrors.income}
-                                    disabled={isFieldReadOnly('income')}
+                                    options={incomeLevels}
+                                    placeholder={incomeLevelsLoading ? 'Loading income levels...' : 'Select income level'}
+                                    error={formErrors.income || (incomeLevelsError ? incomeLevelsError : undefined)}
+                                    disabled={incomeLevelsLoading || isFieldReadOnly('income')}
                                 /> */}
                             </div>
                         </CardContent>

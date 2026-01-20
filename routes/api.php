@@ -19,6 +19,10 @@ use App\Http\Controllers\Api\v1\QuerySurveyOrderSummaryController;
 use App\Http\Controllers\Api\v1\ReserveNumberServiceController;
 use App\Http\Controllers\Api\v1\ResourceCheckController;
 use App\Http\Controllers\Api\v1\ServiceClientController;
+use App\Http\Controllers\Api\v1\EducationLevelController;
+use App\Http\Controllers\Api\v1\IncomeLevelController;
+use App\Http\Controllers\Api\v1\ReligionController;
+use App\Http\Controllers\Api\v1\ServiceTypeController;
 use App\Http\Controllers\Api\v1\SubsriptionController;
 use App\Http\Controllers\Api\v1\SurveyOrderController;
 use App\Http\Controllers\Api\v1\SurveyTypeController;
@@ -51,6 +55,10 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('survey-types', SurveyTypeController::class);
         Route::apiResource('bandwidth-options', BandwidthOptionController::class);
         Route::apiResource('occupations', OccupationController::class);
+        Route::apiResource('service-types', ServiceTypeController::class);
+        Route::apiResource('education-levels', EducationLevelController::class);
+        Route::apiResource('religions', ReligionController::class);
+        Route::apiResource('income-levels', IncomeLevelController::class);
         Route::get('available-devices', [AvailableDeviceController::class, 'index']);
         Route::get('available-devices/{id}', [AvailableDeviceController::class, 'show']);
 

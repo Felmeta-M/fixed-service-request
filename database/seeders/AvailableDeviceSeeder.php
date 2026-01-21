@@ -23,7 +23,7 @@ class AvailableDeviceSeeder extends Seeder
                 'device_type' => 'broadband',
                 'price' => 1500.00,
                 'description' => 'High-performance Optical Network Terminal (ONT) router with WiFi support. Perfect for home and small office use.',
-                'status' => 'active',
+                'is_active' => true,
                 'stock_quantity' => 50,
                 'specifications' => [
                     'wifi' => '802.11n',
@@ -38,7 +38,7 @@ class AvailableDeviceSeeder extends Seeder
                 'device_type' => 'broadband',
                 'price' => 1200.00,
                 'description' => 'Reliable ONT modem with excellent signal strength and easy setup. Compatible with all major ISPs.',
-                'status' => 'active',
+                'is_active' => true,
                 'stock_quantity' => 35,
                 'specifications' => [
                     'wifi' => '802.11n',
@@ -53,7 +53,7 @@ class AvailableDeviceSeeder extends Seeder
                 'device_type' => 'broadband',
                 'price' => 2000.00,
                 'description' => 'Advanced smart router with dual-band WiFi, parental controls, and mobile app management. Ideal for modern homes.',
-                'status' => 'active',
+                'is_active' => true,
                 'stock_quantity' => 25,
                 'specifications' => [
                     'wifi' => '802.11ac Dual-band',
@@ -68,7 +68,7 @@ class AvailableDeviceSeeder extends Seeder
                 'device_type' => 'broadband',
                 'price' => 1800.00,
                 'description' => 'Premium fiber gateway with advanced features and excellent coverage. Best for large homes and offices.',
-                'status' => 'active',
+                'is_active' => true,
                 'stock_quantity' => 30,
                 'specifications' => [
                     'wifi' => '802.11ac',
@@ -83,7 +83,7 @@ class AvailableDeviceSeeder extends Seeder
                 'device_type' => 'broadband',
                 'price' => 1000.00,
                 'description' => 'Affordable and reliable basic ONT device. Perfect for budget-conscious customers.',
-                'status' => 'active',
+                'is_active' => true,
                 'stock_quantity' => 40,
                 'specifications' => [
                     'wifi' => 'No WiFi',
@@ -99,7 +99,7 @@ class AvailableDeviceSeeder extends Seeder
                 'device_type' => 'voice',
                 'price' => 800.00,
                 'description' => 'Dedicated voice terminal device for telephone services. Reliable and easy to configure.',
-                'status' => 'active',
+                'is_active' => true,
                 'stock_quantity' => 30,
                 'specifications' => [
                     'ports' => '2 POTS',
@@ -113,7 +113,7 @@ class AvailableDeviceSeeder extends Seeder
                 'device_type' => 'voice',
                 'price' => 750.00,
                 'description' => 'Compact voice gateway device perfect for residential telephone services.',
-                'status' => 'active',
+                'is_active' => true,
                 'stock_quantity' => 35,
                 'specifications' => [
                     'ports' => '2 POTS',
@@ -127,7 +127,7 @@ class AvailableDeviceSeeder extends Seeder
                 'device_type' => 'voice',
                 'price' => 1200.00,
                 'description' => 'Enterprise-grade voice router with multiple POTS ports for business use.',
-                'status' => 'active',
+                'is_active' => true,
                 'stock_quantity' => 20,
                 'specifications' => [
                     'ports' => '4 POTS',
@@ -142,7 +142,7 @@ class AvailableDeviceSeeder extends Seeder
                 'device_type' => 'universal',
                 'price' => 2500.00,
                 'description' => 'Enterprise-grade router with advanced security features, VPN support, and high-speed connectivity. Supports both data and voice.',
-                'status' => 'active',
+                'is_active' => true,
                 'stock_quantity' => 15,
                 'specifications' => [
                     'wifi' => '802.11ac',

@@ -270,6 +270,7 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
     const [readOnlyFields, setReadOnlyFields] = useState<Set<string>>(new Set());
     const [isLoadingPrefill, setIsLoadingPrefill] = useState(true);
     const [hasNidData, setHasNidData] = useState(false);
+    const [hasInitializedPrefill, setHasInitializedPrefill] = useState(false);
 
     // TanStack Query hooks - use user's API token
     const { data: customerData, isLoading: isLoadingCustomer, error: customerError } = useGetCustomer(user?.customer_sub_id);
@@ -330,17 +331,32 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
         customer_level: '8',
     });
 
-    // Enhanced prefill data loading with better error handling - FIXED
+    // Enhanced prefill data loading with better error handling and stable UI states
     useEffect(() => {
+        // If user has no existing customer id, skip any prefill and show a clean form
+        if (!user?.customer_sub_id) {
+            if (!hasInitializedPrefill) {
+                setHasInitializedPrefill(true);
+            }
+            setIsLoadingPrefill(false);
+            return;
+        }
+
+        // While the TanStack Query request is in-flight, keep a single loading UI
+        if (isLoadingCustomer && !hasInitializedPrefill) {
+            setIsLoadingPrefill(true);
+            return;
+        }
+
+        // Once we've already initialized, don't re-run prefill logic or toasts
+        if (hasInitializedPrefill) {
+            return;
+        }
+
         const loadPrefillData = () => {
             try {
-                setIsLoadingPrefill(true);
-
                 // Check if we have customer data from TanStack Query
                 if (customerData) {
-                    console.log('Customer data received:', customerData);
-
-                    // Check the actual structure of the response
                     const responseData = customerData as any;
 
                     // Check for success in different possible response structures
@@ -353,7 +369,6 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                         responseData;
 
                     if (isSuccess && customer) {
-                        // Show success toast for prefill
                         toast.success('Customer data loaded successfully', {
                             description: 'Some fields are pre-filled from existing data',
                             duration: 3000,
@@ -414,7 +429,6 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
 
                         // Check if data came from NID (has identification_number and related fields)
                         const hasNid = !!(transform.identification_number && transform.first_name && transform.date_of_birth);
-                        console.log('Has NID data:', hasNid, transform.identification_number, transform.first_name, transform.date_of_birth);
                         setHasNidData(hasNid);
 
                         // Set read-only fields if data came from NID
@@ -422,13 +436,10 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                             const newReadOnlyFields = new Set<string>();
                             NID_READONLY_FIELDS.forEach((field) => {
                                 const fieldValue = getNestedValue(transform, field);
-                                console.log(`Checking field ${field}:`, fieldValue);
                                 if (fieldValue && fieldValue.toString().trim() !== '') {
                                     newReadOnlyFields.add(field);
-                                    console.log(`Field ${field} marked as read-only with value:`, fieldValue);
                                 }
                             });
-                            console.log('Read-only fields:', Array.from(newReadOnlyFields));
                             setReadOnlyFields(newReadOnlyFields);
                         }
 
@@ -437,20 +448,17 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                             localStorage.setItem('customer_photo_base64', customer.photo_base64);
                         }
                     } else {
-                        console.log('No customer data found or success false:', responseData);
                         toast.info('Starting with new customer form', {
                             description: 'No existing customer data found',
                             duration: 3000,
                         });
                     }
                 } else if (customerError) {
-                    console.error('Error loading customer data:', customerError);
                     toast.error('Failed to load customer data', {
-                        description: customerError.message || 'Please try again',
+                        description: (customerError as Error).message || 'Please try again',
                         duration: 5000,
                     });
-                } else if (!isLoadingCustomer && user?.customer_sub_id) {
-                    console.log('No customer data received for ID:', user.customer_sub_id);
+                } else {
                     toast.info('Starting with new customer form', {
                         description: 'No existing customer data found',
                         duration: 3000,
@@ -463,12 +471,13 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                     duration: 5000,
                 });
             } finally {
+                setHasInitializedPrefill(true);
                 setIsLoadingPrefill(false);
             }
         };
 
         loadPrefillData();
-    }, [customerData, customerError, isLoadingCustomer, user?.customer_sub_id, setData]);
+    }, [customerData, customerError, isLoadingCustomer, user?.customer_sub_id, setData, hasInitializedPrefill, NID_READONLY_FIELDS]);
 
     // Helper function to get nested values
     const getNestedValue = (obj: any, path: string): any => {
@@ -947,14 +956,57 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
     // Show loading state when loading prefill data
     if (isLoadingPrefill) {
         return (
-            <div className="flex min-h-[400px] items-center justify-center">
-                <Card className="w-full max-w-md">
-                    <CardContent className="flex flex-col items-center space-y-4 p-6 text-center">
-                        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-primary"></div>
-                        <h2 className="text-xl font-semibold">Loading Customer Data</h2>
-                        <p className="text-gray-600">Please wait while we load your existing information...</p>
-                    </CardContent>
-                </Card>
+            <div className="mx-auto flex min-h-[420px] max-w-4xl items-center justify-center px-4">
+                <div className="w-full space-y-6">
+                    {/* <div className="flex items-center gap-3"> */}
+                        {/* <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
+                            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-b-transparent" />
+                        </div> */}
+                        {/* <div>
+                            <p className="text-sm font-medium text-primary">Preparing customer form</p>
+                            <p className="text-xs text-muted-foreground">
+                                Loading verified customer information and pre‑filling available details.
+                            </p>
+                        </div> */}
+                    {/* </div> */}
+
+                    <Card className="border-dashed">
+                        <CardContent className="space-y-4 p-6">
+                            <div className="space-y-2">
+                                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                                <div className="h-3 w-56 animate-pulse rounded bg-muted/80" />
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                {[1, 2, 3].map((i) => (
+                                    <div
+                                        key={i}
+                                        className="space-y-2 rounded-md border bg-muted/40 p-3"
+                                    >
+                                        <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+                                        <div className="h-9 w-full animate-pulse rounded-md bg-background/60" />
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                {[4, 5].map((i) => (
+                                    <div
+                                        key={i}
+                                        className="space-y-2 rounded-md border bg-muted/40 p-3"
+                                    >
+                                        <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+                                        <div className="h-9 w-full animate-pulse rounded-md bg-background/60" />
+                                    </div>
+                                ))}
+                            </div>
+
+                            <p className="pt-2 text-xs text-muted-foreground">
+                                This will only take a moment. You&apos;ll be able to review and update all details before continuing.
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         );
     }
@@ -1082,7 +1134,7 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                 disabled={true}
                             />
                         </div>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <FormInput
                                 label="Identification Number"
                                 id="identification_number"
@@ -1109,7 +1161,7 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                 error={formErrors.identification_type}
                                 disabled={true}
                             />
-                        </div>
+                        </div> */}
                     </CardContent>
                 </Card>
             )}

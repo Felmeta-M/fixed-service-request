@@ -293,9 +293,14 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
 
     // ============================================================
     // MINIMAL FORM STATE - Backend applies defaults for omitted fields
-    // Backend defaults: title='1', nationality='1231', identification_type='2',
-    // primary_language='2060', notification_mode='1', customer_type='1',
-    // customer_category='1', customer_subcategory='1', customer_level='8', income='6'
+    // 
+    // BACKEND-ONLY (not sent from frontend):
+    //   - customer_type, customer_category, customer_subcategory, customer_level
+    //   (these are fixed by backend for third-party API and local DB)
+    //
+    // BACKEND DEFAULTS (frontend can override):
+    //   - title='1', nationality='1231', identification_type='2',
+    //   - primary_language='2060', notification_mode='1', income='6'
     // ============================================================
     const { data, setData } = useForm<CustomerFormValues>('createCustomer', {
         // Required fields - must be filled by user
@@ -341,11 +346,8 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
         // Optional - can be omitted entirely
         contact_person: [],
         
-        // Customer classification - all have backend defaults
-        customer_type: '',             // Backend default: '1' (Residential)
-        customer_category: '',         // Backend default: '1'
-        customer_subcategory: '',      // Backend default: '1'
-        customer_level: '',            // Backend default: '8' (Copper)
+        // NOTE: customer_type, customer_category, customer_subcategory, customer_level
+        // are NOT included here - they are set by backend only
     });
 
     // Enhanced prefill data loading with better error handling and stable UI states

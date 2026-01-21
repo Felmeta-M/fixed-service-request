@@ -21,6 +21,7 @@ class CustomerService extends BaseApiService
         try {
             $data['ethio_zone_or_region'] = '21'; //TODO: remove this after testing NAAZ
             $xmlPayload = $this->buildXml($data);
+
             $xmlResponse = $this->executeRequest($xmlPayload);
 
             AppLogger::api()->debug('Customer create response received', [
@@ -53,24 +54,24 @@ class CustomerService extends BaseApiService
         $processTime = now()->format('YmdHis');
 
         // ============================================================
-        // DEFAULT VALUES - Centralized here to minimize frontend payload
-        // Frontend only needs to send values that differ from these defaults
+        // BACKEND-ONLY VALUES - Always set by backend, NOT from frontend
+        // These are fixed for third-party API and local database
         // ============================================================
-        
-        // Customer classification defaults
-        $data['customer_type'] = $data['customer_type'] ?? '1';           // Default: Residential
-        $data['customer_category'] = $data['customer_category'] ?? '1';   // Default: Category 1
-        $data['customer_subcategory'] = $data['customer_subcategory'] ?? '1'; // Default: Subcategory 1
-        $data['customer_level'] = $data['customer_level'] ?? '8';         // Default: Copper
-        
-        // Personal info defaults
+        $data['customer_type'] = '1';           // Residential (fixed)
+        $data['customer_category'] = '1';       // Category 1 (fixed)
+        $data['customer_subcategory'] = '1';    // Subcategory 1 (fixed)
+        $data['customer_level'] = '8';          // Copper (fixed)
+
+        // ============================================================
+        // OPTIONAL FIELDS WITH DEFAULTS - Frontend can override these
+        // ============================================================
         $data['title'] = $data['title'] ?? '1';                           // Default: Mr.
         $data['nationality'] = $data['nationality'] ?? '1231';            // Default: Ethiopian
         $data['identification_type'] = $data['identification_type'] ?? '2'; // Default: National ID
         $data['primary_language'] = $data['primary_language'] ?? '2060';  // Default: Amharic
         $data['income'] = $data['income'] ?? '6';                         // Default: Income level 6
         $data['place_of_birth'] = $data['place_of_birth'] ?? '';          // Default: Empty
-        
+
         // Contact defaults
         $data['contact'] = $data['contact'] ?? [];
         $data['contact']['notification_mode'] = $data['contact']['notification_mode'] ?? '1'; // Default: SMS
@@ -234,13 +235,13 @@ XML;
                     'street_name' => $data['address']['street_name'] ?? null,
                     'apartment' => $data['address']['apartment'] ?? null,
 
-                    // BSS Classification (defaults already applied in buildXml)
-                    'customer_type' => $data['customer_type'],
-                    'customer_category' => $data['customer_category'],
-                    'customer_subcategory' => $data['customer_subcategory'],
-                    'customer_level' => $data['customer_level'],
+                    // BSS Classification - Fixed backend values (same as buildXml)
+                    'customer_type' => '1',           // Residential (fixed)
+                    'customer_category' => '1',       // Category 1 (fixed)
+                    'customer_subcategory' => '1',    // Subcategory 1 (fixed)
+                    'customer_level' => '8',          // Copper (fixed)
                     // Notification & Credit
-                    'notification_mode' => $data['contact']['notification_mode'],
+                    'notification_mode' => $data['contact']['notification_mode'] ?? '1',
                     'credit_class' => $data['credit_class'] ?? 'Excellent',
                     'verified_at' => now(),
                     'updated_at' => now(),

@@ -237,10 +237,8 @@ export default function Create() {
             fax_no: '',
         },
         contact_person: [],
-        customer_type: '1',
-        customer_category: '1',
-        customer_subcategory: '1',
-        customer_level: '8',
+        // NOTE: customer_type, customer_category, customer_subcategory, customer_level
+        // are NOT sent from frontend - they are set by backend only
     });
 
     const API_READONLY_FIELDS = [
@@ -291,9 +289,8 @@ export default function Create() {
                 religion: customer.religion || '',
                 income: customer.income || '',
                 primary_language: customer.primary_language || '2060',
-                customer_type: customer.customer_type || '1',
-                customer_category: customer.customer_category || '1',
-                customer_subcategory: customer.customer_subcategory || '1',
+                // NOTE: customer_type, customer_category, customer_subcategory, customer_level
+                // are set by backend only - not loaded into frontend form
                 contact: {
                     notification_mode:
                         customer.contact?.notification_mode ||
@@ -333,7 +330,6 @@ export default function Create() {
                         '',
                 },
                 contact_person: customer.contact_person || [],
-                customer_level: customer.customer_level || '8',
             };
             console.log('transfored data', transform);
 

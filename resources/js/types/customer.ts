@@ -282,10 +282,8 @@ export interface Customer {
         home_no?: string;
         fax_no?: string;
     }>;
-    customer_type?: string;
-    customer_category?: string;
-    customer_subcategory?: string;
-    customer_level?: string;
+    // NOTE: customer_type, customer_category, customer_subcategory, customer_level
+    // are set by backend only - not included in frontend Customer interface
 }
 
 export type Option = { label: string; value: string };
@@ -352,11 +350,8 @@ export const customerSchema = z.object({
         }),
     ).optional(),
     
-    // CUSTOMER CLASSIFICATION - All have backend defaults
-    customer_type: z.string().optional(),            // Backend default: '1' (Residential)
-    customer_category: z.string().optional(),        // Backend default: '1'
-    customer_subcategory: z.string().optional(),     // Backend default: '1'
-    customer_level: z.string().optional(),           // Backend default: '8' (Copper)
+    // NOTE: customer_type, customer_category, customer_subcategory, customer_level
+    // are NOT sent from frontend - they are set by backend only for third-party API and local DB
 });
 
 export type CustomerFormValues = z.infer<typeof customerSchema>;
@@ -403,8 +398,9 @@ export function cleanCustomerPayload(data: CustomerFormValues): Partial<Customer
     const cleaned: Partial<CustomerFormValues> = { ...data };
     
     // Fields with backend defaults - remove if empty
+    // NOTE: customer_type, customer_category, customer_subcategory, customer_level
+    // are not sent from frontend anymore
     const optionalFields: (keyof CustomerFormValues)[] = [
-        'customer_type', 'customer_category', 'customer_subcategory', 'customer_level',
         'income', 'place_of_birth'
     ];
     

@@ -15,13 +15,18 @@ class CustomerRequest extends FormRequest
     {
         return [
             // ============================================================
-            // FIELDS WITH BACKEND DEFAULTS - Frontend can omit these
-            // Backend will apply defaults in CustomerService::buildXml()
+            // BACKEND-ONLY FIELDS (NOT accepted from frontend)
+            // These are set automatically in CustomerService::buildXml():
+            //   - customer_type: '1' (Residential)
+            //   - customer_category: '1'
+            //   - customer_subcategory: '1'
+            //   - customer_level: '8' (Copper)
             // ============================================================
-            'customer_type' => 'nullable|string|max:255',        // Default: '1' (Residential)
-            'customer_category' => 'nullable|string|max:255',    // Default: '1'
-            'customer_subcategory' => 'nullable|string|max:255', // Default: '1'
-            'customer_level' => 'nullable|string|max:255',       // Default: '8' (Copper)
+            
+            // ============================================================
+            // OPTIONAL FIELDS WITH BACKEND DEFAULTS
+            // Frontend can send these, but backend has defaults if omitted
+            // ============================================================
             'title' => 'nullable|string|max:255',                // Default: '1' (Mr.)
             'nationality' => 'nullable|string|max:100',          // Default: '1231' (Ethiopian)
             'identification_type' => 'nullable|string|max:100',  // Default: '2' (National ID)

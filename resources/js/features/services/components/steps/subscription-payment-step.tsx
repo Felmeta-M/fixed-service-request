@@ -44,6 +44,7 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete, onLoadCo
         service_number?: string | null;
         cable_length?: string | number | null;
         cable_type?: string | null;
+        with_device?: boolean;
         lat?: string | number | null;
         long?: string | number | null;
         status?: string | number | null;
@@ -79,6 +80,7 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete, onLoadCo
               service_number: surveyDetailQuery.data.data.service_number,
               cable_length: surveyDetailQuery.data.data.cable_length,
               cable_type: null,
+              with_device: surveyDetailQuery.data.data.with_device,
               lat: null,
               long: null,
               status: surveyDetailQuery.data.data.status,

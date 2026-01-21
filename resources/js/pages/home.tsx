@@ -21,17 +21,6 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
 
   const services = [
     {
-      icon: Phone,
-      title: t('home.services.voice.title'),
-      description: t('home.services.voice.description'),
-      features: [
-        t('home.services.voice.feature1'),
-        t('home.services.voice.feature2'),
-        t('home.services.voice.feature3'),
-      ],
-      color: 'primary',
-    },
-    {
       icon: Wifi,
       title: t('home.services.broadband.title'),
       description: t('home.services.broadband.description'),
@@ -41,6 +30,17 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
         t('home.services.broadband.feature3'),
       ],
       color: 'et-blue',
+    },
+    {
+      icon: Phone,
+      title: t('home.services.voice.title'),
+      description: t('home.services.voice.description'),
+      features: [
+        t('home.services.voice.feature1'),
+        t('home.services.voice.feature2'),
+        t('home.services.voice.feature3'),
+      ],
+      color: 'primary',
     },
     {
       icon: Package,

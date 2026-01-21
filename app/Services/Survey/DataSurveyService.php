@@ -85,19 +85,59 @@ XML;
 
     protected function parseResponse(array $data, string $xml, array $resource)
     {
+        libxml_use_internal_errors(true);
         $parsed = simplexml_load_string($xml);
 
-        $ns = $parsed->getNamespaces(true);
-        $body = $parsed->children($ns['soapenv'])->Body;
-        $rsp = $body->children($ns['ser'])->HandleSurveyOrderRspMsg;
-        $hdr = $rsp->ResponseHeader->children($ns['com']);
-
-        if ((string) $hdr->RetCode !== '0') {
-            return ApiResponse::error((string) $hdr->RetMsg);
+        if ($parsed === false) {
+            $errors = array_map(fn($e) => $e->message, libxml_get_errors());
+            libxml_clear_errors();
+            return ApiResponse::error('Failed to parse XML response: ' . implode(', ', $errors));
         }
 
-        $surveyOrderId = (string) $rsp->HandleSurveyOrderRespBody
-            ->children($ns['com'])->CustomerSurveyOrderId;
+        // Use hardcoded namespace URIs for reliability
+        $soapNs = 'http://schemas.xmlsoap.org/soap/envelope/';
+        $serNs = 'http://oss.huawei.com/webservice/bss/services';
+        $comNs = 'http://www.huawei.com/bss/soaif/interface/common/';
+
+        $body = $parsed->children($soapNs)->Body ?? null;
+        if (!$body) {
+            return ApiResponse::error('Missing SOAP Body in response');
+        }
+
+        $rsp = $body->children($serNs)->HandleSurveyOrderRspMsg ?? null;
+        if (!$rsp) {
+            return ApiResponse::error('Invalid XML response - missing HandleSurveyOrderRspMsg');
+        }
+
+        // Get ser: namespace children for accessing ResponseHeader and HandleSurveyOrderRespBody
+        $serChildren = $rsp->children($serNs);
+
+        // Response header (ser:ResponseHeader)
+        $header = $serChildren->ResponseHeader ?? null;
+        if (!$header) {
+            return ApiResponse::error('Invalid response - missing ResponseHeader');
+        }
+
+        // Header data is in com: namespace (com:RetCode, com:RetMsg)
+        $hdr = $header->children($comNs);
+        $retCode = (string) ($hdr->RetCode ?? '1');
+        $retMsg = (string) ($hdr->RetMsg ?? 'Unknown error');
+
+        if ($retCode !== '0') {
+            return ApiResponse::error($retMsg);
+        }
+
+        // HandleSurveyOrderRespBody is in ser: namespace
+        $respBody = $serChildren->HandleSurveyOrderRespBody ?? null;
+        if (!$respBody) {
+            return ApiResponse::error('Invalid response - missing HandleSurveyOrderRespBody');
+        }
+
+        $surveyOrderId = (string) $respBody->children($comNs)->CustomerSurveyOrderId;
+
+        if (empty($surveyOrderId)) {
+            return ApiResponse::error('Survey order ID not found in response');
+        }
 
         $this->persistSurvey($surveyOrderId, $data, $resource);
 

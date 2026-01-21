@@ -45,6 +45,7 @@ type SurveyDetails = {
     bandwidth?: string | null;
     cable_length?: string | number | null;
     cable_type?: string | null;
+    with_device?: boolean;
     status?: string | number | null;
     survey_type?: string | null;
     customer_type?: string | null;
@@ -453,6 +454,24 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                             <span className="flex items-center gap-2 font-medium">
                                 <Gauge className="h-4 w-4 text-muted-foreground" />
                                 {bandwidthDisplay || <span className="text-muted-foreground">Not available</span>}
+                            </span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Device</span>
+                            <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-xs font-medium ${
+                                surveyDetails?.with_device 
+                                    ? 'bg-emerald-100 text-emerald-700' 
+                                    : 'bg-gray-100 text-gray-600'
+                            }`}>
+                                {surveyDetails?.with_device ? (
+                                    <>
+                                        <Package className="h-3 w-3" />
+                                        With Device
+                                    </>
+                                ) : (
+                                    'Without Device'
+                                )}
                             </span>
                         </div>
                     </CardContent>

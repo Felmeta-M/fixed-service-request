@@ -17,7 +17,7 @@ class SurveyOrderResource extends JsonResource
             'service_number' => $this->service_number,
             'bandwidth' => $this->bandwidth,
             'status'   => $this->status,
-            'with_device' => $this->device,
+            'with_device' => (bool) $this->with_device,
             'survey_is_manual' => $this->survey_is_manual,
             'created_at' => $this->created_at?->format('Y-m-d'),
             'payment' => new PaymentResource($this->payment),

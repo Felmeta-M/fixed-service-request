@@ -360,11 +360,12 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                         fullscreenControl: true,
                         zoomControl: true,
                         gestureHandling: 'cooperative',
+                        // Enable place / POI labels so users can see shops, malls, restaurants, etc.
                         styles: [
                             {
                                 featureType: 'poi',
                                 elementType: 'labels',
-                                stylers: [{ visibility: 'off' }],
+                                stylers: [{ visibility: 'on' }],
                             },
                             {
                                 featureType: 'transit',

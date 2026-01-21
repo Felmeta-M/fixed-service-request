@@ -124,45 +124,45 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
             return;
         }
 
+        // ============================================================
+        // MINIMAL PAYLOAD - Backend applies defaults for omitted fields
+        // Backend defaults (in BaseSurveyService::applyDefaults):
+        //   survey_type: 'EIC08', oper_type: 'A', customer_type: 'residential',
+        //   telecom_region: from area_code, contact_*: from customer profile,
+        //   external_operid: '512', bandwidth: '10M', with_device: false
+        // ============================================================
         const submitData = {
-            customer_code: user.customer_code.toString(),
-            customer_type: formData.customerType || 'residential',
-            survey_type: 'EIC08',
-            telecom_region: '104',
-            oper_type: 'A',
+            // REQUIRED - Must be provided
             main_offer_id: formData.serviceType,
-            bandwidth: formData.bandwidth,
-            contact_person: formData.contactPerson || user.name,
-            contact_no: formData.contactNo || user.phone,
-            contact_email: formData.contactEmail || user.email || '',
             survey_address_info: {
+                // Address info (can use defaults from customer profile on backend)
                 region_city: '2',
                 subcity_zone: '11',
                 wereda_town: '141',
                 kebele: '',
-                house_no: '', // Backend has fallback if not provided
+                house_no: '',
                 address: formData.address || '',
-                // All fields are critical and must be encrypted from resource-check response
-                // No fallbacks - validation ensures all fields are present above
+                // Encrypted resource fields - REQUIRED (from resource-check)
                 latitude: encryptedResource.latitude,
                 longitude: encryptedResource.longitude,
                 distance: encryptedResource.distance,
                 cable_type: encryptedResource.cable_type,
                 neid: encryptedResource.neid,
                 nename: encryptedResource.nename || '',
-                // Ensure area_code and area_name are always included (even if empty string)
                 area_code: (encryptedResource as any).area_code ?? '',
                 area_name: (encryptedResource as any).area_name ?? '',
             },
-            with_device: formData.withDevice,
-            device_id: formData.deviceId || null,
-            device_voice_id: formData.serviceType === '180427974' ? null : (formData.deviceVoiceId || null), // Not used for combo services
-            completed_date: new Date()
-                .toISOString()
-                .replace(/[-:T.Z]/g, '')
-                .slice(0, 14),
-            external_operid: '512',
-            survey_is_manual: false, // Normal flow - resource is available
+            
+            // OPTIONAL - Only send if different from defaults
+            ...(formData.bandwidth && { bandwidth: formData.bandwidth }),
+            ...(formData.withDevice !== undefined && { with_device: formData.withDevice }),
+            ...(formData.deviceId && { device_id: formData.deviceId }),
+            ...(formData.serviceType !== '180427974' && formData.deviceVoiceId && { device_voice_id: formData.deviceVoiceId }),
+            
+            // Contact - only send if user provided custom values
+            ...(formData.contactPerson && { contact_person: formData.contactPerson }),
+            ...(formData.contactNo && { contact_no: formData.contactNo }),
+            ...(formData.contactEmail && { contact_email: formData.contactEmail }),
         };
 
         const submissionToast = toast.loading('Creating service request...');

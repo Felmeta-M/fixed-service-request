@@ -25,11 +25,16 @@ class DataSurveyService extends BaseSurveyService implements SurveyInterface
         $sessionId = $cfg['session_id'] ?? uniqid();
         $completedDate = $this->completedDate();
 
-        // Use shared helpers for contact info
-        $primaryContact = $this->getPrimaryContact();
-        $customerCode = $this->customerCode();
+        // Contact and customer info already set by applyDefaults() in base class
+        $primaryContact = [
+            'contact_person' => $data['contact_person'],
+            'contact_no' => $data['contact_no'],
+            'contact_email' => $data['contact_email'],
+        ];
+        $customerCode = $data['customer_code'];
 
-        $bandwidth = $data['bandwidth'] ? $this->parseBandwidth($data['bandwidth']) : '';
+        // Bandwidth already has default from applyDefaults()
+        $bandwidth = $this->parseBandwidth($data['bandwidth']);
 
         $houseNo = $data['survey_address_info']['house_no'] ?? CustomerContext::houseNo('');
 

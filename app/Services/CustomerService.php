@@ -52,14 +52,33 @@ class CustomerService extends BaseApiService
 
         $processTime = now()->format('YmdHis');
 
-        // Set default values for customer classification (used by third-party API)
+        // ============================================================
+        // DEFAULT VALUES - Centralized here to minimize frontend payload
+        // Frontend only needs to send values that differ from these defaults
+        // ============================================================
+        
+        // Customer classification defaults
         $data['customer_type'] = $data['customer_type'] ?? '1';           // Default: Residential
         $data['customer_category'] = $data['customer_category'] ?? '1';   // Default: Category 1
         $data['customer_subcategory'] = $data['customer_subcategory'] ?? '1'; // Default: Subcategory 1
         $data['customer_level'] = $data['customer_level'] ?? '8';         // Default: Copper
+        
+        // Personal info defaults
+        $data['title'] = $data['title'] ?? '1';                           // Default: Mr.
+        $data['nationality'] = $data['nationality'] ?? '1231';            // Default: Ethiopian
+        $data['identification_type'] = $data['identification_type'] ?? '2'; // Default: National ID
+        $data['primary_language'] = $data['primary_language'] ?? '2060';  // Default: Amharic
+        $data['income'] = $data['income'] ?? '6';                         // Default: Income level 6
+        $data['place_of_birth'] = $data['place_of_birth'] ?? '';          // Default: Empty
+        
+        // Contact defaults
+        $data['contact'] = $data['contact'] ?? [];
+        $data['contact']['notification_mode'] = $data['contact']['notification_mode'] ?? '1'; // Default: SMS
+        $data['contact']['home_no'] = $data['contact']['home_no'] ?? '';
+        $data['contact']['office_no'] = $data['contact']['office_no'] ?? '';
+        $data['contact']['fax_no'] = $data['contact']['fax_no'] ?? '';
 
         $data['identification_number'] = random_int(100000, 999999); //TODO: remove this after testing
-        $data['income'] = $data['income'] ?? '6'; // Default income level
 
         // Safely handle optional contact person info (may be empty array from frontend)
         $contactPerson = $data['contact_person'][0] ?? null;
@@ -215,13 +234,13 @@ XML;
                     'street_name' => $data['address']['street_name'] ?? null,
                     'apartment' => $data['address']['apartment'] ?? null,
 
-                    // BSS Classification (defaults match third-party API defaults)
-                    'customer_type' => $data['customer_type'] ?? '1',
-                    'customer_category' => $data['customer_category'] ?? '1',
-                    'customer_subcategory' => $data['customer_subcategory'] ?? '1',
-                    'customer_level' => $data['customer_level'] ?? '8',
+                    // BSS Classification (defaults already applied in buildXml)
+                    'customer_type' => $data['customer_type'],
+                    'customer_category' => $data['customer_category'],
+                    'customer_subcategory' => $data['customer_subcategory'],
+                    'customer_level' => $data['customer_level'],
                     // Notification & Credit
-                    'notification_mode' => $data['contact']['notification_mode'] ?? '2',
+                    'notification_mode' => $data['contact']['notification_mode'],
                     'credit_class' => $data['credit_class'] ?? 'Excellent',
                     'verified_at' => now(),
                     'updated_at' => now(),

@@ -290,60 +290,73 @@ export interface Customer {
 
 export type Option = { label: string; value: string };
 
+// ============================================================
 // Zod Schema for Customer
+// Fields marked with "Backend default" can be omitted from frontend payload
+// Backend will apply these defaults in CustomerService::buildXml()
+// ============================================================
 export const customerSchema = z.object({
+    // REQUIRED - Must be provided by frontend
     first_name: z.string().min(1, 'First name is required').max(255),
     middle_name: z.string().min(1, 'Middle name is required').max(255),
     last_name: z.string().min(1, 'Last name is required').max(255),
-    title: z.string().min(1, 'Title is required'),
     gender: z.string().min(1, 'Gender is required'),
-    nationality: z.string().min(1, 'Nationality is required'),
-    identification_type: z.string().min(1, 'Identification type is required'),
     identification_number: z.string().min(5, 'Identification number is required'),
-    date_of_birth: z
-        .string()
-        .min(1, 'Date of birth is required'),
-    place_of_birth: z.string().optional().nullable(),
+    date_of_birth: z.string().min(1, 'Date of birth is required'),
     occupation: z.string().min(1, 'Occupation is required'),
     education: z.string().min(1, 'Education is required'),
     religion: z.string().min(1, 'Religion is required'),
-    income: z.string().optional().nullable(),
-    primary_language: z.string().min(1, 'Primary language is required').max(255),
+    
+    // OPTIONAL - Have backend defaults
+    title: z.string().optional(),                    // Backend default: '1' (Mr.)
+    nationality: z.string().optional(),              // Backend default: '1231' (Ethiopian)
+    identification_type: z.string().optional(),      // Backend default: '2' (National ID)
+    primary_language: z.string().optional(),         // Backend default: '2060' (Amharic)
+    place_of_birth: z.string().optional().nullable(),
+    income: z.string().optional().nullable(),        // Backend default: '6'
+    
+    // ADDRESS - region/zone/woreda required
     address: z
         .object({
             [AddressTypes.REGION]: z.string().min(1, 'Region is required').max(128),
-            [AddressTypes.ZONE]: z.string().optional(),
-            [AddressTypes.WOREDA]: z.string().optional(),
+            [AddressTypes.ZONE]: z.string().min(1, 'Zone is required'),
+            [AddressTypes.WOREDA]: z.string().min(1, 'Woreda is required'),
             [AddressTypes.CITY]: z.string().optional(),
             [AddressTypes.STREET_NAME]: z.string().optional(),
             [AddressTypes.KEBELE]: z.string().optional(),
             [AddressTypes.HOUSE_NO]: z.string().optional(),
         })
         .partial(),
+    
+    // CONTACT - mobile required, others optional
     contact: z.object({
-        notification_mode: z.string().optional(),
-        mobile_no: z.string().min(1, 'Phone number is required'), // Changed from number to string
+        notification_mode: z.string().optional(),    // Backend default: '1' (SMS)
+        mobile_no: z.string().min(1, 'Phone number is required'),
         email: z.string().email().optional().or(z.literal('')),
         office_no: z.string().optional(),
         home_no: z.string().optional(),
         fax_no: z.string().optional(),
     }),
+    
+    // CONTACT PERSON - Fully optional
     contact_person: z.array(
         z.object({
             title: z.string().optional(),
             first_name: z.string().optional(),
             middle_name: z.string().optional(),
             last_name: z.string().optional(),
-            mobile_no: z.string().optional(), // Changed from number to string
+            mobile_no: z.string().optional(),
             office_no: z.string().nullable().optional(),
             home_no: z.string().nullable().optional(),
             fax_no: z.string().nullable().optional(),
         }),
-    ).optional(), // Made optional
-    customer_type: z.string().optional().default('1'),
-    customer_category: z.string().optional().default('1'),
-    customer_subcategory: z.string().optional().default('1'),
-    customer_level: z.string().optional().default('8'),
+    ).optional(),
+    
+    // CUSTOMER CLASSIFICATION - All have backend defaults
+    customer_type: z.string().optional(),            // Backend default: '1' (Residential)
+    customer_category: z.string().optional(),        // Backend default: '1'
+    customer_subcategory: z.string().optional(),     // Backend default: '1'
+    customer_level: z.string().optional(),           // Backend default: '8' (Copper)
 });
 
 export type CustomerFormValues = z.infer<typeof customerSchema>;
@@ -357,8 +370,8 @@ export type CustomerFormValues = z.infer<typeof customerSchema>;
 export function createDynamicCustomerSchema(isEmailRequired: boolean, isKebeleRequired: boolean) {
     return customerSchema.extend({
         contact: z.object({
-            notification_mode: z.string().min(1, 'Notification mode is required'),
-            mobile_no: z.string().regex(/^(\+251|251|0)?(9)\d{8}$/, 'Please enter a valid phone number'), // 9 digit is allowed if it start from 9
+            notification_mode: z.string().optional(), // Backend default: '1' (SMS)
+            mobile_no: z.string().regex(/^(\+251|251|0)?(9)\d{8}$/, 'Please enter a valid phone number'),
             email: isEmailRequired
                 ? z.string().email('Valid email is required when Email notification mode is selected').min(1, 'Email is required when Email notification mode is selected')
                 : z.string().email('Invalid email format').optional().or(z.literal('')),
@@ -369,8 +382,8 @@ export function createDynamicCustomerSchema(isEmailRequired: boolean, isKebeleRe
         address: z
             .object({
                 region: z.string().min(1, 'Region is required').max(128),
-                zone: z.string().optional(),
-                woreda: z.string().optional(),
+                zone: z.string().min(1, 'Zone is required'),
+                woreda: z.string().min(1, 'Woreda is required'),
                 city: z.string().optional(),
                 street_name: z.string().optional(),
                 kebele: isKebeleRequired
@@ -380,4 +393,31 @@ export function createDynamicCustomerSchema(isEmailRequired: boolean, isKebeleRe
             })
             .partial(),
     });
+}
+
+/**
+ * Utility to clean payload before sending to backend
+ * Removes empty strings and null values for fields with backend defaults
+ */
+export function cleanCustomerPayload(data: CustomerFormValues): Partial<CustomerFormValues> {
+    const cleaned: Partial<CustomerFormValues> = { ...data };
+    
+    // Fields with backend defaults - remove if empty
+    const optionalFields: (keyof CustomerFormValues)[] = [
+        'customer_type', 'customer_category', 'customer_subcategory', 'customer_level',
+        'income', 'place_of_birth'
+    ];
+    
+    optionalFields.forEach(field => {
+        if (!cleaned[field] || cleaned[field] === '') {
+            delete cleaned[field];
+        }
+    });
+    
+    // Clean contact_person if empty array
+    if (cleaned.contact_person && cleaned.contact_person.length === 0) {
+        delete cleaned.contact_person;
+    }
+    
+    return cleaned;
 }

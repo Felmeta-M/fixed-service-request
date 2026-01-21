@@ -291,22 +291,33 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
         // 'contact.mobile_no',
     ];
 
+    // ============================================================
+    // MINIMAL FORM STATE - Backend applies defaults for omitted fields
+    // Backend defaults: title='1', nationality='1231', identification_type='2',
+    // primary_language='2060', notification_mode='1', customer_type='1',
+    // customer_category='1', customer_subcategory='1', customer_level='8', income='6'
+    // ============================================================
     const { data, setData } = useForm<CustomerFormValues>('createCustomer', {
+        // Required fields - must be filled by user
         first_name: '',
         middle_name: '',
         last_name: '',
-        title: '1',
         gender: '',
-        nationality: '1231',
-        identification_type: '2',
         identification_number: '',
         date_of_birth: '',
-        place_of_birth: '',
         occupation: '',
         education: '',
         religion: '',
-        income: '',
-        primary_language: '2060',
+        
+        // Optional fields with backend defaults (set here for UI display)
+        title: '1',                    // UI default, backend default: '1' (Mr.)
+        nationality: '1231',           // UI default, backend default: '1231' (Ethiopian)
+        identification_type: '2',      // UI default, backend default: '2' (National ID)
+        primary_language: '2060',      // UI default, backend default: '2060' (Amharic)
+        place_of_birth: '',
+        income: '',                    // Backend default: '6'
+        
+        // Address - region/zone/woreda required
         address: {
             region: '',
             zone: '',
@@ -316,19 +327,25 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
             kebele: '',
             house_no: '',
         },
+        
+        // Contact - mobile required, notification_mode has backend default
         contact: {
-            notification_mode: '1',
+            notification_mode: '1',    // UI default, backend default: '1' (SMS)
             mobile_no: '',
             office_no: '',
             email: '',
             home_no: '',
             fax_no: '',
         },
+        
+        // Optional - can be omitted entirely
         contact_person: [],
-        customer_type: '1',
-        customer_category: '1',
-        customer_subcategory: '1',
-        customer_level: '8',
+        
+        // Customer classification - all have backend defaults
+        customer_type: '',             // Backend default: '1' (Residential)
+        customer_category: '',         // Backend default: '1'
+        customer_subcategory: '',      // Backend default: '1'
+        customer_level: '',            // Backend default: '8' (Copper)
     });
 
     // Enhanced prefill data loading with better error handling and stable UI states

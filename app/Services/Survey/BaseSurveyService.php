@@ -52,8 +52,6 @@ abstract class BaseSurveyService extends BaseApiService
 
         $resource = self::decrypt($resource);
 
-        $data['telecom_region'] = $resource['area_code'] ?? null;
-
         if ($resource === null) {
             AppLogger::api()->error('Resource data validation failed - invalid or tampered information', [
                 'operation' => 'survey_create',
@@ -66,6 +64,12 @@ abstract class BaseSurveyService extends BaseApiService
             );
         }
 
+        // ============================================================
+        // APPLY BACKEND DEFAULTS - Minimizes frontend payload
+        // Frontend only needs to send main_offer_id and survey_address_info
+        // ============================================================
+        $data = $this->applyDefaults($data, $resource);
+
         $xml = $this->buildXml($data, $resource);
         AppLogger::api()->info('Survey XML', [
             'xml' => $xml,
@@ -74,6 +78,47 @@ abstract class BaseSurveyService extends BaseApiService
         $response = $this->executeRequest($xml);
 
         return $this->parseResponse($data, $response, $resource);
+    }
+
+    /**
+     * Apply default values for survey request fields.
+     * Centralizes defaults to minimize frontend payload.
+     *
+     * @param array $data Request data from frontend
+     * @param array $resource Decrypted resource data
+     * @return array Data with defaults applied
+     */
+    protected function applyDefaults(array $data, array $resource): array
+    {
+        // Get customer profile and contact info from context
+        $profile = $this->getCustomerProfile();
+        $contact = $this->getPrimaryContact();
+
+        // Survey classification defaults
+        $data['survey_type'] = $data['survey_type'] ?? 'EIC08';
+        $data['oper_type'] = $data['oper_type'] ?? 'A';                    // A = new
+        $data['telecom_region'] = $data['telecom_region'] ?? $resource['area_code'] ?? null;
+        $data['customer_type'] = $data['customer_type'] ?? 'residential';
+        
+        // Contact defaults from customer profile
+        $data['contact_person'] = $data['contact_person'] ?? $contact['contact_person'] ?? null;
+        $data['contact_no'] = $data['contact_no'] ?? $contact['contact_no'] ?? null;
+        $data['contact_email'] = $data['contact_email'] ?? $contact['contact_email'] ?? null;
+        
+        // Customer code from auth context
+        $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
+        
+        // Other defaults
+        $data['external_operid'] = $data['external_operid'] ?? '512';
+        $data['with_device'] = $data['with_device'] ?? false;
+        $data['survey_is_manual'] = $data['survey_is_manual'] ?? false;
+        
+        // Bandwidth default (10M = 10 Mbps) - only if not provided
+        if (empty($data['bandwidth'])) {
+            $data['bandwidth'] = '10M';
+        }
+
+        return $data;
     }
 
     protected function resourceCheck(array $data): array

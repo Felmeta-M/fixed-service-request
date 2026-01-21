@@ -14,33 +14,60 @@ class CustomerRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_type' => 'nullable|string|max:255',
-            'customer_category' => 'nullable|string|max:255',
-            'customer_subcategory' => 'nullable|string|max:255',
-            'customer_level' => 'nullable|string|max:255',
+            // ============================================================
+            // FIELDS WITH BACKEND DEFAULTS - Frontend can omit these
+            // Backend will apply defaults in CustomerService::buildXml()
+            // ============================================================
+            'customer_type' => 'nullable|string|max:255',        // Default: '1' (Residential)
+            'customer_category' => 'nullable|string|max:255',    // Default: '1'
+            'customer_subcategory' => 'nullable|string|max:255', // Default: '1'
+            'customer_level' => 'nullable|string|max:255',       // Default: '8' (Copper)
+            'title' => 'nullable|string|max:255',                // Default: '1' (Mr.)
+            'nationality' => 'nullable|string|max:100',          // Default: '1231' (Ethiopian)
+            'identification_type' => 'nullable|string|max:100',  // Default: '2' (National ID)
+            'primary_language' => 'nullable|string|max:100',     // Default: '2060' (Amharic)
+            'income' => 'nullable|string|max:100',               // Default: '6'
+            'place_of_birth' => 'nullable|string|max:255',       // Default: ''
+            
+            // ============================================================
+            // REQUIRED FIELDS - Must be provided by frontend
+            // ============================================================
             'first_name' => 'required|string|max:255',
             'middle_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'title' => 'required|string|max:255',
             'gender' => 'required|string|max:50',
-            'nationality' => 'required|string|max:100',
-            'identification_type' => 'required|string|max:100',
             'identification_number' => 'required|string|max:100',
             'date_of_birth' => 'required|date',
-            'place_of_birth' => 'nullable|string|max:255',
             'occupation' => 'required|string|max:255',
             'education' => 'required|string|max:255',
             'religion' => 'required|string|max:255',
-            'income' => 'nullable|string|max:100',
-            'primary_language' => 'nullable|string|max:100',
+            
+            // ============================================================
+            // ADDRESS - Required
+            // ============================================================
             'address' => 'required|array',
-            'contact' => 'required|array',
+            'address.region' => 'required|string|max:255',
+            'address.zone' => 'required|string|max:255',
+            'address.woreda' => 'required|string|max:255',
+            'address.city' => 'nullable|string|max:255',
+            'address.street_name' => 'nullable|string|max:255',
+            'address.kebele' => 'nullable|string|max:255',
+            'address.house_no' => 'nullable|string|max:255',
+            
+            // ============================================================
+            // CONTACT - Mobile required, others optional with defaults
+            // ============================================================
+            'contact' => 'nullable|array',
             'contact.email' => 'nullable|email',
-            'contact.notification_mode' => 'nullable|integer',
+            'contact.notification_mode' => 'nullable|string|max:10', // Default: '1' (SMS)
             'contact.home_no' => 'nullable|min:9|max:20',
             'contact.office_no' => 'nullable|min:9|max:20',
             'contact.mobile_no' => ['nullable', 'regex:/^(\+251|251|0)?(9)\d{8}$/'],
             'contact.fax_no' => 'nullable|string|min:9|max:20',
+            
+            // ============================================================
+            // CONTACT PERSON - Fully optional
+            // ============================================================
             'contact_person' => 'nullable|array',
             'contact_person.*.first_name' => 'nullable|string|max:255',
             'contact_person.*.middle_name' => 'nullable|string|max:255',

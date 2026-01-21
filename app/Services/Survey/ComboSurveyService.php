@@ -28,16 +28,20 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
       $sessionId = $cfg['session_id'] ?? uniqid();
       $completedDate = $this->completedDate();
 
-      // Use shared helpers for customer and contact info
-      $customerCode = $this->customerCode();
-      $primaryContact = $this->getPrimaryContact();
+      // Customer and contact info already set by applyDefaults() in base class
+      $customerCode = $data['customer_code'];
+      $primaryContact = [
+         'contact_person' => $data['contact_person'],
+         'contact_no' => $data['contact_no'],
+         'contact_email' => $data['contact_email'],
+      ];
 
-      // Default values
-      $surveyType = $data['survey_type'] ?? 'EIC08';
-      $telecomRegion = $data['telecom_region'] ?? '2046';
-      $operType = $data['oper_type'] ?? 'A';
+      // Values already have defaults from applyDefaults() in base class
+      $surveyType = $data['survey_type'];
+      $telecomRegion = $data['telecom_region'];
+      $operType = $data['oper_type'];
       $mainOfferId = $data['main_offer_id'] ?? $this->mainOfferId();
-      $bandwidth = $data['bandwidth'] ? $this->parseBandwidth($data['bandwidth']) : 5120;
+      $bandwidth = $this->parseBandwidth($data['bandwidth']);
 
       // Get dynamic survey address info from customer or request data
       $address = $this->getCustomerAddress();

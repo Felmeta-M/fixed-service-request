@@ -67,14 +67,34 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       // Get config values
       $cfg = config('services.subscriber');
 
-      // Get voice service number (we provide this for voice subscription)
-      $voiceServiceNumber = $this->queryAvailableNumberService
-         ->getAvailableNumberServices('1766044689199549668');
+      // Get voice service number from pool (no reserve/release needed for combo)
+      // Just fetch available number and use it directly in subscription
+      $depId = '1766044689199549668';
+      $numberList = $this->queryAvailableNumberService->queryAvailableNumbers([
+         'pay_mode' => '1',
+         'tele_type' => '4',
+         'need_query_by_dept' => false,
+         'res_cnt' => 100,
+         'dept_id' => $depId,
+      ]);
 
-      if (!$voiceServiceNumber) {
-         throw new \RuntimeException('Unable to reserve service number');
+      if (empty($numberList)) {
+         throw new \RuntimeException('No available voice service numbers in pool');
       }
 
+      // Filter by level '6' and get the first one
+      $filtered = array_filter($numberList, fn($item) => $item['Level'] === '6');
+      if (empty($filtered)) {
+         throw new \RuntimeException('No voice service numbers with required level');
+      }
+
+      $voiceServiceNumber = reset($filtered)['ServiceNumber'];
+
+      AppLogger::api()->info('Voice service number fetched for combo subscription', [
+         'service_number' => $voiceServiceNumber,
+         'survey_order_id' => $data['survey_order_id'] ?? null,
+         'dept_id' => $depId,
+      ]);
       // Get dynamic customer profile and address data
       $customerCode = $this->customerCode();
       $profile = $this->getCustomerProfile();
@@ -318,9 +338,6 @@ XML;
       ];
 
       $obj = simplexml_load_string($xml);
-      if (!$obj) {
-         return $res;
-      }
 
       // Register namespaces dynamically
       $namespaces = $obj->getNamespaces(true);
@@ -337,28 +354,52 @@ XML;
          return $res;
       }
 
-      // Response header
-      $header = $rsp
-         ->children($namespaces['ser'])
-         ->ResponseHeader
-         ->children($namespaces['com']);
+      // Response header - ResponseHeader is in 'ser' namespace, its children are in 'com' namespace
+      $responseHeader = $rsp->children($namespaces['ser'])->ResponseHeader ?? null;
+      if (!$responseHeader) {
+         AppLogger::api()->warning('ComboSubscriptionService: ResponseHeader not found in response');
+         return $res;
+      }
 
+      $header = $responseHeader->children($namespaces['com']);
       $res['ret_code'] = (string) $header->RetCode;
       $res['ret_msg'] = (string) $header->RetMsg;
-      $res['success'] = ((string) $header->RetCode === '0');
+      $res['success'] = ($res['ret_code'] === '0');
 
-      // Customer order ID
+      // Customer order ID - CustomerBusiOrderId is in 'ser' namespace
       $res['customer_busi_order_id'] =
          (string) $rsp->children($namespaces['ser'])->CustomerBusiOrderId;
 
-      // Extra parameters
-      if (isset($rsp->ExtParamList)) {
-         foreach (
-            $rsp->ExtParamList->children($namespaces['com'])->ParameterInfo as $p
-         ) {
-            $res['extra_params'][(string) $p->ParamName]
-               = (string) $p->ParamValue;
+      AppLogger::api()->debug('ComboSubscriptionService parsed response', [
+         'ret_code' => $res['ret_code'],
+         'ret_msg' => $res['ret_msg'],
+         'success' => $res['success'],
+         'customer_busi_order_id' => $res['customer_busi_order_id'],
+      ]);
+
+      // Extra parameters - ExtParamList is in 'ser' namespace
+      $extParamList = $rsp->children($namespaces['ser'])->ExtParamList ?? null;
+      if ($extParamList) {
+         $paramInfoList = $extParamList->children($namespaces['com'])->ParameterInfo;
+         AppLogger::api()->debug('ExtParamList found', [
+            'param_count' => count($paramInfoList),
+         ]);
+
+         foreach ($paramInfoList as $p) {
+            $pChildren = $p->children($namespaces['com']);
+            $paramName = (string) $pChildren->ParamName;
+            $paramValue = (string) $pChildren->ParamValue;
+            $res['extra_params'][$paramName] = $paramValue;
+
+            // Log FBB number extraction for combo services
+            if ($paramName === 'FBBNUMBER') {
+               AppLogger::api()->info('FBB service number extracted from BSS response', [
+                  'fbb_service_number' => $paramValue,
+               ]);
+            }
          }
+      } else {
+         AppLogger::api()->debug('No ExtParamList in response');
       }
 
       /**

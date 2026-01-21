@@ -56,6 +56,8 @@ export default function SurveyShowPage() {
             cable_length: surveyDetailQuery.data.data.cable_length,
             status: surveyDetailQuery.data.data.status,
             service_number: surveyDetailQuery.data.data.service_number,
+            fbb_service_number: surveyDetailQuery.data.data.fbb_service_number,
+            with_device: surveyDetailQuery.data.data.with_device,
             created_at: surveyDetailQuery.data.data.created_at,
             updated_at: surveyDetailQuery.data.data.updated_at,
             is_paid: surveyDetailQuery.data.data.is_paid,

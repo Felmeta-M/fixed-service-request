@@ -65,6 +65,7 @@ interface SurveyDetailResponse {
         main_offer_id: string;
         bandwidth?: string | null;
         cable_length?: string | number | null;
+        with_device?: boolean;
         status?: string | number | null;
         service_number?: string | null;
         created_at?: string;

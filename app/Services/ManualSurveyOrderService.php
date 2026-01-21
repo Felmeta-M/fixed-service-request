@@ -237,6 +237,12 @@ XML;
         // Resolve telecom region to area_id for storage
         $telecomRegionAreaId = $this->resolveTelecomRegion($data['telecom_region'] ?? null);
 
+        // Convert bandwidth to KB for consistent storage (BSS returns KB format)
+        $bandwidthKb = null;
+        if (!empty($data['bandwidth'])) {
+            $bandwidthKb = $this->parseBandwidth($data['bandwidth']);
+        }
+
         $survey = SurveyOrder::create([
             'customer_code' => $customerCode,
             'customer_survey_order_id' => $customerSurveyOrderId,
@@ -245,7 +251,7 @@ XML;
             'telecom_region' => $telecomRegionAreaId,
             'oper_type' => $data['oper_type'] ?? 'A',
             'customer_type' => 'residential',
-            'bandwidth' => $data['bandwidth'] ?? null,
+            'bandwidth' => $bandwidthKb, // Save as KB for consistency with BSS responses
             'contact_person' => $primaryContact['contact_person'],
             'contact_no' => $primaryContact['contact_no'],
             'contact_email' => $primaryContact['contact_email'],

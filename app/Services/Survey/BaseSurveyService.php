@@ -99,9 +99,17 @@ abstract class BaseSurveyService extends BaseApiService
     ): void {
 
         $serviceNumber = $data['service_number'] ?? $this->serviceNumber ?? null;
-        DB::transaction(function () use ($surveyOrderId, $data, $resource, $serviceNumber) {
+        
+        // Convert bandwidth to KB for consistent storage (BSS returns KB format)
+        $bandwidthKb = null;
+        if (!empty($data['bandwidth'])) {
+            $bandwidthKb = $this->parseBandwidth($data['bandwidth']);
+        }
+        
+        DB::transaction(function () use ($surveyOrderId, $data, $resource, $serviceNumber, $bandwidthKb) {
             $survey = SurveyOrder::create([
                 ...$data,
+                'bandwidth' => $bandwidthKb, // Save as KB for consistency with BSS responses
                 'completed_date' => now(),
                 'with_device' => (bool) $data['with_device'],
                 'device_id' => $data['device_id'] ?? null,

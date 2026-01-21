@@ -190,6 +190,8 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
 
     const formatBandwidth = (bandwidth?: string | null) => {
         if (!bandwidth) return null;
+        
+        // If bandwidth ends with 'M', it's already in Mbps format (e.g., "10M")
         if (bandwidth.endsWith('M')) {
             const mbps = parseInt(bandwidth);
             if (mbps >= 1000) {
@@ -197,6 +199,18 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
             }
             return `${mbps} Mbps`;
         }
+        
+        // If it's a pure number, assume it's in KB and convert to MB
+        const numericValue = parseInt(bandwidth);
+        if (!isNaN(numericValue)) {
+            const mbps = numericValue / 1024; // Convert KB to MB
+            if (mbps >= 1000) {
+                return `${(mbps / 1000).toFixed(mbps % 1000 === 0 ? 0 : 1)} Gbps`;
+            }
+            // Show as integer if it's a whole number, otherwise show 1 decimal
+            return `${mbps % 1 === 0 ? mbps : mbps.toFixed(1)} Mbps`;
+        }
+        
         return bandwidth;
     };
 

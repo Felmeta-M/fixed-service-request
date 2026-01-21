@@ -96,6 +96,33 @@ class ChangePrimaryOfferingService extends BaseApiService
                 return $result;
             }
 
+            // Update local database with new bandwidth after successful change
+            // Save as KB for consistency with BSS responses
+            $bandwidthKb = $this->parseBandwidth($bandwidth);
+            
+            try {
+                $surveyOrder->update([
+                    'bandwidth' => $bandwidthKb, // Save as KB for consistency with BSS responses
+                ]);
+
+                AppLogger::api()->info('Survey order bandwidth updated after upgrade/downgrade', [
+                    'service_number' => $serviceNumber,
+                    'new_bandwidth' => $bandwidth,
+                    'new_bandwidth_kb' => $bandwidthKb,
+                    'customer_survey_order_id' => $surveyOrder->customer_survey_order_id,
+                    'order_id' => $result['order_id'] ?? null,
+                    'operation' => 'change_primary_offering',
+                ]);
+            } catch (\Throwable $e) {
+                // Log the error but don't fail the request - the API change was successful
+                AppLogger::api()->exception($e, 'Failed to update local bandwidth after successful change', [
+                    'service_number' => $serviceNumber,
+                    'new_bandwidth' => $bandwidth,
+                    'new_bandwidth_kb' => $bandwidthKb,
+                    'operation' => 'change_primary_offering',
+                ]);
+            }
+
             return [
                 'success' => true,
                 'message' => 'Primary offering changed successfully',

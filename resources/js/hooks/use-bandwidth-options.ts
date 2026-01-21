@@ -45,31 +45,17 @@ const parseBandwidthValue = (bandwidth: string): number => {
     return numericValue;
 };
 
-// Function to format bandwidth value for display (KB to MB/Gbps)
+/**
+ * @deprecated Backend is now the single source of truth for bandwidth formatting.
+ * The API returns 'bandwidth' pre-formatted (e.g., "10 Mbps", "1 Gbps").
+ * Frontend should just display the value as-is without parsing.
+ * 
+ * This function is kept for backward compatibility but should not be used for API responses.
+ * Use it only for formatting user-selected bandwidth options before display.
+ */
 export const formatBandwidthDisplay = (bandwidth?: string | null): string | null => {
-    if (!bandwidth) return null;
-    
-    // If bandwidth ends with 'M', it's already in Mbps format (e.g., "10M")
-    if (bandwidth.endsWith('M')) {
-        const mbps = parseInt(bandwidth);
-        if (mbps >= 1000) {
-            return `${(mbps / 1000).toFixed(mbps % 1000 === 0 ? 0 : 1)} Gbps`;
-        }
-        return `${mbps} Mbps`;
-    }
-    
-    // If it's a pure number, assume it's in KB and convert to MB
-    const numericValue = parseInt(bandwidth);
-    if (!isNaN(numericValue)) {
-        const mbps = numericValue / 1024; // Convert KB to MB
-        if (mbps >= 1000) {
-            return `${(mbps / 1000).toFixed(mbps % 1000 === 0 ? 0 : 1)} Gbps`;
-        }
-        // Show as integer if it's a whole number, otherwise show 1 decimal
-        return `${mbps % 1 === 0 ? mbps : mbps.toFixed(1)} Mbps`;
-    }
-    
-    return bandwidth;
+    // Just return as-is - backend handles formatting for API responses
+    return bandwidth || null;
 };
 
 export function useBandwidthOptions() {

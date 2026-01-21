@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Enums\FFDServiceProvisionStatus;
+use App\Helpers\BandwidthHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ManualSurveyOrderRequest;
 use App\Http\Requests\SurveyOrderFormRequest;
@@ -470,7 +471,9 @@ class SurveyOrderController extends Controller
             'main_offer_id' => $order->main_offer_id,
             'service_number' => $order->service_number ?? null,
             'fbb_service_number' => $order->fbb_service_number ?? null,
-            'bandwidth' => $order->bandwidth ?? null,
+            // Backend is single source of truth - return formatted for display
+            'bandwidth' => BandwidthHelper::format($order->bandwidth),
+            'bandwidth_raw' => $order->bandwidth ?? null, // Raw KB value for debugging/API use
             'cable_length' => $order->cable_length ?? null,
             'with_device' => (bool) ($order->with_device ?? false),
             'created_at' => $order->created_at,

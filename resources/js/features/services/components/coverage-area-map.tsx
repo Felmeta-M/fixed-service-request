@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/use-translation';
-import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
-import { Loader2, MapPin, RefreshCw } from 'lucide-react';
+import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import { CheckCircle2, Loader2, MapPin, RefreshCw, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface CoverageAreaMapProps {
@@ -15,7 +15,9 @@ const defaultCenter = {
 };
 
 // Libraries needed for the map
-const LIBRARIES: Array<'places' | 'drawing' | 'geometry' | 'visualization'> = ['places'];
+const LIBRARIES: Array<'places' | 'drawing' | 'geometry' | 'visualization'> = ['places', 'geometry'];
+
+type AvailabilityStatus = 'idle' | 'checking' | 'inside' | 'outside' | 'error';
 
 export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: CoverageAreaMapProps) {
     const { t } = useTranslation();
@@ -26,6 +28,9 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
     const [loadError, setLoadError] = useState(false);
     const [scriptLoadError, setScriptLoadError] = useState<string | null>(null);
     const coverageDataRef = useRef<google.maps.Data.Feature[]>([]);
+    const [selectedLocation, setSelectedLocation] = useState<google.maps.LatLngLiteral | null>(null);
+    const [availabilityStatus, setAvailabilityStatus] = useState<AvailabilityStatus>('idle');
+    const [availabilityMessage, setAvailabilityMessage] = useState<string>('');
 
     // Load Google Maps script using the recommended hook (more reliable with React 18 / StrictMode)
     const { isLoaded: isScriptLoaded, loadError: jsApiLoadError } = useJsApiLoader({
@@ -193,6 +198,64 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
         [getPrimaryColor, fitToCoverageBounds, isCoverageLoaded, isCoverageLoading],
     );
 
+    const checkPointInCoverage = useCallback(
+        (point: google.maps.LatLngLiteral) => {
+            if (!map || !window.google || !google.maps.geometry || coverageDataRef.current.length === 0) {
+                setAvailabilityStatus('error');
+                setAvailabilityMessage('Coverage check is temporarily unavailable. Please try again in a moment.');
+                return;
+            }
+
+            const target = new google.maps.LatLng(point.lat, point.lng);
+            let isInside = false;
+
+            for (const feature of coverageDataRef.current) {
+                const geometry = feature.getGeometry();
+                if (!geometry) continue;
+
+                const type = geometry.getType();
+
+                if (type === 'Polygon') {
+                    const polygon = new google.maps.Polygon({
+                        paths: (geometry as google.maps.Data.Polygon).getArray().map((path) => path.getArray()),
+                    });
+
+                    if (google.maps.geometry.poly.containsLocation(target, polygon)) {
+                        isInside = true;
+                        break;
+                    }
+                } else if (type === 'MultiPolygon') {
+                    const multiPoly = geometry as google.maps.Data.MultiPolygon;
+                    const polys = multiPoly.getArray();
+
+                    for (const poly of polys) {
+                        const polygon = new google.maps.Polygon({
+                            paths: poly.getArray().map((path) => path.getArray()),
+                        });
+
+                        if (google.maps.geometry.poly.containsLocation(target, polygon)) {
+                            isInside = true;
+                            break;
+                        }
+                    }
+
+                    if (isInside) break;
+                }
+            }
+
+            if (isInside) {
+                setAvailabilityStatus('inside');
+                setAvailabilityMessage('Good news! Your selected area is within our current service coverage.');
+            } else {
+                setAvailabilityStatus('outside');
+                setAvailabilityMessage(
+                    'This spot is currently outside our fixed service coverage. We are continuously expanding, so please check back soon or contact support.',
+                );
+            }
+        },
+        [map],
+    );
+
     // Retry loading coverage
     const retryLoadCoverage = useCallback(() => {
         if (map) {
@@ -245,6 +308,27 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
             fitToCoverageBounds(map);
         }
     }, [map, fitToCoverageBounds]);
+
+    const handleLocationSelection = useCallback(
+        (location: google.maps.LatLngLiteral) => {
+            if (!map) return;
+
+            setSelectedLocation(location);
+            setAvailabilityStatus('checking');
+            setAvailabilityMessage('Checking if this location is within our coverage...');
+
+            map.panTo(location);
+            const currentZoom = map.getZoom() ?? 11;
+            if (currentZoom < 13) {
+                map.setZoom(13);
+            }
+
+            window.setTimeout(() => {
+                checkPointInCoverage(location);
+            }, 150);
+        },
+        [map, checkPointInCoverage],
+    );
 
     // Show loading state - only show overlay when map script or instance is not ready
     // Once map is ready, let it show even while coverage is loading
@@ -335,6 +419,30 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                 </Button>
             )} */}
 
+            {/* Availability status footer */}
+            {availabilityStatus !== 'idle' && (
+                <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center px-3 pb-3">
+                    <div className="inline-flex max-w-xl items-center gap-2 rounded-md bg-white/95 px-3 py-1.5 text-[11px] text-gray-700 shadow-sm backdrop-blur-sm sm:text-xs">
+                        {availabilityStatus === 'inside' && (
+                            <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0 text-emerald-600" />
+                        )}
+                        {availabilityStatus === 'outside' && (
+                            <XCircle className="h-3.5 w-3.5 flex-shrink-0 text-red-500" />
+                        )}
+                        {availabilityStatus === 'checking' && (
+                            <Loader2 className="h-3.5 w-3.5 flex-shrink-0 animate-spin text-primary" />
+                        )}
+                        {availabilityStatus === 'error' && (
+                            <span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-amber-500" />
+                        )}
+                        <p className="truncate">
+                            {availabilityMessage ||
+                                'Tap on the map to verify if your exact location is within the current coverage.'}
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Render map only when script is fully loaded and there is a valid key */}
             {!scriptLoadError && isScriptLoaded && googleMapsApiKey && (
                 <GoogleMap
@@ -374,7 +482,26 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                             },
                         ],
                     }}
-                />
+                    onClick={(event) => {
+                        if (event.latLng) {
+                            handleLocationSelection({
+                                lat: event.latLng.lat(),
+                                lng: event.latLng.lng(),
+                            });
+                        }
+                    }}
+                >
+                    {selectedLocation && (
+                        <Marker
+                            position={selectedLocation}
+                            icon={{
+                                url: 'https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2_hdpi.png',
+                                scaledSize: new google.maps.Size(20, 30),
+                                anchor: new google.maps.Point(15, 30),
+                            }}
+                        />
+                    )}
+                </GoogleMap>
             )}
         </div>
     );

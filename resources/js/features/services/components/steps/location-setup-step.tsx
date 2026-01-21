@@ -672,23 +672,25 @@ export function LocationSetupStep({
                                 <AlertCircle className="h-5 w-5 text-amber-600" />
                             </div>
                             <AlertDialogTitle className="text-xl font-semibold text-foreground">Location Review Needed</AlertDialogTitle>
+                            {/* <AlertDialogTitle className="text-xl font-semibold text-foreground">Dear Customer,</AlertDialogTitle> */}
                         </div>
 
                         <AlertDialogDescription className="space-y-3 pt-2 text-left">
+                            <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+                                <p className="text-sm leading-relaxed text-foreground">Dear Customer,</p>
+                            </div>
                             <p className="text-sm leading-relaxed text-muted-foreground">
-                                Thank you for selecting your location on the map. We're currently unable to automatically provision service for this
-                                location because available resources could not be confirmed.
+                            Thank you for selecting your location on the map! We wanted to let you know that, at the moment, we can’t automatically set up service for your area because we couldn’t confirm available resources.
                             </p>
 
                             <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
                                 <p className="text-sm leading-relaxed text-foreground">
-                                    You can continue by submitting a manual request. Our team will review your location, perform a manual survey if
-                                    needed, and contact you to assist with the next steps.
+                                But don’t worry! You can still submit a manual request. Our team will take a closer look at your location, and if needed, we’ll conduct a manual survey. We’ll reach out to you soon to guide you through the next steps.
                                 </p>
                             </div>
 
                             <p className="text-xs text-muted-foreground">
-                                We appreciate your patience and look forward to helping you get connected.
+                            We really appreciate your patience and can’t wait to help you get connected!
                             </p>
                         </AlertDialogDescription>
                     </AlertDialogHeader>

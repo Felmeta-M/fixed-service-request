@@ -39,10 +39,11 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       //   $data = $this->normalize($payload);
 
       $xml = $this->buildXml($payload);
-
       $response = $this->executeRequest($xml);
 
-      return $this->parseResponse($response, $payload);
+      $parsedResponse = $this->parseResponse($response, $payload);
+
+      return $parsedResponse;
    }
 
    protected function buildXml(array $data)
@@ -50,6 +51,9 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       // Use shared helpers for customer data
       $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
       $email = $data['email'] ?? $this->customerEmail() ?? $this->generateEmail();
+
+      // Get config values
+      $cfg = config('services.subscriber');
 
       // Get service number
       $serviceNumber = $this->queryAvailableNumberService
@@ -78,11 +82,11 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
             <com:ProcessTime>{$this->processTime()}</com:ProcessTime>
             <com:ContactId>1</com:ContactId>
             <com:Language>2002</com:Language>
-            <com:ChannelId>35</com:ChannelId>
-            <com:TechnicalChannelId>53</com:TechnicalChannelId>
-            <com:TenantId>101</com:TenantId>
-           <com:AccessUser>ecaf</com:AccessUser>
-            <com:AccessPwd>REDACTED_PASSWORD</com:AccessPwd> 
+            <com:ChannelId>{$cfg['channel_id']}</com:ChannelId>
+            <com:TechnicalChannelId>{$cfg['technical_channel_id']}</com:TechnicalChannelId>
+            <com:TenantId>{$cfg['tenant_id']}</com:TenantId>
+            <com:AccessUser>{$cfg['access_user']}</com:AccessUser>
+            <com:AccessPwd>{$cfg['access_pwd']}</com:AccessPwd>
             <com:AccessIP>1</com:AccessIP>
             <com:TestFlag>1</com:TestFlag>
             <com:AdditionalProperty>
@@ -121,9 +125,10 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:SecretQuestion>1</com:SecretQuestion>
                   <com:SecretAnswer>REDACTED_PASSWORD=</com:SecretAnswer>
                   <com:PromotionMessageFlag>2</com:PromotionMessageFlag>
+
                   <com:CustomerAddressInfo>
-                     <com:EthioZoneOrRegion>{$address['region']}</com:EthioZoneOrRegion>
-                     <com:AdministrativeRegionOrCity>{$address['city']}</com:AdministrativeRegionOrCity>
+                     <com:EthioZoneOrRegion>{$address['ethio_zone']}</com:EthioZoneOrRegion>
+                     <com:AdministrativeRegionOrCity>{$address['region']}</com:AdministrativeRegionOrCity>
                      <com:SubcityOrZone>{$address['zone']}</com:SubcityOrZone>
                      <com:WeredaOrTown>{$address['wereda']}</com:WeredaOrTown>
                      <com:Kebele>{$address['kebele']}</com:Kebele>
@@ -131,6 +136,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                      <com:StreetName>{$address['street_name']}</com:StreetName>
                      <com:Apartment>{$address['apartment']}</com:Apartment>
                   </com:CustomerAddressInfo>
+
                   <com:CustomerContactInfo>
                      <com:NotificationMode>{$profile['notification_mode']}</com:NotificationMode>
                      <com:Email>{$email}</com:Email>
@@ -217,14 +223,9 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
             </com:SubBusiOrderlist>
             <com:SubBusiOrderlist>
                <com:BusinessCode>CO015</com:BusinessCode>
-               <!--You have a CHOICE of the next 2 items at this level-->
                <com:SubscriberInfo>
-                  <!--Optional:  0:Prepaid  1:Postpaid  3:Hybrid.-->
-                  <com:SubType>4</com:SubType>
                   <com:ServiceNumber>{$serviceNumber}</com:ServiceNumber>
-                  <!--Optional:  21：GSM 22：CDMA  3：ADSL  4：FIX  固话-->
                   <com:NetworkType>4</com:NetworkType>
-                  <!--Optional:  0:Prepaid  1:Postpaid  3:Hybrid.-->
                   <com:SubType>1</com:SubType>
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
@@ -240,19 +241,29 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:GreenFlag>1</com:GreenFlag>
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>
+
             <com:SubBusiOrderlist>
                <com:BusinessCode>CO015</com:BusinessCode>
-               <!--You have a CHOICE of the next 2 items at this level-->
                <com:SubscriberInfo>
-                  <!--Optional:  0:Prepaid  1:Postpaid  3:Hybrid.-->
                   <com:SubType>0</com:SubType>
                   <com:SubLanguage>{$profile['primary_language']}</com:SubLanguage>
+
 
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
                         <com:OfferingId>
                            <com:OfferingId>1457567289</com:OfferingId>
                         </com:OfferingId>
+                        <com:InstanceProperty>
+                           <com:PropertyCode>50135</com:PropertyCode>
+                           <com:PropertyType>1</com:PropertyType>
+                           <com:Value>2701DTU</com:Value>
+                        </com:InstanceProperty>
+                        <com:InstanceProperty>
+                           <com:PropertyCode>50134</com:PropertyCode>
+                           <com:PropertyType>1</com:PropertyType>
+                           <com:Value>2</com:Value>
+                        </com:InstanceProperty>
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
                   <com:SLAPriority>0</com:SLAPriority>
@@ -264,6 +275,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:GreenFlag>1</com:GreenFlag>
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>
+
             <com:ExternalOperid>9527</com:ExternalOperid>
             <com:ExternalOperName>helloworld</com:ExternalOperName>
             <com:InstallmentCompletedDate>{$data['completed_date']}</com:InstallmentCompletedDate>

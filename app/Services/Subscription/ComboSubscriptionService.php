@@ -39,11 +39,10 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       //   $data = $this->normalize($payload);
 
       $xml = $this->buildXml($payload);
-      \Log::info('Combo Subscription XML: ' . $xml);
       $response = $this->executeRequest($xml);
 
       $parsedResponse = $this->parseResponse($response, $payload);
-      \Log::info('Combo Subscription Parsed Response: ' . json_encode($parsedResponse));
+
       return $parsedResponse;
    }
 

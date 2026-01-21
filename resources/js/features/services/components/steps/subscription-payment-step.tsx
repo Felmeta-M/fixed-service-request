@@ -42,6 +42,7 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete, onLoadCo
         main_offer_id?: string;
         bandwidth?: string | null;
         service_number?: string | null;
+        fbb_service_number?: string | null;
         cable_length?: string | number | null;
         cable_type?: string | null;
         with_device?: boolean;
@@ -78,6 +79,7 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete, onLoadCo
               main_offer_id: surveyDetailQuery.data.data.main_offer_id,
               bandwidth: surveyDetailQuery.data.data.bandwidth,
               service_number: surveyDetailQuery.data.data.service_number,
+              fbb_service_number: surveyDetailQuery.data.data.fbb_service_number,
               cable_length: surveyDetailQuery.data.data.cable_length,
               cable_type: null,
               with_device: surveyDetailQuery.data.data.with_device,

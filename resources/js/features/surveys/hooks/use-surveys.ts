@@ -68,6 +68,7 @@ interface SurveyDetailResponse {
         with_device?: boolean;
         status?: string | number | null;
         service_number?: string | null;
+        fbb_service_number?: string | null;
         created_at?: string;
         updated_at?: string;
         payment?: {

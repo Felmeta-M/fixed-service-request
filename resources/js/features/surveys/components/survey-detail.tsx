@@ -42,6 +42,7 @@ type SurveyDetails = {
     customer_subscription_order_id?: string | null;
     main_offer_id?: string;
     service_number?: string | null;
+    fbb_service_number?: string | null;
     bandwidth?: string | null;
     cable_length?: string | number | null;
     cable_type?: string | null;
@@ -456,12 +457,33 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                             </span>
                         </div>
                         <Separator />
-                        <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Service Number</span>
-                            <span className="font-medium">
-                                {service_number || <span className="text-muted-foreground">Awaiting</span>}
-                            </span>
-                        </div>
+                        {/* For Combo services, show both Voice and FBB numbers */}
+                        {surveyDetails?.main_offer_id === COMBO_OFFER_ID ? (
+                            <>
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-muted-foreground">Voice Number</span>
+                                    <span className="flex items-center gap-2 font-medium">
+                                        <Phone className="h-4 w-4 text-violet-500" />
+                                        {service_number || <span className="text-muted-foreground">Awaiting</span>}
+                                    </span>
+                                </div>
+                                <Separator />
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-muted-foreground">FBB/Data Number</span>
+                                    <span className="flex items-center gap-2 font-medium">
+                                        <Wifi className="h-4 w-4 text-blue-500" />
+                                        {surveyDetails?.fbb_service_number || <span className="text-muted-foreground">Awaiting</span>}
+                                    </span>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex justify-between">
+                                <span className="text-sm text-muted-foreground">Service Number</span>
+                                <span className="font-medium">
+                                    {service_number || <span className="text-muted-foreground">Awaiting</span>}
+                                </span>
+                            </div>
+                        )}
                         <Separator />
                         <div className="flex justify-between">
                             <span className="text-sm text-muted-foreground">Bandwidth</span>

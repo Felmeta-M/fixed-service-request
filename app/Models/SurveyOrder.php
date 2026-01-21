@@ -41,6 +41,7 @@ class SurveyOrder extends Model
         'customer_subscription_order_id',
         'main_offer_id',
         'service_number',
+        'fbb_service_number',
         'survey_type',
         'telecom_region',
         'oper_type',

@@ -36,9 +36,14 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
 
    public function create(array $payload): array
    {
-      //   $data = $this->normalize($payload);
+      // Build XML and get the voice service number that was used
+      $xmlData = $this->buildXmlWithServiceNumber($payload);
+      $xml = $xmlData['xml'];
+      $voiceServiceNumber = $xmlData['voice_service_number'];
 
-      $xml = $this->buildXml($payload);
+      // Add voice service number to payload for use in parseResponse
+      $payload['voice_service_number'] = $voiceServiceNumber;
+
       $response = $this->executeRequest($xml);
 
       $parsedResponse = $this->parseResponse($response, $payload);
@@ -46,7 +51,14 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       return $parsedResponse;
    }
 
-   protected function buildXml(array $data)
+   /**
+    * Build XML with service number.
+    * Returns both XML and the voice service number for combo services.
+    *
+    * @param array $data
+    * @return array ['xml' => string, 'voice_service_number' => string]
+    */
+   protected function buildXmlWithServiceNumber(array $data): array
    {
       // Use shared helpers for customer data
       $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
@@ -55,11 +67,11 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       // Get config values
       $cfg = config('services.subscriber');
 
-      // Get service number
-      $serviceNumber = $this->queryAvailableNumberService
+      // Get voice service number (we provide this for voice subscription)
+      $voiceServiceNumber = $this->queryAvailableNumberService
          ->getAvailableNumberServices('1766044689199549668');
 
-      if (!$serviceNumber) {
+      if (!$voiceServiceNumber) {
          throw new \RuntimeException('Unable to reserve service number');
       }
 
@@ -70,7 +82,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
 
       $data['completed_date'] = $this->completedDate();
 
-      return <<<XML
+      $xml = <<<XML
   <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
    <soapenv:Header/>
    <soapenv:Body>
@@ -224,7 +236,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
             <com:SubBusiOrderlist>
                <com:BusinessCode>CO015</com:BusinessCode>
                <com:SubscriberInfo>
-                  <com:ServiceNumber>{$serviceNumber}</com:ServiceNumber>
+                  <com:ServiceNumber>{$voiceServiceNumber}</com:ServiceNumber>
                   <com:NetworkType>4</com:NetworkType>
                   <com:SubType>1</com:SubType>
                   <com:PrimaryOffering>
@@ -247,7 +259,6 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                <com:SubscriberInfo>
                   <com:SubType>0</com:SubType>
                   <com:SubLanguage>{$profile['primary_language']}</com:SubLanguage>
-
 
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
@@ -284,6 +295,11 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
    </soapenv:Body>
 </soapenv:Envelope>
 XML;
+
+      return [
+         'xml' => $xml,
+         'voice_service_number' => $voiceServiceNumber,
+      ];
    }
 
    /**
@@ -346,18 +362,65 @@ XML;
       /**
        * ✅ POST-SUCCESS BUSINESS LOGIC
        * Update survey order when subscription is successful
+       * 
+       * For Combo services:
+       * - service_number: Voice service number (we provided)
+       * - fbb_service_number: Data/FBB service number (BSS returns in FBBNUMBER)
        */
       if ($res['success'] && !empty($res['customer_busi_order_id'])) {
          try {
             $surveyOrderId = $data['survey_order_id'] ?? null;
+            $voiceServiceNumber = $data['voice_service_number'] ?? null;
+            $fbbServiceNumber = $res['extra_params']['FBBNUMBER'] ?? null;
 
             if ($surveyOrderId) {
-               $this->persistSubscription(
-                  $surveyOrderId,
-                  $res['customer_busi_order_id'],
-                  null, // Combo subscription doesn't update service_number here
-                  'combo'
-               );
+               // Update survey order with both service numbers
+               $updateData = [
+                  'status' => \App\Enums\FFDServiceProvisionStatus::Waiting->value,
+                  'subscribed_at' => now(),
+                  'customer_subscription_order_id' => $res['customer_busi_order_id'],
+               ];
+
+               // Voice service number (we provide for combo)
+               if ($voiceServiceNumber) {
+                  $updateData['service_number'] = $voiceServiceNumber;
+               }
+
+               // FBB/Data service number (BSS returns for combo)
+               if ($fbbServiceNumber) {
+                  $updateData['fbb_service_number'] = $fbbServiceNumber;
+               }
+
+               $updated = \App\Models\SurveyOrder::where('customer_survey_order_id', $surveyOrderId)
+                  ->update($updateData);
+
+               if ($updated) {
+                  AppLogger::api()->info('Survey order updated after combo subscription', [
+                     'survey_order_id' => $surveyOrderId,
+                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
+                     'voice_service_number' => $voiceServiceNumber,
+                     'fbb_service_number' => $fbbServiceNumber,
+                     'service_type' => 'combo',
+                  ]);
+               } else {
+                  AppLogger::api()->warning('Failed to update survey order after combo subscription', [
+                     'survey_order_id' => $surveyOrderId,
+                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
+                     'service_type' => 'combo',
+                  ]);
+               }
+
+               // Update payment table
+               try {
+                  \Illuminate\Support\Facades\DB::table('payments')
+                     ->where('customer_survey_order_id', $surveyOrderId)
+                     ->update(['customer_subscription_order_id' => $res['customer_busi_order_id']]);
+               } catch (\Throwable $e) {
+                  AppLogger::api()->warning('Failed to update payment after combo subscription', [
+                     'survey_order_id' => $surveyOrderId,
+                     'error' => $e->getMessage(),
+                  ]);
+               }
             }
          } catch (\Throwable $e) {
             AppLogger::api()->exception($e, 'Failed to update survey order after combo subscription', [

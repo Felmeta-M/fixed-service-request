@@ -29,8 +29,8 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
       $completedDate = $this->completedDate();
 
       // Use shared helpers for customer and contact info
-      $customerCode = $this->customerCode($data['customer_code'] ?? null);
-      $primaryContact = $this->getPrimaryContact($data);
+      $customerCode = $this->customerCode();
+      $primaryContact = $this->getPrimaryContact();
 
       // Default values
       $surveyType = $data['survey_type'] ?? 'EIC08';

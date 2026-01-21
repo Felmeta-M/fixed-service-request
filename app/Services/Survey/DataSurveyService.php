@@ -26,8 +26,8 @@ class DataSurveyService extends BaseSurveyService implements SurveyInterface
         $completedDate = $this->completedDate();
 
         // Use shared helpers for contact info
-        $primaryContact = $this->getPrimaryContact($data);
-        $customerCode = $this->customerCode($data['customer_code'] ?? null);
+        $primaryContact = $this->getPrimaryContact();
+        $customerCode = $this->customerCode();
 
         $bandwidth = $data['bandwidth'] ? $this->parseBandwidth($data['bandwidth']) : '';
 

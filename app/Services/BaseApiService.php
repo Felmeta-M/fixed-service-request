@@ -354,7 +354,8 @@ abstract class BaseApiService
             try {
                 if ($response->failed()) {
                     $this->logError($response);
-                    if ($onError) $onError($response);
+                    if ($onError)
+                        $onError($response);
                     continue;
                 }
 
@@ -362,7 +363,8 @@ abstract class BaseApiService
                 $onSuccess($parsed);
             } catch (\Throwable $e) {
                 AppLogger::api()->exception($e, 'Async request exception');
-                if ($onError) $onError($e);
+                if ($onError)
+                    $onError($e);
             }
         }
     }

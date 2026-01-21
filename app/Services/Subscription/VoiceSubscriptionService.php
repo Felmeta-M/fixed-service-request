@@ -72,6 +72,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
       $cfg = config('services.subscriber');
 
       // Get dynamic customer profile, address, and BSS classification from logged-in user
+      $customerCode = $this->customerCode();
       $profile = $this->getCustomerProfile();
       $address = $this->getCustomerAddress();
       $bss = $this->getBssClassification();
@@ -170,7 +171,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
          <ser:CreateNewSubscriberReqBody>
             <com:CustomerBusiOrder>
                <com:CustomerSurveyOrderId>{$data['survey_order_id']}</com:CustomerSurveyOrderId>
-               <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
+               <com:CustomerCode>{$customerCode}</com:CustomerCode>
 
                <com:CustomerInfo>
                   <com:CustomerType>{$bss['customer_type']}</com:CustomerType>

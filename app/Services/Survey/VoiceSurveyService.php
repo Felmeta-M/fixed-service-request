@@ -41,8 +41,8 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
         $completedDate = $this->completedDate();
 
         // Use shared helpers for contact info
-        $primaryContact = $this->getPrimaryContact($data);
-        $customerCode = $this->customerCode($data['customer_code'] ?? null);
+        $primaryContact = $this->getPrimaryContact();
+        $customerCode = $this->customerCode();
 
         $houseNo = $data['survey_address_info']['house_no'] ?? CustomerContext::houseNo('');
 

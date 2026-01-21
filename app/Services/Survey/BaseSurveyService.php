@@ -27,7 +27,8 @@ abstract class BaseSurveyService extends BaseApiService
         protected readonly PaymentService $payment_service,
         protected readonly QueryAvailableNumberService $queryAvailableNumberService,
         protected readonly ReserveNumberService $reserveNumberService,
-    ) {}
+    ) {
+    }
 
     protected function endpoint(): string
     {
@@ -99,13 +100,13 @@ abstract class BaseSurveyService extends BaseApiService
     ): void {
 
         $serviceNumber = $data['service_number'] ?? $this->serviceNumber ?? null;
-        
+
         // Convert bandwidth to KB for consistent storage (BSS returns KB format)
         $bandwidthKb = null;
         if (!empty($data['bandwidth'])) {
             $bandwidthKb = $this->parseBandwidth($data['bandwidth']);
         }
-        
+
         DB::transaction(function () use ($surveyOrderId, $data, $resource, $serviceNumber, $bandwidthKb) {
             $survey = SurveyOrder::create([
                 ...$data,

@@ -1082,7 +1082,7 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                 disabled={true}
                             />
                         </div>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <FormInput
                                 label="Identification Number"
                                 id="identification_number"
@@ -1109,7 +1109,7 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                                 error={formErrors.identification_type}
                                 disabled={true}
                             />
-                        </div>
+                        </div> */}
                     </CardContent>
                 </Card>
             )}

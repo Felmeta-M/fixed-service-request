@@ -173,11 +173,12 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                      </com:ContactPersonInfo>
                   </com:CustomerContactPersonInfoList>
                </com:CustomerInfo>
+               
                <com:AccountInfo>
                   <com:PaymentType>1</com:PaymentType>
                   <com:BillCycle>{$profile['bill_cycle']}</com:BillCycle>
                   <com:InitialCredit>{$profile['initial_credit']}</com:InitialCredit>
-                  <com:ethioZoneOrRegion>{$address['region']}</com:ethioZoneOrRegion>
+                  <com:ethioZoneOrRegion>{$address['ethio_zone']}</com:ethioZoneOrRegion>
                   <com:CollectionCenter>{$profile['collection_center']}</com:CollectionCenter>
                   <com:Language>{$profile['primary_language']}</com:Language>
                   <com:EnterpriseCustomerName>{$profile['enterprise_customer_name']}</com:EnterpriseCustomerName>

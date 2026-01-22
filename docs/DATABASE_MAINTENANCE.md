@@ -98,6 +98,12 @@ Run health checks:
 - No logical replication is configured in the application
 - Cleanup prevents unnecessary WAL retention and log noise
 
+**2026-01-22**: Restored PostgreSQL replication setup
+- Recreated logical replication slot `ffd` with pgoutput plugin
+- Recreated publication `ffd` for all tables
+- Replication is now active and ready for external consumers
+- Slot is configured for logical replication with publication `ffd`
+
 ## Best Practices
 
 1. **Regular Monitoring**: Check for replication slots monthly
@@ -138,3 +144,38 @@ Run health checks:
 2. Check replication lag: `SELECT * FROM pg_replication_slots;`
 3. Drop unused slots or fix replication consumers
 4. Consider adjusting `max_wal_size` if needed
+
+### Issue: Replication slot errors in logs (slot does not exist)
+
+**Symptoms**: 
+```
+ERROR: replication slot "ffd" does not exist
+STATEMENT: START_REPLICATION SLOT "ffd" LOGICAL ...
+```
+
+**Possible Causes**:
+- External service trying to connect to deleted replication slot
+- Publication exists but slot was removed
+- Misconfigured external replication consumer
+
+**Solution**:
+1. **If replication is not needed**: Drop the publication
+   ```sql
+   DROP PUBLICATION IF EXISTS <publication_name>;
+   ```
+
+2. **If replication is needed**: Recreate both publication and slot
+   ```sql
+   -- Create publication
+   CREATE PUBLICATION <name> FOR ALL TABLES;
+   
+   -- Create replication slot
+   SELECT pg_create_logical_replication_slot('<slot_name>', 'pgoutput');
+   ```
+
+3. **To stop external connection attempts**: 
+   - Identify the source IP from logs
+   - Restrict replication access in `pg_hba.conf` if not needed
+   - Or configure the external service to stop attempting connections
+
+**Note**: These errors are harmless log noise if replication is not being used. They don't affect database functionality.

@@ -8,12 +8,15 @@ services:
     env_file:
       - .env
     volumes:
-      - ./:/var/www
+      - ./storage:/var/www/storage
+      - ./bootstrap/cache:/var/www/bootstrap/cache
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      pgbouncer:
         condition: service_healthy
     networks:
       - app_net
@@ -23,7 +26,7 @@ services:
         max-size: "50m"
         max-file: "3"
 
-  scheduler:
+  scheduler: # this is used to run the scheduler
     build:
       context: .
       dockerfile: docker/php/Dockerfile
@@ -32,9 +35,18 @@ services:
     env_file:
       - .env
     volumes:
-      - ./:/var/www
+      - ./storage:/var/www/storage
+      - ./bootstrap/cache:/var/www/bootstrap/cache
+      - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini
     depends_on:
-      - app
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
     command: >
       sh -c "while true; do
         php artisan schedule:run --verbose --no-interaction;
@@ -42,29 +54,42 @@ services:
       done"
     networks:
       - app_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
-  # queue:
-  #   build:
-  #     context: .
-  #     dockerfile: docker/php/Dockerfile
-  #   container_name: ffd_queue
-  #   restart: always
-  #   env_file:
-  #     - .env
-  #   volumes:
-  #     - ./:/var/www
-  #   depends_on:
-  #     redis:
-  #       condition: service_healthy
-  #     postgres:
-  #       condition: service_healthy
-  #   command: >
-  #     php artisan queue:work redis
-  #     --sleep=3
-  #     --tries=3
-  #     --timeout=90
-  #   networks:
-  #     - app_net
+  queue: # this is used to run the queue worker
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: ffd_queue
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./storage:/var/www/storage
+      - ./bootstrap/cache:/var/www/bootstrap/cache
+      - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
+    command: >
+      php artisan queue:work --sleep=3 --tries=3 --timeout=90
+    networks:
+      - app_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
 
   nginx:
@@ -95,6 +120,51 @@ services:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sa -d ffd"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - app_net
+    shm_size: 8gb
+    deploy:
+      resources:
+        limits:
+          memory: 12g
+        reservations:
+          memory: 8g
+    command: >
+      postgres
+      -c shared_buffers=8GB
+      -c effective_cache_size=32GB
+      -c work_mem=32MB
+      -c maintenance_work_mem=1GB
+      -c wal_compression=on
+      -c random_page_cost=1.1
+      -c autovacuum_vacuum_scale_factor=0.05
+      -c autovacuum_analyze_scale_factor=0.02
+      -c max_connections=150
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: ffd_pgbouncer
+    restart: always
+    ports:
+      - "6432:6432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgres://sa:secret@ffd_pgsql:5432/ffd"
+    volumes:
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    healthcheck:
+      test: ["CMD-SHELL", "PGPASSWORD=secret psql -h localhost -p 6432 -U sa -d ffd -c 'SELECT 1' > /dev/null 2>&1 || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 5

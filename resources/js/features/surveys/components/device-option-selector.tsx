@@ -68,19 +68,6 @@ export function DeviceOptionSelector({
                 className="space-y-2"
                 disabled={disabled}
             >
-                {/* WITHOUT DEVICE */}
-                <label
-                    className={cn(
-                        'flex w-full cursor-pointer items-center gap-2 rounded-lg border p-2 transition sm:max-w-72',
-                        disabled ? 'cursor-not-allowed opacity-50' : '',
-                        displayValue === 'without'
-                            ? 'border-gray-300 ring-1 ring-primary'
-                            : 'border-border hover:border-muted-foreground/50',
-                    )}
-                >
-                    <RadioGroupItem value="without" disabled={disabled} />
-                    <span className="text-sm font-medium">Without Device</span>
-                </label>
 
                 {/* WITH DEVICE */}
                 <label
@@ -94,6 +81,19 @@ export function DeviceOptionSelector({
                 >
                     <RadioGroupItem value="with" disabled={disabled} />
                     <span className="text-sm font-medium">With Device</span>
+                </label>
+                {/* WITHOUT DEVICE */}
+                <label
+                    className={cn(
+                        'flex w-full cursor-pointer items-center gap-2 rounded-lg border p-2 transition sm:max-w-72',
+                        disabled ? 'cursor-not-allowed opacity-50' : '',
+                        displayValue === 'without'
+                            ? 'border-gray-300 ring-1 ring-primary'
+                            : 'border-border hover:border-muted-foreground/50',
+                    )}
+                >
+                    <RadioGroupItem value="without" disabled={disabled} />
+                    <span className="text-sm font-medium">Without Device</span>
                 </label>
             </RadioGroup>
 

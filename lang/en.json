@@ -92,6 +92,8 @@
     "sidebar.steps.service_info_desc": "Choose service configuration",
     "sidebar.steps.location_info": "Location Information",
     "sidebar.steps.location_info_desc": "Select location and check availability",
+    "sidebar.steps.device_info": "Device Information",
+    "sidebar.steps.device_info_desc": "Choose your device option",
     "sidebar.steps.review_submit": "Review & Submit",
     "sidebar.steps.review_submit_desc": "Verify details and submit request",
     "sidebar.steps.payment": "Payment / Subscribe",

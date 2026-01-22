@@ -92,6 +92,8 @@
     "sidebar.steps.service_info_desc": "Dooro nooca adeegga iyo qaabaynta",
     "sidebar.steps.location_info": "Macluumaadka Goobta",
     "sidebar.steps.location_info_desc": "Dooro goobta oo hubi helitaanka",
+    "sidebar.steps.device_info": "Doorashada Qalabka",
+    "sidebar.steps.device_info_desc": "Dooro ikhtiyaarka qalabkaaga",
     "sidebar.steps.review_submit": "Dib u Eeg & Dir",
     "sidebar.steps.review_submit_desc": "Xaqiiji faahfaahinta oo codsi dir",
     "sidebar.steps.payment": "Lacag-bixin / Isdiiwaangeli",

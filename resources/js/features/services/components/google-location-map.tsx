@@ -409,7 +409,7 @@ export function GoogleLocationMap({
                 const lat = parseFloat(rawLat.toFixed(6));
                 const lng = parseFloat(rawLng.toFixed(6));
 
-                console.log('📍 Locate Me - Current location obtained:', { 
+                console.log('📍 Get My Location - Current location obtained:', { 
                     raw: { lat: rawLat, lng: rawLng },
                     precise: { lat, lng }
                 });
@@ -537,8 +537,8 @@ export function GoogleLocationMap({
                     ) : (
                         <>
                             <MapPin className="h-4 w-4" />
-                            <span className="hidden sm:inline">Locate Me</span>
-                            <span className="sm:hidden">Locate Me</span>
+                            <span className="hidden sm:inline">Get My Location</span>
+                            <span className="sm:hidden">Get My Location</span>
                         </>
                     )}
                 </Button>

@@ -75,6 +75,13 @@ Route::middleware(['otp.auth'])->group(function () {
         ]);
     })->name('services.create');
 
+    Route::get('/services/resume/{customerSurveyOrderId}', function (string $customerSurveyOrderId) {
+        return Inertia::render('services/resume', [
+            'googleMapsApiKey' => config('services.google.google_api_key'),
+            'customerSurveyOrderId' => $customerSurveyOrderId,
+        ]);
+    })->name('services.resume');
+
     Route::get('/services/manual-create', function (Request $request) {
         $formData = null;
         if ($request->has('formData')) {

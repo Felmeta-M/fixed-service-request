@@ -13,7 +13,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import logo from '@/images/ethio_logo_full.png';
 import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
-import { CheckCircle, CreditCard, FileText, MapPin, RadioTower, ShieldQuestionIcon, Wifi } from 'lucide-react';
+import { CheckCircle, CreditCard, FileText, MapPin, RadioTower, RouterIcon, ShieldQuestionIcon, Wifi } from 'lucide-react';
 import { NavUser } from '@/components/nav/nav-user';
 
 interface AppSidebarProps {
@@ -43,6 +43,7 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps, ...props }: 
     const defaultCreateServiceSteps = [
         { name: t('sidebar.steps.service_info'), icon: Wifi },
         { name: t('sidebar.steps.location_info'), icon: MapPin },
+        { name: t('sidebar.steps.device_info'), icon: RouterIcon },
         { name: t('sidebar.steps.review_submit'), icon: FileText },
         { name: t('sidebar.steps.payment'), icon: CreditCard },
     ];
@@ -53,6 +54,7 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps, ...props }: 
         if (stepName === t('sidebar.steps.customer_info')) return t('sidebar.steps.customer_info_desc');
         if (stepName === t('sidebar.steps.service_info')) return t('sidebar.steps.service_info_desc');
         if (stepName === t('sidebar.steps.location_info')) return t('sidebar.steps.location_info_desc');
+        if (stepName === t('sidebar.steps.device_info')) return t('sidebar.steps.device_info_desc');
         if (stepName === t('sidebar.steps.review_submit')) return t('sidebar.steps.review_submit_desc');
         if (stepName === t('sidebar.steps.payment')) return t('sidebar.steps.payment_desc');
         return '';

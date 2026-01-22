@@ -3,7 +3,7 @@ import { SiteHeader } from '@/components/layout/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { usePage } from '@inertiajs/react';
-import { CreditCard, FileText, MapPin, User, Wifi } from 'lucide-react';
+import { CreditCard, FileText, MapPin, RouterIcon, User, Wifi } from 'lucide-react';
 import { ReactNode } from 'react';
 
 interface MainLayoutProps {
@@ -26,6 +26,7 @@ export default function MainLayout({ children, currentStep = 0, isNewCustomer = 
         ...(isNewCustomer ? [{ name: 'Customer Information', icon: User }] : []),
         { name: 'Service Information', icon: Wifi },
         { name: 'Location Information', icon: MapPin },
+        { name: 'Device Information', icon: RouterIcon },
         { name: 'Review & Submit', icon: FileText },
         { name: 'Payment / Subscribe', icon: CreditCard },
     ];

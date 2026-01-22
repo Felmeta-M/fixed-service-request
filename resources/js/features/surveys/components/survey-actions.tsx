@@ -1,6 +1,6 @@
 import { useCancelSurveyOrder, useChangePrimaryOffering, useCreateSubscription, useDeleteSurveyOrder } from '@/hooks/use-api-mutations';
 import { router, usePage } from '@inertiajs/react';
-import { ArrowDownToLineIcon, ArrowUpToLineIcon, Eye, X } from 'lucide-react';
+import { ArrowDownToLineIcon, ArrowUpToLineIcon, ArrowRight, Eye, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
@@ -60,6 +60,7 @@ type Survey = {
     offering_id?: string;
     customer_code?: string | number;
     external_operid?: string;
+    survey_is_manual?: boolean;
     payment?: {
         total_amount?: number | string;
         status?: string;
@@ -323,6 +324,23 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const isInternetOrCombo = survey.main_offer_id === INTERNET_OFFER_ID || survey.main_offer_id === COMBO_OFFER_ID;
     const canUpgradeDowngrade = canChangeOffer && isInternetOrCombo;
 
+    // Check if survey can be resumed (approved manual survey that needs device selection)
+    // A survey can be resumed if:
+    // 1. It's a manual survey (survey_is_manual = true)
+    // 2. Status is "Ready" or "2" (approved by admin)
+    // 3. can_pay or can_subscribe is true
+    const statusStr = String(survey.status ?? '');
+    const RESUMABLE_STATUSES = ['Ready', '2', 'Approved'];
+    const isResumableStatus = RESUMABLE_STATUSES.includes(statusStr);
+    const isManualSurvey = survey.survey_is_manual === true;
+    const canResume = isManualSurvey && isResumableStatus && (canPay || canSubscribe);
+
+    const handleResume = () => {
+        const surveyOrderId = survey.customer_survey_order_id;
+        if (!surveyOrderId) return;
+        router.visit(`/services/resume/${surveyOrderId}`);
+    };
+
     // Helper: Get primary order ID (customer_subscription_order_id for auto, customer_survey_order_id for manual)
     const getPrimaryOrderId = () => {
         return survey?.customer_subscription_order_id || survey?.customer_survey_order_id;
@@ -423,7 +441,16 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     return (
         <>
             <div className="flex items-center justify-end gap-2">
-                {canPay && (
+                {/* Continue button for resumable manual surveys (approved, needs device selection) */}
+                {canResume && (
+                    <Button onClick={handleResume} disabled={loading} className="gap-1 bg-et-green px-3 text-white hover:bg-et-green/90" size="sm">
+                        <ArrowRight className="h-3 w-3" />
+                        Continue
+                    </Button>
+                )}
+
+                {/* Pay button for auto surveys that can pay (not for resumable manual surveys) */}
+                {canPay && !canResume && (
                     <Button onClick={() => navigateToDetails('payment')} disabled={loading} className="gap-1 bg-primary px-4 text-white" size="sm">
                         {loading ? (
                             <>
@@ -436,7 +463,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                     </Button>
                 )}
 
-                {canSubscribe && (
+                {/* Subscribe button for auto surveys (not for resumable manual surveys) */}
+                {canSubscribe && !canResume && (
                     <Button onClick={onSubscribeClick} disabled={loading || isSubmitting} className="gap-1 bg-primary px-2 text-white" size="sm">
                         {isSubmitting || createSubscriptionMutation.isPending ? 'Subscribing...' : 'Subscribe'}
                     </Button>

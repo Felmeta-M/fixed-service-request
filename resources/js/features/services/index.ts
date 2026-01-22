@@ -2,6 +2,7 @@
 
 // Components
 export { ServiceCreationFlow } from './components/service-creation-flow';
+export { ServiceResumeFlow } from './components/service-resume-flow';
 export { ServiceList } from './components/service-list';
 export { CoverageAreaMap } from './components/coverage-area-map';
 export { GoogleLocationMap } from './components/google-location-map';

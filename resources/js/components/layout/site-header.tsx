@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Link, router } from '@inertiajs/react';
-import { ArrowLeft, FileText, LogOut, MapPin, Wifi } from 'lucide-react';
+import { ArrowLeft, FileText, LogOut, MapPin, RouterIcon, Wifi } from 'lucide-react';
 import { MobileStepIndicator } from '@/components/common/mobile-step-indicator';
 
 interface SiteHeaderProps {
@@ -15,6 +15,7 @@ interface SiteHeaderProps {
 const createServiceSteps = [
     { name: 'Service Information', icon: Wifi },
     { name: 'Location Information', icon: MapPin },
+    { name: 'Device Information', icon: RouterIcon },
     { name: 'Review & Submit', icon: FileText },
 ];
 

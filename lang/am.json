@@ -92,6 +92,8 @@
     "sidebar.steps.service_info_desc": "የአገልግሎት ዓይነት እና ውቅረት ይምረጡ",
     "sidebar.steps.location_info": "የአካባቢ መረጃ",
     "sidebar.steps.location_info_desc": "ቦታ ይምረጡ እና ተገኝነት ያረጋግጡ",
+    "sidebar.steps.device_info": "መሳሪያ መረጃ",
+    "sidebar.steps.device_info_desc": "የመሳሪያ አማራጭዎን ይምረጡ",
     "sidebar.steps.review_submit": "ይገምግሙ እና ያስገቡ",
     "sidebar.steps.review_submit_desc": "ዝርዝሮችን ያረጋግጡ እና ጥያቄ ያስገቡ",
     "sidebar.steps.payment": "ክፍያ / ምዝገባ",

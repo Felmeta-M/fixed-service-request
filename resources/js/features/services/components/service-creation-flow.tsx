@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
 import { CustomerCreationStep } from './steps/customer-creation-step';
+import { DeviceSelectionStep } from './steps/device-selection-step';
 import { LocationSetupStep } from './steps/location-setup-step';
 import { ManualSurveyStep } from './steps/manual-survey-step';
 import { ReviewSubmitStep } from './steps/review-submit-step';
@@ -233,7 +234,9 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     };
 
     const nextStep = () => {
-        const maxSteps = isNewCustomer ? 5 : 4;
+        // New step order: Service -> Location -> Device -> Review -> Payment
+        // Existing customer: 5 steps (0-4), New customer: 6 steps (0-5)
+        const maxSteps = isNewCustomer ? 6 : 5;
         if (currentStep < maxSteps) {
             onStepChange(currentStep + 1);
         }
@@ -250,34 +253,18 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
         switch (adjustedStep) {
             case 0: // Service Selection
-                const hasValidService = formData.serviceType && (!formData.serviceType.includes('1457567289') || formData.bandwidth);
-                const hasAcceptedTerms = formData.termsAccepted === true; // Terms acceptance is required
-
-                // Device selection validation
-                let hasDeviceSelection = true; // Default to true (no device needed)
-
-                // If device option hasn't been selected yet, disable next button
-                if (formData.withDevice === undefined) {
-                    hasDeviceSelection = false;
-                } else if (formData.withDevice === true) {
-                    // If "with device" is selected, must have selected device(s)
-                    if (formData.serviceType === '180427974') {
-                        // Combo service: need both internet and voice devices with IDs
-                        hasDeviceSelection = !!(
-                            formData.selectedDeviceInternet?.id &&
-                            formData.selectedDeviceVoice?.id
-                        );
-                    } else {
-                        // Single service (broadband or voice): need one device with ID
-                        hasDeviceSelection = !!(formData.selectedDevice?.id && formData.deviceId);
-                    }
-                }
-                // If withDevice === false, hasDeviceSelection remains true (no device needed)
-
-                return hasValidService && hasDeviceSelection && hasAcceptedTerms;
+                // Validate service type, bandwidth (for broadband/combo), and terms acceptance
+                const hasValidService = formData.serviceType && (
+                    formData.serviceType === '1207609454' || // Voice doesn't need bandwidth
+                    formData.bandwidth // Broadband and Combo need bandwidth
+                );
+                const hasAcceptedTerms = formData.termsAccepted === true;
+                return hasValidService && hasAcceptedTerms;
             case 1: // Location Setup
                 return formData.latitude !== 0 && formData.longitude !== 0 && formData.address;
-            case 2: // Review
+            case 2: // Device Selection (handled by step's own Next button)
+                return true;
+            case 3: // Review
                 return true;
             default:
                 return false;
@@ -310,9 +297,9 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         }
 
         switch (adjustedStep) {
-            case 0:
+            case 0: // Service Selection
                 return <ServiceSelectionStep formData={formData} onUpdate={updateFormData} hasActiveSurvey={hasActiveSurvey} />;
-            case 1:
+            case 1: // Location Setup
                 return (
                     <LocationSetupStep
                         formData={formData}
@@ -331,7 +318,16 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                         }}
                     />
                 );
-            case 2:
+            case 2: // Device Selection (NEW STEP)
+                return (
+                    <DeviceSelectionStep
+                        formData={formData}
+                        onUpdate={updateFormData}
+                        onNext={nextStep}
+                        onBack={prevStep}
+                    />
+                );
+            case 3: // Review & Submit
                 return (
                     <ReviewSubmitStep
                         formData={formData}
@@ -343,13 +339,13 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                         }}
                     />
                 );
-            case 3:
+            case 4: // Payment / Subscription
                 return (
                     <SubscriptionPaymentStep
                         surveyId={createdSurveyId}
                         onBack={() => {
                             setIsTransitioningToSubscription(false);
-                            onStepChange(isNewCustomer ? 3 : 2);
+                            onStepChange(isNewCustomer ? 4 : 3);
                         }}
                         onComplete={() => {
                             setIsTransitioningToSubscription(false);
@@ -377,6 +373,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
         return [
             ...baseTitles,
+            { title: 'Device Selection', description: 'Choose your device option' },
             { title: 'Review & Submit', description: 'Verify details and submit your request' },
             { title: 'Payment / Subscribe', description: 'Review charges and proceed to pay or subscribe' },
         ];
@@ -386,7 +383,8 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
     const totalSteps = stepTitles.length;
     const isLastStep = currentStep === totalSteps - 1;
-    // Hide navigation for CustomerCreation (0 if new), Manual Step, and Review (2 adjusted)
+    // Hide navigation for CustomerCreation (0 if new), Manual Step, Device Selection (2), Review (3), and Payment (4)
+    // These steps have their own navigation buttons
     const showNavigation = !(isNewCustomer && currentStep === 0) && !shouldShowManualStep && adjustedStep < 2;
 
     return (

@@ -1,5 +1,4 @@
 import { BandwidthSelector } from '@/features/surveys/components/bandwidth-selector';
-import { DeviceOptionSelector } from '@/features/surveys/components/device-option-selector';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useBandwidthOptions } from '@/hooks/use-bandwidth-options';
@@ -142,62 +141,6 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                         onBandwidthChange={handleBandwidthChange}
                     />
                 </div>
-            )}
-
-            {/* Device selection only available for Internet and Combo services */}
-            {(formData.serviceType === '1457567289' || formData.serviceType === '180427974') && (
-                <DeviceOptionSelector
-                    value={formData.withDevice}
-                    serviceType={formData.serviceType}
-                    onChange={(val) => {
-                        const isCombo = formData.serviceType === '180427974';
-                        // If switching to "without device", clear all selected devices
-                        if (!val) {
-                            if (isCombo) {
-                                onUpdate({
-                                    withDevice: false,
-                                    selectedDeviceInternet: null,
-                                    selectedDeviceVoice: null,
-                                    deviceId: null,
-                                    deviceVoiceId: null,
-                                });
-                            } else {
-                                onUpdate({
-                                    withDevice: false,
-                                    selectedDevice: null,
-                                    deviceId: null,
-                                });
-                            }
-                        } else {
-                            onUpdate({ withDevice: true });
-                        }
-                    }}
-                    selectedDevice={formData.selectedDevice}
-                    selectedDeviceInternet={formData.selectedDeviceInternet}
-                    selectedDeviceVoice={formData.selectedDeviceVoice}
-                    onDeviceSelect={(device) => {
-                        // Single service device selection
-                        onUpdate({
-                            selectedDevice: device,
-                            deviceId: device.id,
-                        });
-                    }}
-                    onInternetDeviceSelect={(device) => {
-                        // Combo internet device selection
-                        onUpdate({
-                            selectedDeviceInternet: device,
-                            deviceId: device.id,
-                        });
-                    }}
-                    onVoiceDeviceSelect={formData.serviceType === '180427974' ? undefined : (device) => {
-                        // Voice device selection (not used for combo)
-                        onUpdate({
-                            selectedDeviceVoice: device,
-                            deviceVoiceId: device.id,
-                        });
-                    }}
-                    disabled={hasActiveSurvey}
-                />
             )}
 
             {/* Terms and Conditions Checkbox */}

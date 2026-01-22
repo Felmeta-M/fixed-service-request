@@ -92,6 +92,8 @@
     "sidebar.steps.service_info_desc": "ናይ ኣገልግሎት ዓይነትን ውቅርን ምረጽ",
     "sidebar.steps.location_info": "ናይ ቦታ ሓበሬታ",
     "sidebar.steps.location_info_desc": "ቦታ ምረጽ ከምኡውን ተረኽቦ ኣረጋግጽ",
+    "sidebar.steps.device_info": "ናይ መሳርሒ ምርጫ",
+    "sidebar.steps.device_info_desc": "ናይ መሳርሒ ኣማራጺ ምረጽ",
     "sidebar.steps.review_submit": "ገምግምን ኣእቱን",
     "sidebar.steps.review_submit_desc": "ዝርዝራት ኣረጋግጽን ሕቶ ኣእቱን",
     "sidebar.steps.payment": "ክፍሊት / ምዝገባ",

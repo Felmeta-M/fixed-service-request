@@ -92,6 +92,8 @@
     "sidebar.steps.service_info_desc": "Gosa tajaajilaa fi qindaa'ina filadhu",
     "sidebar.steps.location_info": "Odeeffannoo Bakka",
     "sidebar.steps.location_info_desc": "Bakka filadhu fi argama mirkaneessi",
+    "sidebar.steps.device_info": "Filannoo Meeshaa",
+    "sidebar.steps.device_info_desc": "Filannoo meeshaa kee filadhu",
     "sidebar.steps.review_submit": "Gamaaggami fi Galchi",
     "sidebar.steps.review_submit_desc": "Bal'ina mirkaneessi fi gaaffii galchi",
     "sidebar.steps.payment": "Kaffaltii / Galmoofamuu",

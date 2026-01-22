@@ -16,9 +16,9 @@ class EthioZonalArea extends Model
      * Only allow specific fields to prevent mass assignment attacks.
      */
     protected $fillable = [
-        'area_code',
-        'area_name',
-        'description',
+        'code',
+        'name',
+        'status',
     ];
 
     /**
@@ -30,4 +30,9 @@ class EthioZonalArea extends Model
         'updated_at',
         'deleted_at',
     ];
+
+    public function zones()
+    {
+        return $this->hasMany(related: Zone::class, foreignKey: 'zone_code', localKey: 'code');
+    }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -31,13 +33,18 @@ class Zone extends Model
         'deleted_at',
     ];
 
-    public function region()
+    public function region(): BelongsTo
     {
         return $this->belongsTo(Region::class);
     }
 
-    public function weredas()
+    public function weredas(): HasMany
     {
         return $this->hasMany(Wereda::class);
+    }
+
+    public function ethioZone(): BelongsTo
+    {
+        return $this->belongsTo(EthioZone::class);
     }
 }

@@ -37,9 +37,6 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
       ];
 
       // Values already have defaults from applyDefaults() in base class
-      $surveyType = $data['survey_type'];
-      $telecomRegion = $data['telecom_region'];
-      $operType = $data['oper_type'];
       $mainOfferId = $data['main_offer_id'] ?? $this->mainOfferId();
       $bandwidth = $this->parseBandwidth($data['bandwidth']);
 
@@ -101,9 +98,9 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
             </ser:RequestHeader>
             <ser:HandleSurveyOrderReqBody>
                 <com:CustomerCode>{$customerCode}</com:CustomerCode>
-                <com:SurveyType>{$surveyType}</com:SurveyType>
+                <com:SurveyType>{$data['survey_type']}</com:SurveyType>
                 <com:TelecomRegion>{$data['telecom_region']}</com:TelecomRegion>
-                <com:OperType>{$operType}</com:OperType>
+                <com:OperType>{$data['oper_type']}</com:OperType>
                 <com:MainOfferId>{$mainOfferId}</com:MainOfferId>
 
                 <com:SurveyAddressInfo>

@@ -60,10 +60,6 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
     */
    protected function buildXmlWithServiceNumber(array $data): array
    {
-      // Use shared helpers for customer data
-      $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
-      $email = $data['email'] ?? $this->customerEmail() ?? $this->generateEmail();
-
       // Get config values
       $cfg = config('services.subscriber');
 
@@ -95,8 +91,11 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
          'survey_order_id' => $data['survey_order_id'] ?? null,
          'dept_id' => $depId,
       ]);
+            // Use shared helpers for customer data
+      $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
+      $email = $data['email'] ?? $this->customerEmail() ?? $this->generateEmail();
+
       // Get dynamic customer profile and address data
-      $customerCode = $this->customerCode();
       $profile = $this->getCustomerProfile();
       $address = $this->getCustomerAddress();
       $nameParts = CustomerContext::nameParts();
@@ -130,7 +129,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
          <ser:CreateNewSubscriberReqBody>
             <com:CustomerBusiOrder>
             <com:CustomerSurveyOrderId>{$data['survey_order_id']}</com:CustomerSurveyOrderId>
-            <com:CustomerCode>{$customerCode}</com:CustomerCode>
+            <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
                <com:CustomerInfo>
                <com:SubLanguage>{$profile['primary_language']}</com:SubLanguage>
                   <com:IVRLanguage>{$profile['primary_language']}</com:IVRLanguage>

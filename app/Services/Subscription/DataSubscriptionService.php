@@ -94,7 +94,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       $cfg['default_password'] = 'REDACTED_PASSWORD';
 
       // Get dynamic customer profile, address, and BSS classification from logged-in user
-      $customerCode = $this->customerCode();
+      $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
       $profile = $this->getCustomerProfile();
       $address = $this->getCustomerAddress();
       $bss = $this->getBssClassification();
@@ -155,7 +155,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          <ser:CreateNewSubscriberReqBody>
             <com:CustomerBusiOrder>
                <com:CustomerSurveyOrderId>{$data['survey_order_id']}</com:CustomerSurveyOrderId>
-               <com:CustomerCode>{$customerCode}</com:CustomerCode>
+               <com:CustomerCode>{$data['customer_code']}</com:CustomerCode>
                <com:CustomerInfo>
                   <com:CustomerType>{$bss['customer_type']}</com:CustomerType>
                   <com:CustomerCategory>{$bss['customer_category']}</com:CustomerCategory>

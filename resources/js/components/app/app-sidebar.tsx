@@ -8,13 +8,15 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    SidebarRail,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import { useTranslation } from '@/hooks/use-translation';
-import logo from '@/images/ethio_logo_full.png';
 import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
 import { CheckCircle, CreditCard, FileText, MapPin, RadioTower, RouterIcon, ShieldQuestionIcon, Wifi } from 'lucide-react';
 import { NavUser } from '@/components/nav/nav-user';
+import { LogoSwitcher } from './logo-switcher';
 
 interface AppSidebarProps {
     currentStep?: number;
@@ -26,6 +28,7 @@ interface AppSidebarProps {
 export function AppSidebar({ currentStep = 0, mode = 'list', steps, ...props }: AppSidebarProps) {
     const { url } = usePage();
     const { t } = useTranslation();
+    const { state } = useSidebar();
 
     const items = [
         {
@@ -67,85 +70,112 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps, ...props }: 
     const displayMode = mode === 'create' || url.startsWith('/services/create') ? 'create' : 'list';
 
     return (
-        <Sidebar collapsible="offcanvas" {...props}>
+        <Sidebar collapsible="icon" {...props}>
             <SidebarHeader>
-                <div className="flex p-2">
-                    <Link href={route('services')} className="cursor-pointer">
-                        <img src={logo} alt="Company Logo" className="h-10 w-auto" />
-                    </Link>
-                </div>
+                <LogoSwitcher />
             </SidebarHeader>
             <SidebarContent>
                 {displayMode === 'create' ? (
                     <SidebarGroup>
                         <SidebarGroupContent>
-                            <ol role="list" className="relative space-y-10 pt-2">
-                                {actualSteps.map((step, idx) => {
-                                    const status = idx < currentStep ? 'complete' : idx === currentStep ? 'current' : 'upcoming';
-                                    const isCompleted = status === 'complete';
-                                    const isCurrent = status === 'current';
-                                    const Icon = step.icon;
+                            {state === 'collapsed' ? (
+                                <SidebarMenu>
+                                    {actualSteps.map((step, idx) => {
+                                        const status = idx < currentStep ? 'complete' : idx === currentStep ? 'current' : 'upcoming';
+                                        const isCompleted = status === 'complete';
+                                        const isCurrent = status === 'current';
+                                        const Icon = step.icon;
 
-                                    return (
-                                        <li key={step.name} className="relative">
-                                            {/* Connecting line */}
-                                            {idx < actualSteps.length - 1 && (
-                                                <div
+                                        return (
+                                            <SidebarMenuItem key={step.name}>
+                                                <SidebarMenuButton
+                                                    tooltip={step.name}
+                                                    isActive={isCurrent}
                                                     className={cn(
-                                                        'absolute top-11 left-7 h-10 w-0.5 -translate-y-1',
-                                                        isCompleted ? 'bg-primary' : 'bg-gray-200',
-                                                    )}
-                                                    aria-hidden="true"
-                                                />
-                                            )}
-
-                                            <div className="relative flex items-center gap-2 pl-2">
-                                                {/* Step number/icon */}
-                                                <div
-                                                    className={cn(
-                                                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition-all duration-200',
-                                                        isCompleted
-                                                            ? 'border-primary bg-primary text-white shadow-sm'
-                                                            : isCurrent
-                                                              ? 'border-primary text-primary shadow-sm'
-                                                              : 'border-gray-300 bg-white text-gray-400',
+                                                        isCompleted && 'bg-primary text-primary-foreground',
+                                                        isCurrent && 'bg-primary/10 text-primary',
                                                     )}
                                                 >
                                                     {isCompleted ? (
-                                                        <CheckCircle className="h-5 w-5" />
+                                                        <CheckCircle className="h-4 w-4" />
                                                     ) : (
-                                                        <Icon className={cn('h-4 w-4', isCurrent ? 'text-primary' : 'text-gray-400')} />
+                                                        <Icon className="h-4 w-4" />
                                                     )}
-                                                </div>
+                                                    <span className="sr-only">{step.name}</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                        );
+                                    })}
+                                </SidebarMenu>
+                            ) : (
+                                <ol role="list" className="relative space-y-10 pt-2">
+                                    {actualSteps.map((step, idx) => {
+                                        const status = idx < currentStep ? 'complete' : idx === currentStep ? 'current' : 'upcoming';
+                                        const isCompleted = status === 'complete';
+                                        const isCurrent = status === 'current';
+                                        const Icon = step.icon;
 
-                                                {/* Step content */}
-                                                <div className="flex min-w-0 flex-1 flex-col pt-1">
-                                                    <span
+                                        return (
+                                            <li key={step.name} className="relative">
+                                                {/* Connecting line */}
+                                                {idx < actualSteps.length - 1 && (
+                                                    <div
                                                         className={cn(
-                                                            'text-sm font-medium transition-colors',
+                                                            'absolute top-11 left-7 h-10 w-0.5 -translate-y-1',
+                                                            isCompleted ? 'bg-primary' : 'bg-gray-200',
+                                                        )}
+                                                        aria-hidden="true"
+                                                    />
+                                                )}
+
+                                                <div className="relative flex items-center gap-2 pl-2">
+                                                    {/* Step number/icon */}
+                                                    <div
+                                                        className={cn(
+                                                            'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition-all duration-200',
                                                             isCompleted
-                                                                ? 'font-semibold text-primary'
+                                                                ? 'border-primary bg-primary text-white shadow-sm'
                                                                 : isCurrent
-                                                                  ? 'font-semibold text-gray-900'
-                                                                  : 'text-gray-500',
+                                                                  ? 'border-primary text-primary shadow-sm'
+                                                                  : 'border-gray-300 bg-white text-gray-400',
                                                         )}
                                                     >
-                                                        {step.name}
-                                                    </span>
-                                                    <span
-                                                        className={cn(
-                                                            'text-xs transition-colors',
-                                                            isCompleted ? 'text-primary/70' : isCurrent ? 'text-gray-500' : 'text-gray-400',
+                                                        {isCompleted ? (
+                                                            <CheckCircle className="h-5 w-5" />
+                                                        ) : (
+                                                            <Icon className={cn('h-4 w-4', isCurrent ? 'text-primary' : 'text-gray-400')} />
                                                         )}
-                                                    >
-                                                        {getStepDescription(step.name)}
-                                                    </span>
+                                                    </div>
+
+                                                    {/* Step content */}
+                                                    <div className="flex min-w-0 flex-1 flex-col pt-1">
+                                                        <span
+                                                            className={cn(
+                                                                'text-sm font-medium transition-colors',
+                                                                isCompleted
+                                                                    ? 'font-semibold text-primary'
+                                                                    : isCurrent
+                                                                      ? 'font-semibold text-gray-900'
+                                                                      : 'text-gray-500',
+                                                            )}
+                                                        >
+                                                            {step.name}
+                                                        </span>
+                                                        <span
+                                                            className={cn(
+                                                                'text-xs transition-colors',
+                                                                isCompleted ? 'text-primary/70' : isCurrent ? 'text-gray-500' : 'text-gray-400',
+                                                            )}
+                                                        >
+                                                            {getStepDescription(step.name)}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </li>
-                                    );
-                                })}
-                            </ol>
+                                            </li>
+                                        );
+                                    })}
+                                </ol>
+                            )}
                         </SidebarGroupContent>
                     </SidebarGroup>
                 ) : (
@@ -157,10 +187,10 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps, ...props }: 
                                     const isActive = isCurrentPath(item.url);
                                     return (
                                         <SidebarMenuItem key={item.title}>
-                                            <SidebarMenuButton asChild isActive={isActive}>
-                                                <Link href={item.url} className="flex items-center gap-3">
+                                            <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
+                                                <Link href={item.url}>
                                                     <item.icon className="h-4 w-4" />
-                                                    <span className="font-medium">{item.title}</span>
+                                                    <span>{item.title}</span>
                                                 </Link>
                                             </SidebarMenuButton>
                                         </SidebarMenuItem>
@@ -174,6 +204,7 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps, ...props }: 
             <SidebarFooter>
                 <NavUser />
             </SidebarFooter>
+            <SidebarRail />
         </Sidebar>
     );
 }

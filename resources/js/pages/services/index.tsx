@@ -292,10 +292,10 @@ export default function CustomerDashboard() {
 
     return (
         <MainLayout>
-            <div className="w-full space-y-6 px-4 py-2 lg:px-6">
+            <div className="w-full max-w-full overflow-x-hidden space-y-6 px-4 py-2 lg:px-6">
                 {/* Header Section */}
-                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-                    <div className="">
+                <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center min-w-0">
+                    <div className="min-w-0">
                         <h1 className="text-2xl font-bold tracking-tight">Services</h1>
                         <p className="text-muted-foreground">{loading ? 'Loading your services...' : `Managing your service requests.`}</p>
                     </div>
@@ -339,12 +339,12 @@ export default function CustomerDashboard() {
 
                 <div className="border-0 pl-0 shadow-none">
                     <div className="p-0">
-                        <div className="flex flex-col justify-between lg:flex-row lg:items-center">
-                            <div>
+                        <div className="flex flex-col justify-between lg:flex-row lg:items-center min-w-0">
+                            <div className="min-w-0">
                                 <CardTitle>Your Services</CardTitle>
                                 <CardDescription>{` Here are your fixed service requests`}</CardDescription>
                             </div>
-                            <div className="mt-4 flex items-center gap-2 lg:mt-0">
+                            <div className="mt-4 flex items-center gap-2 lg:mt-0 flex-shrink-0">
                                 <Input
                                     placeholder="Search services..."
                                     value={globalFilter}

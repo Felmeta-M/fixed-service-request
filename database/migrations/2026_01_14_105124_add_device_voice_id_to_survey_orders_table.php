@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('survey_orders', function (Blueprint $table) {
-            $table->uuid('device_voice_id')->nullable()->after('device_id')->comment('Voice device ID for combo services');
+            $table->uuid('device_voice_id')->nullable()->after('device_id')->comment('Voice device ID for combo services. For voice-only services, voice device is stored in device_id.');
             $table->foreign('device_voice_id')
                 ->references('id')
                 ->on('available_devices')

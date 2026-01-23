@@ -676,17 +676,17 @@ export function LocationSetupStep({
                         </div>
 
                         <AlertDialogDescription className="space-y-3 pt-2 text-left">
-                            <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
-                                <p className="text-sm leading-relaxed text-foreground">Dear Customer,</p>
+                            <div className="text-sm leading-relaxed text-muted-foreground">
+                                <p>Dear Customer,</p>
                             </div>
                             <p className="text-sm leading-relaxed text-muted-foreground">
                             Thank you for selecting your location on the map! We wanted to let you know that, at the moment, we can’t automatically set up service for your area because we couldn’t confirm available resources.
                             </p>
 
-                            <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
-                                <p className="text-sm leading-relaxed text-foreground">
+                            <div className="text-sm leading-relaxed text-muted-foreground">
+                        
                                 But don’t worry! You can still submit a manual request. Our team will take a closer look at your location, and if needed, we’ll conduct a manual survey. We’ll reach out to you soon to guide you through the next steps.
-                                </p>
+                               
                             </div>
 
                             <p className="text-xs text-muted-foreground">

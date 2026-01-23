@@ -113,7 +113,7 @@ export default function SurveyShowPage() {
                                     Try Again
                                 </Button>
                                 <Link href="/services">
-                                    <Button>Back to Services</Button>
+                                    <Button>Back</Button>
                                 </Link>
                             </div>
                         </CardContent>

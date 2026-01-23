@@ -66,7 +66,7 @@ export function ServiceList({ surveys, loading, error, onSurveyUpdate, globalFil
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full max-w-full overflow-x-hidden">
             <SurveyTable
                 surveys={surveys}
                 loading={loading}

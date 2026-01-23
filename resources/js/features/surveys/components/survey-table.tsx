@@ -260,10 +260,10 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
     }
 
     return (
-        <div className="w-full flex-col justify-start gap-6">
-            <div className="overflow-hidden rounded-lg bg-white shadow-sm">
-                <div className="overflow-x-auto">
-                    <Table className="min-w-[700px]">
+        <div className="w-full max-w-full flex flex-col justify-start gap-6">
+            <div className="overflow-hidden rounded-lg bg-white shadow-sm w-full">
+                <div className="overflow-x-auto w-full">
+                    <Table className="min-w-[700px] w-full">
                         <TableHeader className="bg-gray-50">
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id}>

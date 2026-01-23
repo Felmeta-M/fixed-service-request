@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useAvailableDevices, AvailableDevice } from '@/hooks/use-available-devices';
-import { CheckCircle, Loader2, Package, Wifi, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle, Loader2, Package, Wifi, Phone, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
 
 interface DeviceSelectorProps {
@@ -42,6 +42,10 @@ export function DeviceSelector({
     // Filter devices by type for combo
     const broadbandDevices = isCombo
         ? allDevices.filter((d: AvailableDevice) => d.device_type === 'broadband' || d.device_type === 'universal')
+        : [];
+    
+    const voiceDevices = isCombo
+        ? allDevices.filter((d: AvailableDevice) => d.device_type === 'voice' || d.device_type === 'universal')
         : [];
 
     // For single service, use all devices (already filtered by API)
@@ -173,11 +177,12 @@ export function DeviceSelector({
         );
     };
 
-    // Combo service - show only internet devices section
+    // Combo service - show both internet and voice devices sections
     if (isCombo) {
         const hasInternetDevices = broadbandDevices.length > 0;
+        const hasVoiceDevices = voiceDevices.length > 0;
 
-        if (!hasInternetDevices) {
+        if (!hasInternetDevices && !hasVoiceDevices) {
             return (
                 <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                     <p className="text-sm text-gray-600">No devices available at the moment.</p>
@@ -204,6 +209,29 @@ export function DeviceSelector({
                                     isSelected,
                                     () => onInternetDeviceSelect?.(device),
                                     'device-internet'
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* Voice/Phone Devices Section */}
+                {hasVoiceDevices && (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                            <Phone className="h-5 w-5 text-primary" />
+                            <Label className="text-base font-semibold">
+                                Voice/Phone Device <span className="text-red-500">*</span>
+                            </Label>
+                        </div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {voiceDevices.map((device: AvailableDevice) => {
+                                const isSelected = selectedDeviceVoiceId === device.id;
+                                return renderDeviceCard(
+                                    device,
+                                    isSelected,
+                                    () => onVoiceDeviceSelect?.(device),
+                                    'device-voice'
                                 );
                             })}
                         </div>

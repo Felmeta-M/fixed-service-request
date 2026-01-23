@@ -24,45 +24,6 @@ export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabl
     const isCombo = formData.serviceType === '180427974';
     const isVoiceOnly = formData.serviceType === '1207609454';
 
-    // Voice-only services don't need device selection
-    if (isVoiceOnly) {
-        // Auto-set without device for voice services and proceed
-        if (formData.withDevice === undefined) {
-            onUpdate({ withDevice: false });
-        }
-        return (
-            <div className="space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <RouterIcon className="h-5 w-5 text-primary" />
-                            Device Information
-                        </CardTitle>
-                        <CardDescription>
-                            Device selection is not available for Voice-only services.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-sm text-muted-foreground">
-                            Voice services do not require a device. You can proceed to the next step.
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <div className="flex justify-between pt-4">
-                    <Button variant="outline" onClick={onBack} disabled={disabled} className="flex items-center gap-2">
-                        <ArrowLeft className="h-4 w-4" />
-                        Back
-                    </Button>
-                    <Button onClick={onNext} disabled={disabled} className="flex items-center gap-2 bg-primary hover:bg-primary/90">
-                        Next
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
     // Check if device selection is valid for proceeding
     const canProceed = () => {
         // Device option must be selected
@@ -77,11 +38,17 @@ export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabl
 
         // If "with device", must have selected device(s)
         if (isCombo) {
-            // Combo service: need internet device with ID
-            return !!(formData.selectedDeviceInternet?.id);
+            // Combo service: need both internet and voice devices with IDs
+            return !!(formData.selectedDeviceInternet?.id && formData.selectedDeviceVoice?.id && formData.deviceId && formData.deviceVoiceId);
         } else {
-            // Single service (broadband): need one device with ID
-            return !!(formData.selectedDevice?.id && formData.deviceId);
+            // Single service (broadband or voice): need one device with ID
+            if (isVoiceOnly) {
+                // Voice service: need voice device with ID
+                return !!(formData.selectedDeviceVoice?.id && formData.deviceVoiceId);
+            } else {
+                // Broadband service: need device with ID
+                return !!(formData.selectedDevice?.id && formData.deviceId);
+            }
         }
     };
 
@@ -94,6 +61,12 @@ export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabl
                     selectedDeviceInternet: null,
                     selectedDeviceVoice: null,
                     deviceId: null,
+                    deviceVoiceId: null,
+                });
+            } else if (isVoiceOnly) {
+                onUpdate({
+                    withDevice: false,
+                    selectedDeviceVoice: null,
                     deviceVoiceId: null,
                 });
             } else {
@@ -146,12 +119,12 @@ export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabl
                         value={formData.withDevice}
                         serviceType={formData.serviceType}
                         onChange={handleDeviceOptionChange}
-                        selectedDevice={formData.selectedDevice}
+                        selectedDevice={isVoiceOnly ? null : formData.selectedDevice}
                         selectedDeviceInternet={formData.selectedDeviceInternet}
                         selectedDeviceVoice={formData.selectedDeviceVoice}
-                        onDeviceSelect={handleDeviceSelect}
+                        onDeviceSelect={isVoiceOnly ? undefined : handleDeviceSelect}
                         onInternetDeviceSelect={handleInternetDeviceSelect}
-                        onVoiceDeviceSelect={isCombo ? undefined : handleVoiceDeviceSelect}
+                        onVoiceDeviceSelect={handleVoiceDeviceSelect}
                         disabled={disabled}
                     />
                 </CardContent>

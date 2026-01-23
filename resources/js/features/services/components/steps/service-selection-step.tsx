@@ -57,21 +57,9 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
     const handleServiceSelect = (serviceId: string) => {
         if (hasActiveSurvey) return; // Prevent selection if there's an active survey
         
-        // Clear device data when switching to Voice service (no device option for Voice)
-        const isVoiceService = serviceId === '1207609454';
-        if (isVoiceService) {
-            onUpdate({ 
-                serviceType: serviceId,
-                withDevice: false,
-                selectedDevice: null,
-                selectedDeviceInternet: null,
-                selectedDeviceVoice: null,
-                deviceId: null,
-                deviceVoiceId: null,
-            });
-        } else {
-            onUpdate({ serviceType: serviceId });
-        }
+        // Update service type without clearing device data
+        // Voice services now support device selection
+        onUpdate({ serviceType: serviceId });
     };
 
     const handleBandwidthChange = (value: string, numericValue: number, type: string) => {

@@ -145,7 +145,7 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
                                 Try Again
                             </Button>
                             <Link href={route('services')}>
-                                <Button variant="outline">Back to Services</Button>
+                                <Button variant="outline">Back</Button>
                             </Link>
                         </div>
                     </CardContent>
@@ -172,7 +172,7 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
                         </div>
                         <div className="mt-6">
                             <Link href={route('services')}>
-                                <Button variant="outline">Back to Services</Button>
+                                <Button variant="outline">Back</Button>
                             </Link>
                         </div>
                     </CardContent>

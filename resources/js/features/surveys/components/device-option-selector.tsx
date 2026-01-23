@@ -37,6 +37,7 @@ export function DeviceOptionSelector({
     // When explicitly set, use the corresponding value
     const displayValue = value === undefined ? '' : value ? 'with' : 'without';
     const isCombo = serviceType === '180427974';
+    const isVoiceOnly = serviceType === '1207609454';
 
     const handleDeviceSelect = (device: AvailableDevice) => {
         if (onDeviceSelect) {
@@ -116,12 +117,12 @@ export function DeviceOptionSelector({
                 <div className="mt-4">
                     <DeviceSelector
                         serviceType={serviceType}
-                        selectedDeviceId={selectedDevice?.id}
+                        selectedDeviceId={isVoiceOnly ? selectedDeviceVoice?.id : selectedDevice?.id}
                         selectedDeviceInternetId={selectedDeviceInternet?.id}
-                        selectedDeviceVoiceId={isCombo ? undefined : selectedDeviceVoice?.id}
-                        onDeviceSelect={handleDeviceSelect}
+                        selectedDeviceVoiceId={isCombo ? selectedDeviceVoice?.id : (isVoiceOnly ? selectedDeviceVoice?.id : undefined)}
+                        onDeviceSelect={isVoiceOnly ? handleVoiceDeviceSelect : handleDeviceSelect}
                         onInternetDeviceSelect={handleInternetDeviceSelect}
-                        onVoiceDeviceSelect={isCombo ? undefined : handleVoiceDeviceSelect}
+                        onVoiceDeviceSelect={isCombo ? handleVoiceDeviceSelect : (isVoiceOnly ? handleVoiceDeviceSelect : undefined)}
                         disabled={disabled}
                     />
                 </div>

@@ -156,8 +156,14 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
             // OPTIONAL - Only send if different from defaults
             ...(formData.bandwidth && { bandwidth: formData.bandwidth }),
             ...(formData.withDevice !== undefined && { with_device: formData.withDevice }),
-            ...(formData.deviceId && { device_id: formData.deviceId }),
-            ...(formData.serviceType !== '180427974' && formData.deviceVoiceId && { device_voice_id: formData.deviceVoiceId }),
+            // Device handling:
+            // - Voice-only (1207609454): use device_id from deviceVoiceId
+            // - Broadband (1457567289): use device_id from deviceId
+            // - Combo (180427974): use device_id for internet, device_voice_id for voice
+            ...(formData.serviceType === '1207609454' && formData.deviceVoiceId && { device_id: formData.deviceVoiceId }),
+            ...(formData.serviceType === '1457567289' && formData.deviceId && { device_id: formData.deviceId }),
+            ...(formData.serviceType === '180427974' && formData.deviceId && { device_id: formData.deviceId }),
+            ...(formData.serviceType === '180427974' && formData.deviceVoiceId && { device_voice_id: formData.deviceVoiceId }),
             
             // Contact - only send if user provided custom values
             ...(formData.contactPerson && { contact_person: formData.contactPerson }),

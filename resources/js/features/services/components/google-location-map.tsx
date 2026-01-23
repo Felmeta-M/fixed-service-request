@@ -554,7 +554,7 @@ export function GoogleLocationMap({
                     >
                         <Layers className="h-4 w-4" />
                         <span className="hidden sm:inline">
-                            {isCoverageVisible ? 'Hide Coverage' : 'Show Coverage'}
+                            {isCoverageVisible ? 'Hide Coverage' : 'Show Fiber Coverage'}
                         </span>
                     </Button>
                 )}

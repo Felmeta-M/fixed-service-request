@@ -631,7 +631,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
 
                                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
                                     <Link href="/services">
-                                        <Button variant="outline" className="w-full sm:w-auto">Back to List</Button>
+                                        <Button variant="outline" className="w-full sm:w-auto">Back</Button>
                                     </Link>
 
                                     {canSubscribe && (
@@ -734,7 +734,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                     <Link href="/services">
                         <Button variant="outline" className="gap-2">
                             <ArrowLeft className="h-4 w-4" />
-                            Back to Services
+                            Back
                         </Button>
                     </Link>
                 </div>

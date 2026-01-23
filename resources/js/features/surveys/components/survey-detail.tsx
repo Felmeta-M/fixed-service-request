@@ -466,22 +466,26 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                 </span>
                             </div>
                         )}
-                        <Separator />
-                        <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Bandwidth</span>
-                            <span className="flex items-center gap-2 font-medium">
-                                <Gauge className="h-4 w-4 text-muted-foreground" />
-                                {bandwidthDisplay || <span className="text-muted-foreground">Not available</span>}
-                            </span>
-                        </div>
+                        {/* Only show bandwidth for Internet and Combo services (not Voice) */}
+                        {(surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID) && (
+                            <>
+                                <Separator />
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-muted-foreground">Bandwidth</span>
+                                    <span className="flex items-center gap-2 font-medium">
+                                        <Gauge className="h-4 w-4 text-muted-foreground" />
+                                        {bandwidthDisplay || <span className="text-muted-foreground">Not available</span>}
+                                    </span>
+                                </div>
+                            </>
+                        )}
                         <Separator />
                         <div className="flex justify-between">
                             <span className="text-sm text-muted-foreground">Device</span>
-                            <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-xs font-medium ${
-                                surveyDetails?.with_device 
-                                    ? 'bg-emerald-100 text-emerald-700' 
+                            <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-xs font-medium ${surveyDetails?.with_device
+                                    ? 'bg-emerald-100 text-emerald-700'
                                     : 'bg-gray-100 text-gray-600'
-                            }`}>
+                                }`}>
                                 {surveyDetails?.with_device ? (
                                     <>
                                         <Package className="h-3 w-3" />
@@ -496,39 +500,39 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                 </Card>
 
                 {/* Internet Credentials Card - Only for Data and Combo services after subscription */}
-                {(surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID) && 
-                 surveyDetails?.internet_account && (
-                    <Card className="border-none shadow-xs bg-gradient-to-br from-blue-50 to-cyan-50">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                <Wifi className="h-4 w-4 text-blue-600" />
-                                Internet Credentials
-                                <Badge variant="outline" className="ml-2 text-xs bg-white">For Device Config</Badge>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Username</span>
-                                <span className="font-mono font-medium text-blue-700 bg-white px-2 py-1 rounded">
-                                    {surveyDetails.internet_account}
-                                </span>
-                            </div>
-                            <Separator />
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted-foreground">Password</span>
-                                <span className="font-mono font-medium text-blue-700 bg-white px-2 py-1 rounded">
-                                    {surveyDetails.internet_password || '••••••••'}
-                                </span>
-                            </div>
-                            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                <p className="text-xs text-amber-800">
-                                    <strong>Important:</strong> Use these credentials to configure your internet device/router. 
-                                    Keep them secure and do not share with others.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
+                {(surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID) &&
+                    surveyDetails?.internet_account && (
+                        <Card className="border-none shadow-xs bg-gradient-to-br from-blue-50 to-cyan-50">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <Wifi className="h-4 w-4 text-blue-600" />
+                                    Internet Credentials
+                                    <Badge variant="outline" className="ml-2 text-xs bg-white">For Device Config</Badge>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">Username</span>
+                                    <span className="font-mono font-medium text-blue-700 bg-white px-2 py-1 rounded">
+                                        {surveyDetails.internet_account}
+                                    </span>
+                                </div>
+                                <Separator />
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">Password</span>
+                                    <span className="font-mono font-medium text-blue-700 bg-white px-2 py-1 rounded">
+                                        {surveyDetails.internet_password || '••••••••'}
+                                    </span>
+                                </div>
+                                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                    <p className="text-xs text-amber-800">
+                                        <strong>Important:</strong> Use these credentials to configure your internet device/router.
+                                        Keep them secure and do not share with others.
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                 {/* Customer Information */}
                 <Card className="border-none shadow-xs">
@@ -576,8 +580,8 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                     Payment Summary
                                 </CardTitle>
                                 <div className="flex items-center gap-2">
-                                    <span className={`inline-flex items-center rounded-md px-3 py-1 text-sm font-semibold ${isPaid ? 'bg-et-green text-white' : 'bg-et-yellow text-gray-900'}`}>
-                                        {isPaid ? 'Paid' : 'Pending'}
+                                    <span className={`inline-flex items-center rounded-md px-3 py-1 text-sm font-semibold ${payment?.status === 'Paid' ? 'bg-et-green text-white' : 'bg-et-yellow text-gray-900'}`}>
+                                        {payment?.status || (isPaid ? 'Paid' : 'Pending')}
                                     </span>
                                     {payment?.merch_order_id && (
                                         <span className="rounded bg-muted px-2 py-1 text-xs font-medium">
@@ -784,7 +788,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                 onConfirm={handleCancel}
                 loading={cancelMutation.isPending}
                 title={isTerminateAction ? "Terminate Service" : "Cancel Survey Order"}
-                description={isTerminateAction 
+                description={isTerminateAction
                     ? "Are you sure you want to terminate this service? This action cannot be undone."
                     : "Are you sure you want to cancel this survey order? This action cannot be undone."
                 }

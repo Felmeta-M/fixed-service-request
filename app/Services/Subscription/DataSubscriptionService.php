@@ -10,12 +10,11 @@ use App\Services\Logging\AppLogger;
 use App\Services\QuerySubscriptionOrderStatusService;
 use App\Traits\InteractsWithSMSGateway;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
-   public function __construct(protected readonly GetCombiningService $get_combining_service)
-   {
-   }
+   public function __construct(protected readonly GetCombiningService $get_combining_service) {}
 
    protected function offeringId(): int
    {
@@ -67,7 +66,23 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       // Add with_device flag from survey order for conditional XML generation
       $data['with_device'] = $surveyOrder->with_device ?? false;
 
-      $xml = $this->buildXml($data);
+      try {
+         $xml = $this->buildXml($data);
+      } catch (\RuntimeException $e) {
+         // Return user-friendly error message for zone/area code lookup failures
+         AppLogger::api()->error('Failed to build XML due to missing zone/area information', [
+            'survey_order_id' => $data['survey_order_id'],
+            'error' => $e->getMessage(),
+         ]);
+
+         return [
+            'success' => false,
+            'ret_code' => 'VALIDATION_ERROR',
+            'ret_msg' => $e->getMessage(),
+            'customer_busi_order_id' => null,
+            'extra_params' => [],
+         ];
+      }
 
       // Add internet credentials to data for parseResponse
       $data['internet_account'] = $this->internetAccount;
@@ -96,26 +111,43 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
    protected function buildXml(array $data): string
    {
-      // Generate internet credentials using centralized helper
-      $credentials = \App\Helpers\InternetCredentialsHelper::generate(
-         $data['sms_no'] ?? null,  // Phone for pattern
-         $data['customer_code'] ?? null  // Customer code for pattern
-      );
-      $email = $credentials['username'];
-      $password = $credentials['password'];
-
-      // Store credentials for use in parseResponse (to save to local DB)
-      $this->internetAccount = $email;
-      $this->internetPassword = $password;
-
-      $cfg = config('services.subscriber');
-      $cfg['default_password'] = $password;
-
       // Get dynamic customer profile, address, and BSS classification from logged-in user
       $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
       $profile = $this->getCustomerProfile();
       $address = $this->getCustomerAddress();
       $bss = $this->getBssClassification();
+
+      // Generate unique email/username using customer name
+      // Sanitize customer name: lowercase, remove spaces and special characters
+      // Note: InternetAccount is limited to 20 chars max (ICCID field limit in BSS)
+      // Using @ethio.et (9 chars) gives us 11 chars for username
+      $customerName = $profile['name'] ?? 'customer';
+      $sanitizedName = preg_replace('/[^a-z0-9]/', '', strtolower($customerName));
+
+      // Use first 8 chars of name for personalization, then 3 random chars for uniqueness
+      $namePart = substr($sanitizedName, 0, 8); // Up to 8 chars from name
+      $randomSuffix = strtolower(Str::random(3)); // 3 random chars for uniqueness
+      $username = substr($namePart . $randomSuffix, 0, 11); // Max 11 chars total
+      $email = $username . '@ethio.et'; // 11 + 9 = 20 chars total
+
+      // Password for BSS (encoded) and customer (plain text)
+      // The BSS password is an encrypted/hashed value, not simple base64-encoded text
+      $passwordEncoded = \App\Helpers\InternetCredentialsHelper::getDefaultPassword();
+      $password = 'REDACTED_PASSWORD'; // Plain text password for customer SMS/DB
+
+      // Store credentials for use in parseResponse (to save to local DB and SMS)
+      $this->internetAccount = $email;
+      $this->internetPassword = $password; // Plain text for SMS/DB
+
+      $cfg = config('services.subscriber');
+
+      // Get dynamic zone_code for CustomerAddressInfo EthioZoneOrRegion
+      // This will throw an exception with a clear message if zone_code cannot be determined
+      $customerEthioZone = $this->getCustomerZoneCode();
+
+      // Get dynamic ethio_zone id for AccountInfo ethioZoneOrRegion
+      // This will throw an exception with a clear message if ethio_zone id cannot be determined
+      $accountEthioZone = $this->getAccountEthioZoneId($data['survey_order_id']);
 
       // Business defaults
       $data = array_merge($data, [
@@ -190,7 +222,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                   <com:PrimaryLanguage>{$profile['primary_language']}</com:PrimaryLanguage>
 
                   <com:CustomerAddressInfo>
-                     <com:EthioZoneOrRegion>{$address['ethio_zone']}</com:EthioZoneOrRegion>
+                     <com:EthioZoneOrRegion>{$customerEthioZone}</com:EthioZoneOrRegion>
                      <com:AdministrativeRegionOrCity>{$address['region']}</com:AdministrativeRegionOrCity>
                      <com:SubcityOrZone>{$address['zone']}</com:SubcityOrZone>
                      <com:WeredaOrTown>{$address['wereda']}</com:WeredaOrTown>
@@ -210,7 +242,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                <com:AccountInfo>
                   <com:PaymentType>1</com:PaymentType>
                   <com:InitialCredit>100</com:InitialCredit>
-                  <com:ethioZoneOrRegion>{$address['ethio_zone']}</com:ethioZoneOrRegion>
+                  <com:ethioZoneOrRegion>{$accountEthioZone}</com:ethioZoneOrRegion>
                   <com:CollectionCenter>10172</com:CollectionCenter>
                   <com:Language>{$profile['primary_language']}</com:Language>
                   <com:EnterpriseCustomerName>{$data['enterprise_name']}</com:EnterpriseCustomerName>
@@ -261,7 +293,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
                   <com:SLAPriority>6</com:SLAPriority>
                   <com:InternetAccount>{$email}</com:InternetAccount>
-                  <com:InternetPassword>{$cfg['default_password']}</com:InternetPassword>
+                  <com:InternetPassword>{$passwordEncoded}</com:InternetPassword>
                   <com:CallCenterAccess>994</com:CallCenterAccess>
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>
@@ -482,7 +514,7 @@ XML;
                // Don't fail the entire request - subscription was successful
             }
 
-            // Send SMS
+            // Send SMS with internet credentials
             if (
                !empty($data['sms_no']) &&
                InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])
@@ -493,10 +525,11 @@ XML;
                   $name = trim(explode(' ', $data['name'] ?? 'Customer')[0]);
 
                   $message = "Dear {$name}, thank you for choosing Ethio Telecom. "
-                     . "We are pleased to inform you that your subscription has been successfully created. "
-                     . "Your service number is {$serviceNo}. "
-                     . "For support or to submit a TT/complaint, please visit "
-                     . "https://fixedservices.ethiotelecom.et/services.";
+                     . "Your subscription has been successfully created. "
+                     . "Data Service Number: {$serviceNo}. "
+                     . "Internet Account: {$internetAccount}. "
+                     . "Password: {$internetPassword}. "
+                     . "For support, visit https://fixedservices.ethiotelecom.et/services.";
 
                   InteractsWithSMSGateway::sendSmsOnly($phone, $message);
                   AppLogger::api()->info('Data subscription SMS sent successfully', [
@@ -528,7 +561,6 @@ XML;
                'service_type' => 'data',
             ]);
          }
-
       } catch (\Throwable $e) {
          AppLogger::api()->exception($e, 'Unexpected error parsing data subscription response', [
             'survey_order_id' => $surveyOrderId,

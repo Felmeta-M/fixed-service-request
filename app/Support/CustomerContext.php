@@ -231,15 +231,15 @@ class CustomerContext
         $customer = self::customer();
 
         return [
-            'ethio_zone' => $overrides['ethio_zone'] ?? self::ethioZoneOrRegion('21'), //TODO: remove this after testing NAAZ
-            'region' => $overrides['region'] ?? self::region('3'),
-            'city' => $overrides['city'] ?? self::city('1'),
-            'zone' => $overrides['zone'] ?? self::zone('1'),
-            'wereda' => $overrides['wereda'] ?? self::wereda('10'),
-            'kebele' => $overrides['kebele'] ?? self::kebele('Kebele'),
-            'house_no' => $overrides['house_no'] ?? self::houseNo('1234'),
-            'street_name' => $overrides['street_name'] ?? ($customer?->street_name ?? 'StreetName'),
-            'apartment' => $overrides['apartment'] ?? ($customer?->apartment ?? 'Apartment'),
+            'ethio_zone' => $overrides['ethio_zone'] ?? null,
+            'region' => $overrides['region'] ?? null,
+            'city' => $overrides['city'] ?? null,
+            'zone' => $overrides['zone'] ?? null,
+            'wereda' => $overrides['wereda'] ?? null,
+            'kebele' => $overrides['kebele'] ?? null,
+            'house_no' => $overrides['house_no'] ?? null,
+            'street_name' => $overrides['street_name'] ?? null,
+            'apartment' => $overrides['apartment'] ?? null,
         ];
     }
 

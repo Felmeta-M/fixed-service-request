@@ -19,8 +19,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
    public function __construct(
       protected readonly QueryAvailableNumberService $queryAvailableNumberService,
       protected readonly ReserveNumberService $reserveNumberService,
-   ) {
-   }
+   ) {}
 
    protected function offeringId(): int
    {
@@ -45,7 +44,17 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
 
          $surveyOrderId = $data['survey_order_id'] ?? null;
 
-         $xml = $this->buildXml($data);
+         try {
+            $xml = $this->buildXml($data);
+         } catch (\RuntimeException $e) {
+            // Return user-friendly error message for zone/area code lookup failures
+            AppLogger::api()->error('Failed to build XML due to missing zone/area information', [
+               'survey_order_id' => $surveyOrderId,
+               'error' => $e->getMessage(),
+            ]);
+
+            return ApiResponse::error($e->getMessage());
+         }
 
          $response = $this->executeRequest($xml);
 
@@ -76,6 +85,14 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
       $profile = $this->getCustomerProfile();
       $address = $this->getCustomerAddress();
       $bss = $this->getBssClassification();
+
+      // Get dynamic zone_code for CustomerAddressInfo EthioZoneOrRegion
+      // This will throw an exception with a clear message if zone_code cannot be determined
+      $customerEthioZone = $this->getCustomerZoneCode();
+
+      // Get dynamic ethio_zone id for AccountInfo ethioZoneOrRegion
+      // This will throw an exception with a clear message if ethio_zone id cannot be determined
+      $accountEthioZone = $this->getAccountEthioZoneId($data['survey_order_id']);
 
       // Business defaults
       $data = array_merge($data, [
@@ -122,14 +139,14 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
                'survey_order_id' => $data['survey_order_id'] ?? null,
                'service_type' => 'voice',
             ]);
-            // Continue anyway - the subscription API might still work
-         } else {
-            AppLogger::api()->info('Service number released before subscription', [
-               'service_number' => $serviceNumber,
-               'survey_order_id' => $data['survey_order_id'] ?? null,
-               'service_type' => 'voice',
-            ]);
          }
+
+         // AppLogger::api()->info('Service number released before subscription', [
+         //    'service_number' => $serviceNumber,
+         //    'survey_order_id' => $data['survey_order_id'] ?? null,
+         //    'service_type' => 'voice',
+         // ]);
+
       } catch (\Throwable $e) {
          AppLogger::api()->exception($e, 'Exception while releasing service number before subscription', [
             'service_number' => $serviceNumber,
@@ -189,7 +206,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:PrimaryLanguage>{$profile['primary_language']}</com:PrimaryLanguage>
 
                   <com:CustomerAddressInfo>
-                     <com:EthioZoneOrRegion>{$address['ethio_zone']}</com:EthioZoneOrRegion>
+                     <com:EthioZoneOrRegion>{$customerEthioZone}</com:EthioZoneOrRegion>
                      <com:AdministrativeRegionOrCity>{$address['region']}</com:AdministrativeRegionOrCity>
                      <com:SubcityOrZone>{$address['zone']}</com:SubcityOrZone>
                      <com:WeredaOrTown>{$address['wereda']}</com:WeredaOrTown>
@@ -207,7 +224,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:PaymentType>1</com:PaymentType>
                   <com:BillCycle>01</com:BillCycle>
                   <com:InitialCredit>100</com:InitialCredit>
-                  <com:ethioZoneOrRegion>{$address['ethio_zone']}</com:ethioZoneOrRegion>
+                  <com:ethioZoneOrRegion>{$accountEthioZone}</com:ethioZoneOrRegion>
                   <com:CollectionCenter>10172</com:CollectionCenter>
                   <com:Language>{$profile['primary_language']}</com:Language>
                   <com:EnterpriseCustomerName>{$data['enterprise_name']}</com:EnterpriseCustomerName>
@@ -374,7 +391,6 @@ XML;
             'customer_busi_order_id' => $customerBusiOrderId,
             'service_number' => $this->serviceNumber,
          ], 'Subscription created successfully');
-
       } catch (\Throwable $e) {
          // Try to re-reserve the number on any unexpected error
          $this->reReserveNumberIfNeeded($data);

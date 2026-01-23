@@ -9,15 +9,16 @@ use App\Services\QueryAvailableNumberService;
 use App\Services\QuerySubscriptionOrderStatusService;
 use App\Services\ReserveNumberService;
 use App\Support\CustomerContext;
+use App\Traits\InteractsWithSMSGateway;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ComboSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
    public function __construct(
       protected readonly QueryAvailableNumberService $queryAvailableNumberService,
       protected readonly ReserveNumberService $reserveNumberService,
-   ) {
-   }
+   ) {}
 
    protected function offeringId(): int
    {
@@ -36,10 +37,26 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
 
    public function create(array $payload): array
    {
-      // Build XML and get the voice service number and internet credentials
-      $xmlData = $this->buildXmlWithServiceNumber($payload);
-      $xml = $xmlData['xml'];
-      $voiceServiceNumber = $xmlData['voice_service_number'];
+      try {
+         // Build XML and get the voice service number and internet credentials
+         $xmlData = $this->buildXmlWithServiceNumber($payload);
+         $xml = $xmlData['xml'];
+         $voiceServiceNumber = $xmlData['voice_service_number'];
+      } catch (\RuntimeException $e) {
+         // Return user-friendly error message for zone/area code lookup failures
+         AppLogger::api()->error('Failed to build XML due to missing zone/area information', [
+            'survey_order_id' => $payload['survey_order_id'] ?? null,
+            'error' => $e->getMessage(),
+         ]);
+
+         return [
+            'success' => false,
+            'ret_code' => 'VALIDATION_ERROR',
+            'ret_msg' => $e->getMessage(),
+            'customer_busi_order_id' => null,
+            'extra_params' => [],
+         ];
+      }
 
       // Add voice service number and internet credentials to payload for use in parseResponse
       $payload['voice_service_number'] = $voiceServiceNumber;
@@ -93,22 +110,42 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
          'survey_order_id' => $data['survey_order_id'] ?? null,
          'dept_id' => $depId,
       ]);
-            // Use shared helpers for customer data
+      // Use shared helpers for customer data
       $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
-      
-      // Generate internet credentials using centralized helper
-      $credentials = \App\Helpers\InternetCredentialsHelper::generate(
-         $data['sms_no'] ?? null,  // Phone for pattern
-         $data['customer_code']    // Customer code for pattern
-      );
-      $email = $credentials['username'];
-      $internetPassword = $credentials['password'];
 
       // Get dynamic customer profile and address data
       $profile = $this->getCustomerProfile();
       $address = $this->getCustomerAddress();
       $nameParts = CustomerContext::nameParts();
 
+      // Generate unique email/username using customer name
+      // Sanitize customer name: lowercase, remove spaces and special characters
+      // Note: InternetAccount is limited to 20 chars max (ICCID field limit in BSS)
+      // Using @ethio.et (9 chars) gives us 11 chars for username
+      $customerName = $profile['name'] ?? 'customer';
+      $sanitizedName = preg_replace('/[^a-z0-9]/', '', strtolower($customerName));
+
+      // Use first 8 chars of name for personalization, then 3 random chars for uniqueness
+      $namePart = substr($sanitizedName, 0, 8); // Up to 8 chars from name
+      $randomSuffix = strtolower(Str::random(3)); // 3 random chars for uniqueness
+      $username = substr($namePart . $randomSuffix, 0, 11); // Max 11 chars total
+      $email = $username . '@ethio.et'; // 11 + 9 = 20 chars total
+
+      // Password for BSS (encoded) and customer (plain text)
+      // The BSS password is an encrypted/hashed value, not simple base64-encoded text
+      $internetPasswordEncoded = \App\Helpers\InternetCredentialsHelper::getDefaultPassword();
+      $internetPassword = 'REDACTED_PASSWORD'; // Plain text password for customer SMS/DB
+
+      // Get dynamic zone_code for CustomerAddressInfo EthioZoneOrRegion
+      // This will throw an exception with a clear message if zone_code cannot be determined
+      $customerEthioZone = $this->getCustomerZoneCode();
+
+      // Get dynamic ethio_zone id for AccountInfo ethioZoneOrRegion
+      // This will throw an exception with a clear message if ethio_zone id cannot be determined
+      $accountEthioZone = $this->getAccountEthioZoneId($data['survey_order_id']);
+
+      // Store password in data array for XML template access
+      $data['internet_password'] = $internetPassword;
       $data['completed_date'] = $this->completedDate();
 
       $xml = <<<XML
@@ -168,7 +205,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:PromotionMessageFlag>2</com:PromotionMessageFlag>
 
                   <com:CustomerAddressInfo>
-                     <com:EthioZoneOrRegion>{$address['ethio_zone']}</com:EthioZoneOrRegion>
+                     <com:EthioZoneOrRegion>{$customerEthioZone}</com:EthioZoneOrRegion>
                      <com:AdministrativeRegionOrCity>{$address['region']}</com:AdministrativeRegionOrCity>
                      <com:SubcityOrZone>{$address['zone']}</com:SubcityOrZone>
                      <com:WeredaOrTown>{$address['wereda']}</com:WeredaOrTown>
@@ -206,7 +243,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:PaymentType>1</com:PaymentType>
                   <com:BillCycle>{$profile['bill_cycle']}</com:BillCycle>
                   <com:InitialCredit>{$profile['initial_credit']}</com:InitialCredit>
-                  <com:ethioZoneOrRegion>{$address['ethio_zone']}</com:ethioZoneOrRegion>
+                  <com:ethioZoneOrRegion>{$accountEthioZone}</com:ethioZoneOrRegion>
                   <com:CollectionCenter>{$profile['collection_center']}</com:CollectionCenter>
                   <com:Language>{$profile['primary_language']}</com:Language>
                   <com:EnterpriseCustomerName>{$profile['enterprise_customer_name']}</com:EnterpriseCustomerName>
@@ -309,7 +346,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   </com:PrimaryOffering>
                   <com:SLAPriority>0</com:SLAPriority>
                   <com:InternetAccount>{$email}</com:InternetAccount>
-                  <com:InternetPassword>{$internetPassword}</com:InternetPassword>
+                  <com:InternetPassword>{$internetPasswordEncoded}</com:InternetPassword>
                   <com:CallCenterAccess>980,894</com:CallCenterAccess>
                   <com:SubLanguage>2002</com:SubLanguage>
                   <com:IVRLanguage>2060</com:IVRLanguage>
@@ -431,7 +468,7 @@ XML;
             if ($surveyOrderId) {
                // Update survey order with service numbers and internet credentials
                $updateData = [
-                  'status' => \App\Enums\FFDServiceProvisionStatus::Waiting->value,
+                  'status' => FFDServiceProvisionStatus::Waiting->value,
                   'subscribed_at' => now(),
                   'customer_subscription_order_id' => $res['customer_busi_order_id'],
                ];
@@ -484,6 +521,51 @@ XML;
                      'survey_order_id' => $surveyOrderId,
                      'error' => $e->getMessage(),
                   ]);
+               }
+
+               // Send SMS with internet credentials
+               // Get SMS number from customer context or data
+               $smsNo = $data['sms_no'] ?? \App\Support\CustomerContext::phone();
+               if (
+                  !empty($smsNo) &&
+                  InteractsWithSMSGateway::ensurePhoneIsLocal($smsNo)
+               ) {
+                  $phone = $smsNo;
+
+                  try {
+                     $customerName = \App\Support\CustomerContext::name() ?? 'Customer';
+                     $name = trim(explode(' ', $customerName)[0] ?? 'Customer');
+
+                     $message = "Dear {$name}, thank you for choosing Ethio Telecom. "
+                        . "Your combo subscription has been successfully created. "
+                        . "Voice Service Number: {$voiceServiceNumber}. "
+                        . "Data Service Number: {$fbbServiceNumber}. "
+                        . "Internet Account: {$internetAccount}. "
+                        . "Password: {$internetPassword}. "
+                        . "For support, visit https://fixedservices.ethiotelecom.et/services.";
+
+                     InteractsWithSMSGateway::sendSmsOnly($phone, $message);
+                     AppLogger::api()->info('Combo subscription SMS sent successfully', [
+                        'phone' => substr($phone, -4), // Last 4 digits only
+                        'survey_order_id' => $surveyOrderId,
+                        'service_type' => 'combo',
+                     ]);
+                  } catch (\RuntimeException $e) {
+                     // Business-level failure (rate limit, gateway reject)
+                     AppLogger::api()->warning('Combo subscription SMS blocked or rejected', [
+                        'phone' => substr($phone, -4), // Last 4 digits only
+                        'reason' => $e->getMessage(),
+                        'survey_order_id' => $surveyOrderId,
+                        'service_type' => 'combo',
+                     ]);
+                  } catch (\Throwable $e) {
+                     // System-level failure
+                     AppLogger::api()->exception($e, 'Combo subscription SMS failed unexpectedly', [
+                        'phone' => substr($phone, -4), // Last 4 digits only
+                        'survey_order_id' => $surveyOrderId,
+                        'service_type' => 'combo',
+                     ]);
+                  }
                }
             }
          } catch (\Throwable $e) {

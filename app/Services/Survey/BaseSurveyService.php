@@ -27,8 +27,7 @@ abstract class BaseSurveyService extends BaseApiService
         protected readonly PaymentService $payment_service,
         protected readonly QueryAvailableNumberService $queryAvailableNumberService,
         protected readonly ReserveNumberService $reserveNumberService,
-    ) {
-    }
+    ) {}
 
     protected function endpoint(): string
     {
@@ -96,7 +95,7 @@ abstract class BaseSurveyService extends BaseApiService
 
         // Survey classification defaults
         $data['survey_type'] = $data['survey_type'] ?? 'EIC08';
-        $data['oper_type'] = $data['oper_type'] ?? 'A';                    // A = new
+        $data['oper_type'] = $data['oper_type'] ?? 'A';                    // A = new, M = modify
         // Zone code from resource
         $data['telecom_region'] = $resource['area_code'];
         $data['customer_type'] = 'residential';
@@ -168,6 +167,8 @@ abstract class BaseSurveyService extends BaseApiService
                 'cable_type' => $resource['cable_type'] ?? null,
                 'lat' => isset($resource['latitude']) ? round((float) $resource['latitude'], 8) : null,
                 'long' => isset($resource['longitude']) ? round((float) $resource['longitude'], 8) : null,
+                'area_code' => $resource['area_code'] ?? null,
+                'area_name' => $resource['area_name'] ?? null,
             ]);
 
             // Use dynamic customer BSS classification from BaseApiService helper

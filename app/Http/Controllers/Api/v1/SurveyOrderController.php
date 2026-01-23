@@ -31,8 +31,7 @@ class SurveyOrderController extends Controller
         protected readonly QuerySubscriptionOrderStatusService $querySubscriptionOrderStatusService,
         protected readonly QueryPurchasedOfferingService $queryPurchasedOfferingService,
         protected readonly ManualSurveyOrderService $manualSurveyOrderService
-    ) {
-    }
+    ) {}
 
     /**
      * Display a listing of the resource - optimized with Query Builder
@@ -487,6 +486,7 @@ class SurveyOrderController extends Controller
                 'cable_charge' => (float) ($order->payment_cable_charge ?? 0),
                 'total_amount' => (float) ($order->payment_total_amount ?? 0),
                 'merch_order_id' => $order->payment_merch_order_id ?? null,
+                'status' => $this->getPaymentStatusLabel($paymentStatus),
             ] : null,
             'status' => $this->getStatusLabel($order),
             'is_paid' => SurveyOrder::checkIsPaid($paymentStatus, $paymentTransId),
@@ -553,6 +553,21 @@ class SurveyOrderController extends Controller
 
             // Default: Use enum label
             default => $statusEnum?->label() ?? FFDServiceProvisionStatus::Processing->label(),
+        };
+    }
+
+    /**
+     * Get payment status label.
+     *
+     * @param int $paymentStatus Payment status value
+     * @return string Human-readable payment status label
+     */
+    protected function getPaymentStatusLabel(int $paymentStatus): string
+    {
+        return match ($paymentStatus) {
+            FFDServiceProvisionStatus::Paid->value => 'Paid',
+            0 => 'Pending',
+            default => 'Unknown',
         };
     }
 

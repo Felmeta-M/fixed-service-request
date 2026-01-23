@@ -14,7 +14,7 @@ enum FFDServiceProvisionStatus: int
     case Failed = 7;
     case Completed = 8;
 
-    // Internal status codes
+        // Internal status codes
     case Paid = 11; // Payment status: Paid
 
     public function label(): string
@@ -28,7 +28,7 @@ enum FFDServiceProvisionStatus: int
             self::Waiting => 'Waiting',
             self::Failed => 'Failed',
             self::Completed => 'Completed',
-            self::Paid => 'Paid',
+            self::Paid => 'Waiting Subscription',
         };
     }
 
@@ -75,5 +75,4 @@ enum FFDServiceProvisionStatus: int
     {
         return self::fromValue(array_search($label, self::options()));
     }
-
 }

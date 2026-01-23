@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use App\Models\Zone;
 use App\Services\Logging\AppLogger;
+use App\Support\CustomerContext;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +21,8 @@ class CustomerService extends BaseApiService
     public function createCustomer(array $data)
     {
         try {
-            $data['ethio_zone_or_region'] = '21'; //TODO: remove this after testing NAAZ
+            // Get dynamic zone code for EthioZoneOrRegion
+            $data['ethio_zone_or_region'] = $this->getCustomerZoneCode();
             $xmlPayload = $this->buildXml($data);
 
             $xmlResponse = $this->executeRequest($xmlPayload);
@@ -350,6 +353,55 @@ XML;
                 'credit_class',
             ])
             ->first();
+    }
+
+    /**
+     * Get zone_code from customer's selected zone.
+     * Used for CustomerAddressInfo EthioZoneOrRegion field.
+     *
+     * @return string Zone code
+     * @throws \RuntimeException If zone or zone_code cannot be found
+     */
+    protected function getCustomerZoneCode(): string
+    {
+        $customer = CustomerContext::customer();
+        if (!$customer || !$customer->zone) {
+            AppLogger::api()->error('Customer zone not found for zone_code lookup', [
+                'customer_code' => $customer?->code,
+            ]);
+            throw new \RuntimeException(
+                'Unable to create customer: Customer zone information is missing. Please update your profile with a valid zone selection.'
+            );
+        }
+
+        // Try to find zone by ID (zone field might be stored as string ID)
+        $zone = Zone::find($customer->zone);
+
+        // If not found by ID, try to find by name (in case zone stores name instead of ID)
+        if (!$zone) {
+            $zone = Zone::where('name', $customer->zone)->first();
+        }
+
+        if (!$zone) {
+            AppLogger::api()->error('Zone not found in database', [
+                'zone_id' => $customer->zone,
+            ]);
+            throw new \RuntimeException(
+                'Unable to create customer: The selected zone is not found in our system. Please contact support or update your profile with a valid zone.'
+            );
+        }
+
+        if (!$zone->zone_code) {
+            AppLogger::api()->error('Zone code not found for zone', [
+                'zone_id' => $zone->id,
+                'zone_name' => $zone->name,
+            ]);
+            throw new \RuntimeException(
+                'Unable to create customer: Zone code is missing for the selected zone. Please contact support for assistance.'
+            );
+        }
+
+        return $zone->zone_code;
     }
 
     protected function endpoint(): string

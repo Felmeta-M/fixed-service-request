@@ -94,10 +94,11 @@ class ManualSurveyOrderService extends BaseApiService
         // Use shared customer context helpers
         $customerCode = $this->customerCode();
 
-        // Resolve telecom region from selected customer zone (zone_id)
+        // Use telecom_region from request (area_id selected by customer in frontend)
+        // Falls back to fetchZoneCode for backward compatibility
         $addressInfo = $data['survey_address_info'] ?? [];
         $zoneId = $data['zone_id'] ?? ($addressInfo['zone_id'] ?? null);
-        $telecomRegion = $this->fetchZoneCode($zoneId) ?? '104';
+        $telecomRegion = $data['telecom_region'] ?? $this->fetchZoneCode($zoneId) ?? '104';
         $operType = $data['oper_type'] ?? 'A';
 
         // Convert bandwidth from MB to KB (BSS expects KB)
@@ -235,16 +236,21 @@ XML;
         $customerCode = $this->customerCode($data['customer_code'] ?? '');
         $primaryContact = $this->getPrimaryContact($data);
 
-        // Resolve telecom region (Ethio zone code) from selected customer zone (zone_id)
+        // Use telecom_region from request (area_id selected by customer in frontend)
+        // Falls back to fetchZoneCode for backward compatibility
         $addressInfo = $data['survey_address_info'] ?? [];
         $zoneId = $data['zone_id'] ?? ($addressInfo['zone_id'] ?? null);
-        $telecomRegionAreaId = $this->fetchZoneCode($zoneId) ?? '104';
+        $telecomRegionAreaId = $data['telecom_region'] ?? $this->fetchZoneCode($zoneId) ?? '104';
 
         // Convert bandwidth to KB for consistent storage (BSS returns KB format)
         $bandwidthKb = null;
         if (!empty($data['bandwidth'])) {
             $bandwidthKb = $this->parseBandwidth($data['bandwidth']);
         }
+
+        // Extract area_code and area_name from survey_address_info if available
+        $areaCode = $addressInfo['area_code'] ?? null;
+        $areaName = $addressInfo['area_name'] ?? null;
 
         $survey = SurveyOrder::create([
             'customer_code' => $customerCode,
@@ -263,6 +269,8 @@ XML;
             'with_device' => (bool) ($data['with_device'] ?? false),
             'device_id' => $data['device_id'] ?? null,
             'device_voice_id' => $data['device_voice_id'] ?? null,
+            'area_code' => $areaCode,
+            'area_name' => $areaName,
         ]);
 
         // Persist payment for manual survey (without cable charge)

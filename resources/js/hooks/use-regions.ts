@@ -67,3 +67,40 @@ export function useWoredas(zoneValue?: string) {
         error: error ? (error instanceof Error ? error.message : 'Failed to load woredas') : null,
     };
 }
+
+interface TelecomRegion {
+    id: number;
+    area_id: string;
+    area_name: string;
+    zone: string;
+}
+
+interface TelecomRegionsResponse {
+    success: boolean;
+    data: TelecomRegion[];
+    count: number;
+    ethio_zone?: string;
+}
+
+export function useTelecomRegionsByZone(zoneValue?: string) {
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['telecom-regions-by-zone', zoneValue],
+        queryFn: async () => {
+            if (!zoneValue) return [];
+            const response = await apiClient.get<TelecomRegionsResponse>(`/telecom-regions/by-zone?zone_id=${zoneValue}`);
+            if (!response.success || !response.data) return [];
+            return response.data.map((region) => ({
+                label: region.area_name,
+                value: region.area_id,
+                zone: region.zone,
+            }));
+        },
+        enabled: !!zoneValue,
+    });
+
+    return {
+        telecomRegions: data || [],
+        loading: isLoading,
+        error: error ? (error instanceof Error ? error.message : 'Failed to load telecom regions') : null,
+    };
+}

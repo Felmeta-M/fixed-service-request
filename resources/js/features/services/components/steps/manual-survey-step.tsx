@@ -10,7 +10,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { router } from '@inertiajs/react';
 import { useCreateSurvey, useGetCustomer } from '@/hooks/use-api-mutations';
-import { useRegions, useWoredas, useZones } from '@/hooks/use-regions';
+import { useRegions, useWoredas, useZones, useTelecomRegionsByZone } from '@/hooks/use-regions';
 
 interface AuthUser {
     id?: number;
@@ -79,6 +79,9 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
         kebele: '',
     });
 
+    // Telecom region selection state (for service installation area)
+    const [selectedTelecomRegion, setSelectedTelecomRegion] = useState('');
+
     const createSurveyMutation = useCreateSurvey();
 
     // Fetch customer data to get address information for fallback
@@ -90,6 +93,9 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
     const { regions: regionOptions, loading: loadingRegions } = useRegions();
     const { zones: zoneOptions, loading: loadingZones } = useZones(selectedAddress.region);
     const { woredas: woredaOptions, loading: loadingWoredas } = useWoredas(selectedAddress.zone);
+
+    // Telecom regions based on selected zone (for service installation area)
+    const { telecomRegions: telecomRegionOptions, loading: loadingTelecomRegions } = useTelecomRegionsByZone(selectedAddress.zone);
 
     // Check if kebele is required based on region (not required for Addis Ababa)
     const isKebeleRequired = useMemo(() => {
@@ -219,6 +225,16 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             return;
         }
 
+        // Validate telecom zone selection (mandatory)
+        if (!selectedTelecomRegion) {
+            setSubmitting(false);
+            setManualFlowErrors({ telecom_region: 'Please select a telecom zone' });
+            toast.error('Nearest telecom zone is required', {
+                description: 'Please select the nearest telecom zone for your service installation.',
+            });
+            return;
+        }
+
         // Build survey creation payload for manual survey
         // Manual surveys don't require encrypted resource fields - they use different backend service
         const encryptedResource = formData.resourceData;
@@ -240,7 +256,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             customer_code: (user as AuthUser)?.customer_code?.toString() || '',
             customer_type: formData.customerType || 'residential',
             survey_type: 'EIC08',
-            telecom_region: '104',
+            telecom_region: selectedTelecomRegion || '104', // Use selected telecom region or fallback
             oper_type: 'A',
             main_offer_id: formData.serviceType,
             bandwidth: formData.bandwidth,
@@ -529,9 +545,9 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                 {/* Address Selection Dropdowns */}
                 <div className="mt-6">
                     <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Address Details</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">Service Address Details</h3>
                         <p className="text-sm text-gray-500">
-                            Select address details or use your saved customer address (pre-filled below)
+                            Enter the service installation address details
                         </p>
                     </div>
                     <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -592,6 +608,8 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                         woreda: '',
                                         kebele: '',
                                     });
+                                    // Reset telecom region when zone changes
+                                    setSelectedTelecomRegion('');
                                     if (manualFlowErrors.zone) {
                                         setManualFlowErrors({ ...manualFlowErrors, zone: '' });
                                     }
@@ -681,6 +699,56 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                             )}
                         </Field>
 
+                        {/* Nearest Telecom Zone - Mandatory */}
+                        <Field>
+                            <FieldLabel htmlFor="manual-telecom-zone">
+                                Nearest Telecom Zone {selectedTelecomRegion ? '' : <span className="text-red-500">*</span>}
+                            </FieldLabel>
+                            <Select
+                                value={selectedTelecomRegion}
+                                onValueChange={(value) => {
+                                    setSelectedTelecomRegion(value);
+                                    if (manualFlowErrors.telecom_region) {
+                                        setManualFlowErrors({ ...manualFlowErrors, telecom_region: '' });
+                                    }
+                                }}
+                                disabled={submitting || loadingTelecomRegions || !selectedAddress.zone}
+                            >
+                                <SelectTrigger
+                                    className={
+                                        manualFlowErrors.telecom_region
+                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
+                                            : ''
+                                    }
+                                >
+                                    <SelectValue
+                                        placeholder={
+                                            !selectedAddress.zone
+                                                ? 'First select zone'
+                                                : loadingTelecomRegions
+                                                    ? 'Loading...'
+                                                    : telecomRegionOptions.length === 0
+                                                        ? 'No telecom zones found'
+                                                        : 'Select nearest telecom zone'
+                                        }
+                                    />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {telecomRegionOptions.map((region) => (
+                                        <SelectItem key={region.value} value={region.value}>
+                                            {region.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {manualFlowErrors.telecom_region && (
+                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                    <AlertCircle className="h-4 w-4" />
+                                    {manualFlowErrors.telecom_region}
+                                </p>
+                            )}
+                        </Field>
+
                         <Field>
                             <FieldLabel htmlFor="manual-kebele">
                                 Kebele {isKebeleRequired && !selectedAddress.kebele ? <span className="text-red-500">*</span> : ''}
@@ -688,7 +756,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                             <Input
                                 id="manual-kebele"
                                 type="text"
-                                placeholder={isKebeleRequired ? 'Enter kebele' : 'Optional (not required for Addis Ababa)'}
+                                placeholder=""
                                 value={selectedAddress.kebele}
                                 onChange={(e) => {
                                     setSelectedAddress({

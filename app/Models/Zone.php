@@ -21,6 +21,7 @@ class Zone extends Model
         'name',
         'region_id',
         'status',
+        'zone_code',
     ];
 
     /**

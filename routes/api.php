@@ -75,6 +75,7 @@ Route::prefix('v1')->group(function () {
         // Telecom regions for manual survey dropdown
         Route::get('telecom-regions', [TelecomRegionController::class, 'index']);
         Route::get('telecom-regions/show', [TelecomRegionController::class, 'show']);
+        Route::get('telecom-regions/by-zone', [TelecomRegionController::class, 'byZoneId']);
     });
 
     Route::middleware(['auth:api'])->group(function () {

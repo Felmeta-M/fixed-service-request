@@ -192,6 +192,10 @@ XML;
 
     protected function createLocalSurveyOrder(string $customerSurveyOrderId, array $data, array $resourceCheck = [])
     {
+        // Extract area_code and area_name from resourceCheck or survey_address_info
+        $areaCode = $resourceCheck['area_code'] ?? $data['survey_address_info']['area_code'] ?? null;
+        $areaName = $resourceCheck['area_name'] ?? $data['survey_address_info']['area_name'] ?? null;
+
         SurveyOrder::create([
             ...$data,
             'customer_survey_order_id' => $customerSurveyOrderId,
@@ -200,6 +204,8 @@ XML;
             'cable_type'   => $resourceCheck['cable_type'] ?? null,
             'lat'          => $resourceCheck['latitude'] ?? null,
             'long'         => $resourceCheck['longitude'] ?? null,
+            'area_code'    => $areaCode,
+            'area_name'    => $areaName,
         ]);
     }
 

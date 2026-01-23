@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ethio_region_zones', function (Blueprint $table) {
+        Schema::create('ethio_zones', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
             $table->string('name');
@@ -22,6 +22,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('ethio_region_zones');
+        Schema::dropIfExists('ethio_zones');
     }
 };

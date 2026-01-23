@@ -69,6 +69,8 @@ interface SurveyDetailResponse {
         status?: string | number | null;
         service_number?: string | null;
         fbb_service_number?: string | null;
+        internet_account?: string | null;
+        internet_password?: string | null;
         created_at?: string;
         updated_at?: string;
         payment?: {

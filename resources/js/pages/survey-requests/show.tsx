@@ -57,6 +57,8 @@ export default function SurveyShowPage() {
             status: surveyDetailQuery.data.data.status,
             service_number: surveyDetailQuery.data.data.service_number,
             fbb_service_number: surveyDetailQuery.data.data.fbb_service_number,
+            internet_account: surveyDetailQuery.data.data.internet_account,
+            internet_password: surveyDetailQuery.data.data.internet_password,
             with_device: surveyDetailQuery.data.data.with_device,
             created_at: surveyDetailQuery.data.data.created_at,
             updated_at: surveyDetailQuery.data.data.updated_at,

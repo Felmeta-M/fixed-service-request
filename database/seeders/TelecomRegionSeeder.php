@@ -9,43 +9,59 @@ class TelecomRegionSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * Seeds the telecom_regions table from area_list.csv
      */
     public function run(): void
     {
-        $regions = [
-            ['area_id' => '5962', 'area_name' => 'Legetafo Business Area', 'zone' => 'EAAZ'],
-            ['area_id' => '6044', 'area_name' => 'Bole Arabsa', 'zone' => 'EAAZ'],
-            ['area_id' => '2086', 'area_name' => 'Eastern AA Zone', 'zone' => 'EAAZ'],
-            ['area_id' => '2089', 'area_name' => 'Bole Michael Area', 'zone' => 'EAAZ'],
-            ['area_id' => '2111', 'area_name' => 'Legedade Paystation', 'zone' => 'EAAZ'],
-            ['area_id' => '2092', 'area_name' => 'London Cafa Business Area', 'zone' => 'EAAZ'],
-            ['area_id' => '189', 'area_name' => 'Bole Medhanealem', 'zone' => 'EAAZ'],
-            ['area_id' => '5268', 'area_name' => 'NEW BOLE LONDON NOVIS SHOP', 'zone' => 'EAAZ'],
-            ['area_id' => '5313', 'area_name' => 'GURD SHOLA SHOP', 'zone' => 'EAAZ'],
-            ['area_id' => '187', 'area_name' => 'EAAZ-Bus.Admin', 'zone' => 'EAAZ'],
-            ['area_id' => '2090', 'area_name' => 'Gereji Area', 'zone' => 'EAAZ'],
-            ['area_id' => '5938', 'area_name' => 'Bole Gurd-Sholla', 'zone' => 'EAAZ'],
-            ['area_id' => '5940', 'area_name' => 'Ayat Area', 'zone' => 'EAAZ'],
-            ['area_id' => '5941', 'area_name' => 'Summit Area', 'zone' => 'EAAZ'],
-            ['area_id' => '6045', 'area_name' => 'Yeka Abado Area', 'zone' => 'EAAZ'],
-            ['area_id' => '5965', 'area_name' => 'Bole Millennium Business Area', 'zone' => 'EAAZ'],
-            ['area_id' => '5974', 'area_name' => 'Goro-Figa', 'zone' => 'EAAZ'],
-            ['area_id' => '5963', 'area_name' => 'Atlas', 'zone' => 'EAAZ'],
-            ['area_id' => '60060', 'area_name' => 'Summit 72', 'zone' => 'EAAZ'],
-        ];
+        // Use CSV import method to populate telecom_regions table
+        $this->seedFromCsv();
+    }
 
-        $now = now();
+    /**
+     * Seed from CSV file.
+     * CSV file should be in database/ directory with columns: area_code, area_name, zone_name
+     * Maps to telecom_regions table: area_id, area_name, zone
+     */
+    private function seedFromCsv(): void
+    {
+        $path = database_path('area_list.csv');
 
-        foreach ($regions as &$region) {
-            $region['status'] = true;
-            $region['created_at'] = $now;
-            $region['updated_at'] = $now;
+        if (!file_exists($path)) {
+            $this->command->warn("CSV file not found at: {$path}");
+            return;
         }
 
-        DB::table('telecom_regions')->upsert(
-            $regions,
-            ['area_id'],
-            ['area_name', 'zone', 'status', 'updated_at']
-        );
+        $data = array_map('str_getcsv', file($path));
+        $header = array_map('trim', array_shift($data));
+
+        $areas = [];
+        foreach ($data as $row) {
+            if (count($row) !== count($header)) {
+                continue; // Skip malformed rows
+            }
+
+            $record = array_combine($header, $row);
+
+            $areas[] = [
+                'area_id' => (string) $record['area_code'], // Convert to string to match telecom_regions structure
+                'area_name' => trim($record['area_name']),
+                'zone' => isset($record['zone_name']) ? trim($record['zone_name']) : null,
+                'status' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        // Use upsert to avoid duplicates (based on area_id)
+        $chunks = array_chunk($areas, 500);
+        foreach ($chunks as $chunk) {
+            DB::table('telecom_regions')->upsert(
+                $chunk,
+                ['area_id'], // Unique key
+                ['area_name', 'zone', 'status', 'updated_at'] // Columns to update if duplicate
+            );
+        }
+
+        $this->command->info('Seeded ' . count($areas) . ' areas from CSV into telecom_regions table.');
     }
 }

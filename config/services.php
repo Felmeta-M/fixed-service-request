@@ -321,6 +321,36 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Internet Credentials Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for generating internet account credentials for Data and
+    | Combo subscription services. These credentials are used by customers
+    | to configure their end devices (routers/modems).
+    |
+    | Username Patterns:
+    |   - 'random': Random 8-char alphanumeric (default)
+    |   - 'phone': Based on customer phone (prefix + last 6 digits + random)
+    |   - 'uuid': UUID-based username
+    |   - 'timestamp': Timestamp-based (YmdHis + random)
+    |   - 'customer_code': Based on customer code
+    |
+    */
+    'internet_credentials' => [
+        // Username generation
+        'username_pattern' => env('INTERNET_USERNAME_PATTERN', 'timestamp'),
+        'username_prefix' => env('INTERNET_USERNAME_PREFIX', 'fbb'),
+        'email_domain' => env('INTERNET_EMAIL_DOMAIN', 'ethiotelecom.et'),
+
+        // Password generation
+        // If static_password is set, it will be used; otherwise generates random
+        'static_password' => env('INTERNET_STATIC_PASSWORD', 'REDACTED_PASSWORD'),
+        'encrypt_password' => env('INTERNET_ENCRYPT_PASSWORD', false),
+        'password_length' => env('INTERNET_PASSWORD_LENGTH', 12),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Change Primary Offering Service (BSS IECAF)
     |--------------------------------------------------------------------------
     |

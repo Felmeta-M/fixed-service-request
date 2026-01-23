@@ -32,6 +32,10 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       return 3; // matches actual XML
    }
 
+   // Store internet credentials for use in parseResponse
+   protected ?string $internetAccount = null;
+   protected ?string $internetPassword = null;
+
    public function create(array $data)
    {
       // Check if survey order is already subscribed (prevent duplicate subscriptions)
@@ -65,6 +69,10 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
       $xml = $this->buildXml($data);
 
+      // Add internet credentials to data for parseResponse
+      $data['internet_account'] = $this->internetAccount;
+      $data['internet_password'] = $this->internetPassword;
+
       $response = $this->executeRequest($xml);
       $parsedResponse = $this->parseResponse($response, $data);
       return $parsedResponse;
@@ -88,10 +96,20 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
    protected function buildXml(array $data): string
    {
-      $email = $this->generateEmail();
+      // Generate internet credentials using centralized helper
+      $credentials = \App\Helpers\InternetCredentialsHelper::generate(
+         $data['sms_no'] ?? null,  // Phone for pattern
+         $data['customer_code'] ?? null  // Customer code for pattern
+      );
+      $email = $credentials['username'];
+      $password = $credentials['password'];
+
+      // Store credentials for use in parseResponse (to save to local DB)
+      $this->internetAccount = $email;
+      $this->internetPassword = $password;
 
       $cfg = config('services.subscriber');
-      $cfg['default_password'] = 'REDACTED_PASSWORD';
+      $cfg['default_password'] = $password;
 
       // Get dynamic customer profile, address, and BSS classification from logged-in user
       $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
@@ -118,7 +136,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          'effective_mode' => '0',
          'sla_priority' => '6',
          'internet_account' => $email,
-         'internet_password' => 'REDACTED_PASSWORD',
+         'internet_password' => $password,
          'call_center_access' => '994',
          'external_oper_id' => '512',
          'installment_date' => $this->completedDate(),
@@ -404,11 +422,16 @@ XML;
                return $res;
             }
 
-            // Update SurveyOrder
+            // Update SurveyOrder with service number and internet credentials
             try {
+               $internetAccount = $data['internet_account'] ?? null;
+               $internetPassword = $data['internet_password'] ?? null;
+
                $updated = SurveyOrder::where('customer_survey_order_id', $surveyOrderId)
                   ->update([
                      'service_number' => $serviceNo,
+                     'internet_account' => $internetAccount,
+                     'internet_password' => $internetPassword,
                      'status' => FFDServiceProvisionStatus::Waiting->value,
                      'subscribed_at' => now(),
                      'customer_subscription_order_id' => $res['customer_busi_order_id'],
@@ -419,6 +442,7 @@ XML;
                      'survey_order_id' => $surveyOrderId,
                      'customer_subscription_order_id' => $res['customer_busi_order_id'],
                      'service_number' => $serviceNo,
+                     'internet_account' => $internetAccount,
                      'service_type' => 'data',
                   ]);
                } else {

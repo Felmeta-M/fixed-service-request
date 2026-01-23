@@ -43,6 +43,8 @@ type SurveyDetails = {
     main_offer_id?: string;
     service_number?: string | null;
     fbb_service_number?: string | null;
+    internet_account?: string | null;
+    internet_password?: string | null;
     bandwidth?: string | null;
     cable_length?: string | number | null;
     cable_type?: string | null;
@@ -492,6 +494,41 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Internet Credentials Card - Only for Data and Combo services after subscription */}
+                {(surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID) && 
+                 surveyDetails?.internet_account && (
+                    <Card className="border-none shadow-xs bg-gradient-to-br from-blue-50 to-cyan-50">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <Wifi className="h-4 w-4 text-blue-600" />
+                                Internet Credentials
+                                <Badge variant="outline" className="ml-2 text-xs bg-white">For Device Config</Badge>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground">Username</span>
+                                <span className="font-mono font-medium text-blue-700 bg-white px-2 py-1 rounded">
+                                    {surveyDetails.internet_account}
+                                </span>
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-muted-foreground">Password</span>
+                                <span className="font-mono font-medium text-blue-700 bg-white px-2 py-1 rounded">
+                                    {surveyDetails.internet_password || '••••••••'}
+                                </span>
+                            </div>
+                            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <p className="text-xs text-amber-800">
+                                    <strong>Important:</strong> Use these credentials to configure your internet device/router. 
+                                    Keep them secure and do not share with others.
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Customer Information */}
                 <Card className="border-none shadow-xs">

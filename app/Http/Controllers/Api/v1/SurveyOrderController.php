@@ -99,9 +99,9 @@ class SurveyOrderController extends Controller
                 ->filter(fn($order) => SurveyOrder::needsRefresh($order));
 
             // Batch refresh orders (for WAITING status - check order status)
-            // if ($ordersToRefresh->isNotEmpty()) {
-            //     $this->batchRefreshOrders($ordersToRefresh);
-            // }
+            if ($ordersToRefresh->isNotEmpty()) {
+                $this->batchRefreshOrders($ordersToRefresh);
+            }
 
             // Transform raw data to API format
             $transformedItems = collect($surveyOrders->items())->map(fn($item) => $this->transformOrder($item));
@@ -471,6 +471,9 @@ class SurveyOrderController extends Controller
             'main_offer_id' => $order->main_offer_id,
             'service_number' => $order->service_number ?? null,
             'fbb_service_number' => $order->fbb_service_number ?? null,
+            // Internet credentials for device configuration (Data and Combo services)
+            'internet_account' => $order->internet_account ?? null,
+            'internet_password' => $order->internet_password ?? null,
             // Backend is single source of truth - return formatted for display
             'bandwidth' => BandwidthHelper::format($order->bandwidth),
             'bandwidth_raw' => $order->bandwidth ?? null, // Raw KB value for debugging/API use

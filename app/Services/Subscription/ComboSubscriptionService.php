@@ -36,13 +36,15 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
 
    public function create(array $payload): array
    {
-      // Build XML and get the voice service number that was used
+      // Build XML and get the voice service number and internet credentials
       $xmlData = $this->buildXmlWithServiceNumber($payload);
       $xml = $xmlData['xml'];
       $voiceServiceNumber = $xmlData['voice_service_number'];
 
-      // Add voice service number to payload for use in parseResponse
+      // Add voice service number and internet credentials to payload for use in parseResponse
       $payload['voice_service_number'] = $voiceServiceNumber;
+      $payload['internet_account'] = $xmlData['internet_account'];
+      $payload['internet_password'] = $xmlData['internet_password'];
 
       $response = $this->executeRequest($xml);
 
@@ -93,7 +95,14 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       ]);
             // Use shared helpers for customer data
       $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
-      $email = $data['email'] ?? $this->customerEmail() ?? $this->generateEmail();
+      
+      // Generate internet credentials using centralized helper
+      $credentials = \App\Helpers\InternetCredentialsHelper::generate(
+         $data['sms_no'] ?? null,  // Phone for pattern
+         $data['customer_code']    // Customer code for pattern
+      );
+      $email = $credentials['username'];
+      $internetPassword = $credentials['password'];
 
       // Get dynamic customer profile and address data
       $profile = $this->getCustomerProfile();
@@ -300,7 +309,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   </com:PrimaryOffering>
                   <com:SLAPriority>0</com:SLAPriority>
                   <com:InternetAccount>{$email}</com:InternetAccount>
-                  <com:InternetPassword>REDACTED_PASSWORD</com:InternetPassword>
+                  <com:InternetPassword>{$internetPassword}</com:InternetPassword>
                   <com:CallCenterAccess>980,894</com:CallCenterAccess>
                   <com:SubLanguage>2002</com:SubLanguage>
                   <com:IVRLanguage>2060</com:IVRLanguage>
@@ -320,6 +329,8 @@ XML;
       return [
          'xml' => $xml,
          'voice_service_number' => $voiceServiceNumber,
+         'internet_account' => $email,
+         'internet_password' => $internetPassword,
       ];
    }
 
@@ -414,9 +425,11 @@ XML;
             $surveyOrderId = $data['survey_order_id'] ?? null;
             $voiceServiceNumber = $data['voice_service_number'] ?? null;
             $fbbServiceNumber = $res['extra_params']['FBBNUMBER'] ?? null;
+            $internetAccount = $data['internet_account'] ?? null;
+            $internetPassword = $data['internet_password'] ?? null;
 
             if ($surveyOrderId) {
-               // Update survey order with both service numbers
+               // Update survey order with service numbers and internet credentials
                $updateData = [
                   'status' => \App\Enums\FFDServiceProvisionStatus::Waiting->value,
                   'subscribed_at' => now(),
@@ -433,6 +446,14 @@ XML;
                   $updateData['fbb_service_number'] = $fbbServiceNumber;
                }
 
+               // Internet credentials for device configuration
+               if ($internetAccount) {
+                  $updateData['internet_account'] = $internetAccount;
+               }
+               if ($internetPassword) {
+                  $updateData['internet_password'] = $internetPassword;
+               }
+
                $updated = \App\Models\SurveyOrder::where('customer_survey_order_id', $surveyOrderId)
                   ->update($updateData);
 
@@ -442,6 +463,7 @@ XML;
                      'customer_subscription_order_id' => $res['customer_busi_order_id'],
                      'voice_service_number' => $voiceServiceNumber,
                      'fbb_service_number' => $fbbServiceNumber,
+                     'internet_account' => $internetAccount,
                      'service_type' => 'combo',
                   ]);
                } else {

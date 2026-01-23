@@ -36,7 +36,7 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/var/www:ro
+      - .:/var/www:rw
       - ./storage:/var/www/storage:rw
       - ./bootstrap/cache:/var/www/bootstrap/cache:rw
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro

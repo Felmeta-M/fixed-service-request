@@ -12,8 +12,6 @@ use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Services\ResourceService;
 use App\Services\Logging\AppLogger;
-use App\Models\EthioZone;
-use App\Models\Zone;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -54,7 +52,6 @@ abstract class BaseSurveyService extends BaseApiService
 
         $resource = self::decrypt($resource);
 
-
         if ($resource === null) {
             AppLogger::api()->error('Resource data validation failed - invalid or tampered information', [
                 'operation' => 'survey_create',
@@ -62,21 +59,6 @@ abstract class BaseSurveyService extends BaseApiService
             ]);
             return ApiResponse::error(
                 'Invalid location information provided. Please select your location again and try submitting your request.',
-                \App\Enums\ErrorCode::VALIDATION_ERROR,
-                422
-            );
-        }
-
-        // Validate telecom region - critical check
-        $telecomRegion = $this->fetchZoneCode($resource);
-        if ($telecomRegion === null) {
-            AppLogger::api()->error('Telecom region not defined for customer', [
-                'operation' => 'survey_create',
-                'survey_type' => $this->mainOfferId(),
-                'area_name' => $resource['area_name'] ?? null,
-            ]);
-            return ApiResponse::error(
-                'Your telecom region is not defined. Please ensure your location information is complete and try again.',
                 \App\Enums\ErrorCode::VALIDATION_ERROR,
                 422
             );
@@ -279,60 +261,6 @@ abstract class BaseSurveyService extends BaseApiService
         }
 
         return $decrypted;
-    }
-
-    /**
-     * Fetch zone code from ethio_zone table based on resource area_name.
-     * If not found, fallback to customer's zone or city selection.
-     * 
-     * @param array $resource Decrypted resource data containing area_name
-     * @return int|null Zone code if found, null otherwise
-     */
-    protected function fetchZoneCode(array $resource): ?int
-    {
-        // First attempt: Try to find code from ethio_zone table using area_name
-        if (!empty($resource['area_name'])) {
-            $ethioZone = EthioZone::where('name', $resource['area_name'])
-                ->where('status', true)
-                ->first();
-
-            if ($ethioZone && !empty($ethioZone->code)) {
-                AppLogger::api()->info('Zone code found from ethio_zone table', [
-                    'area_name' => $resource['area_name'],
-                    'zone_code' => $ethioZone->code,
-                ]);
-                return $ethioZone->code;
-            }
-        }
-
-        // Fallback: Use customer's zone or city selection
-        $address = $this->getCustomerAddress();
-        $customer = \App\Support\CustomerContext::customer();
-
-        // Check if customer has zone_id in address array or direct zone_id
-        $zoneId = null;
-        if ($customer && is_array($customer->address)) {
-            $zoneId = $customer->address['zone_id'] ?? null;
-        }
-
-        // If we have zone_id, use it directly to get zone_code
-        if ($zoneId) {
-            $zone = Zone::where('id', $zoneId)
-                ->where('status', true)
-                ->first();
-
-            if ($zone && !empty($zone->zone_code)) {
-                AppLogger::api()->info('Zone code found using customer zone_id', [
-                    'zone_id' => $zoneId,
-                    'zone_code' => $zone->zone_code,
-                ]);
-                return (int) $zone->zone_code;
-            }
-        }
-
-
-
-        return null;
     }
 
     // parseBandwidth is inherited from BaseApiService

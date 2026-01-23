@@ -6,7 +6,7 @@ use App\Enums\FFDServiceProvisionStatus;
 use App\Exceptions\ExternalServiceException;
 use App\Models\Customer;
 use App\Models\SurveyOrder;
-use App\Models\TelecomRegion;
+use App\Models\Zone;
 use App\Services\Logging\AppLogger;
 use App\Services\Payment\PaymentCalculatorService;
 use App\Services\Payment\PaymentService;
@@ -94,8 +94,10 @@ class ManualSurveyOrderService extends BaseApiService
         // Use shared customer context helpers
         $customerCode = $this->customerCode();
 
-        // Resolve telecom region: accept name and convert to area_id
-        $telecomRegion = 104; // $this->resolveTelecomRegion($data['telecom_region'] ?? ''); //TODO: Add oper_type to the request
+        // Resolve telecom region from selected customer zone (zone_id)
+        $addressInfo = $data['survey_address_info'] ?? [];
+        $zoneId = $data['zone_id'] ?? ($addressInfo['zone_id'] ?? null);
+        $telecomRegion = $this->fetchZoneCode($zoneId) ?? '104';
         $operType = $data['oper_type'] ?? 'A';
 
         // Convert bandwidth from MB to KB (BSS expects KB)
@@ -105,7 +107,6 @@ class ManualSurveyOrderService extends BaseApiService
         $primaryContact = $this->getPrimaryContact($data);
 
         // Extract address info
-        $addressInfo = $data['survey_address_info'] ?? [];
         $regionCity = $addressInfo['region_city'] ?? $addressInfo['administrative_region_city'] ?? '';
         $subcityZone = $addressInfo['subcity_zone'] ?? '';
         $weredaTown = $addressInfo['wereda_town'] ?? '';
@@ -234,8 +235,10 @@ XML;
         $customerCode = $this->customerCode($data['customer_code'] ?? '');
         $primaryContact = $this->getPrimaryContact($data);
 
-        // Resolve telecom region to area_id for storage
-        $telecomRegionAreaId = $this->resolveTelecomRegion($data['telecom_region'] ?? null);
+        // Resolve telecom region (Ethio zone code) from selected customer zone (zone_id)
+        $addressInfo = $data['survey_address_info'] ?? [];
+        $zoneId = $data['zone_id'] ?? ($addressInfo['zone_id'] ?? null);
+        $telecomRegionAreaId = $this->fetchZoneCode($zoneId) ?? '104';
 
         // Convert bandwidth to KB for consistent storage (BSS returns KB format)
         $bandwidthKb = null;
@@ -360,46 +363,38 @@ XML;
     }
 
     /**
-     * Resolve telecom region from name to area_id.
+     * Map customer-selected zone_id to Ethio zone code (telecom region).
      *
-     * If the input is a numeric area_id, return it directly.
-     * If the input is a name, query the telecom_regions table for the area_id.
-     *
-     * @param string|null $telecomRegion Region name or area_id
-     * @return string The resolved area_id
+     * @param int|string|null $zoneId
+     * @return string|null Ethio zone code or null if not found
      */
-    protected function resolveTelecomRegion(?string $telecomRegion): string
+    protected function fetchZoneCode(int|string|null $zoneId): ?string
     {
-        // Default fallback
-        $defaultAreaId = '104';
+        $zoneId = $zoneId !== null ? (int) $zoneId : null;
 
-        if (empty($telecomRegion)) {
-            return $defaultAreaId;
+        if (!$zoneId) {
+            return null;
         }
 
-        // If it's already a numeric area_id, return it directly
-        if (is_numeric($telecomRegion)) {
-            return $telecomRegion;
-        }
+        $zone = Zone::query()
+            ->where('id', $zoneId)
+            ->where('status', true)
+            ->first();
 
-        // Query by area name
-        $areaId = TelecomRegion::getAreaIdByName($telecomRegion);
-
-        if ($areaId) {
-            AppLogger::api()->debug('Telecom region resolved', [
-                'input' => $telecomRegion,
-                'area_id' => $areaId,
+        if ($zone && !empty($zone->zone_code)) {
+            AppLogger::api()->info('Telecom region resolved from customer zone selection', [
+                'zone_id' => $zoneId,
+                'zone_code' => $zone->zone_code,
             ]);
-            return $areaId;
+
+            return (string) $zone->zone_code;
         }
 
-        // Log warning if region name not found
-        AppLogger::api()->warning('Telecom region not found, using default', [
-            'input' => $telecomRegion,
-            'default_area_id' => $defaultAreaId,
+        AppLogger::api()->warning('Failed to resolve telecom region from zone_id', [
+            'zone_id' => $zoneId,
         ]);
 
-        return $defaultAreaId;
+        return null;
     }
 
     /**

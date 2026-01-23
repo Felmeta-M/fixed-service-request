@@ -54,9 +54,6 @@ abstract class BaseSurveyService extends BaseApiService
 
         $resource = self::decrypt($resource);
 
-        \Log::info('Resource data', [
-            'resource' => $resource,
-        ]);
 
         if ($resource === null) {
             AppLogger::api()->error('Resource data validation failed - invalid or tampered information', [
@@ -119,7 +116,7 @@ abstract class BaseSurveyService extends BaseApiService
         $data['survey_type'] = $data['survey_type'] ?? 'EIC08';
         $data['oper_type'] = $data['oper_type'] ?? 'A';                    // A = new
         // Zone code from resource
-        $data['telecom_region'] = $this->fetchZoneCode($resource);
+        $data['telecom_region'] = $resource['area_code'];
         $data['customer_type'] = 'residential';
 
         // Contact defaults from customer profile

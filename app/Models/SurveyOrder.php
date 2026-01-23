@@ -44,6 +44,8 @@ class SurveyOrder extends Model
         'fbb_service_number',
         'survey_type',
         'telecom_region',
+        'area_code',
+        'area_name',
         'oper_type',
         'customer_type',
         'bandwidth',

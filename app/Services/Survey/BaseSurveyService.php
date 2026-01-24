@@ -191,40 +191,7 @@ abstract class BaseSurveyService extends BaseApiService
             $fees = $calculator->calculateFees($survey, $requestData);
 
             // Calculate device fee from selected device prices
-            // Device storage logic:
-            // - Voice-only (1207609454): device_id contains voice device
-            // - Broadband (1457567289): device_id contains internet device
-            // - Combo (180427974): device_id contains internet device, device_voice_id contains voice device
-            $deviceFee = 0;
-            if ($survey->with_device) {
-                $mainOfferId = (int) $survey->main_offer_id;
-                $isCombo = $mainOfferId === 180427974;
-                $isVoiceOnly = $mainOfferId === 1207609454;
-
-                if ($isCombo) {
-                    // Combo service: device_id is internet, device_voice_id is voice
-                    if ($survey->device_id) {
-                        $internetDevice = \App\Models\AvailableDevice::find($survey->device_id);
-                        $deviceFee += $internetDevice ? (float) $internetDevice->price : 0;
-                    }
-                    if ($survey->device_voice_id) {
-                        $voiceDevice = \App\Models\AvailableDevice::find($survey->device_voice_id);
-                        $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
-                    }
-                } elseif ($isVoiceOnly) {
-                    // Voice-only service: device_id contains voice device
-                    if ($survey->device_id) {
-                        $voiceDevice = \App\Models\AvailableDevice::find($survey->device_id);
-                        $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
-                    }
-                } else {
-                    // Broadband service: device_id contains internet device
-                    if ($survey->device_id) {
-                        $internetDevice = \App\Models\AvailableDevice::find($survey->device_id);
-                        $deviceFee += $internetDevice ? (float) $internetDevice->price : 0;
-                    }
-                }
-            }
+            $deviceFee = $this->calculateDeviceFee($survey);
 
             $totalAmount = $fees['total_amount'] + $deviceFee;
 
@@ -312,6 +279,77 @@ abstract class BaseSurveyService extends BaseApiService
 
         // Format as decimal with up to 8 decimal places
         return (string) round((float) $coordinate, 8);
+    }
+
+    /**
+     * Calculate device fee from selected device prices.
+     * Device storage logic:
+     * - Voice-only (1207609454): device_id contains voice device
+     * - Broadband (1457567289): device_id contains internet device
+     * - Combo (180427974): device_id contains internet device, device_voice_id contains voice device
+     *
+     * @param SurveyOrder $survey Survey order with device information
+     * @return float Total device fee
+     */
+    protected function calculateDeviceFee(SurveyOrder $survey): float
+    {
+        $deviceFee = 0.0;
+
+        if (!$survey->with_device) {
+            return $deviceFee;
+        }
+
+        $mainOfferId = (int) $survey->main_offer_id;
+        $isCombo = $mainOfferId === 180427974;
+        $isVoiceOnly = $mainOfferId === 1207609454;
+
+        if ($isCombo) {
+            // Combo service: device_id is internet, device_voice_id is voice
+            if ($survey->device_id) {
+                $internetDevice = \App\Models\AvailableDevice::find($survey->device_id);
+                $deviceFee += $internetDevice ? (float) $internetDevice->price : 0;
+            }
+            if ($survey->device_voice_id) {
+                $voiceDevice = \App\Models\AvailableDevice::find($survey->device_voice_id);
+                $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
+            }
+        } elseif ($isVoiceOnly) {
+            // Voice-only service: device_id contains voice device
+            if ($survey->device_id) {
+                $voiceDevice = \App\Models\AvailableDevice::find($survey->device_id);
+                $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
+            }
+        } else {
+            // Broadband service: device_id contains internet device
+            if ($survey->device_id) {
+                $internetDevice = \App\Models\AvailableDevice::find($survey->device_id);
+                $deviceFee += $internetDevice ? (float) $internetDevice->price : 0;
+            }
+        }
+
+        return $deviceFee;
+    }
+
+    /**
+     * Validate survey order exists and is in valid state.
+     * Common validation logic for survey operations.
+     *
+     * @param string $surveyOrderId Customer survey order ID
+     * @return SurveyOrder Survey order model
+     * @throws RuntimeException If survey order not found
+     */
+    protected function validateSurveyOrder(string $surveyOrderId): SurveyOrder
+    {
+        $surveyOrder = SurveyOrder::where('customer_survey_order_id', $surveyOrderId)->first();
+
+        if (!$surveyOrder) {
+            AppLogger::api()->error('Survey order not found', [
+                'survey_order_id' => $surveyOrderId,
+            ]);
+            throw new RuntimeException('Survey order not found: ' . $surveyOrderId);
+        }
+
+        return $surveyOrder;
     }
 
     /** Service-specific hooks */

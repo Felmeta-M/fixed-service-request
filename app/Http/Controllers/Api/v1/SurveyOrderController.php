@@ -31,8 +31,7 @@ class SurveyOrderController extends Controller
         protected readonly QuerySubscriptionOrderStatusService $querySubscriptionOrderStatusService,
         protected readonly QueryPurchasedOfferingService $queryPurchasedOfferingService,
         protected readonly ManualSurveyOrderService $manualSurveyOrderService
-    ) {
-    }
+    ) {}
 
     /**
      * Display a listing of the resource - optimized with Query Builder
@@ -222,14 +221,36 @@ class SurveyOrderController extends Controller
                         ];
                     } else {
                         // Survey COMPLETED (50005 = PON/COPPER)
-                        // Set status to Completed and save survey result fields for device selection
-                        $statusUpdates[$order->id] = FFDServiceProvisionStatus::Completed->value;
-                        $surveyResultUpdates[$order->id] = [
-                            'media_type' => $surveyResult['media_type'] ?? null,
-                            'cable_type' => $surveyResult['cable_type'] ?? null,
-                            'line_indicator' => $surveyResult['line_indicator'] ?? null,
-                            'survey_failure_reason' => null, // Clear any previous failure reason
-                        ];
+                        // CRITICAL: Only mark as Completed and update survey result fields
+                        // if ALL required fields (media_type, cable_type, line_indicator) have values
+                        $mediaType = $surveyResult['media_type'] ?? null;
+                        $cableType = $surveyResult['cable_type'] ?? null;
+                        $lineIndicator = $surveyResult['line_indicator'] ?? null;
+
+                        // Check if all required survey result fields have values
+                        $hasAllRequiredFields = (
+                            $mediaType !== null &&
+                            $cableType !== null &&
+                            $lineIndicator !== null
+                        );
+
+                        if ($hasAllRequiredFields) {
+                            // All required fields present: mark as Completed and save survey result
+                            $statusUpdates[$order->id] = FFDServiceProvisionStatus::Completed->value;
+                            $surveyResultUpdates[$order->id] = [
+                                'media_type' => $mediaType,
+                                'cable_type' => $cableType,
+                                'line_indicator' => $lineIndicator,
+                                'survey_failure_reason' => null, // Clear any previous failure reason
+                            ];
+                        } else {
+                            // Missing required fields: only update status from BSS response
+                            // Don't update survey result fields until all data is available
+                            $newStatus = (int) $response['status'];
+                            if ($newStatus >= 1 && $newStatus <= 8) {
+                                $statusUpdates[$order->id] = FFDServiceProvisionStatus::Waiting->value;
+                            }
+                        }
                     }
                 } else {
                     // Non-manual surveys or no survey_result: use BSS status directly

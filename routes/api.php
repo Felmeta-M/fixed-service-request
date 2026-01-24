@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\v1\TroubleTicketController;
 use App\Http\Controllers\Api\v1\SubscriptionOrderStatusController;
 use App\Http\Controllers\Api\v1\PurchasedOfferingController;
 use App\Http\Controllers\Api\v1\ChangePrimaryOfferingController;
+use App\Http\Controllers\Api\v1\StatusController;
 use App\Http\Middleware\AuthenticateServiceClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -76,6 +77,9 @@ Route::prefix('v1')->group(function () {
         Route::get('telecom-regions', [TelecomRegionController::class, 'index']);
         Route::get('telecom-regions/show', [TelecomRegionController::class, 'show']);
         Route::get('telecom-regions/by-zone', [TelecomRegionController::class, 'byZoneId']);
+
+        // Status definitions - dynamic status labels from backend
+        Route::get('status-definitions', [StatusController::class, 'definitions']);
     });
 
     Route::middleware(['auth:api'])->group(function () {

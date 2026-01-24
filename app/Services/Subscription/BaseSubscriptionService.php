@@ -89,29 +89,196 @@ abstract class BaseSubscriptionService extends BaseApiService
             ]);
 
             // Update payment table with customer_subscription_order_id (important for manual subscriptions)
-            try {
-                DB::table('payments')
-                    ->where('customer_survey_order_id', $surveyOrderId)
-                    ->update(['customer_subscription_order_id' => $customerSubscriptionOrderId]);
-
-                AppLogger::api()->info('Payment updated with customer_subscription_order_id after subscription', [
-                    'survey_order_id' => $surveyOrderId,
-                    'customer_subscription_order_id' => $customerSubscriptionOrderId,
-                    'service_type' => $serviceType,
-                ]);
-            } catch (\Throwable $e) {
-                AppLogger::api()->warning('Failed to update payment with customer_subscription_order_id', [
-                    'survey_order_id' => $surveyOrderId,
-                    'customer_subscription_order_id' => $customerSubscriptionOrderId,
-                    'error' => $e->getMessage(),
-                    'service_type' => $serviceType,
-                ]);
-                // Don't fail the entire operation if payment update fails
-            }
+            $this->updatePaymentWithSubscriptionOrderId($surveyOrderId, $customerSubscriptionOrderId, $serviceType);
 
             return true;
         } catch (\Throwable $e) {
             AppLogger::api()->exception($e, 'Exception updating survey order after subscription', [
+                'survey_order_id' => $surveyOrderId,
+                'customer_subscription_order_id' => $customerSubscriptionOrderId,
+                'service_type' => $serviceType,
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Update payment table with customer_subscription_order_id.
+     * Extracted to reduce duplication across subscription services.
+     *
+     * @param string $surveyOrderId Customer survey order ID
+     * @param string $customerSubscriptionOrderId Customer subscription order ID
+     * @param string $serviceType Service type for logging
+     * @return void
+     */
+    protected function updatePaymentWithSubscriptionOrderId(
+        string $surveyOrderId,
+        string $customerSubscriptionOrderId,
+        string $serviceType = 'subscription'
+    ): void {
+        try {
+            DB::table('payments')
+                ->where('customer_survey_order_id', $surveyOrderId)
+                ->update(['customer_subscription_order_id' => $customerSubscriptionOrderId]);
+
+            AppLogger::api()->info('Payment updated with customer_subscription_order_id after subscription', [
+                'survey_order_id' => $surveyOrderId,
+                'customer_subscription_order_id' => $customerSubscriptionOrderId,
+                'service_type' => $serviceType,
+            ]);
+        } catch (\Throwable $e) {
+            AppLogger::api()->warning('Failed to update payment with customer_subscription_order_id', [
+                'survey_order_id' => $surveyOrderId,
+                'customer_subscription_order_id' => $customerSubscriptionOrderId,
+                'error' => $e->getMessage(),
+                'service_type' => $serviceType,
+            ]);
+            // Don't fail the entire operation if payment update fails
+        }
+    }
+
+    /**
+     * Check if survey order is already subscribed (duplicate prevention).
+     * Common validation logic for all subscription services.
+     *
+     * @param string $surveyOrderId Customer survey order ID
+     * @return array|null Returns error response array if duplicate found, null otherwise
+     */
+    protected function checkDuplicateSubscription(string $surveyOrderId): ?array
+    {
+        $surveyOrder = SurveyOrder::where('customer_survey_order_id', $surveyOrderId)->first();
+
+        if (!$surveyOrder) {
+            throw new \RuntimeException('Survey order not found: ' . $surveyOrderId);
+        }
+
+        if ($surveyOrder->customer_subscription_order_id && 
+            $surveyOrder->status === FFDServiceProvisionStatus::Completed->value) {
+            AppLogger::api()->warning('Attempted duplicate subscription', [
+                'survey_order_id' => $surveyOrderId,
+                'current_status' => $surveyOrder->status,
+                'customer_subscription_order_id' => $surveyOrder->customer_subscription_order_id,
+            ]);
+
+            return [
+                'success' => false,
+                'ret_code' => 'DUPLICATE',
+                'ret_msg' => 'This survey order has already been used to create a subscription.',
+                'customer_busi_order_id' => null,
+                'extra_params' => [],
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Send subscription confirmation SMS to customer.
+     * Extracted common SMS sending logic with proper error handling.
+     *
+     * @param string $phone Phone number to send SMS to
+     * @param string $message SMS message content
+     * @param string $surveyOrderId Survey order ID for logging
+     * @param string $serviceType Service type for logging ('voice', 'data', 'combo')
+     * @return void
+     */
+    protected function sendSubscriptionSms(
+        string $phone,
+        string $message,
+        ?string $surveyOrderId = null,
+        string $serviceType = 'subscription'
+    ): void {
+        if (empty($phone) || !\App\Traits\InteractsWithSMSGateway::ensurePhoneIsLocal($phone)) {
+            return;
+        }
+
+        try {
+            \App\Traits\InteractsWithSMSGateway::sendSmsOnly($phone, $message);
+            AppLogger::api()->info('Subscription SMS sent successfully', [
+                'phone' => substr($phone, -4), // Last 4 digits only
+                'survey_order_id' => $surveyOrderId,
+                'service_type' => $serviceType,
+            ]);
+        } catch (\RuntimeException $e) {
+            // Business-level failure (rate limit, gateway reject)
+            AppLogger::api()->warning('Subscription SMS blocked or rejected', [
+                'phone' => substr($phone, -4), // Last 4 digits only
+                'reason' => $e->getMessage(),
+                'survey_order_id' => $surveyOrderId,
+                'service_type' => $serviceType,
+            ]);
+        } catch (\Throwable $e) {
+            // System-level failure
+            AppLogger::api()->exception($e, 'Subscription SMS failed unexpectedly', [
+                'phone' => substr($phone, -4), // Last 4 digits only
+                'survey_order_id' => $surveyOrderId,
+                'service_type' => $serviceType,
+            ]);
+        }
+    }
+
+    /**
+     * Format customer name for SMS (first name only).
+     * Extracted to ensure consistent name formatting.
+     *
+     * @param string|null $fullName Full customer name
+     * @param string $fallback Fallback name if not provided
+     * @return string Formatted first name
+     */
+    protected function formatCustomerNameForSms(?string $fullName, string $fallback = 'Customer'): string
+    {
+        if (empty($fullName)) {
+            return $fallback;
+        }
+
+        $nameParts = explode(' ', trim($fullName));
+        return trim($nameParts[0] ?? $fallback);
+    }
+
+    /**
+     * Update survey order with subscription data and additional fields.
+     * Extracted to reduce duplication when updating survey orders with extra data.
+     *
+     * @param string $surveyOrderId Survey order ID
+     * @param string $customerSubscriptionOrderId Subscription order ID
+     * @param array $additionalData Additional fields to update (e.g., internet_account, service_number, etc.)
+     * @param string $serviceType Service type for logging
+     * @return bool True if update was successful
+     */
+    protected function updateSurveyOrderWithSubscriptionData(
+        string $surveyOrderId,
+        string $customerSubscriptionOrderId,
+        array $additionalData = [],
+        string $serviceType = 'subscription'
+    ): bool {
+        try {
+            $updateData = array_merge([
+                'status' => FFDServiceProvisionStatus::Waiting->value,
+                'subscribed_at' => now(),
+                'customer_subscription_order_id' => $customerSubscriptionOrderId,
+            ], $additionalData);
+
+            $updated = SurveyOrder::where('customer_survey_order_id', $surveyOrderId)
+                ->update($updateData);
+
+            if ($updated) {
+                AppLogger::api()->info('Survey order updated with subscription data', [
+                    'survey_order_id' => $surveyOrderId,
+                    'customer_subscription_order_id' => $customerSubscriptionOrderId,
+                    'service_type' => $serviceType,
+                    'updated_fields' => array_keys($additionalData),
+                ]);
+                return true;
+            } else {
+                AppLogger::api()->warning('Failed to update survey order with subscription data', [
+                    'survey_order_id' => $surveyOrderId,
+                    'customer_subscription_order_id' => $customerSubscriptionOrderId,
+                    'service_type' => $serviceType,
+                ]);
+                return false;
+            }
+        } catch (\Throwable $e) {
+            AppLogger::api()->exception($e, 'Exception updating survey order with subscription data', [
                 'survey_order_id' => $surveyOrderId,
                 'customer_subscription_order_id' => $customerSubscriptionOrderId,
                 'service_type' => $serviceType,

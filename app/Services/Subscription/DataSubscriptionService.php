@@ -8,8 +8,6 @@ use App\Services\ApiResponse;
 use App\Services\GetCombiningService;
 use App\Services\Logging\AppLogger;
 use App\Services\QuerySubscriptionOrderStatusService;
-use App\Traits\InteractsWithSMSGateway;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
@@ -40,28 +38,12 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
    public function create(array $data)
    {
       // Check if survey order is already subscribed (prevent duplicate subscriptions)
-      $surveyOrder = SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])
-         ->first();
-
-      if (!$surveyOrder) {
-         throw new \RuntimeException('Survey order not found: ' . $data['survey_order_id']);
+      $duplicateCheck = $this->checkDuplicateSubscription($data['survey_order_id']);
+      if ($duplicateCheck !== null) {
+         return $duplicateCheck;
       }
 
-      if ($surveyOrder?->customer_subscription_order_id && $surveyOrder->status === FFDServiceProvisionStatus::Completed->value) {
-         AppLogger::api()->warning('Attempted duplicate subscription', [
-            'survey_order_id' => $data['survey_order_id'],
-            'current_status' => $surveyOrder->status,
-            'customer_subscription_order_id' => $surveyOrder->customer_subscription_order_id,
-         ]);
-
-         return [
-            'success' => false,
-            'ret_code' => 'DUPLICATE',
-            'ret_msg' => 'This survey order has already been used to create a subscription.',
-            'customer_busi_order_id' => null,
-            'extra_params' => [],
-         ];
-      }
+      $surveyOrder = SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'])->first();
 
       // Use shared helper to hydrate customer data
       $data = $this->hydrateWithCustomerData($data);
@@ -459,102 +441,38 @@ XML;
             }
 
             // Update SurveyOrder with service number and internet credentials
-            try {
-               $internetAccount = $data['internet_account'] ?? null;
-               $internetPassword = $data['internet_password'] ?? null;
+            $internetAccount = $data['internet_account'] ?? null;
+            $internetPassword = $data['internet_password'] ?? null;
 
-               $updated = SurveyOrder::where('customer_survey_order_id', $surveyOrderId)
-                  ->update([
-                     'service_number' => $serviceNo,
-                     'internet_account' => $internetAccount,
-                     'internet_password' => $internetPassword,
-                     'status' => FFDServiceProvisionStatus::Waiting->value,
-                     'subscribed_at' => now(),
-                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
-                  ]);
+            $this->updateSurveyOrderWithSubscriptionData(
+               $surveyOrderId,
+               $res['customer_busi_order_id'],
+               [
+                  'service_number' => $serviceNo,
+                  'internet_account' => $internetAccount,
+                  'internet_password' => $internetPassword,
+               ],
+               'data'
+            );
 
-               if ($updated) {
-                  AppLogger::api()->info('Survey order updated after data subscription', [
-                     'survey_order_id' => $surveyOrderId,
-                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
-                     'service_number' => $serviceNo,
-                     'internet_account' => $internetAccount,
-                     'service_type' => 'data',
-                  ]);
-               } else {
-                  AppLogger::api()->warning('Failed to update survey order after data subscription', [
-                     'survey_order_id' => $surveyOrderId,
-                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
-                     'service_type' => 'data',
-                  ]);
-               }
-
-               // Update payment table with customer_subscription_order_id (important for manual subscriptions)
-               try {
-                  DB::table('payments')
-                     ->where('customer_survey_order_id', $surveyOrderId)
-                     ->update(['customer_subscription_order_id' => $res['customer_busi_order_id']]);
-
-                  AppLogger::api()->info('Payment updated with customer_subscription_order_id after data subscription', [
-                     'survey_order_id' => $surveyOrderId,
-                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
-                     'service_type' => 'data',
-                  ]);
-               } catch (\Throwable $e) {
-                  AppLogger::api()->warning('Failed to update payment with customer_subscription_order_id', [
-                     'survey_order_id' => $surveyOrderId,
-                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
-                     'error' => $e->getMessage(),
-                     'service_type' => 'data',
-                  ]);
-                  // Don't fail - subscription was successful
-               }
-            } catch (\Throwable $e) {
-               AppLogger::api()->exception($e, 'Exception updating survey order after data subscription', [
-                  'survey_order_id' => $surveyOrderId,
-                  'customer_subscription_order_id' => $res['customer_busi_order_id'],
-                  'service_type' => 'data',
-               ]);
-               // Don't fail the entire request - subscription was successful
-            }
+            // Update payment table with customer_subscription_order_id (important for manual subscriptions)
+            $this->updatePaymentWithSubscriptionOrderId(
+               $surveyOrderId,
+               $res['customer_busi_order_id'],
+               'data'
+            );
 
             // Send SMS with internet credentials
-            if (
-               !empty($data['sms_no']) &&
-               InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])
-            ) {
-               $phone = $data['sms_no'];
+            if (!empty($data['sms_no'])) {
+               $name = $this->formatCustomerNameForSms($data['name'] ?? null);
+               $message = "Dear {$name}, thank you for choosing Ethio Telecom. "
+                  . "Your subscription has been successfully created. "
+                  . "Data Service Number: {$serviceNo}. "
+                  . "Internet Account: {$internetAccount}. "
+                  . "Password: {$internetPassword}. "
+                  . "For support, visit https://fixedservices.ethiotelecom.et/services.";
 
-               try {
-                  $name = trim(explode(' ', $data['name'] ?? 'Customer')[0]);
-
-                  $message = "Dear {$name}, thank you for choosing Ethio Telecom. "
-                     . "Your subscription has been successfully created. "
-                     . "Data Service Number: {$serviceNo}. "
-                     . "Internet Account: {$internetAccount}. "
-                     . "Password: {$internetPassword}. "
-                     . "For support, visit https://fixedservices.ethiotelecom.et/services.";
-
-                  InteractsWithSMSGateway::sendSmsOnly($phone, $message);
-                  AppLogger::api()->info('Data subscription SMS sent successfully', [
-                     'phone' => substr($phone, -4), // Last 4 digits only
-                     'survey_order_id' => $surveyOrderId,
-                     'service_type' => 'data',
-                  ]);
-               } catch (\RuntimeException $e) {
-                  AppLogger::api()->warning('Data subscription SMS blocked or rate-limited', [
-                     'phone' => substr($phone, -4), // Last 4 digits only
-                     'reason' => $e->getMessage(),
-                     'survey_order_id' => $surveyOrderId,
-                     'service_type' => 'data',
-                  ]);
-               } catch (\Throwable $e) {
-                  AppLogger::api()->exception($e, 'Data subscription SMS failed unexpectedly', [
-                     'phone' => substr($phone, -4), // Last 4 digits only
-                     'survey_order_id' => $surveyOrderId,
-                     'service_type' => 'data',
-                  ]);
-               }
+               $this->sendSubscriptionSms($data['sms_no'], $message, $surveyOrderId, 'data');
             }
          } else {
             // Log Huawei error response

@@ -9,8 +9,6 @@ use App\Services\Logging\AppLogger;
 use App\Services\QueryAvailableNumberService;
 use App\Services\QuerySubscriptionOrderStatusService;
 use App\Services\ReserveNumberService;
-use App\Traits\InteractsWithSMSGateway;
-use Illuminate\Support\Facades\DB;
 
 class VoiceSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
@@ -352,39 +350,14 @@ XML;
          );
 
          // ✅ Send SMS to customer (non-blocking - failures are logged but don't affect response)
-         if (!empty($data['sms_no']) && InteractsWithSMSGateway::ensurePhoneIsLocal($data['sms_no'])) {
-
-            $phone = $data['sms_no'];
-            $name = trim(explode(' ', $data['name'] ?? '')[0] ?? 'Customer');
-
+         if (!empty($data['sms_no'])) {
+            $name = $this->formatCustomerNameForSms($data['name'] ?? null);
             $message = sprintf(
                'Dear %s, thank you for choosing Ethio telecom. Your subscription has been successfully created. For support or to submit a TT/complaint, please visit https://fixedservices.ethiotelecom.et/services.',
                $name
             );
 
-            try {
-               InteractsWithSMSGateway::sendSmsOnly($phone, $message);
-               AppLogger::api()->info('Subscription SMS sent successfully', [
-                  'phone' => substr($phone, -4), // Last 4 digits only
-                  'survey_order_id' => $data['survey_order_id'] ?? null,
-                  'service_type' => 'voice',
-               ]);
-            } catch (\RuntimeException $e) {
-               // Business-level failure (rate limit, gateway reject)
-               AppLogger::api()->warning('Voice subscription SMS blocked or rejected', [
-                  'phone' => substr($phone, -4), // Last 4 digits only
-                  'reason' => $e->getMessage(),
-                  'survey_order_id' => $data['survey_order_id'] ?? null,
-                  'service_type' => 'voice',
-               ]);
-            } catch (\Throwable $e) {
-               // System-level failure
-               AppLogger::api()->exception($e, 'Voice subscription SMS failed unexpectedly', [
-                  'phone' => substr($phone, -4), // Last 4 digits only
-                  'survey_order_id' => $data['survey_order_id'] ?? null,
-                  'service_type' => 'voice',
-               ]);
-            }
+            $this->sendSubscriptionSms($data['sms_no'], $message, $data['survey_order_id'] ?? null, 'voice');
          }
 
          return ApiResponse::success([

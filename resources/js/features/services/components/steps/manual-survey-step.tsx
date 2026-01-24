@@ -745,7 +745,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                             <div className="rounded-lg bg-blue-50/50 p-4 border border-blue-100/50">
                                 <Field>
                                     <FieldLabel htmlFor="manual-telecom-zone" className="text-gray-700 flex items-center gap-2">
-                                        Nearest Telecom Zone {selectedTelecomRegion ? '' : <span className="text-red-500">*</span>}
+                                        Nearest ethio telecom zone {selectedTelecomRegion ? '' : <span className="text-red-500">*</span>}
                                         <span className="text-xs font-normal text-gray-500">(Required for technical assignment)</span>
                                     </FieldLabel>
                                     <Select

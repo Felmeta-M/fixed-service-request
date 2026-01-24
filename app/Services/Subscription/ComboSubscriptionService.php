@@ -9,8 +9,6 @@ use App\Services\QueryAvailableNumberService;
 use App\Services\QuerySubscriptionOrderStatusService;
 use App\Services\ReserveNumberService;
 use App\Support\CustomerContext;
-use App\Traits\InteractsWithSMSGateway;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ComboSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
@@ -469,11 +467,7 @@ XML;
 
             if ($surveyOrderId) {
                // Update survey order with service numbers and internet credentials
-               $updateData = [
-                  'status' => FFDServiceProvisionStatus::Waiting->value,
-                  'subscribed_at' => now(),
-                  'customer_subscription_order_id' => $res['customer_busi_order_id'],
-               ];
+               $updateData = [];
 
                // Voice service number (we provide for combo)
                if ($voiceServiceNumber) {
@@ -493,81 +487,36 @@ XML;
                   $updateData['internet_password'] = $internetPassword;
                }
 
-               $updated = \App\Models\SurveyOrder::where('customer_survey_order_id', $surveyOrderId)
-                  ->update($updateData);
-
-               if ($updated) {
-                  AppLogger::api()->info('Survey order updated after combo subscription', [
-                     'survey_order_id' => $surveyOrderId,
-                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
-                     'voice_service_number' => $voiceServiceNumber,
-                     'fbb_service_number' => $fbbServiceNumber,
-                     'internet_account' => $internetAccount,
-                     'service_type' => 'combo',
-                  ]);
-               } else {
-                  AppLogger::api()->warning('Failed to update survey order after combo subscription', [
-                     'survey_order_id' => $surveyOrderId,
-                     'customer_subscription_order_id' => $res['customer_busi_order_id'],
-                     'service_type' => 'combo',
-                  ]);
-               }
+               $this->updateSurveyOrderWithSubscriptionData(
+                  $surveyOrderId,
+                  $res['customer_busi_order_id'],
+                  $updateData,
+                  'combo'
+               );
 
                // Update payment table
-               try {
-                  \Illuminate\Support\Facades\DB::table('payments')
-                     ->where('customer_survey_order_id', $surveyOrderId)
-                     ->update(['customer_subscription_order_id' => $res['customer_busi_order_id']]);
-               } catch (\Throwable $e) {
-                  AppLogger::api()->warning('Failed to update payment after combo subscription', [
-                     'survey_order_id' => $surveyOrderId,
-                     'error' => $e->getMessage(),
-                  ]);
-               }
+               $this->updatePaymentWithSubscriptionOrderId(
+                  $surveyOrderId,
+                  $res['customer_busi_order_id'],
+                  'combo'
+               );
 
                // Send SMS with internet credentials
                // Get SMS number from customer context or data
                $smsNo = $data['sms_no'] ?? \App\Support\CustomerContext::phone();
-               if (
-                  !empty($smsNo) &&
-                  InteractsWithSMSGateway::ensurePhoneIsLocal($smsNo)
-               ) {
-                  $phone = $smsNo;
+               if (!empty($smsNo)) {
+                  $customerName = \App\Support\CustomerContext::name() ?? 'Customer';
+                  $name = $this->formatCustomerNameForSms($customerName);
 
-                  try {
-                     $customerName = \App\Support\CustomerContext::name() ?? 'Customer';
-                     $name = trim(explode(' ', $customerName)[0] ?? 'Customer');
+                  $message = "Dear {$name}, thank you for choosing Ethio Telecom. "
+                     . "Your combo subscription has been successfully created. "
+                     . "Voice Service Number: {$voiceServiceNumber}. "
+                     . "Data Service Number: {$fbbServiceNumber}. "
+                     . "Internet Account: {$internetAccount}. "
+                     . "Password: {$internetPassword}. "
+                     . "For support, visit https://fixedservices.ethiotelecom.et/services.";
 
-                     $message = "Dear {$name}, thank you for choosing Ethio Telecom. "
-                        . "Your combo subscription has been successfully created. "
-                        . "Voice Service Number: {$voiceServiceNumber}. "
-                        . "Data Service Number: {$fbbServiceNumber}. "
-                        . "Internet Account: {$internetAccount}. "
-                        . "Password: {$internetPassword}. "
-                        . "For support, visit https://fixedservices.ethiotelecom.et/services.";
-
-                     InteractsWithSMSGateway::sendSmsOnly($phone, $message);
-                     AppLogger::api()->info('Combo subscription SMS sent successfully', [
-                        'phone' => substr($phone, -4), // Last 4 digits only
-                        'survey_order_id' => $surveyOrderId,
-                        'service_type' => 'combo',
-                     ]);
-                  } catch (\RuntimeException $e) {
-                     // Business-level failure (rate limit, gateway reject)
-                     AppLogger::api()->warning('Combo subscription SMS blocked or rejected', [
-                        'phone' => substr($phone, -4), // Last 4 digits only
-                        'reason' => $e->getMessage(),
-                        'survey_order_id' => $surveyOrderId,
-                        'service_type' => 'combo',
-                     ]);
-                  } catch (\Throwable $e) {
-                     // System-level failure
-                     AppLogger::api()->exception($e, 'Combo subscription SMS failed unexpectedly', [
-                        'phone' => substr($phone, -4), // Last 4 digits only
-                        'survey_order_id' => $surveyOrderId,
-                        'service_type' => 'combo',
-                     ]);
-                  }
+                  $this->sendSubscriptionSms($smsNo, $message, $surveyOrderId, 'combo');
                }
             }
          } catch (\Throwable $e) {

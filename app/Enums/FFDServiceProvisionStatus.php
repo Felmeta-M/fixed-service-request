@@ -70,4 +70,80 @@ enum FFDServiceProvisionStatus: int
     {
         return self::fromValue(array_search($label, self::options()));
     }
+
+    /**
+     * Get business-specific label based on context.
+     * These are custom labels that differ from the base enum label()
+     * to provide more specific information based on order phase and type.
+     *
+     * @param array $context Context information:
+     *   - has_subscription: bool - Whether order has subscription
+     *   - is_manual: bool - Whether survey is manual
+     *   - device_selected: bool - Whether device is selected (manual surveys)
+     *   - has_payment: bool - Whether payment is required
+     *   - is_paid: bool - Whether payment is completed
+     * @return string Business-specific label
+     */
+    public function businessLabel(array $context = []): string
+    {
+        $hasSubscription = $context['has_subscription'] ?? false;
+        $isManual = $context['is_manual'] ?? false;
+        $deviceSelected = $context['device_selected'] ?? false;
+        $hasPayment = $context['has_payment'] ?? false;
+        $isPaid = $context['is_paid'] ?? false;
+
+        return match ($this) {
+            self::Created => match (true) {
+                $isManual && !$hasSubscription => 'Waiting',
+                default => $this->label(),
+            },
+            self::Processing => match (true) {
+                $isManual && !$hasSubscription => 'Waiting',
+                default => $this->label(),
+            },
+            self::Waiting => match (true) {
+                $hasSubscription => 'Order Waiting',
+                $isManual && !$hasSubscription => 'Waiting',
+                !$hasSubscription && $isPaid => 'Paid',
+                !$hasSubscription => 'Waiting Survey',
+                default => $this->label(),
+            },
+            self::Completed => match (true) {
+                $hasSubscription => 'Order Completed', // Can be changed to "Service Activation" or any other label
+                $isManual && !$deviceSelected && !$hasSubscription => 'Device Selection',
+                $isManual && $deviceSelected && $hasPayment && !$isPaid && !$hasSubscription => 'Pending Payment',
+                $isManual && $deviceSelected && $isPaid && !$hasSubscription => 'Paid',
+                $isManual && $deviceSelected && !$hasPayment && !$hasSubscription => 'Ready',
+                !$isManual && !$hasSubscription && $hasPayment && !$isPaid => 'Pending Payment',
+                !$isManual && !$hasSubscription => 'Survey Completed',
+                default => $this->label(),
+            },
+            default => $this->label(),
+        };
+    }
+
+    /**
+     * Get all possible business labels for this status.
+     * Useful for frontend to know all possible label variations.
+     *
+     * @return array<string> Array of possible business labels
+     */
+    public function possibleBusinessLabels(): array
+    {
+        return match ($this) {
+            self::Created => ['Created', 'Waiting'],
+            self::Processing => ['Processing', 'Waiting'],
+            self::Waiting => ['Waiting Subscription', 'Order Waiting', 'Waiting', 'Paid', 'Waiting Survey'],
+            self::Completed => [
+                'Completed',
+                'Order Completed', // Can be changed to "Service Activation"
+                'Survey Completed',
+                'Device Selection',
+                'Pending Payment',
+                'Paid',
+                'Ready',
+            ],
+            default => [$this->label()],
+        };
+    }
 }

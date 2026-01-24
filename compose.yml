@@ -62,7 +62,7 @@ services:
         max-size: "50m"
         max-file: "3"
 
-  queue: # this is used to run the queue worker
+  queue: # this is used to run the queue worker (default queue)
     build:
       context: .
       dockerfile: docker/php/Dockerfile
@@ -88,6 +88,39 @@ services:
       php artisan queue:work --sleep=3 --tries=3 --timeout=90
     networks:
       - app_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  queue-sms: # dedicated SMS queue workers - scalable
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - .:/var/www:ro
+      - ./storage:/var/www/storage:rw
+      - ./bootstrap/cache:/var/www/bootstrap/cache:rw
+      - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
+    command: >
+      php artisan queue:work --queue=sms --sleep=2 --tries=3 --timeout=30
+    networks:
+      - app_net
+    deploy:
+      replicas: 3
     logging:
       driver: "json-file"
       options:

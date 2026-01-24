@@ -6,6 +6,7 @@ import { getStatusInfo } from '@/lib/status-map';
 import { Link, router, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
 import {
+    AlertTriangle,
     ArrowLeft,
     CheckCircle2,
     CreditCard,
@@ -19,6 +20,7 @@ import {
     Zap,
     Calendar,
     Hash,
+    Cable,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
@@ -47,7 +49,10 @@ type SurveyDetails = {
     internet_password?: string | null;
     bandwidth?: string | null;
     cable_length?: string | number | null;
-    cable_type?: string | null;
+    cable_type?: number | string | null; // BSS param 50056: 0=copper, 1=fiber, 2=EPON, 3=GPON, 5=without survey
+    media_type?: string | null; // BSS param 50005: PON (fiber) or COPPER, null if failed
+    line_indicator?: number | null; // BSS param 50112: 0=same line, 1=separate line
+    survey_failure_reason?: string | null; // Reason when survey failed (50005 = -1)
     with_device?: boolean;
     status?: string | number | null;
     survey_type?: string | null;
@@ -95,6 +100,21 @@ const serviceTypeMap = {
 
 const surveyTypeMap = {
     EIC08: { label: 'New Connection', description: 'New service installation' },
+};
+
+// Cable type mapping from BSS param 50056
+const cableTypeMap: Record<number, { label: string; description: string }> = {
+    0: { label: 'Copper', description: 'Copper cable infrastructure' },
+    1: { label: 'Fiber', description: 'Fiber optic cable' },
+    2: { label: 'EPON', description: 'Ethernet Passive Optical Network' },
+    3: { label: 'GPON', description: 'Gigabit Passive Optical Network' },
+    5: { label: 'Without Survey', description: 'No physical survey required' },
+};
+
+// Media type mapping from BSS param 50005
+const mediaTypeMap: Record<string, { label: string; description: string }> = {
+    PON: { label: 'Fiber (PON)', description: 'Passive Optical Network - Fiber devices' },
+    COPPER: { label: 'Copper', description: 'Copper cable - Copper devices' },
 };
 
 export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDetailProps) {
@@ -376,6 +396,74 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                     </div>
                 </CardHeader>
             </Card>
+
+            {/* Survey Failed Alert - Show when survey failed (50005 = -1) */}
+            {surveyDetails?.survey_failure_reason && (
+                <Card className="border-none shadow-xs border-l-4 border-l-red-500 bg-red-50">
+                    <CardContent className="py-4">
+                        <div className="flex items-start gap-3">
+                            <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+                            <div>
+                                <h4 className="font-semibold text-red-800">Survey Failed</h4>
+                                <p className="text-sm text-red-700 mt-1">
+                                    {surveyDetails.survey_failure_reason}
+                                </p>
+                                <p className="text-xs text-red-600 mt-2">
+                                    Please contact support or submit a new survey request.
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Survey Result Info - Show media type and cable type when survey completed */}
+            {surveyDetails?.media_type && !surveyDetails?.survey_failure_reason && (
+                <Card className="border-none shadow-xs bg-gradient-to-br from-green-50 to-emerald-50">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                            <Cable className="h-4 w-4 text-green-600" />
+                            Survey Result
+                            <Badge variant="outline" className="ml-2 text-xs bg-white text-green-700">Completed</Badge>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Media Type</span>
+                            <span className="font-medium text-green-700 bg-white px-2 py-1 rounded">
+                                {mediaTypeMap[surveyDetails.media_type]?.label || surveyDetails.media_type}
+                            </span>
+                        </div>
+                        {surveyDetails.cable_type !== null && surveyDetails.cable_type !== undefined && (
+                            <>
+                                <Separator />
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">Cable Type</span>
+                                    <span className="font-medium text-green-700 bg-white px-2 py-1 rounded">
+                                        {cableTypeMap[Number(surveyDetails.cable_type)]?.label || `Type ${surveyDetails.cable_type}`}
+                                    </span>
+                                </div>
+                            </>
+                        )}
+                        {surveyDetails.line_indicator !== null && surveyDetails.line_indicator !== undefined && (
+                            <>
+                                <Separator />
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">Installation Type</span>
+                                    <span className="font-medium text-green-700 bg-white px-2 py-1 rounded">
+                                        {surveyDetails.line_indicator === 0 ? 'Same Line' : 'Separate Line'}
+                                    </span>
+                                </div>
+                            </>
+                        )}
+                        <div className="mt-4 p-3 bg-green-100 border border-green-200 rounded-lg">
+                            <p className="text-xs text-green-800">
+                                <strong>Next Step:</strong> Based on your survey result, please select a compatible device and proceed to payment.
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

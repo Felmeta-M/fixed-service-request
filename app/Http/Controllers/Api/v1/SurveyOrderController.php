@@ -31,7 +31,8 @@ class SurveyOrderController extends Controller
         protected readonly QuerySubscriptionOrderStatusService $querySubscriptionOrderStatusService,
         protected readonly QueryPurchasedOfferingService $queryPurchasedOfferingService,
         protected readonly ManualSurveyOrderService $manualSurveyOrderService
-    ) {}
+    ) {
+    }
 
     /**
      * Display a listing of the resource - optimized with Query Builder
@@ -59,6 +60,10 @@ class SurveyOrderController extends Controller
                     'survey_orders.fbb_service_number',
                     'survey_orders.bandwidth',
                     'survey_orders.cable_length',
+                    'survey_orders.cable_type',
+                    'survey_orders.media_type',
+                    'survey_orders.line_indicator',
+                    'survey_orders.survey_failure_reason',
                     'survey_orders.with_device',
                     'survey_orders.last_checked_at',
                     'survey_orders.created_at',
@@ -140,6 +145,7 @@ class SurveyOrderController extends Controller
     protected function batchRefreshOrders($orders): void
     {
         $statusUpdates = [];
+        $surveyResultUpdates = []; // For manual survey result fields
         $timestampUpdates = [];
 
         foreach ($orders as $order) {
@@ -184,6 +190,7 @@ class SurveyOrderController extends Controller
                         $response = [
                             'success' => true,
                             'status' => $responseData['data']['status'],
+                            'survey_result' => $responseData['data']['survey_result'] ?? null,
                         ];
                     } elseif (!empty($responseData['success']) && isset($responseData['status'])) {
                         // Already in correct format (direct array response)
@@ -198,11 +205,39 @@ class SurveyOrderController extends Controller
                     continue;
                 }
 
-                // Third party API status always has priority - overwrite local DB status
-                // Only accept valid status codes (1-8 matching FFDServiceProvisionStatus enum)
-                $newStatus = (int) $response['status'];
-                if ($newStatus >= 1 && $newStatus <= 8) {
-                    $statusUpdates[$order->id] = $newStatus;
+                // For manual surveys, check survey_result to determine actual status
+                // If 50005 = -1, survey FAILED regardless of BSS order status
+                if ($isManual && !empty($response['survey_result'])) {
+                    $surveyResult = $response['survey_result'];
+
+                    if (!empty($surveyResult['survey_failed'])) {
+                        // Survey FAILED (50005 = -1)
+                        // Override status to Failed and save failure reason
+                        $statusUpdates[$order->id] = FFDServiceProvisionStatus::Failed->value;
+                        $surveyResultUpdates[$order->id] = [
+                            'media_type' => null,
+                            'cable_type' => null,
+                            'line_indicator' => null,
+                            'survey_failure_reason' => $surveyResult['survey_failure_reason'] ?? 'Survey failed',
+                        ];
+                    } else {
+                        // Survey COMPLETED (50005 = PON/COPPER)
+                        // Set status to Completed and save survey result fields for device selection
+                        $statusUpdates[$order->id] = FFDServiceProvisionStatus::Completed->value;
+                        $surveyResultUpdates[$order->id] = [
+                            'media_type' => $surveyResult['media_type'] ?? null,
+                            'cable_type' => $surveyResult['cable_type'] ?? null,
+                            'line_indicator' => $surveyResult['line_indicator'] ?? null,
+                            'survey_failure_reason' => null, // Clear any previous failure reason
+                        ];
+                    }
+                } else {
+                    // Non-manual surveys or no survey_result: use BSS status directly
+                    // Only accept valid status codes (1-8 matching FFDServiceProvisionStatus enum)
+                    $newStatus = (int) $response['status'];
+                    if ($newStatus >= 1 && $newStatus <= 8) {
+                        $statusUpdates[$order->id] = $newStatus;
+                    }
                 }
 
                 $timestampUpdates[] = $order->id;
@@ -251,6 +286,18 @@ class SurveyOrderController extends Controller
                  WHERE id IN ({$idPlaceholders})",
                 $bindings
             );
+        }
+
+        // Update survey result fields for manual surveys (individual updates for now)
+        // These fields are critical for device selection after manual survey completion
+        // Note: We update ALL fields including null to clear previous values (e.g., clear failure_reason on success)
+        foreach ($surveyResultUpdates as $orderId => $fields) {
+            if (!empty($fields)) {
+                $fields['updated_at'] = now();
+                DB::table('survey_orders')
+                    ->where('id', $orderId)
+                    ->update($fields);
+            }
         }
 
         // Batch update timestamps - ensure unique IDs
@@ -477,6 +524,10 @@ class SurveyOrderController extends Controller
             'bandwidth' => BandwidthHelper::format($order->bandwidth),
             'bandwidth_raw' => $order->bandwidth ?? null, // Raw KB value for debugging/API use
             'cable_length' => $order->cable_length ?? null,
+            'cable_type' => $order->cable_type ?? null, // BSS param 50056: 0=copper, 1=fiber, 2=EPON, 3=GPON, 5=without survey
+            'media_type' => $order->media_type ?? null, // BSS param 50005: PON (fiber) or COPPER, null if failed
+            'line_indicator' => $order->line_indicator ?? null, // BSS param 50112: 0=same line, 1=separate line
+            'survey_failure_reason' => $order->survey_failure_reason ?? null, // Reason when survey failed (50005 = -1)
             'with_device' => (bool) ($order->with_device ?? false),
             'created_at' => $order->created_at,
             'updated_at' => $order->updated_at,

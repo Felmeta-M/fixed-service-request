@@ -80,6 +80,7 @@ XML;
 
         $subOrders = [];
         $statuses  = [];
+        $surveyParams = []; // ExtParamList params for manual survey
 
         if (isset($responseBody->SubOrderList)) {
             foreach ($responseBody->SubOrderList->children($namespaces['com']) as $subOrder) {
@@ -87,6 +88,21 @@ XML;
                 $statusCode = (int) $subOrder->OrderStatus;
 
                 $statuses[] = $statusCode;
+
+                // Parse ExtParamList for survey details (critical for manual surveys)
+                $extParams = [];
+                if (isset($subOrder->ExtParamList)) {
+                    foreach ($subOrder->ExtParamList->children($namespaces['com']) as $paramInfo) {
+                        $paramCode = (string) $paramInfo->ParamCode;
+                        $paramValue = (string) $paramInfo->ParamValue;
+                        if ($paramCode !== '') {
+                            $extParams[$paramCode] = $paramValue;
+                        }
+                    }
+                }
+
+                // Extract bandwidth from sub-order if present
+                $bandwidth = (string) ($subOrder->bandwidth ?? '');
 
                 $subOrders[] = [
                     'sub_survey_order_id' => (string) $subOrder->SubSurveyOrderId,
@@ -97,12 +113,23 @@ XML;
                     'contact_person'      => (string) $subOrder->ContactPerson,
                     'contact_no'          => (string) $subOrder->ContactNo,
                     'contact_email'       => (string) $subOrder->ContactEmail,
+                    'bandwidth'           => $bandwidth,
+                    'ext_params'          => $extParams,
                 ];
+
+                // Merge ext_params into surveyParams (use first sub-order's params)
+                if (empty($surveyParams) && !empty($extParams)) {
+                    $surveyParams = $extParams;
+                }
             }
         }
 
         /** 🔑 Compute MAIN survey order status from sub-order statuses */
         $mainStatus = $this->resolveSurveyOrderStatus($statuses);
+
+        // Extract key survey result fields from ExtParamList
+        // These are critical for device selection in manual surveys
+        $surveyResult = $this->extractSurveyResultFields($surveyParams);
 
         return [
             'success' => true,
@@ -112,6 +139,47 @@ XML;
             'customer_survey_order_id' => $customerSurveyOrderId,
             'status' => $mainStatus,
             'sub_orders' => $subOrders,
+            'survey_result' => $surveyResult,
+        ];
+    }
+
+    /**
+     * Extract key survey result fields from ExtParamList.
+     *
+     * Critical params for manual surveys (device selection):
+     * - 50005: media_type (PON/COPPER, or -1 if survey failed)
+     * - 50056: cable_type (0=copper, 1=fiber, 2=EPON, 3=GPON, 5=without survey)
+     * - 50112: line_indicator (0=same line, 1=separate line)
+     * - CauseContent: Failure reason when 50005 = -1 (e.g., "Need rehabilitation")
+     * - 328: status indicator (1=created)
+     *
+     * Survey result logic:
+     * - If 50005 = -1: Survey FAILED, extract CauseContent as failure reason
+     * - If 50005 = PON/COPPER: Survey COMPLETED, proceed to device selection
+     */
+    private function extractSurveyResultFields(array $params): array
+    {
+        $mediaTypeRaw = $params['50005'] ?? null;
+        $isSurveyFailed = $mediaTypeRaw === '-1' || $mediaTypeRaw === -1;
+
+        // Extract failure reason from CauseContent when survey failed
+        $failureReason = null;
+        if ($isSurveyFailed) {
+            $failureReason = $params['CauseContent'] ?? null;
+            // Fallback: sometimes the reason might be empty, provide a default
+            if (empty($failureReason)) {
+                $failureReason = 'Survey failed - no specific reason provided';
+            }
+        }
+
+        return [
+            'media_type' => $isSurveyFailed ? null : ($mediaTypeRaw ?? null),
+            'cable_type' => isset($params['50056']) ? (int) $params['50056'] : null,
+            'line_indicator' => isset($params['50112']) ? (int) $params['50112'] : 0,
+            'survey_failed' => $isSurveyFailed,
+            'survey_failure_reason' => $failureReason,
+            'survey_status' => isset($params['328']) ? (int) $params['328'] : null,
+            'survey_result_flag' => $params['SURVEY_RESULT'] ?? null,
         ];
     }
 

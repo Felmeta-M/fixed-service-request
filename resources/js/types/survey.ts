@@ -14,6 +14,55 @@ export const ServiceType = {
     BUSINESS: 'business',
 } as const;
 
+/**
+ * Cable Type from BSS survey response (param 50056)
+ * Used for device selection - determines compatible devices based on cable infrastructure.
+ */
+export const CableType = {
+    COPPER: 0,
+    FIBER: 1,
+    EPON: 2,
+    GPON: 3,
+    WITHOUT_SURVEY: 5,
+} as const;
+
+export const CableTypeLabels: Record<number, string> = {
+    [CableType.COPPER]: 'Copper',
+    [CableType.FIBER]: 'Fiber',
+    [CableType.EPON]: 'EPON',
+    [CableType.GPON]: 'GPON',
+    [CableType.WITHOUT_SURVEY]: 'Without Survey',
+};
+
+/**
+ * Media Type from BSS survey response (param 50005)
+ * PON = Fiber (GPON/EPON), COPPER = Copper cable
+ * Critical for device selection - determines which devices are compatible.
+ */
+export const MediaType = {
+    PON: 'PON',
+    COPPER: 'COPPER',
+} as const;
+
+export const MediaTypeLabels: Record<string, string> = {
+    [MediaType.PON]: 'Fiber (PON)',
+    [MediaType.COPPER]: 'Copper',
+};
+
+/**
+ * Check if cable type is fiber-based (supports fiber devices)
+ */
+export const isFiberCableType = (cableType: number | null | undefined): boolean => {
+    return cableType === CableType.FIBER || cableType === CableType.EPON || cableType === CableType.GPON;
+};
+
+/**
+ * Check if media type supports fiber devices
+ */
+export const isFiberMediaType = (mediaType: string | null | undefined): boolean => {
+    return mediaType === MediaType.PON;
+};
+
 // Zod schema for survey request
 export const surveyRequestSchema = z.object({
     customer_id: z.number().int().optional(),
@@ -60,6 +109,11 @@ export type SurveyRequest = {
     updated_at: string;
     customer?: Customer;
     services: keyof typeof ServiceType;
+    // Manual survey result fields (from BSS response)
+    cable_type?: number | null; // BSS param 50056: 0=copper, 1=fiber, 2=EPON, 3=GPON, 5=without survey
+    media_type?: string | null; // BSS param 50005: PON (fiber) or COPPER, null if failed
+    line_indicator?: number | null; // BSS param 50112: 0=same line, 1=separate line
+    survey_failure_reason?: string | null; // Reason when survey failed (50005 = -1)
 };
 
 export type ServiceType = 'fl' | 'fbb' | 'combo' | 'home' | 'business';

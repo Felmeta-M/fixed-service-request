@@ -17,15 +17,13 @@ trait InteractsWithSMSGateway
      | -----------------------------------------------------------------
      */
 
-    public static function sendSmsOnly(string|int $phone, string $message): bool
+    public static function sendSmsOnly(string|int $phone, string $message): void
     {
         self::applySmsRateLimit($phone);
 
         $phone = self::normalizePhone($phone);
 
-        $url = self::buildSmsUrl($phone, $message);
-
-        return self::sendRequest($url);
+        \App\Jobs\SendSmsJob::dispatch($phone, $message);
     }
 
     public static function sendOTP(string|int $phone): string
@@ -39,11 +37,7 @@ trait InteractsWithSMSGateway
 
         $message = "Your verification code is {$otp}. It expires in 5 minutes.";
 
-        $url = self::buildSmsUrl($phone, $message);
-
-        if (! self::sendRequest($url)) {
-            throw new \RuntimeException('Failed to send OTP SMS.');
-        }
+        \App\Jobs\SendSmsJob::dispatch($phone, $message);
 
         return $otp;
     }

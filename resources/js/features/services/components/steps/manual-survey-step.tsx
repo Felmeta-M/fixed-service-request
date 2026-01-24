@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePage } from '@inertiajs/react';
-import { AlertCircle, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, MapPin } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { router } from '@inertiajs/react';
@@ -416,7 +416,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 />
                             </Field> */}
 
-                            <Field>
+                            {/* <Field>
                                 <FieldLabel>Device Option</FieldLabel>
                                 <Input
                                     type="text"
@@ -430,7 +430,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                     disabled
                                     className="bg-gray-50"
                                 />
-                            </Field>
+                            </Field> */}
                             <Field>
                                 <FieldLabel htmlFor="manual-phone">
                                     Contact Phone Number <span className="text-red-500">*</span>
@@ -543,17 +543,23 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                 </div>
 
                 {/* Address Selection Dropdowns */}
-                <div className="mt-6">
-                    <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Service Address Details</h3>
-                        <p className="text-sm text-gray-500">
-                            Enter the service installation address details
-                        </p>
+                <div className="mt-8 rounded-xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+                    <div className="mb-6 flex items-start gap-4">
+                        <div className="hidden rounded-full bg-primary/10 p-2 sm:block">
+                            <MapPin className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold text-gray-900">Installation Address</h3>
+                            <p className="mt-1 text-sm text-gray-500">
+                                Please provide the exact location where you would like the service to be installed. This helps us check availability and plan the connection.
+                            </p>
+                        </div>
                     </div>
-                    <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <Field>
-                            <FieldLabel htmlFor="manual-region">
-                                Region {selectedAddress.region ? '' : <span className="text-red-500">*</span>}
+                            <FieldLabel htmlFor="manual-region" className="text-gray-700">
+                                Region {selectedAddress.region ? '' : <span className="ml-1 text-red-500">*</span>}
                             </FieldLabel>
                             <Select
                                 value={selectedAddress.region}
@@ -574,7 +580,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                     className={
                                         manualFlowErrors.region
                                             ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
-                                            : ''
+                                            : 'bg-gray-50/50'
                                     }
                                 >
                                     <SelectValue placeholder={loadingRegions ? 'Loading regions...' : 'Select region'} />
@@ -596,8 +602,8 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                         </Field>
 
                         <Field>
-                            <FieldLabel htmlFor="manual-zone">
-                                Zone {selectedAddress.zone ? '' : <span className="text-red-500">*</span>}
+                            <FieldLabel htmlFor="manual-zone" className="text-gray-700">
+                                Zone {selectedAddress.zone ? '' : <span className="ml-1 text-red-500">*</span>}
                             </FieldLabel>
                             <Select
                                 value={selectedAddress.zone}
@@ -620,7 +626,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                     className={
                                         manualFlowErrors.zone
                                             ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
-                                            : ''
+                                            : 'bg-gray-50/50'
                                     }
                                 >
                                     <SelectValue
@@ -650,8 +656,8 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                         </Field>
 
                         <Field>
-                            <FieldLabel htmlFor="manual-woreda">
-                                Woreda {selectedAddress.woreda ? '' : <span className="text-red-500">*</span>}
+                            <FieldLabel htmlFor="manual-woreda" className="text-gray-700">
+                                Woreda {selectedAddress.woreda ? '' : <span className="ml-1 text-red-500">*</span>}
                             </FieldLabel>
                             <Select
                                 value={selectedAddress.woreda}
@@ -670,7 +676,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                     className={
                                         manualFlowErrors.woreda
                                             ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
-                                            : ''
+                                            : 'bg-gray-50/50'
                                     }
                                 >
                                     <SelectValue
@@ -699,64 +705,14 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                             )}
                         </Field>
 
-                        {/* Nearest Telecom Zone - Mandatory */}
                         <Field>
-                            <FieldLabel htmlFor="manual-telecom-zone">
-                                Nearest Telecom Zone {selectedTelecomRegion ? '' : <span className="text-red-500">*</span>}
-                            </FieldLabel>
-                            <Select
-                                value={selectedTelecomRegion}
-                                onValueChange={(value) => {
-                                    setSelectedTelecomRegion(value);
-                                    if (manualFlowErrors.telecom_region) {
-                                        setManualFlowErrors({ ...manualFlowErrors, telecom_region: '' });
-                                    }
-                                }}
-                                disabled={submitting || loadingTelecomRegions || !selectedAddress.zone}
-                            >
-                                <SelectTrigger
-                                    className={
-                                        manualFlowErrors.telecom_region
-                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
-                                            : ''
-                                    }
-                                >
-                                    <SelectValue
-                                        placeholder={
-                                            !selectedAddress.zone
-                                                ? 'First select zone'
-                                                : loadingTelecomRegions
-                                                    ? 'Loading...'
-                                                    : telecomRegionOptions.length === 0
-                                                        ? 'No telecom zones found'
-                                                        : 'Select nearest telecom zone'
-                                        }
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {telecomRegionOptions.map((region) => (
-                                        <SelectItem key={region.value} value={region.value}>
-                                            {region.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {manualFlowErrors.telecom_region && (
-                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                                    <AlertCircle className="h-4 w-4" />
-                                    {manualFlowErrors.telecom_region}
-                                </p>
-                            )}
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="manual-kebele">
-                                Kebele {isKebeleRequired && !selectedAddress.kebele ? <span className="text-red-500">*</span> : ''}
+                            <FieldLabel htmlFor="manual-kebele" className="text-gray-700">
+                                Kebele {isKebeleRequired && !selectedAddress.kebele ? <span className="ml-1 text-red-500">*</span> : ''}
                             </FieldLabel>
                             <Input
                                 id="manual-kebele"
                                 type="text"
-                                placeholder=""
+                                placeholder="Enter kebele name/number"
                                 value={selectedAddress.kebele}
                                 onChange={(e) => {
                                     setSelectedAddress({
@@ -770,7 +726,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 className={
                                     manualFlowErrors.kebele
                                         ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
-                                        : ''
+                                        : 'bg-gray-50/50'
                                 }
                                 disabled={submitting}
                                 required={isKebeleRequired}
@@ -782,7 +738,65 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 </p>
                             )}
                         </Field>
-                    </FieldGroup>
+
+                        {/* Nearest Telecom Zone - Mandatory */}
+                        <div className="col-span-1 md:col-span-2">
+                             <div className="rounded-lg bg-blue-50/50 p-4 border border-blue-100/50">
+                                <Field>
+                                    <FieldLabel htmlFor="manual-telecom-zone" className="text-gray-700 flex items-center gap-2">
+                                        Nearest Telecom Zone {selectedTelecomRegion ? '' : <span className="text-red-500">*</span>}
+                                        <span className="text-xs font-normal text-gray-500">(Required for technical assignment)</span>
+                                    </FieldLabel>
+                                    <Select
+                                        value={selectedTelecomRegion}
+                                        onValueChange={(value) => {
+                                            setSelectedTelecomRegion(value);
+                                            if (manualFlowErrors.telecom_region) {
+                                                setManualFlowErrors({ ...manualFlowErrors, telecom_region: '' });
+                                            }
+                                        }}
+                                        disabled={submitting || loadingTelecomRegions || !selectedAddress.zone}
+                                    >
+                                        <SelectTrigger
+                                            className={
+                                                manualFlowErrors.telecom_region
+                                                    ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
+                                                    : 'bg-white border-blue-200 focus:border-blue-400 focus:ring-blue-100'
+                                            }
+                                        >
+                                            <SelectValue
+                                                placeholder={
+                                                    !selectedAddress.zone
+                                                        ? 'First select zone to see nearby telecom zones'
+                                                        : loadingTelecomRegions
+                                                            ? 'Searching for nearby zones...'
+                                                            : telecomRegionOptions.length === 0
+                                                                ? 'No telecom zones found in this area'
+                                                                : 'Select the nearest telecom zone'
+                                                }
+                                            />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {telecomRegionOptions.map((region) => (
+                                                <SelectItem key={region.value} value={region.value}>
+                                                    {region.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {manualFlowErrors.telecom_region && (
+                                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                            <AlertCircle className="h-4 w-4" />
+                                            {manualFlowErrors.telecom_region}
+                                        </p>
+                                    )}
+                                    <p className="mt-2 text-xs text-gray-500">
+                                        Select the telecom office or zone closest to your installation address.
+                                    </p>
+                                </Field>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Submit Button */}

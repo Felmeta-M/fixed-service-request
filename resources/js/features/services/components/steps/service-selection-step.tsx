@@ -75,111 +75,140 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
 
     if (loadingServiceTypes) {
         return (
-            <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="ml-2 text-gray-600">Loading service types...</span>
+            <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4 rounded-xl border border-dashed bg-gray-50/50 py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="text-sm font-medium text-gray-500">Loading service types...</span>
             </div>
         );
     }
 
     return (
-        <div className="w-full space-y-6">
-            <div className="grid grid-cols-1 gap-2 gap-y-4 sm:grid-cols-2 md:gap-x-4 lg:grid-cols-3">
+        <div className="mx-auto w-full max-w-5xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Service Type Selection Cards */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-6">
                 {transformedServiceTypes.map((service) => {
                     const Icon = service.icon;
                     const isSelected = formData.serviceType === service.value;
+                    const isRecommended = service.recommended;
 
                     return (
-                        <label
-                            key={service.value}
-                            onClick={() => !hasActiveSurvey && handleServiceSelect(service.value)}
-                            className={`group relative flex cursor-pointer flex-col rounded-lg border bg-white p-5 transition ${hasActiveSurvey ? 'cursor-not-allowed border-gray-300 bg-gray-100 opacity-50' : ''} ${isSelected ? 'border-gray-300 ring-1 ring-primary' : 'border-gray-300 hover:border-gray-400 hover:shadow-md'} `}
-                        >
-                            <input
-                                type="radio"
-                                name="serviceType"
-                                value={service.value}
-                                checked={isSelected}
-                                onChange={() => {}}
-                                className="absolute inset-0 cursor-pointer opacity-0"
-                                disabled={hasActiveSurvey}
-                            />
-
-                            <div className="flex items-start gap-2">
-                                <div className={`rounded-xl p-3 ${isSelected ? 'text-primary' : 'text-gray-600'}`}>
-                                    <Icon className="h-6 w-6" />
+                        <div key={service.value} className="relative">
+                             {/* Recommended Badge */}
+                             {isRecommended && (
+                                <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 transform">
+                                    <span className="inline-flex items-center rounded-full border border-yellow-200 bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-700 shadow-sm">
+                                        ✨ Recommended
+                                    </span>
                                 </div>
+                            )}
+                            
+                            <label
+                                onClick={() => !hasActiveSurvey && handleServiceSelect(service.value)}
+                                className={`group relative flex h-full cursor-pointer flex-col rounded-xl border-2 p-6 transition-all duration-200 
+                                    ${hasActiveSurvey 
+                                        ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60' 
+                                        : isSelected 
+                                            ? 'border-primary shadow-sm ring-1 ring-primary/20' 
+                                            : 'border-gray-100 bg-white shadow-sm hover:border-primary/50 hover:shadow-md'
+                                    }
+                                `}
+                            >
+                                <input
+                                    type="radio"
+                                    name="serviceType"
+                                    value={service.value}
+                                    checked={isSelected}
+                                    onChange={() => {}}
+                                    className="absolute inset-0 cursor-pointer opacity-0"
+                                    disabled={hasActiveSurvey}
+                                />
 
-                                <div className="flex-1">
-                                    <h4 className={`font-semibold ${isSelected ? '' : ''}`}>{service.name}</h4>
-                                    <p className="mt-1 text-xs text-gray-500">{service.description}</p>
+                                <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
+                                    <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl shadow-sm transition-colors duration-200 
+                                        ${isSelected ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 group-hover:text-primary'}`
+                                    }>
+                                        <Icon className="h-6 w-6" />
+                                    </div>
+
+                                    <div className="flex-1 space-y-1">
+                                        <div className="flex items-center justify-center gap-2 sm:justify-start">
+                                            <h4 className={`text-lg font-semibold ${isSelected ? 'text-primary' : 'text-gray-900'}`}>
+                                                {service.name}
+                                            </h4>
+                                            {isSelected && <CheckCircle className="h-5 w-5 text-primary animate-in zoom-in duration-300" />}
+                                        </div>
+                                        <p className="text-sm leading-relaxed text-gray-500">
+                                            {service.description}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-
-                            {isSelected && <CheckCircle className="absolute top-3 right-3 h-5 w-5 text-primary" />}
-                        </label>
+                            </label>
+                        </div>
                     );
                 })}
             </div>
-            {/* Bandwidth Selection (Only for Broadband) */}
+
+            {/* Bandwidth Selection (Only for Broadband) - Smooth Reveal */}
             {(formData.serviceType === '1457567289' || formData.serviceType === '180427974') && !hasActiveSurvey && (
-                <div className="mt-6">
-                    <BandwidthSelector
-                        residentialOptions={residentialOptions}
-                        enterpriseOptions={enterpriseOptions}
-                        loading={loadingBandwidths}
-                        selectedBandwidth={formData.bandwidth}
-                        onBandwidthChange={handleBandwidthChange}
-                    />
+                <div className="mt-4 animate-in fade-in slide-in-from-top-4 duration-500 fill-mode-forwards">
+                    {/* <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8"> */}
+                        <BandwidthSelector
+                            residentialOptions={residentialOptions}
+                            enterpriseOptions={enterpriseOptions}
+                            loading={loadingBandwidths}
+                            selectedBandwidth={formData.bandwidth}
+                            onBandwidthChange={handleBandwidthChange}
+                        />
+                    {/* </div> */}
                 </div>
             )}
 
             {/* Terms and Conditions Checkbox */}
-            <div>
-                <div>
-                    <div className="flex items-start gap-3">
-                        <Checkbox
-                            id="terms-acceptance"
-                            checked={formData.termsAccepted || false}
-                            onCheckedChange={(checked) => onUpdate({ termsAccepted: checked === true })}
-                            disabled={hasActiveSurvey}
-                            className="mt-1 border-primary"
-                        />
-                        <label
-                            htmlFor="terms-acceptance"
-                            className={`flex-1 cursor-pointer text-sm leading-relaxed ${hasActiveSurvey ? 'cursor-not-allowed opacity-50' : ''}`}
-                        >
-                            <span>
-                                I accept the{' '}
-                                <Link
-                                    href={route('terms')}
-                                    className="font-medium text-primary underline hover:text-primary/80"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    Terms and Conditions
-                                </Link>{' '}
-                                and agree to the service agreement. By proceeding, I acknowledge that I have read and understood the terms of service.
-                            </span>
-                        </label>
-                    </div>
+            <div className="rounded-xl bg-gray-50 p-4 border border-gray-100">
+                <div className="flex items-start gap-3">
+                    <Checkbox
+                        id="terms-acceptance"
+                        checked={formData.termsAccepted || false}
+                        onCheckedChange={(checked) => onUpdate({ termsAccepted: checked === true })}
+                        disabled={hasActiveSurvey}
+                        className="mt-0.5 border-gray-300 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                    />
+                    <label
+                        htmlFor="terms-acceptance"
+                        className={`flex-1 cursor-pointer text-sm leading-relaxed text-gray-600 ${hasActiveSurvey ? 'cursor-not-allowed opacity-50' : ''}`}
+                    >
+                        <span>
+                            I have read and accept the{' '}
+                            <Link
+                                href={route('terms')}
+                                className="font-semibold text-primary underline decoration-primary/30 underline-offset-4 transition-colors hover:text-primary/80 hover:decoration-primary"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                Terms and Conditions
+                            </Link>{' '}
+                            and service agreement. By proceeding, I acknowledge that I understand the terms of service.
+                        </span>
+                    </label>
                 </div>
             </div>
 
+            {/* Active Survey Warning */}
             {hasActiveSurvey && (
-                <Card className="bg-gray-50">
-                    <CardContent className="p-4">
-                        <div className="flex items-center space-x-3">
-                            <AlertCircle className="h-5 w-5 text-blue-500" />
-                            <div>
-                                <p className="font-semibold text-blue-800">Active Service Request</p>
-                                <p className="text-sm text-blue-700">
-                                    You currently have an active service request in progress. Please complete or cancel your existing request before
-                                    creating a new one.
-                                </p>
+                <div className="animate-in fade-in zoom-in duration-300">
+                    <Card className="border-l-4 border-l-blue-500 bg-blue-50/50 shadow-none">
+                        <CardContent className="p-4">
+                            <div className="flex items-start space-x-3">
+                                <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-500" />
+                                <div>
+                                    <h5 className="font-semibold text-blue-900">Active Service Request</h5>
+                                    <p className="mt-1 text-sm text-blue-700">
+                                        You currently have an active service request in progress. Please complete or cancel your existing request before creating a new one.
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </div>
             )}
         </div>
     );

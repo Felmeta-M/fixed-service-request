@@ -271,6 +271,11 @@ XML;
             'device_voice_id' => $data['device_voice_id'] ?? null,
             'area_code' => $areaCode,
             'area_name' => $areaName,
+            // Manual survey fields - will be populated from BSS response after survey completion
+            'media_type' => null, // Set from BSS param 50005 (PON/COPPER), null if failed (-1)
+            'cable_type' => null, // Set from BSS param 50056 (0-5)
+            'line_indicator' => null,  // Set from BSS param 50112
+            'survey_failure_reason' => null, // Set from CauseContent when 50005 = -1
         ]);
 
         // Persist payment for manual survey (without cable charge)

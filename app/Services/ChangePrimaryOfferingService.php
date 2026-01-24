@@ -58,7 +58,7 @@ class ChangePrimaryOfferingService extends BaseApiService
                     'bandwidth' => $bandwidth,
                     'operation' => 'change_primary_offering',
                 ]);
-                
+
                 return [
                     'success' => false,
                     'error' => 'Invalid bandwidth option. Please select a valid bandwidth from the available options.',
@@ -73,7 +73,7 @@ class ChangePrimaryOfferingService extends BaseApiService
                     'bandwidth' => $bandwidth,
                     'operation' => 'change_primary_offering',
                 ]);
-                
+
                 return [
                     'success' => false,
                     'message' => 'Survey order not found',
@@ -82,11 +82,11 @@ class ChangePrimaryOfferingService extends BaseApiService
             }
 
             $data['object_id_type'] = self::OBJECT_TYPE_SUBSCRIBER;
-            $data['object_id'] = 291018719; // $serviceNumber; //TODO: change to $serviceNumber
+            $data['object_id'] = $serviceNumber; // fbb service number
             $data['old_offering_id'] = $surveyOrder->main_offer_id;
             $data['new_offering_id'] = $surveyOrder->main_offer_id;
             $data['bandwidth'] = $this->parseBandwidth($bandwidth);
-            
+
             $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $result = $this->parseResponse($xmlResponse, $serviceNumber);
@@ -99,7 +99,7 @@ class ChangePrimaryOfferingService extends BaseApiService
             // Update local database with new bandwidth after successful change
             // Save as KB for consistency with BSS responses
             $bandwidthKb = $this->parseBandwidth($bandwidth);
-            
+
             try {
                 $surveyOrder->update([
                     'bandwidth' => $bandwidthKb, // Save as KB for consistency with BSS responses
@@ -138,7 +138,7 @@ class ChangePrimaryOfferingService extends BaseApiService
                 'bandwidth' => $bandwidth,
                 'operation' => 'change_primary_offering',
             ]);
-            
+
             return [
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -149,7 +149,7 @@ class ChangePrimaryOfferingService extends BaseApiService
                 'bandwidth' => $bandwidth,
                 'operation' => 'change_primary_offering',
             ]);
-            
+
             return [
                 'success' => false,
                 'error' => 'An unexpected error occurred. Please try again.',
@@ -168,7 +168,7 @@ class ChangePrimaryOfferingService extends BaseApiService
         try {
             // Fetch bandwidth options from database
             $bandwidthOption = BandwidthOption::first();
-            
+
             if (!$bandwidthOption) {
                 AppLogger::api()->warning('Bandwidth options not found in database', [
                     'bandwidth' => $bandwidth,
@@ -326,7 +326,7 @@ XML;
             if ($parsed === false) {
                 $errors = array_map(fn($e) => $e->message, libxml_get_errors());
                 libxml_clear_errors();
-                
+
                 AppLogger::api()->error('Failed to parse change offering XML response', [
                     'service_number' => $objectId,
                     'xml_preview' => substr($xml, 0, 500),
@@ -442,13 +442,13 @@ XML;
                 'order_id' => $orderId,
                 'additional_properties' => $additionalProps,
             ];
-            
+
         } catch (\Throwable $e) {
             AppLogger::api()->exception($e, 'Unexpected error parsing change offering response', [
                 'service_number' => $objectId,
                 'operation' => 'change_primary_offering',
             ]);
-            
+
             return [
                 'success' => false,
                 'error' => 'An unexpected error occurred while processing the response.',

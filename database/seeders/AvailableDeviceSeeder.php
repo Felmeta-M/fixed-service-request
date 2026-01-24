@@ -15,12 +15,13 @@ class AvailableDeviceSeeder extends Seeder
     public function run(): void
     {
         $devices = [
-            // Broadband devices (for internet/data services)
+            // Broadband devices (for internet/data services) - FIBER (PON)
             [
                 'name' => 'Huawei ONT Router',
                 'vendor' => 'Huawei',
                 'model' => 'HG8245H',
                 'device_type' => 'broadband',
+                'media_type' => 'PON', // Fiber device (GPON/EPON)
                 'price' => 1500.00,
                 'description' => 'High-performance Optical Network Terminal (ONT) router with WiFi support. Perfect for home and small office use.',
                 'is_active' => true,
@@ -36,6 +37,7 @@ class AvailableDeviceSeeder extends Seeder
                 'vendor' => 'ZTE',
                 'model' => 'F660',
                 'device_type' => 'broadband',
+                'media_type' => 'PON', // Fiber device (GPON/EPON)
                 'price' => 1200.00,
                 'description' => 'Reliable ONT modem with excellent signal strength and easy setup. Compatible with all major ISPs.',
                 'is_active' => true,
@@ -51,6 +53,7 @@ class AvailableDeviceSeeder extends Seeder
                 'vendor' => 'Huawei',
                 'model' => 'HG8245W5',
                 'device_type' => 'broadband',
+                'media_type' => 'PON', // Fiber device (GPON/EPON)
                 'price' => 2000.00,
                 'description' => 'Advanced smart router with dual-band WiFi, parental controls, and mobile app management. Ideal for modern homes.',
                 'is_active' => true,
@@ -66,6 +69,7 @@ class AvailableDeviceSeeder extends Seeder
                 'vendor' => 'ZTE',
                 'model' => 'F670L',
                 'device_type' => 'broadband',
+                'media_type' => 'PON', // Fiber device (GPON/EPON)
                 'price' => 1800.00,
                 'description' => 'Premium fiber gateway with advanced features and excellent coverage. Best for large homes and offices.',
                 'is_active' => true,
@@ -81,6 +85,7 @@ class AvailableDeviceSeeder extends Seeder
                 'vendor' => 'Huawei',
                 'model' => 'HG8240',
                 'device_type' => 'broadband',
+                'media_type' => 'PON', // Fiber device (GPON/EPON)
                 'price' => 1000.00,
                 'description' => 'Affordable and reliable basic ONT device. Perfect for budget-conscious customers.',
                 'is_active' => true,
@@ -91,12 +96,46 @@ class AvailableDeviceSeeder extends Seeder
                     'speed' => 'Up to 100Mbps',
                 ],
             ],
-            // Voice devices (for telephone services)
+            // Broadband devices - COPPER (ADSL/DSL)
+            [
+                'name' => 'Huawei ADSL Modem',
+                'vendor' => 'Huawei',
+                'model' => 'HG532d',
+                'device_type' => 'broadband',
+                'media_type' => 'COPPER', // Copper device (ADSL)
+                'price' => 900.00,
+                'description' => 'Reliable ADSL modem for copper line connections. WiFi enabled with good coverage.',
+                'is_active' => true,
+                'stock_quantity' => 40,
+                'specifications' => [
+                    'wifi' => '802.11n',
+                    'ports' => '4 LAN',
+                    'speed' => 'Up to 24Mbps',
+                ],
+            ],
+            [
+                'name' => 'ZTE DSL Router',
+                'vendor' => 'ZTE',
+                'model' => 'ZXHN H168N',
+                'device_type' => 'broadband',
+                'media_type' => 'COPPER', // Copper device (VDSL/ADSL)
+                'price' => 1100.00,
+                'description' => 'VDSL/ADSL compatible router for copper infrastructure. Supports high-speed DSL connections.',
+                'is_active' => true,
+                'stock_quantity' => 30,
+                'specifications' => [
+                    'wifi' => '802.11ac',
+                    'ports' => '4 LAN + 1 USB',
+                    'speed' => 'Up to 100Mbps',
+                ],
+            ],
+            // Voice devices (for telephone services) - UNIVERSAL (work with any media)
             [
                 'name' => 'Huawei Voice Terminal',
                 'vendor' => 'Huawei',
                 'model' => 'HG8240V',
                 'device_type' => 'voice',
+                'media_type' => 'UNIVERSAL', // Works with both fiber and copper
                 'price' => 800.00,
                 'description' => 'Dedicated voice terminal device for telephone services. Reliable and easy to configure.',
                 'is_active' => true,
@@ -111,6 +150,7 @@ class AvailableDeviceSeeder extends Seeder
                 'vendor' => 'ZTE',
                 'model' => 'F660V',
                 'device_type' => 'voice',
+                'media_type' => 'UNIVERSAL', // Works with both fiber and copper
                 'price' => 750.00,
                 'description' => 'Compact voice gateway device perfect for residential telephone services.',
                 'is_active' => true,
@@ -125,6 +165,7 @@ class AvailableDeviceSeeder extends Seeder
                 'vendor' => 'Huawei',
                 'model' => 'HG8245V',
                 'device_type' => 'voice',
+                'media_type' => 'UNIVERSAL', // Works with both fiber and copper
                 'price' => 1200.00,
                 'description' => 'Enterprise-grade voice router with multiple POTS ports for business use.',
                 'is_active' => true,
@@ -140,6 +181,7 @@ class AvailableDeviceSeeder extends Seeder
                 'vendor' => 'ZTE',
                 'model' => 'F680',
                 'device_type' => 'universal',
+                'media_type' => 'UNIVERSAL', // Works with both fiber and copper
                 'price' => 2500.00,
                 'description' => 'Enterprise-grade router with advanced security features, VPN support, and high-speed connectivity. Supports both data and voice.',
                 'is_active' => true,

@@ -28,7 +28,9 @@ import { type ServiceActionFocus } from '@/lib/service-action-rules';
 import { useCreateSubscription, useCreatePaymentOrder, useCancelSurveyOrder, useChangePrimaryOffering } from '@/hooks/use-api-mutations';
 import { BandwidthChangeDialog } from './bandwidth-change-dialog';
 import { CancelConfirmationDialog } from './cancel-confirmation-dialog';
-import { ArrowUpToLineIcon, ArrowDownToLineIcon, X } from 'lucide-react';
+import { ManualSurveyDeviceSelection } from './manual-survey-device-selection';
+import { ArrowUpToLineIcon, ArrowDownToLineIcon, X, ChevronRight } from 'lucide-react';
+import { formatBandwidthLabel } from '@/hooks/use-bandwidth-options';
 
 type AuthUser = {
     api_token: string;
@@ -53,13 +55,15 @@ type SurveyDetails = {
     media_type?: string | null; // BSS param 50005: PON (fiber) or COPPER, null if failed
     line_indicator?: number | null; // BSS param 50112: 0=same line, 1=separate line
     survey_failure_reason?: string | null; // Reason when survey failed (50005 = -1)
-    with_device?: boolean;
+    survey_is_manual?: boolean; // True for manual surveys, false for auto surveys
+    with_device?: boolean | null; // null for manual surveys before device selection
     status?: string | number | null;
     survey_type?: string | null;
     customer_type?: string | null;
     created_at?: string;
     updated_at?: string;
     is_paid?: boolean;
+    can_continue?: boolean; // For manual surveys: can proceed to device selection
     can_pay?: boolean;
     can_subscribe?: boolean;
     can_change_offer?: boolean;
@@ -131,6 +135,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
     const [openDowngradeDialog, setOpenDowngradeDialog] = useState(false);
     const [openCancelDialog, setOpenCancelDialog] = useState(false);
     const [isTerminateAction, setIsTerminateAction] = useState(false);
+    const [showDeviceSelection, setShowDeviceSelection] = useState(false);
 
     const loading = createSubscriptionMutation.isPending || createPaymentOrderMutation.isPending || cancelMutation.isPending || changePrimaryOfferingMutation.isPending || isSubmitting;
 
@@ -153,6 +158,17 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
     const canTerminate = surveyDetails?.can_terminate ?? false;
     const isInternetOrCombo = surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID;
     const canUpgradeDowngrade = canChangeOffer && isInternetOrCombo;
+
+    // Manual survey completed - needs device selection before payment
+    // Show "Continue" button when:
+    // 1. It's a manual survey (survey_is_manual = true)
+    // 2. Survey is completed (has media_type, no failure reason)
+    // 3. No subscription order yet
+    // 4. Device not selected yet (with_device is undefined/null)
+    const isManualSurvey = surveyDetails?.survey_is_manual === true;
+    // Use backend permission check for device selection (single source of truth)
+    // can_continue: manual survey + completed + no subscription + no device selected + no failure
+    const canContinue = surveyDetails?.can_continue ?? false;
 
     const statusInfo = getStatusInfo(surveyDetails?.status);
 
@@ -212,9 +228,10 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
     };
 
     // Backend is single source of truth - bandwidth comes pre-formatted from API
-    // No frontend parsing needed - just display as-is
+    // However, we use formatBandwidthLabel as a safety layer for any legacy data
     const formatBandwidth = (bandwidth?: string | null) => {
-        return bandwidth || null;
+        if (!bandwidth) return null;
+        return formatBandwidthLabel(bandwidth);
     };
 
 
@@ -357,6 +374,39 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
 
     const bandwidthDisplay = formatBandwidth(surveyDetails?.bandwidth);
 
+    // Show device selection screen for manual surveys
+    if (showDeviceSelection && surveyDetails?.media_type && surveyDetails?.main_offer_id) {
+        return (
+            <div className="w-full space-y-4 px-4 py-4 lg:px-6">
+                {/* Header with back button */}
+                <div className="flex items-center gap-4 mb-6">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setShowDeviceSelection(false)}
+                        className="h-8 w-8"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div>
+                        <h2 className="text-lg font-semibold">Select Device</h2>
+                        <p className="text-sm text-muted-foreground">
+                            Choose a compatible device based on your {surveyDetails.media_type === 'PON' ? 'Fiber' : 'Copper'} infrastructure
+                        </p>
+                    </div>
+                </div>
+
+                <ManualSurveyDeviceSelection
+                    surveyOrderId={customer_survey_order_id}
+                    mainOfferId={surveyDetails.main_offer_id}
+                    mediaType={surveyDetails.media_type}
+                    onBack={() => setShowDeviceSelection(false)}
+                    onSuccess={() => setShowDeviceSelection(false)}
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="w-full space-y-4 px-4 py-4 lg:px-6">
             {/* Header */}
@@ -399,17 +449,24 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
 
             {/* Survey Failed Alert - Show when survey failed (50005 = -1) */}
             {surveyDetails?.survey_failure_reason && (
-                <Card className="border-none shadow-xs border-l-4 border-l-red-500 bg-red-50">
-                    <CardContent className="py-4">
-                        <div className="flex items-start gap-3">
-                            <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
-                            <div>
-                                <h4 className="font-semibold text-red-800">Survey Failed</h4>
-                                <p className="text-sm text-red-700 mt-1">
+                <Card className="border-none shadow-md border-l-4 border-l-red-500 bg-red-50">
+                    <CardContent className="py-5">
+                        <div className="flex items-start gap-4">
+                            <div className="rounded-full bg-red-100 p-3 shrink-0">
+                                <AlertTriangle className="h-6 w-6 text-red-600" />
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-semibold text-lg text-red-800 mb-2">
+                                    Survey Could Not Be Completed
+                                </h4>
+                                <p className="text-sm text-red-700 mb-3">
                                     {surveyDetails.survey_failure_reason}
                                 </p>
-                                <p className="text-xs text-red-600 mt-2">
-                                    Please contact support or submit a new survey request.
+                                <p className="text-sm text-gray-600">
+                                    Please contact our support team or submit a new service request.
+                                </p>
+                                <p className="text-xs text-gray-500 mt-3">
+                                    Reference: {customer_survey_order_id}
                                 </p>
                             </div>
                         </div>
@@ -417,49 +474,34 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                 </Card>
             )}
 
-            {/* Survey Result Info - Show media type and cable type when survey completed */}
-            {surveyDetails?.media_type && !surveyDetails?.survey_failure_reason && (
-                <Card className="border-none shadow-xs bg-gradient-to-br from-green-50 to-emerald-50">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            <Cable className="h-4 w-4 text-green-600" />
-                            Survey Result
-                            <Badge variant="outline" className="ml-2 text-xs bg-white text-green-700">Completed</Badge>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Media Type</span>
-                            <span className="font-medium text-green-700 bg-white px-2 py-1 rounded">
-                                {mediaTypeMap[surveyDetails.media_type]?.label || surveyDetails.media_type}
-                            </span>
-                        </div>
-                        {surveyDetails.cable_type !== null && surveyDetails.cable_type !== undefined && (
-                            <>
-                                <Separator />
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-muted-foreground">Cable Type</span>
-                                    <span className="font-medium text-green-700 bg-white px-2 py-1 rounded">
-                                        {cableTypeMap[Number(surveyDetails.cable_type)]?.label || `Type ${surveyDetails.cable_type}`}
-                                    </span>
-                                </div>
-                            </>
-                        )}
-                        {surveyDetails.line_indicator !== null && surveyDetails.line_indicator !== undefined && (
-                            <>
-                                <Separator />
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-muted-foreground">Installation Type</span>
-                                    <span className="font-medium text-green-700 bg-white px-2 py-1 rounded">
-                                        {surveyDetails.line_indicator === 0 ? 'Same Line' : 'Separate Line'}
-                                    </span>
-                                </div>
-                            </>
-                        )}
-                        <div className="mt-4 p-3 bg-green-100 border border-green-200 rounded-lg">
-                            <p className="text-xs text-green-800">
-                                <strong>Next Step:</strong> Based on your survey result, please select a compatible device and proceed to payment.
-                            </p>
+            {/* Manual Survey Success - Device Selection Required Card */}
+            {/* This is only for MANUAL surveys that completed successfully and need device selection */}
+            {canContinue && (
+                <Card className="border-none shadow-md bg-green-50 border-l-4 border-l-green-500">
+                    <CardContent className="py-5">
+                        <div className="flex items-start gap-4">
+                            <div className="rounded-full bg-green-100 p-3 shrink-0">
+                                <CheckCircle2 className="h-6 w-6 text-green-600" />
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-semibold text-lg text-green-800 mb-2">
+                                    Survey Completed
+                                </h4>
+                                <p className="text-sm text-green-700 mb-1">
+                                    Your location supports <strong>{surveyDetails?.media_type === 'PON' ? 'Fiber' : 'Copper'}</strong> connection.
+                                </p>
+                                <p className="text-sm text-gray-600 mb-4">
+                                    Please select a device to continue with your order.
+                                </p>
+                                <Button
+                                    onClick={() => setShowDeviceSelection(true)}
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                    <Package className="mr-2 h-4 w-4" />
+                                    Continue
+                                    <ChevronRight className="ml-2 h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -570,26 +612,93 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                         <Separator />
                         {surveyDetails?.with_device && (
 
-                        
-                        <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Device</span>
-                            <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-xs font-medium ${surveyDetails?.with_device
+
+                            <div className="flex justify-between">
+                                <span className="text-sm text-muted-foreground">Device</span>
+                                <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-xs font-medium ${surveyDetails?.with_device
                                     ? 'bg-emerald-100 text-emerald-700'
                                     : 'bg-gray-100 text-gray-600'
-                                }`}>
-                                {surveyDetails?.with_device ? (
-                                    <>
-                                        <Package className="h-3 w-3" />
-                                        With Device
-                                    </>
-                                ) : (
-                                    'Without Device'
-                                )}
-                            </span>
-                        </div>
+                                    }`}>
+                                    {surveyDetails?.with_device ? (
+                                        <>
+                                            <Package className="h-3 w-3" />
+                                            With Device
+                                        </>
+                                    ) : (
+                                        'Without Device'
+                                    )}
+                                </span>
+                            </div>
                         )}
                     </CardContent>
                 </Card>
+
+                {/* Infrastructure Info Card - Show media type and cable type */}
+                {(surveyDetails?.media_type || surveyDetails?.cable_type !== null) && !surveyDetails?.survey_failure_reason && (
+                    <Card className={`border-none shadow-xs ${canContinue ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' : ''}`}>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="flex items-center gap-2 text-base">
+                                <Cable className="h-4 w-4 text-emerald-600" />
+                                Infrastructure Details
+                                {canContinue && (
+                                    <Badge className="ml-2 bg-green-100 text-green-700 border-green-200">Survey Complete</Badge>
+                                )}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {surveyDetails?.media_type && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">Media Type</span>
+                                    <Badge variant="outline" className={`${surveyDetails.media_type === 'PON' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                                        {mediaTypeMap[surveyDetails.media_type]?.label || surveyDetails.media_type}
+                                    </Badge>
+                                </div>
+                            )}
+                            {surveyDetails?.media_type && surveyDetails.cable_type !== null && surveyDetails.cable_type !== undefined && (
+                                <Separator />
+                            )}
+                            {surveyDetails.cable_type !== null && surveyDetails.cable_type !== undefined && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-muted-foreground">Cable Type</span>
+                                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                                        {cableTypeMap[Number(surveyDetails.cable_type)]?.label || `Type ${surveyDetails.cable_type}`}
+                                    </Badge>
+                                </div>
+                            )}
+                            {surveyDetails.line_indicator !== null && surveyDetails.line_indicator !== undefined && (
+                                <>
+                                    <Separator />
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-muted-foreground">Installation</span>
+                                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                                            {surveyDetails.line_indicator === 0 ? 'Same Line' : 'Separate Line'}
+                                        </Badge>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Continue button for manual surveys */}
+                            {canContinue && (
+                                <>
+                                    <Separator className="my-4" />
+                                    <div className="pt-2">
+                                        <p className="text-sm text-muted-foreground mb-3">
+                                            Select a device to continue with your order.
+                                        </p>
+                                        <Button
+                                            onClick={() => setShowDeviceSelection(true)}
+                                            className="w-full bg-green-600 hover:bg-green-700 text-white"
+                                        >
+                                            <Package className="mr-2 h-4 w-4" />
+                                            Continue
+                                            <ChevronRight className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Internet Credentials Card - Only for Data and Combo services after subscription */}
                 {(surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID) &&
@@ -598,7 +707,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                             <CardHeader className="pb-3">
                                 <CardTitle className="flex items-center gap-2 text-base">
                                     <Wifi className="h-4 w-4 text-blue-600" />
-                                    Internet Credentials
+                                    Default Internet Credentials
                                     <Badge variant="outline" className="ml-2 text-xs bg-white">For Device Config</Badge>
                                 </CardTitle>
                             </CardHeader>

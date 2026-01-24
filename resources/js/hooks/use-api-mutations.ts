@@ -440,3 +440,38 @@ export function useChangePrimaryOffering() {
     });
 }
 
+/**
+ * Mutation hook for updating survey device selection (for manual surveys)
+ * Updates the device selection and recalculates payment
+ */
+export function useUpdateSurveyDevice() {
+    const token = useAuthToken();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        retry: false,
+        mutationFn: async (data: {
+            customer_survey_order_id: string;
+            with_device: boolean;
+            device_id?: string;
+            device_voice_id?: string;
+        }) => {
+            if (!token) throw new Error('Authentication token required');
+            const response = await apiClient.post<any>('/survey-requests/update-device', data, {
+                token,
+            });
+
+            if (!response.success) {
+                throw new Error(response.message || 'Failed to update device selection');
+            }
+
+            return response;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['surveyList'] });
+            queryClient.invalidateQueries({ queryKey: ['surveyDetail'] });
+            queryClient.invalidateQueries({ queryKey: ['survey'] });
+        },
+    });
+}
+

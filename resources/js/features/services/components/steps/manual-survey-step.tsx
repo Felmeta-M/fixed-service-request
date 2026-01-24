@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { router } from '@inertiajs/react';
 import { useCreateSurvey, useGetCustomer } from '@/hooks/use-api-mutations';
 import { useRegions, useWoredas, useZones, useTelecomRegionsByZone } from '@/hooks/use-regions';
+import { formatBandwidthLabel } from '@/hooks/use-bandwidth-options';
 
 interface AuthUser {
     id?: number;
@@ -229,8 +230,8 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
         if (!selectedTelecomRegion) {
             setSubmitting(false);
             setManualFlowErrors({ telecom_region: 'Please select a telecom zone' });
-            toast.error('Nearest telecom zone is required', {
-                description: 'Please select the nearest telecom zone for your service installation.',
+            toast.error('Nearest ethiotelecom zone is required', {
+                description: 'Please select the nearest ethiotelecom zone for your service installation.',
             });
             return;
         }
@@ -399,7 +400,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                     <FieldLabel>Bandwidth</FieldLabel>
                                     <Input
                                         type="text"
-                                        value={formData.bandwidth}
+                                        value={formData.bandwidth ? formatBandwidthLabel(formData.bandwidth) : ''}
                                         disabled
                                         className="bg-gray-50"
                                     />
@@ -555,7 +556,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                             </p>
                         </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <Field>
                             <FieldLabel htmlFor="manual-region" className="text-gray-700">
@@ -741,7 +742,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
 
                         {/* Nearest Telecom Zone - Mandatory */}
                         <div className="col-span-1 md:col-span-2">
-                             <div className="rounded-lg bg-blue-50/50 p-4 border border-blue-100/50">
+                            <div className="rounded-lg bg-blue-50/50 p-4 border border-blue-100/50">
                                 <Field>
                                     <FieldLabel htmlFor="manual-telecom-zone" className="text-gray-700 flex items-center gap-2">
                                         Nearest Telecom Zone {selectedTelecomRegion ? '' : <span className="text-red-500">*</span>}

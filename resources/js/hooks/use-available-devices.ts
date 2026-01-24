@@ -7,6 +7,7 @@ export interface AvailableDevice {
     vendor: string;
     model: string | null;
     device_type: 'broadband' | 'voice' | 'universal';
+    media_type: 'PON' | 'COPPER' | 'UNIVERSAL';
     price: number;
     description: string | null;
     status: 'active' | 'inactive';
@@ -20,13 +21,21 @@ interface AvailableDevicesApiResponse {
     data: AvailableDevice[];
 }
 
-export function useAvailableDevices(serviceType?: string) {
+export interface UseAvailableDevicesOptions {
+    serviceType?: string;
+    mediaType?: string; // PON (fiber) or COPPER - from survey result
+}
+
+export function useAvailableDevices(serviceType?: string, mediaType?: string) {
     const { data, isLoading, error } = useQuery({
-        queryKey: ['available-devices', serviceType],
+        queryKey: ['available-devices', serviceType, mediaType],
         queryFn: async () => {
             const params: Record<string, string> = {};
             if (serviceType) {
                 params.service_type = serviceType;
+            }
+            if (mediaType) {
+                params.media_type = mediaType;
             }
 
             const response = await apiClient.get<any>('/available-devices', { params });

@@ -33,8 +33,8 @@ class BandwidthHelper
 
         $bwStr = trim((string) $bandwidth);
 
-        // Handle legacy string format: "10M" or "10m" (already in Mbps)
-        if (preg_match('/^(\d+)[Mm]$/', $bwStr, $matches)) {
+        // Handle legacy string format: "10M", "10m", "10MB", "10mb", "10Mbps" (already in Mbps)
+        if (preg_match('/^(\d+)(m|mb|mbps)$/i', $bwStr, $matches)) {
             $mbps = (int) $matches[1];
             if ($mbps >= 1000) {
                 $gbps = $mbps / 1000;

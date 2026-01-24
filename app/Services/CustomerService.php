@@ -21,8 +21,12 @@ class CustomerService extends BaseApiService
     public function createCustomer(array $data)
     {
         try {
-            // Get dynamic zone code for EthioZoneOrRegion
-            $data['ethio_zone_or_region'] = $this->getCustomerZoneCode();
+            // Get dynamic zone code from customer's selected zone_id (not from logged-in user)
+            $zoneId = $data['zone'] ?? $data['address']['zone'] ?? null;
+            if (!$zoneId) {
+                throw new RuntimeException('Zone is required to create a customer profile.');
+            }
+            $data['ethio_zone_or_region'] = $this->getZoneCodeById($zoneId);
             $xmlPayload = $this->buildXml($data);
 
             $xmlResponse = $this->executeRequest($xmlPayload);
@@ -374,17 +378,37 @@ XML;
             );
         }
 
-        // Try to find zone by ID (zone field might be stored as string ID)
-        $zone = Zone::find($customer->zone);
+        return $this->getZoneCodeById($customer->zone);
+    }
+
+    /**
+     * Get zone_code from a zone ID.
+     * Used for CustomerAddressInfo EthioZoneOrRegion field when creating new customers.
+     *
+     * @param int|string $zoneId The zone ID selected by the customer
+     * @return string Zone code
+     * @throws \RuntimeException If zone or zone_code cannot be found
+     */
+    protected function getZoneCodeById(int|string $zoneId): string
+    {
+        if (!$zoneId) {
+            AppLogger::api()->error('Zone ID not provided for zone_code lookup');
+            throw new \RuntimeException(
+                'Unable to create customer: Zone selection is required. Please select a valid zone.'
+            );
+        }
+
+        // Try to find zone by ID
+        $zone = Zone::find($zoneId);
 
         // If not found by ID, try to find by name (in case zone stores name instead of ID)
         if (!$zone) {
-            $zone = Zone::where('name', $customer->zone)->first();
+            $zone = Zone::where('name', $zoneId)->first();
         }
 
         if (!$zone) {
             AppLogger::api()->error('Zone not found in database', [
-                'zone_id' => $customer->zone,
+                'zone_id' => $zoneId,
             ]);
             throw new \RuntimeException(
                 'Unable to create customer: The selected zone is not found in our system. Please contact support or update your profile with a valid zone.'

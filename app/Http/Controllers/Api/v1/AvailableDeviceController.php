@@ -32,6 +32,7 @@ class AvailableDeviceController extends Controller
         $devices = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($request) {
             $query = DB::table('available_devices')
                 // ->where('is_active', true)
+                ->whereNull('deleted_at')
                 ->select([
                     'id',
                     'name',
@@ -39,6 +40,7 @@ class AvailableDeviceController extends Controller
                     'model',
                     'price',
                     'device_type',
+                    'media_type',
                     'description',
                     'image_url',
                     'specifications',
@@ -71,13 +73,23 @@ class AvailableDeviceController extends Controller
                 }
             }
 
-            // Filter by vendor
-            if ($request->has('vendor')) {
-                $query->where('vendor', $request->vendor);
-            }
+                // Filter by vendor
+                if ($request->has('vendor')) {
+                    $query->where('vendor', $request->vendor);
+                }
 
-            return $query->orderBy('price', 'asc')->get();
-        });
+                // Filter by media type (PON for fiber, COPPER for copper)
+                // Used for manual surveys to filter devices based on infrastructure
+                if ($request->has('media_type')) {
+                    $mediaType = strtoupper($request->media_type);
+                    $query->where(function ($q) use ($mediaType) {
+                        $q->where('media_type', $mediaType)
+                          ->orWhere('media_type', 'UNIVERSAL');
+                    });
+                }
+
+                return $query->orderBy('price', 'asc')->get();
+            });
 
 
         // Transform devices
@@ -89,6 +101,7 @@ class AvailableDeviceController extends Controller
                 'model' => $device->model,
                 'price' => (float) $device->price,
                 'device_type' => $device->device_type,
+                'media_type' => $device->media_type ?? 'UNIVERSAL',
                 'description' => $device->description,
                 'image_url' => $device->image_url,
                 'specifications' => $device->specifications ? json_decode($device->specifications, true) : null,
@@ -145,6 +158,10 @@ class AvailableDeviceController extends Controller
 
         if ($request->has('device_type')) {
             $parts[] = 'dt_' . $request->device_type;
+        }
+
+        if ($request->has('media_type')) {
+            $parts[] = 'mt_' . strtoupper($request->media_type);
         }
 
         if ($request->has('vendor')) {

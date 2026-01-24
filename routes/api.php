@@ -114,6 +114,7 @@ Route::prefix('v1')->group(function () {
             Route::get('survey-requests', [SurveyOrderController::class, 'index']);
             Route::get('survey-requests/show', [SurveyOrderController::class, 'show']);
             Route::patch('survey-requests/update', [SurveyOrderController::class, 'update']);
+            Route::post('survey-requests/update-device', [SurveyOrderController::class, 'updateDevice']);
             Route::delete('survey-requests/delete', [SurveyOrderController::class, 'destroy']);
 
             Route::post('account-list', [AccountController::class, 'getAccount']);

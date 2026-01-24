@@ -1,5 +1,5 @@
 import FormSelect from '@/components/common/form-select';
-import { ProcessedBandwidthOption } from '@/hooks/use-bandwidth-options';
+import { ProcessedBandwidthOption, formatBandwidthLabel } from '@/hooks/use-bandwidth-options';
 import { useState } from 'react';
 
 interface BandwidthSelectorProps {

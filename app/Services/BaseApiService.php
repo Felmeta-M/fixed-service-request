@@ -284,13 +284,13 @@ abstract class BaseApiService
     {
         $value = strtolower(trim((string) $value));
 
-        // Handle "10m" format (MB to KB)
-        if (preg_match('/^(\d+)m$/', $value, $matches)) {
+        // Handle "10m" or "10mb" or "10mbps" format (MB to KB)
+        if (preg_match('/^(\d+)(m|mb|mbps)$/', $value, $matches)) {
             return (int) $matches[1] * 1024;
         }
 
-        // Handle "1gbps" format (GB to KB)
-        if (preg_match('/^(\d+)gbps$/', $value, $matches)) {
+        // Handle "1gbps" or "1g" format (GB to KB)
+        if (preg_match('/^(\d+)(g|gb|gbps)$/', $value, $matches)) {
             return (int) $matches[1] * 1024 * 1024;
         }
 

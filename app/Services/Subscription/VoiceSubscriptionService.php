@@ -88,7 +88,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
 
       // Get dynamic zone_code for CustomerAddressInfo EthioZoneOrRegion
       // This will throw an exception with a clear message if zone_code cannot be determined
-      $customerEthioZone = $this->getCustomerZoneCode();
+      $customerEthioZone = $this->getCustomerZoneCode($data);
 
       // Get dynamic ethio_zone id for AccountInfo ethioZoneOrRegion
       // This will throw an exception with a clear message if ethio_zone id cannot be determined

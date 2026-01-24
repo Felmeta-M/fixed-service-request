@@ -30,7 +30,7 @@ class PaymentService
                     'customer_survey_order_id' => $data['customer_survey_order_id'],
                     'total_amount' => $data['total_amount'] ?? 0,
                     'payload' => $data['payload'] ?? [],
-                    'status' => $data['status'] ?? FFDServiceProvisionStatus::Waiting->value,
+                    'status' => $data['status'] ?? Payment::STATUS_PENDING,
                 ]
             );
         });
@@ -60,7 +60,7 @@ class PaymentService
                     'cable_charge' => $data['cable_charge'] ?? 0,
                     'device_fee' => $data['device_fee'] ?? 0,
                     'customer_subscription_order_id' => $data['customer_subscription_order_id'] ?? null,
-                    'status' => FFDServiceProvisionStatus::Waiting->value,
+                    'status' => Payment::STATUS_PENDING,
                     'updated_at' => now(),
                     'created_at' => now(),
                 ]
@@ -127,7 +127,7 @@ class PaymentService
 
             if ($isCompleted) {
                 $payment->update([
-                    'status' => FFDServiceProvisionStatus::Paid->value,
+                    'status' => \App\Models\Payment::STATUS_PAID,
                     'trans_id' => $providerPayload['transId'] ?? null,
                     'total_amount' => $providerPayload['total_amount'] ?? $payment->total_amount,
                     'payment_order_id' => $providerPayload['payment_order_id'] ?? null,
@@ -142,7 +142,7 @@ class PaymentService
                         ]);
             } else {
                 $payment->update([
-                    'status' => FFDServiceProvisionStatus::Failed->value,
+                    'status' => Payment::STATUS_FAILED,
                 ]);
             }
         });
@@ -188,6 +188,7 @@ class PaymentService
                 'sr.main_offer_id',
                 'c.name',
                 'c.phone_number',
+                'c.zone',
             ])
             ->first();
 
@@ -204,6 +205,7 @@ class PaymentService
             'name' => trim($record->name),
             'main_offer_id' => $record->main_offer_id,
             'sms_no' => $record->phone_number,
+            'zone' => $record->zone,
         ];
 
         try {

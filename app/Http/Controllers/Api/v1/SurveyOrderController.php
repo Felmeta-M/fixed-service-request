@@ -471,12 +471,12 @@ class SurveyOrderController extends Controller
             // Check if bandwidth changed
             $currentBandwidth = $response['bandwidth'] ?? null;
             if ($currentBandwidth && $currentBandwidth !== $order->bandwidth) {
-                DB::table('survey_orders')
-                    ->where('id', $order->id)
-                    ->update([
-                        'bandwidth' => $currentBandwidth,
-                        'updated_at' => now(),
-                    ]);
+                // DB::table('survey_orders')
+                //     ->where('id', $order->id)
+                //     ->update([
+                //         'bandwidth' => $currentBandwidth,
+                //         'updated_at' => now(),
+                //     ]);
 
                 // AppLogger::business()->info('Offering bandwidth updated on show', [
                 //     'customer_survey_order_id' => $order->customer_survey_order_id,
@@ -485,7 +485,7 @@ class SurveyOrderController extends Controller
                 //     'new_bandwidth' => $currentBandwidth,
                 // ]);
 
-                return true;
+                // return true;
             }
         } catch (Throwable $e) {
             AppLogger::business()->warning('Failed to refresh offering on show', [
@@ -509,6 +509,18 @@ class SurveyOrderController extends Controller
         $paymentId = $order->payment_id ?? null;
         $paymentStatus = (int) ($order->payment_status ?? 0);
 
+        // Handle PostgreSQL boolean values for survey_is_manual
+        $rawManual = $order->survey_is_manual ?? false;
+        $isManualSurvey = $rawManual === true || $rawManual === 't' || $rawManual === 1 || $rawManual === '1';
+
+        // For manual surveys, with_device is null until customer selects device
+        // For auto surveys, with_device is always set from the initial request
+        $rawWithDevice = $order->with_device ?? null;
+        $withDevice = $rawWithDevice === null ? null : (bool) $rawWithDevice;
+
+        // Survey failure reason (for manual surveys)
+        $surveyFailureReason = $order->survey_failure_reason ?? null;
+
         return [
             'customer_survey_order_id' => $order->customer_survey_order_id,
             'customer_subscription_order_id' => $subscriptionOrderId,
@@ -528,7 +540,8 @@ class SurveyOrderController extends Controller
             'media_type' => $order->media_type ?? null, // BSS param 50005: PON (fiber) or COPPER, null if failed
             'line_indicator' => $order->line_indicator ?? null, // BSS param 50112: 0=same line, 1=separate line
             'survey_failure_reason' => $order->survey_failure_reason ?? null, // Reason when survey failed (50005 = -1)
-            'with_device' => (bool) ($order->with_device ?? false),
+            'survey_is_manual' => $isManualSurvey,
+            'with_device' => $withDevice,
             'created_at' => $order->created_at,
             'updated_at' => $order->updated_at,
             'payment' => $paymentId ? [
@@ -541,8 +554,10 @@ class SurveyOrderController extends Controller
             ] : null,
             'status' => $this->getStatusLabel($order),
             'is_paid' => SurveyOrder::checkIsPaid($paymentStatus, $paymentTransId),
-            'can_pay' => SurveyOrder::checkCanPay($status, $paymentAmount, $paymentTransId),
-            'can_subscribe' => SurveyOrder::checkCanSubscribe($status, $paymentAmount, $paymentTransId, $subscriptionOrderId),
+            // Action permissions - single source of truth from model
+            'can_continue' => SurveyOrder::checkCanContinue($status, $isManualSurvey, $withDevice, $subscriptionOrderId, $surveyFailureReason),
+            'can_pay' => SurveyOrder::checkCanPay($status, $paymentAmount, $paymentTransId, $subscriptionOrderId, $isManualSurvey, $withDevice),
+            'can_subscribe' => SurveyOrder::checkCanSubscribe($status, $paymentAmount, $paymentTransId, $subscriptionOrderId, $isManualSurvey, $withDevice),
             'can_change_offer' => SurveyOrder::checkCanChangeOffer($status, $subscriptionOrderId),
             'can_cancel' => SurveyOrder::checkCanCancel($status, $subscriptionOrderId, $paymentTransId),
             'can_terminate' => SurveyOrder::checkCanTerminate($status, $subscriptionOrderId),
@@ -553,7 +568,12 @@ class SurveyOrderController extends Controller
      * Get status label based on order phase, payment status, and survey type.
      * 
      * Manual Survey (survey_is_manual = true):
-     *   - Waiting → "Waiting" (pending physical survey by field team)
+     *   - In Progress (Created/Waiting/Processing) → "Waiting" (pending physical survey)
+     *   - Completed + device not selected → "Device Selection"
+     *   - Completed + device selected + not paid → "Pending Payment"
+     *   - Completed + paid → "Paid"
+     *   - Has subscription + Waiting → "Order Waiting"
+     *   - Has subscription + Completed → "Order Completed"
      * 
      * Auto Survey (survey_is_manual = false):
      *   Phase 1 (Survey): No subscription order yet
@@ -573,9 +593,14 @@ class SurveyOrderController extends Controller
         $paymentTransId = $order->payment_trans_id ?? null;
         $isPaid = !empty($paymentTransId);
         $hasPayment = $paymentAmount > 0;
+
         // Handle PostgreSQL boolean values (can be true, false, 't', 'f', '1', '0', 1, 0)
         $rawManual = $order->survey_is_manual ?? false;
         $isManual = $rawManual === true || $rawManual === 't' || $rawManual === 1 || $rawManual === '1';
+
+        // Handle with_device for manual surveys
+        $rawWithDevice = $order->with_device ?? null;
+        $deviceSelected = $rawWithDevice !== null;
 
         // In-progress statuses for manual survey (Created, Waiting, Processing)
         $manualInProgress = in_array($statusEnum, [
@@ -585,14 +610,27 @@ class SurveyOrderController extends Controller
         ], true);
 
         return match (true) {
-            // Manual survey: In progress (Created/Waiting/Processing) - pending physical survey by field team
-            $isManual && $manualInProgress && !$hasSubscription => 'Waiting',
+            // Failed/Cancelled - same for both auto and manual
+            $statusEnum === FFDServiceProvisionStatus::Failed => 'Failed',
+            $statusEnum === FFDServiceProvisionStatus::Cancelled => 'Cancelled',
 
-            // Phase 2: Subscription phase (has subscription order)
+            // Phase 2: Subscription phase (has subscription order) - same for both
             $statusEnum === FFDServiceProvisionStatus::Waiting && $hasSubscription => 'Order Waiting',
             $statusEnum === FFDServiceProvisionStatus::Completed && $hasSubscription => 'Order Completed',
 
-            // Phase 1: Survey phase (no subscription order) - Auto survey only
+            // ===== MANUAL SURVEY FLOW =====
+            // Manual survey: In progress - pending physical survey by field team
+            $isManual && $manualInProgress && !$hasSubscription => 'Waiting',
+            // Manual survey: Completed but device not yet selected
+            $isManual && $statusEnum === FFDServiceProvisionStatus::Completed && !$deviceSelected && !$hasSubscription => 'Device Selection',
+            // Manual survey: Device selected, payment pending
+            $isManual && $statusEnum === FFDServiceProvisionStatus::Completed && $deviceSelected && $hasPayment && !$isPaid && !$hasSubscription => 'Pending Payment',
+            // Manual survey: Paid, waiting for subscription
+            $isManual && $statusEnum === FFDServiceProvisionStatus::Completed && $deviceSelected && $isPaid && !$hasSubscription => 'Paid',
+            // Manual survey: Free service, device selected, ready to subscribe
+            $isManual && $statusEnum === FFDServiceProvisionStatus::Completed && $deviceSelected && !$hasPayment && !$hasSubscription => 'Ready',
+
+            // ===== AUTO SURVEY FLOW =====
             // Paid but not yet subscribed (status becomes Waiting after payment)
             $statusEnum === FFDServiceProvisionStatus::Waiting && !$hasSubscription && $isPaid => 'Paid',
             // Survey in progress
@@ -609,17 +647,15 @@ class SurveyOrderController extends Controller
 
     /**
      * Get payment status label.
+     * Simplified to only "Paid" or "Pending" for all cases.
      *
      * @param int $paymentStatus Payment status value
      * @return string Human-readable payment status label
      */
     protected function getPaymentStatusLabel(int $paymentStatus): string
     {
-        return match ($paymentStatus) {
-            FFDServiceProvisionStatus::Paid->value => 'Paid',
-            0 => 'Pending',
-            default => 'Unknown',
-        };
+        // Simple: if paid status, show "Paid", otherwise "Pending"
+        return $paymentStatus === \App\Models\Payment::STATUS_PAID ? 'Paid' : 'Pending';
     }
 
     /**
@@ -686,6 +722,171 @@ class SurveyOrderController extends Controller
                 'success' => false,
                 'message' => 'Failed to create manual survey order. Please try again later.',
                 'error' => config('app.debug') ? $e->getMessage() : null,
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Update device selection for a completed manual survey.
+     * Creates/updates payment with subscription fee + device fee.
+     * After this, customer can proceed to payment and subscription (same as auto survey).
+     */
+    public function updateDevice(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'customer_survey_order_id' => 'required|string',
+                'with_device' => 'required|boolean',
+                'device_id' => 'nullable|string',
+                'device_voice_id' => 'nullable|string',
+            ]);
+
+            $surveyOrderId = $request->input('customer_survey_order_id');
+            $withDevice = $request->input('with_device');
+            $deviceId = $request->input('device_id');
+            $deviceVoiceId = $request->input('device_voice_id');
+
+            // Find the survey order with full model for fee calculation
+            $surveyOrder = SurveyOrder::where('customer_survey_order_id', $surveyOrderId)->first();
+
+            if (!$surveyOrder) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Survey order not found.',
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            // Verify it's a completed manual survey
+            // Cast status to int for proper comparison (status column may be string from DB)
+            $currentStatus = (int) $surveyOrder->status;
+            if ($currentStatus !== FFDServiceProvisionStatus::Completed->value) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Device selection is only available for completed surveys.',
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            // Prevent device selection if already selected
+            if ($surveyOrder->with_device !== null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Device has already been selected for this order.',
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            // Check if already paid - cannot change device after payment
+            $existingPayment = DB::table('payments')
+                ->where('customer_survey_order_id', $surveyOrderId)
+                ->first();
+            if ($existingPayment && !empty($existingPayment->trans_id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot change device selection after payment.',
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            // Update device selection on survey order
+            $surveyOrder->update([
+                'with_device' => $withDevice,
+                'device_id' => $withDevice ? $deviceId : null,
+                'device_voice_id' => $withDevice ? $deviceVoiceId : null,
+            ]);
+
+            // Calculate device fee
+            $deviceFee = 0;
+            if ($withDevice) {
+                $mainOfferId = (int) $surveyOrder->main_offer_id;
+                $isCombo = $mainOfferId === 180427974;
+                $isVoiceOnly = $mainOfferId === 1207609454;
+
+                if ($isCombo) {
+                    // Combo: device_id is internet, device_voice_id is voice
+                    if ($deviceId) {
+                        $internetDevice = \App\Models\AvailableDevice::find($deviceId);
+                        $deviceFee += $internetDevice ? (float) $internetDevice->price : 0;
+                    }
+                    if ($deviceVoiceId) {
+                        $voiceDevice = \App\Models\AvailableDevice::find($deviceVoiceId);
+                        $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
+                    }
+                } elseif ($isVoiceOnly) {
+                    // Voice only: device_id contains voice device
+                    if ($deviceId) {
+                        $voiceDevice = \App\Models\AvailableDevice::find($deviceId);
+                        $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
+                    }
+                } else {
+                    // Broadband: device_id contains internet device
+                    if ($deviceId) {
+                        $internetDevice = \App\Models\AvailableDevice::find($deviceId);
+                        $deviceFee += $internetDevice ? (float) $internetDevice->price : 0;
+                    }
+                }
+            }
+
+            // Calculate subscription fee using PaymentCalculatorService
+            // Manual surveys use calculateFeesWithoutCable (no cable charge for manual surveys)
+            $paymentCalculator = app(\App\Services\Payment\PaymentCalculatorService::class);
+            $fees = $paymentCalculator->calculateFeesWithoutCable($surveyOrder);
+            $subscriptionFee = (float) $fees['subscription_fee'];
+            $cableCharge = 0; // Manual surveys don't have cable charge
+
+            // Total amount = subscription fee + device fee
+            $totalAmount = $subscriptionFee + $cableCharge + $deviceFee;
+
+            // Create or update payment record
+            // This follows the same pattern as auto surveys
+            $customer = auth()->guard('api')->user();
+            $customerCode = $customer ? $customer->customer_code : $surveyOrder->customer_code;
+
+            DB::table('payments')->updateOrInsert(
+                ['customer_survey_order_id' => $surveyOrderId],
+                [
+                    'customer_code' => $customerCode,
+                    'subscription_fee' => $subscriptionFee,
+                    'cable_charge' => $cableCharge,
+                    'device_fee' => $deviceFee,
+                    'total_amount' => $totalAmount,
+                    'status' => \App\Models\Payment::STATUS_PENDING,
+                    'updated_at' => now(),
+                    'created_at' => DB::raw('COALESCE(created_at, NOW())'),
+                ]
+            );
+
+            AppLogger::business()->info('Device selection and payment created for manual survey', [
+                'customer_survey_order_id' => $surveyOrderId,
+                'with_device' => $withDevice,
+                'device_id' => $deviceId,
+                'device_voice_id' => $deviceVoiceId,
+                'subscription_fee' => $subscriptionFee,
+                'device_fee' => $deviceFee,
+                'total_amount' => $totalAmount,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Device selection saved. You can now proceed to payment.',
+                'data' => [
+                    'subscription_fee' => $subscriptionFee,
+                    'device_fee' => $deviceFee,
+                    'total_amount' => $totalAmount,
+                ],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $e->errors(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (Throwable $e) {
+            AppLogger::business()->error('Failed to update device selection', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update device selection. Please try again.',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

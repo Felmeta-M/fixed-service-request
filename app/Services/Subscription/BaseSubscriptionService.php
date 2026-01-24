@@ -12,7 +12,6 @@ use App\Services\Logging\AppLogger;
 use App\Services\Payment\PaymentService;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
-use App\Support\CustomerContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -26,7 +25,8 @@ abstract class BaseSubscriptionService extends BaseApiService
         protected readonly PaymentService $payment_service,
         protected readonly QueryAvailableNumberService $queryAvailableNumberService,
         protected readonly ReserveNumberService $reserveNumberService,
-    ) {}
+    ) {
+    }
 
     protected function endpoint(): string
     {
@@ -125,35 +125,55 @@ abstract class BaseSubscriptionService extends BaseApiService
     abstract protected function networkType(): int;
 
     /**
-     * Get zone_code from customer's zone_id.
+     * Get zone_code from data array.
      * Used for CustomerAddressInfo EthioZoneOrRegion field.
      *
+     * Supports:
+     * - Anonymous requests (webhooks): Pass zone in data array
+     * - New customer selection: Pass zone in data array
+     * - Logged-in customer: Pass zone in data array
+     *
+     * @param array $data Data array containing 'zone'
      * @return string Zone code
      * @throws \RuntimeException If zone or zone_code cannot be found
      */
-    protected function getCustomerZoneCode(): string
+    protected function getCustomerZoneCode(array $data): string
     {
-        $customer = CustomerContext::customer();
-        if (!$customer || !$customer->zone) {
-            AppLogger::api()->error('Customer zone not found for zone_code lookup', [
-                'customer_code' => $customer?->code,
+        $zoneId = $data['zone'] ?? null;
+
+        if (!$zoneId) {
+            AppLogger::api()->error('Zone not found in data for zone_code lookup', [
+                'data_keys' => array_keys($data),
             ]);
             throw new \RuntimeException(
-                'Unable to process subscription: Customer zone information is missing. Please update your profile with a valid zone selection.'
+                'Unable to process subscription: Zone information is missing. Please provide a valid zone selection.'
             );
         }
 
-        // Try to find zone by ID (zone field might be stored as string ID)
-        $zone = Zone::find($customer->zone);
+        return $this->getZoneCodeById($zoneId);
+    }
+
+    /**
+     * Get zone_code from a zone ID.
+     * Core lookup function - single source of truth for zone code resolution.
+     *
+     * @param int|string $zoneId The zone ID or name
+     * @return string Zone code
+     * @throws \RuntimeException If zone or zone_code cannot be found
+     */
+    protected function getZoneCodeById(int|string $zoneId): string
+    {
+        // Try to find zone by ID
+        $zone = Zone::find($zoneId);
 
         // If not found by ID, try to find by name (in case zone stores name instead of ID)
         if (!$zone) {
-            $zone = Zone::where('name', $customer->zone)->first();
+            $zone = Zone::where('name', $zoneId)->first();
         }
 
         if (!$zone) {
             AppLogger::api()->error('Zone not found in database', [
-                'zone_id' => $customer->zone,
+                'zone_id' => $zoneId,
             ]);
             throw new \RuntimeException(
                 'Unable to process subscription: The selected zone is not found in our system. Please contact support or update your profile with a valid zone.'

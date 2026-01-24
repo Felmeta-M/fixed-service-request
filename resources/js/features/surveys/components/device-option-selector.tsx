@@ -9,6 +9,7 @@ interface DeviceOptionSelectorProps {
     value?: boolean;
     onChange: (value: boolean) => void;
     serviceType?: string; // Service type for filtering devices
+    mediaType?: string; // PON or COPPER - for manual survey device filtering
     selectedDevice?: AvailableDevice | null; // For single service (broadband/voice)
     selectedDeviceInternet?: AvailableDevice | null; // For combo internet device
     selectedDeviceVoice?: AvailableDevice | null; // For combo voice device
@@ -22,6 +23,7 @@ export function DeviceOptionSelector({
     value,
     onChange,
     serviceType,
+    mediaType,
     selectedDevice,
     selectedDeviceInternet,
     selectedDeviceVoice,
@@ -117,6 +119,7 @@ export function DeviceOptionSelector({
                 <div className="mt-4">
                     <DeviceSelector
                         serviceType={serviceType}
+                        mediaType={mediaType}
                         selectedDeviceId={isVoiceOnly ? selectedDeviceVoice?.id : selectedDevice?.id}
                         selectedDeviceInternetId={selectedDeviceInternet?.id}
                         selectedDeviceVoiceId={isCombo ? selectedDeviceVoice?.id : (isVoiceOnly ? selectedDeviceVoice?.id : undefined)}

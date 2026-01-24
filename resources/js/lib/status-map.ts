@@ -14,6 +14,7 @@ export const ServiceProvisionStatus = {
     'Ready': { label: 'Ready', text: 'text-white', bg: 'bg-et-light-green', variant: 'default' as const },
     'Cancelled': { label: 'Cancelled', text: 'text-white', bg: 'bg-et-red', variant: 'destructive' as const },
     'Paid': { label: 'Paid', text: 'text-white', bg: 'bg-et-green', variant: 'default' as const },
+    'Pending': { label: 'Pending', text: 'text-white', bg: 'bg-et-yellow', variant: 'secondary' as const },
     'Refund': { label: 'Refund', text: 'text-white', bg: 'bg-et-blue', variant: 'default' as const },
     // Survey-specific statuses from backend
     'Survey Completed': { label: 'Survey Completed', text: 'text-white', bg: 'bg-et-green', variant: 'default' as const },
@@ -21,6 +22,8 @@ export const ServiceProvisionStatus = {
     'Waiting Survey': { label: 'Waiting Survey', text: 'text-white', bg: 'bg-et-yellow', variant: 'secondary' as const },
     'Order Waiting': { label: 'Order Waiting', text: 'text-white', bg: 'bg-et-yellow', variant: 'secondary' as const },
     'Pending Payment': { label: 'Pending Payment', text: 'text-white', bg: 'bg-et-light-blue', variant: 'secondary' as const },
+    // Manual survey specific statuses
+    'Device Selection': { label: 'Device Selection', text: 'text-white', bg: 'bg-et-light-blue', variant: 'secondary' as const },
     // Fallback for unknown status
     'Unknown': { label: 'Unknown', text: 'text-muted-foreground', bg: 'bg-muted', variant: 'outline' as const },
 } as const;

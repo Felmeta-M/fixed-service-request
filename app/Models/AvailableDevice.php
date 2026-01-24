@@ -22,6 +22,7 @@ class AvailableDevice extends Model
         'vendor',
         'model',
         'device_type',
+        'media_type',
         'price',
         'description',
         'status',
@@ -62,6 +63,20 @@ class AvailableDevice extends Model
         return $query->where(function ($q) use ($type) {
             $q->where('device_type', $type)
               ->orWhere('device_type', 'universal');
+        });
+    }
+
+    /**
+     * Scope to filter by media type (PON/COPPER)
+     * Includes UNIVERSAL devices that work with any media type
+     */
+    public function scopeByMediaType($query, string $mediaType)
+    {
+        $mediaType = strtoupper($mediaType);
+
+        return $query->where(function ($q) use ($mediaType) {
+            $q->where('media_type', $mediaType)
+              ->orWhere('media_type', 'UNIVERSAL');
         });
     }
 }

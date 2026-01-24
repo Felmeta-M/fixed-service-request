@@ -114,6 +114,8 @@ export type SurveyRequest = {
     media_type?: string | null; // BSS param 50005: PON (fiber) or COPPER, null if failed
     line_indicator?: number | null; // BSS param 50112: 0=same line, 1=separate line
     survey_failure_reason?: string | null; // Reason when survey failed (50005 = -1)
+    survey_is_manual?: boolean; // True for manual surveys, false for auto surveys
+    with_device?: boolean | null; // null for manual surveys before device selection, boolean after
 };
 
 export type ServiceType = 'fl' | 'fbb' | 'combo' | 'home' | 'business';

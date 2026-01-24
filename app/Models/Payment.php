@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\FFDServiceProvisionStatus;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +10,14 @@ class Payment extends Model
 {
     use HasFactory;
     use LogsActivity;
+
+    /**
+     * Payment status constants (separate from survey order status)
+     */
+    public const STATUS_PENDING = 0;
+    public const STATUS_PAID = 1;
+    public const STATUS_FAILED = 2;
+    public const STATUS_CANCELLED = 3;
 
     /**
      * Log channel for this model
@@ -60,28 +67,30 @@ class Payment extends Model
 
     protected $casts = [
         'payload' => 'array',
-        'status' => FFDServiceProvisionStatus::class,
+        'status' => 'integer',
     ];
 
+    /**
+     * Check if payment is paid
+     */
+    public function isPaid(): bool
+    {
+        return $this->status === self::STATUS_PAID && !empty($this->trans_id);
+    }
 
     public function scopePending($query)
     {
-        return $query->where('status', FFDServiceProvisionStatus::Waiting->value);
+        return $query->where('status', self::STATUS_PENDING);
     }
 
     public function scopePaid($query)
     {
-        return $query->where('status', FFDServiceProvisionStatus::Paid->value);
-    }
-
-    public function scopeRejected($query)
-    {
-        return $query->where('status', FFDServiceProvisionStatus::Failed->value);
+        return $query->where('status', self::STATUS_PAID);
     }
 
     public function scopeCanceled($query)
     {
-        return $query->where('status', FFDServiceProvisionStatus::Cancelled->value);
+        return $query->where('status', self::STATUS_CANCELLED);
     }
 
     public function survey_request()

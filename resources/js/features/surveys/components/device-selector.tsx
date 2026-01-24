@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 interface DeviceSelectorProps {
     serviceType?: string; // '1457567289' (broadband), '1207609454' (voice), '180427974' (combo)
+    mediaType?: string; // 'PON' (fiber) or 'COPPER' - from manual survey result
     selectedDeviceId?: string; // For single selection (broadband/voice)
     selectedDeviceInternetId?: string; // For combo internet device
     selectedDeviceVoiceId?: string; // For combo voice device
@@ -23,6 +24,7 @@ const SERVICE_TYPES = {
 
 export function DeviceSelector({
     serviceType,
+    mediaType,
     selectedDeviceId,
     selectedDeviceInternetId,
     selectedDeviceVoiceId,
@@ -36,8 +38,13 @@ export function DeviceSelector({
     // Track which device card is expanded (by device ID)
     const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null);
 
-    // Fetch all devices for combo, filtered devices for single service
-    const { devices: allDevices, loading, error } = useAvailableDevices(isCombo ? undefined : serviceType);
+    // Fetch devices filtered by service type and media type (for manual surveys)
+    // For combo services, fetch all then filter by device_type
+    // For single services, API filters by service_type and optional media_type
+    const { devices: allDevices, loading, error } = useAvailableDevices(
+        isCombo ? undefined : serviceType,
+        mediaType // Pass media type for PON/COPPER filtering (manual surveys)
+    );
 
     // Filter devices by type for combo
     const broadbandDevices = isCombo

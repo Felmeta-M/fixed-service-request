@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources;
 
-use App\Enums\FFDServiceProvisionStatus;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,19 +15,13 @@ class PaymentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $isPaid = (int) $this->status === Payment::STATUS_PAID;
+
         return [
             'customer_survey_order_id' => $this->customer_survey_order_id,
             'customer_subscription_order_id' => $this->customer_subscription_order_id,
-            'status' => $this->status instanceof FFDServiceProvisionStatus
-                ? $this->status->label()
-                : (FFDServiceProvisionStatus::tryFrom($this->status)?->label() ?? (string) $this->status),
-
-            'is_paid' => $this->status === FFDServiceProvisionStatus::Paid->value && $this->trans_id !== null,
-
-            'can_pay' => $this->status === FFDServiceProvisionStatus::Completed->value || $this->customer_subscription_order_id === null,
-            'can_subscribe' => $this->status === FFDServiceProvisionStatus::Waiting->value || $this->customer_subscription_order_id === null,
-            'can_cancel' => $this->customer_subscription_order_id !== null,
-
+            'status' => $isPaid ? 'Paid' : 'Pending',
+            'is_paid' => $isPaid && !empty($this->trans_id),
             'cable_charge' => $this->cable_charge,
             'subscription_fee' => $this->subscription_fee,
             'device_price' => $this->device_fee,

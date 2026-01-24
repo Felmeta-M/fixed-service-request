@@ -330,7 +330,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     // 2. Status is "Ready" or "2" (approved by admin)
     // 3. can_pay or can_subscribe is true
     const statusStr = String(survey.status ?? '');
-    const RESUMABLE_STATUSES = ['Ready', '2', 'Approved'];
+    const RESUMABLE_STATUSES = ['Ready', '2', 'Approved', '8', 'Survey Completed'];
     const isResumableStatus = RESUMABLE_STATUSES.includes(statusStr);
     const isManualSurvey = survey.survey_is_manual === true;
     const canResume = isManualSurvey && isResumableStatus && (canPay || canSubscribe);

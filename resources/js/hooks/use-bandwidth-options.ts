@@ -58,6 +58,24 @@ export const formatBandwidthDisplay = (bandwidth?: string | null): string | null
     return bandwidth || null;
 };
 
+// Function to format bandwidth label (e.g., "10M" -> "10 Mbps")
+export const formatBandwidthLabel = (value: string): string => {
+    const cleanValue = value.trim();
+    const lower = cleanValue.toLowerCase();
+    
+    // Handle "10M" or "10m" -> "10 Mbps"
+    if (lower.endsWith('m')) {
+        return cleanValue + 'bps'; 
+    }
+    
+    // Handle plain numbers -> assume Mbps
+    if (/^\d+$/.test(cleanValue)) {
+        return cleanValue + ' Mbps';
+    }
+
+    return cleanValue;
+};
+
 export function useBandwidthOptions() {
     const { data, isLoading, error } = useQuery({
         queryKey: ['bandwidth-options'],
@@ -69,14 +87,14 @@ export function useBandwidthOptions() {
 
                 // Process residential options
                 const formattedResidential = bandwidthData.residential_options.map((value) => ({
-                    label: value,
+                    label: formatBandwidthLabel(value),
                     value,
                     numericValue: parseBandwidthValue(value),
                 }));
 
                 // Process enterprise options
                 const formattedEnterprise = bandwidthData.enterprise_options.map((value) => ({
-                    label: value,
+                    label: formatBandwidthLabel(value),
                     value,
                     numericValue: parseBandwidthValue(value),
                 }));

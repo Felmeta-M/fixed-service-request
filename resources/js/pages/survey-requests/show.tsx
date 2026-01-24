@@ -14,11 +14,17 @@ type SurveyDetails = {
     main_offer_id: string;
     bandwidth?: string | null;
     cable_length?: string | number | null;
+    cable_type?: number | string | null; // BSS param 50056
+    media_type?: string | null; // BSS param 50005: PON or COPPER
+    line_indicator?: number | null; // BSS param 50112
+    survey_failure_reason?: string | null; // Reason when survey failed
+    survey_is_manual?: boolean; // True for manual surveys
     status?: string | number | null;
     service_number?: string | null;
     created_at?: string;
     updated_at?: string;
     is_paid?: boolean;
+    can_continue?: boolean;
     can_pay?: boolean;
     can_subscribe?: boolean;
     can_change_offer?: boolean;
@@ -54,6 +60,11 @@ export default function SurveyShowPage() {
             main_offer_id: surveyDetailQuery.data.data.main_offer_id,
             bandwidth: surveyDetailQuery.data.data.bandwidth,
             cable_length: surveyDetailQuery.data.data.cable_length,
+            cable_type: surveyDetailQuery.data.data.cable_type,
+            media_type: surveyDetailQuery.data.data.media_type,
+            line_indicator: surveyDetailQuery.data.data.line_indicator,
+            survey_failure_reason: surveyDetailQuery.data.data.survey_failure_reason,
+            survey_is_manual: surveyDetailQuery.data.data.survey_is_manual,
             status: surveyDetailQuery.data.data.status,
             service_number: surveyDetailQuery.data.data.service_number,
             fbb_service_number: surveyDetailQuery.data.data.fbb_service_number,
@@ -63,6 +74,7 @@ export default function SurveyShowPage() {
             created_at: surveyDetailQuery.data.data.created_at,
             updated_at: surveyDetailQuery.data.data.updated_at,
             is_paid: surveyDetailQuery.data.data.is_paid,
+            can_continue: surveyDetailQuery.data.data.can_continue,
             can_pay: surveyDetailQuery.data.data.can_pay,
             can_subscribe: surveyDetailQuery.data.data.can_subscribe,
             can_change_offer: surveyDetailQuery.data.data.can_change_offer,

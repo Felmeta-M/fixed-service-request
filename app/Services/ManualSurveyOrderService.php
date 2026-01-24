@@ -266,9 +266,12 @@ XML;
             'contact_email' => $primaryContact['contact_email'],
             'status' => FFDServiceProvisionStatus::Waiting->value,
             'survey_is_manual' => true,
-            'with_device' => (bool) ($data['with_device'] ?? false),
-            'device_id' => $data['device_id'] ?? null,
-            'device_voice_id' => $data['device_voice_id'] ?? null,
+            // For manual surveys: device selection happens AFTER survey completion
+            // when we know the media_type (PON/COPPER) from BSS response.
+            // Set to null initially - will be updated when customer selects device.
+            'with_device' => null,
+            'device_id' => null,
+            'device_voice_id' => null,
             'area_code' => $areaCode,
             'area_name' => $areaName,
             // Manual survey fields - will be populated from BSS response after survey completion

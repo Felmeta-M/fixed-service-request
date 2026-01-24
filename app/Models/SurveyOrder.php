@@ -92,7 +92,7 @@ class SurveyOrder extends Model
         'with_device' => 'boolean',
         'survey_is_manual' => 'boolean',
         'line_indicator' => 'integer',
-        // 'status'  => FFDServiceProvisionStatus::class,
+        'status' => 'integer',
         // 'media_type' => \App\Enums\MediaType::class,
         // 'cable_type' => \App\Enums\CableType::class,
     ];
@@ -168,16 +168,41 @@ class SurveyOrder extends Model
     // Static methods contain the logic, instance methods are wrappers
     // ==========================================
 
+    public function canContinue(): bool
+    {
+        return self::checkCanContinue(
+            (int) $this->status,
+            (bool) $this->survey_is_manual,
+            $this->with_device,
+            $this->customer_subscription_order_id,
+            $this->survey_failure_reason
+        );
+    }
+
     public function canPay(): bool
     {
         $p = $this->payment;
-        return self::checkCanPay((int) $this->status, (float) ($p?->total_amount ?? 0), $p?->trans_id);
+        return self::checkCanPay(
+            (int) $this->status,
+            (float) ($p?->total_amount ?? 0),
+            $p?->trans_id,
+            $this->customer_subscription_order_id,
+            (bool) $this->survey_is_manual,
+            $this->with_device
+        );
     }
 
     public function canSubscribe(): bool
     {
         $p = $this->payment;
-        return self::checkCanSubscribe((int) $this->status, (float) ($p?->total_amount ?? 0), $p?->trans_id, $this->customer_subscription_order_id);
+        return self::checkCanSubscribe(
+            (int) $this->status,
+            (float) ($p?->total_amount ?? 0),
+            $p?->trans_id,
+            $this->customer_subscription_order_id,
+            (bool) $this->survey_is_manual,
+            $this->with_device
+        );
     }
 
     public function canChangeOffer(): bool
@@ -206,34 +231,120 @@ class SurveyOrder extends Model
     // ==========================================
 
     /**
-     * Completed + payment > 0 + no trans_id yet
+     * Can continue (device selection) only if:
+     * - Survey is MANUAL
+     * - Status is Completed (survey finished successfully)
+     * - No subscription order yet
+     * - Device not yet selected (with_device is null)
+     * - No failure reason (survey was successful)
      */
-    public static function checkCanPay(int $status, float $paymentAmount, ?string $paymentTransId): bool
-    {
-        return $status === FFDServiceProvisionStatus::Completed->value
-            && $paymentAmount > 0
-            && empty($paymentTransId);
+    public static function checkCanContinue(
+        int $status,
+        bool $isManualSurvey,
+        ?bool $withDevice,
+        ?string $subscriptionOrderId,
+        ?string $surveyFailureReason
+    ): bool {
+        // Only for manual surveys
+        if (!$isManualSurvey) {
+            return false;
+        }
+
+        // Already subscribed - no need to continue
+        if (!empty($subscriptionOrderId)) {
+            return false;
+        }
+
+        // Device already selected - no need to continue
+        if ($withDevice !== null) {
+            return false;
+        }
+
+        // Survey failed - cannot continue
+        if (!empty($surveyFailureReason)) {
+            return false;
+        }
+
+        // Only completed surveys can continue to device selection
+        return $status === FFDServiceProvisionStatus::Completed->value;
+    }
+
+    /**
+     * Can pay only if:
+     * - Status is Completed
+     * - Payment amount > 0
+     * - No trans_id yet (not already paid)
+     * - No subscription order yet
+     * - For manual surveys: device must be selected first (with_device is not null)
+     */
+    public static function checkCanPay(
+        int $status,
+        float $paymentAmount,
+        ?string $paymentTransId,
+        ?string $subscriptionOrderId,
+        bool $isManualSurvey = false,
+        ?bool $withDevice = null
+    ): bool {
+        // Already subscribed - payment phase is done
+        if (!empty($subscriptionOrderId)) {
+            return false;
+        }
+
+        // Already paid
+        if (!empty($paymentTransId)) {
+            return false;
+        }
+
+        // No payment needed
+        if ($paymentAmount <= 0) {
+            return false;
+        }
+
+        // Manual survey: must have device selected first
+        if ($isManualSurvey && $withDevice === null) {
+            return false;
+        }
+
+        // Must be completed to pay
+        return $status === FFDServiceProvisionStatus::Completed->value;
     }
 
     /**
      * Can subscribe only if:
-     * - (Completed + free service + no subscription yet) OR
-     * - (Waiting + paid + no subscription yet)
+     * - No subscription order yet
+     * - For manual surveys: device must be selected first (with_device is not null)
+     * - Either: (Completed + free service) OR (Completed + paid)
      */
-    public static function checkCanSubscribe(int $status, float $paymentAmount, ?string $paymentTransId, ?string $subscriptionOrderId): bool
-    {
+    public static function checkCanSubscribe(
+        int $status,
+        float $paymentAmount,
+        ?string $paymentTransId,
+        ?string $subscriptionOrderId,
+        bool $isManualSurvey = false,
+        ?bool $withDevice = null
+    ): bool {
         // Already subscribed - can't subscribe again
         if (!empty($subscriptionOrderId)) {
             return false;
         }
 
-        // Free service: Completed + no payment required
-        $isFreeAndReady = $status === FFDServiceProvisionStatus::Completed->value && $paymentAmount < 1;
+        // Manual survey: must have device selected first
+        if ($isManualSurvey && $withDevice === null) {
+            return false;
+        }
 
-        // Paid service: Waiting + already paid
-        $isPaidAndReady = $status === FFDServiceProvisionStatus::Waiting->value && $paymentAmount > 0 && !empty($paymentTransId);
+        // Must be completed status
+        if ($status !== FFDServiceProvisionStatus::Completed->value) {
+            return false;
+        }
 
-        return $isFreeAndReady || $isPaidAndReady;
+        // Free service: no payment required
+        if ($paymentAmount < 1) {
+            return true;
+        }
+
+        // Paid service: must have paid already
+        return !empty($paymentTransId);
     }
 
     /**
@@ -281,7 +392,7 @@ class SurveyOrder extends Model
      */
     public static function checkIsPaid(?int $paymentStatus, ?string $paymentTransId): bool
     {
-        return $paymentStatus === FFDServiceProvisionStatus::Paid->value && !empty($paymentTransId);
+        return $paymentStatus === Payment::STATUS_PAID && !empty($paymentTransId);
     }
 
     /**
@@ -292,14 +403,14 @@ class SurveyOrder extends Model
     {
         $status = (int) $order->status;
 
-        // if (
-        //     in_array($status, [
-        //         FFDServiceProvisionStatus::Completed->value,
-        //         FFDServiceProvisionStatus::Processing->value,
-        //     ], true)
-        // ) {
-        //     return false;
-        // }
+        if (
+            in_array($status, [
+                FFDServiceProvisionStatus::Failed->value,
+                FFDServiceProvisionStatus::Cancelled->value,
+            ], true)
+        ) {
+            return false;
+        }
 
         if (!empty($order->last_checked_at)) {
             $lastChecked = \Carbon\Carbon::parse($order->last_checked_at);

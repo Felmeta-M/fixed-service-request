@@ -31,17 +31,17 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
       ],
       color: 'et-blue',
     },
-    {
-      icon: Phone,
-      title: t('home.services.voice.title'),
-      description: t('home.services.voice.description'),
-      features: [
-        t('home.services.voice.feature1'),
-        t('home.services.voice.feature2'),
-        t('home.services.voice.feature3'),
-      ],
-      color: 'primary',
-    },
+    // {
+    //   icon: Phone,
+    //   title: t('home.services.voice.title'),
+    //   description: t('home.services.voice.description'),
+    //   features: [
+    //     t('home.services.voice.feature1'),
+    //     t('home.services.voice.feature2'),
+    //     t('home.services.voice.feature3'),
+    //   ],
+    //   color: 'primary',
+    // },
     {
       icon: Package,
       title: t('home.services.combo.title'),
@@ -51,7 +51,8 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
         t('home.services.combo.feature2'),
         t('home.services.combo.feature3'),
       ],
-      color: 'et-green',
+      color: 'primary',
+      // color: 'et-green',
     },
   ];
 
@@ -130,7 +131,7 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-3">
+            <div className="grid gap-8 md:grid-cols-2">
               {services.map((service, index) => (
                 <Card
                   key={index}

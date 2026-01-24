@@ -480,6 +480,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                             </>
                         )}
                         <Separator />
+                        {surveyDetails?.with_device && (
+
+                        
                         <div className="flex justify-between">
                             <span className="text-sm text-muted-foreground">Device</span>
                             <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-xs font-medium ${surveyDetails?.with_device
@@ -496,6 +499,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                 )}
                             </span>
                         </div>
+                        )}
                     </CardContent>
                 </Card>
 

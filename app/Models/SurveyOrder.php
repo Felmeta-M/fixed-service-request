@@ -295,6 +295,10 @@ class SurveyOrder extends Model
         //     return false;
         // }
 
+        if ($status === FFDServiceProvisionStatus::Cancelled->value) {
+            return true;
+        }
+
 
         if (!empty($order->last_checked_at)) {
             $lastChecked = \Carbon\Carbon::parse($order->last_checked_at);

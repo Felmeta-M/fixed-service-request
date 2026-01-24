@@ -26,14 +26,17 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
 
     // Transform service types for rendering
     const transformedServiceTypes = useMemo(() => {
-        return serviceTypes.map((st) => ({
-            value: st.code,
-            name: st.name,
-            description: st.description || '',
-            icon: iconMap[st.icon || 'Wifi'] || Wifi,
-            color: st.color || 'blue',
-            recommended: st.recommended,
-        }));
+        return serviceTypes
+            // Filter out "Fixed Voice" (code: 1207609454) to only show Broadband and Combo
+            .filter((st) => st.code !== '1207609454')
+            .map((st) => ({
+                value: st.code,
+                name: st.name,
+                description: st.description || '',
+                icon: iconMap[st.icon || 'Wifi'] || Wifi,
+                color: st.color || 'blue',
+                recommended: st.recommended,
+            }));
     }, [serviceTypes]);
 
     // Set default bandwidth to "5M" when options are loaded and bandwidth is empty

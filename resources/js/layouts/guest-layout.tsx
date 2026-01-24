@@ -1,5 +1,5 @@
 import { Footer } from '@/components/layout/footer';
-import { LocaleSwitcher } from '@/components/common/locale-switcher';
+// import { LocaleSwitcher } from '@/components/common/locale-switcher';
 import { useTranslation } from '@/hooks/use-translation';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
@@ -63,7 +63,7 @@ export default function GuestLayout({ children }: Props) {
                                         {t('nav.coverage')}
                                     </button> */}
 
-                                    <LocaleSwitcher variant="compact" />
+                                    {/* <LocaleSwitcher variant="compact" /> */}
                                 </nav>
                                 {auth?.user ? (
                                     <div className="flex items-center space-x-4">

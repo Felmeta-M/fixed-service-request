@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Enums\ErrorCode;
+use App\Enums\OfferId;
 use App\Http\Controllers\Controller;
 use App\Models\SurveyOrder;
 use App\Services\ApiResponse;
@@ -65,7 +66,7 @@ class ChangePrimaryOfferingController extends Controller
         }
 
         try {
-            $result = $this->changePrimaryOfferingService->changePrimaryOffering($validated['service_number'], $validated['bandwidth']);
+            $result = $this->changePrimaryOfferingService->changePrimaryOffering($surveyOrder, $validated['bandwidth']);
             if (!$result['success']) {
                 return ApiResponse::error(
                     message: $result['error'] ?? $result['ret_msg'] ?? 'Change bandwidth failed',

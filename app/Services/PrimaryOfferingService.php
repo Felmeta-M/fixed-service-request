@@ -22,7 +22,7 @@ class PrimaryOfferingService extends BaseApiService
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
         } catch (\Throwable $e) {
-            return ApiResponse::exception($e, 'Primary number query failed.');
+            return ApiResponse::fromException($e, 'Primary number query failed.');
         }
     }
 
@@ -72,8 +72,8 @@ XML;
             ->QueryAvailablePrimaryOfferingRspMsg;
 
         $responseHeader = $response->ResponseHeader->children($namespaces['com']);
-        $retCode  = (string) $responseHeader->RetCode;
-        $retMsg   = (string) $responseHeader->RetMsg;
+        $retCode = (string) $responseHeader->RetCode;
+        $retMsg = (string) $responseHeader->RetMsg;
         $respTime = (string) $responseHeader->ResponseTime;
 
         if ($retCode !== '0') {
@@ -83,21 +83,21 @@ XML;
         $offering = $response->PrimaryOffering->children($namespaces['com']);
 
         $parsedOffering = [
-            'offering_id'        => (string) $offering->OfferingId->OfferingId,
-            'offering_name'      => (string) $offering->OfferingName,
-            'short_name'         => (string) $offering->OfferingShortName,
-            'network_type'       => (string) $offering->NetworkType,
-            'effective_date'     => (string) $offering->EffectiveDate,
-            'expire_date'        => (string) $offering->ExpireDate,
-            'monthly_cost'       => (string) $offering->MonthlyCost,
-            'one_time_cost'      => (string) $offering->OneTimeCost,
+            'offering_id' => (string) $offering->OfferingId->OfferingId,
+            'offering_name' => (string) $offering->OfferingName,
+            'short_name' => (string) $offering->OfferingShortName,
+            'network_type' => (string) $offering->NetworkType,
+            'effective_date' => (string) $offering->EffectiveDate,
+            'expire_date' => (string) $offering->ExpireDate,
+            'monthly_cost' => (string) $offering->MonthlyCost,
+            'one_time_cost' => (string) $offering->OneTimeCost,
         ];
 
         return ApiResponse::success([
-            'ret_code'  => $retCode,
-            'ret_msg'   => $retMsg,
+            'ret_code' => $retCode,
+            'ret_msg' => $retMsg,
             'timestamp' => $respTime,
-            'offering'  => $parsedOffering,
+            'offering' => $parsedOffering,
         ]);
     }
 }

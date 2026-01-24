@@ -12,6 +12,7 @@ use App\Services\Logging\AppLogger;
 use App\Services\Payment\PaymentService;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
+use App\Support\CustomerContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -131,7 +132,7 @@ abstract class BaseSubscriptionService extends BaseApiService
      * Supports:
      * - Anonymous requests (webhooks): Pass zone in data array
      * - New customer selection: Pass zone in data array
-     * - Logged-in customer: Pass zone in data array
+     * - Logged-in customer: Falls back to customer profile if zone missing in data
      *
      * @param array $data Data array containing 'zone'
      * @return string Zone code
@@ -139,11 +140,19 @@ abstract class BaseSubscriptionService extends BaseApiService
      */
     protected function getCustomerZoneCode(array $data): string
     {
-        $zoneId = $data['zone'] ?? null;
+        // 1. Priority: Logged-in customer context (Existing Customer)
+        $zoneId = CustomerContext::zone();
 
+        // 2. Fallback: Data array (Webhook / New Customer / Anonymous)
         if (!$zoneId) {
-            AppLogger::api()->error('Zone not found in data for zone_code lookup', [
+            $zoneId = $data['zone'] ?? $data['address']['zone'] ?? null;
+        }
+
+        // 3. Validation
+        if (!$zoneId) {
+            AppLogger::api()->error('Zone not found in data or customer context for zone_code lookup', [
                 'data_keys' => array_keys($data),
+                'has_customer_context' => CustomerContext::isAuthenticated(),
             ]);
             throw new \RuntimeException(
                 'Unable to process subscription: Zone information is missing. Please provide a valid zone selection.'
@@ -163,10 +172,13 @@ abstract class BaseSubscriptionService extends BaseApiService
      */
     protected function getZoneCodeById(int|string $zoneId): string
     {
-        // Try to find zone by ID
-        $zone = Zone::find($zoneId);
+        // Try to find zone by ID if numeric
+        $zone = null;
+        if (is_numeric($zoneId)) {
+            $zone = Zone::find($zoneId);
+        }
 
-        // If not found by ID, try to find by name (in case zone stores name instead of ID)
+        // If not found by ID or not numeric, try to find by name
         if (!$zone) {
             $zone = Zone::where('name', $zoneId)->first();
         }

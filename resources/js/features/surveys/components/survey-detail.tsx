@@ -372,6 +372,14 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
         );
     };
 
+    const handleContinueClick = () => {
+        if (!surveyDetails?.media_type) {
+            showErrorToast('Survey infrastructure details missing. Please contact support.');
+            return;
+        }
+        setShowDeviceSelection(true);
+    };
+
     const bandwidthDisplay = formatBandwidth(surveyDetails?.bandwidth);
 
     // Show device selection screen for manual surveys
@@ -493,10 +501,10 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                 <p className="text-sm text-gray-600 mb-4">
                                     Please select a device to continue with your order.
                                 </p>
-                                <Button
-                                    onClick={() => setShowDeviceSelection(true)}
-                                    className="bg-green-600 hover:bg-green-700 text-white"
-                                >
+                                        <Button
+                                            onClick={handleContinueClick}
+                                            className="bg-green-600 hover:bg-green-700 text-white"
+                                        >
                                     <Package className="mr-2 h-4 w-4" />
                                     Continue
                                     <ChevronRight className="ml-2 h-4 w-4" />
@@ -686,7 +694,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                             Select a device to continue with your order.
                                         </p>
                                         <Button
-                                            onClick={() => setShowDeviceSelection(true)}
+                                            onClick={handleContinueClick}
                                             className="w-full bg-green-600 hover:bg-green-700 text-white"
                                         >
                                             <Package className="mr-2 h-4 w-4" />

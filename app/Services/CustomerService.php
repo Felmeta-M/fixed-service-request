@@ -22,7 +22,8 @@ class CustomerService extends BaseApiService
     {
         try {
             // Get dynamic zone code from customer's selected zone_id (not from logged-in user)
-            $zoneId = $data['zone'] ?? $data['address']['zone'] ?? null;
+            $zoneId = CustomerContext::code() ?? $data['zone'] ?? $data['address']['zone'] ?? null;
+            \Log::info('Customer zone code', ['zzzzzz' => $zoneId]);
             if (!$zoneId) {
                 throw new RuntimeException('Zone is required to create a customer profile.');
             }
@@ -368,17 +369,9 @@ XML;
      */
     protected function getCustomerZoneCode(): string
     {
-        $customer = CustomerContext::customer();
-        if (!$customer || !$customer->zone) {
-            AppLogger::api()->error('Customer zone not found for zone_code lookup', [
-                'customer_code' => $customer?->code,
-            ]);
-            throw new \RuntimeException(
-                'Unable to create customer: Customer zone information is missing. Please update your profile with a valid zone selection.'
-            );
-        }
+        $zoneId = CustomerContext::code() ?? $data['zone'] ?? null;
 
-        return $this->getZoneCodeById($customer->zone);
+        return $this->getZoneCodeById($zoneId);
     }
 
     /**
@@ -391,13 +384,6 @@ XML;
      */
     protected function getZoneCodeById(int|string $zoneId): string
     {
-        if (!$zoneId) {
-            AppLogger::api()->error('Zone ID not provided for zone_code lookup');
-            throw new \RuntimeException(
-                'Unable to create customer: Zone selection is required. Please select a valid zone.'
-            );
-        }
-
         // Try to find zone by ID
         $zone = Zone::find($zoneId);
 

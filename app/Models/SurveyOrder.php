@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FFDServiceProvisionStatus;
+use App\Enums\OfferId;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -91,6 +92,7 @@ class SurveyOrder extends Model
     protected $casts = [
         'with_device' => 'boolean',
         'survey_is_manual' => 'boolean',
+        'main_offer_id' => 'integer',
         'line_indicator' => 'integer',
         'status' => 'integer',
         // 'media_type' => \App\Enums\MediaType::class,
@@ -175,7 +177,8 @@ class SurveyOrder extends Model
             (bool) $this->survey_is_manual,
             $this->with_device,
             $this->customer_subscription_order_id,
-            $this->survey_failure_reason
+            $this->survey_failure_reason,
+            $this->media_type
         );
     }
 
@@ -237,13 +240,15 @@ class SurveyOrder extends Model
      * - No subscription order yet
      * - Device not yet selected (with_device is null)
      * - No failure reason (survey was successful)
+     * - Media type is present (required for device filtering)
      */
     public static function checkCanContinue(
         int $status,
         bool $isManualSurvey,
         ?bool $withDevice,
         ?string $subscriptionOrderId,
-        ?string $surveyFailureReason
+        ?string $surveyFailureReason,
+        ?string $mediaType
     ): bool {
         // Only for manual surveys
         if (!$isManualSurvey) {
@@ -262,6 +267,11 @@ class SurveyOrder extends Model
 
         // Survey failed - cannot continue
         if (!empty($surveyFailureReason)) {
+            return false;
+        }
+
+        // Media type is required for device selection
+        if (empty($mediaType)) {
             return false;
         }
 

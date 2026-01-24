@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\OfferId;
 use App\Models\BandwidthOption;
 use App\Models\SurveyOrder;
 use App\Services\Logging\AppLogger;
@@ -47,14 +48,16 @@ class ChangePrimaryOfferingService extends BaseApiService
      * @return array Change result with order ID
      */
     public function changePrimaryOffering(
-        string $serviceNumber,
+        SurveyOrder $surveyOrder,
         string $bandwidth,
     ): array {
         try {
             // Validate bandwidth against database options
+            $surveyOrderServiceNumber = $surveyOrder->main_offer_id === OfferId::FixedCombo->value ? $surveyOrder->fbb_service_number : $surveyOrder->service_number;
+
             if (!$this->isValidBandwidthOption($bandwidth)) {
                 AppLogger::api()->warning('Invalid bandwidth option provided for upgrade', [
-                    'service_number' => $serviceNumber,
+                    'service_number' => $surveyOrderServiceNumber,
                     'bandwidth' => $bandwidth,
                     'operation' => 'change_primary_offering',
                 ]);
@@ -66,30 +69,15 @@ class ChangePrimaryOfferingService extends BaseApiService
                 ];
             }
 
-            $surveyOrder = SurveyOrder::where('service_number', $serviceNumber)->first();
-            if (!$surveyOrder) {
-                AppLogger::api()->error('Survey order not found for bandwidth change', [
-                    'service_number' => $serviceNumber,
-                    'bandwidth' => $bandwidth,
-                    'operation' => 'change_primary_offering',
-                ]);
-
-                return [
-                    'success' => false,
-                    'message' => 'Survey order not found',
-                    'error' => 'Survey order not found for the provided service number',
-                ];
-            }
-
             $data['object_id_type'] = self::OBJECT_TYPE_SUBSCRIBER;
-            $data['object_id'] = $serviceNumber; // fbb service number
+            $data['object_id'] = $surveyOrderServiceNumber; // fbb service number
             $data['old_offering_id'] = $surveyOrder->main_offer_id;
             $data['new_offering_id'] = $surveyOrder->main_offer_id;
             $data['bandwidth'] = $this->parseBandwidth($bandwidth);
 
             $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            $result = $this->parseResponse($xmlResponse, $serviceNumber);
+            $result = $this->parseResponse($xmlResponse, $surveyOrderServiceNumber);
 
             // Return the parsed result
             if (!$result['success']) {
@@ -106,7 +94,7 @@ class ChangePrimaryOfferingService extends BaseApiService
                 ]);
 
                 AppLogger::api()->info('Survey order bandwidth updated after upgrade/downgrade', [
-                    'service_number' => $serviceNumber,
+                    'service_number' => $surveyOrderServiceNumber,
                     'new_bandwidth' => $bandwidth,
                     'new_bandwidth_kb' => $bandwidthKb,
                     'customer_survey_order_id' => $surveyOrder->customer_survey_order_id,
@@ -116,7 +104,7 @@ class ChangePrimaryOfferingService extends BaseApiService
             } catch (\Throwable $e) {
                 // Log the error but don't fail the request - the API change was successful
                 AppLogger::api()->exception($e, 'Failed to update local bandwidth after successful change', [
-                    'service_number' => $serviceNumber,
+                    'service_number' => $surveyOrderServiceNumber,
                     'new_bandwidth' => $bandwidth,
                     'new_bandwidth_kb' => $bandwidthKb,
                     'operation' => 'change_primary_offering',
@@ -134,7 +122,7 @@ class ChangePrimaryOfferingService extends BaseApiService
             ];
         } catch (RuntimeException $e) {
             AppLogger::api()->exception($e, 'Runtime exception in change primary offering', [
-                'service_number' => $serviceNumber,
+                'service_number' => $surveyOrderServiceNumber,
                 'bandwidth' => $bandwidth,
                 'operation' => 'change_primary_offering',
             ]);
@@ -145,7 +133,7 @@ class ChangePrimaryOfferingService extends BaseApiService
             ];
         } catch (\Throwable $e) {
             AppLogger::api()->exception($e, 'Unexpected error in change primary offering', [
-                'service_number' => $serviceNumber,
+                'service_number' => $surveyOrderServiceNumber,
                 'bandwidth' => $bandwidth,
                 'operation' => 'change_primary_offering',
             ]);

@@ -14,7 +14,9 @@ use Illuminate\Support\Str;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
-   public function __construct(protected readonly GetCombiningService $get_combining_service) {}
+   public function __construct(protected readonly GetCombiningService $get_combining_service)
+   {
+   }
 
    protected function offeringId(): int
    {
@@ -45,10 +47,11 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          throw new \RuntimeException('Survey order not found: ' . $data['survey_order_id']);
       }
 
-      if ($surveyOrder->status === FFDServiceProvisionStatus::Completed->value) {
+      if ($surveyOrder?->customer_subscription_order_id && $surveyOrder->status === FFDServiceProvisionStatus::Completed->value) {
          AppLogger::api()->warning('Attempted duplicate subscription', [
             'survey_order_id' => $data['survey_order_id'],
             'current_status' => $surveyOrder->status,
+            'customer_subscription_order_id' => $surveyOrder->customer_subscription_order_id,
          ]);
 
          return [
@@ -143,6 +146,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
       // Get dynamic zone_code for CustomerAddressInfo EthioZoneOrRegion
       // This will throw an exception with a clear message if zone_code cannot be determined
+
       $customerEthioZone = $this->getCustomerZoneCode($data);
 
       // Get dynamic ethio_zone id for AccountInfo ethioZoneOrRegion

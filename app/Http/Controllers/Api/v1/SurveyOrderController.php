@@ -555,7 +555,14 @@ class SurveyOrderController extends Controller
             'status' => $this->getStatusLabel($order),
             'is_paid' => SurveyOrder::checkIsPaid($paymentStatus, $paymentTransId),
             // Action permissions - single source of truth from model
-            'can_continue' => SurveyOrder::checkCanContinue($status, $isManualSurvey, $withDevice, $subscriptionOrderId, $surveyFailureReason),
+            'can_continue' => SurveyOrder::checkCanContinue(
+                $status,
+                $isManualSurvey,
+                $withDevice,
+                $subscriptionOrderId,
+                $surveyFailureReason,
+                $order->media_type ?? null
+            ),
             'can_pay' => SurveyOrder::checkCanPay($status, $paymentAmount, $paymentTransId, $subscriptionOrderId, $isManualSurvey, $withDevice),
             'can_subscribe' => SurveyOrder::checkCanSubscribe($status, $paymentAmount, $paymentTransId, $subscriptionOrderId, $isManualSurvey, $withDevice),
             'can_change_offer' => SurveyOrder::checkCanChangeOffer($status, $subscriptionOrderId),

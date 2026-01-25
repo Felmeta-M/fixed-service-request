@@ -21,6 +21,42 @@
         })();
     </script>
 
+    {{-- Suppress Google Maps API deprecation warnings and blocked request errors --}}
+    <script>
+        (function() {
+            // Suppress Google Maps deprecation warnings
+            const originalWarn = console.warn;
+            const originalError = console.error;
+
+            console.warn = function(...args) {
+                const message = args.join(' ');
+                // Suppress Google Maps deprecation warnings
+                if (
+                    message.includes('google.maps.Marker is deprecated') ||
+                    message.includes('google.maps.places.AutocompleteService') ||
+                    message.includes('google.maps.places.PlacesService') ||
+                    message.includes('As of') && message.includes('deprecated')
+                ) {
+                    return; // Suppress these warnings
+                }
+                originalWarn.apply(console, args);
+            };
+
+            console.error = function(...args) {
+                const message = args.join(' ');
+                // Suppress ERR_BLOCKED_BY_CLIENT errors (ad blockers, privacy extensions)
+                if (
+                    message.includes('ERR_BLOCKED_BY_CLIENT') ||
+                    message.includes('net::ERR_BLOCKED_BY_CLIENT') ||
+                    message.includes('maps.googleapis.com') && message.includes('blocked')
+                ) {
+                    return; // Suppress blocked request errors
+                }
+                originalError.apply(console, args);
+            };
+        })();
+    </script>
+
     {{-- Inline style to set the HTML background color based on our theme in app.css --}}
     <style>
         html {

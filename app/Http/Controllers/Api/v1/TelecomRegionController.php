@@ -100,19 +100,7 @@ class TelecomRegionController extends Controller
         }
 
         // Use ZoneService - single source of truth
-        $zoneService = app(ZoneService::class);
-        $zoneCode = $zoneService->getZoneCodeById($zoneId);
-        
-        if (!$zoneCode) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Zone not found or zone_code is missing.',
-                'data' => [],
-            ], 404);
-        }
-
-        // zone_code from zones table is actually the EthioZone name
-        $ethioZone = $zoneService->getEthioZoneByName($zoneCode);
+        $ethioZone = app(ZoneService::class)->getEthioZoneByZoneId($zoneId);
 
         if (!$ethioZone) {
             return response()->json([

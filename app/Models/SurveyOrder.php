@@ -414,7 +414,12 @@ class SurveyOrder extends Model
     {
         $status = (int) $order->status;
 
-        if ($status === FFDServiceProvisionStatus::Waiting->value) {
+        if (
+            in_array($status, [
+                FFDServiceProvisionStatus::Waiting->value,
+                FFDServiceProvisionStatus::Processing->value
+            ], true)
+        ) {
             return true;
         }
 

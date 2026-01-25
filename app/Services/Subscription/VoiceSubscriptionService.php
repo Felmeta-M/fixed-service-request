@@ -14,11 +14,9 @@ use App\Services\ZoneService;
 
 class VoiceSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
-   protected ?string $serviceNumber = null;
-
    public function __construct(
-      protected readonly QueryAvailableNumberService $queryAvailableNumberService,
-      protected readonly ReserveNumberService $reserveNumberService,
+      QueryAvailableNumberService $queryAvailableNumberService,
+      ReserveNumberService $reserveNumberService,
       PaymentService $payment_service,
       ZoneService $zoneService,
    ) {

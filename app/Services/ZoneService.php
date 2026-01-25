@@ -81,6 +81,90 @@ class ZoneService
         return EthioZone::where('name', $name)->where('status', true)->first();
     }
 
+    /**
+     * Get EthioZone by customer-selected zone ID.
+     *
+     * Path: zone_id → zones.zone_code → ethio_zones (by code)
+     *
+     * Note: zones.zone_code stores the EthioZone CODE (e.g., "40"), not name (e.g., "SWAAZ")
+     *
+     * Used for:
+     * - Customer creation (get EthioZone for customer profile)
+     * - Manual survey creation (show nearest Ethio Telecom zones)
+     */
+    public function getEthioZoneByZoneId(int|string|null $zoneId): ?EthioZone
+    {
+        $zoneCode = $this->getZoneCodeById($zoneId);
+
+        return $zoneCode ? $this->getEthioZoneByCode($zoneCode) : null;
+    }
+
+    /**
+     * Get EthioZone by code (BSS code like "40", "21", "3").
+     */
+    public function getEthioZoneByCode(string $code): ?EthioZone
+    {
+        return EthioZone::where('code', $code)->where('status', true)->first();
+    }
+
+    /**
+     * Get EthioZones for customer selection dropdown.
+     *
+     * Path: zone_id → zones.zone_code (=BSS code) → matching ethio_zones
+     *
+     * Returns: Array formatted for dropdown [{ value, label }, ...]
+     * - label: name for display (e.g., "CAAZ", "NAAZ")
+     * - value: BSS code for submission (e.g., "21", "22")
+     *
+     * Used for: Manual survey creation - customer selects nearest Ethio Telecom zone
+     */
+    public function getEthioZonesForSelection(int|string|null $zoneId): array
+    {
+        $zoneCode = $this->getZoneCodeById($zoneId);
+
+        if (!$zoneCode) {
+            return [];
+        }
+
+        // Get matching EthioZone by code (zones.zone_code stores BSS code)
+        $matchingZone = $this->getEthioZoneByCode($zoneCode);
+
+        if (!$matchingZone) {
+            return [];
+        }
+
+        // Return formatted for dropdown: value = BSS code, label = name
+        return [
+            [
+                'value' => $matchingZone->code,  // BSS code (e.g., "21")
+                'label' => $matchingZone->name,  // Display name (e.g., "CAAZ")
+                'id' => $matchingZone->id,       // DB id (for reference)
+            ],
+        ];
+    }
+
+    /**
+     * Get all active EthioZones for selection dropdown.
+     *
+     * Returns: Array formatted for dropdown [{ value, label }, ...]
+     * - label: name for display (e.g., "CAAZ", "NAAZ")
+     * - value: BSS code for submission (e.g., "21", "22")
+     *
+     * Used for: When customer needs to select from all available Ethio Telecom zones
+     */
+    public function getAllEthioZonesForSelection(): array
+    {
+        return EthioZone::where('status', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'code'])
+            ->map(fn($zone) => [
+                'value' => $zone->code,  // BSS code (e.g., "21")
+                'label' => $zone->name,  // Display name (e.g., "CAAZ")
+                'id' => $zone->id,       // DB id (for reference)
+            ])
+            ->toArray();
+    }
+
     // =========================================================================
     // ACCOUNT INFO RESOLUTION - Priority chain
     // =========================================================================
@@ -133,12 +217,11 @@ class ZoneService
     /**
      * From customer context → EthioZone code.
      * Path: customer.zone → zones.zone_code → ethio_zones.code
+     * Note: zones.zone_code IS the EthioZone code, so return directly
      */
     private function fromCustomerContextToEthioZoneCode(): ?string
     {
-        $zoneName = $this->fromCustomerContext();
-
-        return $zoneName ? $this->getEthioZoneByName($zoneName)?->code : null;
+        return $this->fromCustomerContext();
     }
 
     /**
@@ -155,12 +238,11 @@ class ZoneService
     /**
      * From data array → EthioZone code.
      * Path: data.zone → zones.zone_code → ethio_zones.code
+     * Note: zones.zone_code IS the EthioZone code, so return directly
      */
     private function fromDataToEthioZoneCode(?array $data): ?string
     {
-        $zoneName = $this->fromData($data);
-
-        return $zoneName ? $this->getEthioZoneByName($zoneName)?->code : null;
+        return $this->fromData($data);
     }
 
     /**

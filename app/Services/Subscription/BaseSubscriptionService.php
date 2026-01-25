@@ -19,6 +19,7 @@ abstract class BaseSubscriptionService extends BaseApiService
 {
     protected int $timeout = 10;
     protected int $rateLimit = 30;
+    protected ?string $serviceNumber = null;
 
     public function __construct(
         protected readonly PaymentService $payment_service,

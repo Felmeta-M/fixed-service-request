@@ -105,6 +105,8 @@ class AvailableDeviceController extends Controller
                 'description' => $device->description,
                 'image_url' => $device->image_url,
                 'specifications' => $device->specifications ? json_decode($device->specifications, true) : null,
+                'status' => $device->is_active ? 'active' : 'inactive',
+                'stock_quantity' => $device->stock_quantity ?? 0,
             ];
         })->values()->all();
 

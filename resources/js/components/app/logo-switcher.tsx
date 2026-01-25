@@ -27,7 +27,7 @@ export function LogoSwitcher() {
               <Link href={route('services')} className="flex items-center">
                 {state === "collapsed" ? (
                   <div className="bg-accent text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <img src="/favicon1.ico" alt="Ethio Telecom" className="h-5 w-5" />
+                  <img src="/favicon.ico" alt="Ethio Telecom" className="h-5 w-5" />
                   </div>
                 ) : (
                   <img src={logo} alt="Ethio Telecom Logo" className="h-9 w-auto" />

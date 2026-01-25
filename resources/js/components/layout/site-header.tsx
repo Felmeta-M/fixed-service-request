@@ -43,17 +43,15 @@ export function SiteHeader({ title, isServiceCreation = false, currentStep = 0, 
                     <Separator orientation="vertical" className="data-[orientation=vertical]:h-4" />
                     <h1 className="hidden text-base font-medium capitalize md:block">{title}</h1>
 
-                    <div className="ml-auto flex items-center gap-4">
-                        {/* additional header buttons or actions */}
-                        {/* Mobile title for service creation */}
-                        {/* {isServiceCreation && (
-                            <h1 className="text-sm text-gray-500 font-medium capitalize md:hidden">
+                    <div className="ml-auto flex items-center gap-2">
+                        {isServiceCreation && (
+                            <div className="hidden text-xs text-gray-500 sm:block md:hidden">
                                 Step {currentStep + 1} of {steps.length}
-                            </h1>
-                        )} */}
-                         <Button variant="ghost" size="sm" className="h-8 md:hidden" onClick={handleLogout}>
-                            <LogOut className=" h-4 w-4" />
-                            Log out
+                            </div>
+                        )}
+                        <Button variant="ghost" size="sm" className="h-8" onClick={handleLogout}>
+                            <LogOut className="h-4 w-4" />
+                            <span className="sr-only">Log out</span>
                         </Button>
                     </div>
                 </div>
@@ -61,7 +59,7 @@ export function SiteHeader({ title, isServiceCreation = false, currentStep = 0, 
 
             {/* Mobile Step Indicator */}
             {showMobileSteps && (
-                <div className="md:hidden">
+                <div className="md:hidden border-b border-gray-200">
                     <MobileStepIndicator currentStep={currentStep} steps={steps} />
                 </div>
             )}

@@ -16,7 +16,6 @@ export function OTPVerificationForm({ className, ...props }: React.ComponentProp
     }
 
     const phone = phoneRef.current;
-    console.log('🚀 ~ OTPVerificationForm ~ phone:', phone);
 
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [isLoading, setIsLoading] = useState(false);

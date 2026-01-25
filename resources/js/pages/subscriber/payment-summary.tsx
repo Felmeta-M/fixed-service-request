@@ -8,7 +8,6 @@ export default function PaymentSummaryPage() {
     const { user } = props.auth
 
     const { payment_details, survey_details } = props;
-    // console.log('payment details ', payment_details)
 
     const [loading, setLoading] = useState(false);
     // const [survey_data, setsurvey_data] useState({})
@@ -43,7 +42,6 @@ export default function PaymentSummaryPage() {
     //         //     throw new Error(result.message || 'Failed to create payment order');
     //         // }
     //     } catch (error) {
-    //         console.error('Payment error:', error);
     //         alert('Failed to process payment. Please try again.');
     //     } finally {
     //         setLoading(false);

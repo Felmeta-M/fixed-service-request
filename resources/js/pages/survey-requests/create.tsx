@@ -150,7 +150,6 @@ export default function Create() {
                         contactEmail = kycData.email || 'customer@ethiotelecom.et';
                         customerCode = kycData.customer_data.customer.code;
                     } catch (e) {
-                        console.error('Error parsing KYC data:', e);
                     }
                 }
 
@@ -172,7 +171,6 @@ export default function Create() {
                             customerCode = customer.code;
                         }
                     } catch (e) {
-                        console.error('Error parsing customer data:', e);
                     }
                 }
 
@@ -184,7 +182,6 @@ export default function Create() {
                     contact_email: contactEmail,
                 }));
             } catch (error) {
-                console.error('Failed to fetch user data from localStorage:', error);
                 setData((prev) => ({
                     ...prev,
                     customer_code: '828204303',
@@ -327,7 +324,6 @@ export default function Create() {
                         }
                     }
                 } catch (err) {
-                    console.error('Geocoding failed:', err);
                     setLocationError('Location detected but failed to get address details');
                 }
 
@@ -466,7 +462,6 @@ export default function Create() {
             setResourceAvailable(false);
             setResourceMessage('Failed to check resource availability');
             setError('Failed to check resource availability');
-            console.error('Resource check error:', error);
         } finally {
             setCheckingResource(false);
         }

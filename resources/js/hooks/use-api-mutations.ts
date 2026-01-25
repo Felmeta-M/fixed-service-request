@@ -388,7 +388,6 @@ export function useCreateSubscription() {
             completed_date: string;
         }) => {
             if (!token) throw new Error('Authentication token required');
-            console.log('[useCreateSubscription] Calling API', { survey_order_id: data.survey_order_id, timestamp: new Date().toISOString() });
             const response = await apiClient.post<any>('/services/subscription', data, {
                 token,
             });
@@ -417,11 +416,6 @@ export function useChangePrimaryOffering() {
         retry: false,
         mutationFn: async (data: { service_number: string; bandwidth: string }) => {
             if (!token) throw new Error('Authentication token required');
-            console.log('[useChangePrimaryOffering] Calling API', {
-                service_number: data.service_number,
-                bandwidth: data.bandwidth,
-                timestamp: new Date().toISOString()
-            });
             const response = await apiClient.post<any>('/change-primary-offering', data, {
                 token,
             });

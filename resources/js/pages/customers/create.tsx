@@ -192,10 +192,8 @@ export default function Create() {
         success: false,
     });
     const [createdCustomerData, setCreatedCustomerData] = useState<any>(null);
-    console.log('🚀 ~ Create ~ createdCustomerData:', createdCustomerData);
 
     const [readOnlyFields, setReadOnlyFields] = useState<Set<string>>(new Set());
-    console.log('🚀 ~ Create ~ readOnlyFields:', readOnlyFields);
     const [isLoadingPrefill, setIsLoadingPrefill] = useState(true);
 
     // TanStack Query hooks
@@ -257,7 +255,6 @@ export default function Create() {
     useEffect(() => {
         if (customerData && (customerData as any)?.success && (customerData as any)?.data) {
             const customer = (customerData as any).data;
-            console.log('🚀 ~ loadDataFromApi ~ customer:', customer);
 
             // Show success toast for prefill
             toast.success('Customer data loaded successfully', {
@@ -331,7 +328,6 @@ export default function Create() {
                 },
                 contact_person: customer.contact_person || [],
             };
-            console.log('transfored data', transform);
 
             setData(transform);
 
@@ -420,7 +416,6 @@ export default function Create() {
     // Enhanced submit handler with comprehensive error handling
     const handleSubmit: FormEventHandler = async (e) => {
         e.preventDefault();
-        console.log('hiiiiii');
         // Clear previous errors
         setFormErrors({});
         setSubmissionState({
@@ -434,11 +429,9 @@ export default function Create() {
         const submissionToast = toast.loading('Validating form data...', {
             duration: Infinity,
         });
-        console.log('🚀 ~ submit ~ submissionToast:', submissionToast);
 
         // Step 1: Validate form data
         const result = customerSchema.safeParse(data);
-        console.log('🚀 ~ submit ~ result:', result);
 
         if (!result.success) {
             const fieldErrors: Record<string, string> = {};
@@ -471,7 +464,6 @@ export default function Create() {
         toast.loading('Creating customer...', {
             id: submissionToast,
         });
-        console.log('🚀 ~ submit ~ submissionToast:', submissionToast);
 
         // Step 2: Create customer
         createCustomerMutation.mutate(

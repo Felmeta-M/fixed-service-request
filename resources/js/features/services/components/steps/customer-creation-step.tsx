@@ -192,13 +192,11 @@ const handleApiError = (error: unknown): ApiError => {
     if (error && typeof error === 'object') {
         const err = error as any;
 
-        console.log('err', err);
         // Check if it has a response property (Axios-like)
         if (err.response) {
             const status = err.response?.status;
             const responseData = err.response?.data;
 
-            console.log('responseData', responseData);
             // Enhanced 422 error handling
             if (status === 422) {
                 // Laravel validation errors can be in different formats
@@ -239,7 +237,6 @@ const handleApiError = (error: unknown): ApiError => {
             message: error.message,
         };
     }
-    console.log('error', error);
 
     return {
         message: 'An unexpected error occurred',
@@ -484,7 +481,6 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                     });
                 }
             } catch (error) {
-                console.error('Error in prefill data loading:', error);
                 toast.error('Error loading prefill data', {
                     description: 'Please refresh and try again',
                     duration: 5000,
@@ -548,7 +544,6 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
     // Check if a field is read-only - FIXED
     const isFieldReadOnly = (fieldName: string): boolean => {
         const isReadOnly = readOnlyFields.has(fieldName);
-        console.log(`Field ${fieldName} read-only:`, isReadOnly, 'All read-only fields:', Array.from(readOnlyFields));
         return isReadOnly;
     };
 
@@ -825,7 +820,6 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
 
     // Enhanced change handlers - FIXED
     const handleInputChange = (field: string, value: string) => {
-        console.log(`Attempting to change field ${field} to:`, value, 'Read-only?', isFieldReadOnly(field));
 
         if (isFieldReadOnly(field)) {
             toast.warning('Field cannot be edited', {
@@ -845,7 +839,6 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
 
     const handleNestedInputChange = (parent: string, field: string, value: string) => {
         const fullFieldName = `${parent}.${field}`;
-        console.log(`Attempting to change nested field ${fullFieldName} to:`, value, 'Read-only?', isFieldReadOnly(fullFieldName));
 
         if (isFieldReadOnly(fullFieldName)) {
             toast.warning('Field cannot be edited', {
@@ -869,7 +862,6 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
     };
 
     const handleSelectChange = (field: string, value: string) => {
-        console.log(`Attempting to change select field ${field} to:`, value, 'Read-only?', isFieldReadOnly(field));
 
         if (isFieldReadOnly(field)) {
             toast.warning('Field cannot be edited', {
@@ -1032,9 +1024,6 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
 
     // Check if we have any pre-filled data
     const hasPrefilledData = readOnlyFields.size > 0;
-    console.log('Current read-only fields:', Array.from(readOnlyFields));
-    console.log('Has prefilled data:', hasPrefilledData);
-    console.log('Current form data:', data);
 
     return (
         <div className="mx-auto max-w-4xl space-y-6">

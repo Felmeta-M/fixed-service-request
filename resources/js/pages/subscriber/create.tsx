@@ -42,7 +42,6 @@ export default function CreateSubscriber() {
 
     // Enhanced error handling
     const handleApiError = (result: any, context: string = '') => {
-        console.error(`API Error in ${context}:`, result);
 
         let errorMessage = 'An unexpected error occurred. Please try again.';
 
@@ -83,12 +82,10 @@ export default function CreateSubscriber() {
     useEffect(() => {
         // Load survey data from localStorage if needed
         const surveyDataString = localStorage.getItem('customerSurveyData');
-        console.log(surveyDataString);
         if (surveyDataString) {
             try {
                 setSurveyData(JSON.parse(surveyDataString));
             } catch (e) {
-                console.error('Error parsing survey data:', e);
                 setError('Invalid survey data format');
             }
         }

@@ -6,12 +6,10 @@ import { useEffect, useRef, useState } from 'react';
 export default function CreateServicePage({ googleMapsApiKey }: { googleMapsApiKey: string }) {
     const [currentStep, setCurrentStep] = useState(0);
     const { auth } = usePage().props;
-    console.log("🚀 ~ CreateServicePage ~ auth:", auth)
     
     // Safety check: ensure auth.user exists
     const isNewCustomer = !auth?.user?.customer_code;
     const { user } = auth || {};
-    console.log("🚀 ~ User :", user)
 
     // Track previous isNewCustomer value using ref to avoid infinite loops
     const prevIsNewCustomerRef = useRef(isNewCustomer);

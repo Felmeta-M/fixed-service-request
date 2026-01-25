@@ -216,7 +216,6 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
                 }, 1500);
             },
             onError: (error: Error) => {
-                console.error('Manual survey creation error:', error);
                 toast.dismiss(submissionToast);
                 const errorMessage = error.message || 'Failed to create your service request. Please try again.';
                 toast.error(errorMessage, {

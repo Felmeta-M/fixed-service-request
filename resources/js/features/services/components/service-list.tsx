@@ -15,8 +15,6 @@ interface ServiceListProps {
 }
 
 export function ServiceList({ surveys, loading, error, onSurveyUpdate, globalFilter, typeFilter, statusFilter }: ServiceListProps) {
-    console.log('🚀 ~ ServiceList ~ error:', error);
-    console.log('🚀 ~ ServiceList ~ surveys:', surveys);
 
     useEffect(() => {
         onSurveyUpdate();

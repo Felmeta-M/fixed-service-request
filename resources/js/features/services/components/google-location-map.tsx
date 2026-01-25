@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { formatCoordinate } from '@/lib/coordinate-utils';
+import { reverseGeocode } from '@/lib/geocoding';
 import { GoogleMap, LoadScript } from '@react-google-maps/api';
 import { Layers, Loader2, MapPin } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -228,26 +229,19 @@ export function GoogleLocationMap({
         [map],
     );
 
-    // Get address from coordinates using Google Geocoding API
+    // Get address from coordinates using server-side proxy (API key hidden)
     const getAddressFromCoordinates = useCallback(
         async (lat: number, lng: number): Promise<string> => {
             try {
                 setIsGeocoding(true);
-                const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${googleMapsApiKey}`);
-                const data = await response.json();
-
-                if (data.status === 'OK' && data.results.length > 0) {
-                    return data.results[0].formatted_address;
-                }
-                return 'Location identified (address details limited)';
+                return await reverseGeocode(lat, lng);
             } catch (error) {
-                console.error('Google Geocoding error:', error);
                 return 'Address service temporarily unavailable';
             } finally {
                 setIsGeocoding(false);
             }
         },
-        [googleMapsApiKey],
+        [],
     );
 
     // Update marker position smoothly with bounce animation
@@ -367,7 +361,6 @@ export function GoogleLocationMap({
                 const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
                 return result.state;
             } catch (error) {
-                console.warn('Permissions API query failed:', error);
                 return 'unknown';
             }
         }
@@ -383,7 +376,6 @@ export function GoogleLocationMap({
 
         // Check permission status first
         const permissionStatus = await checkGeolocationPermission();
-        console.log('📍 Permission status before request:', permissionStatus);
 
         if (permissionStatus === 'denied') {
             toast.error('Location access is blocked. Please enable location permissions in your browser settings and refresh the page.', {
@@ -395,7 +387,6 @@ export function GoogleLocationMap({
 
         // Check if we're on HTTPS (required for geolocation in many browsers)
         if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            console.warn('⚠️ Geolocation may require HTTPS in production');
         }
 
         setIsGettingLocation(true);
@@ -408,11 +399,6 @@ export function GoogleLocationMap({
                 const rawLng = position.coords.longitude;
                 const lat = parseFloat(rawLat.toFixed(6));
                 const lng = parseFloat(rawLng.toFixed(6));
-
-                console.log('📍 Get My Location - Current location obtained:', { 
-                    raw: { lat: rawLat, lng: rawLng },
-                    precise: { lat, lng }
-                });
 
                 // Dismiss loading toast
                 toast.dismiss(toastId);
@@ -432,15 +418,6 @@ export function GoogleLocationMap({
                 setIsGettingLocation(false);
             },
             (error) => {
-                // Log detailed error information for debugging
-                console.error('❌ Geolocation error details:', {
-                    error,
-                    code: error.code,
-                    message: error.message,
-                    type: error.constructor?.name,
-                    stringified: JSON.stringify(error),
-                });
-
                 // Dismiss loading toast
                 toast.dismiss(toastId);
 

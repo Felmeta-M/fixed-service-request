@@ -11,12 +11,9 @@ export interface ActiveCustomerPayload {
 
 export function useActiveCustomer() {
     const page = usePage();
-    console.log('🚀 ~ useActiveCustomer ~ page:', page);
     const serverCustomer = (page.props as any)?.auth.user as ActiveCustomerPayload | undefined;
-    console.log('🚀 ~ useActiveCustomer ~ serverCustomer:', serverCustomer);
 
     const [activeCustomer, setActiveCustomer] = useState<ActiveCustomerPayload | null>(null);
-    console.log('🚀 ~ useActiveCustomer ~ activeCustomer:', activeCustomer);
 
     // Hydrate only from server session data
     useEffect(() => {

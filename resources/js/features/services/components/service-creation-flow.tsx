@@ -84,7 +84,6 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         contactNo: '',
         contactEmail: '',
     });
-    console.log("🚀 ~ ServiceCreationFlow ~ formData:", formData)
 
     const [checkingResource, setCheckingResource] = useState(false);
     const [createdSurveyId, setCreatedSurveyId] = useState<string | null>(null);
@@ -103,7 +102,6 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         const loadUserData = () => {
             try {
                 if (!user) {
-                    console.warn('No authenticated user found');
                     return;
                 }
 
@@ -128,7 +126,6 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                     };
                 });
             } catch (error) {
-                console.error('Failed to load user data:', error);
             }
         };
 
@@ -218,7 +215,6 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 }
             }
         } catch (error) {
-            console.error('Resource check error:', error);
             // Extract error message from API error
             const errorMessage = error instanceof Error
                 ? error.message

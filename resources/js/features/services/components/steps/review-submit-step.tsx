@@ -82,8 +82,6 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
     };
 
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
-    console.log('user:', user);
-    console.log('formData in ReviewSubmitStep:', formData);
     const [submitting, setSubmitting] = useState(false);
     const [waitingForProcessing, setWaitingForProcessing] = useState(false);
 
@@ -175,13 +173,10 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
 
         createSurveyMutation.mutate(submitData, {
             onSuccess: (response) => {
-                console.log('🚀 ~ handleSubmit ~ response:', response);
 
                 const responseData = response.data;
-                console.log("🚀 ~ handleSubmit ~ responseData:", responseData)
 
                 const { customer_survey_order_id: surveyId } = responseData;
-                console.log("🚀 ~ handleSubmit ~ surveyId:", surveyId)
 
                 const newSurvey = {
                     id: surveyId,
@@ -213,7 +208,6 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 }, 7500); // 7.5 seconds - middle of 5-10 second range
             },
             onError: (err: Error) => {
-                console.error('Submission error:', err);
                 setSubmitting(false);
                 const errorMessage = err.message || 'Failed to create your service request. Please try again.';
                 toast.error(errorMessage, {

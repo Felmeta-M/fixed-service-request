@@ -117,7 +117,6 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     }, [user]);
 
     const handleApiError = (result: unknown, context: string = '', toastId?: string | number) => {
-        console.error(`API Error in ${context}:`, result);
 
         let errorMessage = 'An unexpected error occurred. Please try again.';
 
@@ -365,17 +364,10 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
         // Prevent double-click / duplicate submission using ref for immediate check
         if (isSubmittingRef.current || isSubmitting || createSubscriptionMutation.isPending || loading) {
-            console.log('[Subscribe] Blocked duplicate call', {
-                isSubmittingRef: isSubmittingRef.current,
-                isSubmitting,
-                isPending: createSubscriptionMutation.isPending,
-                loading,
-            });
             return;
         }
 
         // Set flags immediately to prevent concurrent calls (both state and ref)
-        console.log('[Subscribe] Starting subscription', { survey_order_id: id });
         isSubmittingRef.current = true;
         setIsSubmitting(true);
         onUpdatingChange(true);

@@ -100,7 +100,6 @@ export default function CustomerDashboard() {
         surveyListQuery.refetch();
     };
 
-    console.log('🚀 ~ Dashboard ~ surveys:', surveys);
 
     useEffect(() => {
         // Initial fetch is handled by the query

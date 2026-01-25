@@ -11,8 +11,6 @@ interface LocaleSwitcherProps {
 
 export function LocaleSwitcher({ variant = 'default', className }: LocaleSwitcherProps) {
     const { locale, availableLocales, setLocale, t } = useTranslation();
-    console.log("🚀 ~ LocaleSwitcher ~ availableLocales:", availableLocales)
-    console.log("🚀 ~ LocaleSwitcher ~ locale:", locale)
 
     const currentLocaleName = availableLocales[locale] || 'English';
 
@@ -44,7 +42,6 @@ export function LocaleSwitcher({ variant = 'default', className }: LocaleSwitche
  */
 export function LocaleSelect({ className }: { className?: string }) {
     const { locale, availableLocales, setLocale } = useTranslation();
-    console.log("🚀 ~ LocaleSelect ~ locale:", locale)
 
     return (
         <select

@@ -42,13 +42,11 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
     // Validate API key and reflect script load errors
     useEffect(() => {
         if (!googleMapsApiKey || googleMapsApiKey.trim() === '') {
-            console.error('Google Maps API key is missing or empty');
             setScriptLoadError('Google Maps API key is missing');
             return;
         }
 
         if (jsApiLoadError) {
-            console.error('Google Maps script failed to load:', jsApiLoadError);
             setScriptLoadError('Failed to load Google Maps. Please check your API key and network connection.');
             return;
         }
@@ -140,9 +138,6 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                 // limit the number of features we render in this lightweight homepage map.
                 const MAX_FEATURES = 800;
                 if (geoJsonData.features.length > MAX_FEATURES) {
-                    console.warn(
-                        `Coverage GeoJSON has ${geoJsonData.features.length} features; truncating to first ${MAX_FEATURES} for homepage map.`,
-                    );
                     geoJsonData.features = geoJsonData.features.slice(0, MAX_FEATURES);
                 }
 
@@ -153,7 +148,6 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
 
                 // Add the GeoJSON data to the map
                 const features = targetMap.data.addGeoJson(geoJsonData);
-                console.log('Coverage features added to map:', features.length);
 
                 if (!features || features.length === 0) {
                     throw new Error('No features were added to the map from GeoJSON');
@@ -178,17 +172,10 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                     fitToCoverageBounds(targetMap);
                 }, 100);
             } catch (error) {
-                console.error('Error loading coverage area:', error);
-
                 let errorMessage = 'Failed to load coverage area';
                 if (error instanceof Error) {
                     errorMessage = error.message || errorMessage;
                 }
-
-                console.error('Coverage area load error details:', {
-                    message: errorMessage,
-                    error,
-                });
 
                 setLoadError(true);
             } finally {
@@ -268,7 +255,6 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
     // Initialize map
     const onLoad = useCallback(
         (loadedMap: google.maps.Map) => {
-            console.log('Google Map loaded successfully');
             setMap(loadedMap);
             setIsMapReady(true);
             setScriptLoadError(null);

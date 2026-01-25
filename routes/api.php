@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\v1\CancelSurveyOrderController;
 use App\Http\Controllers\Api\v1\ChangeOfferController;
 use App\Http\Controllers\Api\v1\CustomerController;
 use App\Http\Controllers\Api\v1\EcafController;
+use App\Http\Controllers\Api\v1\GeocodingController;
 use App\Http\Controllers\Api\v1\GetCombiningController;
 use App\Http\Controllers\Api\v1\LocationController;
 use App\Http\Controllers\Api\v1\OccupationController;
@@ -77,6 +78,10 @@ Route::prefix('v1')->group(function () {
         Route::get('telecom-regions', [TelecomRegionController::class, 'index']);
         Route::get('telecom-regions/show', [TelecomRegionController::class, 'show']);
         Route::get('telecom-regions/by-zone', [TelecomRegionController::class, 'byZoneId']);
+
+        // Geocoding proxy - secure server-side Google API calls
+        Route::post('geocode/reverse', [GeocodingController::class, 'reverse']);
+        Route::post('geocode/address', [GeocodingController::class, 'address']);
 
         // Status definitions - dynamic status labels from backend
         Route::get('status-definitions', [StatusController::class, 'definitions']);

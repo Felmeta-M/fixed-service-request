@@ -55,7 +55,6 @@ export async function fetchStatusDefinitions(): Promise<StatusDefinitionsRespons
         .catch((error) => {
             // Clear promise on error so we can retry
             statusDefinitionsPromise = null;
-            console.error('Error fetching status definitions:', error);
             throw error;
         });
 

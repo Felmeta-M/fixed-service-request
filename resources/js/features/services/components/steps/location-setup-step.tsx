@@ -14,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { parseCoordinate } from '@/lib/coordinate-utils';
+import { reverseGeocode, geocodeAddress } from '@/lib/geocoding';
 import { usePage } from '@inertiajs/react';
 import { AlertCircle, CheckCircle2, Loader2, MapPin } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -80,16 +81,12 @@ export function LocationSetupStep({
         setLocationError('');
 
         try {
-            console.log('🔄 Getting current location...', forceRefresh ? '(forced refresh)' : '');
             const position = await getCurrentLocationWithTimeout();
             const { latitude, longitude } = position.coords;
             const preciseLat = parseFloat(latitude.toFixed(6));
             const preciseLng = parseFloat(longitude.toFixed(6));
 
-            console.log('📍 Current location obtained:', { preciseLat, preciseLng });
-
             const address = await getGoogleAddressFromCoordinates(preciseLat, preciseLng);
-            console.log('📫 Address obtained:', address);
 
             setCurrentLocation({
                 lat: preciseLat,
@@ -110,7 +107,6 @@ export function LocationSetupStep({
             setManualLat(preciseLat.toString());
             setManualLng(preciseLng.toString());
         } catch (error) {
-            console.error('❌ Auto-location failed:', error);
             const errorMessage = getGeolocationErrorMessage(error);
             setLocationError(errorMessage);
 
@@ -176,7 +172,6 @@ export function LocationSetupStep({
                 const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
                 return result.state;
             } catch (error) {
-                console.warn('Permissions API query failed:', error);
                 return 'unknown';
             }
         }
@@ -192,7 +187,6 @@ export function LocationSetupStep({
 
             // Check permission status first (non-blocking, just for logging)
             const permissionStatus = await checkGeolocationPermission();
-            console.log('📍 Geolocation permission status:', permissionStatus);
 
             let timeoutId: NodeJS.Timeout | null = null;
             let isResolved = false;
@@ -213,7 +207,6 @@ export function LocationSetupStep({
                     if (!isResolved) {
                         isResolved = true;
                         if (timeoutId) clearTimeout(timeoutId);
-                        console.log('✅ Location obtained successfully');
                         resolve(position);
                     }
                 },
@@ -221,12 +214,6 @@ export function LocationSetupStep({
                     if (!isResolved) {
                         isResolved = true;
                         if (timeoutId) clearTimeout(timeoutId);
-                        // Log the actual geolocation error with full details
-                        console.error('❌ Geolocation API error:', {
-                            code: error.code,
-                            message: error.message,
-                            error: error,
-                        });
                         // Ensure the error object has the code property
                         if (error && typeof error.code === 'number') {
                             reject(error);
@@ -250,24 +237,9 @@ export function LocationSetupStep({
     const getGoogleAddressFromCoordinates = async (lat: number, lng: number): Promise<string> => {
         try {
             setIsGeocoding(true);
-            const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${googleMapsApiKey}`);
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (data.status === 'OK' && data.results.length > 0) {
-                return data.results[0].formatted_address;
-            } else if (data.status === 'ZERO_RESULTS') {
-                return 'Location identified (specific address not available)';
-            } else {
-                console.warn('Geocoding API warning:', data.status, data.error_message);
-                return 'Address details not available';
-            }
+            // Use server-side proxy for security (API key hidden)
+            return await reverseGeocode(lat, lng);
         } catch (error) {
-            console.error('Google Geocoding error:', error);
             return 'Address service temporarily unavailable';
         } finally {
             setIsGeocoding(false);
@@ -277,27 +249,9 @@ export function LocationSetupStep({
     const getCoordinatesFromAddress = async (address: string): Promise<{ lat: number; lng: number; address: string } | null> => {
         try {
             setIsGeocoding(true);
-            const response = await fetch(
-                `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googleMapsApiKey}`,
-            );
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (data.status === 'OK' && data?.results?.length > 0) {
-                const location = data.results[0].geometry.location;
-                return {
-                    lat: location.lat,
-                    lng: location.lng,
-                    address: data.results[0].formatted_address,
-                };
-            }
-            return null;
+            // Use server-side proxy for security (API key hidden)
+            return await geocodeAddress(address);
         } catch (error) {
-            console.error('Google Geocoding error:', error);
             return null;
         } finally {
             setIsGeocoding(false);
@@ -336,13 +290,10 @@ export function LocationSetupStep({
         setLocationError('');
 
         try {
-            console.log('🔄 Refreshing location...');
             const position = await getCurrentLocationWithTimeout();
             const { latitude, longitude } = position.coords;
             const preciseLat = parseFloat(latitude.toFixed(6));
             const preciseLng = parseFloat(longitude.toFixed(6));
-
-            console.log('📍 New location obtained:', { preciseLat, preciseLng });
 
             const address = await getGoogleAddressFromCoordinates(preciseLat, preciseLng);
 
@@ -353,7 +304,6 @@ export function LocationSetupStep({
         } catch (error) {
             const errorMessage = getGeolocationErrorMessage(error);
             setLocationError(errorMessage);
-            console.error('❌ Location refresh failed:', error);
             // Don't mark as loaded on error to allow retry
             hasInitialLocationLoaded.current = false;
         } finally {
@@ -362,15 +312,6 @@ export function LocationSetupStep({
     };
 
     const getGeolocationErrorMessage = (error: any): string => {
-        // Log error details for debugging
-        console.error('Geolocation error details:', {
-            error,
-            code: error.code,
-            message: error.message,
-            type: error.constructor?.name,
-            stringified: JSON.stringify(error),
-        });
-
         const errorMessage = error.message?.toLowerCase() || '';
         const errorString = JSON.stringify(error).toLowerCase();
 

@@ -14,7 +14,6 @@ export default function CreateComplaintPage() {
     const { auth } = usePage().props as any;
 
     const { user } = auth;
-    console.log('user:', user);
     const { data, setData, errors, setError, clearErrors, processing, reset } = useForm<ComplaintFormValues>({
         trouble_title: '',
         access_number: '',
@@ -33,7 +32,6 @@ export default function CreateComplaintPage() {
         clearErrors();
 
         const validation = complaintSchema.safeParse(data);
-        console.log('🚀 ~ handleSubmit ~ validation:', validation);
 
         if (!validation.success) {
             validation.error.errors.forEach((err) => {

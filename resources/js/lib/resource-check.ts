@@ -42,8 +42,6 @@ export const useResourceChecker = () => {
     const user = auth.user;
     const token = useAuthToken();
 
-    console.log('Using resource checker with user:', user);
-
     const mutation = useMutation({
         mutationFn: async ({
             coordinates,
@@ -126,7 +124,6 @@ export const useResourceChecker = () => {
             const result = await mutation.mutateAsync({ coordinates, customerName });
             return result;
         } catch (error) {
-            console.error('Resource check failed:', error);
             return {
                 available: false,
                 message: error instanceof Error ? error.message : 'Failed to check resource availability. Try again.',

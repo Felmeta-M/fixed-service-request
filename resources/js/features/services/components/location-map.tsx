@@ -39,7 +39,6 @@ const LocationMap: React.FC<LocationMapProps> = ({ onLocationSelect, initialLat 
             }
             return '';
         } catch (error) {
-            console.error('Reverse geocoding error:', error);
             return '';
         }
     };
@@ -211,7 +210,6 @@ const LocationMap: React.FC<LocationMapProps> = ({ onLocationSelect, initialLat 
                 onLocationSelect(preciseLat, preciseLng, address);
             }
         } catch (error) {
-            console.error('Error handling place selection:', error);
         } finally {
             setIsLoading(false);
         }

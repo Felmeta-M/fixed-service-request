@@ -39,7 +39,6 @@ export function LocaleProvider({ children }: LocaleProviderProps) {
     const translations = (pageProps.translations as Record<string, string>) ?? {};
 
     const setLocale = useCallback((newLocale: Locale) => {
-        console.log('Setting locale to:', newLocale);
 
         // Get CSRF token from meta tag or cookie
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
@@ -59,12 +58,10 @@ export function LocaleProvider({ children }: LocaleProviderProps) {
             credentials: 'same-origin',
         })
             .then((response) => {
-                console.log('Locale change response:', response.status);
                 // Force full page reload to get new translations
                 window.location.reload();
             })
             .catch((error) => {
-                console.error('Locale change failed:', error);
                 // Try reload anyway
                 window.location.reload();
             });

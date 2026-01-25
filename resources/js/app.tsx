@@ -9,10 +9,10 @@ import { initializeTheme } from './hooks/use-appearance';
 import { queryClient } from './lib/query-client';
 import RootLayout from './layouts/root-layout';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'Fixed Services Provisioning System';
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    title: (title) => title ? `${title} | ${appName}` : appName,
     resolve: async (name) => {
         const page = await resolvePageComponent(`./pages/${name}.tsx`, import.meta.glob('./pages/**/*.tsx'));
 

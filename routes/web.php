@@ -33,7 +33,7 @@ Route::post('/locale', function (Request $request) {
 })->name('locale.switch');
 
 Route::get('/', fn() => Inertia::render('home', [
-    'googleMapsApiKey' => config('services.google.google_api_key'),
+    'googleMapsApiKey' => config('services.google.maps_frontend_key', ''),
 ]))->name('home');
 Route::get('/terms', fn() => Inertia::render('terms'))->name('terms');
 Route::get('/verification', fn() => Inertia::render('Verification'))->name('verification');
@@ -71,13 +71,13 @@ Route::middleware(['otp.auth'])->group(function () {
 
     Route::get('/services/create', function () {
         return Inertia::render('services/create', [
-            'googleMapsApiKey' => config('services.google.google_api_key'),
+            'googleMapsApiKey' => config('services.google.maps_frontend_key', ''),
         ]);
     })->name('services.create');
 
     Route::get('/services/resume/{customerSurveyOrderId}', function (string $customerSurveyOrderId) {
         return Inertia::render('services/resume', [
-            'googleMapsApiKey' => config('services.google.google_api_key'),
+            'googleMapsApiKey' => config('services.google.maps_frontend_key', ''),
             'customerSurveyOrderId' => $customerSurveyOrderId,
         ]);
     })->name('services.resume');
@@ -91,7 +91,7 @@ Route::middleware(['otp.auth'])->group(function () {
             }
         }
         return Inertia::render('services/manual-create', [
-            'googleMapsApiKey' => config('services.google.google_api_key'),
+            'googleMapsApiKey' => config('services.google.maps_frontend_key', ''),
             'formData' => $formData,
         ]);
     })->name('services.manual-create');

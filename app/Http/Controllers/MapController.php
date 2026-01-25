@@ -12,7 +12,7 @@ class MapController extends Controller
     public function create()
     {
         return Inertia::render('ServiceRequest/Create', [
-            'googleMapsApiKey' => config('services.google.google_api_key'),
+            'googleMapsApiKey' => config('services.google.maps_frontend_key', ''),
         ]);
     }
 

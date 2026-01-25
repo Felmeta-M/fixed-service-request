@@ -297,8 +297,13 @@ return [
     ],
 
     'google' => [
+        // Server-side only key (for Geocoding API, etc.) - NEVER expose to frontend
         'google_api_key' => env('GOOGLE_API_KEY'),
         'maps_server_key' => env('GOOGLE_MAPS_SERVER_KEY'),
+        // Frontend key - MUST be restricted in Google Cloud Console:
+        // 1. Application restrictions: HTTP referrers (your domain only)
+        // 2. API restrictions: Maps JavaScript API only
+        'maps_frontend_key' => env('GOOGLE_MAPS_FRONTEND_KEY', ''),
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
     ],

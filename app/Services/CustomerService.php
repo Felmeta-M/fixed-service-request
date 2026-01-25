@@ -362,21 +362,7 @@ XML;
 
     /**
      * Get zone_code from customer's selected zone.
-     * Used for CustomerAddressInfo EthioZoneOrRegion field.
-     *
-     * @return string Zone code
-     * @throws \RuntimeException If zone or zone_code cannot be found
-     */
-    protected function getCustomerZoneCode(): string
-    {
-        $zoneId = CustomerContext::code() ?? $data['zone'] ?? null;
-
-        return $this->getZoneCodeById($zoneId);
-    }
-
-    /**
-     * Get zone_code from a zone ID.
-     * Used for CustomerAddressInfo EthioZoneOrRegion field when creating new customers.
+     * Delegates to ZoneService - single source of truth.
      *
      * @param int|string $zoneId The zone ID selected by the customer
      * @return string Zone code
@@ -384,16 +370,10 @@ XML;
      */
     protected function getZoneCodeById(int|string $zoneId): string
     {
-        // Try to find zone by ID
-        $zone = Zone::find($zoneId);
-
-        // If not found by ID, try to find by name (in case zone stores name instead of ID)
-        if (!$zone) {
-            $zone = Zone::where('name', $zoneId)->first();
-        }
-
-        if (!$zone) {
-            AppLogger::api()->error('Zone not found in database', [
+        $zoneCode = app(ZoneService::class)->getZoneCodeById($zoneId);
+        
+        if (!$zoneCode) {
+            AppLogger::api()->error('Zone code not found for zone ID', [
                 'zone_id' => $zoneId,
             ]);
             throw new \RuntimeException(
@@ -401,17 +381,7 @@ XML;
             );
         }
 
-        if (!$zone->zone_code) {
-            AppLogger::api()->error('Zone code not found for zone', [
-                'zone_id' => $zone->id,
-                'zone_name' => $zone->name,
-            ]);
-            throw new \RuntimeException(
-                'Unable to create customer: Zone code is missing for the selected zone. Please contact support for assistance.'
-            );
-        }
-
-        return $zone->zone_code;
+        return $zoneCode;
     }
 
     protected function endpoint(): string

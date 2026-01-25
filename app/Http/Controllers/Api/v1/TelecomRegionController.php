@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\EthioZone;
 use App\Models\TelecomRegion;
 use App\Models\Zone;
+use App\Services\ZoneService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -98,15 +99,11 @@ class TelecomRegionController extends Controller
             ], 400);
         }
 
-        // Step 1: Get zone_code from zones table
-        $zone = Zone::find($zoneId);
-
-        if (!$zone) {
-            // Try finding by name if ID lookup fails
-            $zone = Zone::where('name', $zoneId)->first();
-        }
-
-        if (!$zone || !$zone->zone_code) {
+        // Use ZoneService - single source of truth
+        $zoneService = app(ZoneService::class);
+        $zoneCode = $zoneService->getZoneCodeById($zoneId);
+        
+        if (!$zoneCode) {
             return response()->json([
                 'success' => false,
                 'message' => 'Zone not found or zone_code is missing.',
@@ -114,8 +111,8 @@ class TelecomRegionController extends Controller
             ], 404);
         }
 
-        // Step 2: Get ethio_zone name from zone_code
-        $ethioZone = EthioZone::where('code', $zone->zone_code)->first();
+        // zone_code from zones table is actually the EthioZone name
+        $ethioZone = $zoneService->getEthioZoneByName($zoneCode);
 
         if (!$ethioZone) {
             return response()->json([

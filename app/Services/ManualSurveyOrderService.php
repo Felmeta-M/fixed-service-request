@@ -412,18 +412,14 @@ XML;
             return null;
         }
 
-        $zone = Zone::query()
-            ->where('id', $zoneId)
-            ->where('status', true)
-            ->first();
-
-        if ($zone && !empty($zone->zone_code)) {
+        // Use ZoneService - single source of truth
+        $zoneCode = app(ZoneService::class)->getZoneCodeById($zoneId);
+        if ($zoneCode) {
             AppLogger::api()->info('Telecom region resolved from customer zone selection', [
                 'zone_id' => $zoneId,
-                'zone_code' => $zone->zone_code,
+                'zone_code' => $zoneCode,
             ]);
-
-            return (string) $zone->zone_code;
+            return $zoneCode;
         }
 
         AppLogger::api()->warning('Failed to resolve telecom region from zone_id', [

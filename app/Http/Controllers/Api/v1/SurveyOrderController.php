@@ -7,6 +7,7 @@ use App\Helpers\BandwidthHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ManualSurveyOrderRequest;
 use App\Http\Requests\SurveyOrderFormRequest;
+use App\Models\EthioZone;
 use App\Models\SurveyOrder;
 use App\Services\ManualSurveyOrderService;
 use App\Services\QueryPurchasedOfferingService;
@@ -218,6 +219,7 @@ class SurveyOrderController extends Controller
                             'cable_type' => null,
                             'line_indicator' => null,
                             'survey_failure_reason' => $surveyResult['survey_failure_reason'] ?? 'Survey failed',
+                            'zone_code' => null, // Clear zone code on failure
                         ];
                     } else {
                         // Survey COMPLETED (50005 = PON/COPPER)
@@ -226,6 +228,38 @@ class SurveyOrderController extends Controller
                         $mediaType = $surveyResult['media_type'] ?? null;
                         $cableType = $surveyResult['cable_type'] ?? null;
                         $lineIndicator = $surveyResult['line_indicator'] ?? null;
+                        // Parameter 50001 from BSS contains the zone name/abbreviation (e.g., "CAAZ", "NAAZ", "EAAZ")
+                        $zoneName = $surveyResult['zone_name'] ?? null;
+
+                        // Lookup zone code from zone name (parameter 50001 from BSS survey response)
+                        // The BSS returns zone name like "CAAZ" (Central Addis Ababa Zone), we lookup the code in ethio_zones table
+                        $zoneCode = null;
+                        if ($zoneName) {
+                            try {
+                                // Use ZoneService - single source of truth
+                                $ethioZone = app(ZoneService::class)->getEthioZoneByName($zoneName);
+                                
+                                if ($ethioZone) {
+                                    $zoneCode = $ethioZone->code;
+                                    AppLogger::business()->info('Zone code found for manual survey', [
+                                        'customer_survey_order_id' => $order->customer_survey_order_id ?? null,
+                                        'zone_name' => $zoneName, // From BSS parameter 50001 (e.g., "CAAZ")
+                                        'zone_code' => $zoneCode, // Looked up from ethio_zones table
+                                    ]);
+                                } else {
+                                    AppLogger::business()->warning('Ethio zone not found by name', [
+                                        'customer_survey_order_id' => $order->customer_survey_order_id ?? null,
+                                        'zone_name' => $zoneName, // From BSS parameter 50001
+                                    ]);
+                                }
+                            } catch (Throwable $e) {
+                                AppLogger::business()->warning('Failed to lookup zone code', [
+                                    'customer_survey_order_id' => $order->customer_survey_order_id ?? null,
+                                    'zone_name' => $zoneName, // From BSS parameter 50001
+                                    'error' => $e->getMessage(),
+                                ]);
+                            }
+                        }
 
                         // Check if all required survey result fields have values
                         $hasAllRequiredFields = (
@@ -242,18 +276,27 @@ class SurveyOrderController extends Controller
                                 'cable_type' => $cableType,
                                 'line_indicator' => $lineIndicator,
                                 'survey_failure_reason' => null, // Clear any previous failure reason
+                                'zone_code' => $zoneCode, // Store zone code if found
                             ];
                         } else {
                             // Missing required fields: only update status from BSS response
                             // Don't update survey result fields until all data is available
+                            // But still try to store ethio zone code if available
                             $newStatus = (int) $response['status'];
                             if ($newStatus >= 1 && $newStatus <= 8) {
                                 $statusUpdates[$order->id] = FFDServiceProvisionStatus::Waiting->value;
                             }
+                            
+                            // Store zone code even if other fields are missing
+                            if ($zoneCode) {
+                                $surveyResultUpdates[$order->id] = [
+                                    'zone_code' => $zoneCode,
+                                ];
+                            }
                         }
                     }
                 } else {
-                    // Non-manual surveys or no survey_result: use BSS status directly
+                    // Non-manual surveys (auto surveys) or no survey_result: use BSS status directly
                     // Only accept valid status codes (1-8 matching FFDServiceProvisionStatus enum)
                     $newStatus = (int) $response['status'];
                     if ($newStatus >= 1 && $newStatus <= 8) {

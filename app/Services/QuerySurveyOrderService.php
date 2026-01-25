@@ -147,6 +147,7 @@ XML;
      * Extract key survey result fields from ExtParamList.
      *
      * Critical params for manual surveys (device selection):
+     * - 50001: zone_name (e.g., "CAAZ", "NAAZ", "EAAZ") - used to lookup zone_code
      * - 50005: media_type (PON/COPPER, or -1 if survey failed)
      * - 50056: cable_type (0=copper, 1=fiber, 2=EPON, 3=GPON, 5=without survey)
      * - 50112: line_indicator (0=same line, 1=separate line)
@@ -173,6 +174,7 @@ XML;
         }
 
         return [
+            'zone_name' => $params['50001'] ?? null, // Zone name from BSS parameter 50001 (e.g., "CAAZ")
             'media_type' => $isSurveyFailed ? null : ($mediaTypeRaw ?? null),
             'cable_type' => isset($params['50056']) ? (int) $params['50056'] : null,
             'line_indicator' => isset($params['50112']) ? (int) $params['50112'] : 0,

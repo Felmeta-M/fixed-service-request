@@ -74,6 +74,7 @@ class SurveyOrder extends Model
         'device_id',
         'device_voice_id',
         'survey_is_manual',
+        'zone_code',
     ];
 
     /**
@@ -412,6 +413,10 @@ class SurveyOrder extends Model
     public static function needsRefresh(object $order, int $minutesThreshold = 5): bool
     {
         $status = (int) $order->status;
+
+        if ($status === FFDServiceProvisionStatus::Waiting->value) {
+            return true;
+        }
 
         if (
             in_array($status, [

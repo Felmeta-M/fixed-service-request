@@ -7,13 +7,23 @@ use App\Enums\FFDServiceProvisionStatus;
 use App\Services\ApiResponse;
 use App\Services\GetCombiningService;
 use App\Services\Logging\AppLogger;
+use App\Services\Payment\PaymentService;
+use App\Services\QueryAvailableNumberService;
 use App\Services\QuerySubscriptionOrderStatusService;
+use App\Services\ReserveNumberService;
+use App\Services\ZoneService;
 use Illuminate\Support\Str;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
-   public function __construct(protected readonly GetCombiningService $get_combining_service)
-   {
+   public function __construct(
+      protected readonly GetCombiningService $get_combining_service,
+      PaymentService $payment_service,
+      QueryAvailableNumberService $queryAvailableNumberService,
+      ReserveNumberService $reserveNumberService,
+      ZoneService $zoneService,
+   ) {
+      parent::__construct($payment_service, $queryAvailableNumberService, $reserveNumberService, $zoneService);
    }
 
    protected function offeringId(): int
@@ -128,12 +138,11 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
       // Get dynamic zone_code for CustomerAddressInfo EthioZoneOrRegion
       // This will throw an exception with a clear message if zone_code cannot be determined
-
-      $customerEthioZone = $this->getCustomerZoneCode($data);
+      $customerEthioZone = $this->getZoneCodeForCustomerAddress($data);
 
       // Get dynamic ethio_zone id for AccountInfo ethioZoneOrRegion
       // This will throw an exception with a clear message if ethio_zone id cannot be determined
-      $accountEthioZone = $this->getAccountEthioZoneId($data['survey_order_id']);
+      $accountEthioZone = $this->getZoneCodeForAccountInfo($data['survey_order_id'], $data);
 
       // Business defaults
       $data = array_merge($data, [

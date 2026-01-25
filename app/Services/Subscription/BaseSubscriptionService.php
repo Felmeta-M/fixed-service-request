@@ -3,29 +3,28 @@
 namespace App\Services\Subscription;
 
 use App\Enums\FFDServiceProvisionStatus;
-use App\Models\EthioZone;
 use App\Models\SurveyOrder;
-use App\Models\TelecomRegion;
-use App\Models\Zone;
 use App\Services\BaseApiService;
 use App\Services\Logging\AppLogger;
 use App\Services\Payment\PaymentService;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
+use App\Services\ZoneService;
 use App\Support\CustomerContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Throwable;
 
 abstract class BaseSubscriptionService extends BaseApiService
 {
     protected int $timeout = 10;
     protected int $rateLimit = 30;
-    protected ?string $serviceNumber = null;
 
     public function __construct(
         protected readonly PaymentService $payment_service,
         protected readonly QueryAvailableNumberService $queryAvailableNumberService,
         protected readonly ReserveNumberService $reserveNumberService,
+        protected readonly ZoneService $zoneService,
     ) {
     }
 
@@ -293,31 +292,17 @@ abstract class BaseSubscriptionService extends BaseApiService
     abstract protected function networkType(): int;
 
     /**
-     * Get zone_code from data array.
-     * Used for CustomerAddressInfo EthioZoneOrRegion field.
+     * Get zone code for CustomerAddressInfo XML.
+     * Delegates to ZoneService - single source of truth.
      *
-     * Supports:
-     * - Anonymous requests (webhooks): Pass zone in data array
-     * - New customer selection: Pass zone in data array
-     * - Logged-in customer: Falls back to customer profile if zone missing in data
-     *
-     * @param array $data Data array containing 'zone'
-     * @return string Zone code
-     * @throws \RuntimeException If zone or zone_code cannot be found
+     * @throws \RuntimeException If zone code cannot be found
      */
-    protected function getCustomerZoneCode(array $data): string
+    protected function getZoneCodeForCustomerAddress(array $data): string
     {
-        // 1. Priority: Logged-in customer context (Existing Customer)
-        $zoneId = CustomerContext::zone();
+        $zoneCode = $this->zoneService->getZoneCodeForCustomerAddress($data);
 
-        // 2. Fallback: Data array (Webhook / New Customer / Anonymous)
-        if (!$zoneId) {
-            $zoneId = $data['zone'] ?? $data['address']['zone'] ?? null;
-        }
-
-        // 3. Validation
-        if (!$zoneId) {
-            AppLogger::api()->error('Zone not found in data or customer context for zone_code lookup', [
+        if (!$zoneCode) {
+            AppLogger::api()->error('Zone code not found for CustomerAddressInfo', [
                 'data_keys' => array_keys($data),
                 'has_customer_context' => CustomerContext::isAuthenticated(),
             ]);
@@ -326,156 +311,51 @@ abstract class BaseSubscriptionService extends BaseApiService
             );
         }
 
-        return $this->getZoneCodeById($zoneId);
+        return $zoneCode;
     }
 
     /**
-     * Get zone_code from a zone ID.
-     * Core lookup function - single source of truth for zone code resolution.
+     * Get zone code for AccountInfo XML.
+     * Delegates to ZoneService - single source of truth.
      *
-     * @param int|string $zoneId The zone ID or name
-     * @return string Zone code
-     * @throws \RuntimeException If zone or zone_code cannot be found
+     * @throws \RuntimeException If zone code cannot be found
+     */
+    protected function getZoneCodeForAccountInfo(string $surveyOrderId, ?array $data = null): string
+    {
+        $zoneCode = $this->zoneService->getZoneCodeForAccountInfo($surveyOrderId, $data);
+
+        if (!$zoneCode) {
+            AppLogger::api()->error('Zone code not found for AccountInfo', [
+                'survey_order_id' => $surveyOrderId,
+                'has_customer_context' => CustomerContext::isAuthenticated(),
+            ]);
+            throw new \RuntimeException(
+                'Unable to process subscription: Zone information is missing. Please contact support.'
+            );
+        }
+
+        return $zoneCode;
+    }
+
+    /**
+     * Get zone code by zone ID.
+     * Delegates to ZoneService - single source of truth.
+     *
+     * @throws \RuntimeException If zone code cannot be found
      */
     protected function getZoneCodeById(int|string $zoneId): string
     {
-        // Try to find zone by ID if numeric
-        $zone = null;
-        if (is_numeric($zoneId)) {
-            $zone = Zone::find($zoneId);
-        }
+        $zoneCode = $this->zoneService->getZoneCodeById($zoneId);
 
-        // If not found by ID or not numeric, try to find by name
-        if (!$zone) {
-            $zone = Zone::where('name', $zoneId)->first();
-        }
-
-        if (!$zone) {
-            AppLogger::api()->error('Zone not found in database', [
+        if (!$zoneCode) {
+            AppLogger::api()->error('Zone code not found for zone ID', [
                 'zone_id' => $zoneId,
             ]);
             throw new \RuntimeException(
-                'Unable to process subscription: The selected zone is not found in our system. Please contact support or update your profile with a valid zone.'
+                'Unable to process: The selected zone is not found in our system. Please contact support.'
             );
         }
 
-        if (!$zone->zone_code) {
-            AppLogger::api()->error('Zone code not found for zone', [
-                'zone_id' => $zone->id,
-                'zone_name' => $zone->name,
-            ]);
-            throw new \RuntimeException(
-                'Unable to process subscription: Zone code is missing for the selected zone. Please contact support for assistance.'
-            );
-        }
-
-        return $zone->zone_code;
-    }
-
-    /**
-     * Get ethio_zone id from survey_order area_code.
-     * Used for AccountInfo ethioZoneOrRegion field.
-     *
-     * @param string $surveyOrderId Survey order ID
-     * @return string Ethio zone ID
-     * @throws \RuntimeException If area_code, telecom_region, or ethio_zone cannot be found
-     */
-    protected function getAccountEthioZoneId(string $surveyOrderId): string
-    {
-        $surveyOrder = SurveyOrder::where('customer_survey_order_id', $surveyOrderId)->first();
-        if (!$surveyOrder) {
-            AppLogger::api()->error('Survey order not found for ethio_zone lookup', [
-                'survey_order_id' => $surveyOrderId,
-            ]);
-            throw new \RuntimeException(
-                'Unable to process subscription: Survey order not found. Please contact support for assistance.'
-            );
-        }
-
-        if (!$surveyOrder->area_code) {
-            AppLogger::api()->error('Area code not found in survey order', [
-                'survey_order_id' => $surveyOrderId,
-            ]);
-            throw new \RuntimeException(
-                'Unable to process subscription: Area code information is missing from your survey order. Please contact support for assistance.'
-            );
-        }
-
-        // Find telecom_region by area_code (which maps to area_id in telecom_regions table)
-        $telecomRegion = TelecomRegion::where('area_id', $surveyOrder->area_code)
-            ->where('status', true)
-            ->first();
-
-        if (!$telecomRegion) {
-            AppLogger::api()->error('Telecom region not found for area code', [
-                'area_code' => $surveyOrder->area_code,
-                'survey_order_id' => $surveyOrderId,
-            ]);
-            throw new \RuntimeException(
-                'Unable to process subscription: The area code from your survey order does not match any telecom region in our system. Please contact support for assistance.'
-            );
-        }
-
-        if (!$telecomRegion->zone) {
-            AppLogger::api()->error('Zone not found in telecom region', [
-                'area_code' => $surveyOrder->area_code,
-                'telecom_region_id' => $telecomRegion->id,
-            ]);
-            throw new \RuntimeException(
-                'Unable to process subscription: Zone information is missing for the selected area. Please contact support for assistance.'
-            );
-        }
-
-        // Find ethio_zone by zone name
-        // Based on seeder data: ethio_zones has base names like "NAAZ", "EAAZ", "CAAZ"
-        // while telecom_regions may have suffixes like "NAAZ-2", "EAAZ-1", etc.
-
-        $requestedZone = trim($telecomRegion->zone);
-
-        // Step 1: Try exact match (case-insensitive)
-        $ethioZone = EthioZone::whereRaw('UPPER(name) = ?', [strtoupper($requestedZone)])->first();
-
-        // Step 2: If not found, extract base name by removing suffix patterns
-        // Patterns: "NAAZ-2" -> "NAAZ", "EAAZ_1" -> "EAAZ", "CAAZ-10" -> "CAAZ"
-        if (!$ethioZone) {
-            // Remove trailing dash/underscore followed by digits
-            $baseZoneName = preg_replace('/[-_]\d+$/', '', $requestedZone);
-
-            // Try exact match with base name (case-insensitive)
-            $ethioZone = EthioZone::whereRaw('UPPER(name) = ?', [strtoupper($baseZoneName)])->first();
-
-            // Step 3: If still not found, try prefix match (e.g., "NAAZ-2" matches "NAAZ")
-            // Order by length to prefer shorter/more exact matches
-            if (!$ethioZone && $baseZoneName !== $requestedZone) {
-                $ethioZone = EthioZone::whereRaw('UPPER(name) LIKE ?', [strtoupper($baseZoneName) . '%'])
-                    ->orderByRaw('LENGTH(name) ASC')
-                    ->first();
-            }
-        }
-
-        // Log the match result
-        if ($ethioZone) {
-            $matchType = strtoupper($requestedZone) === strtoupper($ethioZone->name) ? 'exact' : 'partial';
-            AppLogger::api()->info("Ethio zone found using {$matchType} match", [
-                'requested_zone' => $requestedZone,
-                'matched_zone' => $ethioZone->name,
-                'ethio_zone_id' => $ethioZone->id,
-                'ethio_zone_code' => $ethioZone->code,
-                'area_code' => $surveyOrder->area_code,
-            ]);
-        } else {
-            $baseZoneName = preg_replace('/[-_]\d+$/', '', $requestedZone);
-            AppLogger::api()->error('Ethio zone not found by name (exact or partial match)', [
-                'zone_name' => $requestedZone,
-                'base_zone_name' => $baseZoneName,
-                'area_code' => $surveyOrder->area_code,
-                'available_zones_sample' => EthioZone::limit(10)->pluck('name')->toArray(),
-            ]);
-            throw new \RuntimeException(
-                'Unable to process subscription: The zone information from your survey order does not match any zone in our system. Please contact support for assistance.'
-            );
-        }
-
-        return (string) $ethioZone->id;
+        return $zoneCode;
     }
 }

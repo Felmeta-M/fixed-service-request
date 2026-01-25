@@ -43,6 +43,7 @@ type SurveyRow = {
     status?: string;
     created_at?: string;
     updated_at?: string;
+    survey_is_manual?: boolean;
     // Backend-provided action flags (single source of truth)
     is_paid?: boolean;
     can_pay?: boolean;
@@ -163,6 +164,27 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                             <Badge variant="outline" className="flex items-center gap-1.5 bg-white">
                                 <IconComponent className={`h-3 w-3 ${selected.text}`} />
                                 <span className="text-xs font-medium">{selected.label}</span>
+                            </Badge>
+                        </div>
+                    );
+                },
+            },
+            {
+                accessorKey: 'survey_is_manual',
+                header: 'Type',
+                cell: ({ getValue }) => {
+                    const isManual = getValue<boolean>();
+                    return (
+                        <div>
+                            <Badge
+                                variant="outline"
+                                className={`flex items-center gap-1.5 bg-white ${
+                                    isManual
+                                        ? 'border-blue-200 bg-blue-50 text-blue-700'
+                                        : 'border-purple-200 bg-purple-50 text-purple-700'
+                                }`}
+                            >
+                                <span className="text-xs font-medium">{isManual ? 'Manual' : 'Auto'}</span>
                             </Badge>
                         </div>
                     );

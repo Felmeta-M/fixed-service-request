@@ -545,6 +545,20 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                             <span className="font-medium">{surveyTypeInfo.label}</span>
                         </div>
                         <Separator />
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm text-muted-foreground">Survey Type</span>
+                            <Badge
+                                variant="outline"
+                                className={`${
+                                    isManualSurvey
+                                        ? 'border-blue-200 bg-blue-50 text-blue-700'
+                                        : 'border-purple-200 bg-purple-50 text-purple-700'
+                                }`}
+                            >
+                                {isManualSurvey ? 'Manual' : 'Auto'}
+                            </Badge>
+                        </div>
+                        <Separator />
                         <div className="flex justify-between">
                             <span className="text-sm text-muted-foreground">Created</span>
                             <span className="font-medium">{formatDate(surveyDetails?.created_at)}</span>

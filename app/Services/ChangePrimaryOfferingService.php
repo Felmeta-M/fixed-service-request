@@ -52,8 +52,22 @@ class ChangePrimaryOfferingService extends BaseApiService
         string $bandwidth,
     ): array {
         try {
-            // Validate bandwidth against database options
-            $surveyOrderServiceNumber = $surveyOrder->main_offer_id === OfferId::FixedCombo->value ? $surveyOrder->fbb_service_number : $surveyOrder->service_number;
+            // Determine the correct service number for BSS API:
+            // - Combo services: use fbb_service_number (the data/FBB line)
+            // - Data/Voice services: use service_number
+            $isComboService = (int) $surveyOrder->main_offer_id === OfferId::FixedCombo->value;
+            $surveyOrderServiceNumber = $isComboService
+                ? $surveyOrder->fbb_service_number
+                : $surveyOrder->service_number;
+
+            AppLogger::api()->debug('Determined service number for change offer', [
+                'main_offer_id' => $surveyOrder->main_offer_id,
+                'is_combo_service' => $isComboService,
+                'service_number' => $surveyOrder->service_number,
+                'fbb_service_number' => $surveyOrder->fbb_service_number,
+                'used_service_number' => $surveyOrderServiceNumber,
+                'operation' => 'change_primary_offering',
+            ]);
 
             if (!$this->isValidBandwidthOption($bandwidth)) {
                 AppLogger::api()->warning('Invalid bandwidth option provided for upgrade', [
@@ -71,8 +85,8 @@ class ChangePrimaryOfferingService extends BaseApiService
 
             $data['object_id_type'] = self::OBJECT_TYPE_SUBSCRIBER;
             $data['object_id'] = $surveyOrderServiceNumber; // fbb service number
-            $data['old_offering_id'] = $surveyOrder->main_offer_id;
-            $data['new_offering_id'] = $surveyOrder->main_offer_id;
+            $data['old_offering_id'] = OfferId::FixedData->value;
+            $data['new_offering_id'] = OfferId::FixedData->value;
             $data['bandwidth'] = $this->parseBandwidth($bandwidth);
 
             $xmlPayload = $this->buildXml($data);
@@ -87,26 +101,42 @@ class ChangePrimaryOfferingService extends BaseApiService
             // Update local database with new bandwidth after successful change
             // Save as KB for consistency with BSS responses
             $bandwidthKb = $this->parseBandwidth($bandwidth);
+            $newOrderId = $result['order_id'] ?? null;
 
             try {
-                $surveyOrder->update([
+                $updateData = [
                     'bandwidth' => $bandwidthKb, // Save as KB for consistency with BSS responses
-                ]);
+                ];
 
-                AppLogger::api()->info('Survey order bandwidth updated after upgrade/downgrade', [
+                // Check if BSS returned a new CustOrderId that differs from existing one
+                // When change offer succeeds, BSS creates a new order with new ID
+                $existingSubscriptionOrderId = $surveyOrder->customer_subscription_order_id;
+                $subscriptionOrderUpdated = false;
+
+                if ($newOrderId && $newOrderId !== $existingSubscriptionOrderId) {
+                    $updateData['customer_subscription_order_id'] = $newOrderId;
+                    $subscriptionOrderUpdated = true;
+                }
+
+                $surveyOrder->update($updateData);
+
+                AppLogger::api()->info('Survey order updated after upgrade/downgrade', [
                     'service_number' => $surveyOrderServiceNumber,
                     'new_bandwidth' => $bandwidth,
                     'new_bandwidth_kb' => $bandwidthKb,
                     'customer_survey_order_id' => $surveyOrder->customer_survey_order_id,
-                    'order_id' => $result['order_id'] ?? null,
+                    'old_subscription_order_id' => $existingSubscriptionOrderId,
+                    'new_subscription_order_id' => $newOrderId,
+                    'subscription_order_updated' => $subscriptionOrderUpdated,
                     'operation' => 'change_primary_offering',
                 ]);
             } catch (\Throwable $e) {
                 // Log the error but don't fail the request - the API change was successful
-                AppLogger::api()->exception($e, 'Failed to update local bandwidth after successful change', [
+                AppLogger::api()->exception($e, 'Failed to update local data after successful change', [
                     'service_number' => $surveyOrderServiceNumber,
                     'new_bandwidth' => $bandwidth,
                     'new_bandwidth_kb' => $bandwidthKb,
+                    'new_order_id' => $newOrderId,
                     'operation' => 'change_primary_offering',
                 ]);
             }

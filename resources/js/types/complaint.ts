@@ -9,11 +9,8 @@ export const TroubleReasons = {
 } as const;
 
 export const complaintSchema = z.object({
-    trouble_title: z.string().min(1, 'Subject is required'),
-
     access_number: z.string()
-        .min(1, 'Access number is required')
-        .regex(/^\d{12}$/, 'Service number must be exactly 12 digits'),
+        .min(1, 'Service number is required'),
 
     account_number: z.string().optional().nullable(),
 
@@ -35,21 +32,9 @@ export const complaintSchema = z.object({
         errorMap: () => ({ message: 'Trouble reason is required' }),
     }),
 
-    tt_description: z.string().optional().nullable(),
+    tt_description: z.string().min(1, 'Description is required'),
 
     occurrence_date: z.string().optional().nullable(),
-}).refine(
-    (data) => {
-        // If trouble_reason is OTHER, description is required
-        if (data.trouble_reason === TroubleReasons.OTHER) {
-            return data.tt_description && data.tt_description.trim().length >= 5;
-        }
-        return true;
-    },
-    {
-        message: 'Description is required (minimum 5 characters) when "Other" is selected',
-        path: ['tt_description'],
-    }
-);
+});
 
 export type ComplaintFormValues = z.infer<typeof complaintSchema>;

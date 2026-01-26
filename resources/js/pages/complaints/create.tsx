@@ -15,7 +15,6 @@ export default function CreateComplaintPage() {
 
     const { user } = auth;
     const { data, setData, errors, setError, clearErrors, processing, reset } = useForm<ComplaintFormValues>({
-        trouble_title: '',
         access_number: '',
         contact_person: user?.name || '',
         mobile_no: user?.phone || '',
@@ -69,26 +68,15 @@ export default function CreateComplaintPage() {
                     <CardContent>
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                                {/* Title */}
-                                <div className="space-y-1 lg:col-span-2">
-                                    <label className="text-sm font-medium">
-                                        Title <Required />
-                                    </label>
-                                    <Input value={data.trouble_title} onChange={(e) => setData('trouble_title', e.target.value)} />
-                                    {errors.trouble_title && <p className="text-sm text-red-600">{errors.trouble_title}</p>}
-                                </div>
-
                                 {/* Access Number */}
                                 <div className="space-y-1">
                                     <label className="text-sm font-medium">
                                         Service Number <Required />
                                     </label>
                                     <Input
+                                        placeholder="Enter service number"
                                         value={data.access_number}
-                                        onChange={(e) => {
-                                            const value = e.target.value.replace(/\D/g, '').slice(0, 12);
-                                            setData('access_number', value);
-                                        }}
+                                        onChange={(e) => setData('access_number', e.target.value)}
                                     />
                                     {errors.access_number && <p className="text-sm text-red-600">{errors.access_number}</p>}
                                 </div>
@@ -145,7 +133,7 @@ export default function CreateComplaintPage() {
                                 {/* Description */}
                                 <div className="space-y-1 lg:col-span-2">
                                     <label className="text-sm font-medium">
-                                        Description {data.trouble_reason === TroubleReasons.OTHER && <Required />}
+                                        Description <Required />
                                     </label>
                                     <Textarea
                                         rows={5}

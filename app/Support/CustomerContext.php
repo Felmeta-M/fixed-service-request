@@ -231,15 +231,15 @@ class CustomerContext
         $customer = self::customer();
 
         return [
-            'ethio_zone' => $overrides['ethio_zone'] ?? null,
-            'region' => $overrides['region'] ?? null,
-            'city' => $overrides['city'] ?? null,
-            'zone' => $overrides['zone'] ?? null,
-            'wereda' => $overrides['wereda'] ?? null,
-            'kebele' => $overrides['kebele'] ?? null,
-            'house_no' => $overrides['house_no'] ?? null,
-            'street_name' => $overrides['street_name'] ?? null,
-            'apartment' => $overrides['apartment'] ?? null,
+            'ethio_zone' => $overrides['ethio_zone'] ?? self::ethioZoneOrRegion(''),
+            'region' => $overrides['region'] ?? self::region(''),
+            'city' => $overrides['city'] ?? self::city(''),
+            'zone' => $overrides['zone'] ?? self::zone(''),
+            'wereda' => $overrides['wereda'] ?? self::wereda(''),
+            'kebele' => $overrides['kebele'] ?? self::kebele(''),
+            'house_no' => $overrides['house_no'] ?? self::houseNo('aa'),
+            'street_name' => $overrides['street_name'] ?? ($customer?->street_name ?? 'aa'),
+            'apartment' => $overrides['apartment'] ?? ($customer?->apartment ?? 'aa'),
         ];
     }
 
@@ -271,12 +271,12 @@ class CustomerContext
             'primary_language' => $overrides['primary_language'] ?? self::primaryLanguage('2002'),
 
             // BSS classification
-            'customer_type' => $overrides['customer_type'] ?? self::customerType('2'),
-            'customer_category' => $overrides['customer_category'] ?? self::customerCategory('5'),
-            'customer_subcategory' => $overrides['customer_subcategory'] ?? self::customerSubcategory('14'),
-            'customer_level' => $overrides['customer_level'] ?? self::customerLevel('6'),
+            'customer_type' => $overrides['customer_type'] ?? self::customerType('1 '),
+            'customer_category' => $overrides['customer_category'] ?? self::customerCategory('1'),
+            'customer_subcategory' => $overrides['customer_subcategory'] ?? self::customerSubcategory('1'),
+            'customer_level' => $overrides['customer_level'] ?? self::customerLevel('8'),
             'branch_name' => $overrides['branch_name'] ?? ($customer?->branch_name ?? 'BranchName'),
-            'notification_mode' => $overrides['notification_mode'] ?? self::notificationMode('2'),
+            'notification_mode' => $overrides['notification_mode'] ?? self::notificationMode('1'),
             'vat_reg_no' => $overrides['vat_reg_no'] ?? ($customer?->vat_reg_no ?? '123456'),
 
             // Account info
@@ -303,50 +303,56 @@ class CustomerContext
 
     /**
      * Get customer type (BSS).
+     * Uses ?: to handle empty strings, not just null.
      */
     public static function customerType(?string $fallback = '2'): string
     {
-        return self::customer()?->customer_type ?? $fallback;
+        return self::customer()?->customer_type ?: $fallback;
     }
 
     /**
      * Get customer category (BSS).
+     * Uses ?: to handle empty strings, not just null.
      */
     public static function customerCategory(?string $fallback = '5'): string
     {
-        return self::customer()?->customer_category ?? $fallback;
+        return self::customer()?->customer_category ?: $fallback;
     }
 
     /**
      * Get customer subcategory (BSS).
+     * Uses ?: to handle empty strings, not just null.
      */
     public static function customerSubcategory(?string $fallback = '14'): string
     {
-        return self::customer()?->customer_subcategory ?? $fallback;
+        return self::customer()?->customer_subcategory ?: $fallback;
     }
 
     /**
      * Get customer level (BSS).
+     * Uses ?: to handle empty strings, not just null.
      */
-    public static function customerLevel(?string $fallback = '2'): string
+    public static function customerLevel(?string $fallback = '6'): string
     {
-        return self::customer()?->customer_level ?? $fallback;
+        return self::customer()?->customer_level ?: $fallback;
     }
 
     /**
      * Get notification mode.
+     * Uses ?: to handle empty strings, not just null.
      */
     public static function notificationMode(?string $fallback = '2'): string
     {
-        return self::customer()?->notification_mode ?? $fallback;
+        return self::customer()?->notification_mode ?: $fallback;
     }
 
     /**
      * Get credit class.
+     * Uses ?: to handle empty strings, not just null.
      */
     public static function creditClass(?string $fallback = 'Excellent'): string
     {
-        return self::customer()?->credit_class ?? $fallback;
+        return self::customer()?->credit_class ?: $fallback;
     }
 
     /**

@@ -20,7 +20,7 @@ services:
       pgbouncer:
         condition: service_healthy
     networks:
-      - app_net
+      - ffd_net
     logging:
       driver: "json-file"
       options:
@@ -55,7 +55,7 @@ services:
         sleep 60;
       done"
     networks:
-      - app_net
+      - ffd_net
     logging:
       driver: "json-file"
       options:
@@ -87,7 +87,7 @@ services:
     command: >
       php artisan queue:work --sleep=3 --tries=3 --timeout=90
     networks:
-      - app_net
+      - ffd_net
     logging:
       driver: "json-file"
       options:
@@ -118,7 +118,7 @@ services:
     command: >
       php artisan queue:work --queue=sms --sleep=2 --tries=3 --timeout=30
     networks:
-      - app_net
+      - ffd_net
     deploy:
       replicas: 8
     logging:
@@ -140,7 +140,7 @@ services:
     depends_on:
       - app
     networks:
-      - app_net
+      - ffd_net
 
   postgres:
     image: postgres:17
@@ -160,7 +160,7 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - app_net
+      - ffd_net
     shm_size: 8gb
     deploy:
       resources:
@@ -190,7 +190,7 @@ services:
     container_name: ffd_pgbouncer
     restart: always
     ports:
-      - "6432:6432"
+      - "6633:6432"
     depends_on:
       postgres:
         condition: service_healthy
@@ -205,7 +205,7 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - app_net
+      - ffd_net
 
   redis:
     image: redis:alpine
@@ -220,11 +220,11 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - app_net
+      - ffd_net
 
 volumes:
   pgdata:
 
 networks:
-  app_net:
+  ffd_net:
     driver: bridge

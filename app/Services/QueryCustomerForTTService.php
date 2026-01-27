@@ -20,6 +20,15 @@ class QueryCustomerForTTService extends BaseApiService
     protected int $timeout = 15;
     protected int $rateLimit = 30;
 
+
+    /**
+     * Get the API endpoint
+     */
+    protected function endpoint(): string
+    {
+        return config('services.query_customer_for_tt.endpoint');
+    }
+
     /**
      * Query customer by service number
      * 
@@ -103,14 +112,14 @@ XML;
     protected function parseResponseXml(string $xml, string $serviceNumber): array
     {
         libxml_use_internal_errors(true);
-        
+
         $xmlObject = simplexml_load_string($xml);
         if ($xmlObject === false) {
             throw new RuntimeException('Failed to parse XML response');
         }
 
         $namespaces = $xmlObject->getNamespaces(true);
-        
+
         // Register namespaces for XPath
         $xmlObject->registerXPathNamespace('soapenv', $namespaces['soapenv'] ?? 'http://schemas.xmlsoap.org/soap/envelope/');
         $xmlObject->registerXPathNamespace('quer', $namespaces['quer'] ?? 'http://crm.huawei.com/query/');
@@ -119,7 +128,7 @@ XML;
         // Navigate to response body
         $body = $xmlObject->children($namespaces['soapenv'] ?? 'http://schemas.xmlsoap.org/soap/envelope/')->Body;
         $response = $body->children($namespaces['quer'] ?? 'http://crm.huawei.com/query/')->GetCustomerResponse;
-        
+
         if (!$response) {
             throw new RuntimeException('Invalid response: GetCustomerResponse not found');
         }
@@ -127,7 +136,7 @@ XML;
         // Parse response header
         $responseHeader = $response->ResponseHeader;
         $basNs = $namespaces['bas'] ?? 'http://crm.huawei.com/basetype/';
-        
+
         $retCode = (string) ($responseHeader->children($basNs)->RetCode ?? $responseHeader->RetCode ?? '');
         $retMsg = (string) ($responseHeader->children($basNs)->RetMsg ?? $responseHeader->RetMsg ?? '');
 
@@ -251,11 +260,5 @@ XML;
         return $result;
     }
 
-    /**
-     * Get the API endpoint
-     */
-    protected function endpoint(): string
-    {
-        return config('services.query_customer_for_tt.endpoint');
-    }
+
 }

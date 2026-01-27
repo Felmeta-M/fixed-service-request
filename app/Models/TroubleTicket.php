@@ -29,6 +29,28 @@ class TroubleTicket extends Model
         'problem_description',
         'last_checked_at',
         'last_synced_status',
+
+        // Service owner info (from queried service number)
+        'service_owner_code',
+        'service_owner_name',
+        'service_owner_type',
+        'service_owner_level',
+
+        // Service location/address for TT detail display
+        'region',
+        'zone',
+        'city',
+        'sub_city',
+        'wereda',
+        'kebele',
+        'house_no',
+
+        // TT details
+        'contact_person',
+        'mobile_no',
+        'trouble_title',
+        'trouble_reason',
+        'tt_description',
     ];
 
     /**

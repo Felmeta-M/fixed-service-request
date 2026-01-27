@@ -17,15 +17,21 @@ interface ShowProps {
 }
 
 // Helper function to transform LocalTroubleTicket to TTDetail format
-const transformLocalToTTDetail = (localTT: LocalTroubleTicket): TTDetail => {
+const transformLocalToTTDetail = (localTT: LocalTroubleTicket): TTDetail & { 
+  serviceOwnerCode?: string;
+  serviceOwnerName?: string;
+  serviceOwnerType?: string;
+  serviceOwnerLevel?: string;
+  createdByCode?: string;
+} => {
   // Map status to result_code format (external uses '0' for active, '1' for failed/closed)
   const resultCode = localTT.status === 'completed' || localTT.status === 'cancelled' ? '1' : '0';
   
-  // Split contact person name into parts (simple split on spaces)
-  const nameParts = (localTT.contact_person || '').trim().split(/\s+/);
-  const firstName = nameParts[0] || '';
-  const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(' ') : '';
-  const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+  // Parse service owner name into parts
+  const ownerNameParts = (localTT.service_owner_name || '').trim().split(/\s+/);
+  const firstName = ownerNameParts[0] || '';
+  const middleName = ownerNameParts.length > 2 ? ownerNameParts.slice(1, -1).join(' ') : '';
+  const lastName = ownerNameParts.length > 1 ? ownerNameParts[ownerNameParts.length - 1] : '';
   
   return {
     ttNumber: localTT.tt_serial_no,
@@ -33,20 +39,20 @@ const transformLocalToTTDetail = (localTT: LocalTroubleTicket): TTDetail => {
     firstName,
     middleName,
     lastName,
-    customerType: '',
-    customerLevel: '',
+    customerType: localTT.service_owner_type || '',
+    customerLevel: localTT.service_owner_level || '',
     customerCategory: '',
     custSubCategory: '',
-    custID: '',
+    custID: localTT.service_owner_code || '',
     subsID: '',
-    adminRegion: '',
-    zone: '',
-    city: '',
-    subCity: '',
-    wereda: '',
-    kebele: '',
+    adminRegion: localTT.region || '',
+    zone: localTT.zone || '',
+    city: localTT.city || '',
+    subCity: localTT.sub_city || '',
+    wereda: localTT.wereda || '',
+    kebele: localTT.kebele || '',
     street: '',
-    houseNo: '',
+    houseNo: localTT.house_no || '',
     buildingName: '',
     floor: '',
     roomNo: '',
@@ -72,6 +78,12 @@ const transformLocalToTTDetail = (localTT: LocalTroubleTicket): TTDetail => {
     result_code: resultCode,
     desc: '',
     activities: [],
+    // Additional local fields for display
+    serviceOwnerCode: localTT.service_owner_code,
+    serviceOwnerName: localTT.service_owner_name,
+    serviceOwnerType: localTT.service_owner_type,
+    serviceOwnerLevel: localTT.service_owner_level,
+    createdByCode: localTT.customer_code,
   };
 };
 
@@ -315,12 +327,12 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
 
             {/* Details Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Customer Information */}
+              {/* Service Owner Information */}
               <Card className='border-none shadow-xs'>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    Customer Information
+                    Service Owner
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -333,14 +345,22 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm text-muted-foreground">Customer Type</label>
-                    <p className="font-medium">{detail.customerType || 'N/A'}</p>
+                    <label className="text-sm text-muted-foreground">Customer Code</label>
+                    <p className="font-medium">{detail.custID || 'N/A'}</p>
                   </div>
-                  <div>
-                    <label className="text-sm text-muted-foreground">Category</label>
-                    <p className="font-medium">
-                      {detail.customerCategory || 'N/A'} / {detail.custSubCategory || 'N/A'}
-                    </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-sm text-muted-foreground">Customer Type</label>
+                      <p className="font-medium">
+                        {detail.customerType === '0' ? 'Personal' : 
+                         detail.customerType === '1' ? 'Enterprise' : 
+                         detail.customerType || 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-muted-foreground">Level</label>
+                      <p className="font-medium">{detail.customerLevel || 'N/A'}</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -393,32 +413,48 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
                 </CardContent>
               </Card>
 
-              {/* Location Information */}
+              {/* Service Location */}
               <Card className='border-none shadow-xs'>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
-                    Location
+                    Service Location
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div>
-                    <label className="text-sm text-muted-foreground">Region/Zone</label>
-                    <p className="font-medium">
-                      {detail.adminRegion || 'N/A'} / {detail.zone || 'N/A'}
-                    </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-sm text-muted-foreground">Region</label>
+                      <p className="font-medium">{detail.adminRegion || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-muted-foreground">Zone</label>
+                      <p className="font-medium">{detail.zone || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-sm text-muted-foreground">City</label>
+                      <p className="font-medium">{detail.city || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-muted-foreground">Sub City</label>
+                      <p className="font-medium">{detail.subCity || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-sm text-muted-foreground">Wereda</label>
+                      <p className="font-medium">{detail.wereda || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-muted-foreground">Kebele</label>
+                      <p className="font-medium">{detail.kebele || 'N/A'}</p>
+                    </div>
                   </div>
                   <div>
-                    <label className="text-sm text-muted-foreground">Woreda/Kebele</label>
-                    <p className="font-medium">
-                      {detail.wereda || 'N/A'} / {detail.kebele || 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-muted-foreground">Address</label>
-                    <p className="font-medium">
-                      {[detail.houseNo, detail.street, detail.city].filter(Boolean).join(', ') || 'N/A'}
-                    </p>
+                    <label className="text-sm text-muted-foreground">House No.</label>
+                    <p className="font-medium">{detail.houseNo || 'N/A'}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -447,27 +483,31 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
                 </CardContent>
               </Card>
 
-              {/* Additional Information */}
+              {/* Issue Description */}
               <Card className='border-none shadow-xs'>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <AlertCircle className="h-4 w-4" />
-                    Additional Information
+                    Issue Details
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div>
-                    <label className="text-sm text-muted-foreground">SMS Notification</label>
-                    <p className="font-medium">{detail.sendSMS || 'N/A'}</p>
-                  </div>
-                  <div>
                     <label className="text-sm text-muted-foreground">Description</label>
-                    <p className="font-medium">{detail.ttDescription || 'N/A'}</p>
+                    <p className="font-medium whitespace-pre-wrap">{detail.ttDescription || 'N/A'}</p>
                   </div>
-                  <div>
-                    <label className="text-sm text-muted-foreground">Remark</label>
-                    <p className="font-medium">{detail.Remark && detail.Remark !== '?' ? detail.Remark : 'N/A'}</p>
-                  </div>
+                  {detail.Remark && detail.Remark !== '?' && (
+                    <div>
+                      <label className="text-sm text-muted-foreground">Remark</label>
+                      <p className="font-medium whitespace-pre-wrap">{detail.Remark}</p>
+                    </div>
+                  )}
+                  {detail.sendSMS && detail.sendSMS !== '?' && (
+                    <div>
+                      <label className="text-sm text-muted-foreground">SMS Notification</label>
+                      <p className="font-medium">{detail.sendSMS === 'Yes' ? 'Enabled' : 'Disabled'}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

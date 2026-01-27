@@ -84,6 +84,24 @@ export interface LocalTroubleTicket {
   created_at: string;
   updated_at: string;
   user_id?: number;
+  
+  // Who created the TT (logged-in user)
+  customer_code?: string;
+  
+  // Service owner info (actual owner of the service number)
+  service_owner_code?: string;
+  service_owner_name?: string;
+  service_owner_type?: string;
+  service_owner_level?: string;
+  
+  // Service location/address
+  region?: string;
+  zone?: string;
+  city?: string;
+  sub_city?: string;
+  wereda?: string;
+  kebele?: string;
+  house_no?: string;
 }
 
 export interface PaginatedResponse<T> {

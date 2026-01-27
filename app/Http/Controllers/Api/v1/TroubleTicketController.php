@@ -17,6 +17,7 @@ use App\Services\QueryTTDetailService;
 use App\Services\ConfirmFeedbackService;
 use App\Http\Requests\QueryTTDetailRequest;
 use App\Http\Requests\ConfirmFeedbackRequest;
+use App\Services\QueryCustomerForTTService;
 
 class TroubleTicketController extends Controller
 {
@@ -24,8 +25,68 @@ class TroubleTicketController extends Controller
         protected readonly CreateTTService $createTTService,
         protected readonly QueryTTService $queryTTService,
         protected readonly QueryTTDetailService $queryTTDetailService,
-        protected readonly ConfirmFeedbackService $confirmFeedbackService
+        protected readonly ConfirmFeedbackService $confirmFeedbackService,
+        protected readonly QueryCustomerForTTService $queryCustomerForTTService
     ) {}
+
+    /**
+     * Query customer by service number before TT creation
+     * This validates the service number and returns customer info
+     */
+    public function queryCustomerByServiceNumber(Request $request)
+    {
+        $request->validate([
+            'service_number' => 'required|string|min:6',
+        ]);
+
+        try {
+            $serviceNumber = $request->input('service_number');
+            $result = $this->queryCustomerForTTService->query($serviceNumber);
+
+            if (!($result['success'] ?? false)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message'] ?? 'Service number not found. Please verify the number and try again.',
+                ], 404);
+            }
+
+            // Return customer info for frontend display
+            $customer = $result['customer'] ?? [];
+            $addresses = $result['addresses'][0] ?? [];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Customer found',
+                'data' => [
+                    'customer_code' => $customer['customer_code'] ?? '',
+                    'customer_name' => trim(($customer['first_name'] ?? '') . ' ' . ($customer['middle_name'] ?? '') . ' ' . ($customer['last_name'] ?? '')),
+                    'first_name' => $customer['first_name'] ?? '',
+                    'middle_name' => $customer['middle_name'] ?? '',
+                    'last_name' => $customer['last_name'] ?? '',
+                    'customer_type' => $customer['customer_type'] ?? '',
+                    'customer_level' => $customer['customer_level'] ?? '',
+                    'address' => [
+                        'region' => $addresses['address1'] ?? '',
+                        'zone' => $addresses['address3'] ?? '',
+                        'city' => $addresses['address2'] ?? '',
+                        'wereda' => $addresses['address4'] ?? '',
+                        'kebele' => $addresses['address5'] ?? '',
+                        'house_no' => $addresses['address6'] ?? '',
+                    ],
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            AppLogger::api()->error('Failed to query customer by service number', [
+                'service_number' => $request->input('service_number'),
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to query service number. Please try again.',
+            ], 500);
+        }
+    }
 
     public function index(Request $request)
     {
@@ -41,7 +102,6 @@ class TroubleTicketController extends Controller
                     'tt_serial_no',
                     'access_number',
                     'status',
-                    // 'last_checked_at',
                     'last_synced_status',
                     'created_at',
                     'updated_at',
@@ -49,6 +109,11 @@ class TroubleTicketController extends Controller
                     'service_number',
                     'problem_type',
                     'problem_description',
+                    // Service owner info for list display
+                    'service_owner_code',
+                    'service_owner_name',
+                    'trouble_title',
+                    'trouble_reason',
                 ]);
 
             if ($request->filled('tt_serial_no')) {

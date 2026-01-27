@@ -105,10 +105,10 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
             },
             {
                 accessorKey: 'cust_name',
-                header: 'Customer',
+                header: 'Service Owner',
                 cell: ({ getValue }) => {
                     const name = getValue<string>();
-                    return <span className="text-gray-800">{name || '—'}</span>;
+                    return <span className="text-gray-800 font-medium">{name || '—'}</span>;
                 },
             },
             {

@@ -165,6 +165,7 @@ Route::prefix('v1')->group(function () {
         Route::middleware(['throttle:api_trouble_tickets'])->group(function () {
             Route::get('trouble-tickets', [TroubleTicketController::class, 'index']);
             Route::get('trouble-tickets/{tt_serial_no}', [TroubleTicketController::class, 'show']);
+            Route::post('tt/query-customer', [TroubleTicketController::class, 'queryCustomerByServiceNumber']);
             Route::post('tt/create', [TroubleTicketController::class, 'store']);
             Route::post('tt/query', [TroubleTicketController::class, 'query']);
             Route::post('tt/detail', [TroubleTicketController::class, 'detail']);

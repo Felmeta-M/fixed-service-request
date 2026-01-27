@@ -82,6 +82,17 @@ return [
         'access_pwd' => env('QUERY_CUSTOMER_BY_SERVICE_NUMBER_ACCESS_PWD'),
     ],
 
+    // Query Customer for Trouble Ticket (CRM Huawei API)
+    'query_customer_for_tt' => [
+        'endpoint' => env('QUERY_CUSTOMER_FOR_TT_ENDPOINT'),
+        'language' => env('QUERY_CUSTOMER_FOR_TT_LANGUAGE'),
+        'channel_id' => env('QUERY_CUSTOMER_FOR_TT_CHANNEL_ID'),
+        'technical_channel_id' => env('QUERY_CUSTOMER_FOR_TT_TECH_CHANNEL_ID'),
+        'tenant_id' => env('QUERY_CUSTOMER_FOR_TT_TENANT_ID'),
+        'access_user' => env('QUERY_CUSTOMER_FOR_TT_ACCESS_USER'),
+        'access_pwd' => env('QUERY_CUSTOMER_FOR_TT_ACCESS_PWD'),
+    ],
+
     'survey' => [
         'endpoint' => env('SURVEY_BSS_ENDPOINT'),
         'access_user' => env('SURVEY_BSS_ACCESS_USER'),
@@ -317,10 +328,10 @@ return [
 
     'get_combining' => [
         'endpoint' => env('GET_COMBINING_ENDPOINT'),
-        'user'     => env('GET_COMBINING_USER'),
+        'user' => env('GET_COMBINING_USER'),
         'password' => env('GET_COMBINING_PASSWORD'),
-        'tenant'   => env('GET_COMBINING_TENANT', '101'),
-        'channel'  => env('GET_COMBINING_CHANNEL', '59'),
+        'tenant' => env('GET_COMBINING_TENANT', '101'),
+        'channel' => env('GET_COMBINING_CHANNEL', '59'),
         'tech_channel' => env('GET_COMBINING_TECH_CHANNEL', '35'),
     ],
 

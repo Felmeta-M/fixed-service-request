@@ -112,7 +112,7 @@ const cableTypeMap: Record<number, { label: string; description: string }> = {
     1: { label: 'Fiber', description: 'Fiber optic cable' },
     2: { label: 'EPON', description: 'Ethernet Passive Optical Network' },
     3: { label: 'GPON', description: 'Gigabit Passive Optical Network' },
-    5: { label: 'Without Survey', description: 'No physical survey required' },
+    5: { label: 'Pre-approved', description: 'No site assessment required' },
 };
 
 // Media type mapping from BSS param 50005
@@ -374,7 +374,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
 
     const handleContinueClick = () => {
         if (!surveyDetails?.media_type) {
-            showErrorToast('Survey infrastructure details missing. Please contact support.');
+            showErrorToast('Infrastructure details missing. Please contact support.');
             return;
         }
         setShowDeviceSelection(true);
@@ -427,7 +427,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                         </Button>
                     </Link>
                     <p className="text-muted-foreground">
-                        Survey Details
+                        Service Request Details
                     </p>
                 </div>
             </div>
@@ -465,7 +465,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                             </div>
                             <div className="flex-1">
                                 <h4 className="font-semibold text-lg text-red-800 mb-2">
-                                    Survey Could Not Be Completed
+                                    Service Request Could Not Be Completed
                                 </h4>
                                 <p className="text-sm text-red-700 mb-3">
                                     {surveyDetails.survey_failure_reason}
@@ -493,7 +493,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                             </div>
                             <div className="flex-1">
                                 <h4 className="font-semibold text-lg text-green-800 mb-2">
-                                    Survey Completed
+                                    Request Approved
                                 </h4>
                                 <p className="text-sm text-green-700 mb-1">
                                     Your location supports <strong>{surveyDetails?.media_type === 'PON' ? 'Fiber' : 'Copper'}</strong> connection.
@@ -523,12 +523,12 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                     <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-base">
                             <Hash className="h-4 w-4" />
-                            Survey Information
+                            Request Information
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Survey Number</span>
+                            <span className="text-sm text-muted-foreground">Request Number</span>
                             <span className="font-mono font-medium">{customer_survey_order_id || 'N/A'}</span>
                         </div>
                         <Separator />
@@ -546,7 +546,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                         </div>
                         <Separator />
                         <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Survey Type</span>
+                            <span className="text-sm text-muted-foreground">Processing Type</span>
                             <Badge
                                 variant="outline"
                                 className={`${
@@ -663,7 +663,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                 <Cable className="h-4 w-4 text-emerald-600" />
                                 Infrastructure Details
                                 {canContinue && (
-                                    <Badge className="ml-2 bg-green-100 text-green-700 border-green-200">Survey Complete</Badge>
+                                    <Badge className="ml-2 bg-green-100 text-green-700 border-green-200">Ready</Badge>
                                 )}
                             </CardTitle>
                         </CardHeader>
@@ -1010,10 +1010,10 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                 onOpenChange={setOpenCancelDialog}
                 onConfirm={handleCancel}
                 loading={cancelMutation.isPending}
-                title={isTerminateAction ? "Terminate Service" : "Cancel Survey Order"}
+                title={isTerminateAction ? "Terminate Service" : "Cancel Service Request"}
                 description={isTerminateAction
                     ? "Are you sure you want to terminate this service? This action cannot be undone."
-                    : "Are you sure you want to cancel this survey order? This action cannot be undone."
+                    : "Are you sure you want to cancel this service request? This action cannot be undone."
                 }
                 confirmText={cancelMutation.isPending ? (isTerminateAction ? 'Terminating...' : 'Cancelling...') : (isTerminateAction ? 'Yes, Terminate' : 'Yes, Cancel')}
                 cancelText="No, Keep It"

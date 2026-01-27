@@ -31,7 +31,7 @@ export const CableTypeLabels: Record<number, string> = {
     [CableType.FIBER]: 'Fiber',
     [CableType.EPON]: 'EPON',
     [CableType.GPON]: 'GPON',
-    [CableType.WITHOUT_SURVEY]: 'Without Survey',
+    [CableType.WITHOUT_SURVEY]: 'Pre-approved',
 };
 
 /**

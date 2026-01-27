@@ -38,6 +38,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 # Copy entrypoint & supervisor config
 COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY docker/php/supervisord.conf /etc/supervisor/supervisord.conf
+COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 

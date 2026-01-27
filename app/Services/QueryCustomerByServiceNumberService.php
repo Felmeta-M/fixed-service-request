@@ -16,23 +16,23 @@ class QueryCustomerByServiceNumberService extends BaseApiService
     {
         try {
             logger('serviceNumber', [$serviceNumber]);
-            $xmlPayload  = $this->buildRequestXml($serviceNumber);
+            $xmlPayload = $this->buildRequestXml($serviceNumber);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            $parsedXml   = $this->parseResponseXml($xmlResponse);
+            $parsedXml = $this->parseResponseXml($xmlResponse);
 
             return ApiResponse::success($parsedXml);
         } catch (RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
         } catch (Throwable $e) {
-            return ApiResponse::exception($e, 'Query customer by service number failed.');
+            return ApiResponse::error($e->getMessage(), 500);
         }
     }
 
     protected function buildRequestXml(string $serviceNumber): string
     {
         $transactionId = uniqid();
-        $processTime   = now()->format('YmdHis');
-        $config        = config('services.query_customer_by_service_number');
+        $processTime = now()->format('YmdHis');
+        $config = config('services.query_customer_by_service_number');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -62,58 +62,58 @@ XML;
 
     protected function parseResponseXml(string $xml)
     {
-        $xmlObject  = simplexml_load_string($xml);
+        $xmlObject = simplexml_load_string($xml);
         $namespaces = $xmlObject->getNamespaces(true);
 
-        $body     = $xmlObject->children($namespaces['soapenv'])->Body;
+        $body = $xmlObject->children($namespaces['soapenv'])->Body;
         $response = $body->children($namespaces['ser'])->GetCustomerResponse;
 
-        $header  = $response->ResponseHeader->children($namespaces['com']);
-        $body    = $response->GetCustomerBody->children($namespaces['com']);
+        $header = $response->ResponseHeader->children($namespaces['com']);
+        $body = $response->GetCustomerBody->children($namespaces['com']);
         $retCode = (string) $header->RetCode;
-        $retMsg  = (string) $header->RetMsg;
+        $retMsg = (string) $header->RetMsg;
 
         if ($retCode !== '0') {
             return ApiResponse::error($retMsg);
         }
 
         $result = [
-            'success'  => true,
+            'success' => true,
             'ret_code' => $retCode,
-            'ret_msg'  => $retMsg,
+            'ret_msg' => $retMsg,
             'customer' => [
-                'id'               => (string) $body->CustomerId,
-                'code'             => (string) $body->CustomerCode,
-                'first_name'       => (string) $body->FirstName,
-                'middle_name'      => (string) $body->MiddleName,
-                'last_name'        => (string) $body->LastName,
-                'dob'              => (string) $body->DateOfBirth,
-                'gender'           => (string) $body->Gender,
-                'status'           => (string) $body->Status,
-                'title'            => (string) $body->Title,
-                'nationality'      => (string) $body->Nationality,
-                'type'             => (string) $body->CustomerType,
-                'level'            => (string) $body->CustomerLevel,
-                'language'         => (string) $body->CustomerLanguage,
+                'id' => (string) $body->CustomerId,
+                'code' => (string) $body->CustomerCode,
+                'first_name' => (string) $body->FirstName,
+                'middle_name' => (string) $body->MiddleName,
+                'last_name' => (string) $body->LastName,
+                'dob' => (string) $body->DateOfBirth,
+                'gender' => (string) $body->Gender,
+                'status' => (string) $body->Status,
+                'title' => (string) $body->Title,
+                'nationality' => (string) $body->Nationality,
+                'type' => (string) $body->CustomerType,
+                'level' => (string) $body->CustomerLevel,
+                'language' => (string) $body->CustomerLanguage,
                 'certificate_type' => (string) $body->CertificateType,
-                'certificate_no'   => (string) $body->CertificateNumber,
-                'tenant_id'        => (string) $body->TenantId,
-                'occupation'       => (string) $body->Occupation,
-                'religion'         => (string) $body->Religion,
-                'education'        => (string) $body->Education,
+                'certificate_no' => (string) $body->CertificateNumber,
+                'tenant_id' => (string) $body->TenantId,
+                'occupation' => (string) $body->Occupation,
+                'religion' => (string) $body->Religion,
+                'education' => (string) $body->Education,
             ],
-            'contacts'    => [],
-            'addresses'   => [],
+            'contacts' => [],
+            'addresses' => [],
             'subscribers' => [],
-            'ext_params'  => [],
+            'ext_params' => [],
         ];
 
         foreach ($body->ContactList->ContactInfo ?? [] as $contact) {
             $result['contacts'][] = [
-                'name1'  => (string) $contact->Relaname1,
-                'name2'  => (string) $contact->Relaname2,
+                'name1' => (string) $contact->Relaname1,
+                'name2' => (string) $contact->Relaname2,
                 'mobile' => (string) $contact->Relatel1,
-                'fax'    => (string) $contact->Relafax,
+                'fax' => (string) $contact->Relafax,
             ];
         }
 
@@ -130,11 +130,11 @@ XML;
 
         foreach ($body->SubscriberList->SubscriberAbstractInfo ?? [] as $subscriber) {
             $result['subscribers'][] = [
-                'subscriber_id'      => (string) $subscriber->SubscriberId,
-                'service_number'     => (string) $subscriber->ServiceNumber,
-                'payment_type'       => (string) $subscriber->PaymentType,
+                'subscriber_id' => (string) $subscriber->SubscriberId,
+                'service_number' => (string) $subscriber->ServiceNumber,
+                'payment_type' => (string) $subscriber->PaymentType,
                 'default_account_id' => (string) $subscriber->DefaultAccountId,
-                'status'             => (string) $subscriber->Status,
+                'status' => (string) $subscriber->Status,
             ];
         }
 

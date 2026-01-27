@@ -22,9 +22,9 @@ export default function SurveyDetailModal({ open, onOpenChange, survey }: Survey
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md rounded-2xl bg-white">
                 <DialogHeader>
-                    <DialogTitle className="text-lg font-semibold text-gray-900">Survey Details</DialogTitle>
+                    <DialogTitle className="text-lg font-semibold text-gray-900">Service Request Details</DialogTitle>
                     <DialogDescription className="text-sm text-gray-600">
-                        Detailed information for survey order <strong>{survey.customer_survey_order_id}</strong>
+                        Detailed information for service request <strong>{survey.customer_survey_order_id}</strong>
                         {survey.customer_subscription_order_id && (
                             <> and subscription order <strong>{survey.customer_subscription_order_id}</strong></>
                         )}
@@ -34,7 +34,7 @@ export default function SurveyDetailModal({ open, onOpenChange, survey }: Survey
 
                 <div className="mt-4 space-y-3 text-sm text-gray-700">
                     <div className="flex justify-between">
-                        <span className="font-medium">Survey Order Number:</span>
+                        <span className="font-medium">Request Number:</span>
                         <span className="font-mono">{survey.customer_survey_order_id || 'N/A'}</span>
                     </div>
                     {survey.customer_subscription_order_id && (
@@ -48,7 +48,7 @@ export default function SurveyDetailModal({ open, onOpenChange, survey }: Survey
                         <span>{survey.service_type || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="font-medium">Survey Type:</span>
+                        <span className="font-medium">Request Type:</span>
                         {/* <span>{survey.survey_type || 'N/A'}</span> */}
                         <span>{<p>New</p>}</span>
                     </div>

@@ -499,7 +499,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                             {canCancel && (
                                 <DropdownMenuItem onClick={() => { setIsTerminateAction(false); setOpenCancelDialog(true); }} className="flex cursor-pointer items-center gap-2 text-destructive">
                                     <X className="h-4 w-4" />
-                                    <span>Cancel Survey</span>
+                                    <span>Cancel Request</span>
                                 </DropdownMenuItem>
                             )}
                             {canTerminate && (
@@ -531,10 +531,10 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 onOpenChange={setOpenCancelDialog}
                 onConfirm={handleCancel}
                 loading={loading}
-                title={isTerminateAction ? "Terminate Service" : "Cancel Survey Order"}
+                title={isTerminateAction ? "Terminate Service" : "Cancel Service Request"}
                 description={isTerminateAction 
                     ? "Are you sure you want to terminate this service? This action cannot be undone."
-                    : "Are you sure you want to cancel this survey order? This action cannot be undone."
+                    : "Are you sure you want to cancel this service request? This action cannot be undone."
                 }
                 confirmText={loading ? (isTerminateAction ? 'Terminating...' : 'Cancelling...') : (isTerminateAction ? 'Yes, Terminate' : 'Yes, Cancel')}
                 cancelText="No, Keep It"
@@ -545,8 +545,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 onOpenChange={setOpenDeleteDialog}
                 onConfirm={handleDelete}
                 loading={loading}
-                title="Delete Survey Order"
-                description="This will permanently delete the survey order."
+                title="Delete Service Request"
+                description="This will permanently delete the service request."
                 confirmText={loading ? 'Deleting...' : 'Yes, Delete'}
                 cancelText="No, Keep It"
             />

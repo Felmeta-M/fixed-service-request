@@ -9,8 +9,8 @@ services:
       - .env
     volumes:
       - .:/var/www
-      - ./storage:/var/www/storage:rw
-      - ./bootstrap/cache:/var/www/bootstrap/cache:rw
+      - ./storage:/var/www/storage
+      - ./bootstrap/cache:/var/www/bootstrap/cache
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     depends_on:
       postgres:
@@ -120,7 +120,7 @@ services:
     networks:
       - app_net
     deploy:
-      replicas: 3
+      replicas: 8
     logging:
       driver: "json-file"
       options:
@@ -170,7 +170,7 @@ services:
           memory: 8g
     command: >
       postgres
-      -c shared_buffers=8GB
+      -c shared_buffers=12GB
       -c effective_cache_size=32GB
       -c work_mem=32MB
       -c maintenance_work_mem=1GB
@@ -178,7 +178,7 @@ services:
       -c random_page_cost=1.1
       -c autovacuum_vacuum_scale_factor=0.05
       -c autovacuum_analyze_scale_factor=0.02
-      -c max_connections=150
+      -c max_connections=200
     logging:
       driver: "json-file"
       options:
@@ -213,6 +213,7 @@ services:
     restart: always
     ports:
       - "6379:6379"
+    command: redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru --appendonly yes --appendfsync everysec
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s

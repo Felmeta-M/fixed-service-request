@@ -626,7 +626,7 @@ export function LocationSetupStep({
 
                             <div className="text-sm leading-relaxed text-muted-foreground">
                         
-                                But don’t worry! You can still submit a manual request. Our team will take a closer look at your location, and if needed, we’ll conduct a manual survey. We’ll reach out to you soon to guide you through the next steps.
+                                But don’t worry! You can still submit a manual request. Our team will take a closer look at your location, and if needed, we’ll conduct a site assessment. We’ll reach out to you soon to guide you through the next steps.
                                
                             </div>
 

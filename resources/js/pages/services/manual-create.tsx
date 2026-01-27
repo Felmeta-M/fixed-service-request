@@ -262,7 +262,7 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
                                 <p className="text-sm text-amber-800">
                                     We're currently unable to automatically provision service for this location because
                                     available resources could not be confirmed. Our team will review your location,
-                                    perform a manual survey if needed, and contact you to assist with the next steps.
+                                    conduct a site assessment if needed, and contact you to assist with the next steps.
                                 </p>
                             </div>
                         </div>

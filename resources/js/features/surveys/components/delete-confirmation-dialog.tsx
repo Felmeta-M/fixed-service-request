@@ -18,8 +18,8 @@ export function DeleteConfirmationDialog({
     onOpenChange,
     onConfirm,
     loading = false,
-    title = 'Delete Survey Order',
-    description = 'This will permanently delete the survey order from the system. This action cannot be undone.',
+    title = 'Delete Service Request',
+    description = 'This will permanently delete the service request from the system. This action cannot be undone.',
     confirmText = 'Yes, Delete',
     cancelText = 'No, Keep It',
 }: DeleteConfirmationDialogProps) {
@@ -81,7 +81,7 @@ export function DeleteConfirmationDialog({
                                         <div className="flex items-start space-x-2">
                                             <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" />
                                             <p className="text-xs text-red-700">
-                                                <strong>Warning:</strong> This action is permanent and cannot be reversed. All survey data will be
+                                                <strong>Warning:</strong> This action is permanent and cannot be reversed. All request data will be
                                                 lost.
                                             </p>
                                         </div>

@@ -44,7 +44,7 @@ export interface Subscriber {
 
 // Zod schema for subscriber form
 export const subscriberSchema = z.object({
-    customer_survey_order_id: z.string().min(1, 'Survey request is required'),
+    customer_survey_order_id: z.string().min(1, 'Service request is required'),
     customer_code: z.string().min(1, 'Customer code is required'),
     payment_type: z.string().min(1, 'Payment type is required'),
     bill_cycle: z.string().nonempty(),

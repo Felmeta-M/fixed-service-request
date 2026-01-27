@@ -97,7 +97,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                         className="!hover:text-primary px-0 font-medium"
                         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                     >
-                        Survey Number
+                        Request Number
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 ),

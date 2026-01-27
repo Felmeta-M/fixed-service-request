@@ -588,29 +588,29 @@ export default function Create() {
 
     const getServiceName = (serviceType: string) => {
         const found = serviceTypes.find((st) => st.code === serviceType);
-        return found?.name || 'Survey';
+        return found?.name || 'Service';
     };
 
     const getSurveyType = (surveyType: string) => {
         switch (surveyType) {
             case '1':
-                return 'Survey for New connection';
+                return 'New Connection';
             case '2':
-                return 'Survey for Change primary offer';
+                return 'Change Primary Offer';
             case '3':
-                return 'Survey for Upgrade';
+                return 'Upgrade';
             case '4':
-                return 'Survey for Downgrade';
+                return 'Downgrade';
             case '5':
-                return 'Survey for Shifting(within or across site)';
+                return 'Shifting (within or across site)';
             case '6':
-                return 'Survey for Reconnection';
+                return 'Reconnection';
             case '7':
-                return 'Survey for Change Offering Attribute';
+                return 'Change Offering Attribute';
             case '8':
-                return 'Survey for Change Copper to Fiber';
+                return 'Change Copper to Fiber';
             default:
-                return 'Survey';
+                return 'Service Request';
         }
     };
 
@@ -620,7 +620,7 @@ export default function Create() {
         if (!hasValidLocation) return 'Select Location First';
         if (resourceAvailable === undefined) return 'Check Resource Availability';
         if (resourceAvailable === false) return 'Resource Not Available';
-        return 'Submit Survey';
+        return 'Submit Request';
     };
 
     const isSubmitDisabled = (): boolean => {
@@ -633,7 +633,7 @@ export default function Create() {
                 <Card className="w-full max-w-md">
                     <CardHeader className="text-center">
                         <CardTitle>Sign In Required</CardTitle>
-                        <CardDescription>Please sign in to place a survey order</CardDescription>
+                        <CardDescription>Please sign in to place a service request</CardDescription>
                     </CardHeader>
                     <CardContent className="text-center">
                         <Link href="/auth/signin">
@@ -673,9 +673,9 @@ export default function Create() {
                                     </Link>
                                     <div className="h-6 w-px bg-gray-300"></div>
                                     <div>
-                                        <CardTitle className="text-2xl font-bold text-gray-900">Create Survey Order</CardTitle>
+                                        <CardTitle className="text-2xl font-bold text-gray-900">Create Service Request</CardTitle>
                                         <CardDescription className="mt-1 text-gray-600">
-                                            Complete all fields to submit your <span className="font-semibold">survey</span> order
+                                            Complete all fields to submit your <span className="font-semibold">service request</span>
                                         </CardDescription>
                                     </div>
                                 </div>
@@ -1026,7 +1026,7 @@ export default function Create() {
                                                 <div className="flex items-center justify-between">
                                                     <span className="font-semibold">✓ Resource available in this area.</span>
                                                 </div>
-                                                <p className="mt-1">You can proceed with survey creation.</p>
+                                                <p className="mt-1">You can proceed with your service request.</p>
                                             </AlertDescription>
                                         </Alert>
                                     )}
@@ -1037,7 +1037,7 @@ export default function Create() {
                                                 <div className="flex items-center justify-between">
                                                     <span className="font-semibold">✗ Resource not available</span>
                                                 </div>
-                                                <p className="mt-1">{resourceMessage || 'Survey creation is not allowed in this area.'}</p>
+                                                <p className="mt-1">{resourceMessage || 'Service request is not available in this area.'}</p>
                                             </AlertDescription>
                                         </Alert>
                                     )}
@@ -1075,7 +1075,7 @@ export default function Create() {
                                         <p className="text-center text-xs text-gray-500">
                                             {!hasValidLocation && 'Please select a valid location first'}
                                             {hasValidLocation && resourceAvailable === undefined && 'Check resource availability before submitting'}
-                                            {resourceAvailable === true && 'Ready to submit your survey order'}
+                                            {resourceAvailable === true && 'Ready to submit your service request'}
                                             {resourceAvailable === false && 'Resource not available in selected location'}
                                         </p>
                                     </div>
@@ -1160,7 +1160,7 @@ export default function Create() {
 
                                     <div className="space-y-3 text-sm">
                                         <div className="flex justify-between">
-                                            <span className="text-gray-600">Survey Type:</span>
+                                            <span className="text-gray-600">Request Type:</span>
                                             <Badge variant="outline" className="bg-blue-50 text-xs">
                                                 {getSurveyType(data.survey_type)}
                                             </Badge>

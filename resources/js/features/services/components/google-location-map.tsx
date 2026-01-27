@@ -21,6 +21,7 @@ interface GoogleLocationMapProps {
 const mapContainerStyle = {
     width: '100%',
     height: '400px',
+    minHeight: '300px',
 };
 
 const defaultCenter = {
@@ -487,10 +488,10 @@ export function GoogleLocationMap({
     };
 
     return (
-        <div className="space-y-2">
+        <div className="w-full space-y-2">
             {/* Search Bar and Get Location Button */}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="flex-1">
+                <div className="flex-1 min-w-0 w-full">
                     <AutocompleteSearch
                         onPlaceSelect={(lat, lng, address) => {
                             smoothPanTo(lat, lng, 16);
@@ -502,39 +503,42 @@ export function GoogleLocationMap({
                         disabled={!map}
                     />
                 </div>
-                <Button
-                    type="button"
-                    onClick={getCurrentLocation}
-                    disabled={isGettingLocation || isCurrentlyAnimating || !map}
-                    size="sm"
-                    className="h-9 shrink-0"
-                >
-                    {isGettingLocation ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                        <>
-                            <MapPin className="h-4 w-4" />
-                            <span className="hidden sm:inline">Get My Location</span>
-                            <span className="sm:hidden">Get My Location</span>
-                        </>
-                    )}
-                </Button>
-                {showCoverageArea && (
+                <div className="flex gap-2 w-full sm:w-auto sm:shrink-0">
                     <Button
                         type="button"
-                        onClick={toggleCoverageVisibility}
-                        disabled={!map || !isCoverageLoaded}
+                        onClick={getCurrentLocation}
+                        disabled={isGettingLocation || isCurrentlyAnimating || !map}
                         size="sm"
-                        variant={isCoverageVisible ? 'default' : 'outline'}
-                        className="h-9 shrink-0"
-                        title={isCoverageVisible ? 'Hide coverage area' : 'Show coverage area'}
+                        className="h-8 sm:h-9 flex-1 sm:flex-initial sm:shrink-0 text-xs sm:text-sm"
                     >
-                        <Layers className="h-4 w-4" />
-                        <span className="hidden sm:inline">
-                            {isCoverageVisible ? 'Hide Coverage' : 'Show Fiber Coverage'}
-                        </span>
+                        {isGettingLocation ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <>
+                                <MapPin className="h-4 w-4 shrink-0 sm:inline-block hidden" />
+                                <span className="hidden sm:inline">Get My Location</span>
+                                <span className="sm:hidden text-xs">Get My Location</span>
+                            </>
+                        )}
                     </Button>
-                )}
+                    {showCoverageArea && (
+                        <Button
+                            type="button"
+                            onClick={toggleCoverageVisibility}
+                            disabled={!map || !isCoverageLoaded}
+                            size="sm"
+                            variant={isCoverageVisible ? 'default' : 'outline'}
+                            className="h-8 sm:h-9 shrink-0 text-xs sm:text-sm"
+                            title={isCoverageVisible ? 'Hide coverage area' : 'Show coverage area'}
+                        >
+                            <Layers className="h-4 w-4 shrink-0 sm:inline-block hidden" />
+                            <span className="hidden sm:inline">
+                                {isCoverageVisible ? 'Hide Fiber Coverage' : 'Show Fiber Coverage'}
+                            </span>
+                            <span className="sm:hidden text-xs">{isCoverageVisible ? 'Hide Fiber Coverage' : 'Show Fiber Coverage'}</span>
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {/* Status Indicators */}
@@ -568,7 +572,7 @@ export function GoogleLocationMap({
             </div> */}
 
             {/* Google Maps Container */}
-            <div className="relative overflow-hidden rounded-sm transition-all duration-300">
+            <div className="relative w-full overflow-hidden rounded-sm transition-all duration-300">
                 {isLoading && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-100/80 backdrop-blur-sm">
                         <div className="text-center">
@@ -578,8 +582,9 @@ export function GoogleLocationMap({
                     </div>
                 )}
 
-                <div className="absolute top-2 right-14 z-10 rounded-sm bg-white/90 px-3 py-2 text-xs font-medium text-gray-700 backdrop-blur-sm transition-all duration-300">
-                    📍 Click on map or drag marker to select location
+                <div className="absolute top-2 left-2 right-2 z-10 rounded-sm bg-white/90 px-2 py-1.5 text-[10px] font-medium text-gray-700 backdrop-blur-sm transition-all duration-300 sm:right-14 sm:left-auto sm:px-3 sm:py-2 sm:text-xs">
+                    <span className="hidden sm:inline">📍 Click on map or drag marker to select location</span>
+                    <span className="sm:hidden">📍 Click map or drag marker</span>
                 </div>
 
                 <LoadScript
@@ -608,7 +613,7 @@ export function GoogleLocationMap({
                             fullscreenControl: true,
                             zoomControl: true,
                             gestureHandling: 'greedy',
-                            // mapTypeId: 'satellite',
+                            mapTypeId: 'satellite',
                             styles: [
                                 {
                                     featureType: 'poi',

@@ -81,7 +81,7 @@ class GeocodingService
      */
     private function callGoogleApi(array $params): array
     {
-        $apiKey = config('services.google.google_api_key');
+        $apiKey = config('services.google.maps_frontend_key');
 
         if (empty($apiKey)) {
             AppLogger::api()->error('Google API key is not configured');

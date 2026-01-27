@@ -414,10 +414,10 @@ export function LocationSetupStep({
             : null);
 
     return (
-        <div className="min-w-sm space-y-6 md:min-w-3xl">
+        <div className="w-full max-w-full space-y-6 overflow-x-hidden">
             {/* Map Section with Enhanced Styling */}
             <div className="space-y-4">
-                <div className="relative h-full overflow-hidden rounded-sm shadow-xs">
+                <div className="relative h-full w-full overflow-hidden rounded-sm shadow-xs">
                     <div className="pointer-events-none absolute inset-0 z-10" />
                     <GoogleLocationMap
                         onLocationSelect={handleLocationSelect}
@@ -433,21 +433,21 @@ export function LocationSetupStep({
 
                 {/* Location Details Card - Enhanced Design */}
                 {(hasValidLocation || currentLocation) && (
-                    <Card className="shadow-none transition-all duration-300">
-                        <CardContent className="shadow-none">
+                    <Card className="w-full shadow-none transition-all duration-300">
+                        <CardContent className="shadow-none p-4 sm:p-6">
                             <div className="space-y-5">
                                 {/* Header Section */}
-                                <div className="flex items-center justify-between pb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex h-10 w-10 items-center justify-center rounded-sm ring-1 ring-primary/80">
+                                <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm ring-1 ring-primary/80">
                                             {locationLoading ? (
                                                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
                                             ) : (
                                                 <MapPin className="h-5 w-5 text-primary" />
                                             )}
                                         </div>
-                                        <div>
-                                            <h4 className="text-lg font-semibold text-foreground">
+                                        <div className="min-w-0 flex-1">
+                                            <h4 className="text-base font-semibold text-foreground sm:text-lg">
                                                 {locationLoading ? 'Detecting Location...' : 'Selected Location'}
                                             </h4>
                                             <p className="text-xs text-muted-foreground">
@@ -456,29 +456,31 @@ export function LocationSetupStep({
                                         </div>
                                     </div>
 
-                                    {(isGeocoding || isMapAnimating) && (
-                                        <div className="flex items-center gap-2 rounded-full px-3 py-1.5">
-                                            {isGeocoding && (
-                                                <>
-                                                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                                                    <span className="text-xs font-medium text-primary">Geocoding...</span>
-                                                </>
-                                            )}
-                                            {isMapAnimating && (
-                                                <>
-                                                    <div className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-                                                    <span className="text-xs font-medium text-primary">Updating...</span>
-                                                </>
-                                            )}
-                                        </div>
-                                    )}
+                                    <div className="flex shrink-0 items-center gap-2">
+                                        {(isGeocoding || isMapAnimating) && (
+                                            <div className="flex items-center gap-2 rounded-full px-2 py-1.5 sm:px-3">
+                                                {isGeocoding && (
+                                                    <>
+                                                        <Loader2 className="h-3.5 w-3.5 animate-spin text-primary shrink-0" />
+                                                        <span className="hidden text-xs font-medium text-primary sm:inline">Geocoding...</span>
+                                                    </>
+                                                )}
+                                                {isMapAnimating && (
+                                                    <>
+                                                        <div className="h-2 w-2 animate-pulse rounded-full bg-primary shrink-0" />
+                                                        <span className="hidden text-xs font-medium text-primary sm:inline">Updating...</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
 
-                                    {!locationLoading && !isGeocoding && !isMapAnimating && (hasValidLocation || currentLocation) && (
-                                        <div className="flex items-center gap-1.5 rounded-full px-3 py-1.5">
-                                            <CheckCircle2 className="h-3.5 w-3.5 text-et-green" />
-                                            <span className="text-xs font-medium text-et-green">Confirmed</span>
-                                        </div>
-                                    )}
+                                        {!locationLoading && !isGeocoding && !isMapAnimating && (hasValidLocation || currentLocation) && (
+                                            <div className="flex items-center gap-1.5 rounded-full px-2 py-1.5 sm:px-3">
+                                                <CheckCircle2 className="h-3.5 w-3.5 text-et-green shrink-0" />
+                                                <span className="hidden text-xs font-medium text-et-green sm:inline">Confirmed</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Coordinates Section */}
@@ -490,7 +492,7 @@ export function LocationSetupStep({
                                     </div>
 
                                     <FieldGroup>
-                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                             <Field>
                                                 <FieldLabel htmlFor="manualLat" className="text-sm font-medium text-foreground">
                                                     Latitude
@@ -506,7 +508,7 @@ export function LocationSetupStep({
                                                             setManualLat(e.target.value);
                                                             setShowUpdateBtn(true);
                                                         }}
-                                                        className="h-11 border-border/60 bg-background/50 transition-all duration-200 focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/20"
+                                                        className="h-11 w-full border-border/60 bg-background/50 transition-all duration-200 focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/20"
                                                     />
                                                     <div className="absolute top-1/2 right-3 -translate-y-1/2">
                                                         <span className="text-xs text-muted-foreground">°N</span>
@@ -529,7 +531,7 @@ export function LocationSetupStep({
                                                             setManualLng(e.target.value);
                                                             setShowUpdateBtn(true);
                                                         }}
-                                                        className="h-11 border-border/60 bg-background/50 transition-all duration-200 focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/20"
+                                                        className="h-11 w-full border-border/60 bg-background/50 transition-all duration-200 focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/20"
                                                     />
                                                     <div className="absolute top-1/2 right-3 -translate-y-1/2">
                                                         <span className="text-xs text-muted-foreground">°E</span>
@@ -546,17 +548,17 @@ export function LocationSetupStep({
                                                 type="button"
                                                 onClick={handleManualCoordinateSubmit}
                                                 disabled={locationLoading || isGeocoding || isMapAnimating}
-                                                className="h-9 px-4"
+                                                className="h-9 w-full px-4 text-sm sm:w-auto"
                                             >
                                                 {locationLoading || isGeocoding ? (
                                                     <>
-                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                        Updating...
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin shrink-0" />
+                                                        <span>Updating...</span>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <MapPin className="mr-2 h-4 w-4" />
-                                                        Update Location
+                                                        <MapPin className="mr-2 h-4 w-4 shrink-0" />
+                                                        <span>Update Location</span>
                                                     </>
                                                 )}
                                             </Button>
@@ -568,9 +570,9 @@ export function LocationSetupStep({
                                         <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
                                             <div className="flex items-start gap-2">
                                                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                                                <div className="flex-1">
+                                                <div className="min-w-0 flex-1">
                                                     <p className="text-xs font-medium text-muted-foreground">Address</p>
-                                                    <p className="mt-1 text-sm text-foreground">{mapLocation.address}</p>
+                                                    <p className="mt-1 break-words text-sm text-foreground">{mapLocation.address}</p>
                                                 </div>
                                             </div>
                                         </div>

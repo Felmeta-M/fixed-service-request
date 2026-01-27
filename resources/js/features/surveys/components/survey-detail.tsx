@@ -91,6 +91,10 @@ type SurveyDetailProps = {
     paymentDetails: PaymentDetailsResource;
     surveyDetails: SurveyDetails;
     focus?: ServiceActionFocus;
+    /** If true, hides the header and back button (used when embedded in flow) */
+    isInFlow?: boolean;
+    /** Custom back handler for flow context */
+    onBack?: () => void;
 };
 
 const INTERNET_OFFER_ID = '1457567289';
@@ -121,7 +125,7 @@ const mediaTypeMap: Record<string, { label: string; description: string }> = {
     COPPER: { label: 'Copper', description: 'Copper cable - Copper devices' },
 };
 
-export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDetailProps) {
+export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = false, onBack }: SurveyDetailProps) {
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
 
     const createSubscriptionMutation = useCreateSubscription();
@@ -416,39 +420,42 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
     }
 
     return (
-        <div className="w-full space-y-4 px-4 py-4 lg:px-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Link href="/services">
-                        <Button variant="ghost" size="sm" className="gap-1">
-                            <ArrowLeft className="h-4 w-4" />
-                            Back
-                        </Button>
-                    </Link>
-                    <p className="text-muted-foreground">
-                        Service Request Details
-                    </p>
+        <div className="w-full max-w-full space-y-4 overflow-x-hidden px-2 py-2 sm:px-4 sm:py-4 lg:px-6">
+            {/* Header - Only show when NOT in flow context */}
+            {!isInFlow && (
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <Link href="/services" className="shrink-0">
+                            <Button variant="ghost" size="sm" className="gap-1 h-9">
+                                <ArrowLeft className="h-4 w-4 shrink-0" />
+                                <span className="hidden sm:inline">Back</span>
+                            </Button>
+                        </Link>
+                        <div className="min-w-0 flex-1">
+                            <h1 className="text-lg font-semibold text-foreground sm:text-xl">Survey Details</h1>
+                            <p className="text-xs text-muted-foreground sm:text-sm">Review your service request information</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Title Card */}
-            <Card className="border-none shadow-xs">
-                <CardHeader className="pb-3">
+            <Card className="w-full border-none shadow-sm transition-all duration-300 hover:shadow-md">
+                <CardHeader className="pb-3 p-4 sm:p-6">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${serviceType.label === 'Internet' ? 'from-blue-500 to-cyan-500' :
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${serviceType.label === 'Internet' ? 'from-blue-500 to-cyan-500' :
                                 serviceType.label === 'Voice' ? 'from-violet-500 to-purple-500' :
                                     'from-emerald-500 to-teal-500'
                                 }`}>
-                                <ServiceIcon className="h-6 w-6 text-white" />
+                                <ServiceIcon className="h-5 w-5 text-white" />
                             </div>
-                            <div>
-                                <CardTitle className="text-xl">{serviceType.label} Service</CardTitle>
-                                <p className="text-sm text-muted-foreground">{surveyTypeInfo.label}</p>
+                            <div className="min-w-0 flex-1">
+                                <CardTitle className="text-lg sm:text-xl truncate">{serviceType.label} Service</CardTitle>
+                                <p className="text-xs sm:text-sm text-muted-foreground truncate">{surveyTypeInfo.label}</p>
                             </div>
                         </div>
-                        <span className={`inline-flex items-center rounded-lg px-4 py-1.5 text-sm font-semibold ${statusInfo.bg} ${statusInfo.text}`}>
+                        <span className={`inline-flex items-center rounded-lg px-3 py-1.5 text-xs sm:text-sm font-semibold shrink-0 ${statusInfo.bg} ${statusInfo.text}`}>
                             {statusInfo.label}
                         </span>
                     </div>
@@ -457,23 +464,23 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
 
             {/* Survey Failed Alert - Show when survey failed (50005 = -1) */}
             {surveyDetails?.survey_failure_reason && (
-                <Card className="border-none shadow-md border-l-4 border-l-red-500 bg-red-50">
-                    <CardContent className="py-5">
-                        <div className="flex items-start gap-4">
-                            <div className="rounded-full bg-red-100 p-3 shrink-0">
-                                <AlertTriangle className="h-6 w-6 text-red-600" />
+                <Card className="w-full border-none shadow-md border-l-4 border-l-red-500 bg-red-50">
+                    <CardContent className="py-4 px-4 sm:py-5 sm:px-6">
+                        <div className="flex items-start gap-3 sm:gap-4">
+                            <div className="rounded-full bg-red-100 p-2 sm:p-3 shrink-0">
+                                <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
                             </div>
-                            <div className="flex-1">
-                                <h4 className="font-semibold text-lg text-red-800 mb-2">
-                                    Service Request Could Not Be Completed
+                            <div className="min-w-0 flex-1">
+                                <h4 className="font-semibold text-base sm:text-lg text-red-800 mb-2">
+                                    Survey Could Not Be Completed
                                 </h4>
-                                <p className="text-sm text-red-700 mb-3">
+                                <p className="text-sm text-red-700 mb-3 break-words">
                                     {surveyDetails.survey_failure_reason}
                                 </p>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-xs sm:text-sm text-gray-600">
                                     Please contact our support team or submit a new service request.
                                 </p>
-                                <p className="text-xs text-gray-500 mt-3">
+                                <p className="text-xs text-gray-500 mt-3 break-all">
                                     Reference: {customer_survey_order_id}
                                 </p>
                             </div>
@@ -485,29 +492,29 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
             {/* Manual Survey Success - Device Selection Required Card */}
             {/* This is only for MANUAL surveys that completed successfully and need device selection */}
             {canContinue && (
-                <Card className="border-none shadow-md bg-green-50 border-l-4 border-l-green-500">
-                    <CardContent className="py-5">
-                        <div className="flex items-start gap-4">
-                            <div className="rounded-full bg-green-100 p-3 shrink-0">
-                                <CheckCircle2 className="h-6 w-6 text-green-600" />
+                <Card className="w-full border-none shadow-md bg-green-50 border-l-4 border-l-green-500">
+                    <CardContent className="py-4 px-4 sm:py-5 sm:px-6">
+                        <div className="flex items-start gap-3 sm:gap-4">
+                            <div className="rounded-full bg-green-100 p-2 sm:p-3 shrink-0">
+                                <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                             </div>
-                            <div className="flex-1">
-                                <h4 className="font-semibold text-lg text-green-800 mb-2">
-                                    Request Approved
+                            <div className="min-w-0 flex-1">
+                                <h4 className="font-semibold text-base sm:text-lg text-green-800 mb-2">
+                                    Survey Completed
                                 </h4>
                                 <p className="text-sm text-green-700 mb-1">
                                     Your location supports <strong>{surveyDetails?.media_type === 'PON' ? 'Fiber' : 'Copper'}</strong> connection.
                                 </p>
-                                <p className="text-sm text-gray-600 mb-4">
+                                <p className="text-xs sm:text-sm text-gray-600 mb-4">
                                     Please select a device to continue with your order.
                                 </p>
-                                        <Button
-                                            onClick={handleContinueClick}
-                                            className="bg-green-600 hover:bg-green-700 text-white"
-                                        >
-                                    <Package className="mr-2 h-4 w-4" />
-                                    Continue
-                                    <ChevronRight className="ml-2 h-4 w-4" />
+                                <Button
+                                    onClick={handleContinueClick}
+                                    className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white h-9 sm:h-10"
+                                >
+                                    <Package className="mr-2 h-4 w-4 shrink-0" />
+                                    <span>Continue</span>
+                                    <ChevronRight className="ml-2 h-4 w-4 shrink-0" />
                                 </Button>
                             </div>
                         </div>
@@ -516,40 +523,40 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
             )}
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
 
                 {/* Survey Information */}
-                <Card className="border-none shadow-xs">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            <Hash className="h-4 w-4" />
-                            Request Information
+                <Card className="w-full border-none shadow-sm transition-all duration-300 hover:shadow-md">
+                    <CardHeader className="pb-3 p-4 sm:p-6">
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                            <Hash className="h-4 w-4 shrink-0 text-primary" />
+                            <span>Survey Information</span>
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                        <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Request Number</span>
-                            <span className="font-mono font-medium">{customer_survey_order_id || 'N/A'}</span>
+                    <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                            <span className="text-xs sm:text-sm text-muted-foreground">Survey Number</span>
+                            <span className="font-mono text-xs sm:text-sm font-medium break-all sm:break-normal">{customer_survey_order_id || 'N/A'}</span>
                         </div>
                         <Separator />
-                        <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Service Type</span>
-                            <span className="flex items-center gap-2 font-medium">
-                                <ServiceIcon className={`h-4 w-4 ${serviceType.color}`} />
-                                {serviceType.label}
+                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                            <span className="text-xs sm:text-sm text-muted-foreground">Service Type</span>
+                            <span className="flex items-center gap-2 text-xs sm:text-sm font-medium">
+                                <ServiceIcon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 ${serviceType.color}`} />
+                                <span>{serviceType.label}</span>
                             </span>
                         </div>
                         <Separator />
-                        <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Request Type</span>
-                            <span className="font-medium">{surveyTypeInfo.label}</span>
+                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                            <span className="text-xs sm:text-sm text-muted-foreground">Request Type</span>
+                            <span className="text-xs sm:text-sm font-medium">{surveyTypeInfo.label}</span>
                         </div>
                         <Separator />
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Processing Type</span>
+                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                            <span className="text-xs sm:text-sm text-muted-foreground">Survey Type</span>
                             <Badge
                                 variant="outline"
-                                className={`${
+                                className={`w-fit text-xs ${
                                     isManualSurvey
                                         ? 'border-blue-200 bg-blue-50 text-blue-700'
                                         : 'border-purple-200 bg-purple-50 text-purple-700'
@@ -559,16 +566,16 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                             </Badge>
                         </div>
                         <Separator />
-                        <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Created</span>
-                            <span className="font-medium">{formatDate(surveyDetails?.created_at)}</span>
+                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                            <span className="text-xs sm:text-sm text-muted-foreground">Created</span>
+                            <span className="text-xs sm:text-sm font-medium break-words">{formatDate(surveyDetails?.created_at)}</span>
                         </div>
                         {surveyDetails?.updated_at && surveyDetails.updated_at !== surveyDetails.created_at && (
                             <>
                                 <Separator />
-                                <div className="flex justify-between">
-                                    <span className="text-sm text-muted-foreground">Last Updated</span>
-                                    <span className="font-medium">{formatDate(surveyDetails?.updated_at)}</span>
+                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                                    <span className="text-xs sm:text-sm text-muted-foreground">Last Updated</span>
+                                    <span className="text-xs sm:text-sm font-medium break-words">{formatDate(surveyDetails?.updated_at)}</span>
                                 </div>
                             </>
                         )}
@@ -576,17 +583,17 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                 </Card>
 
                 {/* Subscription Information */}
-                <Card className="border-none shadow-xs">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            <Zap className="h-4 w-4" />
-                            Subscription Information
+                <Card className="w-full border-none shadow-sm transition-all duration-300 hover:shadow-md">
+                    <CardHeader className="pb-3 p-4 sm:p-6">
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                            <Zap className="h-4 w-4 shrink-0 text-primary" />
+                            <span>Subscription Information</span>
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                        <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Order Number</span>
-                            <span className="font-mono font-medium">
+                    <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                            <span className="text-xs sm:text-sm text-muted-foreground">Order Number</span>
+                            <span className="font-mono text-xs sm:text-sm font-medium break-all sm:break-normal">
                                 {customer_subscription_order_id || <span className="text-muted-foreground">—</span>}
                             </span>
                         </div>
@@ -594,26 +601,26 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                         {/* For Combo services, show both Voice and FBB numbers */}
                         {surveyDetails?.main_offer_id === COMBO_OFFER_ID ? (
                             <>
-                                <div className="flex justify-between">
-                                    <span className="text-sm text-muted-foreground">Voice Number</span>
-                                    <span className="flex items-center gap-2 font-medium">
-                                        <Phone className="h-4 w-4 text-violet-500" />
-                                        {service_number || <span className="text-muted-foreground">Awaiting</span>}
+                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                                    <span className="text-xs sm:text-sm text-muted-foreground">Voice Number</span>
+                                    <span className="flex items-center gap-2 text-xs sm:text-sm font-medium">
+                                        <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-violet-500" />
+                                        <span className="break-all sm:break-normal">{service_number || <span className="text-muted-foreground">Awaiting</span>}</span>
                                     </span>
                                 </div>
                                 <Separator />
-                                <div className="flex justify-between">
-                                    <span className="text-sm text-muted-foreground">FBB/Data Number</span>
-                                    <span className="flex items-center gap-2 font-medium">
-                                        <Wifi className="h-4 w-4 text-blue-500" />
-                                        {surveyDetails?.fbb_service_number || <span className="text-muted-foreground">Awaiting</span>}
+                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                                    <span className="text-xs sm:text-sm text-muted-foreground">FBB/Data Number</span>
+                                    <span className="flex items-center gap-2 text-xs sm:text-sm font-medium">
+                                        <Wifi className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-blue-500" />
+                                        <span className="break-all sm:break-normal">{surveyDetails?.fbb_service_number || <span className="text-muted-foreground">Awaiting</span>}</span>
                                     </span>
                                 </div>
                             </>
                         ) : (
-                            <div className="flex justify-between">
-                                <span className="text-sm text-muted-foreground">Service Number</span>
-                                <span className="font-medium">
+                            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                                <span className="text-xs sm:text-sm text-muted-foreground">Service Number</span>
+                                <span className="text-xs sm:text-sm font-medium break-all sm:break-normal">
                                     {service_number || <span className="text-muted-foreground">Awaiting</span>}
                                 </span>
                             </div>
@@ -622,32 +629,30 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                         {(surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID) && (
                             <>
                                 <Separator />
-                                <div className="flex justify-between">
-                                    <span className="text-sm text-muted-foreground">Bandwidth</span>
-                                    <span className="flex items-center gap-2 font-medium">
-                                        <Gauge className="h-4 w-4 text-muted-foreground" />
-                                        {bandwidthDisplay || <span className="text-muted-foreground">Not available</span>}
+                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                                    <span className="text-xs sm:text-sm text-muted-foreground">Bandwidth</span>
+                                    <span className="flex items-center gap-2 text-xs sm:text-sm font-medium">
+                                        <Gauge className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-muted-foreground" />
+                                        <span>{bandwidthDisplay || <span className="text-muted-foreground">Not available</span>}</span>
                                     </span>
                                 </div>
                             </>
                         )}
                         <Separator />
-                        {surveyDetails?.with_device && (
-
-
-                            <div className="flex justify-between">
-                                <span className="text-sm text-muted-foreground">Device</span>
-                                <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-xs font-medium ${surveyDetails?.with_device
+                        {surveyDetails?.with_device !== undefined && (
+                            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                                <span className="text-xs sm:text-sm text-muted-foreground">Device</span>
+                                <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-xs font-medium w-fit ${surveyDetails?.with_device
                                     ? 'bg-emerald-100 text-emerald-700'
                                     : 'bg-gray-100 text-gray-600'
                                     }`}>
                                     {surveyDetails?.with_device ? (
                                         <>
-                                            <Package className="h-3 w-3" />
-                                            With Device
+                                            <Package className="h-3 w-3 shrink-0" />
+                                            <span>With Device</span>
                                         </>
                                     ) : (
-                                        'Without Device'
+                                        <span>Without Device</span>
                                     )}
                                 </span>
                             </div>
@@ -657,21 +662,21 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
 
                 {/* Infrastructure Info Card - Show media type and cable type */}
                 {(surveyDetails?.media_type || surveyDetails?.cable_type !== null) && !surveyDetails?.survey_failure_reason && (
-                    <Card className={`border-none shadow-xs ${canContinue ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' : ''}`}>
-                        <CardHeader className="pb-3">
-                            <CardTitle className="flex items-center gap-2 text-base">
-                                <Cable className="h-4 w-4 text-emerald-600" />
-                                Infrastructure Details
+                    <Card className={`w-full border-none shadow-sm transition-all duration-300 hover:shadow-md ${canContinue ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' : ''}`}>
+                        <CardHeader className="pb-3 p-4 sm:p-6">
+                            <CardTitle className="flex flex-wrap items-center gap-2 text-base sm:text-lg">
+                                <Cable className="h-4 w-4 shrink-0 text-emerald-600" />
+                                <span>Infrastructure Details</span>
                                 {canContinue && (
-                                    <Badge className="ml-2 bg-green-100 text-green-700 border-green-200">Ready</Badge>
+                                    <Badge className="ml-auto sm:ml-2 bg-green-100 text-green-700 border-green-200 text-xs">Survey Complete</Badge>
                                 )}
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3">
+                        <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
                             {surveyDetails?.media_type && (
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-muted-foreground">Media Type</span>
-                                    <Badge variant="outline" className={`${surveyDetails.media_type === 'PON' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                                    <span className="text-xs sm:text-sm text-muted-foreground">Media Type</span>
+                                    <Badge variant="outline" className={`w-fit text-xs ${surveyDetails.media_type === 'PON' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
                                         {mediaTypeMap[surveyDetails.media_type]?.label || surveyDetails.media_type}
                                     </Badge>
                                 </div>
@@ -680,9 +685,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                 <Separator />
                             )}
                             {surveyDetails.cable_type !== null && surveyDetails.cable_type !== undefined && (
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-muted-foreground">Cable Type</span>
-                                    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                                    <span className="text-xs sm:text-sm text-muted-foreground">Cable Type</span>
+                                    <Badge variant="outline" className="w-fit text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
                                         {cableTypeMap[Number(surveyDetails.cable_type)]?.label || `Type ${surveyDetails.cable_type}`}
                                     </Badge>
                                 </div>
@@ -690,9 +695,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                             {surveyDetails.line_indicator !== null && surveyDetails.line_indicator !== undefined && (
                                 <>
                                     <Separator />
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-muted-foreground">Installation</span>
-                                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                                    <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                                        <span className="text-xs sm:text-sm text-muted-foreground">Installation</span>
+                                        <Badge variant="outline" className="w-fit text-xs bg-gray-50 text-gray-700 border-gray-200">
                                             {surveyDetails.line_indicator === 0 ? 'Same Line' : 'Separate Line'}
                                         </Badge>
                                     </div>
@@ -704,16 +709,16 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                 <>
                                     <Separator className="my-4" />
                                     <div className="pt-2">
-                                        <p className="text-sm text-muted-foreground mb-3">
+                                        <p className="text-xs sm:text-sm text-muted-foreground mb-3">
                                             Select a device to continue with your order.
                                         </p>
                                         <Button
                                             onClick={handleContinueClick}
-                                            className="w-full bg-green-600 hover:bg-green-700 text-white"
+                                            className="w-full bg-green-600 hover:bg-green-700 text-white h-9 sm:h-10"
                                         >
-                                            <Package className="mr-2 h-4 w-4" />
-                                            Continue
-                                            <ChevronRight className="ml-2 h-4 w-4" />
+                                            <Package className="mr-2 h-4 w-4 shrink-0" />
+                                            <span>Continue</span>
+                                            <ChevronRight className="ml-2 h-4 w-4 shrink-0" />
                                         </Button>
                                     </div>
                                 </>
@@ -725,30 +730,30 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                 {/* Internet Credentials Card - Only for Data and Combo services after subscription */}
                 {(surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID) &&
                     surveyDetails?.internet_account && (
-                        <Card className="border-none shadow-xs bg-gradient-to-br from-blue-50 to-cyan-50">
-                            <CardHeader className="pb-3">
-                                <CardTitle className="flex items-center gap-2 text-base">
-                                    <Wifi className="h-4 w-4 text-blue-600" />
-                                    Default Internet Credentials
-                                    <Badge variant="outline" className="ml-2 text-xs bg-white">For Device Config</Badge>
+                        <Card className="w-full border-none shadow-sm transition-all duration-300 hover:shadow-md bg-gradient-to-br from-blue-50 to-cyan-50">
+                            <CardHeader className="pb-3 p-4 sm:p-6">
+                                <CardTitle className="flex flex-wrap items-center gap-2 text-base sm:text-lg">
+                                    <Wifi className="h-4 w-4 shrink-0 text-blue-600" />
+                                    <span>Default Internet Credentials</span>
+                                    <Badge variant="outline" className="ml-auto sm:ml-2 text-xs bg-white">For Device Config</Badge>
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-muted-foreground">Username</span>
-                                    <span className="font-mono font-medium text-blue-700 bg-white px-2 py-1 rounded">
+                            <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
+                                    <span className="text-xs sm:text-sm text-muted-foreground">Username</span>
+                                    <span className="font-mono text-xs sm:text-sm font-medium text-blue-700 bg-white px-2 py-1 rounded break-all sm:break-normal">
                                         {surveyDetails.internet_account}
                                     </span>
                                 </div>
                                 <Separator />
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-muted-foreground">Password</span>
-                                    <span className="font-mono font-medium text-blue-700 bg-white px-2 py-1 rounded">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
+                                    <span className="text-xs sm:text-sm text-muted-foreground">Password</span>
+                                    <span className="font-mono text-xs sm:text-sm font-medium text-blue-700 bg-white px-2 py-1 rounded break-all sm:break-normal">
                                         {surveyDetails.internet_password || '••••••••'}
                                     </span>
                                 </div>
                                 <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                    <p className="text-xs text-amber-800">
+                                    <p className="text-xs text-amber-800 break-words">
                                         <strong>Important:</strong> Use these credentials to configure your internet device/router.
                                         Keep them secure and do not share with others.
                                     </p>
@@ -758,34 +763,34 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                     )}
 
                 {/* Customer Information */}
-                <Card className="border-none shadow-xs">
-                    <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center gap-2 text-base">
-                            <User className="h-4 w-4" />
-                            Customer Information
+                <Card className="w-full border-none shadow-sm transition-all duration-300 hover:shadow-md">
+                    <CardHeader className="pb-3 p-4 sm:p-6">
+                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                            <User className="h-4 w-4 shrink-0 text-primary" />
+                            <span>Customer Information</span>
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                        <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Name</span>
-                            <span className="font-medium">{user.name}</span>
+                    <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                            <span className="text-xs sm:text-sm text-muted-foreground">Name</span>
+                            <span className="text-xs sm:text-sm font-medium break-words">{user.name}</span>
                         </div>
                         <Separator />
-                        <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Phone</span>
-                            <span className="flex items-center gap-2 font-medium">
-                                <Phone className="h-4 w-4 text-muted-foreground" />
-                                {user.phone}
+                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                            <span className="text-xs sm:text-sm text-muted-foreground">Phone</span>
+                            <span className="flex items-center gap-2 text-xs sm:text-sm font-medium">
+                                <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-muted-foreground" />
+                                <span className="break-all sm:break-normal">{user.phone}</span>
                             </span>
                         </div>
                         {user.email && (
                             <>
                                 <Separator />
-                                <div className="flex justify-between">
-                                    <span className="text-sm text-muted-foreground">Email</span>
-                                    <span className="flex items-center gap-2 font-medium">
-                                        <Mail className="h-4 w-4 text-muted-foreground" />
-                                        {user.email}
+                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
+                                    <span className="text-xs sm:text-sm text-muted-foreground">Email</span>
+                                    <span className="flex items-center gap-2 text-xs sm:text-sm font-medium">
+                                        <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-muted-foreground" />
+                                        <span className="break-all sm:break-normal">{user.email}</span>
                                     </span>
                                 </div>
                             </>
@@ -795,68 +800,68 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
 
                 {/* Payment Information - Invoice Style (only show if there's payment info) */}
                 {hasPaymentItems && (
-                    <Card className="border-none shadow-xs">
-                        <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-2 text-base">
-                                    <CreditCard className="h-4 w-4" />
-                                    Payment Summary
+                    <Card className="w-full border-none shadow-sm transition-all duration-300 hover:shadow-md lg:col-span-2">
+                        <CardHeader className="pb-3 p-4 sm:p-6">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                                    <CreditCard className="h-4 w-4 shrink-0 text-primary" />
+                                    <span>Payment Summary</span>
                                 </CardTitle>
-                                <div className="flex items-center gap-2">
-                                    <span className={`inline-flex items-center rounded-md px-3 py-1 text-sm font-semibold ${payment?.status === 'Paid' ? 'bg-et-green text-white' : 'bg-et-yellow text-gray-900'}`}>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className={`inline-flex items-center rounded-md px-2 sm:px-3 py-1 text-xs sm:text-sm font-semibold ${payment?.status === 'Paid' ? 'bg-et-green text-white' : 'bg-et-yellow text-gray-900'}`}>
                                         {payment?.status || (isPaid ? 'Paid' : 'Pending')}
                                     </span>
                                     {payment?.merch_order_id && (
-                                        <span className="rounded bg-muted px-2 py-1 text-xs font-medium">
+                                        <span className="rounded bg-muted px-2 py-1 text-xs font-medium break-all sm:break-normal">
                                             Invoice #{payment.merch_order_id}
                                         </span>
                                     )}
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-4 sm:p-6 pt-0">
                             {/* Invoice Table */}
-                            <div className="rounded-lg border bg-muted/30">
-                                <table className="w-full">
+                            <div className="rounded-lg border bg-muted/30 overflow-x-auto">
+                                <table className="w-full min-w-[300px]">
                                     <thead>
                                         <tr className="border-b bg-muted/50">
-                                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Description</th>
-                                            <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Amount (ETB)</th>
+                                            <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Description</th>
+                                            <th className="px-3 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Amount (ETB)</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
                                         {subscriptionFee > 0 && (
                                             <tr>
-                                                <td className="px-4 py-3 text-sm">Subscription Fee</td>
-                                                <td className="px-4 py-3 text-right font-medium tabular-nums">{subscriptionFee.toFixed(2)}</td>
+                                                <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">Subscription Fee</td>
+                                                <td className="px-3 sm:px-4 py-2 sm:py-3 text-right text-xs sm:text-sm font-medium tabular-nums">{subscriptionFee.toFixed(2)}</td>
                                             </tr>
                                         )}
                                         {cableCharge > 0 && (
                                             <tr>
-                                                <td className="px-4 py-3 text-sm">
+                                                <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">
                                                     Cable Charge
                                                     {cableLength && <span className="ml-1 text-muted-foreground">({cableLength}m)</span>}
                                                 </td>
-                                                <td className="px-4 py-3 text-right font-medium tabular-nums">{cableCharge.toFixed(2)}</td>
+                                                <td className="px-3 sm:px-4 py-2 sm:py-3 text-right text-xs sm:text-sm font-medium tabular-nums">{cableCharge.toFixed(2)}</td>
                                             </tr>
                                         )}
                                         {deviceFee > 0 && (
                                             <tr>
-                                                <td className="px-4 py-3 text-sm">Device Fee</td>
-                                                <td className="px-4 py-3 text-right font-medium tabular-nums">{deviceFee.toFixed(2)}</td>
+                                                <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">Device Fee</td>
+                                                <td className="px-3 sm:px-4 py-2 sm:py-3 text-right text-xs sm:text-sm font-medium tabular-nums">{deviceFee.toFixed(2)}</td>
                                             </tr>
                                         )}
                                     </tbody>
                                     <tfoot>
                                         <tr className="border-t-2 bg-muted/50">
-                                            <td className="px-4 py-4 text-sm font-semibold">Total Amount</td>
-                                            <td className="px-4 py-4 text-right text-lg font-bold text-primary tabular-nums">{totalAmount}</td>
+                                            <td className="px-3 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-semibold">Total Amount</td>
+                                            <td className="px-3 sm:px-4 py-3 sm:py-4 text-right text-base sm:text-lg font-bold text-primary tabular-nums">{totalAmount}</td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
                             {payment?.payment_order_id && (
-                                <p className="mt-3 text-center text-xs text-muted-foreground">
+                                <p className="mt-3 text-center text-xs text-muted-foreground break-all">
                                     Payment Reference: {payment.payment_order_id}
                                 </p>
                             )}
@@ -902,17 +907,17 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                         <Button
                                             onClick={onSubscribeConfirm}
                                             disabled={loading || isSubmitting || !customer_survey_order_id}
-                                            className={`w-full gap-2 sm:w-auto ${focusFlash && focusSafe === 'subscribe' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                                            className={`w-full gap-2 sm:w-auto h-9 sm:h-10 ${focusFlash && focusSafe === 'subscribe' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                                         >
                                             {loading && createSubscriptionMutation.isPending ? (
                                                 <>
-                                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                                    Processing...
+                                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent shrink-0" />
+                                                    <span>Processing...</span>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <CheckCircle2 className="h-5 w-5" />
-                                                    Subscribe
+                                                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                                                    <span>Subscribe</span>
                                                 </>
                                             )}
                                         </Button>
@@ -922,18 +927,17 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                         <Button
                                             onClick={onPaymentConfirm}
                                             disabled={loading || !customer_survey_order_id}
-                                            size="lg"
-                                            className={`w-full gap-2 sm:w-auto ${focusFlash && focusSafe === 'payment' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                                            className={`w-full gap-2 sm:w-auto h-9 sm:h-10 ${focusFlash && focusSafe === 'payment' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                                         >
                                             {loading && createPaymentOrderMutation.isPending ? (
                                                 <>
-                                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                                    Processing...
+                                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent shrink-0" />
+                                                    <span>Processing...</span>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <CreditCard className="h-5 w-5" />
-                                                    Pay {totalAmount} ETB
+                                                    <CreditCard className="h-4 w-4 shrink-0" />
+                                                    <span>Pay {totalAmount} ETB</span>
                                                 </>
                                             )}
                                         </Button>
@@ -945,19 +949,19 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                                 onClick={() => setOpenUpgradeDialog(true)}
                                                 disabled={loading}
                                                 variant="outline"
-                                                className="w-full gap-2 sm:w-auto"
+                                                className="w-full gap-2 sm:w-auto h-9 sm:h-10"
                                             >
-                                                <ArrowUpToLineIcon className="h-4 w-4" />
-                                                Upgrade
+                                                <ArrowUpToLineIcon className="h-4 w-4 shrink-0" />
+                                                <span>Upgrade</span>
                                             </Button>
                                             <Button
                                                 onClick={() => setOpenDowngradeDialog(true)}
                                                 disabled={loading}
                                                 variant="outline"
-                                                className="w-full gap-2 sm:w-auto"
+                                                className="w-full gap-2 sm:w-auto h-9 sm:h-10"
                                             >
-                                                <ArrowDownToLineIcon className="h-4 w-4" />
-                                                Downgrade
+                                                <ArrowDownToLineIcon className="h-4 w-4 shrink-0" />
+                                                <span>Downgrade</span>
                                             </Button>
                                         </>
                                     )}
@@ -967,10 +971,10 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                             onClick={() => { setIsTerminateAction(false); setOpenCancelDialog(true); }}
                                             disabled={loading}
                                             variant="destructive"
-                                            className="w-full gap-2 sm:w-auto"
+                                            className="w-full gap-2 sm:w-auto h-9 sm:h-10"
                                         >
-                                            <X className="h-4 w-4" />
-                                            Cancel
+                                            <X className="h-4 w-4 shrink-0" />
+                                            <span>Cancel</span>
                                         </Button>
                                     )}
 
@@ -979,10 +983,10 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
                                             onClick={() => { setIsTerminateAction(true); setOpenCancelDialog(true); }}
                                             disabled={loading}
                                             variant="destructive"
-                                            className="w-full gap-2 sm:w-auto"
+                                            className="w-full gap-2 sm:w-auto h-9 sm:h-10"
                                         >
-                                            <X className="h-4 w-4" />
-                                            Terminate
+                                            <X className="h-4 w-4 shrink-0" />
+                                            <span>Terminate</span>
                                         </Button>
                                     )}
                                 </div>
@@ -995,12 +999,19 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus }: SurveyDet
             {/* No Actions Available */}
             {!canPay && !canSubscribe && !canUpgradeDowngrade && !canCancel && !canTerminate && (
                 <div className="flex justify-center pt-4">
-                    <Link href="/services">
-                        <Button variant="outline" className="gap-2">
-                            <ArrowLeft className="h-4 w-4" />
-                            Back
+                    {!isInFlow ? (
+                        <Link href="/services" className="w-full sm:w-auto">
+                            <Button variant="outline" className="w-full sm:w-auto gap-2 h-9 sm:h-10">
+                                <ArrowLeft className="h-4 w-4 shrink-0" />
+                                <span>Back</span>
+                            </Button>
+                        </Link>
+                    ) : onBack ? (
+                        <Button variant="outline" onClick={onBack} className="w-full sm:w-auto gap-2 h-9 sm:h-10">
+                            <ArrowLeft className="h-4 w-4 shrink-0" />
+                            <span>Back</span>
                         </Button>
-                    </Link>
+                    ) : null}
                 </div>
             )}
 

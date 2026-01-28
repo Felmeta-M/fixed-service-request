@@ -23,9 +23,11 @@ const transformLocalToTTDetail = (localTT: LocalTroubleTicket): TTDetail & {
   serviceOwnerType?: string;
   serviceOwnerLevel?: string;
   createdByCode?: string;
+  localStatus?: string;
 } => {
-  // Map status to result_code format (external uses '0' for active, '1' for failed/closed)
-  const resultCode = localTT.status === 'completed' || localTT.status === 'cancelled' ? '1' : '0';
+  // Map status to result_code format (external uses '0' for active, '1' for closed/resolved)
+  const isCompleted = ['resolved', 'closed', 'cancelled'].includes(localTT.status);
+  const resultCode = isCompleted ? '1' : '0';
   
   // Parse service owner name into parts
   const ownerNameParts = (localTT.service_owner_name || '').trim().split(/\s+/);
@@ -57,7 +59,7 @@ const transformLocalToTTDetail = (localTT: LocalTroubleTicket): TTDetail & {
     floor: '',
     roomNo: '',
     accessNumber: localTT.access_number || '',
-    acctNumber: localTT.account_number || '',
+    acctNumber: '',
     additionalFaultyNbr: '',
     contactPerson: localTT.contact_person || '',
     mobileNo: localTT.mobile_no || '',
@@ -68,7 +70,7 @@ const transformLocalToTTDetail = (localTT: LocalTroubleTicket): TTDetail & {
     troubleGrand: '',
     deadline: '',
     acceptTime: localTT.created_at || '',
-    occurrenceDate: localTT.occurrence_date || '',
+    occurrenceDate: localTT.created_at || '',
     expectFeedbackTime: '',
     faultLocation: '',
     sendSMS: '',
@@ -84,6 +86,7 @@ const transformLocalToTTDetail = (localTT: LocalTroubleTicket): TTDetail & {
     serviceOwnerType: localTT.service_owner_type,
     serviceOwnerLevel: localTT.service_owner_level,
     createdByCode: localTT.customer_code,
+    localStatus: localTT.status,
   };
 };
 
@@ -231,12 +234,30 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={detail.result_code === '0' ? 'default' : source === 'local' && detail.result_code === '1' ? 'secondary' : 'destructive'}>
-                      {source === 'local' 
-                        ? (detail.result_code === '0' ? 'Active' : detail.result_code === '1' ? 'Completed' : 'Failed')
-                        : (detail.result_code === '0' ? 'Active' : 'Failed')
-                      }
-                    </Badge>
+                    {source === 'local' ? (
+                      <Badge 
+                        variant="outline" 
+                        className={
+                          (detail as any).localStatus === 'pending' ? 'text-yellow-700 border-yellow-200 bg-yellow-50' :
+                          (detail as any).localStatus === 'in_progress' ? 'text-blue-700 border-blue-200 bg-blue-50' :
+                          (detail as any).localStatus === 'resolved' ? 'text-green-700 border-green-200 bg-green-50' :
+                          (detail as any).localStatus === 'closed' ? 'text-gray-700 border-gray-200 bg-gray-50' :
+                          (detail as any).localStatus === 'cancelled' ? 'text-red-700 border-red-200 bg-red-50' :
+                          ''
+                        }
+                      >
+                        {(detail as any).localStatus === 'pending' ? 'Pending' :
+                         (detail as any).localStatus === 'in_progress' ? 'In Progress' :
+                         (detail as any).localStatus === 'resolved' ? 'Resolved' :
+                         (detail as any).localStatus === 'closed' ? 'Closed' :
+                         (detail as any).localStatus === 'cancelled' ? 'Cancelled' :
+                         'Unknown'}
+                      </Badge>
+                    ) : (
+                      <Badge variant={detail.result_code === '0' ? 'default' : 'destructive'}>
+                        {detail.result_code === '0' ? 'Active' : 'Failed'}
+                      </Badge>
+                    )}
                     <Badge variant="outline" className="text-xs">
                       {source === 'local' ? 'Local' : 'External'}
                     </Badge>

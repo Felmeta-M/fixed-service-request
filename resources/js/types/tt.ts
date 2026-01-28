@@ -73,17 +73,15 @@ export interface LocalTroubleTicket {
   tt_serial_no: string;
   trouble_title: string;
   access_number: string;
-  account_number?: string;
   contact_person: string;
   mobile_no: string;
   trouble_reason: string;
   tt_description: string;
-  occurrence_date?: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  external_tt_no?: string; // If synced with external system
+  status: 'pending' | 'in_progress' | 'resolved' | 'closed' | 'cancelled';
+  last_synced_status?: string;
+  last_checked_at?: string;
   created_at: string;
   updated_at: string;
-  user_id?: number;
   
   // Who created the TT (logged-in user)
   customer_code?: string;

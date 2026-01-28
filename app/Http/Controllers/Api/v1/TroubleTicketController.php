@@ -93,7 +93,7 @@ class TroubleTicketController extends Controller
         $user = auth()->user();
 
         try {
-            // Use Query Builder for better performance - only get needed columns
+            // Use Query Builder for better performance - get all fields needed for list and detail views
             $ticketsQuery = DB::table('trouble_tickets')
                 ->whereNull('deleted_at')
                 ->where('customer_code', $user->customer_code)
@@ -103,17 +103,29 @@ class TroubleTicketController extends Controller
                     'access_number',
                     'status',
                     'last_synced_status',
+                    'last_checked_at',
                     'created_at',
                     'updated_at',
                     'customer_code',
-                    'service_number',
-                    'problem_type',
-                    'problem_description',
-                    // Service owner info for list display
+                    // Service owner info
                     'service_owner_code',
                     'service_owner_name',
+                    'service_owner_type',
+                    'service_owner_level',
+                    // Address fields
+                    'region',
+                    'zone',
+                    'city',
+                    'sub_city',
+                    'wereda',
+                    'kebele',
+                    'house_no',
+                    // TT details
+                    'contact_person',
+                    'mobile_no',
                     'trouble_title',
                     'trouble_reason',
+                    'tt_description',
                 ]);
 
             if ($request->filled('tt_serial_no')) {

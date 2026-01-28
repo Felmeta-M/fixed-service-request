@@ -17,16 +17,16 @@ class GetCombiningService extends BaseApiService
     public function getByServiceNumber(string $serviceNumber)
     {
         try {
-            //TODO: to be replaced by frontend service number
-            $serviceNumber = "123418588";
-            $xmlRequest  = $this->buildXml($serviceNumber);
+            $xmlRequest = $this->buildXml($serviceNumber);
             $xmlResponse = $this->executeRequest($xmlRequest);
-
+            Log::info('GetCombiningService Response', ['xmlResponse' => $xmlResponse]);
             return ApiResponse::success(
                 $this->parseResponse($xmlResponse)
             );
         } catch (\Throwable $e) {
-            return ApiResponse::exception($e, 'GetCombining query failed');
+            return ApiResponse::error($e->getMessage(), 500);
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), 500);
         }
     }
 
@@ -38,7 +38,7 @@ class GetCombiningService extends BaseApiService
         $config = config('services.get_combining');
 
         $transactionId = uniqid();
-        $processTime   = now()->format('YmdHis');
+        $processTime = now()->format('YmdHis');
 
         return <<<XML
         <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -72,10 +72,10 @@ XML;
      */
     protected function parseResponse(string $xml): array
     {
-        $xmlObject  = simplexml_load_string($xml);
+        $xmlObject = simplexml_load_string($xml);
         $namespaces = $xmlObject->getNamespaces(true);
 
-        $body     = $xmlObject->children($namespaces['soapenv'])->Body;
+        $body = $xmlObject->children($namespaces['soapenv'])->Body;
         $response = $body->children($namespaces['quer'])->GetCombiningResponse;
 
         $header = $response->ResponseHeader->children($namespaces['bas']);
@@ -91,23 +91,23 @@ XML;
             'subscriber' => [
                 'subscriber_id' => (string) $body->SubscriberId,
                 'service_number' => (string) $body->ServiceNumber,
-                'subs_status'   => (string) $body->SubsStatus,
+                'subs_status' => (string) $body->SubsStatus,
             ],
 
             'customer' => [
-                'customer_id'       => (string) $body->CustomerId,
-                'customer_code'     => (string) $body->CustomerCode,
-                'first_name'        => (string) $body->FirstName,
-                'nationality'       => (string) $body->Nationality,
-                'customer_type'     => (string) $body->CustomerType,
-                'customer_level'    => (string) $body->CustomerLevel,
+                'customer_id' => (string) $body->CustomerId,
+                'customer_code' => (string) $body->CustomerCode,
+                'first_name' => (string) $body->FirstName,
+                'nationality' => (string) $body->Nationality,
+                'customer_type' => (string) $body->CustomerType,
+                'customer_level' => (string) $body->CustomerLevel,
                 'customer_language' => (string) $body->CustomerLanguage,
-                'gender'            => (string) $body->Gender,
-                'status'            => (string) $body->Status,
+                'gender' => (string) $body->Gender,
+                'status' => (string) $body->Status,
             ],
 
             'account' => [
-                'account_id'   => (string) $body->AccountId,
+                'account_id' => (string) $body->AccountId,
                 'account_code' => (string) $body->AccountCode,
             ],
 
@@ -116,9 +116,9 @@ XML;
             'ext_params' => $this->parseExtParams($body, $namespaces),
 
             'payment' => [
-                'pay_type'     => (string) $body->PayType,
+                'pay_type' => (string) $body->PayType,
                 'sla_priority' => (string) $body->SLAPriority,
-                'tele_type'    => (string) $body->TeleType,
+                'tele_type' => (string) $body->TeleType,
             ],
         ];
     }
@@ -130,17 +130,17 @@ XML;
         foreach ($body->AddressInfoList->children($namespaces['bas'])->AddressInfo ?? [] as $addr) {
             $addresses[] = [
                 'address_class' => (string) $addr->AddressClass,
-                'contact_seq'   => (string) $addr->ContactSeq,
-                'address_type'  => (string) $addr->AddressType,
-                'local_id'      => (string) $addr->LocalId,
-                'address1'      => (string) $addr->Address1,
-                'address2'      => (string) $addr->Address2,
-                'address3'      => (string) $addr->Address3,
-                'address4'      => (string) $addr->Address4,
-                'address5'      => (string) $addr->Address5,
-                'address6'      => (string) $addr->Address6,
-                'address9'      => (string) $addr->Address9,
-                'address11'     => (string) $addr->Address11,
+                'contact_seq' => (string) $addr->ContactSeq,
+                'address_type' => (string) $addr->AddressType,
+                'local_id' => (string) $addr->LocalId,
+                'address1' => (string) $addr->Address1,
+                'address2' => (string) $addr->Address2,
+                'address3' => (string) $addr->Address3,
+                'address4' => (string) $addr->Address4,
+                'address5' => (string) $addr->Address5,
+                'address6' => (string) $addr->Address6,
+                'address9' => (string) $addr->Address9,
+                'address11' => (string) $addr->Address11,
             ];
         }
 

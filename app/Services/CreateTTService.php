@@ -16,7 +16,6 @@ class CreateTTService extends BaseApiService
 
     public function __construct(
         protected readonly GetCombiningService $get_combining_service,
-        protected readonly QueryCustomerForTTService $queryCustomerForTTService
     ) {
     }
 
@@ -42,8 +41,9 @@ class CreateTTService extends BaseApiService
                 return ApiResponse::error('Service number (access_number) is required', 400);
             }
 
-            // Step 2: Query customer by service number
-            $customerResult = $this->queryCustomerForTTService->query($data['access_number']);
+            // Step 2: Query customer/subscriber by service number using GetCombiningService
+            $combiningResponse = $this->get_combining_service->getByServiceNumber($data['access_number']);
+            $customerResult = $combiningResponse->getData(true);
 
             if (!($customerResult['success'] ?? false)) {
                 $message = $customerResult['message'] ?? 'Service number not found. Please verify the number and try again.';
@@ -54,8 +54,8 @@ class CreateTTService extends BaseApiService
                 return ApiResponse::error($message, 404);
             }
 
-            // Step 3: Store queried customer data for XML building
-            $data['queried_customer'] = $customerResult;
+            // Step 3: Store queried customer data (parsed GetCombining payload) for XML building and persistence
+            $data['queried_customer'] = $customerResult['data'] ?? [];
 
             // Use tt_description as trouble_title to minimize customer journey
             $data['trouble_title'] = $data['tt_description'] ?? 'Fixed Services Complaint';

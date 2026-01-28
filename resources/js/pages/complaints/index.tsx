@@ -349,7 +349,6 @@ export default function ComplaintsIndex() {
                           <SelectItem value="all">All Status</SelectItem>
                           <SelectItem value="pending">Pending</SelectItem>
                           <SelectItem value="in_progress">In Progress</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
                           <SelectItem value="resolved">Resolved</SelectItem>
                           <SelectItem value="closed">Closed</SelectItem>
                           <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -393,7 +392,7 @@ export default function ComplaintsIndex() {
             <TTTable
               tts={tts}
               loading={loading}
-              onTTUpdate={() => loadUserTTs(pagination.current_page)}
+              onTTUpdate={() => localTTsQuery.refetch()}
             />
           </TabsContent>
 
@@ -523,7 +522,8 @@ export default function ComplaintsIndex() {
                             <SelectItem value="all">All Status</SelectItem>
                             <SelectItem value="pending">Pending</SelectItem>
                             <SelectItem value="in_progress">In Progress</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="resolved">Resolved</SelectItem>
+                            <SelectItem value="closed">Closed</SelectItem>
                             <SelectItem value="cancelled">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
@@ -563,24 +563,23 @@ export default function ComplaintsIndex() {
 
                     // Status filter
                     if (statusFilter !== 'all') {
-                      const ttStatus = tt.status.toLowerCase();
+                      const ttStatus = (tt.status || '').toLowerCase();
                       const filterStatus = statusFilter.toLowerCase();
 
-                      if (filterStatus === 'pending' && !ttStatus.includes('pending')) {
+                      // Exact match for specific statuses
+                      if (filterStatus === 'pending' && ttStatus !== 'pending') {
                         return false;
                       }
-                      if (filterStatus === 'in_progress' && !ttStatus.includes('progress')) {
+                      if (filterStatus === 'in_progress' && ttStatus !== 'in_progress' && !ttStatus.includes('progress')) {
                         return false;
                       }
-                      if (filterStatus === 'completed' &&
-                        !ttStatus.includes('completed') &&
-                        !ttStatus.includes('resolved') &&
-                        !ttStatus.includes('closed')) {
+                      if (filterStatus === 'resolved' && ttStatus !== 'resolved') {
                         return false;
                       }
-                      if (filterStatus === 'cancelled' &&
-                        !ttStatus.includes('cancelled') &&
-                        !ttStatus.includes('failed')) {
+                      if (filterStatus === 'closed' && ttStatus !== 'closed') {
+                        return false;
+                      }
+                      if (filterStatus === 'cancelled' && ttStatus !== 'cancelled' && !ttStatus.includes('failed')) {
                         return false;
                       }
                     }
@@ -589,10 +588,10 @@ export default function ComplaintsIndex() {
                     if (searchQuery) {
                       const query = searchQuery.toLowerCase();
                       return (
-                        tt.tt_no.toLowerCase().includes(query) ||
-                        tt.cust_name.toLowerCase().includes(query) ||
-                        tt.trouble_title.toLowerCase().includes(query) ||
-                        tt.access_number.includes(query)
+                        (tt.tt_no || '').toLowerCase().includes(query) ||
+                        (tt.cust_name || '').toLowerCase().includes(query) ||
+                        (tt.trouble_title || '').toLowerCase().includes(query) ||
+                        (tt.access_number || '').includes(query)
                       );
                     }
 

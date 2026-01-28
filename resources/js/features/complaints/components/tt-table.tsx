@@ -35,19 +35,22 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
     };
 
     const getStatusBadge = (status: string) => {
-        const lowerStatus = status.toLowerCase();
+        const lowerStatus = (status || '').toLowerCase();
         
-        if (lowerStatus.includes('pending') || lowerStatus === 'pending') {
-            return <Badge variant="outline" className="text-yellow-700 border-yellow-200">Pending</Badge>;
+        if (lowerStatus === 'pending') {
+            return <Badge variant="outline" className="text-yellow-700 border-yellow-200 bg-yellow-50">Pending</Badge>;
         }
-        if (lowerStatus.includes('progress') || lowerStatus === 'in_progress') {
-            return <Badge variant="outline" className="text-blue-700 border-blue-200">In Progress</Badge>;
+        if (lowerStatus === 'in_progress' || lowerStatus.includes('progress')) {
+            return <Badge variant="outline" className="text-blue-700 border-blue-200 bg-blue-50">In Progress</Badge>;
         }
-        if (lowerStatus.includes('completed') || lowerStatus.includes('resolved') || lowerStatus.includes('closed')) {
-            return <Badge variant="outline" className="text-green-700 border-green-200">Completed</Badge>;
+        if (lowerStatus === 'resolved') {
+            return <Badge variant="outline" className="text-green-700 border-green-200 bg-green-50">Resolved</Badge>;
         }
-        if (lowerStatus.includes('cancelled') || lowerStatus.includes('failed')) {
-            return <Badge variant="outline" className="text-red-700 border-red-200">Cancelled</Badge>;
+        if (lowerStatus === 'closed') {
+            return <Badge variant="outline" className="text-gray-700 border-gray-200 bg-gray-50">Closed</Badge>;
+        }
+        if (lowerStatus === 'cancelled' || lowerStatus.includes('failed')) {
+            return <Badge variant="outline" className="text-red-700 border-red-200 bg-red-50">Cancelled</Badge>;
         }
         return <Badge variant="outline">{status || 'N/A'}</Badge>;
     };

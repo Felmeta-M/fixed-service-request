@@ -436,10 +436,11 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                     center={defaultCenter}
                     zoom={11}
                     // Allow users to switch between roadmap and satellite views
-                    mapTypeId={google.maps.MapTypeId.ROADMAP}
+                    // mapTypeId={google.maps.MapTypeId.ROADMAP}
                     onLoad={onLoad}
                     onUnmount={onUnmount}
                     options={{
+                        mapTypeId: google.maps.MapTypeId.SATELLITE,
                         streetViewControl: false,
                         // Show map type control so users can choose Satellite
                         mapTypeControl: true,

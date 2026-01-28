@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { usePage } from '@inertiajs/react';
-import { CheckCircle, Loader2, Wifi } from 'lucide-react';
+import { CheckCircle, Loader2, Wifi, MapPin, User, Phone, Building2, Router, Globe, PhoneCall } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCreateSurvey } from '@/hooks/use-api-mutations';
@@ -218,80 +219,140 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
         });
     };
 
+    const ServiceIcon = serviceInfo?.icon || Wifi;
+
     return (
-        <div className="space-y-6">
+        <div className="w-full max-w-full space-y-6 overflow-x-hidden">
+            {/* Header Section */}
+            {/* <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/20">
+                        <CheckCircle className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-semibold text-foreground sm:text-2xl">Review & Submit</h2>
+                        <p className="text-sm text-muted-foreground">Please review your service request details before submitting</p>
+                    </div>
+                </div>
+            </div> */}
+
             {/* Review Summary */}
-            <div className="3xl:grid-cols-3 grid grid-cols-1 gap-6 lg:grid-cols-1">
-                {/* Service Details (match Resource Details layout) */}
-                <Card>
-                    <CardContent>
-                        <h3 className="mb-4 font-semibold text-gray-900">Service Details</h3>
-                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                            <div>
-                                <span className="text-sm text-gray-600">Service Type</span>
-                                <p className="font-semibold">{serviceInfo?.name}</p>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {/* Service Details Card */}
+                <Card className="w-full shadow-sm transition-all duration-300 hover:shadow-md">
+                    <CardContent className="sm:p-6">
+                        <div className="mb-2 flex items-center gap-3 border-b border-border/50 pb-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg  ring-1 ring-primary/20">
+                                <ServiceIcon className="h-5 w-5 text-primary" />
                             </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-foreground">Service Details</h3>
+                                <p className="text-xs text-muted-foreground">Service configuration and preferences</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            {/* Service Type */}
+                            <div className="flex flex-row justify-between gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Globe className="h-4 w-4 text-primary shrink-0" />
+                                    <span className="text-sm font-medium text-muted-foreground">Service Type</span>
+                                </div>
+                                <Badge variant="outline" className="w-fit  text-primary hover:bg-primary/20">
+                                    {serviceInfo?.name}
+                                </Badge>
+                            </div>
+
                             {/* Bandwidth - only for Internet and Combo services */}
                             {(formData.serviceType === '1457567289' || formData.serviceType === '180427974') && (
-                                <div>
-                                    <span className="text-sm text-gray-600">Bandwidth</span>
-                                    <p className="font-semibold">{formData.bandwidth || '-'}</p>
+                                <div className="flex flex-row justify-between gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Wifi className="h-4 w-4 text-primary shrink-0" />
+                                        <span className="text-sm font-medium text-muted-foreground">Bandwidth</span>
+                                    </div>
+                                    <p className="text-sm font-semibold text-foreground">{formData.bandwidth || '-'}</p>
                                 </div>
                             )}
-                            <div>
-                                <span className="text-sm text-gray-600">Customer Type</span>
-                                <p className="font-semibold capitalize">{formData.customerType || 'residential'}</p>
-                            </div>
+
+                            {/* Customer Type */}
+                            {/* <div className="flex flex-row justify-between gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Building2 className="h-4 w-4 text-primary shrink-0" />
+                                    <span className="text-sm font-medium text-muted-foreground">Customer Type</span>
+                                </div>
+                                <Badge variant="outline" className="w-fit capitalize">
+                                    {formData.customerType || 'residential'}
+                                </Badge>
+                            </div> */}
+
                             {/* Device info - only for Internet and Combo services */}
                             {(formData.serviceType === '1457567289' || formData.serviceType === '180427974') && (
-                                <div>
-                                    <span className="text-sm text-gray-600">Device</span>
-                                    <div className="font-semibold">
+                                <div className="flex flex-col gap-2 pt-2 border-t border-border/50">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Router className="h-4 w-4 text-primary shrink-0" />
+                                        <span className="text-sm font-medium text-muted-foreground">Device</span>
+                                    </div>
+                                    <div className="pl-6">
                                         {formData.withDevice === undefined ? (
-                                            <p>Not selected</p>
+                                            <p className="text-sm text-muted-foreground">Not selected</p>
                                         ) : formData.withDevice ? (
                                             formData.serviceType === '180427974' ? (
                                                 // Combo service - show only internet device
-                                                <div className="space-y-1">
+                                                <div className="space-y-2">
                                                     {formData.selectedDeviceInternet ? (
-                                                        <p>
-                                                            {formData.selectedDeviceInternet.name} ({formData.selectedDeviceInternet.vendor}) -{' '}
-                                                            {new Intl.NumberFormat('en-ET', {
-                                                                style: 'currency',
-                                                                currency: 'ETB',
-                                                                minimumFractionDigits: 0,
-                                                                maximumFractionDigits: 2,
-                                                            }).format(formData.selectedDeviceInternet.price)}
-                                                        </p>
+                                                        <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+                                                            <p className="text-sm font-semibold text-foreground">
+                                                                {formData.selectedDeviceInternet.name}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {formData.selectedDeviceInternet.vendor}
+                                                                {formData.selectedDeviceInternet.model && ` • ${formData.selectedDeviceInternet.model}`}
+                                                            </p>
+                                                            <p className="mt-1 text-sm font-semibold text-primary">
+                                                                {new Intl.NumberFormat('en-ET', {
+                                                                    style: 'currency',
+                                                                    currency: 'ETB',
+                                                                    minimumFractionDigits: 0,
+                                                                    maximumFractionDigits: 2,
+                                                                }).format(formData.selectedDeviceInternet.price)}
+                                                            </p>
+                                                        </div>
                                                     ) : (
-                                                        <p className="text-orange-600">Not selected</p>
+                                                        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                                                            Not selected
+                                                        </Badge>
                                                     )}
                                                 </div>
                                             ) : formData.selectedDevice ? (
                                                 // Single service device
-                                                <p>
-                                                    {formData.selectedDevice.name} ({formData.selectedDevice.vendor}) -{' '}
-                                                    {new Intl.NumberFormat('en-ET', {
-                                                        style: 'currency',
-                                                        currency: 'ETB',
-                                                        minimumFractionDigits: 0,
-                                                        maximumFractionDigits: 2,
-                                                    }).format(formData.selectedDevice.price)}
-                                                </p>
+                                                <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+                                                    <p className="text-sm font-semibold text-foreground">
+                                                        {formData.selectedDevice.name}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {formData.selectedDevice.vendor}
+                                                        {formData.selectedDevice.model && ` • ${formData.selectedDevice.model}`}
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-semibold text-primary">
+                                                        {new Intl.NumberFormat('en-ET', {
+                                                            style: 'currency',
+                                                            currency: 'ETB',
+                                                            minimumFractionDigits: 0,
+                                                            maximumFractionDigits: 2,
+                                                        }).format(formData.selectedDevice.price)}
+                                                    </p>
+                                                </div>
                                             ) : (
-                                                <p className="text-orange-600">With Device (Not selected)</p>
+                                                <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                                                    With Device (Not selected)
+                                                </Badge>
                                             )
                                         ) : (
-                                            <p>Without Device</p>
+                                            <Badge variant="outline" className="w-fit">Without Device</Badge>
                                         )}
                                     </div>
                                 </div>
                             )}
-
-                            {/*<div>*/}
-                            {/*    <span className="text-sm text-gray-600">Main Offer ID</span>*/}
-                            {/*    <p className="font-semibold">{formData.serviceType || '-'}</p>*/}
-                            {/*</div>*/}
                         </div>
                     </CardContent>
                 </Card>
@@ -325,27 +386,112 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                     </CardContent>
                 </Card> */}
 
-                {/* Contact Details (match Resource Details layout) */}
-                <Card>
-                    <CardContent>
-                        <h3 className="mb-4 font-semibold text-gray-900">Contact</h3>
-                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                            <div>
-                                <span className="text-sm text-gray-600">Contact Person</span>
-                                <p className="font-semibold">{formData.contactPerson || 'Customer'}</p>
+                {/* Location Details Card */}
+                {/* <Card className="w-full shadow-sm transition-all duration-300 hover:shadow-md">
+                    <CardContent className="p-4 sm:p-6">
+                        <div className="mb-5 flex items-center gap-3 border-b border-border/50 pb-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/20">
+                                <MapPin className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                                <span className="text-sm text-gray-600">Phone</span>
-                                <p className="font-semibold">{formData.contactNo || '-'}</p>
+                                <h3 className="text-lg font-semibold text-foreground">Location Details</h3>
+                                <p className="text-xs text-muted-foreground">Installation address and coordinates</p>
                             </div>
-                            {/* <div>
-                                <span className="text-sm text-gray-600">Email</span>
-                                <p className="font-semibold">{formData.contactEmail || '-'}</p>
+                        </div>
+
+                        <div className="space-y-4"> */}
+                            {/* Address */}
+                            {/* {formData.address && (
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                                        <span className="text-sm font-medium text-muted-foreground">Address</span>
+                                    </div>
+                                    <div className="rounded-lg border border-border/50 bg-muted/30 p-3 pl-6">
+                                        <p className="text-sm text-foreground break-words">{formData.address}</p>
+                                    </div>
+                                </div>
+                            )} */}
+
+                            {/* Coordinates */}
+                            {/* <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/50">
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-xs font-medium text-muted-foreground">Latitude</span>
+                                    <p className="text-sm font-mono font-semibold text-foreground">
+                                        {formData.latitude.toFixed(6)}
+                                    </p>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-xs font-medium text-muted-foreground">Longitude</span>
+                                    <p className="text-sm font-mono font-semibold text-foreground">
+                                        {formData.longitude.toFixed(6)}
+                                    </p>
+                                </div>
                             </div> */}
-                            {/*<div>*/}
-                            {/*    <span className="text-sm text-gray-600">Preferred</span>*/}
-                            {/*    <p className="font-semibold">{formData.contactPreferred || '-'}</p>*/}
-                            {/*</div>*/}
+
+                            {/* Resource Status */}
+                            {/* {formData.resourceData && (
+                                <div className="pt-2 border-t border-border/50">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-sm font-medium text-muted-foreground">Resource Status</span>
+                                        <Badge
+                                            className={
+                                                formData.resourceAvailable
+                                                    ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100'
+                                                    : 'bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-100'
+                                            }
+                                        >
+                                            {formData.resourceAvailable ? 'Available' : 'Review Needed'}
+                                        </Badge>
+                                    </div>
+                                    {formData.resourceData.distance && (
+                                        <p className="mt-2 text-xs text-muted-foreground">
+                                            Distance: {formData.resourceData.distance}m
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card> */}
+
+                {/* Contact Details Card */}
+                <Card className="w-full shadow-sm transition-all duration-300 hover:shadow-md lg:col-span-2">
+                    <CardContent className="sm:p-6">
+                        <div className="mb-2 flex items-center gap-3 border-b border-border/50 pb-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg  ring-1 ring-primary/20">
+                                <User className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-foreground">Contact Information</h3>
+                                <p className="text-xs text-muted-foreground">Contact person and communication details</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <div className="flex flex-col sm:flex row justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <User className="h-4 w-4 text-primary shrink-0" />
+                                    <span className="text-sm font-medium text-muted-foreground">Contact Person</span>
+                                </div>
+                                <p className="text-sm font-semibold text-foreground pl-6">{formData.contactPerson || user.name || 'Customer'}</p>
+                            </div>
+                            <div className="flex flex-col sm:flex row justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <Phone className="h-4 w-4 text-primary shrink-0" />
+                                    <span className="text-sm font-medium text-muted-foreground">Phone</span>
+                                </div>
+                                <p className="text-sm font-semibold text-foreground pl-6">{formData.contactNo || user.phone || '-'}</p>
+                            </div>
+                            {/* {formData.contactEmail && (
+                                <div className="flex flex-col sm:flex row justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <PhoneCall className="h-4 w-4 text-primary shrink-0" />
+                                        <span className="text-sm font-medium text-muted-foreground">Email</span>
+                                    </div>
+                                    <p className="text-sm font-semibold text-foreground pl-6 break-words">{formData.contactEmail}</p>
+                                </div>
+                            )} */}
                         </div>
                     </CardContent>
                 </Card>
@@ -380,21 +526,30 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
 
 
             {/* Submit Actions */}
-            <div className="flex justify-between border-t pt-6">
-                <Button variant="outline" onClick={onBack} disabled={submitting}>
+            <div className="flex flex-row justify-between gap-3 border-t border-border/50 pt-6 sm:flex-row sm:justify-between sm:gap-4">
+                <Button
+                    variant="outline"
+                    onClick={onBack}
+                    disabled={submitting || createSurveyMutation.isPending || waitingForProcessing}
+                    className="w-full sm:w-auto"
+                >
                     Back
                 </Button>
 
-                <Button onClick={handleSubmit} disabled={submitting || createSurveyMutation.isPending || waitingForProcessing || !formData.resourceAvailable} className="bg-primary hover:bg-primary/80">
+                <Button
+                    onClick={handleSubmit}
+                    disabled={submitting || createSurveyMutation.isPending || waitingForProcessing || !formData.resourceAvailable}
+                    className="w-full bg-primary hover:bg-primary/90 focus:ring-2 focus:ring-primary/20 sm:w-auto"
+                >
                     {(submitting || createSurveyMutation.isPending || waitingForProcessing) ? (
                         <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            {waitingForProcessing ? 'Preparing subscription...' : 'Processing...'}
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin shrink-0" />
+                            <span>{waitingForProcessing ? 'Preparing subscription...' : 'Processing...'}</span>
                         </>
                     ) : (
                         <>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Next
+                            <CheckCircle className="mr-2 h-4 w-4 shrink-0" />
+                            <span>Submit Request</span>
                         </>
                     )}
                 </Button>

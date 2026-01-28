@@ -94,43 +94,28 @@ export const Footer = () => {
   };
       return (
       <footer className="bg-primary">
-        <div className="mx-auto max-w-7xl overflow-hidden px-6 py-20 sm:py-8 lg:px-8">
-            {/* <div className=''>
+        <div className="mx-auto max-w-screen-2xl px-4 py-6 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+            {/* Copyright - Left */}
+            <p className="text-sm text-white">
+              {t('footer.copyright', { year: currentYear })}
+            </p>
 
-            <img src={logo} alt='ethiotelecom logo' />
-            </div> */}
-                {/* <nav
-            className="-mb-6 columns-2 sm:flex sm:justify-center sm:space-x-12"
-            aria-label="Footer"
-          >
-            {navigation.main.map((item) => (
-              <div key={item.name} className="pb-6">
+            {/* Social Icons - Right */}
+            <div className="flex items-center space-x-6">
+              {navigation.social.map((item) => (
                 <Link
                   target="_blank"
+                  key={item.name}
                   href={item.href}
-                  className="text-sm leading-6 text-white hover:text-gray-900"
+                  className="text-white transition hover:opacity-80"
+                  aria-label={item.name}
                 >
-                  {item.name}
+                  <item.icon className="h-5 w-5" aria-hidden="true" />
                 </Link>
-              </div>
-            ))}
-          </nav> */}
-          <div className="mt-10 flex justify-center space-x-10">
-            {navigation.social.map((item) => (
-              <Link
-                target="_blank"
-                key={item.name}
-                href={item.href}
-                className="text-white hover:text-white"
-              >
-                <span className="sr-only">{item.name}</span>
-                <item.icon className="h-6 w-6" aria-hidden="true" />
-              </Link>
-            ))}
+              ))}
+            </div>
           </div>
-          <p className="mt-10 text-center text-xs leading-5 text-white">
-            {t('footer.copyright', { year: currentYear })}
-          </p>
         </div>
       </footer>
     );

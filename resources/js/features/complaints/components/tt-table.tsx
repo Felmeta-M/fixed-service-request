@@ -34,25 +34,39 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
         router.visit(`/complaints/${tt.tt_no}`);
     };
 
+    /**
+     * Display status badge - backend is the source of truth
+     * Status styling is based on common patterns but displays actual backend value
+     */
     const getStatusBadge = (status: string) => {
-        const lowerStatus = (status || '').toLowerCase();
+        const displayStatus = status || 'N/A';
+        const lowerStatus = displayStatus.toLowerCase();
         
-        if (lowerStatus === 'pending') {
-            return <Badge variant="outline" className="text-yellow-700 border-yellow-200 bg-yellow-50">Pending</Badge>;
+        // Color coding based on status category (not transformation)
+        // Yellow: waiting/pending states
+        // Blue: in-progress/active states  
+        // Green: success/completed states
+        // Gray: closed/finished states
+        // Red: failed/cancelled states
+        
+        let colorClass = '';
+        
+        if (lowerStatus.includes('pending') || lowerStatus.includes('waiting')) {
+            colorClass = 'text-yellow-700 border-yellow-200 bg-yellow-50';
+        } else if (lowerStatus.includes('progress') || lowerStatus.includes('active') || lowerStatus.includes('processing')) {
+            colorClass = 'text-blue-700 border-blue-200 bg-blue-50';
+        } else if (lowerStatus.includes('resolved') || lowerStatus.includes('completed') || lowerStatus.includes('success')) {
+            colorClass = 'text-green-700 border-green-200 bg-green-50';
+        } else if (lowerStatus.includes('closed') || lowerStatus.includes('done')) {
+            colorClass = 'text-gray-700 border-gray-200 bg-gray-50';
+        } else if (lowerStatus.includes('cancelled') || lowerStatus.includes('failed') || lowerStatus.includes('rejected')) {
+            colorClass = 'text-red-700 border-red-200 bg-red-50';
         }
-        if (lowerStatus === 'in_progress' || lowerStatus.includes('progress')) {
-            return <Badge variant="outline" className="text-blue-700 border-blue-200 bg-blue-50">In Progress</Badge>;
-        }
-        if (lowerStatus === 'resolved') {
-            return <Badge variant="outline" className="text-green-700 border-green-200 bg-green-50">Resolved</Badge>;
-        }
-        if (lowerStatus === 'closed') {
-            return <Badge variant="outline" className="text-gray-700 border-gray-200 bg-gray-50">Closed</Badge>;
-        }
-        if (lowerStatus === 'cancelled' || lowerStatus.includes('failed')) {
-            return <Badge variant="outline" className="text-red-700 border-red-200 bg-red-50">Cancelled</Badge>;
-        }
-        return <Badge variant="outline">{status || 'N/A'}</Badge>;
+        
+        // Display the actual backend status value (formatted for readability)
+        const formattedStatus = displayStatus.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        
+        return <Badge variant="outline" className={colorClass}>{formattedStatus}</Badge>;
     };
 
     const getSourceIcon = (source: 'local' | 'external') => {

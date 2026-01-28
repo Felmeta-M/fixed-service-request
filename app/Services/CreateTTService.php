@@ -110,7 +110,6 @@ class CreateTTService extends BaseApiService
         $response = $this->get_combining_service->getByServiceNumber($data['access_number']);
         $responseData = $response->getData(true);
         $subscriber = $this->getSubscriber($responseData);
-        Log::info('CreateTT Subscriber', ['subscriber' => $subscriber]);
         // Extract queried customer data (from service number query)
         $customer = $subscriber['customer'] ?? [];
         $addresses = $subscriber['addresses'][0] ?? [];
@@ -137,13 +136,13 @@ class CreateTTService extends BaseApiService
         $zone = $addresses['address3'] ?? '';
         $city = $addresses['address2'] ?? $zone;
         $subCity = $zone;
-        $wereda = $addresses['address4'] ?? '';
-        $kebele = $addresses['address5'] ?? '';
-        $street = $addresses['address11'] ?? '';
-        $houseNo = $addresses['address6'] ?? '';
-        $buildingName = $addresses['address9'] ?? '';
-        $floor = $addresses['address10'] ?? '';
-        $roomNo = $addresses['address12'] ?? '';
+        $wereda = !empty($addresses['address4']) ? $addresses['address4'] : 'new';
+        $kebele = !empty($addresses['address5']) ? $addresses['address5'] : 'new';
+        $street = !empty($addresses['address11']) ? $addresses['address11'] : 'new';
+        $houseNo = !empty($addresses['address6']) ? $addresses['address6'] : 'new';
+        $buildingName = !empty($addresses['address9']) ? $addresses['address9'] : 'new';
+        $floor = !empty($addresses['address10']) ? $addresses['address10'] : 'new';
+        $roomNo = !empty($addresses['address12']) ? $addresses['address12'] : 'new';
 
         // IDs from subscriber data
         $accountId = $subscriber['account']['account_id'] ?? '';
@@ -204,7 +203,7 @@ class CreateTTService extends BaseApiService
          <accessNumber>{$accessNumber}</accessNumber>
          <acctNumber>{$accountCode}</acctNumber>
          <!--Optional:-->
-<!--         <additionalFaultyNbr>911500799</additionalFaultyNbr>-->
+<!--         <additionalFaultyNbr></additionalFaultyNbr>-->
          <contactPerson>{$contactPerson}</contactPerson>
          <mobileNo>{$mobileNo}</mobileNo>
     

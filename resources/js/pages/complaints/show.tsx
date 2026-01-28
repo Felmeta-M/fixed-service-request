@@ -16,6 +16,35 @@ interface ShowProps {
   ttNumber: string;
 }
 
+/**
+ * StatusBadge - displays backend status directly without transformation
+ * Backend is the source of truth; status may change via third-party integration
+ */
+const StatusBadge = ({ status }: { status: string }) => {
+  const displayStatus = status || 'N/A';
+  const lowerStatus = displayStatus.toLowerCase();
+  
+  // Color coding based on status category patterns
+  let colorClass = '';
+  
+  if (lowerStatus.includes('pending') || lowerStatus.includes('waiting')) {
+    colorClass = 'text-yellow-700 border-yellow-200 bg-yellow-50';
+  } else if (lowerStatus.includes('progress') || lowerStatus.includes('active') || lowerStatus.includes('processing')) {
+    colorClass = 'text-blue-700 border-blue-200 bg-blue-50';
+  } else if (lowerStatus.includes('resolved') || lowerStatus.includes('completed') || lowerStatus.includes('success')) {
+    colorClass = 'text-green-700 border-green-200 bg-green-50';
+  } else if (lowerStatus.includes('closed') || lowerStatus.includes('done')) {
+    colorClass = 'text-gray-700 border-gray-200 bg-gray-50';
+  } else if (lowerStatus.includes('cancelled') || lowerStatus.includes('failed') || lowerStatus.includes('rejected')) {
+    colorClass = 'text-red-700 border-red-200 bg-red-50';
+  }
+  
+  // Display actual backend status (formatted for readability)
+  const formattedStatus = displayStatus.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  
+  return <Badge variant="outline" className={colorClass}>{formattedStatus}</Badge>;
+};
+
 // Helper function to transform LocalTroubleTicket to TTDetail format
 const transformLocalToTTDetail = (localTT: LocalTroubleTicket): TTDetail & { 
   serviceOwnerCode?: string;
@@ -235,27 +264,10 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
                   </div>
                   <div className="flex items-center gap-2">
                     {source === 'local' ? (
-                      <Badge 
-                        variant="outline" 
-                        className={
-                          (detail as any).localStatus === 'pending' ? 'text-yellow-700 border-yellow-200 bg-yellow-50' :
-                          (detail as any).localStatus === 'in_progress' ? 'text-blue-700 border-blue-200 bg-blue-50' :
-                          (detail as any).localStatus === 'resolved' ? 'text-green-700 border-green-200 bg-green-50' :
-                          (detail as any).localStatus === 'closed' ? 'text-gray-700 border-gray-200 bg-gray-50' :
-                          (detail as any).localStatus === 'cancelled' ? 'text-red-700 border-red-200 bg-red-50' :
-                          ''
-                        }
-                      >
-                        {(detail as any).localStatus === 'pending' ? 'Pending' :
-                         (detail as any).localStatus === 'in_progress' ? 'In Progress' :
-                         (detail as any).localStatus === 'resolved' ? 'Resolved' :
-                         (detail as any).localStatus === 'closed' ? 'Closed' :
-                         (detail as any).localStatus === 'cancelled' ? 'Cancelled' :
-                         'Unknown'}
-                      </Badge>
+                      <StatusBadge status={(detail as any).localStatus} />
                     ) : (
                       <Badge variant={detail.result_code === '0' ? 'default' : 'destructive'}>
-                        {detail.result_code === '0' ? 'Active' : 'Failed'}
+                        {detail.result_code === '0' ? 'Active' : 'Closed'}
                       </Badge>
                     )}
                     <Badge variant="outline" className="text-xs">

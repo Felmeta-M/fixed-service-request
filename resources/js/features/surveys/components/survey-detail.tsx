@@ -432,7 +432,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                             </Button>
                         </Link>
                         <div className="min-w-0 flex-1">
-                            <h1 className="text-lg font-semibold text-foreground sm:text-xl">Survey Details</h1>
+                            <h1 className="text-lg font-semibold text-foreground sm:text-xl">Request Details</h1>
                             <p className="text-xs text-muted-foreground sm:text-sm">Review your service request information</p>
                         </div>
                     </div>
@@ -462,7 +462,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                 </CardHeader>
             </Card>
 
-            {/* Survey Failed Alert - Show when survey failed (50005 = -1) */}
+            {/* Request Failed Alert - Show when assessment failed (50005 = -1) */}
             {surveyDetails?.survey_failure_reason && (
                 <Card className="w-full border-none shadow-md border-l-4 border-l-red-500 bg-red-50">
                     <CardContent className="py-4 px-4 sm:py-5 sm:px-6">
@@ -472,7 +472,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                             </div>
                             <div className="min-w-0 flex-1">
                                 <h4 className="font-semibold text-base sm:text-lg text-red-800 mb-2">
-                                    Survey Could Not Be Completed
+                                    Request Could Not Be Processed
                                 </h4>
                                 <p className="text-sm text-red-700 mb-3 break-words">
                                     {surveyDetails.survey_failure_reason}
@@ -489,7 +489,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                 </Card>
             )}
 
-            {/* Manual Survey Success - Device Selection Required Card */}
+            {/* Request Ready - Device Selection Required Card */}
             {/* This is only for MANUAL surveys that completed successfully and need device selection */}
             {canContinue && (
                 <Card className="w-full border-none shadow-md bg-green-50 border-l-4 border-l-green-500">
@@ -500,7 +500,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                             </div>
                             <div className="min-w-0 flex-1">
                                 <h4 className="font-semibold text-base sm:text-lg text-green-800 mb-2">
-                                    Survey Completed
+                                    Assessment Complete
                                 </h4>
                                 <p className="text-sm text-green-700 mb-1">
                                     Your location supports <strong>{surveyDetails?.media_type === 'PON' ? 'Fiber' : 'Copper'}</strong> connection.
@@ -525,17 +525,17 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
 
-                {/* Survey Information */}
+                {/* Request Information */}
                 <Card className="w-full border-none shadow-sm transition-all duration-300 hover:shadow-md">
                     <CardHeader className="pb-3 p-4 sm:p-6">
                         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                             <Hash className="h-4 w-4 shrink-0 text-primary" />
-                            <span>Survey Information</span>
+                            <span>Request Information</span>
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
                         <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                            <span className="text-xs sm:text-sm text-muted-foreground">Survey Number</span>
+                            <span className="text-xs sm:text-sm text-muted-foreground">Request Number</span>
                             <span className="font-mono text-xs sm:text-sm font-medium break-all sm:break-normal">{customer_survey_order_id || 'N/A'}</span>
                         </div>
                         <Separator />
@@ -553,7 +553,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                         </div>
                         <Separator />
                         <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                            <span className="text-xs sm:text-sm text-muted-foreground">Survey Type</span>
+                            <span className="text-xs sm:text-sm text-muted-foreground">Processing Mode</span>
                             <Badge
                                 variant="outline"
                                 className={`w-fit text-xs ${
@@ -668,7 +668,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                 <Cable className="h-4 w-4 shrink-0 text-emerald-600" />
                                 <span>Infrastructure Details</span>
                                 {canContinue && (
-                                    <Badge className="ml-auto sm:ml-2 bg-green-100 text-green-700 border-green-200 text-xs">Survey Complete</Badge>
+                                    <Badge className="ml-auto sm:ml-2 bg-green-100 text-green-700 border-green-200 text-xs">Ready</Badge>
                                 )}
                             </CardTitle>
                         </CardHeader>

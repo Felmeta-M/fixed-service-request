@@ -561,25 +561,13 @@ export default function ComplaintsIndex() {
                       return false;
                     }
 
-                    // Status filter
+                    // Status filter - exact match with backend status (source of truth)
                     if (statusFilter !== 'all') {
                       const ttStatus = (tt.status || '').toLowerCase();
                       const filterStatus = statusFilter.toLowerCase();
-
-                      // Exact match for specific statuses
-                      if (filterStatus === 'pending' && ttStatus !== 'pending') {
-                        return false;
-                      }
-                      if (filterStatus === 'in_progress' && ttStatus !== 'in_progress' && !ttStatus.includes('progress')) {
-                        return false;
-                      }
-                      if (filterStatus === 'resolved' && ttStatus !== 'resolved') {
-                        return false;
-                      }
-                      if (filterStatus === 'closed' && ttStatus !== 'closed') {
-                        return false;
-                      }
-                      if (filterStatus === 'cancelled' && ttStatus !== 'cancelled' && !ttStatus.includes('failed')) {
+                      
+                      // Direct match - backend status is the source of truth
+                      if (ttStatus !== filterStatus) {
                         return false;
                       }
                     }

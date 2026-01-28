@@ -326,11 +326,14 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     // Check if survey can be resumed (approved manual survey that needs device selection)
     // A survey can be resumed if:
     // 1. It's a manual survey (survey_is_manual = true)
-    // 2. Status is "Ready" or "2" (approved by admin)
+    // 2. Status indicates ready/approved state
     // 3. can_pay or can_subscribe is true
+    const statusCode = String(survey.status_code ?? '');
     const statusStr = String(survey.status ?? '');
-    const RESUMABLE_STATUSES = ['Ready', '2', 'Approved', '8', 'Survey Completed'];
-    const isResumableStatus = RESUMABLE_STATUSES.includes(statusStr);
+    // Use status_code (stable) with fallback to legacy status labels
+    const RESUMABLE_STATUS_CODES = ['ready', 'assessment_complete', 'device_selection'];
+    const RESUMABLE_LEGACY_STATUSES = ['Ready', '2', 'Approved', '8', 'Survey Completed'];
+    const isResumableStatus = RESUMABLE_STATUS_CODES.includes(statusCode) || RESUMABLE_LEGACY_STATUSES.includes(statusStr);
     const isManualSurvey = survey.survey_is_manual === true;
     const canResume = isManualSurvey && isResumableStatus && (canPay || canSubscribe);
 

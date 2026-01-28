@@ -41,6 +41,7 @@ type SurveyRow = {
     service_number?: string | null;
     main_offer_id?: string;
     status?: string;
+    status_code?: string;  // Stable status code for logic (decoupled from display label)
     created_at?: string;
     updated_at?: string;
     survey_is_manual?: boolean;
@@ -193,10 +194,11 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
             {
                 accessorKey: 'status',
                 header: 'Status',
-                cell: ({ getValue }) => {
-                    // Backend now sends status as a string label (e.g., "Waiting", "Completed")
+                cell: ({ getValue, row }) => {
+                    // Use status_code (stable) with fallback to status label
                     const statusStr = getValue<string>();
-                    const statusInfo = getStatusInfo(statusStr);
+                    const statusCode = row.original.status_code as string | undefined;
+                    const statusInfo = getStatusInfo(statusStr, statusCode);
 
                     return (
                         <div>

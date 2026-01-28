@@ -616,7 +616,8 @@ class SurveyOrderController extends Controller
                 'merch_order_id' => $order->payment_merch_order_id ?? null,
                 'status' => $this->getPaymentStatusLabel($paymentStatus),
             ] : null,
-            'status' => $this->getStatusLabel($order),
+            'status_code' => $this->getStatusCode($order),  // Stable code for frontend logic
+            'status' => $this->getStatusLabel($order),       // Display label (frontend can override)
             'is_paid' => SurveyOrder::checkIsPaid($paymentStatus, $paymentTransId),
             // Action permissions - single source of truth from model
             'can_continue' => SurveyOrder::checkCanContinue(
@@ -713,6 +714,61 @@ class SurveyOrderController extends Controller
 
             // Default: Use enum label
             default => $statusEnum?->label() ?? FFDServiceProvisionStatus::Processing->label(),
+        };
+    }
+
+    /**
+     * Get stable status code for frontend logic (decoupled from display labels).
+     * Frontend uses this code for logic/filtering; display labels are defined in frontend.
+     *
+     * @param object $order Order data from database
+     * @return string Stable status code (snake_case, never changes)
+     */
+    protected function getStatusCode(object $order): string
+    {
+        $statusEnum = FFDServiceProvisionStatus::tryFrom((int) ($order->status ?? 0));
+        $hasSubscription = !empty($order->customer_subscription_order_id);
+        $paymentAmount = (float) ($order->payment_total_amount ?? 0);
+        $paymentTransId = $order->payment_trans_id ?? null;
+        $isPaid = !empty($paymentTransId);
+        $hasPayment = $paymentAmount > 0;
+
+        $rawManual = $order->survey_is_manual ?? false;
+        $isManual = $rawManual === true || $rawManual === 't' || $rawManual === 1 || $rawManual === '1';
+
+        $rawWithDevice = $order->with_device ?? null;
+        $deviceSelected = $rawWithDevice !== null;
+
+        $manualInProgress = in_array($statusEnum, [
+            FFDServiceProvisionStatus::Created,
+            FFDServiceProvisionStatus::Waiting,
+            FFDServiceProvisionStatus::Processing,
+        ], true);
+
+        return match (true) {
+            // Failed/Cancelled
+            $statusEnum === FFDServiceProvisionStatus::Failed => 'failed',
+            $statusEnum === FFDServiceProvisionStatus::Cancelled => 'cancelled',
+
+            // Phase 2: Subscription phase
+            $statusEnum === FFDServiceProvisionStatus::Waiting && $hasSubscription => 'order_waiting',
+            $statusEnum === FFDServiceProvisionStatus::Completed && $hasSubscription => 'order_completed',
+
+            // Manual flow
+            $isManual && $manualInProgress && !$hasSubscription => 'waiting',
+            $isManual && $statusEnum === FFDServiceProvisionStatus::Completed && !$deviceSelected && !$hasSubscription => 'device_selection',
+            $isManual && $statusEnum === FFDServiceProvisionStatus::Completed && $deviceSelected && $hasPayment && !$isPaid && !$hasSubscription => 'pending_payment',
+            $isManual && $statusEnum === FFDServiceProvisionStatus::Completed && $deviceSelected && $isPaid && !$hasSubscription => 'paid',
+            $isManual && $statusEnum === FFDServiceProvisionStatus::Completed && $deviceSelected && !$hasPayment && !$hasSubscription => 'ready',
+
+            // Auto flow
+            $statusEnum === FFDServiceProvisionStatus::Waiting && !$hasSubscription && $isPaid => 'paid',
+            $statusEnum === FFDServiceProvisionStatus::Waiting && !$hasSubscription => 'waiting_assessment',
+            $statusEnum === FFDServiceProvisionStatus::Completed && !$hasSubscription && $hasPayment && !$isPaid => 'pending_payment',
+            $statusEnum === FFDServiceProvisionStatus::Completed && !$hasSubscription => 'assessment_complete',
+
+            // Default
+            default => 'processing',
         };
     }
 

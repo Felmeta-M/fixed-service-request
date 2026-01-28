@@ -49,8 +49,16 @@ interface RecentActivity {
     status: string;
 }
 
-// Define status categories using string labels from backend
-const STATUS_CATEGORIES = {
+// Status categories using stable codes (with legacy label fallback)
+const STATUS_CODES = {
+    ACTIVE: ['processing', 'waiting', 'waiting_assessment', 'order_waiting', 'ready', 'paid', 'pending_payment', 'device_selection'],
+    PENDING: ['created'],
+    COMPLETED: ['assessment_complete', 'order_completed', 'failed', 'cancelled', 'refund'],
+    SUSPENDED: ['suspended'],
+} as const;
+
+// Legacy labels for backward compatibility
+const STATUS_LABELS = {
     ACTIVE: ['Processing', 'Waiting', 'Waiting Survey', 'Order Waiting', 'Ready', 'Paid', 'Pending Payment'],
     PENDING: ['Created'],
     COMPLETED: ['Survey Completed', 'Order Completed', 'Failed', 'Cancelled', 'Refund'],
@@ -105,7 +113,15 @@ export default function CustomerDashboard() {
         // Initial fetch is handled by the query
     }, []);
 
-    // Calculate dashboard stats from survey data using string-based status labels
+    // Helper: Check if survey matches a status category (uses status_code with legacy fallback)
+    const matchesCategory = (survey: any, category: 'ACTIVE' | 'PENDING' | 'COMPLETED' | 'SUSPENDED') => {
+        const statusCode = String(survey.status_code ?? '');
+        const statusLabel = String(survey.status ?? '');
+        return STATUS_CODES[category].includes(statusCode as any) || 
+               STATUS_LABELS[category].includes(statusLabel as any);
+    };
+
+    // Calculate dashboard stats from survey data
     const dashboardStats = useMemo((): DashboardStats => {
         if (!surveys?.length) {
             return {
@@ -119,22 +135,13 @@ export default function CustomerDashboard() {
         const totalServices = surveys?.length;
 
         // Active services: Processing, Waiting, Ready, Paid
-        const activeServices = surveys.filter((survey) => {
-            const status = String(survey.status ?? '');
-            return STATUS_CATEGORIES.ACTIVE.includes(status as typeof STATUS_CATEGORIES.ACTIVE[number]);
-        })?.length;
+        const activeServices = surveys.filter((survey) => matchesCategory(survey, 'ACTIVE'))?.length;
 
         // Pending requests: Created
-        const pendingRequests = surveys.filter((survey) => {
-            const status = String(survey.status ?? '');
-            return STATUS_CATEGORIES.PENDING.includes(status as typeof STATUS_CATEGORIES.PENDING[number]);
-        })?.length;
+        const pendingRequests = surveys.filter((survey) => matchesCategory(survey, 'PENDING'))?.length;
 
         // Completed services: Completed, Failed, Cancelled, Refund
-        const completedServices = surveys.filter((survey) => {
-            const status = String(survey.status ?? '');
-            return STATUS_CATEGORIES.COMPLETED.includes(status as typeof STATUS_CATEGORIES.COMPLETED[number]);
-        })?.length;
+        const completedServices = surveys.filter((survey) => matchesCategory(survey, 'COMPLETED'))?.length;
 
         return {
             totalServices,
@@ -152,14 +159,14 @@ export default function CustomerDashboard() {
             .slice(0, 5) // Show only 5 most recent
             .map((survey) => {
                 const serviceType = typeMap[survey.main_offer_id as keyof typeof typeMap]?.label || 'Service';
-                const statusInfo = getStatusInfo(survey.status);
+                const statusInfo = getStatusInfo(survey.status, survey.status_code);
 
                 return {
                     id: survey.id,
                     type: 'service_update',
                     message: `${serviceType} request ${survey.customer_survey_order_id} - ${statusInfo.label}`,
                     time: formatTimeAgo(survey.updated_at || survey.created_at),
-                    status: getActivityStatus(survey.status),
+                    status: getActivityStatus(survey),
                 };
             });
     }, [surveys]);
@@ -212,11 +219,10 @@ export default function CustomerDashboard() {
         return date.toLocaleDateString();
     }
 
-    // Determine activity status based on survey status (string-based)
-    function getActivityStatus(status: string | number | null | undefined): string {
-        const statusStr = String(status ?? '');
-        if (STATUS_CATEGORIES.COMPLETED.includes(statusStr as typeof STATUS_CATEGORIES.COMPLETED[number])) return 'completed';
-        if (STATUS_CATEGORIES.ACTIVE.includes(statusStr as typeof STATUS_CATEGORIES.ACTIVE[number])) return 'in-progress';
+    // Determine activity status based on survey status
+    function getActivityStatus(survey: any): string {
+        if (matchesCategory(survey, 'COMPLETED')) return 'completed';
+        if (matchesCategory(survey, 'ACTIVE')) return 'in-progress';
         return 'pending';
     }
 

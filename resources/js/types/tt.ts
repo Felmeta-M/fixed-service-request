@@ -68,6 +68,7 @@ export interface TTActivity {
 }
 
 // Local Database Interfaces
+// Note: Status is a string because backend is source of truth and may sync from third-party systems
 export interface LocalTroubleTicket {
   id: number;
   tt_serial_no: string;
@@ -77,7 +78,7 @@ export interface LocalTroubleTicket {
   mobile_no: string;
   trouble_reason: string;
   tt_description: string;
-  status: 'pending' | 'in_progress' | 'resolved' | 'closed' | 'cancelled';
+  status: string; // Backend is source of truth - can be any value from third-party integration
   last_synced_status?: string;
   last_checked_at?: string;
   created_at: string;

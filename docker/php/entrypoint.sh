@@ -25,10 +25,26 @@ chmod -R 775 $APP_DIR/storage $APP_DIR/bootstrap/cache 2>/dev/null || true
 find $APP_DIR/storage $APP_DIR/bootstrap/cache -type d -exec chmod 775 {} \; 2>/dev/null || true
 find $APP_DIR/storage $APP_DIR/bootstrap/cache -type f -exec chmod 664 {} \; 2>/dev/null || true
 
-# Ensure log files are writable
+# Ensure log files are writable (including API and other channels)
+echo "📝 Ensuring log files are writable..."
+
+# Main Laravel log
 touch $APP_DIR/storage/logs/laravel.log 2>/dev/null || true
 chown www-data:www-data $APP_DIR/storage/logs/laravel.log 2>/dev/null || true
 chmod 664 $APP_DIR/storage/logs/laravel.log 2>/dev/null || true
+
+# Channel-based logs (api, auth, payment, etc.)
+CURRENT_DATE=$(date +%F)
+for channel in api auth payment security http business jobs performance audit json; do
+  CHANNEL_DIR="$APP_DIR/storage/logs/$channel"
+  CHANNEL_FILE="$CHANNEL_DIR/${channel}-${CURRENT_DATE}.log"
+
+  mkdir -p "$CHANNEL_DIR" 2>/dev/null || true
+  touch "$CHANNEL_FILE" 2>/dev/null || true
+  chown -R www-data:www-data "$CHANNEL_DIR" 2>/dev/null || true
+  chmod -R 775 "$CHANNEL_DIR" 2>/dev/null || true
+  find "$CHANNEL_DIR" -type f -exec chmod 664 {} \; 2>/dev/null || true
+done
 
 echo "✅ Permissions configured."
 

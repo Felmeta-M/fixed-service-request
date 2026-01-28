@@ -62,10 +62,10 @@ class CreateTTService extends BaseApiService
 
             // Step 4: Build XML with queried customer data
             $xmlPayload = $this->buildRequestXml($data);
-            Log::info('CreateTT XML Payload', ['xml' => $xmlPayload]);
-
+            Log::info('CreateTT XML Payload', context: ['xml' => $xmlPayload]);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsed = $this->parseResponseXml($xmlResponse, $data);
+            Log::info('CreateTT Response', context: ['response' => $parsed]);
 
             return $parsed;
         } catch (RuntimeException $e) {
@@ -110,108 +110,117 @@ class CreateTTService extends BaseApiService
         $response = $this->get_combining_service->getByServiceNumber($data['access_number']);
         $responseData = $response->getData(true);
         $subscriber = $this->getSubscriber($responseData);
-
+        Log::info('CreateTT Subscriber', ['subscriber' => $subscriber]);
         // Extract queried customer data (from service number query)
-        $queriedCustomer = $data['queried_customer'] ?? [];
-        $customer = $queriedCustomer['customer'] ?? [];
-        $addresses = $queriedCustomer['addresses'][0] ?? [];
-        $extParams = $queriedCustomer['ext_params'] ?? [];
+        $customer = $subscriber['customer'] ?? [];
+        $addresses = $subscriber['addresses'][0] ?? [];
+        $extParams = $subscriber['ext_params'] ?? [];
 
         // Customer profile from queried data
         $customerId = $customer['customer_id'] ?? '';
-        $customerCode = $customer['customer_code'] ?? $data['customer_code'] ?? '';
+        $customerCode = $customer['customer_code'] ?? "";
+        $subscriberId = $subscriber['subscriber']['subscriber_id'] ?? '';
         $title = $customer['title'] ?? '1';
         $firstName = $customer['first_name'] ?? 'Customer';
-        $middleName = $customer['middle_name'] ?? '';
-        $lastName = $customer['last_name'] ?? '';
+        $middleName = $customer['middle_name'] ?? 'customer';
+        $lastName = $customer['last_name'] ?? 'customer';
 
         // BSS Classification from queried data
-        $customerType = $customer['customer_type'] ?? '0';
-        $customerLevel = $customer['customer_level'] ?? '2';
-        $customerCategory = $extParams['Customer Category'] ?? '1';
-        $custSubCategory = $extParams['Customer Sub-Category'] ?? '1';
+        $customerType = $customer['customer_type'] ?? '1';
+        $customerLevel = $customer['customer_level'] ?? '8';
+        $customerCategory = $customer['customer_category'] ?? '1';
+        $custSubCategory = $customer['customer_subcategory'] ?? '1';
 
         // Address from queried data (Address1=Region, Address2=City, Address3=Zone, Address4=Wereda, Address5=Kebele, Address6=HouseNo)
-        $adminRegion = $addresses['address1'] ?? '';
+        $ethioZone = $extParams['address1'] ?? '';
+        $adminRegion = $addresses['address2'] ?? '';
         $zone = $addresses['address3'] ?? '';
         $city = $addresses['address2'] ?? $zone;
         $subCity = $zone;
         $wereda = $addresses['address4'] ?? '';
         $kebele = $addresses['address5'] ?? '';
+        $street = $addresses['address11'] ?? '';
         $houseNo = $addresses['address6'] ?? '';
+        $buildingName = $addresses['address9'] ?? '';
+        $floor = $addresses['address10'] ?? '';
+        $roomNo = $addresses['address12'] ?? '';
 
         // IDs from subscriber data
-        $custId = $customerId ?: ($subscriber['customer']['customer_id'] ?? '');
-        $subsId = $data['access_number'];
-        $accountNumber = $data['account_number'] ?? $subscriber['account']['account_id'] ?? '';
+        $accountId = $subscriber['account']['account_id'] ?? '';
+        $accountCode = $subscriber['account']['account_code'] ?? '';
 
         // Frontend data (contact info for the TT)
         $accessNumber = $data['access_number'];
         $contactPerson = $data['contact_person'];
-        $mobileNo = $data['mobile_no'];
+        $mobileNo = '0' . substr($data['mobile_no'], -9); // Add 0 prefix and take last 9 digits
         $troubleTitle = $data['trouble_title'] ?? $data['tt_description'] ?? 'Fixed Services Complaint';
         $troubleReason = $data['trouble_reason'];
         $ttDescription = $data['tt_description'] ?? '';
+
+        //faulty number
+        $faultLocation = $data['fault_location'] ?? '';
+        $expectFeedbackTime = $data['expect_feedback_time'] ?? '';
 
         // Timestamps
         $acceptTime = date('YmdHis');
         $occurrenceDate = date('YmdHis');
 
         return <<<XML
-<soapenv:Envelope 
-    xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-    xmlns:eth="http://www.example.org/EthioSPMInterfaceSheet/">
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:eth="http://www.example.org/EthioSPMInterfaceSheet/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <eth:createTT>
+         <requestor>1</requestor>
+         <!--Optional:-->
+         <title>{$title}</title>
+         <firstName>{$firstName}</firstName>
+         <!--Optional:-->
+         <middleName>{$middleName}</middleName>
+         <lastName>{$lastName}</lastName>
+         
+         <customerType>{$customerType}</customerType>
+         <customerLevel>{$customerLevel}</customerLevel>
 
-    <soapenv:Header/>
+         <customerCategory>{$customerCategory}</customerCategory>
+         <custSubCategory>{$custSubCategory}</custSubCategory>
 
-    <soapenv:Body>
-        <eth:createTT>
-            <requestor>1</requestor>
-            <title>{$title}</title>
-            <firstName>{$firstName}</firstName>
-            <middleName>{$middleName}</middleName>
-            <lastName>{$lastName}</lastName>
-
-            <customerType>{$customerType}</customerType>
-            <customerLevel>{$customerLevel}</customerLevel>
-            <customerCategory>{$customerCategory}</customerCategory>
-            <custSubCategory>{$custSubCategory}</custSubCategory>
-
-            <custID>{$custId}</custID>
-            <subsID>{$subsId}</subsID>
-
-            <adminRegion>{$adminRegion}</adminRegion>
-            <zone>{$zone}</zone>
-            <city>{$city}</city>
-            <subCity>{$subCity}</subCity>
-            <wereda>{$wereda}</wereda>
-            <kebele>{$kebele}</kebele>
-
-            <street>{$houseNo}</street>
-            <houseNo>{$houseNo}</houseNo>
-            <buildingName></buildingName>
-            <floor></floor>
-            <roomNo></roomNo>
-
-            <accessNumber>{$accessNumber}</accessNumber>
-            <acctNumber>{$accountNumber}</acctNumber>
-
-            <contactPerson>{$contactPerson}</contactPerson>
-            <mobileNo>{$mobileNo}</mobileNo>
-
-            <troubleTitle>{$troubleTitle}</troubleTitle>
-            <troubleReason>{$troubleReason}</troubleReason>
-            <acceptTime>{$acceptTime}</acceptTime>
-            <occurrenceDate>{$occurrenceDate}</occurrenceDate>
-
-            <expectFeedbackTime>?</expectFeedbackTime>
-            <faultLocation>?</faultLocation>
-
-            <sendSMS>Yes</sendSMS>
-            <ttDescription>{$ttDescription}</ttDescription>
-        </eth:createTT>
-    </soapenv:Body>
-</soapenv:Envelope> 
+         <custID>{$customerId}</custID>
+         <subsID>{$subscriberId}</subsID>
+         <adminRegion>{$adminRegion}</adminRegion>
+         <zone>{$zone}</zone>
+         <city>{$city}</city>
+         <subCity>{$subCity}</subCity>
+         <wereda>{$wereda}</wereda>
+         <kebele>{$kebele}</kebele>
+         <!--Optional:-->
+         <street>{$street}</street>
+         <houseNo>{$houseNo}</houseNo>
+         <!--Optional:-->
+         <buildingName>{$buildingName}</buildingName>
+         <!--Optional:-->
+         <floor>{$floor}</floor>
+         <!--Optional:-->
+         <roomNo>{$roomNo}</roomNo>
+         <accessNumber>{$accessNumber}</accessNumber>
+         <acctNumber>{$accountCode}</acctNumber>
+         <!--Optional:-->
+<!--         <additionalFaultyNbr>911500799</additionalFaultyNbr>-->
+         <contactPerson>{$contactPerson}</contactPerson>
+         <mobileNo>{$mobileNo}</mobileNo>
+    
+         <troubleTitle>{$troubleTitle}</troubleTitle>
+         <troubleReason>{$troubleReason}</troubleReason>
+         <acceptTime>{$acceptTime}</acceptTime>
+         <occurrenceDate>{$occurrenceDate}</occurrenceDate>
+         <!--Optional:-->
+         <expectFeedbackTime>{$expectFeedbackTime}</expectFeedbackTime>
+         <!--Optional:-->
+         <faultLocation>{$faultLocation}</faultLocation>
+         <sendSMS>Yes</sendSMS>
+         <ttDescription>{$ttDescription}</ttDescription>         
+      </eth:createTT>
+   </soapenv:Body>
+</soapenv:Envelope>
 XML;
     }
 

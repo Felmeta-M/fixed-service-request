@@ -48,6 +48,8 @@ Thumbs.db
 /.php-cs-fixer.cache
 /.env.testing
 /.env.local
+/.env.production
+/.env.staging
 /.env.local.backup
 /.pnpm-debug.log
 /.pnpm-store

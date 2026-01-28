@@ -12,11 +12,12 @@ import { cn } from '@/lib/utils';
 import { FormSelectProps } from '@/types';
 import { CustomerFormValues, createDynamicCustomerSchema } from '@/types/customer';
 import { router, useForm, usePage } from '@inertiajs/react';
-import { Building, CheckCircle, FileIcon, MapPinIcon, PhoneIcon, User } from 'lucide-react';
+import { ArrowLeft, Building, CheckCircle, AlertCircle, FileIcon, MapPinIcon, PhoneIcon, User, ChevronsRight, BadgeCheck } from 'lucide-react';
 import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { useGetCustomer, useCreateCustomer, useUploadEcaf } from '@/hooks/use-api-mutations';
+import verifiedIcon from '@/images/Vector.png';
 
 type ApiError = {
     message: string;
@@ -245,9 +246,10 @@ const handleApiError = (error: unknown): ApiError => {
 
 interface CustomerCreationStepProps {
     onNext: () => void;
+    onBack?: () => void;
 }
 
-export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
+export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepProps) {
     const { auth } = usePage().props;
     const { user } = auth;
 
@@ -1025,8 +1027,39 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
     // Check if we have any pre-filled data
     const hasPrefilledData = readOnlyFields.size > 0;
 
+    // Check if there are any validation errors
+    const hasValidationErrors = Object.keys(formErrors).length > 0 || submissionState.error;
+
     return (
-        <div className="mx-auto max-w-4xl space-y-6">
+        <div className="min-h-full">
+            {/* Page Header */}
+            {/* <div className="bg-white border-b border-gray-100 px-6 py-4 mb-6">
+                <div className="max-w-4xl mx-auto flex items-start justify-between">
+                    <div className="flex items-start gap-6">
+                        {onBack && (
+                            <button
+                                onClick={onBack}
+                                className="flex items-center gap-1 text-teal-600 hover:text-teal-700 text-sm font-medium mt-1"
+                            >
+                                <ArrowLeft className="h-4 w-4" />
+                                Back
+                            </button>
+                        )}
+                        <div>
+                            <h1 className="text-2xl font-semibold text-gray-900">Customer Information</h1>
+                            <p className="text-sm text-gray-500 mt-0.5">Create your customer profile</p>
+                        </div>
+                    </div>
+                    {hasValidationErrors && (
+                        <div className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-lg border border-red-200">
+                            <AlertCircle className="h-4 w-4" />
+                            <span className="text-sm font-medium">Validation Error</span>
+                        </div>
+                    )}
+                </div>
+            </div> */}
+
+            <div className="mx-auto max-w-4xl space-y-6 px-2 pb-8">
             {/* Debug information (remove in production) */}
             {/* {process.env.NODE_ENV === 'development' && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm">
@@ -1037,28 +1070,20 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                 </div>
             )} */}
 
-            {/* Error Summary */}
-            {/* // if validation error exists show it in here for debug  */}
-            {submissionState.error && (
-                <div className="bg-red-50 border border-red-200 rounded p-3 text-sm">
-                    <div className="font-medium text-red-800 mb-1">Validation Error:</div>
-                    <div>{submissionState.error.message}</div>
-                </div>
-            )}
-
             {renderErrorSummary()}
 
             {/* Verified Customer Information - Read-only fields from NID */}
             {hasNidData && (
-                <Card className="border-2 border-green-200 bg-green-50/50">
+                <Card className="border border-gray-200 bg-white rounded-xl shadow-sm">
                     <CardHeader className="pb-4">
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-                                <CheckCircle className="h-5 w-5 text-green-600" />
+                            <div className="">
+                                <BadgeCheck  fill="white" className="h-10 w-10 text-[#068BCC]" />
+                                {/* <img src={verifiedIcon} alt="Verified Customer Information" className="h-10 w-10" /> */}
                             </div>
                             <div>
-                                <CardTitle className="text-lg text-green-800">Verified Customer Information</CardTitle>
-                                <CardDescription className="text-green-600">
+                                <CardTitle className="text-lg font-semibold text-[#068BCC]">Verified Customer Information</CardTitle>
+                                <CardDescription className="text-[#068BCC] text-sm">
                                     This information has been verified and cannot be edited
                                 </CardDescription>
                             </div>
@@ -1179,8 +1204,8 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                 <div className="pb-4">
                     <div className="flex items-center gap-3 text-gray-800">
                         <div>
-                            <h2 className="text-xl">{hasNidData ? 'Additional Information' : 'Customer Information'}</h2>
-                            <CardDescription>{hasNidData ? 'Please complete the following details' : 'Enter your personal details'}</CardDescription>
+                            <h2 className="text-xl font-semibold">{hasNidData ? 'Additional Information' : 'Customer Information'}</h2>
+                            <p className="text-sm text-gray-500">{hasNidData ? 'Please complete the following details' : 'Enter your personal details'}</p>
                         </div>
                     </div>
                 </div>
@@ -1303,13 +1328,13 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                     <div className="pb-4">
                         <div className="flex items-center gap-3 text-gray-800">
                             <div>
-                                <h2 className="text-xl">Contact Information</h2>
-                                <div className="text-gray-500">Phone numbers and email addresses</div>
+                                <h2 className="text-xl font-semibold">Contact Information</h2>
+                                <div className="text-sm text-gray-500">Phone numbers and email addresses</div>
                             </div>
                         </div>
                     </div>
                     <div className="space-y-6 ">
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                             <FormSelect
                                 label="Notification Mode"
                                 id="contact.notification_mode"
@@ -1362,12 +1387,13 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                 <div className="pb-4">
                     <div className="flex items-center gap-3 text-gray-800">
                         <div>
-                            <h2 className="text-xl">Address</h2>
-                            <div className="text-gray-500">Current residential address</div>
+                            <h2 className="text-xl font-semibold">Address</h2>
+                            <div className="text-sm text-gray-500">Current residential address</div>
                         </div>
                     </div>
                 </div>
-                <div className="space-y-6 ">
+                <div className="space-y-6">
+                    {/* First row: Region and Zone */}
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <FormSelect
                             label="Region"
@@ -1397,6 +1423,9 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                             error={formErrors['address.zone']}
                             disabled={isFieldReadOnly('address.zone')}
                         />
+                    </div>
+                    {/* Second row: Woreda, Kebele, House Number */}
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                         <FormSelect
                             label="Woreda"
                             id="address.woreda"
@@ -1417,7 +1446,7 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                             required={isKebeleRequired}
                             value={data.address?.kebele}
                             onChange={(e) => handleNestedInputChange('address', 'kebele', e.target.value)}
-                            placeholder={isKebeleRequired ? '' : ''}
+                            placeholder="Enter your kebele"
                             error={formErrors['address.kebele']}
                             readOnly={isFieldReadOnly('address.kebele')}
                         />
@@ -1439,13 +1468,13 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                     <div className="pb-4">
                         <div className="flex items-center gap-3 text-gray-800">
                             <div>
-                                <h2 className="text-xl">Professional Information</h2>
-                                <div className="text-gray-500">Work and educational background</div>
+                                <h2 className="text-xl font-semibold">Professional Information</h2>
+                                <div className="text-sm text-gray-500">Work and educational background</div>
                             </div>
                         </div>
                     </div>
                     <div className="space-y-6">
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                             <FormSelect
                                 label="Occupation"
                                 id="occupation"
@@ -1486,25 +1515,30 @@ export function CustomerCreationStep({ onNext }: CustomerCreationStepProps) {
                 </div>
             </div>
 
-            <div className="flex justify-end rounded-lg">
+            {/* Next Button - Full Width */}
+            <div className="pt-4">
                 <Button
                     type="button"
                     onClick={handleSubmit}
                     disabled={submissionState.isSubmitting || submissionState.isUploadingPhoto}
-                    className={`flex items-center gap-2 text-white shadow-sm hover:shadow-md ${submissionState.isSubmitting || submissionState.isUploadingPhoto ? 'cursor-not-allowed opacity-50' : ''
-                        }`}
+                    className={cn(
+                        'w-full h-14 text-lg font-medium rounded-xl bg-primary hover:bg-primary/90 text-white shadow-sm hover:shadow-md transition-all',
+                        (submissionState.isSubmitting || submissionState.isUploadingPhoto) && 'cursor-not-allowed opacity-50'
+                    )}
                 >
                     {submissionState.isSubmitting || submissionState.isUploadingPhoto ? (
                         <>
-                            <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                            <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white mr-2"></div>
                             {submissionState.isUploadingPhoto ? 'Uploading Photo...' : 'Creating Customer...'}
                         </>
                     ) : (
                         <>
+                            <ChevronsRight className="h-5 w-5 mr-1" />
                             Next
                         </>
                     )}
                 </Button>
+            </div>
             </div>
         </div>
     );

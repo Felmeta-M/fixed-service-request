@@ -21,6 +21,16 @@ services:
         condition: service_healthy
     networks:
       - ffd_net
+    # Cap resources so second app (bill complaints) on same host is not starved.
+    # With docker stack deploy (Swarm) these limits are enforced; otherwise size host for both apps.
+    deploy:
+      resources:
+        limits:
+          memory: 8g
+          cpus: "4"
+        reservations:
+          memory: 2g
+          cpus: "0.5"
     logging:
       driver: "json-file"
       options:
@@ -139,6 +149,11 @@ services:
       - app
     networks:
       - ffd_net
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
 
   postgres:
     image: postgres:17

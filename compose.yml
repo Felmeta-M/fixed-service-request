@@ -22,15 +22,15 @@ services:
     networks:
       - ffd_net
     # Cap resources so second app (bill complaints) on same host is not starved.
-    # With docker stack deploy (Swarm) these limits are enforced; otherwise size host for both apps.
+    # Sized for ~200 concurrent PHP workers (~80MB each). Swarm enforces; otherwise size host for both apps.
     deploy:
       resources:
         limits:
-          memory: 8g
-          cpus: "4"
+          memory: 16g
+          cpus: "6"
         reservations:
-          memory: 2g
-          cpus: "0.5"
+          memory: 4g
+          cpus: "1"
     logging:
       driver: "json-file"
       options:

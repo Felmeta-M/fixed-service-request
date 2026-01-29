@@ -3,7 +3,7 @@ import { SiteHeader } from '@/components/layout/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { usePage } from '@inertiajs/react';
-import { CreditCard, FileText, MapPin, RouterIcon, User, Wifi } from 'lucide-react';
+import { CreditCard, FileText, MapPin, RouterIcon, User, User2Icon, Wifi } from 'lucide-react';
 import { ReactNode } from 'react';
 
 interface MainLayoutProps {
@@ -33,7 +33,7 @@ export default function MainLayout({ children, currentStep = 0, isNewCustomer = 
 
     return (
         <SidebarProvider
-            className="overflow-x-hidden"
+            className="overflow-x-hidden h-screen"
             style={
                 {
                     '--sidebar-width': 'calc(var(--spacing) * 72)',
@@ -42,7 +42,7 @@ export default function MainLayout({ children, currentStep = 0, isNewCustomer = 
             }
         >
             <AppSidebar currentStep={currentStep} mode={isServiceCreation ? 'create' : 'list'} steps={steps} />
-            <SidebarInset className="overflow-x-hidden">
+            <SidebarInset className="overflow-x-hidden overflow-y-auto bg-gray-50">
                 <div className="md:hidden">
                     <SiteHeader
                         title={isServiceCreation ? 'Create new service' : headerSegment}
@@ -51,8 +51,8 @@ export default function MainLayout({ children, currentStep = 0, isNewCustomer = 
                         steps={steps}
                     />
                 </div>
-                <main className="flex max-w-full flex-1 flex-col overflow-x-hidden py-2">{children}</main>
-                <Toaster position="top-center" />
+                <main className="flex max-w-full flex-1 flex-col overflow-x-hidden bg-white">{children}</main>
+                <Toaster richColors position="top-right" />
             </SidebarInset>
         </SidebarProvider>
     );

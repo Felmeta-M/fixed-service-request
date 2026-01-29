@@ -385,18 +385,19 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
     return (
         <div className="w-full space-y-6 px-4 py-2 lg:px-6">
-            <div className="bg-white pb-0 pt-0">
+            <div className="pb-0 pt-0">
                 <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex items-center justify-start gap-4 sm:gap-10 pl-2">
                         <Link href={route("services")} className='hidden sm:block'>
                             <Button
                                 variant="link"
                                 size="icon"
-                                className="h-10 w-10"
+                                className="h-10 w-10 text-[#068BCC]"
                             >
-                                <MoveLeftIcon className="h-5 w-5" /> Back
+                                <ArrowLeft className="h-5 w-5 text-[#068BCC]" /> Back
                             </Button>
                         </Link>
+                        <div className="flex flex-col">
                         <div className="text-lg font-bold text-gray-900 lg:text-xl">
                             {shouldShowManualStep
                                 ? stepTitles[stepTitles.length - 1]?.title
@@ -407,16 +408,17 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                                 ? stepTitles[stepTitles.length - 1]?.description
                                 : stepTitles[currentStep]?.description}
                         </div>
+                        </div>
                     </div>
 
                     {/* Desktop step indicator */}
-                    <div className="hidden items-center space-x-4 sm:flex">
+                    {/* <div className="hidden items-center space-x-4 sm:flex">
                         <div className="flex items-center space-x-2 text-sm text-gray-500">
                             <span>
                                 Step {shouldShowManualStep ? totalSteps : currentStep + 1} of {totalSteps}
                             </span>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
             <div className="relative">

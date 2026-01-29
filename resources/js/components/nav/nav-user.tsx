@@ -20,17 +20,11 @@ interface User {
 }
 
 export function NavUser() {
-    const { isMobile } = useSidebar();
+    const { isMobile, state } = useSidebar();
     const { auth } = usePage().props;
     const user = auth.user as User;
     const { t } = useTranslation();
 
-    // const user: User = {
-    //     id: 6,
-    //     customer_code: '828204303',
-    //     name: 'zcppbx zcp',
-    //     phone: '935117912',
-    // };
     const handleLogout = () => {
         router.post(route('logout'));
     };
@@ -51,15 +45,24 @@ export function NavUser() {
             <SidebarMenuItem>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                            <Avatar className="h-8 w-8 rounded-lg">
-                                <AvatarFallback className="rounded-lg bg-primary text-white">{getAvatarFallback(user?.name)}</AvatarFallback>
+                        <SidebarMenuButton 
+                            size="lg" 
+                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-auto py-3"
+                        >
+                            <Avatar className="h-10 w-10 rounded-full shrink-0">
+                                <AvatarFallback className="rounded-full bg-primary text-white text-sm font-medium">
+                                    {getAvatarFallback(user?.name)}
+                                </AvatarFallback>
                             </Avatar>
-                            <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="truncate font-medium">{user?.name}</span>
-                                <span className="truncate text-xs text-muted-foreground">{user?.phone}</span>
-                            </div>
-                            <MoreVertical className="ml-auto size-4" />
+                            {state !== 'collapsed' && (
+                                <>
+                                    <div className="grid flex-1 text-left leading-tight">
+                                        <span className="truncate font-semibold text-gray-900">{user?.name}</span>
+                                        <span className="truncate text-sm text-gray-500">{user?.phone}</span>
+                                    </div>
+                                    <MoreVertical className="ml-auto size-5 text-gray-400" />
+                                </>
+                            )}
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -69,26 +72,20 @@ export function NavUser() {
                         sideOffset={4}
                     >
                         <DropdownMenuLabel className="p-0 font-normal">
-                            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                <Avatar className="h-8 w-8 rounded-lg">
-                                    <AvatarFallback className="rounded-lg bg-primary text-white">{getAvatarFallback(user?.name)}</AvatarFallback>
+                            <div className="flex items-center gap-2 px-2 py-2 text-left text-sm">
+                                <Avatar className="h-10 w-10 rounded-full">
+                                    <AvatarFallback className="rounded-full bg-primary text-white text-sm font-medium">
+                                        {getAvatarFallback(user?.name)}
+                                    </AvatarFallback>
                                 </Avatar>
-                                <div className="grid flex-1 text-left text-sm leading-tight">
-                                    <span className="truncate font-medium">{user?.name}</span>
-                                    <span className="truncate text-xs text-muted-foreground">{user?.customer_code}</span>
-                                    {/* <span className="truncate text-xs text-muted-foreground">{user.phone}</span> */}
+                                <div className="grid flex-1 text-left leading-tight">
+                                    <span className="truncate font-semibold text-gray-900">{user?.name}</span>
+                                    <span className="truncate text-sm text-gray-500">{user?.phone}</span>
                                 </div>
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {/* <DropdownMenuGroup>
-                            <DropdownMenuItem>
-                                <UserCircle className="mr-2 size-4" />
-                                Account
-                            </DropdownMenuItem>
-                        </DropdownMenuGroup> */}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout}>
+                        <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600 focus:bg-red-50">
                             <LogOut className="mr-2 size-4" />
                             {t('nav.log_out')}
                         </DropdownMenuItem>

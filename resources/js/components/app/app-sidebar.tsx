@@ -8,13 +8,12 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarRail,
     useSidebar,
 } from '@/components/ui/sidebar';
 import { useTranslation } from '@/hooks/use-translation';
 import { cn } from '@/lib/utils';
 import { Link, usePage } from '@inertiajs/react';
-import { CheckCircle, CreditCard, FileText, MapPin, RadioTower, RouterIcon, ShieldQuestionIcon, Wifi } from 'lucide-react';
+import { CheckCircle, CreditCard, FileText, MapPin, RadioTower, RouterIcon, ShieldQuestionIcon, User, Wifi } from 'lucide-react';
 import { NavUser } from '@/components/nav/nav-user';
 import { LogoSwitcher } from './logo-switcher';
 
@@ -54,12 +53,12 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps, ...props }: 
     const actualSteps = steps || defaultCreateServiceSteps;
 
     const getStepDescription = (stepName: string) => {
-        if (stepName === t('sidebar.steps.customer_info')) return t('sidebar.steps.customer_info_desc');
-        if (stepName === t('sidebar.steps.service_info')) return t('sidebar.steps.service_info_desc');
-        if (stepName === t('sidebar.steps.location_info')) return t('sidebar.steps.location_info_desc');
-        if (stepName === t('sidebar.steps.device_info')) return t('sidebar.steps.device_info_desc');
-        if (stepName === t('sidebar.steps.review_submit')) return t('sidebar.steps.review_submit_desc');
-        if (stepName === t('sidebar.steps.payment')) return t('sidebar.steps.payment_desc');
+        if (stepName === t('sidebar.steps.customer_info') || stepName === 'Customer Information') return t('sidebar.steps.customer_info_desc') || 'Create or confirm your profile';
+        if (stepName === t('sidebar.steps.service_info') || stepName === 'Service Information') return t('sidebar.steps.service_info_desc') || 'Choose service configuration';
+        if (stepName === t('sidebar.steps.location_info') || stepName === 'Location Information') return t('sidebar.steps.location_info_desc') || 'Select location and check availability';
+        if (stepName === t('sidebar.steps.device_info') || stepName === 'Device Information') return t('sidebar.steps.device_info_desc') || 'Choose your device option';
+        if (stepName === t('sidebar.steps.review_submit') || stepName === 'Review & Submit') return t('sidebar.steps.review_submit_desc') || 'Verify details and submit request';
+        if (stepName === t('sidebar.steps.payment') || stepName === 'Payment / Subscribe') return t('sidebar.steps.payment_desc') || 'Review charges and proceed';
         return '';
     };
 
@@ -70,13 +69,13 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps, ...props }: 
     const displayMode = mode === 'create' || url.startsWith('/services/create') ? 'create' : 'list';
 
     return (
-        <Sidebar collapsible="icon" {...props}>
-            <SidebarHeader>
+        <Sidebar collapsible="icon" className="h-screen border-r-2 border-primary" {...props}>
+            <SidebarHeader className="mb-2 border-b-2 border-primary rounded-br-xl">
                 <LogoSwitcher />
             </SidebarHeader>
-            <SidebarContent>
+            <SidebarContent className="px-2 border-t-2 border-primary rounded-tr-xl">
                 {displayMode === 'create' ? (
-                    <SidebarGroup>
+                    <SidebarGroup className="py-0">
                         <SidebarGroupContent>
                             {state === 'collapsed' ? (
                                 <SidebarMenu>
@@ -108,79 +107,87 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps, ...props }: 
                                     })}
                                 </SidebarMenu>
                             ) : (
-                                <ol role="list" className="relative space-y-10 pt-2">
-                                    {actualSteps.map((step, idx) => {
-                                        const status = idx < currentStep ? 'complete' : idx === currentStep ? 'current' : 'upcoming';
-                                        const isCompleted = status === 'complete';
-                                        const isCurrent = status === 'current';
-                                        const Icon = step.icon;
+                                <div className="py-4">
+                                    {/* Step Counter Header */}
+                                    <div className="flex items-center justify-between px-2 pb-6 border-b-2 border-primary mb-6">
+                                        <span className="text-sm font-medium text-gray-600">Step</span>
+                                        <span className="text-sm font-medium text-gray-800">{currentStep + 1} of {actualSteps.length}</span>
+                                    </div>
+                                    
+                                    {/* Steps List */}
+                                    <ol role="list" className="relative space-y-0">
+                                        {actualSteps.map((step, idx) => {
+                                            const status = idx < currentStep ? 'complete' : idx === currentStep ? 'current' : 'upcoming';
+                                            const isCompleted = status === 'complete';
+                                            const isCurrent = status === 'current';
+                                            const Icon = step.icon;
 
-                                        return (
-                                            <li key={step.name} className="relative">
-                                                {/* Connecting line */}
-                                                {idx < actualSteps.length - 1 && (
-                                                    <div
-                                                        className={cn(
-                                                            'absolute top-11 left-7 h-10 w-0.5 -translate-y-1',
-                                                            isCompleted ? 'bg-primary' : 'bg-gray-200',
-                                                        )}
-                                                        aria-hidden="true"
-                                                    />
-                                                )}
-
-                                                <div className="relative flex items-center gap-2 pl-2">
-                                                    {/* Step number/icon */}
-                                                    <div
-                                                        className={cn(
-                                                            'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition-all duration-200',
-                                                            isCompleted
-                                                                ? 'border-primary bg-primary text-white shadow-sm'
-                                                                : isCurrent
-                                                                  ? 'border-primary text-primary shadow-sm'
-                                                                  : 'border-gray-300 bg-white text-gray-400',
-                                                        )}
-                                                    >
-                                                        {isCompleted ? (
-                                                            <CheckCircle className="h-5 w-5" />
-                                                        ) : (
-                                                            <Icon className={cn('h-4 w-4', isCurrent ? 'text-primary' : 'text-gray-400')} />
-                                                        )}
-                                                    </div>
-
-                                                    {/* Step content */}
-                                                    <div className="flex min-w-0 flex-1 flex-col pt-1">
-                                                        <span
+                                            return (
+                                                <li key={step.name} className="relative">
+                                                    {/* Connecting line - positioned on the left */}
+                                                    {idx < actualSteps.length - 1 && (
+                                                        <div
                                                             className={cn(
-                                                                'text-sm font-medium transition-colors',
+                                                                'absolute left-[19px] top-[44px] h-[calc(100%-20px)] w-[3px] rounded-full',
+                                                                isCompleted ? 'bg-primary' : 'bg-gray-200',
+                                                            )}
+                                                            aria-hidden="true"
+                                                        />
+                                                    )}
+
+                                                    <div className="relative flex items-start gap-3 py-3">
+                                                        {/* Step icon circle */}
+                                                        <div
+                                                            className={cn(
+                                                                'flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-200 z-10',
                                                                 isCompleted
-                                                                    ? 'font-semibold text-primary'
+                                                                    ? 'bg-primary text-white'
                                                                     : isCurrent
-                                                                      ? 'font-semibold text-gray-900'
-                                                                      : 'text-gray-500',
+                                                                      ? 'bg-primary text-white'
+                                                                      : 'bg-gray-100 text-gray-400',
                                                             )}
                                                         >
-                                                            {step.name}
-                                                        </span>
-                                                        <span
-                                                            className={cn(
-                                                                'text-xs transition-colors',
-                                                                isCompleted ? 'text-primary/70' : isCurrent ? 'text-gray-500' : 'text-gray-400',
+                                                            {isCompleted ? (
+                                                                <CheckCircle className="h-5 w-5" />
+                                                            ) : (
+                                                                <Icon className="h-5 w-5" />
                                                             )}
-                                                        >
-                                                            {getStepDescription(step.name)}
-                                                        </span>
+                                                        </div>
+
+                                                        {/* Step content */}
+                                                        <div className="flex min-w-0 flex-1 flex-col pt-0.5">
+                                                            <span
+                                                                className={cn(
+                                                                    'text-sm font-medium leading-tight',
+                                                                    isCompleted
+                                                                        ? 'text-primary'
+                                                                        : isCurrent
+                                                                          ? 'text-gray-900'
+                                                                          : 'text-gray-400',
+                                                                )}
+                                                            >
+                                                                {step.name}
+                                                            </span>
+                                                            <span
+                                                                className={cn(
+                                                                    'text-xs leading-tight mt-0.5',
+                                                                    isCompleted ? 'text-primary/70' : isCurrent ? 'text-gray-500' : 'text-gray-400',
+                                                                )}
+                                                            >
+                                                                {getStepDescription(step.name)}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </li>
-                                        );
-                                    })}
-                                </ol>
+                                                </li>
+                                            );
+                                        })}
+                                    </ol>
+                                </div>
                             )}
                         </SidebarGroupContent>
                     </SidebarGroup>
                 ) : (
                     <SidebarGroup>
-                        {/* <SidebarGroupLabel className="text-gray-700">Main</SidebarGroupLabel> */}
                         <SidebarGroupContent>
                             <SidebarMenu>
                                 {items.map((item) => {
@@ -201,10 +208,9 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps, ...props }: 
                     </SidebarGroup>
                 )}
             </SidebarContent>
-            <SidebarFooter>
+            <SidebarFooter className="border-t-2 border-primary">
                 <NavUser />
             </SidebarFooter>
-            <SidebarRail />
         </Sidebar>
     );
 }

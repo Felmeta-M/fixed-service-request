@@ -84,8 +84,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
-    command: >
-      php artisan queue:work --sleep=3 --tries=3 --timeout=90
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=90"]
     networks:
       - ffd_net
     logging:
@@ -115,8 +114,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
-    command: >
-      php artisan queue:work --queue=sms --sleep=2 --tries=3 --timeout=30
+    command: ["php", "artisan", "queue:work", "--queue=sms", "--sleep=2", "--tries=3", "--timeout=30"]
     networks:
       - ffd_net
     deploy:

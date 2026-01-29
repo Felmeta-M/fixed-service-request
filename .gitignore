@@ -1,3 +1,4 @@
+# PHP / Laravel
 /.phpunit.cache
 /bootstrap/ssr
 /node_modules
@@ -7,13 +8,13 @@
 /storage/*.key
 /storage/pail
 /vendor
-.env*
+.env
+.env.*
+!.env.example
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
-npm-debug.log
-yarn-error.log
 /auth.json
 /.fleet
 /.idea
@@ -23,6 +24,8 @@ yarn-error.log
 /.phpstorm.meta.php
 .DS_Store
 Thumbs.db
+
+# Storage (keep structure, ignore contents)
 /storage/debugbar/*
 /storage/framework/cache/data/*
 /storage/framework/sessions/*
@@ -35,29 +38,37 @@ Thumbs.db
 /storage/app/public/*
 !/storage/app/public/.gitignore
 /storage/app/debugbar/*
-/storage/app/pail/* 
+/storage/app/pail/*
 !/storage/app/pail/.gitignore
 /storage/temp/*
 /storage/backups/*
 /storage/imports/*
 /storage/exports/*
 /storage/media/*
+
+# Testing / coverage
 /coverage.xml
 /phpstan.neon
 /phpstan-baseline.neon
 /.php-cs-fixer.cache
-/.env.testing
-/.env.local
-/.env.production
-/.env.staging
-/.env.local.backup
-/.pnpm-debug.log
-/.pnpm-store
-/.turbo
-/.next  
-/.vercel
-/.vercel_build_output
-/.output
-/.svelte-kit
-/.nuxt
-/.astro
+.env.testing
+.env.local
+.env.local.backup
+
+# Node / frontend
+npm-debug.log
+yarn-error.log
+.pnpm-debug.log
+.pnpm-store
+.turbo
+.next
+.vercel
+.vercel_build_output
+.output
+.svelte-kit
+.nuxt
+.astro
+
+# Env (optional: commit .env.example only)
+# .env.production and .env.staging often kept out of repo
+# Uncomment to track them: !.env.production !.env.staging

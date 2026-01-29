@@ -14,28 +14,32 @@
 .phpstorm.meta.php
 .phpactor.json
 
-# Environment files (sensitive)
+# Environment (never bake into image; use env_file at runtime)
 .env
 .env.*
-!.env.production
-!.env.staging
+.env.backup
+.env.production
+.env.staging
+.env.local
+.env.testing
 
-# Node.js
-node_modules
+# Dependencies (rebuilt in container)
+/node_modules
+/vendor
 .pnpm-store
 .pnpm-debug.log
 npm-debug.log
 yarn-error.log
 
 # Build artifacts (rebuilt in container)
-/vendor
 /public/build
 /public/hot
 /public/storage
 /bootstrap/ssr
 /bootstrap/cache/*.php
+!/bootstrap/cache/.gitignore
 
-# Storage (application runtime data)
+# Storage (runtime data; use volumes in production)
 /storage/*.key
 /storage/pail
 /storage/debugbar
@@ -54,36 +58,41 @@ yarn-error.log
 /storage/exports
 /storage/media
 
-# Testing
+# Testing (not needed in image)
 /tests
-/.phpunit.cache
+.phpunit.cache
 .phpunit.result.cache
 /coverage.xml
 phpunit.xml
 
-# Static analysis and code style
+# Static analysis / code style (not needed in image)
 /phpstan.neon
 /phpstan-baseline.neon
-/.php-cs-fixer.cache
+.php-cs-fixer.cache
 pint.json
 
-# Documentation
+# Documentation (optional: remove to include in image)
 *.md
 /docs
 
-# Database dumps and backups
+# Database dumps and large data (use volumes)
 *.sql
 *.gz
 /database/*.csv
 
-# Docker files (avoid recursive context)
+# Compose and Docker meta (not needed inside image)
 docker-compose*.yml
 compose*.yml
+compose-*.yml
 Dockerfile*
+.dockerignore
 
-# Scripts not needed in container
+# Host scripts (keep docker/php/*.sh for entrypoint)
 /scripts
-*.sh
+database_backup.sh
+laravel_backup.sh
+mirror_backup.sh
+/fixed-services-config
 
 # Misc
 .DS_Store
@@ -95,7 +104,7 @@ Thumbs.db
 Homestead.json
 Homestead.yaml
 
-# Frontend build tools config (not needed at runtime)
+# Frontend tooling (not needed at runtime)
 .prettierrc
 .prettierignore
 .editorconfig
@@ -105,7 +114,7 @@ vite.config.ts
 components.json
 pnpm-workspace.yaml
 
-# Other framework artifacts
+# Other frameworks (unused)
 .next
 .vercel
 .vercel_build_output

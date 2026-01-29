@@ -4,7 +4,6 @@ FROM php:8.4-fpm
 RUN apt-get update && apt-get install -y \
     git curl unzip zip \
     libpq-dev libzip-dev libicu-dev libxml2-dev libonig-dev \
-    supervisor \
     && docker-php-ext-install \
     pdo pdo_pgsql zip bcmath intl mbstring xml \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
@@ -35,9 +34,8 @@ COPY . .
 # Run composer install now that all files exist
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress --ansi
 
-# Copy entrypoint & supervisor config
+# Copy entrypoint & PHP-FPM config
 COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY docker/php/supervisord.conf /etc/supervisor/supervisord.conf
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
@@ -45,5 +43,5 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 # Entrypoint
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-# Start supervisord
-CMD ["supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
+# Run PHP-FPM in foreground (app service); queue/scheduler override CMD in compose
+CMD ["/usr/local/sbin/php-fpm", "-F"]

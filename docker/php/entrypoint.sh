@@ -48,5 +48,5 @@ done
 
 echo "✅ Permissions configured."
 
-# Start main process (supervisord)
+# Start main process
 exec "$@"

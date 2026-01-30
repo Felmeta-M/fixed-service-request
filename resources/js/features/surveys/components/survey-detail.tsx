@@ -21,6 +21,7 @@ import {
     Calendar,
     Hash,
     Cable,
+    HandHelping,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
@@ -440,18 +441,18 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
             )}
 
             {/* Title Card */}
-            <Card className="w-full border-none shadow-sm transition-all duration-300 hover:shadow-md">
-                <CardHeader className="pb-3 p-4 sm:p-6">
+            <div className="w-full">
+                <div className="">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${serviceType.label === 'Internet' ? 'from-blue-500 to-cyan-500' :
-                                serviceType.label === 'Voice' ? 'from-violet-500 to-purple-500' :
-                                    'from-emerald-500 to-teal-500'
+                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${serviceType.label === 'Internet' ? 'bg-primary' :
+                                serviceType.label === 'Voice' ? 'bg-primary' :
+                                    'bg-primary'
                                 }`}>
-                                <ServiceIcon className="h-5 w-5 text-white" />
+                                <HandHelping className="h-5 w-5 text-white" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <CardTitle className="text-lg sm:text-xl truncate">{serviceType.label} Service</CardTitle>
+                                <div className="text-lg sm:text-xl truncate">{serviceType.label} Service</div>
                                 <p className="text-xs sm:text-sm text-muted-foreground truncate">{surveyTypeInfo.label}</p>
                             </div>
                         </div>
@@ -459,13 +460,13 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                             {statusInfo.label}
                         </span>
                     </div>
-                </CardHeader>
-            </Card>
+                </div>
+            </div>
 
             {/* Request Failed Alert - Show when assessment failed (50005 = -1) */}
             {surveyDetails?.survey_failure_reason && (
-                <Card className="w-full border-none shadow-md border-l-4 border-l-red-500 bg-red-50">
-                    <CardContent className="py-4 px-4 sm:py-5 sm:px-6">
+                <div className="w-full">
+                    <div className="sm:p-4">
                         <div className="flex items-start gap-3 sm:gap-4">
                             <div className="rounded-full bg-red-100 p-2 sm:p-3 shrink-0">
                                 <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
@@ -485,15 +486,15 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                 </p>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             )}
 
             {/* Request Ready - Device Selection Required Card */}
             {/* This is only for MANUAL surveys that completed successfully and need device selection */}
             {canContinue && (
-                <Card className="w-full border-none shadow-md bg-green-50 border-l-4 border-l-green-500">
-                    <CardContent className="py-4 px-4 sm:py-5 sm:px-6">
+                <div className="w-full">
+                    <div className="sm:p-4">
                         <div className="flex items-start gap-3 sm:gap-4">
                             <div className="rounded-full bg-green-100 p-2 sm:p-3 shrink-0">
                                 <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
@@ -518,22 +519,22 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                 </Button>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             )}
 
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
 
                 {/* Request Information */}
-                <Card className="w-full border-none shadow-sm transition-all duration-300 hover:shadow-md">
-                    <CardHeader className="pb-3 p-4 sm:p-6">
-                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <div className="w-full">
+                    <div className="sm:p-4">
+                        <div className="flex items-center gap-2 text-base sm:text-lg">
                             <Hash className="h-4 w-4 shrink-0 text-primary" />
                             <span>Request Information</span>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
+                        </div>
+                    </div>
+                    <div className="space-y-3 p-4 sm:p-6 pt-0">
                         <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
                             <span className="text-xs sm:text-sm text-muted-foreground">Request Number</span>
                             <span className="font-mono text-xs sm:text-sm font-medium break-all sm:break-normal">{customer_survey_order_id || 'N/A'}</span>
@@ -579,18 +580,18 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                 </div>
                             </>
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>  
 
                 {/* Subscription Information */}
-                <Card className="w-full border-none shadow-sm transition-all duration-300 hover:shadow-md">
-                    <CardHeader className="pb-3 p-4 sm:p-6">
-                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <div className="w-full">
+                    <div className="sm:p-4">
+                        <div className="flex items-center gap-2 text-base sm:text-lg">
                             <Zap className="h-4 w-4 shrink-0 text-primary" />
                             <span>Subscription Information</span>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
+                        </div>
+                    </div>
+                    <div className="space-y-3 sm:p-4">
                         <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
                             <span className="text-xs sm:text-sm text-muted-foreground">Order Number</span>
                             <span className="font-mono text-xs sm:text-sm font-medium break-all sm:break-normal">
@@ -657,22 +658,22 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                 </span>
                             </div>
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
 
                 {/* Infrastructure Info Card - Show media type and cable type */}
                 {(surveyDetails?.media_type || surveyDetails?.cable_type !== null) && !surveyDetails?.survey_failure_reason && (
-                    <Card className={`w-full border-none shadow-sm transition-all duration-300 hover:shadow-md ${canContinue ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' : ''}`}>
-                        <CardHeader className="pb-3 p-4 sm:p-6">
-                            <CardTitle className="flex flex-wrap items-center gap-2 text-base sm:text-lg">
+                    <div className={`w-full ${canContinue ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' : ''}`}>
+                        <div className="sm:p-4">
+                            <div className="flex flex-wrap items-center gap-2 text-base sm:text-lg">
                                 <Cable className="h-4 w-4 shrink-0 text-emerald-600" />
                                 <span>Infrastructure Details</span>
                                 {canContinue && (
                                     <Badge className="ml-auto sm:ml-2 bg-green-100 text-green-700 border-green-200 text-xs">Ready</Badge>
                                 )}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
+                            </div>
+                        </div>
+                        <div className="space-y-3 sm:p-4">
                             {surveyDetails?.media_type && (
                                 <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
                                     <span className="text-xs sm:text-sm text-muted-foreground">Media Type</span>
@@ -723,22 +724,22 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                     </div>
                                 </>
                             )}
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 )}
 
                 {/* Internet Credentials Card - Only for Data and Combo services after subscription */}
                 {(surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID) &&
                     surveyDetails?.internet_account && (
-                        <Card className="w-full border-none shadow-sm transition-all duration-300 hover:shadow-md bg-gradient-to-br from-blue-50 to-cyan-50">
-                            <CardHeader className="pb-3 p-4 sm:p-6">
-                                <CardTitle className="flex flex-wrap items-center gap-2 text-base sm:text-lg">
-                                    <Wifi className="h-4 w-4 shrink-0 text-blue-600" />
+                        <div className="w-full bg-et-light-blue/10">
+                            <div className="sm:p-4">
+                                <div className="flex flex-wrap items-center gap-2 text-base sm:text-lg">
+                                    <Wifi className="h-4 w-4 shrink-0 text-et-blue" />
                                     <span>Default Internet Credentials</span>
                                     <Badge variant="outline" className="ml-auto sm:ml-2 text-xs bg-white">For Device Config</Badge>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
+                                </div>
+                            </div>
+                            <div className="space-y-3 sm:p-4">
                                 <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
                                     <span className="text-xs sm:text-sm text-muted-foreground">Username</span>
                                     <span className="font-mono text-xs sm:text-sm font-medium text-blue-700 bg-white px-2 py-1 rounded break-all sm:break-normal">
@@ -758,19 +759,19 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                         Keep them secure and do not share with others.
                                     </p>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     )}
 
                 {/* Customer Information */}
-                <Card className="w-full border-none shadow-sm transition-all duration-300 hover:shadow-md">
-                    <CardHeader className="pb-3 p-4 sm:p-6">
-                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <div className="w-full">
+                    <div className="sm:p-4">
+                        <div className="flex items-center gap-2 text-base sm:text-lg">
                             <User className="h-4 w-4 shrink-0 text-primary" />
                             <span>Customer Information</span>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3 p-4 sm:p-6 pt-0">
+                        </div>
+                    </div>
+                    <div className="space-y-3 sm:p-4">
                         <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
                             <span className="text-xs sm:text-sm text-muted-foreground">Name</span>
                             <span className="text-xs sm:text-sm font-medium break-words">{user.name}</span>
@@ -795,18 +796,18 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                 </div>
                             </>
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
 
                 {/* Payment Information - Invoice Style (only show if there's payment info) */}
                 {hasPaymentItems && (
-                    <Card className="w-full border-none shadow-sm transition-all duration-300 hover:shadow-md lg:col-span-2">
-                        <CardHeader className="pb-3 p-4 sm:p-6">
+                    <div className="w-full">
+                        <div className="sm:p-4">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                                <div className="flex items-center gap-2 text-base sm:text-lg">
                                     <CreditCard className="h-4 w-4 shrink-0 text-primary" />
                                     <span>Payment Summary</span>
-                                </CardTitle>
+                                </div>
                                 <div className="flex flex-wrap items-center gap-2">
                                     <span className={`inline-flex items-center rounded-md px-2 sm:px-3 py-1 text-xs sm:text-sm font-semibold ${payment?.status === 'Paid' ? 'bg-et-green text-white' : 'bg-et-yellow text-gray-900'}`}>
                                         {payment?.status || (isPaid ? 'Paid' : 'Pending')}
@@ -818,8 +819,8 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                     )}
                                 </div>
                             </div>
-                        </CardHeader>
-                        <CardContent className="p-4 sm:p-6 pt-0">
+                        </div>
+                        <div className="sm:p-4">
                             {/* Invoice Table */}
                             <div className="rounded-lg border bg-muted/30 overflow-x-auto">
                                 <table className="w-full min-w-[300px]">
@@ -865,8 +866,8 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                     Payment Reference: {payment.payment_order_id}
                                 </p>
                             )}
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 )}
             </div>
 
@@ -874,13 +875,13 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
             {(canPay || canSubscribe || canUpgradeDowngrade || canCancel || canTerminate) && (
                 <>
                     <div ref={actionRef} />
-                    <Card className={`border-none shadow-xs ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
-                        <CardContent className="py-5">
+                    <div className={`border-none shadow-xs ${focusFlash ? 'ring-2 ring-primary ring-offset-2' : ''}`}>
+                        <div className="sm:py-5">
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <p className="font-medium">
-                                        {canSubscribe
-                                            ? 'Ready to activate your service?'
+                                            {canSubscribe
+                                                ? 'Ready to activate your service?'
                                             : canPay
                                                 ? 'Complete payment to activate'
                                                 : canUpgradeDowngrade
@@ -991,8 +992,8 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                     )}
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
                 </>
             )}
 

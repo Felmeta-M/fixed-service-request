@@ -6,6 +6,9 @@ import { useServiceTypes } from '@/hooks/use-service-types';
 import { Link } from '@inertiajs/react';
 import { AlertCircle, CheckCircle, Loader2, Package, Phone, Wifi } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
+import fixedBroadbandIcon from '@/images/fixed-broadband.png';
+import fixedVoiceIcon from '@/images/fixed-voice.png';
+import comboServicesIcon from '@/images/combo.png';
 
 interface ServiceSelectionStepProps {
     formData: any;
@@ -15,9 +18,9 @@ interface ServiceSelectionStepProps {
 
 // Icon mapping for dynamic service types
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-    Wifi: Wifi,
-    Phone: Phone,
-    Package: Package,
+    Wifi: () => <img src={fixedBroadbandIcon} alt="Fixed Broadband" className="h-6 sm:h-8 w-6 sm:w-8" />,
+    Phone: () => <img src={fixedVoiceIcon} alt="Fixed Voice" className="h-6 sm:h-8 w-6 sm:w-8" />,
+    Package: () => <img src={comboServicesIcon} alt="Combo Services" className="h-6 sm:h-8 w-6 sm:w-8" />,
 };
 
 export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: ServiceSelectionStepProps) {
@@ -94,13 +97,13 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                     return (
                         <div key={service.value} className="relative">
                              {/* Recommended Badge */}
-                             {isRecommended && (
+                             {/* {isRecommended && (
                                 <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 transform">
                                     <span className="inline-flex items-center rounded-full border border-yellow-200 bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-700 shadow-sm">
                                         ✨ Recommended
                                     </span>
                                 </div>
-                            )}
+                            )} */}
                             
                             <label
                                 onClick={() => !hasActiveSurvey && handleServiceSelect(service.value)}
@@ -124,10 +127,12 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                                 />
 
                                 <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
-                                    <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl shadow-sm transition-colors duration-200 
-                                        ${isSelected ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 group-hover:text-primary'}`
-                                    }>
-                                        <Icon className="h-6 w-6" />
+                                    <div 
+                                    className={`flex h-6 sm:h-8 w-6 sm:w-8 flex-shrink-0 items-center justify-center transition-colors duration-200 
+                                        ${isSelected ? 'text-white' : ' group-hover:text-primary'}`
+                                    }
+                                    >
+                                        <Icon className="h-6 sm:h-8 w-6 sm:w-8" />
                                     </div>
 
                                     <div className="flex-1 space-y-1">
@@ -164,7 +169,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
             )}
 
             {/* Terms and Conditions Checkbox */}
-            <div className="rounded-xl bg-gray-50 p-4 border border-gray-100">
+            <div className="rounded-xl p-4">
                 <div className="flex items-start gap-3">
                     <Checkbox
                         id="terms-acceptance"

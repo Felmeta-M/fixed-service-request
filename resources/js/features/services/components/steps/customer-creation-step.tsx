@@ -1516,13 +1516,13 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
             </div>
 
             {/* Next Button - Full Width */}
-            <div className="pt-4">
+            <div className="pt-2">
                 <Button
                     type="button"
                     onClick={handleSubmit}
                     disabled={submissionState.isSubmitting || submissionState.isUploadingPhoto}
                     className={cn(
-                        'w-full h-14 text-lg font-medium rounded-xl bg-primary hover:bg-primary/90 text-white shadow-sm hover:shadow-md transition-all',
+                        'w-full h-12 text-lg font-medium rounded-lg bg-primary hover:bg-primary/90 text-white shadow-sm hover:shadow-md transition-all',
                         (submissionState.isSubmitting || submissionState.isUploadingPhoto) && 'cursor-not-allowed opacity-50'
                     )}
                 >

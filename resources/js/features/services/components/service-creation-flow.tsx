@@ -147,6 +147,18 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
     const adjustedStep = getAdjustedStep();
 
+    // When navigating to device selection step, default to "with device"
+    useEffect(() => {
+        if (adjustedStep === 2) {
+            setFormData((prev) => {
+                if (prev.withDevice === undefined) {
+                    return { ...prev, withDevice: true };
+                }
+                return prev;
+            });
+        }
+    }, [adjustedStep]);
+
     // Check if we should show manual step (when resource is not available)
     const shouldShowManualStep = showManualStep && formData.resourceAvailable === false;
 
@@ -369,7 +381,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
         return [
             ...baseTitles,
-            { title: 'Device Selection', description: 'Choose your device option' },
+            { title: 'Device Information', description: 'Choose your device option' },
             { title: 'Review & Submit', description: 'Verify details and submit your request' },
             { title: 'Payment / Subscribe', description: 'Review charges and proceed to pay or subscribe' },
         ];

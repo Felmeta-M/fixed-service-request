@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { usePage } from '@inertiajs/react';
-import { CheckCircle, Loader2, Wifi, MapPin, User, Phone, Building2, Router, Globe, PhoneCall } from 'lucide-react';
+import { CheckCircle, Loader2, Wifi, MapPin, User, Phone, Building2, Router, Globe, PhoneCall, HandHelping } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCreateSurvey } from '@/hooks/use-api-mutations';
@@ -239,11 +239,11 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
             {/* Review Summary */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* Service Details Card */}
-                <Card className="w-full shadow-sm transition-all duration-300 hover:shadow-md">
-                    <CardContent className="sm:p-6">
+                <div className="w-full">
+                    <div className="sm:p-4">
                         <div className="mb-2 flex items-center gap-3 border-b border-border/50 pb-4">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg  ring-1 ring-primary/20">
-                                <ServiceIcon className="h-5 w-5 text-primary" />
+                                <HandHelping className="h-5 w-5 text-primary" />
                             </div>
                             <div>
                                 <h3 className="text-lg font-semibold text-foreground">Service Details</h3>
@@ -354,8 +354,8 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                 </div>
                             )}
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
 
                 {/* Location Details (match Resource Details layout) */}
                 {/* <Card>
@@ -456,8 +456,8 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 </Card> */}
 
                 {/* Contact Details Card */}
-                <Card className="w-full shadow-sm transition-all duration-300 hover:shadow-md lg:col-span-2">
-                    <CardContent className="sm:p-6">
+                <div className="w-full">
+                    <div className="sm:p-4">
                         <div className="mb-2 flex items-center gap-3 border-b border-border/50 pb-4">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg  ring-1 ring-primary/20">
                                 <User className="h-5 w-5 text-primary" />
@@ -468,7 +468,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
                             <div className="flex flex-col sm:flex row justify-between gap-2">
                                 <div className="flex items-center gap-2">
                                     <User className="h-4 w-4 text-primary shrink-0" />
@@ -493,8 +493,8 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                 </div>
                             )} */}
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
 
             {/* Resource Details */}

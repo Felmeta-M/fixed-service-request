@@ -104,17 +104,16 @@ export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabl
 
     return (
         <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <RouterIcon className="h-5 w-5 text-primary" />
+            <div>
+                {/* <div className="flex flex-col items-start gap-2">
+                    <h2 className="text-lg font-semibold">
                         Device Information
-                    </CardTitle>
-                    <CardDescription>
-                        Choose whether you want to purchase a device with your service or use your own compatible device.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
+                    </h2>
+                    <div className="text-sm text-gray-500">
+                        Buy a device with your plan or use your own device.
+                    </div>
+                </div> */}
+                <div className="mt-4">
                     <DeviceOptionSelector
                         value={formData.withDevice}
                         serviceType={formData.serviceType}
@@ -127,8 +126,8 @@ export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabl
                         onVoiceDeviceSelect={handleVoiceDeviceSelect}
                         disabled={disabled}
                     />
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
             <div className="flex justify-between pt-4">
                 <Button variant="outline" onClick={onBack} disabled={disabled} className="flex items-center gap-2">

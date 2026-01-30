@@ -19,6 +19,11 @@ import { usePage } from '@inertiajs/react';
 import { AlertCircle, CheckCircle2, Loader2, MapPin } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GoogleLocationMap } from '../google-location-map';
+import {
+    LocationAccuracy,
+    LocationAccuracyIndicator,
+    shouldPromptManualSelection,
+} from '../location-accuracy-indicator';
 
 interface LocationSetupStepProps {
     formData: any;
@@ -49,91 +54,53 @@ export function LocationSetupStep({
     onResourceDialogSeen,
 }: LocationSetupStepProps) {
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
-    const [locationLoading, setLocationLoading] = useState(true);
+    const [locationLoading, setLocationLoading] = useState(false);
     const [locationError, setLocationError] = useState('');
     const [isGeocoding, setIsGeocoding] = useState(false);
     const [isMapAnimating, setIsMapAnimating] = useState(false);
     const [isEditingAddress, setIsEditingAddress] = useState(false);
     const [manualAddress, setManualAddress] = useState('');
     const [showResourceUnavailableDialog, setShowResourceUnavailableDialog] = useState(false);
+    const [locationAccuracy, setLocationAccuracy] = useState<LocationAccuracy | null>(null);
+    const [isAutoDetecting, setIsAutoDetecting] = useState(false);
+    const [autoDetectTriggered, setAutoDetectTriggered] = useState(false);
 
     const [manualLat, setManualLat] = useState(formData.latitude || '');
     const [manualLng, setManualLng] = useState(formData.longitude || '');
     const [showUpdateBtn, setShowUpdateBtn] = useState(false);
 
-    const hasInitialLocationLoaded = useRef(false);
     const isFirstMount = useRef(true);
+    const mapRef = useRef<HTMLDivElement>(null);
+    const googleLocationMapRef = useRef<{ triggerGetLocation: () => void } | null>(null);
 
     const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
 
-    const getInitialLocation = useCallback(async (forceRefresh = false) => {
-        // If already loaded and not forcing refresh, skip
-        if (hasInitialLocationLoaded.current && !forceRefresh) return;
-        
-        // Reset flag if forcing refresh
-        if (forceRefresh) {
-            hasInitialLocationLoaded.current = false;
-        }
-        
-        hasInitialLocationLoaded.current = true;
-
-        setLocationLoading(true);
-        setLocationError('');
-
-        try {
-            const position = await getCurrentLocationWithTimeout();
-            const { latitude, longitude } = position.coords;
-            const preciseLat = parseFloat(latitude.toFixed(6));
-            const preciseLng = parseFloat(longitude.toFixed(6));
-
-            const address = await getGoogleAddressFromCoordinates(preciseLat, preciseLng);
-
-            setCurrentLocation({
-                lat: preciseLat,
-                lng: preciseLng,
-                address: address,
-            });
-
-            onUpdate({
-                latitude: preciseLat,
-                longitude: preciseLng,
-                address: address,
-                resourceAvailable: undefined,
-                resourceData: undefined,
-                resourceMessage: '',
-            });
-
-            setManualAddress(address);
-            setManualLat(preciseLat.toString());
-            setManualLng(preciseLng.toString());
-        } catch (error) {
-            const errorMessage = getGeolocationErrorMessage(error);
-            setLocationError(errorMessage);
-
-            // Only keep the flag as true if we successfully loaded, otherwise allow retry
-            if (forceRefresh) {
-                hasInitialLocationLoaded.current = false;
-            }
-            setLocationLoading(false);
-        } finally {
-            setLocationLoading(false);
-        }
-    }, [googleMapsApiKey, onUpdate]);
-
+    // Auto-detect location on mount (if no existing location)
     useEffect(() => {
-        // Always reset and get fresh location when component mounts (when navigating to this step)
-        // This ensures we always try to get the user's actual current location
         if (isFirstMount.current) {
             isFirstMount.current = false;
             
-            // Reset the flag to allow fresh location detection
-            hasInitialLocationLoaded.current = false;
-            
-            // Always try to get fresh location when entering this step
-            // Don't rely on potentially stale coordinates from formData
-            getInitialLocation(true);
+            // If we already have valid coordinates from a previous session, use them
+            if (formData.latitude && formData.longitude && formData.latitude !== 0 && formData.longitude !== 0) {
+                setCurrentLocation({
+                    lat: formData.latitude,
+                    lng: formData.longitude,
+                    address: formData.address || '',
+                });
+                setManualLat(formData.latitude.toString());
+                setManualLng(formData.longitude.toString());
+                setManualAddress(formData.address || '');
+                
+                // Set accuracy based on whether this was manually selected
+                if (formData.locationAccuracy) {
+                    setLocationAccuracy(formData.locationAccuracy);
+                }
+            } else {
+                // No existing location - trigger auto-detection
+                setAutoDetectTriggered(true);
+            }
         }
-    }, []); // Empty dependency array - run only once on mount
+    }, []);
 
     // Show modal when resource is not available, but only if user hasn't seen it yet
     useEffect(() => {
@@ -165,75 +132,6 @@ export function LocationSetupStep({
         }
     };
 
-    const checkGeolocationPermission = async (): Promise<'granted' | 'denied' | 'prompt' | 'unknown'> => {
-        // Check if Permissions API is available
-        if ('permissions' in navigator && 'query' in navigator.permissions) {
-            try {
-                const result = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
-                return result.state;
-            } catch (error) {
-                return 'unknown';
-            }
-        }
-        return 'unknown';
-    };
-
-    const getCurrentLocationWithTimeout = (): Promise<GeolocationPosition> => {
-        return new Promise(async (resolve, reject) => {
-            if (!navigator.geolocation) {
-                reject(new Error('Geolocation is not supported by this browser'));
-                return;
-            }
-
-            // Check permission status first (non-blocking, just for logging)
-            const permissionStatus = await checkGeolocationPermission();
-
-            let timeoutId: NodeJS.Timeout | null = null;
-            let isResolved = false;
-
-            // Set a timeout wrapper (longer than geolocation timeout to let it handle its own timeout first)
-            timeoutId = setTimeout(() => {
-                if (!isResolved) {
-                    isResolved = true;
-                    // Create an error that mimics GeolocationPositionError.TIMEOUT
-                    const timeoutError: any = new Error('Location request timed out');
-                    timeoutError.code = 3; // TIMEOUT code
-                    reject(timeoutError);
-                }
-            }, 20000); // 20 seconds - longer than geolocation's 15 second timeout
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    if (!isResolved) {
-                        isResolved = true;
-                        if (timeoutId) clearTimeout(timeoutId);
-                        resolve(position);
-                    }
-                },
-                (error) => {
-                    if (!isResolved) {
-                        isResolved = true;
-                        if (timeoutId) clearTimeout(timeoutId);
-                        // Ensure the error object has the code property
-                        if (error && typeof error.code === 'number') {
-                            reject(error);
-                        } else {
-                            // If error doesn't have code, create a proper error object
-                            const geolocationError: any = new Error(error.message || 'Geolocation error');
-                            geolocationError.code = error.code ?? 0; // Default to 0 if code is missing
-                            reject(geolocationError);
-                        }
-                    }
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 0,
-                },
-            );
-        });
-    };
-
     const getGoogleAddressFromCoordinates = async (lat: number, lng: number): Promise<string> => {
         try {
             setIsGeocoding(true);
@@ -258,7 +156,7 @@ export function LocationSetupStep({
         }
     };
 
-    const handleLocationSelect = async (lat: number, lng: number, address: string = '') => {
+    const handleLocationSelect = async (lat: number, lng: number, address: string = '', accuracy?: LocationAccuracy) => {
         const finalAddress = address || (await getGoogleAddressFromCoordinates(lat, lng));
 
         setCurrentLocation({
@@ -267,10 +165,16 @@ export function LocationSetupStep({
             address: finalAddress,
         });
 
+        // Update accuracy if provided
+        if (accuracy) {
+            setLocationAccuracy(accuracy);
+        }
+
         onUpdate({
             latitude: lat,
             longitude: lng,
             address: finalAddress,
+            locationAccuracy: accuracy || locationAccuracy,
             resourceAvailable: undefined,
             resourceData: undefined,
             resourceMessage: '',
@@ -282,77 +186,15 @@ export function LocationSetupStep({
         setIsEditingAddress(false);
     };
 
-    const handleRefreshLocation = async () => {
-        // Reset the flag to force fresh location
-        hasInitialLocationLoaded.current = false;
-        
-        setLocationLoading(true);
-        setLocationError('');
+    // Handle accuracy changes from the map component
+    const handleAccuracyChange = useCallback((accuracy: LocationAccuracy | null) => {
+        setLocationAccuracy(accuracy);
+    }, []);
 
-        try {
-            const position = await getCurrentLocationWithTimeout();
-            const { latitude, longitude } = position.coords;
-            const preciseLat = parseFloat(latitude.toFixed(6));
-            const preciseLng = parseFloat(longitude.toFixed(6));
-
-            const address = await getGoogleAddressFromCoordinates(preciseLat, preciseLng);
-
-            await handleLocationSelect(preciseLat, preciseLng, address);
-            
-            // Mark as loaded after successful refresh
-            hasInitialLocationLoaded.current = true;
-        } catch (error) {
-            const errorMessage = getGeolocationErrorMessage(error);
-            setLocationError(errorMessage);
-            // Don't mark as loaded on error to allow retry
-            hasInitialLocationLoaded.current = false;
-        } finally {
-            setLocationLoading(false);
-        }
-    };
-
-    const getGeolocationErrorMessage = (error: any): string => {
-        const errorMessage = error.message?.toLowerCase() || '';
-        const errorString = JSON.stringify(error).toLowerCase();
-
-        // Check if error has a code property (GeolocationPositionError)
-        if (typeof error.code === 'number') {
-            // Use numeric constants: PERMISSION_DENIED = 1, POSITION_UNAVAILABLE = 2, TIMEOUT = 3
-            switch (error.code) {
-                case 1: // GeolocationPositionError.PERMISSION_DENIED
-                    return 'Location access denied. Please allow location permissions in your browser settings and refresh the page.';
-                case 2: // GeolocationPositionError.POSITION_UNAVAILABLE
-                    return 'Location information unavailable. Please check your device location services are enabled.';
-                case 3: // GeolocationPositionError.TIMEOUT
-                    return 'Location request timed out. Please check your internet connection and try again.';
-            }
-        }
-
-        // Fallback: Check error message for permission-related keywords
-        if (
-            errorMessage.includes('permission') ||
-            errorMessage.includes('denied') ||
-            errorMessage.includes('blocked') ||
-            errorString.includes('permission') ||
-            errorString.includes('denied') ||
-            errorString.includes('blocked')
-        ) {
-            return 'Location access denied. Please allow location permissions in your browser settings and refresh the page.';
-        }
-
-        // Handle timeout errors from our wrapper
-        if (errorMessage.includes('timed out') || errorString.includes('timed out')) {
-            return 'Location request timed out. Please check your internet connection and try again.';
-        }
-
-        // Check for unavailable errors
-        if (errorMessage.includes('unavailable') || errorString.includes('unavailable')) {
-            return 'Location information unavailable. Please check your device location services are enabled.';
-        }
-
-        // Default error message
-        return error.message || 'Failed to get your location. Please try again.';
-    };
+    // Handle auto-detection state changes from the map component
+    const handleAutoDetectStateChange = useCallback((isDetecting: boolean) => {
+        setIsAutoDetecting(isDetecting);
+    }, []);
 
     const handleManualCoordinateSubmit = async () => {
         const lat = parseCoordinate(manualLat);
@@ -374,8 +216,21 @@ export function LocationSetupStep({
         }
 
         setLocationError('');
-        const address = await getGoogleAddressFromCoordinates(lat, lng);
-        await handleLocationSelect(lat, lng, address);
+        setLocationLoading(true);
+        
+        try {
+            const address = await getGoogleAddressFromCoordinates(lat, lng);
+            // Manual coordinate entry = excellent accuracy (user specified exact location)
+            const manualAccuracy: LocationAccuracy = {
+                meters: 0,
+                level: 'excellent',
+                timestamp: Date.now(),
+            };
+            await handleLocationSelect(lat, lng, address, manualAccuracy);
+        } finally {
+            setLocationLoading(false);
+        }
+        
         // Hide button after successful update
         setShowUpdateBtn(false);
     };
@@ -389,7 +244,13 @@ export function LocationSetupStep({
         try {
             const location = await getCoordinatesFromAddress(manualAddress);
             if (location) {
-                await handleLocationSelect(location.lat, location.lng, location.address);
+                // Address search = excellent accuracy (geocoded address)
+                const searchAccuracy: LocationAccuracy = {
+                    meters: 0,
+                    level: 'excellent',
+                    timestamp: Date.now(),
+                };
+                await handleLocationSelect(location.lat, location.lng, location.address, searchAccuracy);
             } else {
                 setLocationError('Address not found. Please try a different address.');
             }
@@ -399,6 +260,11 @@ export function LocationSetupStep({
             setLocationLoading(false);
             setIsEditingAddress(false);
         }
+    };
+
+    // Scroll to map section
+    const scrollToMap = () => {
+        mapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
 
     const hasValidLocation = formData.latitude !== 0 && formData.longitude !== 0 && formData.address;
@@ -413,10 +279,13 @@ export function LocationSetupStep({
               }
             : null);
 
+    // Determine if we should show the accuracy warning
+    const showAccuracyWarning = locationAccuracy && shouldPromptManualSelection(locationAccuracy) && !isAutoDetecting;
+
     return (
         <div className="w-full max-w-full space-y-6 overflow-x-hidden">
-            {/* Map Section with Enhanced Styling */}
-            <div className="space-y-4">
+            {/* Map Section */}
+            <div className="space-y-4" ref={mapRef}>
                 <div className="relative h-full w-full overflow-hidden rounded-sm shadow-xs">
                     <div className="pointer-events-none absolute inset-0 z-10" />
                     <GoogleLocationMap
@@ -428,8 +297,21 @@ export function LocationSetupStep({
                         isAnimating={isMapAnimating}
                         onAnimationStateChange={setIsMapAnimating}
                         showCoverageArea={true}
+                        onAccuracyChange={handleAccuracyChange}
+                        autoDetectOnMount={autoDetectTriggered}
+                        onAutoDetectStateChange={handleAutoDetectStateChange}
                     />
                 </div>
+
+                {/* Accuracy Warning - Show when accuracy is poor and not currently detecting */}
+                {showAccuracyWarning && currentLocation && (
+                    <LocationAccuracyIndicator
+                        accuracy={locationAccuracy}
+                        onRefineLocation={scrollToMap}
+                        onSelectOnMap={scrollToMap}
+                        compact={false}
+                    />
+                )}
 
                 {/* Location Details Card - Enhanced Design */}
                 {(hasValidLocation || currentLocation) && (
@@ -448,10 +330,10 @@ export function LocationSetupStep({
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <h4 className="text-base font-semibold text-foreground sm:text-lg">
-                                                {locationLoading ? 'Detecting Location...' : 'Selected Location'}
+                                                {locationLoading ? 'Updating Location...' : 'Selected Location'}
                                             </h4>
                                             <p className="text-xs text-muted-foreground">
-                                                {locationLoading ? 'Please wait while we detect your location' : 'Coordinates and address details'}
+                                                {locationLoading ? 'Please wait while we update your location' : 'Coordinates and address details'}
                                             </p>
                                         </div>
                                     </div>
@@ -592,7 +474,7 @@ export function LocationSetupStep({
                             <Loader2 className="h-4 w-4 animate-spin text-primary" />
                         </div>
                         <AlertDescription className="text-sm font-medium text-foreground">
-                            {isEditingAddress ? 'Updating address...' : 'Getting your current location...'}
+                            {isEditingAddress ? 'Updating address...' : 'Updating your location...'}
                         </AlertDescription>
                     </div>
                 </Alert>
@@ -615,7 +497,6 @@ export function LocationSetupStep({
                                 <AlertCircle className="h-5 w-5 text-amber-600" />
                             </div>
                             <AlertDialogTitle className="text-xl font-semibold text-foreground">Location Review Needed</AlertDialogTitle>
-                            {/* <AlertDialogTitle className="text-xl font-semibold text-foreground">Dear Customer,</AlertDialogTitle> */}
                         </div>
 
                         <AlertDialogDescription className="space-y-3 pt-2 text-left">
@@ -623,17 +504,17 @@ export function LocationSetupStep({
                                 <p>Dear Customer,</p>
                             </div>
                             <p className="text-sm leading-relaxed text-muted-foreground">
-                            Thank you for selecting your location on the map! We wanted to let you know that, at the moment, we can’t automatically set up service for your area because we couldn’t confirm available resources.
+                            Thank you for selecting your location on the map! We wanted to let you know that, at the moment, we can't automatically set up service for your area because we couldn't confirm available resources.
                             </p>
 
                             <div className="text-sm leading-relaxed text-muted-foreground">
                         
-                                But don’t worry! You can still submit a manual request. Our team will take a closer look at your location, and if needed, we’ll conduct a site assessment. We’ll reach out to you soon to guide you through the next steps.
+                                But don't worry! You can still submit a manual request. Our team will take a closer look at your location, and if needed, we'll conduct a site assessment. We'll reach out to you soon to guide you through the next steps.
                                
                             </div>
 
                             <p className="text-xs text-muted-foreground">
-                            We really appreciate your patience and can’t wait to help you get connected!
+                            We really appreciate your patience and can't wait to help you get connected!
                             </p>
                         </AlertDialogDescription>
                     </AlertDialogHeader>

@@ -1,3 +1,4 @@
+import { GoogleMapsProvider } from '@/contexts/google-maps-context';
 import { ServiceCreationFlow } from '@/features/services/components/service-creation-flow';
 import MainLayout from '@/layouts/main-layout';
 import { usePage } from '@inertiajs/react';
@@ -41,15 +42,17 @@ export default function CreateServicePage({ googleMapsApiKey }: { googleMapsApiK
     }, [isNewCustomer, currentStep]);
 
     return (
-        <MainLayout currentStep={currentStep} isNewCustomer={isNewCustomer}>
-            <div className="w-full mx-auto max-w-5xl">
-                <ServiceCreationFlow
-                    currentStep={currentStep}
-                    onStepChange={setCurrentStep}
-                    googleMapsApiKey={googleMapsApiKey}
-                    isNewCustomer={isNewCustomer}
-                />
-            </div>
-        </MainLayout>
+        <GoogleMapsProvider apiKey={googleMapsApiKey}>
+            <MainLayout currentStep={currentStep} isNewCustomer={isNewCustomer}>
+                <div className="w-full mx-auto max-w-5xl">
+                    <ServiceCreationFlow
+                        currentStep={currentStep}
+                        onStepChange={setCurrentStep}
+                        googleMapsApiKey={googleMapsApiKey}
+                        isNewCustomer={isNewCustomer}
+                    />
+                </div>
+            </MainLayout>
+        </GoogleMapsProvider>
     );
 }

@@ -91,6 +91,18 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
     // We map the current step (2, 3) to internal steps (0, 1)
     const internalStep = currentStep - 2;
 
+    // When on device selection step, default to "with device" if not yet set
+    useEffect(() => {
+        if (currentStep === 2) {
+            setFormData((prev) => {
+                if (prev.withDevice === undefined) {
+                    return { ...prev, withDevice: true };
+                }
+                return prev;
+            });
+        }
+    }, [currentStep]);
+
     const nextStep = () => {
         if (currentStep < 3) {
             onStepChange(currentStep + 1);
@@ -104,7 +116,7 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
     };
 
     const getStepTitles = () => [
-        { title: 'Device Selection', description: 'Choose your device option' },
+        { title: 'Device Information', description: 'Choose your device option' },
         { title: 'Payment / Subscribe', description: 'Review charges and proceed to pay or subscribe' },
     ];
 

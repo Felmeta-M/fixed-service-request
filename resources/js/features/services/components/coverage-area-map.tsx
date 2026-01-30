@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
+import { useGoogleMaps } from '@/contexts/google-maps-context';
 import { useTranslation } from '@/hooks/use-translation';
-import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import { GoogleMap, Marker } from '@react-google-maps/api';
 import { CheckCircle2, Loader2, MapPin, RefreshCw, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -13,9 +14,6 @@ const defaultCenter = {
     lat: 9.0192,
     lng: 38.7525,
 };
-
-// Libraries needed for the map
-const LIBRARIES: Array<'places' | 'drawing' | 'geometry' | 'visualization'> = ['places', 'geometry'];
 
 type AvailabilityStatus = 'idle' | 'checking' | 'inside' | 'outside' | 'error';
 
@@ -32,12 +30,8 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
     const [availabilityStatus, setAvailabilityStatus] = useState<AvailabilityStatus>('idle');
     const [availabilityMessage, setAvailabilityMessage] = useState<string>('');
 
-    // Load Google Maps script using the recommended hook (more reliable with React 18 / StrictMode)
-    const { isLoaded: isScriptLoaded, loadError: jsApiLoadError } = useJsApiLoader({
-        id: 'google-maps-coverage-area',
-        googleMapsApiKey: googleMapsApiKey || '',
-        libraries: LIBRARIES,
-    });
+    // Use the centralized Google Maps context
+    const { isLoaded: isScriptLoaded, loadError: jsApiLoadError } = useGoogleMaps();
 
     // Validate API key and reflect script load errors
     useEffect(() => {
@@ -440,7 +434,7 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                     onLoad={onLoad}
                     onUnmount={onUnmount}
                     options={{
-                        mapTypeId: google.maps.MapTypeId.SATELLITE,
+                        mapTypeId: google.maps.MapTypeId.ROADMAP,
                         streetViewControl: false,
                         // Show map type control so users can choose Satellite
                         mapTypeControl: true,

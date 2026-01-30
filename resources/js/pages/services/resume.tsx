@@ -1,3 +1,4 @@
+import { GoogleMapsProvider } from '@/contexts/google-maps-context';
 import { ServiceResumeFlow } from '@/features/services/components/service-resume-flow';
 import MainLayout from '@/layouts/main-layout';
 import { useState } from 'react';
@@ -12,15 +13,17 @@ export default function ResumeServicePage({ googleMapsApiKey, customerSurveyOrde
     const [currentStep, setCurrentStep] = useState(2);
 
     return (
-        <MainLayout currentStep={currentStep}>
-            <div className="mx-auto w-full max-w-4xl">
-                <ServiceResumeFlow
-                    currentStep={currentStep}
-                    onStepChange={setCurrentStep}
-                    googleMapsApiKey={googleMapsApiKey}
-                    surveyOrderId={customerSurveyOrderId}
-                />
-            </div>
-        </MainLayout>
+        <GoogleMapsProvider apiKey={googleMapsApiKey}>
+            <MainLayout currentStep={currentStep}>
+                <div className="mx-auto w-full max-w-4xl">
+                    <ServiceResumeFlow
+                        currentStep={currentStep}
+                        onStepChange={setCurrentStep}
+                        googleMapsApiKey={googleMapsApiKey}
+                        surveyOrderId={customerSurveyOrderId}
+                    />
+                </div>
+            </MainLayout>
+        </GoogleMapsProvider>
     );
 }

@@ -1,5 +1,6 @@
-import { CoverageAreaMap } from '@/features/services/components/coverage-area-map';
 import { Button } from '@/components/ui/button';
+import { GoogleMapsProvider } from '@/contexts/google-maps-context';
+import { CoverageAreaMap } from '@/features/services/components/coverage-area-map';
 import { useTranslation } from '@/hooks/use-translation';
 import GuestLayout from '@/layouts/guest-layout';
 import { type SharedData } from '@/types';
@@ -265,8 +266,9 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
   }, [SERVICES.length]);
 
   return (
-    <GuestLayout>
-      <div className="min-h-screen">
+    <GoogleMapsProvider apiKey={googleMapsApiKey}>
+      <GuestLayout>
+        <div className="min-h-screen">
         {/* ================= HERO & SERVICES SECTION (CONTINUOUS BACKGROUND) ================= */}
         <div
           className="relative overflow-hidden bg-white"
@@ -415,7 +417,7 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
   <div className="grid w-full grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-8">
     {service?.features?.map((feature, featureIndex) => (
       <div key={featureIndex} className="flex flex-col items-center">
-        <div className="mb-3 flex h-[180px] sm:h-[260px] w-full max-w-[200px] items-center justify-center">
+        <div className="mb-3 flex h-[180px] sm:h-[280px] w-full max-w-[200px] items-center justify-center">
           <img
             src={feature?.image}
             alt={t(feature?.titleKey)}
@@ -467,6 +469,7 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
           </section>
         </div>
       </div>
-    </GuestLayout>
+      </GuestLayout>
+    </GoogleMapsProvider>
   );
 }

@@ -316,7 +316,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const canChangeOffer = survey.can_change_offer ?? false;
     const canCancel = survey.can_cancel ?? false;
     const canTerminate = survey.can_terminate ?? false;
-    
+
     // Upgrade/Downgrade is only available for Internet and Combo services
     const INTERNET_OFFER_ID = '1457567289';
     const COMBO_OFFER_ID = '180427974';
@@ -453,7 +453,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                                 Preparing...
                             </>
                         ) : (
-                            <>Pay</>
+                            <>Pay Now</>
                         )}
                     </Button>
                 )}
@@ -461,7 +461,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 {/* Subscribe button for auto surveys (not for resumable manual surveys) */}
                 {canSubscribe && !canResume && (
                     <Button onClick={onSubscribeClick} disabled={loading || isSubmitting} className="gap-1 bg-primary px-2 text-white" size="sm">
-                        {isSubmitting || createSubscriptionMutation.isPending ? 'Subscribing...' : 'Subscribe'}
+                        {isSubmitting || createSubscriptionMutation.isPending ? 'Subscribing...' : 'Activate Service'}
                     </Button>
                 )}
                 <Button variant="ghost" size="sm" onClick={() => handleRowClick(survey as SurveyRow)} className="h-8 w-8 p-0">
@@ -535,7 +535,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 onConfirm={handleCancel}
                 loading={loading}
                 title={isTerminateAction ? "Terminate Service" : "Cancel Service Request"}
-                description={isTerminateAction 
+                description={isTerminateAction
                     ? "Are you sure you want to terminate this service? This action cannot be undone."
                     : "Are you sure you want to cancel this service request? This action cannot be undone."
                 }

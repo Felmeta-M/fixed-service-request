@@ -27,7 +27,8 @@ abstract class BaseSurveyService extends BaseApiService
         protected readonly PaymentService $payment_service,
         protected readonly QueryAvailableNumberService $queryAvailableNumberService,
         protected readonly ReserveNumberService $reserveNumberService,
-    ) {}
+    ) {
+    }
 
     protected function endpoint(): string
     {
@@ -70,9 +71,6 @@ abstract class BaseSurveyService extends BaseApiService
         $data = $this->applyDefaults($data, $resource);
 
         $xml = $this->buildXml($data, $resource);
-        AppLogger::api()->info('Survey XML', [
-            'xml' => $xml,
-        ]);
 
         $response = $this->executeRequest($xml);
 

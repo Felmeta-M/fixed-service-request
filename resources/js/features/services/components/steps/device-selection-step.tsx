@@ -38,8 +38,10 @@ export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabl
 
         // If "with device", must have selected device(s)
         if (isCombo) {
-            // Combo service: need both internet and voice devices with IDs
-            return !!(formData.selectedDeviceInternet?.id && formData.selectedDeviceVoice?.id && formData.deviceId && formData.deviceVoiceId);
+            // Combo service: need at least one device (internet, voice, or both)
+            const hasInternet = !!(formData.selectedDeviceInternet?.id && formData.deviceId);
+            const hasVoice = !!(formData.selectedDeviceVoice?.id && formData.deviceVoiceId);
+            return hasInternet || hasVoice;
         } else {
             // Single service (broadband or voice): need one device with ID
             if (isVoiceOnly) {

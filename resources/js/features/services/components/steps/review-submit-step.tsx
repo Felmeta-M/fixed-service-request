@@ -297,10 +297,11 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                             <p className="text-sm text-muted-foreground">Not selected</p>
                                         ) : formData.withDevice ? (
                                             formData.serviceType === '180427974' ? (
-                                                // Combo service - show only internet device
-                                                <div className="space-y-2">
+                                                // Combo service - show internet and/or voice device(s)
+                                                <div className="space-y-3">
                                                     {formData.selectedDeviceInternet ? (
                                                         <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+                                                            <p className="text-xs font-medium text-muted-foreground mb-1">Internet/Data</p>
                                                             <p className="text-sm font-semibold text-foreground">
                                                                 {formData.selectedDeviceInternet.name}
                                                             </p>
@@ -317,9 +318,30 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                                                 }).format(formData.selectedDeviceInternet.price)}
                                                             </p>
                                                         </div>
-                                                    ) : (
+                                                    ) : null}
+                                                    {formData.selectedDeviceVoice ? (
+                                                        <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
+                                                            <p className="text-xs font-medium text-muted-foreground mb-1">Voice/Phone</p>
+                                                            <p className="text-sm font-semibold text-foreground">
+                                                                {formData.selectedDeviceVoice.name}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {formData.selectedDeviceVoice.vendor}
+                                                                {formData.selectedDeviceVoice.model && ` • ${formData.selectedDeviceVoice.model}`}
+                                                            </p>
+                                                            <p className="mt-1 text-sm font-semibold text-primary">
+                                                                {new Intl.NumberFormat('en-ET', {
+                                                                    style: 'currency',
+                                                                    currency: 'ETB',
+                                                                    minimumFractionDigits: 0,
+                                                                    maximumFractionDigits: 2,
+                                                                }).format(formData.selectedDeviceVoice.price)}
+                                                            </p>
+                                                        </div>
+                                                    ) : null}
+                                                    {!formData.selectedDeviceInternet && !formData.selectedDeviceVoice && (
                                                         <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                                                            Not selected
+                                                            No device selected
                                                         </Badge>
                                                     )}
                                                 </div>

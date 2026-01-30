@@ -124,6 +124,11 @@ export function DeviceOptionSelector({
             {/* Device Selector (only for "With Device") */}
             {isWithDevice && !disabled && (
                 <div className="mt-4">
+                    {isCombo && (
+                        <p className="text-sm text-muted-foreground mb-3">
+                            Choose an internet device, voice device, or both — at least one required.
+                        </p>
+                    )}
                     <DeviceSelector
                         serviceType={serviceType}
                         mediaType={mediaType}

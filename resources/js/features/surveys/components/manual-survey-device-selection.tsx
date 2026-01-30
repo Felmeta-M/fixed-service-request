@@ -53,7 +53,8 @@ export function ManualSurveyDeviceSelection({
 
         // If "with device", must have selected device(s)
         if (isCombo) {
-            return !!(selectedDeviceInternet?.id && selectedDeviceVoice?.id);
+            // Combo: at least one device (internet, voice, or both)
+            return !!(selectedDeviceInternet?.id || selectedDeviceVoice?.id);
         } else if (isVoiceOnly) {
             return !!selectedDeviceVoice?.id;
         } else {

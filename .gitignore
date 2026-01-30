@@ -1,3 +1,7 @@
+# SSL certs (never commit)
+/docker/nginx/ssl/*.crt
+/docker/nginx/ssl/*.key
+
 # PHP / Laravel
 /.phpunit.cache
 /bootstrap/ssr

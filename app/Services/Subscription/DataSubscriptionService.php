@@ -471,17 +471,31 @@ XML;
                'data'
             );
 
-            // Send SMS with internet credentials
+            // Send SMS notifications (non-blocking)
             if (!empty($data['sms_no'])) {
-               $name = $this->formatCustomerNameForSms($data['name'] ?? null);
-               $message = "Dear {$name}, thank you for choosing Ethio Telecom. "
-                  . "Your subscription has been successfully created. "
-                  . "Data Service Number: {$serviceNo}. "
-                  . "Internet Account: {$internetAccount}. "
-                  . "Password: {$internetPassword}. "
-                  . "For support, visit https://fixedservices.ethiotelecom.et/services.";
+               try {
+                  // Send subscription activation notification
+                  \App\Services\NotificationService::sendSubscriptionActivated(
+                     $data['sms_no'],
+                     'data',
+                     $serviceNo
+                  );
 
-               $this->sendSubscriptionSms($data['sms_no'], $message, $surveyOrderId, 'data');
+                  // Send internet credentials (separate SMS for clarity)
+                  if ($internetAccount && $internetPassword) {
+                     \App\Services\NotificationService::sendInternetCredentials(
+                        $data['sms_no'],
+                        $serviceNo,
+                        $internetAccount,
+                        $internetPassword
+                     );
+                  }
+               } catch (\Throwable $e) {
+                  AppLogger::api()->warning('Failed to send data subscription SMS', [
+                     'survey_order_id' => $surveyOrderId,
+                     'error' => $e->getMessage(),
+                  ]);
+               }
             }
          } else {
             // Log Huawei error response

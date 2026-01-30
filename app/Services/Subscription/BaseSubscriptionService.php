@@ -173,69 +173,6 @@ abstract class BaseSubscriptionService extends BaseApiService
     }
 
     /**
-     * Send subscription confirmation SMS to customer.
-     * Extracted common SMS sending logic with proper error handling.
-     *
-     * @param string $phone Phone number to send SMS to
-     * @param string $message SMS message content
-     * @param string $surveyOrderId Survey order ID for logging
-     * @param string $serviceType Service type for logging ('voice', 'data', 'combo')
-     * @return void
-     */
-    protected function sendSubscriptionSms(
-        string $phone,
-        string $message,
-        ?string $surveyOrderId = null,
-        string $serviceType = 'subscription'
-    ): void {
-        if (empty($phone) || !\App\Traits\InteractsWithSMSGateway::ensurePhoneIsLocal($phone)) {
-            return;
-        }
-
-        try {
-            \App\Traits\InteractsWithSMSGateway::sendSmsOnly($phone, $message);
-            AppLogger::api()->info('Subscription SMS sent successfully', [
-                'phone' => substr($phone, -4), // Last 4 digits only
-                'survey_order_id' => $surveyOrderId,
-                'service_type' => $serviceType,
-            ]);
-        } catch (\RuntimeException $e) {
-            // Business-level failure (rate limit, gateway reject)
-            AppLogger::api()->warning('Subscription SMS blocked or rejected', [
-                'phone' => substr($phone, -4), // Last 4 digits only
-                'reason' => $e->getMessage(),
-                'survey_order_id' => $surveyOrderId,
-                'service_type' => $serviceType,
-            ]);
-        } catch (\Throwable $e) {
-            // System-level failure
-            AppLogger::api()->exception($e, 'Subscription SMS failed unexpectedly', [
-                'phone' => substr($phone, -4), // Last 4 digits only
-                'survey_order_id' => $surveyOrderId,
-                'service_type' => $serviceType,
-            ]);
-        }
-    }
-
-    /**
-     * Format customer name for SMS (first name only).
-     * Extracted to ensure consistent name formatting.
-     *
-     * @param string|null $fullName Full customer name
-     * @param string $fallback Fallback name if not provided
-     * @return string Formatted first name
-     */
-    protected function formatCustomerNameForSms(?string $fullName, string $fallback = 'Customer'): string
-    {
-        if (empty($fullName)) {
-            return $fallback;
-        }
-
-        $nameParts = explode(' ', trim($fullName));
-        return trim($nameParts[0] ?? $fallback);
-    }
-
-    /**
      * Update survey order with subscription data and additional fields.
      * Extracted to reduce duplication when updating survey orders with extra data.
      *

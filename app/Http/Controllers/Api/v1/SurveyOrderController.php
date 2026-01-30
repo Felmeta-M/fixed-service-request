@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
+use App\Services\ZoneService;
 
 class SurveyOrderController extends Controller
 {
@@ -147,6 +148,8 @@ class SurveyOrderController extends Controller
         $statusUpdates = [];
         $surveyResultUpdates = []; // For manual survey result fields
         $timestampUpdates = [];
+        $manualSurveyCompletedNotifications = []; // Track manual surveys that completed for SMS notifications
+        $manualSurveyFailedNotifications = []; // Track manual surveys that failed for SMS notifications
 
         foreach ($orders as $order) {
             try {
@@ -221,6 +224,18 @@ class SurveyOrderController extends Controller
                             'survey_failure_reason' => $surveyResult['survey_failure_reason'] ?? 'Survey failed',
                             'zone_code' => null, // Clear zone code on failure
                         ];
+
+                        // Queue notification for manual survey failure
+                        // Only notify if status is actually changing to Failed
+                        if ($order->status !== FFDServiceProvisionStatus::Failed->value) {
+                            $manualSurveyFailedNotifications[] = [
+                                'phone' => $order->contact_no ?? null,
+                                'customer_name' => $order->contact_person ?? 'Customer',
+                                'service_type' => $order->main_offer_id,
+                                'order_number' => $order->customer_survey_order_id,
+                                'failure_reason' => $surveyResult['survey_failure_reason'] ?? null,
+                            ];
+                        }
                     } else {
                         // Survey COMPLETED (50005 = PON/COPPER)
                         // CRITICAL: Only mark as Completed and update survey result fields
@@ -278,6 +293,17 @@ class SurveyOrderController extends Controller
                                 'survey_failure_reason' => null, // Clear any previous failure reason
                                 'zone_code' => $zoneCode, // Store zone code if found
                             ];
+
+                            // Queue notification for manual survey completion
+                            // Only notify if status is actually changing to Completed
+                            if ($order->status !== FFDServiceProvisionStatus::Completed->value) {
+                                $manualSurveyCompletedNotifications[] = [
+                                    'phone' => $order->contact_no ?? null,
+                                    'customer_name' => $order->contact_person ?? 'Customer',
+                                    'service_type' => $order->main_offer_id,
+                                    'order_number' => $order->customer_survey_order_id,
+                                ];
+                            }
                         } else {
                             // Missing required fields: only update status from BSS response
                             // Don't update survey result fields until all data is available
@@ -371,6 +397,58 @@ class SurveyOrderController extends Controller
                 ->whereIn('id', $uniqueIds)
                 ->update(['last_checked_at' => now()]);
         }
+
+        // Send SMS notifications for completed manual surveys (non-blocking)
+        foreach ($manualSurveyCompletedNotifications as $notification) {
+            if (!empty($notification['phone'])) {
+                try {
+                    \App\Services\NotificationService::sendSurveyCreated(
+                        $notification['phone'],
+                        $notification['customer_name'],
+                        $this->mapOfferIdToServiceType($notification['service_type']),
+                        $notification['order_number']
+                    );
+                } catch (Throwable $e) {
+                    AppLogger::business()->warning('Failed to send manual survey completion SMS', [
+                        'order_number' => $notification['order_number'],
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        // Send SMS notifications for failed manual surveys (non-blocking)
+        foreach ($manualSurveyFailedNotifications as $notification) {
+            if (!empty($notification['phone'])) {
+                try {
+                    \App\Services\NotificationService::sendSurveyFailed(
+                        $notification['phone'],
+                        $notification['customer_name'],
+                        $this->mapOfferIdToServiceType($notification['service_type']),
+                        $notification['order_number'],
+                        $notification['failure_reason']
+                    );
+                } catch (Throwable $e) {
+                    AppLogger::business()->warning('Failed to send manual survey failure SMS', [
+                        'order_number' => $notification['order_number'],
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Map main_offer_id to service type label for notifications.
+     */
+    protected function mapOfferIdToServiceType(mixed $offerId): string
+    {
+        return match ((int) $offerId) {
+            1 => 'voice',
+            2 => 'data',
+            3 => 'combo',
+            default => 'voice', // Default to voice if unknown
+        };
     }
 
     /**

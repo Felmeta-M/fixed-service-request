@@ -506,22 +506,32 @@ XML;
                   'combo'
                );
 
-               // Send SMS with internet credentials
-               // Get SMS number from customer context or data
+               // Send SMS notifications (non-blocking)
                $smsNo = $data['sms_no'] ?? \App\Support\CustomerContext::phone();
                if (!empty($smsNo)) {
-                  $customerName = \App\Support\CustomerContext::name() ?? 'Customer';
-                  $name = $this->formatCustomerNameForSms($customerName);
+                  try {
+                     // Send subscription activation notification
+                     \App\Services\NotificationService::sendSubscriptionActivated(
+                        $smsNo,
+                        'combo',
+                        $voiceServiceNumber
+                     );
 
-                  $message = "Dear {$name}, thank you for choosing Ethio Telecom. "
-                     . "Your combo subscription has been successfully created. "
-                     . "Voice Service Number: {$voiceServiceNumber}. "
-                     . "Data Service Number: {$fbbServiceNumber}. "
-                     . "Internet Account: {$internetAccount}. "
-                     . "Password: {$internetPassword}. "
-                     . "For support, visit https://fixedservices.ethiotelecom.et/services.";
-
-                  $this->sendSubscriptionSms($smsNo, $message, $surveyOrderId, 'combo');
+                     // Send internet credentials (separate SMS for clarity)
+                     if ($internetAccount && $internetPassword) {
+                        \App\Services\NotificationService::sendInternetCredentials(
+                           $smsNo,
+                           $fbbServiceNumber,
+                           $internetAccount,
+                           $internetPassword
+                        );
+                     }
+                  } catch (\Throwable $e) {
+                     AppLogger::api()->warning('Failed to send combo subscription SMS', [
+                        'survey_order_id' => $surveyOrderId,
+                        'error' => $e->getMessage(),
+                     ]);
+                  }
                }
             }
          } catch (\Throwable $e) {

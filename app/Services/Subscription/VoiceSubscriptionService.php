@@ -355,13 +355,18 @@ XML;
 
          // ✅ Send SMS to customer (non-blocking - failures are logged but don't affect response)
          if (!empty($data['sms_no'])) {
-            $name = $this->formatCustomerNameForSms($data['name'] ?? null);
-            $message = sprintf(
-               'Dear %s, thank you for choosing Ethio telecom. Your subscription has been successfully created. For support or to submit a TT/complaint, please visit https://fixedservices.ethiotelecom.et/services.',
-               $name
-            );
-
-            $this->sendSubscriptionSms($data['sms_no'], $message, $data['survey_order_id'] ?? null, 'voice');
+            try {
+               \App\Services\NotificationService::sendSubscriptionActivated(
+                  $data['sms_no'],
+                  'voice',
+                  $this->serviceNumber
+               );
+            } catch (\Throwable $e) {
+               AppLogger::api()->warning('Failed to send voice subscription SMS', [
+                  'survey_order_id' => $data['survey_order_id'] ?? null,
+                  'error' => $e->getMessage(),
+               ]);
+            }
          }
 
          return ApiResponse::success([

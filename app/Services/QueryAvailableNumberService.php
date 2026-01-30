@@ -17,7 +17,7 @@ class QueryAvailableNumberService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.query_available_number.endpoint');
+        return config('services.ng.endpoint');
     }
 
     /**
@@ -141,7 +141,7 @@ class QueryAvailableNumberService extends BaseApiService
      */
     protected function buildXml(array $data): string
     {
-        $config = config('services.query_available_number');
+        $config = config('services.ng');
 
         // Use shared helpers for dynamic values
         $transactionId = $this->transactionId();
@@ -161,7 +161,7 @@ class QueryAvailableNumberService extends BaseApiService
         $techChannelId = $config['technical_channel_id'] ?? '51';
         $tenantId = $config['tenant_id'] ?? '101';
         $accessUser = $config['access_user'] ?? 'ecaf';
-        $accessPwd = $config['access_password'] ?? 'REDACTED_PASSWORD';
+        $accessPwd = $config['access_pwd'];
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">

@@ -16,7 +16,7 @@ class CancelSurveyOrderService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.cancel_survey.endpoint');
+        return config('services.ng.endpoint');
     }
 
     public function cancelSurveyOrder(array $data): JsonResponse
@@ -49,7 +49,7 @@ class CancelSurveyOrderService extends BaseApiService
     {
         $transactionId = uniqid();
         $processTime   = now()->format('YmdHis');
-        $config = config('services.cancel_survey');
+        $config = config('services.ng');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -63,7 +63,7 @@ class CancelSurveyOrderService extends BaseApiService
             <com:TransactionId>{$transactionId}</com:TransactionId>
             <com:ProcessTime>{$processTime}</com:ProcessTime>
             <com:ChannelId>{$config['channel_id']}</com:ChannelId>
-            <com:TechnicalChannelId>{$config['tech_channel_id']}</com:TechnicalChannelId>
+            <com:TechnicalChannelId>{$config['technical_channel_id']}</com:TechnicalChannelId>
             <com:AccessUser>{$config['access_user']}</com:AccessUser>
             <com:AccessPwd>{$config['access_pwd']}</com:AccessPwd>
          </ser:RequestHeader>

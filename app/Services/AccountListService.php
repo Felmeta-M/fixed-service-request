@@ -11,7 +11,7 @@ class AccountListService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.get_account_list.endpoint');
+        return config('services.ng.endpoint');
     }
 
     public function getAccountList(string $serviceNumber)
@@ -33,11 +33,11 @@ class AccountListService extends BaseApiService
     {
         $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
-        $accessUser = config('services.get_account_list.user');
-        $accessPwd = config('services.get_account_list.password');
-        $channelId = config('services.get_account_list.channel_id');
-        $techChannelId = config('services.get_account_list.tech_channel_id');
-        $tenantId = config('services.get_account_list.tenant_id', 101);
+        $accessUser = config('services.ng.access_user');
+        $accessPwd = config('services.ng.access_pwd');
+        $channelId = config('services.ng.channel_id');
+        $techChannelId = config('services.ng.technical_channel_id');
+        $tenantId = config('services.ng.tenant_id');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">

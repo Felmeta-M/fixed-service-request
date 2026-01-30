@@ -12,7 +12,7 @@ class ReserveNumberService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.number_service_reserve.endpoint');
+        return config('services.ng.endpoint');
     }
 
     /**
@@ -76,7 +76,7 @@ class ReserveNumberService extends BaseApiService
         $transactionId = $this->transactionId();
         $processTime = $this->processTime();
 
-        $config = config('services.number_service_reserve');
+        $config = config('services.ng');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"

@@ -26,7 +26,7 @@ class QueryCustomerForTTService extends BaseApiService
      */
     protected function endpoint(): string
     {
-        return config('services.query_customer_for_tt.endpoint');
+        return config('services.ng.endpoint');
     }
 
     /**
@@ -71,7 +71,7 @@ class QueryCustomerForTTService extends BaseApiService
      */
     protected function buildRequestXml(string $serviceNumber): string
     {
-        $config = config('services.query_customer_for_tt');
+        $config = config('services.ng');
         $transactionId = date('YmdHis') . rand(1000, 9999);
         $processTime = date('YmdHis');
 

@@ -43,7 +43,7 @@ class QueryPurchasedOfferingService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.purchased_offering.endpoint', 'REDACTED_INTERNAL_ENDPOINT/SELFCARE/HWBSS_Offering');
+        return config('services.ng.endpoint');
     }
 
     /**
@@ -126,16 +126,16 @@ class QueryPurchasedOfferingService extends BaseApiService
      */
     protected function buildXml(array $data): string
     {
-        $config = config('services.purchased_offering');
+        $config = config('services.ng');
 
         $transactionId = $this->transactionId();
         $reqTime = $this->processTime();
 
-        // Config values with fallbacks
-        $channel = $config['channel'] ?? '3';
-        $partnerId = $config['partner_id'] ?? '101';
-        $accessUser = $config['access_user'] ?? 'ecare';
-        $accessPassword = $config['access_password'] ?? 'REDACTED_PASSWORD';
+        // Use unified NG config
+        $channel = $config['channel_id'];
+        $partnerId = $config['tenant_id'];
+        $accessUser = $config['access_user'];
+        $accessPassword = $config['access_pwd'];
 
         $objectIdType = $data['object_id_type'];
         $objectId = $data['object_id'];

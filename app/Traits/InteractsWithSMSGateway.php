@@ -157,7 +157,7 @@ trait InteractsWithSMSGateway
 
     protected static function buildSmsUrl(string $phone, string $message): string
     {
-        $endpoint = config('services.sms_end_point');
+        $endpoint = config('services.sms_endpoint');
 
         return sprintf(
             '%s%s&message=%s',

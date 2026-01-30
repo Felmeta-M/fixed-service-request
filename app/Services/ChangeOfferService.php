@@ -11,7 +11,7 @@ class ChangeOfferService extends BaseApiService
 
    protected function endpoint(): string
    {
-      return config('services.change_offer.endpoint');
+      return config('services.ng.endpoint');
    }
 
    public function changePrimaryOffering(
@@ -48,6 +48,7 @@ class ChangeOfferService extends BaseApiService
       string $oldValue,
       string $value,
    ): string {
+      $cfg = config('services.ng');
       $transactionId = now()->format('YmdHis');
       $processTime = now()->format('YmdHis');
       $propertyCode = '50020';
@@ -67,14 +68,14 @@ class ChangeOfferService extends BaseApiService
             <!--Optional:-->
             <com:ProcessTime>{$processTime}</com:ProcessTime>
             <!--Optional:-->
-            <com:Language>2002</com:Language>
-            <com:ChannelId>{config('services.change_offer.channel_id')}</com:ChannelId>
-            <com:TechnicalChannelId>{config('services.change_offer.tech_channel_id')}</com:TechnicalChannelId>
+            <com:Language>{$cfg['language']}</com:Language>
+            <com:ChannelId>{$cfg['channel_id']}</com:ChannelId>
+            <com:TechnicalChannelId>{$cfg['technical_channel_id']}</com:TechnicalChannelId>
             <!--Optional:-->
-            <com:TenantId>{config('services.change_offer.tenant_id')}</com:TenantId>
-            <com:AccessUser>{config('services.change_offer.user')}</com:AccessUser>
+            <com:TenantId>{$cfg['tenant_id']}</com:TenantId>
+            <com:AccessUser>{$cfg['access_user']}</com:AccessUser>
             <!--Abc1234%-->
-            <com:AccessPwd>{config('services.change_offer.password')}</com:AccessPwd>
+            <com:AccessPwd>{$cfg['access_pwd']}</com:AccessPwd>
          </ser:RequestHeader>
          <ser:AccessInfo>
             <com:ObjectIdType>{$objectIdType}</com:ObjectIdType>

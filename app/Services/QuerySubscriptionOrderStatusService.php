@@ -19,7 +19,7 @@ class QuerySubscriptionOrderStatusService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.subscription_order_status.endpoint', 'REDACTED_INTERNAL_ENDPOINT/SELFCARE/HWBSS_Order');
+        return config('services.ng.endpoint');
     }
 
     /**
@@ -137,17 +137,17 @@ class QuerySubscriptionOrderStatusService extends BaseApiService
      */
     protected function buildXml(array $data): string
     {
-        $config = config('services.subscription_order_status');
+        $config = config('services.ng');
 
         $transactionId = $this->transactionId();
         $reqTime = $this->processTime();
 
-        // Config values with fallbacks
-        $channel = $config['channel'] ?? '70';
-        $partnerId = $config['partner_id'] ?? '101';
-        $accessUser = $config['access_user'] ?? 'esb';
-        $accessPassword = $config['access_password'] ?? 'REDACTED_PASSWORD';
-        $businessCode = $config['business_code'] ?? 'ChangeSupplementaryOffering';
+        // Use unified NG config
+        $channel = $config['channel_id'];
+        $partnerId = $config['tenant_id'];
+        $accessUser = $config['access_user'];
+        $accessPassword = $config['access_pwd'];
+        $businessCode = 'ChangeSupplementaryOffering';
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"

@@ -20,7 +20,7 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
 
    protected function buildXml(array $data, array $resource): string
    {
-      $cfg = config('services.survey');
+      $cfg = config('services.ng');
 
       // Use shared helpers for timestamps
       $transactionId = $this->transactionId();

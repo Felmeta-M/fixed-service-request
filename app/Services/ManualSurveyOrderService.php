@@ -37,7 +37,7 @@ class ManualSurveyOrderService extends BaseApiService
         protected PaymentCalculatorService $paymentCalculator,
         protected PaymentService $paymentService
     ) {
-        $this->config = config('services.manual_survey');
+        $this->config = config('services.ng');
     }
 
     /**
@@ -129,8 +129,8 @@ class ManualSurveyOrderService extends BaseApiService
                 <com:TechnicalChannelId>{$this->config['technical_channel_id']}</com:TechnicalChannelId>
                 <com:TenantId>{$this->config['tenant_id']}</com:TenantId>
                 <com:AccessUser>{$this->config['access_user']}</com:AccessUser>
-                <com:AccessPwd>{$this->config['access_password']}</com:AccessPwd>
-                <com:OperatorId>{$this->config['operator_id']}</com:OperatorId>
+                <com:AccessPwd>{$this->config['access_pwd']}</com:AccessPwd>
+                <com:OperatorId>{$this->config['access_user']}</com:OperatorId>
             </ser:RequestHeader>
             <ser:HandleSurveyOrderReqBody>
                 <com:CustomerCode>{$customerCode}</com:CustomerCode>

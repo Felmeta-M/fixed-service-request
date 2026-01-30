@@ -17,7 +17,7 @@ class DataSurveyService extends BaseSurveyService implements SurveyInterface
 
     protected function buildXml(array $data, array $resource): string
     {
-        $cfg = config('services.survey');
+        $cfg = config('services.ng');
 
         // Use shared helpers for timestamps
         $transactionId = $this->transactionId();
@@ -52,7 +52,7 @@ class DataSurveyService extends BaseSurveyService implements SurveyInterface
 <com:TechnicalChannelId>{$cfg['technical_channel_id']}</com:TechnicalChannelId>
 <com:TenantId>{$cfg['tenant_id']}</com:TenantId>
 <com:AccessUser>{$cfg['access_user']}</com:AccessUser>
-<com:AccessPwd>{$cfg['access_password']}</com:AccessPwd>
+<com:AccessPwd>{$cfg['access_pwd']}</com:AccessPwd>
 </ser:RequestHeader>
 <ser:HandleSurveyOrderReqBody>
 <com:CustomerCode>{$customerCode}</com:CustomerCode>

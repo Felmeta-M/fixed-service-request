@@ -134,7 +134,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       $this->internetAccount = $email;
       $this->internetPassword = $password; // Plain text for SMS/DB
 
-      $cfg = config('services.subscriber');
+      $cfg = config('services.ng');
 
       // Get dynamic zone_code for CustomerAddressInfo EthioZoneOrRegion
       // This will throw an exception with a clear message if zone_code cannot be determined

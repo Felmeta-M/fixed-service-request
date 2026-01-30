@@ -20,7 +20,7 @@ class SubscriptionService extends BaseApiService
 
    protected function endpoint(): string
    {
-      return config('services.subscriber.endpoint');
+      return config('services.ng.endpoint');
    }
 
    protected function generateSimpleEmail(): string
@@ -50,7 +50,7 @@ class SubscriptionService extends BaseApiService
       // Use shared helpers from BaseApiService
       $transactionId = $this->transactionId();
       $processTime   = $this->processTime();
-      $config = config('services.subscriber');
+      $config = config('services.ng');
 
       // Get customer data dynamically
       $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
@@ -76,7 +76,7 @@ class SubscriptionService extends BaseApiService
             <com:TenantId>{$config['tenant_id']}</com:TenantId>
             <com:AccessUser>{$config['access_user']}</com:AccessUser>
             <com:AccessPwd>{$config['access_pwd']}</com:AccessPwd>
-            <com:OperatorId>{$config['operator_id']}</com:OperatorId>
+            <com:OperatorId>{$config['access_user']}</com:OperatorId>
          </ser:RequestHeader>
          <ser:CreateNewSubscriberReqBody>
             <com:CustomerBusiOrder>

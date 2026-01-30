@@ -9,7 +9,7 @@ class QueryCustomerByCodeService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.query_customer.endpoint');
+        return config('services.ng.endpoint');
     }
 
     public function getCustomer(string $customerCode)
@@ -30,8 +30,8 @@ class QueryCustomerByCodeService extends BaseApiService
     {
         $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
-        $accessUser = config('services.query_customer.user');
-        $accessPwd = config('services.query_customer.password');
+        $accessUser = config('services.ng.access_user');
+        $accessPwd = config('services.ng.access_pwd');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">

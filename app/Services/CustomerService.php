@@ -55,7 +55,7 @@ class CustomerService extends BaseApiService
     {
         $customer = $this->getLocalCustomerDataOptimized();
 
-        $credentials = config('services.customer');
+        $credentials = config('services.ng');
 
         $this->transactionId = uniqid();
 
@@ -132,7 +132,7 @@ class CustomerService extends BaseApiService
                 <com:ChannelId>{$credentials['channel_id']}</com:ChannelId>
                 <com:TechnicalChannelId>{$credentials['technical_channel_id']}</com:TechnicalChannelId>
                 <com:AccessUser>{$credentials['access_user']}</com:AccessUser>
-                <com:AccessPwd>{$credentials['access_password']}</com:AccessPwd>
+                <com:AccessPwd>{$credentials['access_pwd']}</com:AccessPwd>
             </ser:RequestHeader>
 
             <ser:CreateNewCustomerReqBody>
@@ -386,6 +386,6 @@ XML;
 
     protected function endpoint(): string
     {
-        return config('services.customer.create_endpoint');
+        return config('services.ng.endpoint');
     }
 }

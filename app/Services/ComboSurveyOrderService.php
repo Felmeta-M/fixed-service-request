@@ -33,7 +33,7 @@ class ComboSurveyOrderService extends BaseApiService
 
     private function buildRequestXml(array $data): string
     {
-        $credentials = config('services.survey');
+        $credentials = config('services.ng');
 
         // Use shared helpers for timestamps
         $transactionId = $this->transactionId();
@@ -211,6 +211,6 @@ XML;
 
     protected function endpoint(): string
     {
-        return config('services.survey.endpoint');
+        return config('services.ng.endpoint');
     }
 }

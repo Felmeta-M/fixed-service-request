@@ -80,7 +80,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
 
    protected function buildXml(array $data): string
    {
-      $cfg = config('services.subscriber');
+      $cfg = config('services.ng');
 
       // Get dynamic customer profile, address, and BSS classification from logged-in user
       $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);

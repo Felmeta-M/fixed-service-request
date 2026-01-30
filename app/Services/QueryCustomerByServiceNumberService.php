@@ -32,7 +32,7 @@ class QueryCustomerByServiceNumberService extends BaseApiService
     {
         $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
-        $config = config('services.query_customer_by_service_number');
+        $config = config('services.ng');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -147,6 +147,6 @@ XML;
 
     protected function endpoint(): string
     {
-        return config('services.query_customer_by_service_number.endpoint');
+        return config('services.ng.endpoint');
     }
 }

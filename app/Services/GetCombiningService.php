@@ -11,7 +11,7 @@ class GetCombiningService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.get_combining.endpoint');
+        return config('services.ng.endpoint');
     }
 
     public function getByServiceNumber(string $serviceNumber)
@@ -35,7 +35,7 @@ class GetCombiningService extends BaseApiService
      */
     protected function buildXml(string $serviceNumber): string
     {
-        $config = config('services.get_combining');
+        $config = config('services.ng');
 
         $transactionId = uniqid();
         $processTime = now()->format('YmdHis');
@@ -52,11 +52,11 @@ class GetCombiningService extends BaseApiService
             <bas:TransactionId>{$transactionId}</bas:TransactionId>
             <bas:ProcessTime>{$processTime}</bas:ProcessTime>
             <bas:Language>2002</bas:Language>
-            <bas:ChannelId>{$config['channel']}</bas:ChannelId>
-            <bas:TechnicalChannelId>{$config['tech_channel']}</bas:TechnicalChannelId>
-            <bas:TenantId>{$config['tenant']}</bas:TenantId>
-            <bas:AccessUser>{$config['user']}</bas:AccessUser>
-            <bas:AccessPwd>{$config['password']}</bas:AccessPwd>
+            <bas:ChannelId>{$config['channel_id']}</bas:ChannelId>
+            <bas:TechnicalChannelId>{$config['technical_channel_id']}</bas:TechnicalChannelId>
+            <bas:TenantId>{$config['tenant_id']}</bas:TenantId>
+            <bas:AccessUser>{$config['access_user']}</bas:AccessUser>
+            <bas:AccessPwd>{$config['access_pwd']}</bas:AccessPwd>
          </quer:RequestHeader>
          <quer:GetCombiningBody>
             <quer:ServiceNumber>{$serviceNumber}</quer:ServiceNumber>

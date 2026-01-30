@@ -34,7 +34,7 @@ class OneOffFeeService extends BaseApiService
         // Use shared helpers from BaseApiService
         $transactionId = $this->transactionId();
         $processTime = $this->processTime();
-        $credentials = config('services.one_off_fee');
+        $credentials = config('services.ng');
         $sequence = $transactionId;
 
         // Get logged-in customer profile and address (with request data as overrides)
@@ -176,6 +176,6 @@ XML;
 
     protected function endpoint(): string
     {
-        return config('services.one_off_fee.endpoint');
+        return config('services.ng.endpoint');
     }
 }

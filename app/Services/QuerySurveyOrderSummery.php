@@ -9,7 +9,7 @@ class QuerySurveyOrderSummery extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.query_survey_summery.endpoint');
+        return config('services.ng.endpoint');
     }
 
     public function querySurveyOrderSummary(array $data)
@@ -29,7 +29,7 @@ class QuerySurveyOrderSummery extends BaseApiService
     protected function buildRequestXml($data): string
     {
         $transactionId = uniqid();
-        $config = config('services.query_survey_summery');
+        $config = config('services.ng');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">

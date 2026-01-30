@@ -32,7 +32,7 @@ abstract class BaseSurveyService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.survey.endpoint');
+        return config('services.ng.endpoint');
     }
 
     // transactionId(), processTime(), completedDate() are inherited from BaseApiService

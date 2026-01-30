@@ -84,7 +84,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
    protected function buildXmlWithServiceNumber(array $data): array
    {
       // Get config values
-      $cfg = config('services.subscriber');
+      $cfg = config('services.ng');
 
       // Get voice service number from pool (no reserve/release needed for combo)
       // Just fetch available number and use it directly in subscription

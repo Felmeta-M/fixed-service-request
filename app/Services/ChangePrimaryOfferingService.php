@@ -35,7 +35,7 @@ class ChangePrimaryOfferingService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.change_primary_offering.endpoint', 'REDACTED_INTERNAL_ENDPOINT/ECAF/BSSForIECAF');
+        return config('services.ng.endpoint');
     }
 
     /**
@@ -228,19 +228,19 @@ class ChangePrimaryOfferingService extends BaseApiService
      */
     protected function buildXml(array $data): string
     {
-        $config = config('services.change_primary_offering');
+        $config = config('services.ng');
 
         $transactionId = $this->transactionId();
         $processTime = $this->processTime();
 
-        // Config values with fallbacks
-        $version = $config['version'] ?? '1';
-        $language = $config['language'] ?? '2002';
-        $channelId = $config['channel_id'] ?? '40';
-        $techChannelId = $config['technical_channel_id'] ?? '51';
-        $tenantId = $config['tenant_id'] ?? '101';
-        $accessUser = $config['access_user'] ?? 'ZTEOSS';
-        $accessPwd = $config['access_password'] ?? 'REDACTED_PASSWORD';
+        // Config values from unified NG config
+        $version = $config['version'];
+        $language = $config['language'];
+        $channelId = $config['channel_id'];
+        $techChannelId = $config['technical_channel_id'];
+        $tenantId = $config['tenant_id'];
+        $accessUser = $config['access_user'];
+        $accessPwd = $config['access_pwd'];
 
         $objectIdType = $data['object_id_type'];
         $objectId = $data['object_id'];

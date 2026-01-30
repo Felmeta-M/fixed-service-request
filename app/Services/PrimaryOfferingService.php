@@ -9,7 +9,7 @@ class PrimaryOfferingService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.primary_offers.endpoint');
+        return config('services.ng.endpoint');
     }
 
     public function queryAvailablePrimaryOffering(string $serviceNumber)
@@ -29,10 +29,10 @@ class PrimaryOfferingService extends BaseApiService
     public static function buildXml(string $objectId): string
     {
         $transactionId = uniqid();
-        $channelId = config('services.primary_offers.channel_id');
-        $techChannelId = config('services.primary_offers.technical_channel_id');
-        $accessUser = config('services.primary_offers.access_user');
-        $accessPwd = config('services.primary_offers.access_pwd');
+        $channelId = config('services.ng.channel_id');
+        $techChannelId = config('services.ng.technical_channel_id');
+        $accessUser = config('services.ng.access_user');
+        $accessPwd = config('services.ng.access_pwd');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">

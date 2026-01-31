@@ -7,7 +7,6 @@ use App\Helpers\BandwidthHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ManualSurveyOrderRequest;
 use App\Http\Requests\SurveyOrderFormRequest;
-use App\Models\EthioZone;
 use App\Models\SurveyOrder;
 use App\Services\ManualSurveyOrderService;
 use App\Services\QueryPurchasedOfferingService;
@@ -33,7 +32,8 @@ class SurveyOrderController extends Controller
         protected readonly QuerySubscriptionOrderStatusService $querySubscriptionOrderStatusService,
         protected readonly QueryPurchasedOfferingService $queryPurchasedOfferingService,
         protected readonly ManualSurveyOrderService $manualSurveyOrderService
-    ) {}
+    ) {
+    }
 
     /**
      * Display a listing of the resource - optimized with Query Builder
@@ -253,7 +253,7 @@ class SurveyOrderController extends Controller
                             try {
                                 // Use ZoneService - single source of truth
                                 $ethioZone = app(ZoneService::class)->getEthioZoneByName($zoneName);
-                                
+
                                 if ($ethioZone) {
                                     $zoneCode = $ethioZone->code;
                                     AppLogger::business()->info('Zone code found for manual survey', [
@@ -312,7 +312,7 @@ class SurveyOrderController extends Controller
                             if ($newStatus >= 1 && $newStatus <= 8) {
                                 $statusUpdates[$order->id] = FFDServiceProvisionStatus::Waiting->value;
                             }
-                            
+
                             // Store zone code even if other fields are missing
                             if ($zoneCode) {
                                 $surveyResultUpdates[$order->id] = [

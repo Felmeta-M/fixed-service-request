@@ -13,6 +13,7 @@ use App\Services\QuerySubscriptionOrderStatusService;
 use App\Services\ReserveNumberService;
 use App\Services\ZoneService;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
@@ -61,24 +62,8 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       // Add with_device flag from survey order for conditional XML generation
       $data['with_device'] = $surveyOrder->with_device ?? false;
 
-      try {
-         $xml = $this->buildXml($data);
-      } catch (\RuntimeException $e) {
-         // Return user-friendly error message for zone/area code lookup failures
-         AppLogger::api()->error('Failed to build XML due to missing zone/area information', [
-            'survey_order_id' => $data['survey_order_id'],
-            'error' => $e->getMessage(),
-         ]);
-
-         return [
-            'success' => false,
-            'ret_code' => 'VALIDATION_ERROR',
-            'ret_msg' => $e->getMessage(),
-            'customer_busi_order_id' => null,
-            'extra_params' => [],
-         ];
-      }
-
+      $xml = $this->buildXml($data);
+      Log::info('DataSubscriptionService buildXml', ['xml' => $xml]);
       // Add internet credentials to data for parseResponse
       $data['internet_account'] = $this->internetAccount;
       $data['internet_password'] = $this->internetPassword;
@@ -106,6 +91,8 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
    protected function buildXml(array $data): string
    {
+      $cfg = config('services.ng');
+
       // Get dynamic customer profile, address, and BSS classification from logged-in user
       $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
       $profile = $this->getCustomerProfile();
@@ -123,18 +110,17 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       $namePart = substr($sanitizedName, 0, 8); // Up to 8 chars from name
       $randomSuffix = strtolower(Str::random(3)); // 3 random chars for uniqueness
       $username = substr($namePart . $randomSuffix, 0, 11); // Max 11 chars total
-      $email = $username . '@ethio.et'; // 11 + 9 = 20 chars total
 
       // Password for BSS (encoded) and customer (plain text)
       // The BSS password is an encrypted/hashed value, not simple base64-encoded text
       $passwordEncoded = \App\Helpers\InternetCredentialsHelper::getDefaultPassword();
-      $password = 'REDACTED_PASSWORD'; // Plain text password for customer SMS/DB
+      $password = 'Abc1234%'; // Plain text password for customer SMS/DB
 
       // Store credentials for use in parseResponse (to save to local DB and SMS)
-      $this->internetAccount = $email;
+      $this->internetAccount = $username;
       $this->internetPassword = $password; // Plain text for SMS/DB
 
-      $cfg = config('services.ng');
+
 
       // Get dynamic zone_code for CustomerAddressInfo EthioZoneOrRegion
       // This will throw an exception with a clear message if zone_code cannot be determined
@@ -162,12 +148,14 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          'offering_id' => '1457567289',
          'effective_mode' => '0',
          'sla_priority' => '6',
-         'internet_account' => $email,
+         'internet_account' => $username,
          'internet_password' => $password,
          'call_center_access' => '994',
          'external_oper_id' => '512',
          'installment_date' => $this->completedDate(),
       ]);
+
+      $email = $this->generateEmail();
 
 
       return <<<XML
@@ -283,16 +271,13 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                         </com:InstanceProperty>
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
-
                   {$this->buildSupplementaryOfferingList($data)}
-
                   <com:SLAPriority>6</com:SLAPriority>
-                  <com:InternetAccount>{$email}</com:InternetAccount>
+                  <com:InternetAccount>{$username}</com:InternetAccount>
                   <com:InternetPassword>{$passwordEncoded}</com:InternetPassword>
                   <com:CallCenterAccess>994</com:CallCenterAccess>
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>
-
             <com:ExternalOperid>{$data['external_oper_id']}</com:ExternalOperid>
             <com:InstallmentCompletedDate>{$data['installment_date']}</com:InstallmentCompletedDate>
          </ser:CreateNewSubscriberReqBody>

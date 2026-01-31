@@ -51,7 +51,6 @@ export function ComplaintForm({
     // Service lookup state
     const [isSearching, setIsSearching] = useState(false);
     const [lookupDone, setLookupDone] = useState(false);
-    const [customerName, setCustomerName] = useState<string>('');
     const [networkInfo, setNetworkInfo] = useState<{ type: number; name: string } | null>(null);
     const [troubleReasons, setTroubleReasons] = useState<DynamicTroubleReason[]>(FALLBACK_REASONS);
 
@@ -89,8 +88,7 @@ export function ComplaintForm({
             );
 
             if (response.success && response.data) {
-                // Update customer info
-                setCustomerName(response.data.customer_name);
+                // Update network info
                 setNetworkInfo(response.data.network);
                 
                 // Update trouble reasons from API
@@ -103,7 +101,7 @@ export function ComplaintForm({
                 // Reset trouble reason selection since options changed
                 setData('trouble_reason', '');
                 
-                showSuccessToast(`Service found: ${response.data.customer_name} (${response.data.network.name})`);
+                showSuccessToast(`Service verified (${response.data.network.name})`);
             } else {
                 // API returned success: false
                 const errorMessage = response.message || 'Service number not found. Please verify and try again.';
@@ -145,7 +143,6 @@ export function ComplaintForm({
         setData('access_number', value);
         if (lookupDone) {
             setLookupDone(false);
-            setCustomerName('');
             setNetworkInfo(null);
             setTroubleReasons(FALLBACK_REASONS);
             setData('trouble_reason', '');
@@ -223,15 +220,13 @@ export function ComplaintForm({
                     </div>
                     {errors.access_number && <p className="text-sm text-red-600">{errors.access_number}</p>}
                     
-                    {/* Customer info display after successful lookup */}
-                    {lookupDone && customerName && (
+                    {/* Network info display after successful lookup */}
+                    {lookupDone && networkInfo && (
                         <div className="mt-2 rounded-md bg-green-50 p-2 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                            <p className="font-medium">{customerName}</p>
-                            {networkInfo && (
-                                <p className="text-xs text-green-600 dark:text-green-500">
-                                    Network: {networkInfo.name}
-                                </p>
-                            )}
+                            <p className="font-medium">Service verified</p>
+                            <p className="text-xs text-green-600 dark:text-green-500">
+                                Network: {networkInfo.name}
+                            </p>
                         </div>
                     )}
                 </div>

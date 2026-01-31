@@ -2,9 +2,12 @@
 
 namespace App\Filament\Resources\SurveyOrders\Schemas;
 
+use App\Enums\FFDServiceProvisionStatus;
 use App\Models\SurveyOrder;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class SurveyOrderInfolist
@@ -13,99 +16,213 @@ class SurveyOrderInfolist
     {
         return $schema
             ->components([
-                TextEntry::make('customer_id')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('customer_code'),
-                TextEntry::make('customer_survey_order_id'),
-                TextEntry::make('main_offer_id'),
-                TextEntry::make('service_number')
-                    ->placeholder('-'),
-                TextEntry::make('survey_type'),
-                TextEntry::make('telecom_region'),
-                TextEntry::make('oper_type'),
-                TextEntry::make('customer_type'),
-                TextEntry::make('bandwidth')
-                    ->placeholder('-'),
-                TextEntry::make('contact_person')
-                    ->placeholder('-'),
-                TextEntry::make('contact_no')
-                    ->placeholder('-'),
-                TextEntry::make('contact_email')
-                    ->placeholder('-'),
-                TextEntry::make('sec_contact_person')
-                    ->placeholder('-'),
-                TextEntry::make('sec_contact_no')
-                    ->placeholder('-'),
-                TextEntry::make('sec_contact_email')
-                    ->placeholder('-'),
-                TextEntry::make('status')
-                    ->placeholder('-'),
-                TextEntry::make('cancel_reason')
-                    ->placeholder('-')
-                    ->columnSpanFull(),
-                TextEntry::make('completed_date')
-                    ->dateTime()
-                    ->placeholder('-'),
-                TextEntry::make('subscribed_at')
-                    ->dateTime()
-                    ->placeholder('-'),
-                IconEntry::make('survey_is_manual')
-                    ->boolean(),
-                TextEntry::make('created_at')
-                    ->dateTime()
-                    ->placeholder('-'),
-                TextEntry::make('updated_at')
-                    ->dateTime()
-                    ->placeholder('-'),
-                TextEntry::make('deleted_at')
-                    ->dateTime()
-                    ->visible(fn (SurveyOrder $record): bool => $record->trashed()),
-                TextEntry::make('cable_length')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('cable_type')
-                    ->placeholder('-'),
-                TextEntry::make('cable_charge')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('lat')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('long')
-                    ->numeric()
-                    ->placeholder('-'),
-                IconEntry::make('with_device')
-                    ->boolean()
-                    ->placeholder('-'),
-                TextEntry::make('device_id')
-                    ->placeholder('-'),
-                TextEntry::make('device_voice_id')
-                    ->placeholder('-'),
-                TextEntry::make('last_synced_status')
-                    ->placeholder('-'),
-                TextEntry::make('last_checked_at')
-                    ->dateTime()
-                    ->placeholder('-'),
-                TextEntry::make('customer_subscription_order_id')
-                    ->placeholder('-'),
-                TextEntry::make('fbb_service_number')
-                    ->placeholder('-'),
-                TextEntry::make('area_code')
-                    ->placeholder('-'),
-                TextEntry::make('area_name')
-                    ->placeholder('-'),
-                TextEntry::make('internet_account')
-                    ->placeholder('-'),
-                TextEntry::make('media_type')
-                    ->placeholder('-'),
-                TextEntry::make('line_indicator')
-                    ->numeric()
-                    ->placeholder('-'),
-                TextEntry::make('survey_failure_reason')
-                    ->placeholder('-'),
-                TextEntry::make('zone_code')
-                    ->placeholder('-'),
+                Section::make('Order Information')
+                    ->columns(3)
+                    ->schema([
+                        TextEntry::make('customer_survey_order_id')
+                            ->label('Survey Order ID')
+                            ->copyable(),
+                        TextEntry::make('customer_subscription_order_id')
+                            ->label('Subscription Order ID')
+                            ->placeholder('-')
+                            ->copyable(),
+                        TextEntry::make('status')
+                            ->label('Status')
+                            ->badge()
+                            ->formatStateUsing(fn(int $state): string => FFDServiceProvisionStatus::tryFrom($state)?->label() ?? 'Unknown')
+                            ->color(fn(int $state): string => match ($state) {
+                                FFDServiceProvisionStatus::Completed->value => 'success',
+                                FFDServiceProvisionStatus::Waiting->value,
+                                FFDServiceProvisionStatus::Processing->value => 'warning',
+                                FFDServiceProvisionStatus::Failed->value => 'danger',
+                                FFDServiceProvisionStatus::Cancelled->value => 'gray',
+                                default => 'primary',
+                            }),
+                        TextEntry::make('survey_type')
+                            ->label('Survey Type'),
+                        IconEntry::make('survey_is_manual')
+                            ->label('Manual Survey')
+                            ->boolean(),
+                        TextEntry::make('telecom_region')
+                            ->label('Telecom Region'),
+                    ]),
+
+                Section::make('Customer Information')
+                    ->columns(3)
+                    ->schema([
+                        TextEntry::make('customer_code')
+                            ->label('Customer Code')
+                            ->copyable(),
+                        TextEntry::make('customer_type')
+                            ->label('Customer Type'),
+                        TextEntry::make('oper_type')
+                            ->label('Operation Type'),
+                    ]),
+
+                Section::make('Service Details')
+                    ->columns(3)
+                    ->schema([
+                        TextEntry::make('main_offer_id')
+                            ->label('Offer ID'),
+                        TextEntry::make('bandwidth')
+                            ->label('Bandwidth')
+                            ->placeholder('-'),
+                        TextEntry::make('service_number')
+                            ->label('Service Number')
+                            ->placeholder('-')
+                            ->copyable(),
+                        TextEntry::make('fbb_service_number')
+                            ->label('FBB Service Number')
+                            ->placeholder('-'),
+                        TextEntry::make('internet_account')
+                            ->label('Internet Account')
+                            ->placeholder('-'),
+                        TextEntry::make('internet_password')
+                            ->label('Internet Password')
+                            ->placeholder('-'),
+                    ]),
+
+                Section::make('Location')
+                    ->columns(3)
+                    ->collapsible()
+                    ->schema([
+                        TextEntry::make('area_code')
+                            ->label('Area Code')
+                            ->placeholder('-'),
+                        TextEntry::make('area_name')
+                            ->label('Area Name')
+                            ->placeholder('-'),
+                        TextEntry::make('zone_code')
+                            ->label('Zone Code')
+                            ->placeholder('-'),
+                        TextEntry::make('lat')
+                            ->label('Latitude')
+                            ->numeric()
+                            ->placeholder('-'),
+                        TextEntry::make('long')
+                            ->label('Longitude')
+                            ->numeric()
+                            ->placeholder('-'),
+                    ]),
+
+                Section::make('Contact Information')
+                    ->columns(2)
+                    ->schema([
+                        Fieldset::make('Primary Contact')
+                            ->schema([
+                                TextEntry::make('contact_person')
+                                    ->label('Name')
+                                    ->placeholder('-'),
+                                TextEntry::make('contact_no')
+                                    ->label('Phone')
+                                    ->placeholder('-'),
+                                TextEntry::make('contact_email')
+                                    ->label('Email')
+                                    ->placeholder('-'),
+                            ])
+                            ->columns(3),
+                        Fieldset::make('Secondary Contact')
+                            ->schema([
+                                TextEntry::make('sec_contact_person')
+                                    ->label('Name')
+                                    ->placeholder('-'),
+                                TextEntry::make('sec_contact_no')
+                                    ->label('Phone')
+                                    ->placeholder('-'),
+                                TextEntry::make('sec_contact_email')
+                                    ->label('Email')
+                                    ->placeholder('-'),
+                            ])
+                            ->columns(3),
+                    ]),
+
+                Section::make('Cable & Infrastructure')
+                    ->columns(3)
+                    ->collapsible()
+                    ->collapsed()
+                    ->schema([
+                        TextEntry::make('cable_length')
+                            ->label('Cable Length')
+                            ->numeric()
+                            ->suffix(' m')
+                            ->placeholder('-'),
+                        TextEntry::make('cable_type')
+                            ->label('Cable Type')
+                            ->placeholder('-'),
+                        TextEntry::make('cable_charge')
+                            ->label('Cable Charge')
+                            ->numeric()
+                            ->prefix('ETB ')
+                            ->placeholder('-'),
+                        TextEntry::make('media_type')
+                            ->label('Media Type')
+                            ->placeholder('-'),
+                        TextEntry::make('line_indicator')
+                            ->label('Line Indicator')
+                            ->numeric()
+                            ->placeholder('-'),
+                    ]),
+
+                Section::make('Device Information')
+                    ->columns(3)
+                    ->collapsible()
+                    ->collapsed()
+                    ->schema([
+                        IconEntry::make('with_device')
+                            ->label('With Device')
+                            ->boolean(),
+                        TextEntry::make('device_id')
+                            ->label('Device ID')
+                            ->placeholder('-'),
+                        TextEntry::make('device_voice_id')
+                            ->label('Voice Device ID')
+                            ->placeholder('-'),
+                    ]),
+
+                Section::make('Dates & Timestamps')
+                    ->columns(3)
+                    ->collapsible()
+                    ->schema([
+                        TextEntry::make('completed_date')
+                            ->label('Completed Date')
+                            ->dateTime('M j, Y H:i')
+                            ->placeholder('-'),
+                        TextEntry::make('subscribed_at')
+                            ->label('Subscribed At')
+                            ->dateTime('M j, Y H:i')
+                            ->placeholder('-'),
+                        TextEntry::make('last_checked_at')
+                            ->label('Last Checked')
+                            ->dateTime('M j, Y H:i')
+                            ->placeholder('-'),
+                        TextEntry::make('created_at')
+                            ->label('Created')
+                            ->dateTime('M j, Y H:i'),
+                        TextEntry::make('updated_at')
+                            ->label('Updated')
+                            ->dateTime('M j, Y H:i'),
+                        TextEntry::make('deleted_at')
+                            ->label('Deleted')
+                            ->dateTime('M j, Y H:i')
+                            ->visible(fn(SurveyOrder $record): bool => $record->trashed()),
+                    ]),
+
+                Section::make('Status & Issues')
+                    ->columns(2)
+                    ->collapsible()
+                    ->collapsed()
+                    ->schema([
+                        TextEntry::make('last_synced_status')
+                            ->label('Last Synced Status')
+                            ->placeholder('-'),
+                        TextEntry::make('survey_failure_reason')
+                            ->label('Failure Reason')
+                            ->placeholder('-'),
+                        TextEntry::make('cancel_reason')
+                            ->label('Cancel Reason')
+                            ->placeholder('-')
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 }

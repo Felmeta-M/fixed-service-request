@@ -19,12 +19,11 @@ export interface DynamicTroubleReason {
 }
 
 // Service lookup response from API
+// Note: No customer names or service numbers exposed for privacy
 export interface ServiceLookupResponse {
     success: boolean;
     message: string;
     data?: {
-        customer_name: string;
-        service_number: string;
         network: {
             type: number;
             name: string;

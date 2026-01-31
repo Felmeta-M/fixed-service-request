@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SurveyOrders\Tables;
 
+use App\Enums\FFDServiceProvisionStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -10,6 +11,8 @@ use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
@@ -19,105 +22,83 @@ class SurveyOrdersTable
     {
         return $table
             ->columns([
-                TextColumn::make('customer_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('customer_code')
-                    ->searchable(),
                 TextColumn::make('customer_survey_order_id')
-                    ->searchable(),
-                TextColumn::make('main_offer_id')
-                    ->searchable(),
+                    ->label('Order ID')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable(),
+                TextColumn::make('customer_code')
+                    ->label('Customer')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('service_number')
-                    ->searchable(),
-                TextColumn::make('survey_type')
-                    ->searchable(),
-                TextColumn::make('telecom_region')
-                    ->searchable(),
-                TextColumn::make('oper_type')
-                    ->searchable(),
-                TextColumn::make('customer_type')
-                    ->searchable(),
-                TextColumn::make('bandwidth')
-                    ->searchable(),
-                TextColumn::make('contact_person')
-                    ->searchable(),
-                TextColumn::make('contact_no')
-                    ->searchable(),
-                TextColumn::make('contact_email')
-                    ->searchable(),
-                TextColumn::make('sec_contact_person')
-                    ->searchable(),
-                TextColumn::make('sec_contact_no')
-                    ->searchable(),
-                TextColumn::make('sec_contact_email')
-                    ->searchable(),
+                    ->label('Service No.')
+                    ->searchable()
+                    ->placeholder('-'),
                 TextColumn::make('status')
-                    ->searchable(),
-                TextColumn::make('completed_date')
-                    ->dateTime()
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn (int $state): string => FFDServiceProvisionStatus::tryFrom($state)?->label() ?? 'Unknown')
+                    ->color(fn (int $state): string => match ($state) {
+                        FFDServiceProvisionStatus::Completed->value => 'success',
+                        FFDServiceProvisionStatus::Waiting->value, 
+                        FFDServiceProvisionStatus::Processing->value => 'warning',
+                        FFDServiceProvisionStatus::Failed->value => 'danger',
+                        FFDServiceProvisionStatus::Cancelled->value => 'gray',
+                        default => 'primary',
+                    })
                     ->sortable(),
-                TextColumn::make('subscribed_at')
-                    ->dateTime()
-                    ->sortable(),
+                TextColumn::make('bandwidth')
+                    ->label('Bandwidth')
+                    ->placeholder('-'),
+                TextColumn::make('telecom_region')
+                    ->label('Region')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('survey_is_manual')
+                    ->label('Manual')
                     ->boolean(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('deleted_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('cable_length')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('cable_type')
-                    ->searchable(),
-                TextColumn::make('cable_charge')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('lat')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('long')
-                    ->numeric()
-                    ->sortable(),
                 IconColumn::make('with_device')
-                    ->boolean(),
-                TextColumn::make('device_id'),
-                TextColumn::make('device_voice_id'),
-                TextColumn::make('last_synced_status')
-                    ->searchable(),
-                TextColumn::make('last_checked_at')
-                    ->dateTime()
+                    ->label('Device')
+                    ->boolean()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('contact_person')
+                    ->label('Contact')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('contact_no')
+                    ->label('Phone')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('completed_date')
+                    ->label('Completed')
+                    ->dateTime('M j, Y')
+                    ->sortable()
+                    ->placeholder('-'),
+                TextColumn::make('created_at')
+                    ->label('Created')
+                    ->dateTime('M j, Y H:i')
                     ->sortable(),
-                TextColumn::make('customer_subscription_order_id')
-                    ->searchable(),
-                TextColumn::make('fbb_service_number')
-                    ->searchable(),
-                TextColumn::make('area_code')
-                    ->searchable(),
-                TextColumn::make('area_name')
-                    ->searchable(),
-                TextColumn::make('internet_account')
-                    ->searchable(),
-                TextColumn::make('media_type')
-                    ->searchable(),
-                TextColumn::make('line_indicator')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('survey_failure_reason')
-                    ->searchable(),
-                TextColumn::make('zone_code')
-                    ->searchable(),
+                TextColumn::make('updated_at')
+                    ->label('Updated')
+                    ->dateTime('M j, Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options(FFDServiceProvisionStatus::options()),
+                TernaryFilter::make('survey_is_manual')
+                    ->label('Manual Survey')
+                    ->placeholder('All')
+                    ->trueLabel('Manual Only')
+                    ->falseLabel('Automated Only'),
+                TernaryFilter::make('with_device')
+                    ->label('With Device')
+                    ->placeholder('All')
+                    ->trueLabel('With Device')
+                    ->falseLabel('Without Device'),
                 TrashedFilter::make(),
             ])
             ->recordActions([

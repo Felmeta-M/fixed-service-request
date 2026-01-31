@@ -155,7 +155,7 @@ class PaymentService
                 'payment_confirmed',
                 $payment->customer_survey_order_id,
                 (float) ($providerPayload['total_amount'] ?? $payment->total_amount),
-                11, // Payment status: Paid
+                \App\Models\Payment::STATUS_PAID,
                 ['trans_id' => $providerPayload['transId'] ?? null]
             );
 

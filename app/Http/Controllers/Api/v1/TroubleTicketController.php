@@ -202,16 +202,13 @@ class TroubleTicketController extends Controller
                 'reasons_count' => $troubleReasons->count(),
             ]);
 
-            // Step 7: Return ONLY minimal, non-confidential data to frontend
-            // SECURITY: No customer IDs, account codes, or sensitive data exposed
+            // Step 7: Return ONLY non-confidential data to frontend
+            // SECURITY: No customer names, IDs, account codes, or sensitive data exposed
             return response()->json([
                 'success' => true,
-                'message' => 'Service number found',
+                'message' => 'Service number verified',
                 'data' => [
-                    // Minimal customer info (non-confidential)
-                    'customer_name' => $customerName,
-                    'service_number' => $subscriber['service_number'] ?? $serviceNumber,
-                    // Network info
+                    // Network info (non-confidential)
                     'network' => [
                         'type' => $networkType,
                         'name' => $networkName,

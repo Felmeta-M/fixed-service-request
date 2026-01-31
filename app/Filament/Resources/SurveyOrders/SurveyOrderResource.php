@@ -22,7 +22,7 @@ class SurveyOrderResource extends Resource
 {
     protected static ?string $model = SurveyOrder::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::RectangleGroup;
 
     public static function form(Schema $schema): Schema
     {

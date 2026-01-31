@@ -29,7 +29,6 @@ class CustomerService extends BaseApiService
             }
             $data['ethio_zone_or_region'] = $this->getZoneCodeById($zoneId);
             $xmlPayload = $this->buildXml($data);
-            Log::info('Customer create XML Payload', context: ['xml' => $xmlPayload]);
             $xmlResponse = $this->executeRequest($xmlPayload);
 
             AppLogger::api()->debug('Customer create response received', [
@@ -68,7 +67,7 @@ class CustomerService extends BaseApiService
         $data['customer_type'] = '1';           // Residential (fixed)
         $data['customer_category'] = '1';       // Category 1 (fixed)
         $data['customer_subcategory'] = '1';    // Subcategory 1 (fixed)
-        $data['customer_level'] = '8';          // Copper (fixed)
+        $data['customer_level'] = '7';          // level 8 Copper (fixed)
 
         // ============================================================
         // OPTIONAL FIELDS WITH DEFAULTS - Frontend can override these

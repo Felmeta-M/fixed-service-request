@@ -261,7 +261,7 @@ XML;
         $addresses = $queriedCustomer['addresses'][0] ?? [];
         $extParams = $queriedCustomer['ext_params'] ?? [];
 
-        // customer_code = logged-in user who created TT
+        // customer_code = logged-in user who created TT (or 'GUEST' for unauthenticated)
         // service_owner_* = actual owner of the service number (from query)
         $loggedInUserCode = $this->customerCode() ?? $payload['customer_code'] ?? '';
         $serviceOwnerCode = $customer['customer_code'] ?? '';

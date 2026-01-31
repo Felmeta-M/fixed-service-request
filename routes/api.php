@@ -85,6 +85,9 @@ Route::prefix('v1')->group(function () {
 
         // Status definitions - dynamic status labels from backend
         Route::get('status-definitions', [StatusController::class, 'definitions']);
+
+        // Guest TT creation - no auth required (rate limited)
+        Route::post('tt/create-guest', [TroubleTicketController::class, 'store']);
     });
 
     Route::middleware(['auth:api'])->group(function () {

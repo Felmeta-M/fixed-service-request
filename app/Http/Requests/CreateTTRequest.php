@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CreateTTRequest extends FormRequest
 {
@@ -52,7 +53,7 @@ class CreateTTRequest extends FormRequest
             'mobile_no'        => 'required',
             'trouble_title'    => 'nullable|string',
             'trouble_reason'   => 'required|string',
-            'tt_description'   => 'required|string',
+            'tt_description'   => [Rule::requiredIf(fn () => $this->input('trouble_reason') === 'other'), 'nullable', 'string'],
             'occurrence_date'  => 'nullable|date',
         ];
     }
@@ -60,8 +61,8 @@ class CreateTTRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'mobile_no.regex' =>
-            'Mobile number must be a valid Ethio Telecom number (09XXXXXXXX).',
+            'mobile_no.regex' => 'Mobile number must be a valid Ethio Telecom number (09XXXXXXXX).',
+            'tt_description.required' => 'Description is required when "Other" is selected.',
         ];
     }
 }

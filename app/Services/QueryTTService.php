@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\TicketStatus;
 use RuntimeException;
 
 class QueryTTService extends BaseApiService
@@ -74,6 +75,12 @@ XML;
         $ttList = [];
         if (!empty($response->TTList->tt)) {
             foreach ($response->TTList->tt as $tt) {
+                $currentActivity = (string) $tt->currentActivity;
+                $ttStatus = (string) $tt->ttStatus;
+                
+                // Resolve normalized status from API response
+                $resolvedStatus = TicketStatus::fromApiResponse($currentActivity, $ttStatus);
+                
                 $ttList[] = [
                     'tt_no' => (string) $tt->ttNo,
                     'cust_name' => (string) $tt->custName,
@@ -82,9 +89,12 @@ XML;
                     'accept_time' => (string) $tt->acceptTime,
                     'trouble_reason' => (string) $tt->troubleReason,
                     'deadline' => (string) $tt->deadline,
-                    'current_activity' => (string) $tt->currentActivity,
+                    'current_activity' => $currentActivity,
                     'handler' => (string) $tt->handler,
-                    'tt_status' => (string) $tt->ttStatus,
+                    'tt_status' => $ttStatus,
+                    // Resolved status for DB storage
+                    'status' => $resolvedStatus->value,
+                    'status_label' => $resolvedStatus->label(),
                 ];
             }
         }

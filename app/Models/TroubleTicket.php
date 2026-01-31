@@ -67,7 +67,7 @@ class TroubleTicket extends Model
      * Default attribute values.
      */
     protected $attributes = [
-        'status' => 'pending',
+        'status' => 'open',
     ];
 
     /**
@@ -88,7 +88,7 @@ class TroubleTicket extends Model
 
     public function scopeOpen($query)
     {
-        return $query->whereIn('status', ['pending', 'in_progress']);
+        return $query->whereIn('status', ['open', 'confirm']);
     }
 
     public function scopeForCustomer($query, string $customerCode)

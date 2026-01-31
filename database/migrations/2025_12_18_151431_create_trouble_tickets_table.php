@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->string('trouble_reason');
             $table->text('tt_description');
             $table->string('tt_serial_no')->unique();
-            $table->enum('status', ['pending', 'in_progress', 'resolved', 'closed'])->default('pending');
+            $table->string('status')->default('pending');
             $table->timestamps();
             $table->softDeletes();
         });

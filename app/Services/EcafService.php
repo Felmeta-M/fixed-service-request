@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Support\CustomerContext;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 
 class EcafService extends BaseApiService
 {
@@ -20,6 +21,7 @@ class EcafService extends BaseApiService
     {
         try {
             $xmlPayload = $this->buildXml($data);
+            Log::info('EcafService uploadFile', ['xmlPayload' => $xmlPayload]);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedXml = $this->parseResponse($xmlResponse);
             return ApiResponse::success($parsedXml);

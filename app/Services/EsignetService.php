@@ -274,6 +274,10 @@ class EsignetService
             $identification_type = 2; //national id
             $identification_number = $payload['sub'] ?? null;
             $picture = $payload['picture'] ?? null;
+            // Remove base64 data URI prefix if present (e.g., "data:image/jpeg;base64,")
+            if ($picture && str_contains($picture, 'base64,')) {
+                $picture = substr($picture, strpos($picture, 'base64,') + 7);
+            }
             $birthdate = null;
             if (!empty($payload['birthdate'])) {
                 $birthdate = date('Y-m-d', strtotime(str_replace('/', '-', $payload['birthdate'])));

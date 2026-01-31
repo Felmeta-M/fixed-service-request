@@ -33,7 +33,8 @@ class TroubleTicketController extends Controller
         protected readonly ConfirmFeedbackService $confirmFeedbackService,
         protected readonly QueryCustomerForTTService $queryCustomerForTTService,
         protected readonly GetCombiningService $getCombiningService
-    ) {}
+    ) {
+    }
 
     /**
      * Query customer by service number before TT creation
@@ -128,12 +129,12 @@ class TroubleTicketController extends Controller
 
             if (!($responseData['success'] ?? false)) {
                 $rawMessage = $responseData['message'] ?? '';
-                
+
                 // Distinguish between API failures vs "not found" scenarios
-                $isApiFailure = str_contains($rawMessage, 'API request') 
+                $isApiFailure = str_contains($rawMessage, 'API request')
                     || str_contains($rawMessage, 'timed out')
                     || str_contains($rawMessage, 'failed');
-                
+
                 if ($isApiFailure) {
                     // Server/network error - suggest retry
                     $message = 'Unable to verify service number due to a temporary issue. Please try again.';
@@ -180,14 +181,14 @@ class TroubleTicketController extends Controller
             ]);
 
             // Get customer name from ExtParams if FirstName is empty (API returns name in ExtParams.CustomerName)
-            $customerName = !empty($customer['first_name']) 
-                ? $customer['first_name'] 
+            $customerName = !empty($customer['first_name'])
+                ? $customer['first_name']
                 : ($extParams['CustomerName'] ?? '');
 
             // Step 4: Get network type (tele_type) from payment section
             // Default to Fixed Line (4) if not found
-            $networkType = !empty($payment['tele_type']) 
-                ? (int) $payment['tele_type'] 
+            $networkType = !empty($payment['tele_type'])
+                ? (int) $payment['tele_type']
                 : self::DEFAULT_NETWORK_TYPE;
 
             // Step 5: Fetch trouble ticket reasons from local DB based on network type
@@ -329,9 +330,9 @@ class TroubleTicketController extends Controller
                 });
 
             // Batch refresh tickets and collect updates
-            // if ($ticketsToRefresh->isNotEmpty()) {
-            //     $this->batchRefreshTickets($ticketsToRefresh);
-            // }
+            if ($ticketsToRefresh->isNotEmpty()) {
+                $this->batchRefreshTickets($ticketsToRefresh);
+            }
 
             return response()->json([
                 'success' => true,
@@ -379,12 +380,15 @@ class TroubleTicketController extends Controller
 
                 $tt = $data['tt_list'][0];
 
-                if (!is_array($tt) || !isset($tt['tt_status'])) {
+                if (!is_array($tt)) {
                     $timestampUpdates[] = $ticket->id;
                     continue;
                 }
 
-                $newStatus = strtolower($tt['tt_status']);
+                // Resolve status from API response using currentActivity + ttStatus
+                $currentActivity = $tt['current_activity'] ?? '';
+                $ttStatus = $tt['tt_status'] ?? '';
+                $newStatus = TicketStatus::fromApiResponse($currentActivity, $ttStatus)->value;
 
                 if ($ticket->status !== $newStatus) {
                     $updates[$ticket->id] = $newStatus;

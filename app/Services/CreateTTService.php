@@ -392,7 +392,7 @@ XML;
                 'trouble_title' => $payload['trouble_title'],
                 'trouble_reason' => $payload['trouble_reason'],
                 'tt_description' => $payload['tt_description'],
-                'status' => 'in_progress',
+                'status' => 'open',
             ]
         );
 

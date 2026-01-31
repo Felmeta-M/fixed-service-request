@@ -29,6 +29,7 @@ class CustomerService extends BaseApiService
             }
             $data['ethio_zone_or_region'] = $this->getZoneCodeById($zoneId);
             $xmlPayload = $this->buildXml($data);
+            Log::info('CustomerService buildXml', ['xmlPayload' => $xmlPayload]);
             $xmlResponse = $this->executeRequest($xmlPayload);
 
             AppLogger::api()->debug('Customer create response received', [

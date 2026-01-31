@@ -127,11 +127,30 @@ class TroubleTicketController extends Controller
             $responseData = $combiningResponse->getData(true);
 
             if (!($responseData['success'] ?? false)) {
-                $message = $responseData['message'] ?? 'Service number not found. Please verify the number and try again.';
-                AppLogger::api()->warning('LookupServiceNumber: Service number not found', [
-                    'service_number' => $serviceNumber,
-                    'message' => $message,
-                ]);
+                $rawMessage = $responseData['message'] ?? '';
+                
+                // Distinguish between API failures vs "not found" scenarios
+                $isApiFailure = str_contains($rawMessage, 'API request') 
+                    || str_contains($rawMessage, 'timed out')
+                    || str_contains($rawMessage, 'failed');
+                
+                if ($isApiFailure) {
+                    // Server/network error - suggest retry
+                    $message = 'Unable to verify service number due to a temporary issue. Please try again.';
+                    $statusCode = 503; // Service Unavailable
+                    AppLogger::api()->warning('LookupServiceNumber: API call failed (server issue)', [
+                        'service_number' => $serviceNumber,
+                        'raw_message' => $rawMessage,
+                    ]);
+                } else {
+                    // Actual not found or validation error
+                    $message = $rawMessage ?: 'Service number not found. Please verify the number and try again.';
+                    $statusCode = 404;
+                    AppLogger::api()->warning('LookupServiceNumber: Service number not found', [
+                        'service_number' => $serviceNumber,
+                        'message' => $message,
+                    ]);
+                }
 
                 // Clear any stale session data for this service number
                 session()->forget("tt_lookup_{$serviceNumber}");
@@ -139,7 +158,7 @@ class TroubleTicketController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => $message,
-                ], 404);
+                ], $statusCode);
             }
 
             // Step 2: Extract data from the response
@@ -152,12 +171,12 @@ class TroubleTicketController extends Controller
 
             // Step 3: Cache FULL response in session (server-side only, NOT sent to frontend)
             // This avoids double API calls - CreateTTService will use this cached data
-            // Session expires after 15 minutes or when TT is successfully created
+            // Session expires after 30 minutes or when TT is successfully created
             $sessionKey = "tt_lookup_{$serviceNumber}";
             session()->put($sessionKey, [
                 'data' => $data,
                 'cached_at' => now()->timestamp,
-                'expires_at' => now()->addMinutes(15)->timestamp,
+                'expires_at' => now()->addMinutes(30)->timestamp,
             ]);
 
             // Get customer name from ExtParams if FirstName is empty (API returns name in ExtParams.CustomerName)

@@ -11,7 +11,7 @@ use RuntimeException;
 
 class CreateTTService extends BaseApiService
 {
-    protected int $timeout = 15;
+    protected int $timeout = 30;
     protected int $rateLimit = 50;
 
     public function __construct(
@@ -77,12 +77,32 @@ class CreateTTService extends BaseApiService
                 $customerResult = $combiningResponse->getData(true);
 
                 if (!($customerResult['success'] ?? false)) {
-                    $message = $customerResult['message'] ?? 'Service number not found. Please verify the number and try again.';
-                    AppLogger::api()->warning('CreateTT: Service number not found', [
-                        'access_number' => $accessNumber,
-                        'message' => $message,
-                    ]);
-                    return ApiResponse::error($message, 404);
+                    $rawMessage = $customerResult['message'] ?? '';
+
+                    // Distinguish between API failures vs "not found" scenarios
+                    $isApiFailure = str_contains($rawMessage, 'API request')
+                        || str_contains($rawMessage, 'timed out')
+                        || str_contains($rawMessage, 'failed');
+
+                    if ($isApiFailure) {
+                        // Server/network error - suggest retry
+                        $message = 'Unable to verify service number due to a temporary issue. Please try again.';
+                        $statusCode = 503; // Service Unavailable
+                        AppLogger::api()->warning('CreateTT: API call failed (server issue)', [
+                            'access_number' => $accessNumber,
+                            'raw_message' => $rawMessage,
+                        ]);
+                    } else {
+                        // Actual not found or validation error
+                        $message = $rawMessage ?: 'Service number not found. Please verify the number and try again.';
+                        $statusCode = 404;
+                        AppLogger::api()->warning('CreateTT: Service number not found', [
+                            'access_number' => $accessNumber,
+                            'message' => $message,
+                        ]);
+                    }
+
+                    return ApiResponse::error($message, $statusCode);
                 }
 
                 $customerData = $customerResult['data'] ?? [];
@@ -151,7 +171,7 @@ class CreateTTService extends BaseApiService
     {
         // Use cached customer data from createTT (already fetched from session or API)
         $subscriber = $data['queried_customer'] ?? [];
-        
+
         if (empty($subscriber)) {
             throw new RuntimeException('No customer data available for XML building');
         }
@@ -166,19 +186,19 @@ class CreateTTService extends BaseApiService
         $customerCode = $customer['customer_code'] ?? "";
         $subscriberId = $subscriber['subscriber']['subscriber_id'] ?? '';
         $title = $customer['title'] ?? '1';
-        
+
         // Get customer name - API may return name in ExtParams.CustomerName instead of FirstName
         $customerNameFromExt = $extParams['CustomerName'] ?? '';
         if (!empty($customerNameFromExt) && empty($customer['first_name'])) {
             // Parse name from ExtParams (e.g., "test carry" -> first="test", last="carry")
             $nameParts = explode(' ', $customerNameFromExt, 3);
             $firstName = $nameParts[0] ?? 'Customer';
-            $middleName = $nameParts[1] ?? '';
-            $lastName = $nameParts[2] ?? ($nameParts[1] ?? '');
+            $middleName = $nameParts[1] ?? 'customer';
+            $lastName = $nameParts[2] ?? ($nameParts[1] ?? 'customer');
         } else {
-            $firstName = $customer['first_name'] ?? 'Customer';
-            $middleName = $customer['middle_name'] ?? '';
-            $lastName = $customer['last_name'] ?? '';
+            $firstName = $customer['first_name'] ?? 'customer';
+            $middleName = $customer['middle_name'] ?? 'customer';
+            $lastName = $customer['last_name'] ?? 'customer';
         }
         $name = trim("{$firstName} {$middleName} {$lastName}") ?: 'Customer';
 
@@ -190,9 +210,9 @@ class CreateTTService extends BaseApiService
         $custSubCategory = $customer['customer_subcategory'] ?? ($extParams['CustSubCategory'] ?? '1');
 
         // Address from queried data (Address1=Region, Address2=City, Address3=Zone, Address4=Wereda, Address5=Kebele, Address6=HouseNo)
-        $ethioZone = $extParams['address1'] ?? '';
-        $adminRegion = $addresses['address2'] ?? '';
-        $zone = $addresses['address3'] ?? '';
+        $ethioZone = $extParams['address1'] ?? 'aa';
+        $adminRegion = $addresses['address2'] ?? 'aa';
+        $zone = $addresses['address3'] ?? 'aa';
         $city = $addresses['address2'] ?? $zone;
         $subCity = $zone;
         $wereda = !empty($addresses['address4']) ? $addresses['address4'] : 'new';
@@ -326,13 +346,13 @@ XML;
         // - If anonymous: use account_code from API response (service number's account)
         $loggedInUserCode = $this->customerCode();
         $serviceAccountCode = $account['account_code'] ?? ($customer['customer_code'] ?? '');
-        
+
         // Use logged-in user code if available, otherwise use service account code
         $creatorCode = !empty($loggedInUserCode) ? $loggedInUserCode : $serviceAccountCode;
-        
+
         // Service owner info (actual owner of the service number from API query)
         $serviceOwnerCode = $customer['customer_code'] ?? '';
-        
+
         // Get service owner name from ExtParams if not in customer object
         $customerNameFromExt = $extParams['CustomerName'] ?? '';
         if (!empty($customerNameFromExt) && empty($customer['first_name'])) {

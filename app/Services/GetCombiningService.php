@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Log;
 
 class GetCombiningService extends BaseApiService
 {
-    protected int $timeout = 10;
+    protected int $timeout = 30;
     protected int $rateLimit = 15;
 
     protected function endpoint(): string
@@ -19,6 +19,7 @@ class GetCombiningService extends BaseApiService
         try {
             $xmlRequest = $this->buildXml($serviceNumber);
             $xmlResponse = $this->executeRequest($xmlRequest);
+            Log::info('GetCombiningService Response', ['xmlResponse' => $xmlResponse]);
             return ApiResponse::success(
                 $this->parseResponse($xmlResponse)
             );
@@ -31,9 +32,12 @@ class GetCombiningService extends BaseApiService
 
     /**
      * Build SOAP request
+     * 
      */
     protected function buildXml(string $serviceNumber): string
     {
+        // Remove leading 0 prefix if present (e.g., 0935117912 -> 935117912)
+        $serviceNumber = ltrim($serviceNumber, '0');
         $config = config('services.get_combining');
 
         $transactionId = uniqid();

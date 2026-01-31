@@ -19,6 +19,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
+use Inertia\Inertia;
 
 /**
  * Professional exception handler with:
@@ -84,6 +85,9 @@ class Handler extends ExceptionHandler
             if ($request->expectsJson() || $request->is('api/*')) {
                 return $this->renderApiException($e, $request);
             }
+            
+            // Handle web/Inertia requests with proper error pages
+            return $this->renderInertiaException($e, $request);
         });
 
         // Additional reporting (Sentry, Bugsnag, etc.)
@@ -91,6 +95,107 @@ class Handler extends ExceptionHandler
             // Add external error tracking here if needed
             // Example: \Sentry\captureException($e);
         });
+    }
+    
+    /**
+     * Render exception as Inertia error page for web requests
+     */
+    protected function renderInertiaException(Throwable $e, Request $request): ?Response
+    {
+        // Determine status code
+        $status = 500;
+        $title = 'Server Error';
+        $message = 'An unexpected error occurred. Please try again later.';
+        
+        if ($e instanceof NotFoundHttpException) {
+            $status = 404;
+            $title = 'Page Not Found';
+            $message = 'The page you are looking for could not be found.';
+        } elseif ($e instanceof ModelNotFoundException) {
+            $status = 404;
+            $title = 'Not Found';
+            $model = class_basename($e->getModel());
+            $message = "The requested {$model} could not be found.";
+        } elseif ($e instanceof LaravelAuthException) {
+            $status = 401;
+            $title = 'Unauthorized';
+            $message = 'Please log in to access this page.';
+        } elseif ($e instanceof MethodNotAllowedHttpException) {
+            $status = 405;
+            $title = 'Method Not Allowed';
+            $message = 'The requested action is not allowed.';
+        } elseif ($e instanceof ThrottleRequestsException) {
+            $status = 429;
+            $title = 'Too Many Requests';
+            $message = 'You have made too many requests. Please wait a moment and try again.';
+        } elseif ($e instanceof TokenMismatchException) {
+            $status = 419;
+            $title = 'Session Expired';
+            $message = 'Your session has expired. Please refresh the page and try again.';
+        } elseif ($e instanceof HttpException) {
+            $status = $e->getStatusCode();
+            $title = $this->getHttpStatusTitle($status);
+            $message = $e->getMessage() ?: $this->getHttpStatusMessage($status);
+        }
+        
+        // For non-HTTP exceptions in production, show generic error
+        if (!config('app.debug') && $status === 500) {
+            $message = 'An unexpected error occurred. Please try again later.';
+        } elseif (config('app.debug') && $status === 500) {
+            $message = $e->getMessage();
+        }
+        
+        return Inertia::render('errors/error', [
+            'status' => $status,
+            'title' => $title,
+            'message' => $message,
+        ])->toResponse($request)->setStatusCode($status);
+    }
+    
+    /**
+     * Get human-readable title for HTTP status codes
+     */
+    protected function getHttpStatusTitle(int $status): string
+    {
+        return match ($status) {
+            400 => 'Bad Request',
+            401 => 'Unauthorized',
+            403 => 'Forbidden',
+            404 => 'Page Not Found',
+            405 => 'Method Not Allowed',
+            408 => 'Request Timeout',
+            419 => 'Session Expired',
+            422 => 'Unprocessable Entity',
+            429 => 'Too Many Requests',
+            500 => 'Server Error',
+            502 => 'Bad Gateway',
+            503 => 'Service Unavailable',
+            504 => 'Gateway Timeout',
+            default => 'Error',
+        };
+    }
+    
+    /**
+     * Get human-readable message for HTTP status codes
+     */
+    protected function getHttpStatusMessage(int $status): string
+    {
+        return match ($status) {
+            400 => 'The request could not be understood by the server.',
+            401 => 'Please log in to access this page.',
+            403 => 'You do not have permission to access this page.',
+            404 => 'The page you are looking for could not be found.',
+            405 => 'The requested action is not allowed.',
+            408 => 'The request took too long to complete.',
+            419 => 'Your session has expired. Please refresh the page.',
+            422 => 'The submitted data was invalid.',
+            429 => 'You have made too many requests. Please wait.',
+            500 => 'An unexpected error occurred. Please try again later.',
+            502 => 'The server received an invalid response.',
+            503 => 'The service is temporarily unavailable. Please try again later.',
+            504 => 'The server took too long to respond.',
+            default => 'An error occurred. Please try again.',
+        };
     }
 
     /**
@@ -183,7 +288,7 @@ class Handler extends ExceptionHandler
 
         // Handle HTTP exceptions
         if ($e instanceof HttpException) {
-            return $this->renderHttpException($e);
+            return $this->renderApiHttpException($e);
         }
 
         // Handle connection exceptions (external services)
@@ -252,9 +357,9 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * Render HTTP exceptions
+     * Render HTTP exceptions for API responses
      */
-    protected function renderHttpException(HttpException $e): JsonResponse
+    protected function renderApiHttpException(HttpException $e): JsonResponse
     {
         $status = $e->getStatusCode();
 

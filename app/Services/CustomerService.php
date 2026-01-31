@@ -29,7 +29,7 @@ class CustomerService extends BaseApiService
             }
             $data['ethio_zone_or_region'] = $this->getZoneCodeById($zoneId);
             $xmlPayload = $this->buildXml($data);
-
+            Log::info('Customer create XML Payload', context: ['xml' => $xmlPayload]);
             $xmlResponse = $this->executeRequest($xmlPayload);
 
             AppLogger::api()->debug('Customer create response received', [
@@ -56,6 +56,7 @@ class CustomerService extends BaseApiService
         $customer = $this->getLocalCustomerDataOptimized();
 
         $credentials = config('services.ng');
+        Log::info('Customer create Credentials', context: ['credentials' => $credentials]);
 
         $this->transactionId = uniqid();
 
@@ -118,6 +119,8 @@ class CustomerService extends BaseApiService
                     </com:CustomerContactPersonInfoList>";
         }
 
+        $password = '17Cm+IKbUUmRJP4xo+rlcA=='; //TODO: remove this after testing  xU3+S8WTAPDO3efE2qAHPA==
+
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                   xmlns:ser="http://oss.huawei.com/webservice/bss/services"
@@ -132,7 +135,7 @@ class CustomerService extends BaseApiService
                 <com:ChannelId>{$credentials['channel_id']}</com:ChannelId>
                 <com:TechnicalChannelId>{$credentials['technical_channel_id']}</com:TechnicalChannelId>
                 <com:AccessUser>{$credentials['access_user']}</com:AccessUser>
-                <com:AccessPwd>{$credentials['access_pwd']}</com:AccessPwd>
+                <com:AccessPwd>{$password}</com:AccessPwd>
             </ser:RequestHeader>
 
             <ser:CreateNewCustomerReqBody>

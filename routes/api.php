@@ -86,7 +86,9 @@ Route::prefix('v1')->group(function () {
         // Status definitions - dynamic status labels from backend
         Route::get('status-definitions', [StatusController::class, 'definitions']);
 
-        // Guest TT creation - no auth required (rate limited)
+        // Guest TT endpoints - no auth required (rate limited)
+        // Lookup service number to get customer profile + trouble reasons
+        Route::post('tt/lookup-service', [TroubleTicketController::class, 'lookupServiceNumber']);
         Route::post('tt/create-guest', [TroubleTicketController::class, 'store']);
     });
 
@@ -169,6 +171,7 @@ Route::prefix('v1')->group(function () {
             Route::get('trouble-tickets', [TroubleTicketController::class, 'index']);
             Route::get('trouble-tickets/{tt_serial_no}', [TroubleTicketController::class, 'show']);
             Route::post('tt/query-customer', [TroubleTicketController::class, 'queryCustomerByServiceNumber']);
+            Route::post('tt/lookup-service', [TroubleTicketController::class, 'lookupServiceNumber']);
             Route::post('tt/create', [TroubleTicketController::class, 'store']);
             Route::post('tt/query', [TroubleTicketController::class, 'query']);
             Route::post('tt/detail', [TroubleTicketController::class, 'detail']);

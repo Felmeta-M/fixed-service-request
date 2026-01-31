@@ -28,10 +28,12 @@ class CreateTTService extends BaseApiService
      * Create Trouble Ticket
      * 
      * Flow:
-     * 1. Query customer by service number (access_number)
-     * 2. If not found, return error
-     * 3. Use queried customer data for TT creation (not logged-in user)
-     * 4. Track who created the TT (logged-in user)
+     * 1. Validate access_number is provided
+     * 2. Check session for cached customer data (from lookupServiceNumber)
+     * 3. If cached and valid, use it (avoids double API call)
+     * 4. If not cached, fallback to API call
+     * 5. Build XML and create TT
+     * 6. Clear session cache on success
      */
     public function createTT(array $data)
     {
@@ -41,29 +43,71 @@ class CreateTTService extends BaseApiService
                 return ApiResponse::error('Service number (access_number) is required', 400);
             }
 
-            // Step 2: Query customer/subscriber by service number using GetCombiningService
-            $combiningResponse = $this->get_combining_service->getByServiceNumber($data['access_number']);
-            $customerResult = $combiningResponse->getData(true);
+            $accessNumber = $data['access_number'];
+            $sessionKey = "tt_lookup_{$accessNumber}";
 
-            if (!($customerResult['success'] ?? false)) {
-                $message = $customerResult['message'] ?? 'Service number not found. Please verify the number and try again.';
-                AppLogger::api()->warning('CreateTT: Service number not found', [
-                    'access_number' => $data['access_number'],
-                    'message' => $message,
-                ]);
-                return ApiResponse::error($message, 404);
+            // Step 2: Check for cached session data (from lookupServiceNumber)
+            $cachedData = session()->get($sessionKey);
+            $customerData = null;
+
+            if ($cachedData && isset($cachedData['data']) && isset($cachedData['expires_at'])) {
+                // Validate cache hasn't expired
+                if ($cachedData['expires_at'] > now()->timestamp) {
+                    $customerData = $cachedData['data'];
+                    AppLogger::api()->info('CreateTT: Using cached session data', [
+                        'access_number' => $accessNumber,
+                        'cached_at' => date('Y-m-d H:i:s', $cachedData['cached_at']),
+                    ]);
+                } else {
+                    // Cache expired, clear it
+                    session()->forget($sessionKey);
+                    AppLogger::api()->info('CreateTT: Session cache expired, will fetch fresh data', [
+                        'access_number' => $accessNumber,
+                    ]);
+                }
             }
 
-            // Step 3: Store queried customer data (parsed GetCombining payload) for XML building and persistence
-            $data['queried_customer'] = $customerResult['data'] ?? [];
+            // Step 3: If no valid cache, fallback to API call
+            if (!$customerData) {
+                AppLogger::api()->info('CreateTT: No cache found, calling GetCombiningService', [
+                    'access_number' => $accessNumber,
+                ]);
+
+                $combiningResponse = $this->get_combining_service->getByServiceNumber($accessNumber);
+                $customerResult = $combiningResponse->getData(true);
+
+                if (!($customerResult['success'] ?? false)) {
+                    $message = $customerResult['message'] ?? 'Service number not found. Please verify the number and try again.';
+                    AppLogger::api()->warning('CreateTT: Service number not found', [
+                        'access_number' => $accessNumber,
+                        'message' => $message,
+                    ]);
+                    return ApiResponse::error($message, 404);
+                }
+
+                $customerData = $customerResult['data'] ?? [];
+            }
+
+            // Step 4: Store queried customer data for XML building and persistence
+            $data['queried_customer'] = $customerData;
 
             // Use tt_description as trouble_title to minimize customer journey
             $data['trouble_title'] = $data['tt_description'] ?? 'Fixed Services Complaint';
 
-            // Step 4: Build XML with queried customer data
+            // Step 5: Build XML with queried customer data (no additional API call)
             $xmlPayload = $this->buildRequestXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsed = $this->parseResponseXml($xmlResponse, $data);
+
+            // Step 6: Clear session cache on successful TT creation
+            $parsedData = $parsed->getData(true);
+            if (($parsedData['success'] ?? false) && !empty($parsedData['data']['tt_serial_no'])) {
+                session()->forget($sessionKey);
+                AppLogger::api()->info('CreateTT: Session cache cleared after successful TT creation', [
+                    'access_number' => $accessNumber,
+                    'tt_serial_no' => $parsedData['data']['tt_serial_no'],
+                ]);
+            }
 
             return $parsed;
         } catch (RuntimeException $e) {
@@ -101,15 +145,18 @@ class CreateTTService extends BaseApiService
 
     /**
      * Build XML request using QUERIED customer data (not logged-in user)
+     * Uses cached data from session - NO additional API call
      */
     protected function buildRequestXml(array $data): string
     {
-        // Get subscriber data from API for IDs and account
-        $response = $this->get_combining_service->getByServiceNumber($data['access_number']);
-        $responseData = $response->getData(true);
-        $subscriber = $this->getSubscriber($responseData);
-        Log::info('CreateTT Subscriber', context: ['subscriber' => $subscriber]);
-        // Extract queried customer data (from service number query)
+        // Use cached customer data from createTT (already fetched from session or API)
+        $subscriber = $data['queried_customer'] ?? [];
+        
+        if (empty($subscriber)) {
+            throw new RuntimeException('No customer data available for XML building');
+        }
+
+        // Extract queried customer data
         $customer = $subscriber['customer'] ?? [];
         $addresses = $subscriber['addresses'][0] ?? [];
         $extParams = $subscriber['ext_params'] ?? [];
@@ -119,16 +166,28 @@ class CreateTTService extends BaseApiService
         $customerCode = $customer['customer_code'] ?? "";
         $subscriberId = $subscriber['subscriber']['subscriber_id'] ?? '';
         $title = $customer['title'] ?? '1';
-        $firstName = $customer['first_name'] ?? 'Customer';
-        $middleName = $customer['middle_name'] ?? 'customer';
-        $lastName = $customer['last_name'] ?? 'customer';
-        $name = $firstName . ' ' . $middleName . ' ' . $lastName;
+        
+        // Get customer name - API may return name in ExtParams.CustomerName instead of FirstName
+        $customerNameFromExt = $extParams['CustomerName'] ?? '';
+        if (!empty($customerNameFromExt) && empty($customer['first_name'])) {
+            // Parse name from ExtParams (e.g., "test carry" -> first="test", last="carry")
+            $nameParts = explode(' ', $customerNameFromExt, 3);
+            $firstName = $nameParts[0] ?? 'Customer';
+            $middleName = $nameParts[1] ?? '';
+            $lastName = $nameParts[2] ?? ($nameParts[1] ?? '');
+        } else {
+            $firstName = $customer['first_name'] ?? 'Customer';
+            $middleName = $customer['middle_name'] ?? '';
+            $lastName = $customer['last_name'] ?? '';
+        }
+        $name = trim("{$firstName} {$middleName} {$lastName}") ?: 'Customer';
 
         // BSS Classification from queried data
         $customerType = $customer['customer_type'] ?? '1';
         $customerLevel = $customer['customer_level'] ?? '8';
-        $customerCategory = $customer['customer_category'] ?? '1';
-        $custSubCategory = $customer['customer_subcategory'] ?? '1';
+        // Get category from ExtParams if not in customer object
+        $customerCategory = $customer['customer_category'] ?? ($extParams['CustomerCategory'] ?? '1');
+        $custSubCategory = $customer['customer_subcategory'] ?? ($extParams['CustSubCategory'] ?? '1');
 
         // Address from queried data (Address1=Region, Address2=City, Address3=Zone, Address4=Wereda, Address5=Kebele, Address6=HouseNo)
         $ethioZone = $extParams['address1'] ?? '';
@@ -258,21 +317,38 @@ XML;
         // Extract queried customer data for persistence
         $queriedCustomer = $payload['queried_customer'] ?? [];
         $customer = $queriedCustomer['customer'] ?? [];
+        $account = $queriedCustomer['account'] ?? [];
         $addresses = $queriedCustomer['addresses'][0] ?? [];
         $extParams = $queriedCustomer['ext_params'] ?? [];
 
-        // customer_code = logged-in user who created TT (or 'GUEST' for unauthenticated)
-        // service_owner_* = actual owner of the service number (from query)
-        $loggedInUserCode = $this->customerCode() ?? $payload['customer_code'] ?? '';
+        // Determine customer_code for local DB:
+        // - If logged in: use logged-in user's customer_code
+        // - If anonymous: use account_code from API response (service number's account)
+        $loggedInUserCode = $this->customerCode();
+        $serviceAccountCode = $account['account_code'] ?? ($customer['customer_code'] ?? '');
+        
+        // Use logged-in user code if available, otherwise use service account code
+        $creatorCode = !empty($loggedInUserCode) ? $loggedInUserCode : $serviceAccountCode;
+        
+        // Service owner info (actual owner of the service number from API query)
         $serviceOwnerCode = $customer['customer_code'] ?? '';
-        $serviceOwnerName = trim(($customer['first_name'] ?? '') . ' ' . ($customer['middle_name'] ?? '') . ' ' . ($customer['last_name'] ?? ''));
+        
+        // Get service owner name from ExtParams if not in customer object
+        $customerNameFromExt = $extParams['CustomerName'] ?? '';
+        if (!empty($customerNameFromExt) && empty($customer['first_name'])) {
+            $serviceOwnerName = $customerNameFromExt;
+        } else {
+            $serviceOwnerName = trim(($customer['first_name'] ?? '') . ' ' . ($customer['middle_name'] ?? '') . ' ' . ($customer['last_name'] ?? ''));
+        }
 
         // Create or update ticket with full details for frontend display
         $ticket = TroubleTicket::updateOrCreate(
             ['tt_serial_no' => $ttSerialNo],
             [
-                // Who created the TT (logged-in user)
-                'customer_code' => $loggedInUserCode,
+                // Who created the TT:
+                // - Logged-in user: their customer_code
+                // - Anonymous user: service number's account_code
+                'customer_code' => $creatorCode,
 
                 // Service owner info (from queried service number)
                 'service_owner_code' => $serviceOwnerCode,
@@ -304,7 +380,8 @@ XML;
             'tt_serial_no' => $ttSerialNo,
             'service_number' => $payload['access_number'],
             'service_owner_code' => $serviceOwnerCode,
-            'created_by' => $loggedInUserCode,
+            'created_by' => $creatorCode,
+            'is_logged_in' => !empty($loggedInUserCode),
         ]);
 
         return ApiResponse::success([

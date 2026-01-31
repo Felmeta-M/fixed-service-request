@@ -58,10 +58,12 @@ function createHeaders(token?: string | null, additionalHeaders?: Record<string,
 
 /**
  * Handle response and parse JSON, throwing errors for non-OK responses
+ * @param response - The fetch Response object
+ * @param skipAuthRedirect - If true, don't redirect on 401 (for public endpoints)
  */
-async function handleResponse<T>(response: Response): Promise<T> {
-    // Handle 401 Unauthorized - redirect to OTP page
-    if (response.status === 401) {
+async function handleResponse<T>(response: Response, skipAuthRedirect: boolean = false): Promise<T> {
+    // Handle 401 Unauthorized - redirect to OTP page (unless skipAuthRedirect is true)
+    if (response.status === 401 && !skipAuthRedirect) {
         window.location.href = '/otp/phone';
         throw new ApiClientError('Unauthorized', 401, null, response);
     }
@@ -154,9 +156,11 @@ export const apiClient = {
             token?: string | null;
             headers?: Record<string, string>;
             timeout?: number;
+            /** Skip 401 redirect for public endpoints */
+            skipAuthRedirect?: boolean;
         }
     ): Promise<T> {
-        const { token, headers, timeout = 15000 } = options || {};
+        const { token, headers, timeout = 15000, skipAuthRedirect = false } = options || {};
 
         // Handle FormData (for file uploads)
         const isFormData = data instanceof FormData;
@@ -177,7 +181,7 @@ export const apiClient = {
                 signal: controller.signal,
             });
 
-            return await handleResponse<T>(response);
+            return await handleResponse<T>(response, skipAuthRedirect);
         } catch (error) {
             if (error instanceof ApiClientError) {
                 throw error;

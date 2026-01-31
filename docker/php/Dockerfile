@@ -23,6 +23,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 # Working directory
 WORKDIR /var/www
 
+# Create Laravel storage directories required for artisan commands during composer install
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views \
+    storage/logs bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
 # Copy only composer files first for caching
 COPY composer.json composer.lock ./
 

@@ -18,15 +18,21 @@ use App\Services\ConfirmFeedbackService;
 use App\Http\Requests\QueryTTDetailRequest;
 use App\Http\Requests\ConfirmFeedbackRequest;
 use App\Services\QueryCustomerForTTService;
+use App\Services\GetCombiningService;
+use App\Models\TroubleTicketReason;
 
 class TroubleTicketController extends Controller
 {
+    // Default network type fallback (Fixed Line = 4)
+    private const DEFAULT_NETWORK_TYPE = 4;
+
     public function __construct(
         protected readonly CreateTTService $createTTService,
         protected readonly QueryTTService $queryTTService,
         protected readonly QueryTTDetailService $queryTTDetailService,
         protected readonly ConfirmFeedbackService $confirmFeedbackService,
-        protected readonly QueryCustomerForTTService $queryCustomerForTTService
+        protected readonly QueryCustomerForTTService $queryCustomerForTTService,
+        protected readonly GetCombiningService $getCombiningService
     ) {}
 
     /**
@@ -84,6 +90,151 @@ class TroubleTicketController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to query service number. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Lookup service number to fetch customer profile and trouble ticket reasons
+     * 
+     * This endpoint is used by both anonymous and authenticated users.
+     * It calls the third-party API (GetCombiningService) to fetch the customer profile,
+     * then uses the network type (tele_type) to fetch relevant trouble ticket reasons.
+     * 
+     * SECURITY: Full API response is cached server-side in session.
+     * Only minimal, non-confidential data is returned to frontend.
+     * 
+     * Flow:
+     * 1. Validate service number
+     * 2. Call GetCombiningService to fetch customer profile
+     * 3. Cache full response in session (for TT creation - avoids double API call)
+     * 4. Extract tele_type (network type) from response
+     * 5. Query local DB for trouble ticket reasons by network type
+     * 6. If no network type or no reasons found, fallback to Fixed Line (4)
+     * 7. Return ONLY minimal, non-confidential data to frontend
+     */
+    public function lookupServiceNumber(Request $request)
+    {
+        $request->validate([
+            'service_number' => 'required|string|min:6',
+        ]);
+
+        try {
+            $serviceNumber = $request->input('service_number');
+
+            // Step 1: Call GetCombiningService to fetch customer profile from third-party API
+            $combiningResponse = $this->getCombiningService->getByServiceNumber($serviceNumber);
+            $responseData = $combiningResponse->getData(true);
+
+            if (!($responseData['success'] ?? false)) {
+                $message = $responseData['message'] ?? 'Service number not found. Please verify the number and try again.';
+                AppLogger::api()->warning('LookupServiceNumber: Service number not found', [
+                    'service_number' => $serviceNumber,
+                    'message' => $message,
+                ]);
+
+                // Clear any stale session data for this service number
+                session()->forget("tt_lookup_{$serviceNumber}");
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 404);
+            }
+
+            // Step 2: Extract data from the response
+            $data = $responseData['data'] ?? [];
+            $customer = $data['customer'] ?? [];
+            $subscriber = $data['subscriber'] ?? [];
+            $addresses = $data['addresses'][0] ?? [];
+            $payment = $data['payment'] ?? [];
+            $extParams = $data['ext_params'] ?? [];
+
+            // Step 3: Cache FULL response in session (server-side only, NOT sent to frontend)
+            // This avoids double API calls - CreateTTService will use this cached data
+            // Session expires after 15 minutes or when TT is successfully created
+            $sessionKey = "tt_lookup_{$serviceNumber}";
+            session()->put($sessionKey, [
+                'data' => $data,
+                'cached_at' => now()->timestamp,
+                'expires_at' => now()->addMinutes(15)->timestamp,
+            ]);
+
+            // Get customer name from ExtParams if FirstName is empty (API returns name in ExtParams.CustomerName)
+            $customerName = !empty($customer['first_name']) 
+                ? $customer['first_name'] 
+                : ($extParams['CustomerName'] ?? '');
+
+            // Step 4: Get network type (tele_type) from payment section
+            // Default to Fixed Line (4) if not found
+            $networkType = !empty($payment['tele_type']) 
+                ? (int) $payment['tele_type'] 
+                : self::DEFAULT_NETWORK_TYPE;
+
+            // Step 5: Fetch trouble ticket reasons from local DB based on network type
+            $troubleReasons = TroubleTicketReason::active()
+                ->byNetworkType($networkType)
+                ->select(['id', 'network_type', 'network_name', 'reason_path', 'reason'])
+                ->get();
+
+            // Step 6: If no reasons found for this network type, fallback to Fixed Line (4)
+            if ($troubleReasons->isEmpty() && $networkType !== self::DEFAULT_NETWORK_TYPE) {
+                AppLogger::api()->info('LookupServiceNumber: No reasons for network type, falling back to Fixed Line', [
+                    'service_number' => $serviceNumber,
+                    'original_network_type' => $networkType,
+                    'fallback_network_type' => self::DEFAULT_NETWORK_TYPE,
+                ]);
+
+                $networkType = self::DEFAULT_NETWORK_TYPE;
+                $troubleReasons = TroubleTicketReason::active()
+                    ->byNetworkType($networkType)
+                    ->select(['id', 'network_type', 'network_name', 'reason_path', 'reason'])
+                    ->get();
+            }
+
+            // Get network name from reasons or default
+            $networkName = $troubleReasons->first()?->network_name ?? 'Fixed Line';
+
+            AppLogger::api()->info('LookupServiceNumber: Success (cached in session)', [
+                'service_number' => $serviceNumber,
+                'network_type' => $networkType,
+                'network_name' => $networkName,
+                'reasons_count' => $troubleReasons->count(),
+            ]);
+
+            // Step 7: Return ONLY minimal, non-confidential data to frontend
+            // SECURITY: No customer IDs, account codes, or sensitive data exposed
+            return response()->json([
+                'success' => true,
+                'message' => 'Service number found',
+                'data' => [
+                    // Minimal customer info (non-confidential)
+                    'customer_name' => $customerName,
+                    'service_number' => $subscriber['service_number'] ?? $serviceNumber,
+                    // Network info
+                    'network' => [
+                        'type' => $networkType,
+                        'name' => $networkName,
+                    ],
+                    // Trouble ticket reasons for this network type
+                    'trouble_reasons' => $troubleReasons->map(fn($reason) => [
+                        'id' => $reason->id,
+                        'reason_path' => $reason->reason_path,
+                        'reason' => $reason->reason,
+                        'label' => $reason->reason,
+                        'value' => $reason->reason_path,
+                    ])->values(),
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            AppLogger::api()->error('LookupServiceNumber: Exception', [
+                'service_number' => $request->input('service_number'),
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to lookup service number. Please try again.',
             ], 500);
         }
     }

@@ -166,12 +166,12 @@ Route::prefix('v1')->group(function () {
             Route::post('create-order', [TelebirrController::class, 'createOrder'])->name('create.order');
         });
 
-        // Trouble ticket operations
+        // Trouble ticket operations (authenticated users)
+        // Note: tt/lookup-service and tt/create-guest are public routes (see api_public section above)
         Route::middleware(['throttle:api_trouble_tickets'])->group(function () {
             Route::get('trouble-tickets', [TroubleTicketController::class, 'index']);
             Route::get('trouble-tickets/{tt_serial_no}', [TroubleTicketController::class, 'show']);
             Route::post('tt/query-customer', [TroubleTicketController::class, 'queryCustomerByServiceNumber']);
-            Route::post('tt/lookup-service', [TroubleTicketController::class, 'lookupServiceNumber']);
             Route::post('tt/create', [TroubleTicketController::class, 'store']);
             Route::post('tt/query', [TroubleTicketController::class, 'query']);
             Route::post('tt/detail', [TroubleTicketController::class, 'detail']);

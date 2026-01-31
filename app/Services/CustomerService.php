@@ -56,7 +56,6 @@ class CustomerService extends BaseApiService
         $customer = $this->getLocalCustomerDataOptimized();
 
         $credentials = config('services.ng');
-        Log::info('Customer create Credentials', context: ['credentials' => $credentials]);
 
         $this->transactionId = uniqid();
 

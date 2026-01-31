@@ -79,7 +79,10 @@ export function useCreateComplaintGuest() {
 
     return useMutation({
         mutationFn: async (data: any) => {
-            const response = await apiClient.post<any>('/tt/create-guest', data, { token: undefined });
+            const response = await apiClient.post<any>('/tt/create-guest', data, { 
+                token: undefined,
+                skipAuthRedirect: true, // Public endpoint - don't redirect on auth errors
+            });
 
             // Check for API-level failure (success: false)
             if (response?.success === false) {

@@ -121,8 +121,25 @@ class Handler extends ExceptionHandler
         }
 
         // Handle Laravel's authentication exception
+        // For API requests, provide a friendly message instead of "Unauthenticated"
         if ($e instanceof LaravelAuthException) {
-            return ApiResponse::unauthorized('Authentication required. Please log in.');
+            // Check if this is a public endpoint that doesn't require auth
+            $publicEndpoints = ['tt/create-guest', 'tt/lookup-service'];
+            $currentPath = $request->path();
+            
+            foreach ($publicEndpoints as $endpoint) {
+                if (str_contains($currentPath, $endpoint)) {
+                    // This shouldn't happen on public endpoints, but if it does,
+                    // return a generic error instead of auth error
+                    return ApiResponse::error(
+                        message: 'Unable to process request. Please try again.',
+                        errorCode: ErrorCode::INTERNAL_ERROR,
+                        status: 500
+                    );
+                }
+            }
+            
+            return ApiResponse::unauthorized('Please log in to access this feature.');
         }
 
         // Handle model not found

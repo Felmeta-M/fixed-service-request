@@ -181,8 +181,8 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                                 variant="outline"
                                 className={`flex items-center gap-1.5 bg-white ${
                                     isManual
-                                        ? 'border-blue-200 bg-blue-50 text-blue-700'
-                                        : 'border-purple-200 bg-purple-50 text-purple-700'
+                                        ? 'border-et-blue bg-et-blue/10 text-et-blue'
+                                        : 'border-primary bg-primary/10 text-primary'
                                 }`}
                             >
                                 <span className="text-xs font-medium">{isManual ? 'Manual' : 'Auto'}</span>

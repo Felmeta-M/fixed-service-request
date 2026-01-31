@@ -1,9 +1,16 @@
-import { AppSidebar } from '@/components/app/app-sidebar';
+import {
+    AppSidebar,
+    StepCustomerIcon,
+    StepDeviceIcon,
+    StepPaymentIcon,
+    StepReviewIcon,
+    StepServiceIcon,
+} from '@/components/app/app-sidebar';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { usePage } from '@inertiajs/react';
-import { BotMessageSquare, CreditCard, FileCheck, FileText, HandHelping, MapPin, RouterIcon, User, User2Icon, Wifi } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { ReactNode } from 'react';
 
 interface MainLayoutProps {
@@ -23,12 +30,12 @@ export default function MainLayout({ children, currentStep = 0, isNewCustomer = 
     const isServiceCreation = page.url.startsWith('/services/create');
 
     const steps = [
-        ...(isNewCustomer ? [{ name: 'Customer Information', icon: User }] : []),
-        { name: 'Service Information', icon: HandHelping },
+        ...(isNewCustomer ? [{ name: 'Customer Information', icon: StepCustomerIcon }] : []),
+        { name: 'Service Information', icon: StepServiceIcon },
         { name: 'Location Information', icon: MapPin },
-        { name: 'Device Information', icon: RouterIcon },
-        { name: 'Review & Submit', icon: FileCheck },
-        { name: 'Payment / Subscribe', icon: CreditCard },
+        { name: 'Device Information', icon: StepDeviceIcon },
+        { name: 'Review & Submit', icon: StepReviewIcon },
+        { name: 'Payment / Subscribe', icon: StepPaymentIcon },
     ];
 
     return (

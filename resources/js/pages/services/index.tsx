@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useSurveyList } from '@/features/surveys/hooks/use-surveys';
 import { useServiceTypes } from '@/hooks/use-service-types';
 import MainLayout from '@/layouts/main-layout';
+import { cn } from '@/lib/utils';
 import { statusOptions, getStatusInfo } from '@/lib/status-map';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
@@ -15,6 +16,7 @@ import {
     Filter,
     Phone,
     Plus,
+    RefreshCw,
     Search,
     UserPlus,
     Wifi,
@@ -87,6 +89,7 @@ export default function CustomerDashboard() {
     // Flatten pages to get all surveys
     const surveys = surveyListQuery.data?.pages.flatMap((page) => page.data || []) || [];
     const loading = surveyListQuery.isLoading;
+    const isRefetching = surveyListQuery.isRefetching;
     const error = surveyListQuery.error?.message || null;
     const total = surveyListQuery.data?.pages[0]?.meta?.total || 0;
     const hasMore = surveyListQuery.hasNextPage || false;
@@ -224,19 +227,23 @@ export default function CustomerDashboard() {
     }
 
     const StatCard = ({ title, value, description, loading: isLoading }: any) => (
-        <Card className="overflow-hidden rounded-lg border border-gray-200 bg-white py-5 shadow-none">
+        <Card className="overflow-hidden rounded-xl border border-gray-400 bg-white py-8 shadow-none">
             <CardContent className="px-5 pt-0">
                 {isLoading ? (
-                    <div className="space-y-2">
-                        <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
-                        <div className="h-8 w-16 animate-pulse rounded bg-gray-200" />
-                        <div className="h-3 w-32 animate-pulse rounded bg-gray-200" />
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="h-5 w-28 animate-pulse rounded bg-gray-200" />
+                            <div className="h-9 w-10 animate-pulse rounded bg-gray-200" />
+                        </div>
+                        <div className="h-4 w-36 animate-pulse rounded bg-gray-200" />
                     </div>
                 ) : (
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium text-gray-700">{title}</p>
-                        <p className="text-3xl font-bold tracking-tight text-gray-900">{value}</p>
-                        <p className="text-sm text-gray-600">{description}</p>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <p className="text-base font-medium text-gray-600">{title}</p>
+                            <p className="text-3xl font-bold text-gray-900">{value}</p>
+                        </div>
+                        <p className="text-sm text-gray-400">{description}</p>
                     </div>
                 )}
             </CardContent>
@@ -247,7 +254,7 @@ export default function CustomerDashboard() {
         return (
             <MainLayout>
                 <div className="w-full space-y-6 px-4 lg:px-6">
-                    <Card>
+                    <Card className="overflow-hidden rounded-xl border border-gray-400 bg-white py-8 shadow-none">
                         <CardContent className="flex flex-col justify-between p-6 sm:flex-row">
                             <div className="flex items-center space-x-3 text-red-600">
                                 <AlertCircle className="h-5 w-5" />
@@ -321,12 +328,12 @@ export default function CustomerDashboard() {
                             </div>
                             <div className="mt-4 flex items-center gap-2 lg:mt-0 flex-shrink-0">
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-600" />
                                     <Input
                                         placeholder="Search service"
                                         value={globalFilter}
                                         onChange={(e) => setGlobalFilter(e.target.value)}
-                                        className="h-9 max-w-sm pl-9 text-sm"
+                                        className="h-9 max-w-sm pl-9 text-sm border-gray-400"
                                         size="sm"
                                     />
                                 </div>
@@ -334,12 +341,23 @@ export default function CustomerDashboard() {
                                     variant={hasActiveFilters ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                                    className="flex items-center gap-2 border-gray-200"
+                                    className="flex items-center gap-2 border-gray-400"
                                 >
                                     <Filter className="h-4 w-4" />
                                     Filter
                                     {hasActiveFilters && <span className="flex h-2 w-2 rounded-full bg-primary-foreground" />}
                                     {showAdvancedFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => refetch()}
+                                    disabled={loading}
+                                    title="Refresh services list"
+                                    className="border-gray-400"
+                                >
+                                    <RefreshCw className={cn('h-4 w-4', isRefetching && 'animate-spin')} />
+                                    Refresh
                                 </Button>
                                 <Link href="/services/create">
                                     <Button size="sm" className="bg-primary hover:bg-primary/90">

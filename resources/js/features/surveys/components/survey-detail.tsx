@@ -559,8 +559,8 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                 variant="outline"
                                 className={`w-fit text-xs ${
                                     isManualSurvey
-                                        ? 'border-blue-200 bg-blue-50 text-blue-700'
-                                        : 'border-purple-200 bg-purple-50 text-purple-700'
+                                        ? 'border-et-blue bg-et-blue/10 text-et-blue'
+                                        : 'border-primary bg-primary/10 text-primary'
                                 }`}
                             >
                                 {isManualSurvey ? 'Manual' : 'Auto'}

@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DisplayTT } from '@/types/tt';
 import { router } from '@inertiajs/react';
@@ -13,8 +14,21 @@ import {
     getSortedRowModel,
     useReactTable,
 } from '@tanstack/react-table';
-import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, FileText, Home, Globe, RefreshCw } from 'lucide-react';
+import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, Home, Globe, RefreshCw } from 'lucide-react';
 import * as React from 'react';
+
+// Same empty-state icon as services page for consistency
+function NoTicketsIcon() {
+    return (
+        <svg width="48" height="40" viewBox="0 0 48 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto" aria-hidden>
+            <line x1="6" y1="9" x2="42" y2="9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-400" />
+            <line x1="6" y1="17" x2="42" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-400" />
+            <line x1="6" y1="25" x2="20" y2="25" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-400" />
+            <line x1="6" y1="33" x2="20" y2="33" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-400" />
+            <path d="M30 34L36 24L42 34" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" className="text-gray-800" />
+        </svg>
+    );
+}
 
 interface TTTableProps {
     tts: DisplayTT[];
@@ -228,11 +242,15 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
 
     if (!tts || tts.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-                <FileText className="mb-3 h-10 w-10 text-muted-foreground" />
-                <h3 className="mb-2 text-lg font-semibold text-gray-900">No trouble tickets found</h3>
-                <p className="mb-4 text-gray-600">You haven't created any tickets yet.</p>
-            </div>
+            <Card className="rounded-lg border border-gray-200 bg-white shadow-none">
+                <CardContent className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                    <h3 className="mb-2 text-lg font-bold text-gray-900">No trouble tickets found</h3>
+                    <p className="mb-6 text-sm text-gray-500">
+                        You haven't created any tickets yet.
+                    </p>
+                    <NoTicketsIcon />
+                </CardContent>
+            </Card>
         );
     }
 

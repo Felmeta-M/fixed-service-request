@@ -188,26 +188,28 @@ export function ComplaintForm({
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <div className={`grid grid-cols-1 gap-4 ${compact ? '' : 'lg:grid-cols-2'}`}>
-                {/* Service Number with Search Button */}
+                {/* Service Number with Search Button Inside */}
                 <div className="space-y-1">
                     <label className="text-sm font-medium">
                         Service Number <Required />
                     </label>
-                    <div className="flex gap-2">
+                    <div className="relative">
                         <Input
                             placeholder="Enter service number"
                             value={data.access_number}
                             onChange={(e) => handleServiceNumberChange(e.target.value)}
-                            className="flex-1"
+                            className="pr-12"
                         />
-                        <Button
+                        <button
                             type="button"
-                            variant={lookupDone ? "outline" : "secondary"}
-                            size="icon"
                             onClick={handleServiceLookup}
                             disabled={isSearching || !data.access_number?.trim()}
                             title="Search service number"
-                            className={lookupDone ? "border-green-500 text-green-600" : ""}
+                            className={`absolute right-1 top-1/2 -translate-y-1/2 flex h-8 w-10 items-center justify-center rounded-md transition-colors ${
+                                lookupDone 
+                                    ? 'bg-green-500 text-white hover:bg-green-600' 
+                                    : 'bg-primary text-white hover:bg-primary/90 disabled:bg-gray-300 disabled:text-gray-500'
+                            }`}
                         >
                             {isSearching ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -216,7 +218,7 @@ export function ComplaintForm({
                             ) : (
                                 <Search className="h-4 w-4" />
                             )}
-                        </Button>
+                        </button>
                     </div>
                     {errors.access_number && <p className="text-sm text-red-600">{errors.access_number}</p>}
                     
@@ -313,7 +315,7 @@ export function ComplaintForm({
                     </Button>
                 )}
                 <Button type="submit" disabled={createMutation.isPending || !lookupDone}>
-                    {createMutation.isPending ? 'Submitting...' : 'Submit Complaint'}
+                    {createMutation.isPending ? 'Submitting...' : 'Submit'}
                 </Button>
             </div>
         </form>

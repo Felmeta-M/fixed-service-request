@@ -11,7 +11,7 @@ class GetCombiningService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.ng.endpoint');
+        return config('services.get_combining.endpoint');
     }
 
     public function getByServiceNumber(string $serviceNumber)
@@ -19,7 +19,6 @@ class GetCombiningService extends BaseApiService
         try {
             $xmlRequest = $this->buildXml($serviceNumber);
             $xmlResponse = $this->executeRequest($xmlRequest);
-            Log::info('GetCombiningService Response', ['xmlResponse' => $xmlResponse]);
             return ApiResponse::success(
                 $this->parseResponse($xmlResponse)
             );
@@ -35,7 +34,7 @@ class GetCombiningService extends BaseApiService
      */
     protected function buildXml(string $serviceNumber): string
     {
-        $config = config('services.ng');
+        $config = config('services.get_combining');
 
         $transactionId = uniqid();
         $processTime = now()->format('YmdHis');

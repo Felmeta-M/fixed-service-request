@@ -43,7 +43,7 @@ class QueryPurchasedOfferingService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.ng.endpoint');
+        return config('services.query_purchased_offering.endpoint');
     }
 
     /**
@@ -126,12 +126,11 @@ class QueryPurchasedOfferingService extends BaseApiService
      */
     protected function buildXml(array $data): string
     {
-        $config = config('services.ng');
+        $config = config('services.query_purchased_offering');
 
         $transactionId = $this->transactionId();
         $reqTime = $this->processTime();
 
-        // Use unified NG config
         $channel = $config['channel_id'];
         $partnerId = $config['tenant_id'];
         $accessUser = $config['access_user'];

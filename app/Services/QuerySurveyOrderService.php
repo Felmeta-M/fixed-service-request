@@ -11,7 +11,7 @@ class QuerySurveyOrderService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.ng.endpoint');
+        return config('services.order_query_status.endpoint');
     }
 
     public function querySurveyOrderDetail(string $surveyOrderId)
@@ -24,7 +24,7 @@ class QuerySurveyOrderService extends BaseApiService
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
         } catch (\Throwable $e) {
-            return ApiResponse::exception($e, 'Query survey order failed.');
+            return ApiResponse::fromException($e, 'Query survey order failed.');
         }
     }
 
@@ -34,7 +34,7 @@ class QuerySurveyOrderService extends BaseApiService
     protected function buildRequestXml(string $customerSurveyOrderId): string
     {
         $transactionId = uniqid();
-        $config = config('services.ng');
+        $config = config('services.order_query_status');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
@@ -67,10 +67,10 @@ XML;
         $responseMsg = $body->children($namespaces['ser'])->QuerySurveyOrderDetailRspMsg;
 
         $responseHeader = $responseMsg->ResponseHeader->children($namespaces['com']);
-        $responseBody   = $responseMsg->QuerySurveyOrderDetailRespBody->children($namespaces['com']);
+        $responseBody = $responseMsg->QuerySurveyOrderDetailRespBody->children($namespaces['com']);
 
         $retCode = (string) $responseHeader->RetCode;
-        $retMsg  = (string) $responseHeader->RetMsg;
+        $retMsg = (string) $responseHeader->RetMsg;
 
         if ($retCode !== '0') {
             return ApiResponse::error('Query survey order failed!');
@@ -79,7 +79,7 @@ XML;
         $customerSurveyOrderId = (string) $responseBody->CustomerSurveyOrderId;
 
         $subOrders = [];
-        $statuses  = [];
+        $statuses = [];
         $surveyParams = []; // ExtParamList params for manual survey
 
         if (isset($responseBody->SubOrderList)) {
@@ -106,15 +106,15 @@ XML;
 
                 $subOrders[] = [
                     'sub_survey_order_id' => (string) $subOrder->SubSurveyOrderId,
-                    'order_type'          => (string) $subOrder->OrderType,
-                    'order_status'        => $statusCode,
-                    'primary_offer_id'    => (string) $subOrder->PrimaryOfferid,
-                    'telecom_region'      => (string) $subOrder->TelecomRegion,
-                    'contact_person'      => (string) $subOrder->ContactPerson,
-                    'contact_no'          => (string) $subOrder->ContactNo,
-                    'contact_email'       => (string) $subOrder->ContactEmail,
-                    'bandwidth'           => $bandwidth,
-                    'ext_params'          => $extParams,
+                    'order_type' => (string) $subOrder->OrderType,
+                    'order_status' => $statusCode,
+                    'primary_offer_id' => (string) $subOrder->PrimaryOfferid,
+                    'telecom_region' => (string) $subOrder->TelecomRegion,
+                    'contact_person' => (string) $subOrder->ContactPerson,
+                    'contact_no' => (string) $subOrder->ContactNo,
+                    'contact_email' => (string) $subOrder->ContactEmail,
+                    'bandwidth' => $bandwidth,
+                    'ext_params' => $extParams,
                 ];
 
                 // Merge ext_params into surveyParams (use first sub-order's params)

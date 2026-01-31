@@ -19,7 +19,7 @@ class QuerySubscriptionOrderStatusService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.ng.endpoint');
+        return config('services.order_query_status.endpoint');
     }
 
     /**
@@ -137,12 +137,11 @@ class QuerySubscriptionOrderStatusService extends BaseApiService
      */
     protected function buildXml(array $data): string
     {
-        $config = config('services.ng');
+        $config = config('services.order_query_status');
 
         $transactionId = $this->transactionId();
         $reqTime = $this->processTime();
 
-        // Use unified NG config
         $channel = $config['channel_id'];
         $partnerId = $config['tenant_id'];
         $accessUser = $config['access_user'];

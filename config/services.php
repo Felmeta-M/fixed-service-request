@@ -164,6 +164,64 @@ return [
         'password' => env('TT_PASSWORD'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Get Combining Service Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the GetCombiningService which queries subscriber,
+    | customer, and account information from FOSS OrderQuery.
+    |
+    */
+    'get_combining' => [
+        'endpoint' => env('GET_COMBINING_ENDPOINT'),
+        'access_user' => env('GET_COMBINING_USER'),
+        'access_pwd' => env('GET_COMBINING_PASSWORD'),
+        'tenant_id' => env('GET_COMBINING_TENANT', '101'),
+        'channel_id' => env('GET_COMBINING_CHANNEL', '116'),
+        'technical_channel_id' => env('GET_COMBINING_TECHNICAL_CHANNEL_ID', '53'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Order Query Status Service Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for QuerySubscriptionOrderStatusService and QuerySurveyOrderService.
+    | Used to query order status from BSS SELFCARE/HWBSS_Order endpoint.
+    |
+    */
+    'order_query_status' => [
+        'endpoint' => env('ORDER_QUERY_STATUS_ENDPOINT'),
+        'access_user' => env('ORDER_QUERY_STATUS_ACCESS_USER', 'PortalFixedService'),
+        'access_pwd' => env('ORDER_QUERY_STATUS_ACCESS_PWD'),
+        'channel_id' => env('ORDER_QUERY_STATUS_CHANNEL_ID', '116'),
+        'technical_channel_id' => env('ORDER_QUERY_STATUS_TECHNICAL_CHANNEL_ID', '53'),
+        'tenant_id' => env('ORDER_QUERY_STATUS_TENANT_ID', '101'),
+        'language' => env('ORDER_QUERY_STATUS_LANGUAGE', '2002'),
+        'version' => env('ORDER_QUERY_STATUS_VERSION', '1'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Query Purchased Primary Offering Service Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for QueryPurchasedOfferingService.
+    | Used to query purchased primary offerings from BSS SELFCARE/HWBSS_Offering endpoint.
+    |
+    */
+    'query_purchased_offering' => [
+        'endpoint' => env('ORDER_QUERY_PURCHASED_PRIMARY_OFFER_ENDPOINT'),
+        'access_user' => env('ORDER_QUERY_PURCHASED_PRIMARY_OFFER_ACCESS_USER', 'PortalFixedService'),
+        'access_pwd' => env('ORDER_QUERY_PURCHASED_PRIMARY_OFFER_ACCESS_PWD'),
+        'channel_id' => env('ORDER_QUERY_PURCHASED_PRIMARY_OFFER_CHANNEL_ID', '116'),
+        'technical_channel_id' => env('ORDER_QUERY_PURCHASED_PRIMARY_OFFER_TECHNICAL_CHANNEL_ID', '53'),
+        'tenant_id' => env('ORDER_QUERY_PURCHASED_PRIMARY_OFFER_TENANT_ID', '101'),
+        'language' => env('ORDER_QUERY_PURCHASED_PRIMARY_OFFER_LANGUAGE', '2002'),
+        'version' => env('ORDER_QUERY_PURCHASED_PRIMARY_OFFER_VERSION', '1'),
+    ],
+
 
     /*
     |--------------------------------------------------------------------------

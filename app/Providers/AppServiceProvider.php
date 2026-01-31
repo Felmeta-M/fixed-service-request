@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
+use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(AppLogger::class, function ($app) {
             return new AppLogger();
         });
+
     }
 
     /**
@@ -64,6 +66,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->terminating(function () {
             QueryLogger::logSummary();
         });
+
     }
 
     /**
@@ -71,6 +74,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+
+        //shield plugin is not working as expected
+        // FilamentShield::prohibitDestructiveCommands(app()->isProduction());
+
         // Initialize professional logging
         $this->bootLogging();
 

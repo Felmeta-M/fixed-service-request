@@ -110,6 +110,7 @@ class CreateTTService extends BaseApiService
         $response = $this->get_combining_service->getByServiceNumber($data['access_number']);
         $responseData = $response->getData(true);
         $subscriber = $this->getSubscriber($responseData);
+        Log::info('CreateTT Subscriber', context: ['subscriber' => $subscriber]);
         // Extract queried customer data (from service number query)
         $customer = $subscriber['customer'] ?? [];
         $addresses = $subscriber['addresses'][0] ?? [];
@@ -123,6 +124,7 @@ class CreateTTService extends BaseApiService
         $firstName = $customer['first_name'] ?? 'Customer';
         $middleName = $customer['middle_name'] ?? 'customer';
         $lastName = $customer['last_name'] ?? 'customer';
+        $name = $firstName . ' ' . $middleName . ' ' . $lastName;
 
         // BSS Classification from queried data
         $customerType = $customer['customer_type'] ?? '1';
@@ -152,7 +154,7 @@ class CreateTTService extends BaseApiService
         $accessNumber = $data['access_number'];
         $contactPerson = $data['contact_person'];
         $mobileNo = '0' . substr($data['mobile_no'], -9); // Add 0 prefix and take last 9 digits
-        $troubleTitle = $data['trouble_title'] ?? $data['tt_description'] ?? 'Fixed Services Complaint';
+        $troubleTitle = $name;
         $troubleReason = $data['trouble_reason'];
         $ttDescription = $data['tt_description'] ?? '';
 

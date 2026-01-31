@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
+use Illuminate\Support\Facades\Log;
 
 class CustomerService extends BaseApiService
 {
@@ -23,7 +24,6 @@ class CustomerService extends BaseApiService
         try {
             // Get dynamic zone code from customer's selected zone_id (not from logged-in user)
             $zoneId = CustomerContext::code() ?? $data['zone'] ?? $data['address']['zone'] ?? null;
-            \Log::info('Customer zone code', ['zzzzzz' => $zoneId]);
             if (!$zoneId) {
                 throw new RuntimeException('Zone is required to create a customer profile.');
             }
@@ -371,7 +371,7 @@ XML;
     protected function getZoneCodeById(int|string $zoneId): string
     {
         $zoneCode = app(ZoneService::class)->getZoneCodeById($zoneId);
-        
+
         if (!$zoneCode) {
             AppLogger::api()->error('Zone code not found for zone ID', [
                 'zone_id' => $zoneId,

@@ -26,7 +26,7 @@ class EcafService extends BaseApiService
         } catch (\RuntimeException $e) {
             return ApiResponse::error($e->getMessage(), 500);
         } catch (\Throwable $e) {
-            return ApiResponse::exception($e, 'Ecaf upload failed.');
+            return ApiResponse::fromException($e, 'Ecaf upload failed.');
         }
     }
 

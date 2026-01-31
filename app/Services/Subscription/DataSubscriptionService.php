@@ -109,17 +109,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       // Use first 8 chars of name for personalization, then 3 random chars for uniqueness
       $namePart = substr($sanitizedName, 0, 8); // Up to 8 chars from name
       $randomSuffix = strtolower(Str::random(3)); // 3 random chars for uniqueness
-      $username = substr($namePart . $randomSuffix, 0, 11); // Max 11 chars total
-
-      // Password for BSS (encoded) and customer (plain text)
-      // The BSS password is an encrypted/hashed value, not simple base64-encoded text
-      $passwordEncoded = \App\Helpers\InternetCredentialsHelper::getDefaultPassword();
-      $password = 'Abc1234%'; // Plain text password for customer SMS/DB
-
-      // Store credentials for use in parseResponse (to save to local DB and SMS)
-      $this->internetAccount = $username;
-      $this->internetPassword = $password; // Plain text for SMS/DB
-
+      $username = substr($namePart . $randomSuffix, 0, 11); // Max 11 chars tota 
 
 
       // Get dynamic zone_code for CustomerAddressInfo EthioZoneOrRegion
@@ -149,7 +139,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          'effective_mode' => '0',
          'sla_priority' => '6',
          'internet_account' => $username,
-         'internet_password' => $password,
+         'internet_password' => 'REDACTED_PASSWORD=',
          'call_center_access' => '994',
          'external_oper_id' => '512',
          'installment_date' => $this->completedDate(),
@@ -274,7 +264,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                   {$this->buildSupplementaryOfferingList($data)}
                   <com:SLAPriority>6</com:SLAPriority>
                   <com:InternetAccount>{$username}</com:InternetAccount>
-                  <com:InternetPassword>{$passwordEncoded}</com:InternetPassword>
+                  <com:InternetPassword>REDACTED_PASSWORD=</com:InternetPassword>
                   <com:CallCenterAccess>994</com:CallCenterAccess>
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>

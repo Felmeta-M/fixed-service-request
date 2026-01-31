@@ -17,12 +17,14 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class SurveyOrderResource extends Resource
 {
     protected static ?string $model = SurveyOrder::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::RectangleGroup;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::Square2Stack;
+    protected static string|UnitEnum|null $navigationGroup = 'Service Management';
 
     public static function form(Schema $schema): Schema
     {

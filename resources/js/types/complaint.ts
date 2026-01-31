@@ -32,9 +32,15 @@ export const complaintSchema = z.object({
         errorMap: () => ({ message: 'Trouble reason is required' }),
     }),
 
-    tt_description: z.string().min(1, 'Description is required'),
-
-    occurrence_date: z.string().optional().nullable(),
+    tt_description: z.string().optional(),
+}).superRefine((data, ctx) => {
+    // When "Other" is selected, description is required
+    if (data.trouble_reason === TroubleReasons.OTHER) {
+        const desc = (data.tt_description ?? '').trim();
+        if (!desc) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Description is required when "Other" is selected', path: ['tt_description'] });
+        }
+    }
 });
 
 export type ComplaintFormValues = z.infer<typeof complaintSchema>;

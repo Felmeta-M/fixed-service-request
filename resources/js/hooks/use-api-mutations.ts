@@ -72,6 +72,34 @@ export function useCreateComplaint() {
 }
 
 /**
+ * Hook for creating a complaint/trouble ticket as guest (no auth required)
+ */
+export function useCreateComplaintGuest() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: any) => {
+            const response = await apiClient.post<any>('/tt/create-guest', data, { token: undefined });
+
+            // Check for API-level failure (success: false)
+            if (response?.success === false) {
+                const parsed = parseApiError(response.message);
+                const error = new Error(parsed.text);
+                (error as any).parsed = parsed;
+                throw error;
+            }
+
+            return response;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['localTTs'] });
+            showSuccessToast('Complaint submitted successfully!');
+            // No redirect - guest stays on page; caller can close modal via onSuccess
+        },
+    });
+}
+
+/**
  * Hook for fetching customer by customer_sub_id
  */
 export function useGetCustomer(customerSubId?: string | number) {

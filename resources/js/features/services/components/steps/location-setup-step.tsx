@@ -496,7 +496,7 @@ export function LocationSetupStep({
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 ring-2 ring-amber-200">
                                 <AlertCircle className="h-5 w-5 text-amber-600" />
                             </div>
-                            <AlertDialogTitle className="text-xl font-semibold text-foreground">Location Review Needed</AlertDialogTitle>
+                            <AlertDialogTitle className="text-xl font-semibold text-foreground">Notice</AlertDialogTitle>
                         </div>
 
                         <AlertDialogDescription className="space-y-3 pt-2 text-left">

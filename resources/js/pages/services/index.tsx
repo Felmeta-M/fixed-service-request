@@ -9,16 +9,13 @@ import { statusOptions, getStatusInfo } from '@/lib/status-map';
 import { Link, router, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
-    BarChart3,
     Box,
-    CheckCircle2,
     ChevronDown,
     ChevronUp,
-    Clock,
     Filter,
     Phone,
     Plus,
-    TrendingUp,
+    Search,
     UserPlus,
     Wifi,
     X,
@@ -226,40 +223,21 @@ export default function CustomerDashboard() {
         return 'pending';
     }
 
-    const StatCard = ({ title, value, description, icon: Icon, trend, color, loading: isLoading }: any) => (
-        <Card className="overflow-hidden pt-3 pb-3 shadow-xs">
-            <CardContent className="pt-0 pr-4 pb-0 pl-4">
+    const StatCard = ({ title, value, description, loading: isLoading }: any) => (
+        <Card className="overflow-hidden rounded-lg border border-gray-200 bg-white py-5 shadow-none">
+            <CardContent className="px-5 pt-0">
                 {isLoading ? (
-                    <div className="flex items-center justify-between">
-                        <div className="flex-1 space-y-2">
-                            <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200"></div>
-                            <div className="h-8 w-3/4 animate-pulse rounded bg-gray-200"></div>
-                            <div className="h-3 w-2/3 animate-pulse rounded bg-gray-200"></div>
-                        </div>
-                        <div className="animate-pulse rounded-full bg-gray-200 p-3">
-                            <div className="h-6 w-6"></div>
-                        </div>
+                    <div className="space-y-2">
+                        <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
+                        <div className="h-8 w-16 animate-pulse rounded bg-gray-200" />
+                        <div className="h-3 w-32 animate-pulse rounded bg-gray-200" />
                     </div>
                 ) : (
-                    <>
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-2">
-                                <p className="text-sm font-medium text-muted-foreground">{title}</p>
-                                <p className="text-3xl font-bold">{value}</p>
-                                <p className="text-xs text-muted-foreground">{description}</p>
-                            </div>
-                            <div className={`rounded-full p-3 ${color} bg-opacity-10`}>
-                                <Icon className={`h-6 w-6 ${color.replace('bg-', 'text-')}`} />
-                            </div>
-                        </div>
-                        {trend && (
-                            <div className="mt-3 flex items-center text-xs">
-                                <TrendingUp className="mr-1 h-3 w-3 text-primary" />
-                                <span className="text-primary">{trend}</span>
-                                <span className="ml-1 text-muted-foreground">from last month</span>
-                            </div>
-                        )}
-                    </>
+                    <div className="space-y-1">
+                        <p className="text-sm font-medium text-gray-700">{title}</p>
+                        <p className="text-3xl font-bold tracking-tight text-gray-900">{value}</p>
+                        <p className="text-sm text-gray-600">{description}</p>
+                    </div>
                 )}
             </CardContent>
         </Card>
@@ -312,32 +290,24 @@ export default function CustomerDashboard() {
                         title="Total Services"
                         value={dashboardStats.totalServices}
                         description="All your service requests"
-                        icon={BarChart3}
-                        color="text-et-blue"
                         loading={loading}
                     />
                     <StatCard
                         title="Active Services"
                         value={dashboardStats.activeServices}
                         description="Currently in progress"
-                        icon={CheckCircle2}
-                        color="text-primary"
                         loading={loading}
                     />
                     <StatCard
                         title="Pending Requests"
                         value={dashboardStats.pendingRequests}
                         description="Awaiting action"
-                        icon={Clock}
-                        color="text-et-yellow"
                         loading={loading}
                     />
                     <StatCard
                         title="Completed"
                         value={dashboardStats.completedServices}
                         description="Successfully delivered"
-                        icon={TrendingUp}
-                        color="text-et-green"
                         loading={loading}
                     />
                 </div>
@@ -346,42 +316,37 @@ export default function CustomerDashboard() {
                     <div className="p-0">
                         <div className="flex flex-col justify-between lg:flex-row lg:items-center min-w-0">
                             <div className="min-w-0">
-                                <CardTitle>Your Services</CardTitle>
-                                <CardDescription>{` Here are your fixed service requests`}</CardDescription>
+                                <CardTitle>Services</CardTitle>
+                                <CardDescription>Here are your fixed service requests</CardDescription>
                             </div>
                             <div className="mt-4 flex items-center gap-2 lg:mt-0 flex-shrink-0">
-                                <Input
-                                    placeholder="Search services..."
-                                    value={globalFilter}
-                                    onChange={(e) => setGlobalFilter(e.target.value)}
-                                    className="h-8 max-w-sm text-sm"
-                                    size="sm"
-                                />
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                    <Input
+                                        placeholder="Search service"
+                                        value={globalFilter}
+                                        onChange={(e) => setGlobalFilter(e.target.value)}
+                                        className="h-9 max-w-sm pl-9 text-sm"
+                                        size="sm"
+                                    />
+                                </div>
                                 <Button
                                     variant={hasActiveFilters ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                                    className="flex items-center gap-2"
+                                    className="flex items-center gap-2 border-gray-200"
                                 >
                                     <Filter className="h-4 w-4" />
-                                    Filters
+                                    Filter
                                     {hasActiveFilters && <span className="flex h-2 w-2 rounded-full bg-primary-foreground" />}
                                     {showAdvancedFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                 </Button>
-                                <div className="flex gap-1">
-                                    {/* <Link href="/tickets/create">
-                                        <Button>
-                                            <Plus className="h-4 w-4" />
-                                            Create Ticket
-                                        </Button>
-                                    </Link> */}
-                                    <Link href="/services/create">
-                                        <Button size="sm">
-                                            <Plus className="h-4 w-4" />
-                                            New Service
-                                        </Button>
-                                    </Link>
-                                </div>
+                                <Link href="/services/create">
+                                    <Button size="sm" className="bg-primary hover:bg-primary/90">
+                                        <Plus className="h-4 w-4" />
+                                        Add services
+                                    </Button>
+                                </Link>
                             </div>
                         </div>
                     </div>

@@ -22,7 +22,9 @@
     "common.all_rights_reserved": "Meqe cullu awunni",
 
     "nav.services": "Saqallota",
+    "nav.create_ticket": "Abuur Tigid",
     "nav.complaints": "Carrotina",
+    "complaints.guest_form_description": "Soo gudbi tigid dhibaata adeegga kee. Soo gal ma aha mid loo baahan yahay.",
     "nav.dashboard": "Tuxxiqo",
     "nav.login": "Gala",
     "nav.logout": "Faxxa",

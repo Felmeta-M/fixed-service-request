@@ -1,9 +1,16 @@
 import SurveyTable from '@/features/surveys/components/survey-table';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Link } from '@inertiajs/react';
-import { AlertCircle, FileText } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { useEffect } from 'react';
+
+function NoServicesIcon() {
+    return (
+        <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg" className="mx-auto text-gray-500">
+            <path d="M10 16h36M10 24h36M10 32h28" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <path d="M24 44L28 36L32 44" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    );
+}
 interface ServiceListProps {
     surveys: any[];
     loading: boolean;
@@ -50,14 +57,13 @@ export function ServiceList({ surveys, loading, error, onSurveyUpdate, globalFil
 
     if (surveys.length === 0) {
         return (
-            <Card>
-                <CardContent className="p-6 text-center">
-                    <FileText className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-                    <h3 className="mb-2 text-lg font-semibold text-gray-900">No services found</h3>
-                    <p className="mb-4 text-gray-600">Get started by creating your first service request to manage your telecom services.</p>
-                    <Link href="/services/create">
-                        <Button>Create Your First Service</Button>
-                    </Link>
+            <Card className="rounded-lg border border-gray-200 bg-white shadow-none">
+                <CardContent className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                    <h3 className="mb-2 text-xl font-bold text-gray-900">No services found</h3>
+                    <p className="mb-8 max-w-sm text-sm text-gray-600">
+                        Get started by creating your first service request to manage your telecom services.
+                    </p>
+                    <NoServicesIcon />
                 </CardContent>
             </Card>
         );

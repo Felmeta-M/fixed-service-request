@@ -1,8 +1,17 @@
 import { Footer } from '@/components/layout/footer';
-// import { LocaleSwitcher } from '@/components/common/locale-switcher';
 import { useTranslation } from '@/hooks/use-translation';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
+import { ComplaintForm } from '@/features/complaints/components/complaint-form';
+import { useCreateComplaintGuest } from '@/hooks/use-api-mutations';
+import { LocaleSwitcher } from '@/components/common';
 import { Link, usePage } from '@inertiajs/react';
 import { LayoutDashboard, LogIn, LogOut, Menu, X } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
@@ -15,7 +24,14 @@ type Props = {
 export default function GuestLayout({ children }: Props) {
     const { auth } = usePage().props as { auth?: { user?: any } };
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
+    const createComplaintGuest = useCreateComplaintGuest();
     const { t, locale } = useTranslation();
+
+    const openCreateTicket = useCallback(() => {
+        setIsMobileMenuOpen(false);
+        setIsCreateTicketOpen(true);
+    }, []);
 
     // Smooth scroll to section
     const scrollToSection = useCallback((sectionId: string) => {
@@ -56,6 +72,15 @@ export default function GuestLayout({ children }: Props) {
                                     >
                                         {t('nav.services')}
                                     </button>
+                                    {!auth?.user && (
+                                        <button
+                                            type="button"
+                                            onClick={openCreateTicket}
+                                            className="text-sm font-medium text-gray-700 transition-colors hover:text-primary"
+                                        >
+                                            {t('nav.complaints')}
+                                        </button>
+                                    )}
                                     {/* <button
                                         onClick={() => scrollToSection('coverage')}
                                         className="text-sm font-medium text-gray-700 transition-colors hover:text-primary"
@@ -110,6 +135,15 @@ export default function GuestLayout({ children }: Props) {
                             >
                                 {t('nav.services')}
                             </button>
+                            {!auth?.user && (
+                                <button
+                                    type="button"
+                                    onClick={openCreateTicket}
+                                    className="block w-full py-2 text-left text-sm font-medium text-gray-700 hover:text-primary"
+                                >
+                                    {t('nav.complaints')}
+                                </button>
+                            )}
                             {/* <button
                                 onClick={() => scrollToSection('coverage')}
                                 className="block w-full py-2 text-left text-sm font-medium text-gray-700 hover:text-primary"
@@ -169,6 +203,26 @@ export default function GuestLayout({ children }: Props) {
 
             <Footer />
             <Toaster />
+
+            {/* Create Ticket Sheet - for unauthenticated users, slides in from right */}
+            <Sheet open={isCreateTicketOpen} onOpenChange={setIsCreateTicketOpen}>
+                <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto px-2">
+                    <SheetHeader className="px-2">
+                        <SheetTitle>{t('nav.create_ticket')}</SheetTitle>
+                        <SheetDescription>
+                            {t('complaints.guest_form_description')}
+                        </SheetDescription>
+                    </SheetHeader>
+                    <div className="flex-1 overflow-y-auto px-2">
+                        <ComplaintForm
+                            createMutation={createComplaintGuest}
+                            onSuccess={() => setIsCreateTicketOpen(false)}
+                            onCancel={() => setIsCreateTicketOpen(false)}
+                            compact
+                        />
+                    </div>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }

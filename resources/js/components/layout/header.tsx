@@ -60,6 +60,9 @@ export const Header = () => {
                                     <Link href="#services" className="text-sm font-medium text-gray-700 transition-colors hover:text-gray-900">
                                         {t('nav.services')}
                                     </Link>
+                                    <Link href={route('complaints.create')} className="text-sm font-medium text-gray-700 transition-colors hover:text-gray-900">
+                                        {t('nav.complaints')}
+                                    </Link>
 
                                     <LocaleSwitcher variant="compact" />
                                 </nav>
@@ -133,6 +136,13 @@ export const Header = () => {
                                     onClick={() => setIsMobileMenuOpen(false)}
                                 >
                                     {t('nav.services')}
+                                </Link>
+                                <Link
+                                    href={route('complaints.create')}
+                                    className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    {t('nav.complaints')}
                                 </Link>
 
                                 {/* Language Switcher */}

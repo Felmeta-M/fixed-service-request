@@ -119,8 +119,6 @@ class CustomerService extends BaseApiService
                     </com:CustomerContactPersonInfoList>";
         }
 
-        $password = '17Cm+IKbUUmRJP4xo+rlcA=='; //TODO: remove this after testing  xU3+S8WTAPDO3efE2qAHPA==
-
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                   xmlns:ser="http://oss.huawei.com/webservice/bss/services"
@@ -135,7 +133,7 @@ class CustomerService extends BaseApiService
                 <com:ChannelId>{$credentials['channel_id']}</com:ChannelId>
                 <com:TechnicalChannelId>{$credentials['technical_channel_id']}</com:TechnicalChannelId>
                 <com:AccessUser>{$credentials['access_user']}</com:AccessUser>
-                <com:AccessPwd>{$password}</com:AccessPwd>
+                <com:AccessPwd>{$credentials['access_pwd']}</com:AccessPwd>
             </ser:RequestHeader>
 
             <ser:CreateNewCustomerReqBody>

@@ -464,9 +464,9 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                         {isSubmitting || createSubscriptionMutation.isPending ? 'Subscribing...' : 'Activate Service'}
                     </Button>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => handleRowClick(survey as SurveyRow)} className="h-8 w-8 p-0">
-                    <Eye className="h-4 w-4" />
-                    <span className="sr-only">View details</span>
+                <Button variant="ghost" size="sm" onClick={() => handleRowClick(survey as SurveyRow)} className="h-8 gap-1.5 px-2">
+                    <Eye className="h-4 w-4 shrink-0" />
+                    <span>View detail</span>
                 </Button>
                 {/* {canCancel && ( */}
 

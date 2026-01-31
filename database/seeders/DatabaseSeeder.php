@@ -27,5 +27,6 @@ class DatabaseSeeder extends Seeder
         // $this->call(EthioZonesTableSeeder::class);
         // $this->call(UpdateSubCitiesZoneCodeSeeder::class);
         // $this->call(TelecomRegionSeeder::class);
+        // $this->call(TroubleTicketReasonSeeder::class);
     }
 }

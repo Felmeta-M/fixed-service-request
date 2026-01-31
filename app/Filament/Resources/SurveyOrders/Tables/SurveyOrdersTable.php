@@ -38,10 +38,10 @@ class SurveyOrdersTable
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->formatStateUsing(fn (int $state): string => FFDServiceProvisionStatus::tryFrom($state)?->label() ?? 'Unknown')
-                    ->color(fn (int $state): string => match ($state) {
+                    ->formatStateUsing(fn(int $state): string => FFDServiceProvisionStatus::tryFrom($state)?->label() ?? 'Unknown')
+                    ->color(fn(int $state): string => match ($state) {
                         FFDServiceProvisionStatus::Completed->value => 'success',
-                        FFDServiceProvisionStatus::Waiting->value, 
+                        FFDServiceProvisionStatus::Waiting->value,
                         FFDServiceProvisionStatus::Processing->value => 'warning',
                         FFDServiceProvisionStatus::Failed->value => 'danger',
                         FFDServiceProvisionStatus::Cancelled->value => 'gray',
@@ -107,9 +107,9 @@ class SurveyOrdersTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
+                    // DeleteBulkAction::make(),
+                    // ForceDeleteBulkAction::make(),
+                    // RestoreBulkAction::make(),
                 ]),
             ]);
     }

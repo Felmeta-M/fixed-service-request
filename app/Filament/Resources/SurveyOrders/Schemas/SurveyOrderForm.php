@@ -17,14 +17,15 @@ class SurveyOrderForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            ->columns(3)
             ->components([
                 Section::make('Order Information')
                     ->description('Basic survey order details')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->schema([
                         TextInput::make('customer_survey_order_id')
                             ->label('Survey Order ID')
-                            ->required()
                             ->disabled(),
                         TextInput::make('customer_subscription_order_id')
                             ->label('Subscription Order ID')
@@ -32,95 +33,115 @@ class SurveyOrderForm
                         Select::make('status')
                             ->label('Status')
                             ->options(FFDServiceProvisionStatus::options())
-                            ->required(),
+                            ->disabled(),
                         TextInput::make('survey_type')
                             ->label('Survey Type')
-                            ->required(),
+                            ->disabled(),
                         Toggle::make('survey_is_manual')
                             ->label('Manual Survey')
-                            ->inline(false),
+                            ->inline(false)
+                            ->disabled(),
                         TextInput::make('telecom_region')
                             ->label('Telecom Region')
-                            ->required(),
+                            ->disabled(),
                     ]),
 
                 Section::make('Customer Information')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->schema([
                         TextInput::make('customer_code')
                             ->label('Customer Code')
-                            ->required(),
+                            ->disabled(),
                         TextInput::make('customer_type')
                             ->label('Customer Type')
-                            ->required(),
+                            ->disabled(),
                         TextInput::make('oper_type')
                             ->label('Operation Type')
-                            ->required(),
+                            ->disabled(),
                     ]),
 
                 Section::make('Service Details')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->schema([
                         TextInput::make('main_offer_id')
                             ->label('Offer ID')
-                            ->required(),
+                            ->disabled(),
                         TextInput::make('bandwidth')
-                            ->label('Bandwidth'),
+                            ->label('Bandwidth')
+                            ->disabled(),
                         TextInput::make('service_number')
-                            ->label('Service Number'),
+                            ->label('Service Number')
+                            ->disabled(),
                         TextInput::make('fbb_service_number')
-                            ->label('FBB Service Number'),
+                            ->label('FBB Service Number')
+                            ->disabled(),
                         TextInput::make('internet_account')
-                            ->label('Internet Account'),
+                            ->label('Internet Account')
+                            ->disabled(),
                         TextInput::make('internet_password')
-                            ->label('Internet Password'),
+                            ->label('Internet Password')
+                            ->disabled(),
                     ]),
 
                 Section::make('Location')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->schema([
                         TextInput::make('area_code')
-                            ->label('Area Code'),
+                            ->label('Area Code')
+                            ->disabled(),
                         TextInput::make('area_name')
-                            ->label('Area Name'),
+                            ->label('Area Name')
+                            ->disabled(),
                         TextInput::make('zone_code')
-                            ->label('Zone Code'),
+                            ->label('Zone Code')
+                            ->disabled(),
                         TextInput::make('lat')
                             ->label('Latitude')
-                            ->numeric(),
+                            ->numeric()
+                            ->disabled(),
                         TextInput::make('long')
                             ->label('Longitude')
-                            ->numeric(),
+                            ->numeric()
+                            ->disabled(),
                     ]),
 
                 Section::make('Contact Information')
+                    ->columnSpanFull()
                     ->columns(2)
                     ->schema([
                         Fieldset::make('Primary Contact')
                             ->schema([
                                 TextInput::make('contact_person')
-                                    ->label('Name'),
+                                    ->label('Name')
+                                    ->disabled(),
                                 TextInput::make('contact_no')
-                                    ->label('Phone'),
+                                    ->label('Phone')
+                                    ->disabled(),
                                 TextInput::make('contact_email')
                                     ->label('Email')
-                                    ->email(),
+                                    ->disabled(),
                             ])
                             ->columns(3),
                         Fieldset::make('Secondary Contact')
                             ->schema([
                                 TextInput::make('sec_contact_person')
-                                    ->label('Name'),
+                                    ->label('Name')
+                                    ->disabled(),
                                 TextInput::make('sec_contact_no')
-                                    ->label('Phone'),
+                                    ->label('Phone')
+                                    ->disabled(),
                                 TextInput::make('sec_contact_email')
                                     ->label('Email')
-                                    ->email(),
+                                    ->disabled(),
                             ])
                             ->columns(3),
                     ]),
 
                 Section::make('Cable & Infrastructure')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->collapsible()
                     ->collapsed()
@@ -128,41 +149,53 @@ class SurveyOrderForm
                         TextInput::make('cable_length')
                             ->label('Cable Length')
                             ->numeric()
-                            ->suffix('m'),
+                            ->suffix('m')
+                            ->disabled(),
                         TextInput::make('cable_type')
-                            ->label('Cable Type'),
+                            ->label('Cable Type')
+                            ->disabled(),
                         TextInput::make('cable_charge')
                             ->label('Cable Charge')
                             ->numeric()
-                            ->prefix('ETB'),
+                            ->prefix('ETB')
+                            ->disabled(),
                         TextInput::make('media_type')
-                            ->label('Media Type'),
+                            ->label('Media Type')
+                            ->disabled(),
                         TextInput::make('line_indicator')
                             ->label('Line Indicator')
-                            ->numeric(),
+                            ->numeric()
+                            ->disabled(),
                     ]),
 
                 Section::make('Device Information')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->collapsible()
                     ->collapsed()
                     ->schema([
                         Toggle::make('with_device')
                             ->label('With Device')
-                            ->inline(false),
+                            ->inline(false)
+                            ->disabled(),
                         TextInput::make('device_id')
-                            ->label('Device ID'),
+                            ->label('Device ID')
+                            ->disabled(),
                         TextInput::make('device_voice_id')
-                            ->label('Voice Device ID'),
+                            ->label('Voice Device ID')
+                            ->disabled(),
                     ]),
 
                 Section::make('Dates & Status')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->schema([
                         DateTimePicker::make('completed_date')
-                            ->label('Completed Date'),
+                            ->label('Completed Date')
+                            ->disabled(),
                         DateTimePicker::make('subscribed_at')
-                            ->label('Subscribed At'),
+                            ->label('Subscribed At')
+                            ->disabled(),
                         DateTimePicker::make('last_checked_at')
                             ->label('Last Checked')
                             ->disabled(),
@@ -171,16 +204,19 @@ class SurveyOrderForm
                             ->disabled(),
                         Textarea::make('survey_failure_reason')
                             ->label('Failure Reason')
-                            ->columnSpan(2),
+                            ->columnSpan(2)
+                            ->disabled(),
                     ]),
 
                 Section::make('Cancellation')
+                    ->columnSpanFull()
                     ->collapsible()
                     ->collapsed()
                     ->schema([
                         Textarea::make('cancel_reason')
                             ->label('Cancel Reason')
-                            ->columnSpanFull(),
+                            ->columnSpanFull()
+                            ->disabled(),
                     ]),
             ]);
     }

@@ -15,8 +15,10 @@ class SurveyOrderInfolist
     public static function configure(Schema $schema): Schema
     {
         return $schema
+            ->columns(3)
             ->components([
                 Section::make('Order Information')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->schema([
                         TextEntry::make('customer_survey_order_id')
@@ -48,6 +50,7 @@ class SurveyOrderInfolist
                     ]),
 
                 Section::make('Customer Information')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->schema([
                         TextEntry::make('customer_code')
@@ -60,6 +63,7 @@ class SurveyOrderInfolist
                     ]),
 
                 Section::make('Service Details')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->schema([
                         TextEntry::make('main_offer_id')
@@ -83,6 +87,7 @@ class SurveyOrderInfolist
                     ]),
 
                 Section::make('Location')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->collapsible()
                     ->schema([
@@ -106,6 +111,7 @@ class SurveyOrderInfolist
                     ]),
 
                 Section::make('Contact Information')
+                    ->columnSpanFull()
                     ->columns(2)
                     ->schema([
                         Fieldset::make('Primary Contact')
@@ -137,6 +143,7 @@ class SurveyOrderInfolist
                     ]),
 
                 Section::make('Cable & Infrastructure')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->collapsible()
                     ->collapsed()
@@ -164,6 +171,7 @@ class SurveyOrderInfolist
                     ]),
 
                 Section::make('Device Information')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->collapsible()
                     ->collapsed()
@@ -180,6 +188,7 @@ class SurveyOrderInfolist
                     ]),
 
                 Section::make('Dates & Timestamps')
+                    ->columnSpanFull()
                     ->columns(3)
                     ->collapsible()
                     ->schema([
@@ -208,6 +217,7 @@ class SurveyOrderInfolist
                     ]),
 
                 Section::make('Status & Issues')
+                    ->columnSpanFull()
                     ->columns(2)
                     ->collapsible()
                     ->collapsed()

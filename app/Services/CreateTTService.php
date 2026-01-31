@@ -62,10 +62,8 @@ class CreateTTService extends BaseApiService
 
             // Step 4: Build XML with queried customer data
             $xmlPayload = $this->buildRequestXml($data);
-            Log::info('CreateTT XML Payload', context: ['xml' => $xmlPayload]);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsed = $this->parseResponseXml($xmlResponse, $data);
-            Log::info('CreateTT Response', context: ['response' => $parsed]);
 
             return $parsed;
         } catch (RuntimeException $e) {
@@ -149,6 +147,7 @@ class CreateTTService extends BaseApiService
         // IDs from subscriber data
         $accountId = $subscriber['account']['account_id'] ?? '';
         $accountCode = $subscriber['account']['account_code'] ?? '';
+        $data['customer_code'] = $customerCode ?? $accountId;
 
         // Frontend data (contact info for the TT)
         $accessNumber = $data['access_number'];
@@ -264,7 +263,7 @@ XML;
 
         // customer_code = logged-in user who created TT (or 'GUEST' for unauthenticated)
         // service_owner_* = actual owner of the service number (from query)
-        $loggedInUserCode = $this->customerCode('GUEST');
+        $loggedInUserCode = $this->customerCode() ?? $payload['customer_code'] ?? '';
         $serviceOwnerCode = $customer['customer_code'] ?? '';
         $serviceOwnerName = trim(($customer['first_name'] ?? '') . ' ' . ($customer['middle_name'] ?? '') . ' ' . ($customer['last_name'] ?? ''));
 

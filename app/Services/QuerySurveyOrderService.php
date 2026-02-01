@@ -11,7 +11,7 @@ class QuerySurveyOrderService extends BaseApiService
 
     protected function endpoint(): string
     {
-        return config('services.order_query_status.endpoint');
+        return config('services.ng.endpoint');
     }
 
     public function querySurveyOrderDetail(string $surveyOrderId)
@@ -34,7 +34,7 @@ class QuerySurveyOrderService extends BaseApiService
     protected function buildRequestXml(string $customerSurveyOrderId): string
     {
         $transactionId = uniqid();
-        $config = config('services.order_query_status');
+        $config = config('services.ng');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">

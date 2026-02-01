@@ -28,6 +28,9 @@ class ServiceActivationService
      */
     public function activate(string $customerSurveyOrderId): bool
     {
+        // Get survey order with customer info
+        // zone_code comes from survey_order (set during survey creation from area_name/area_code)
+        // NOT from customer address
         $record = DB::table('survey_orders as sr')
             ->join('customers as c', 'c.code', '=', 'sr.customer_code')
             ->where('sr.customer_survey_order_id', $customerSurveyOrderId)
@@ -35,9 +38,11 @@ class ServiceActivationService
             ->select([
                 'sr.customer_code',
                 'sr.main_offer_id',
+                'sr.zone_code',
+                'sr.area_code',
+                'sr.area_name',
                 'c.name',
                 'c.phone_number',
-                'c.zone',
             ])
             ->first();
 
@@ -48,13 +53,23 @@ class ServiceActivationService
             return false;
         }
 
+        // Validate zone_code is present (required for subscription)
+        if (empty($record->zone_code)) {
+            AppLogger::api()->error('Survey order missing zone_code for service activation', [
+                'customer_survey_order_id' => $customerSurveyOrderId,
+                'area_code' => $record->area_code,
+                'area_name' => $record->area_name,
+            ]);
+            return false;
+        }
+
         $data = [
             'survey_order_id' => $customerSurveyOrderId,
             'customer_code' => $record->customer_code,
             'name' => trim($record->name),
             'main_offer_id' => $record->main_offer_id,
+            'zone_code' => $record->zone_code,
             'sms_no' => $record->phone_number,
-            'zone' => $record->zone,
         ];
 
         try {

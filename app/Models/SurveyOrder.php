@@ -350,7 +350,7 @@ class SurveyOrder extends Model
         // 1. Completed status (normal flow), OR
         // 2. Waiting status with payment already made (third-party activation failed but paid)
         $isCompleted = $status === FFDServiceProvisionStatus::Completed->value;
-        $isWaitingWithPayment = $status === FFDServiceProvisionStatus::Waiting->value 
+        $isWaitingWithPayment = $status === FFDServiceProvisionStatus::Waiting->value
             && !empty($paymentTransId);
 
         if (!$isCompleted && !$isWaitingWithPayment) {

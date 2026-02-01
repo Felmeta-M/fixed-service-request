@@ -6,6 +6,7 @@ use App\Services\ApiResponse;
 use App\Services\BaseApiService;
 use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
+use App\Enums\MediaType;
 use App\Services\Payment\DeviceFeeCalculatorService;
 use App\Services\Payment\PaymentCalculatorService;
 use App\Services\Payment\PaymentService;
@@ -13,6 +14,7 @@ use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Services\ResourceService;
 use App\Services\Subscription\ServiceActivationService;
+use App\Services\ZoneService;
 use App\Services\Logging\AppLogger;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +33,7 @@ abstract class BaseSurveyService extends BaseApiService
         protected readonly DeviceFeeCalculatorService $deviceFeeCalculator,
         protected readonly QueryAvailableNumberService $queryAvailableNumberService,
         protected readonly ReserveNumberService $reserveNumberService,
+        protected readonly ZoneService $zoneService,
     ) {
     }
 
@@ -159,9 +162,20 @@ abstract class BaseSurveyService extends BaseApiService
         $isManualSurvey = (bool) ($data['survey_is_manual'] ?? false);
 
         DB::transaction(function () use ($surveyOrderId, $data, $resource, $serviceNumber, $bandwidthKb, &$totalAmount, $isManualSurvey) {
+            $areaCode = $resource['area_code'] ?? null;
+            $areaName = $resource['area_name'] ?? null;
+            $zoneCode = $resource['zone_code'] ?? null;
+            $cableType = $resource['cable_type'] ?? null;
+            
+            if (!$zoneCode && !$isManualSurvey) {
+                $zoneCode = $this->zoneService->getZoneCodeFromAreaCode($areaCode, $areaName);
+            }
+            
+            $mediaType = $isManualSurvey ? null : $this->deriveMediaTypeFromCableType($cableType);
+
             $survey = SurveyOrder::create([
                 ...$data,
-                'bandwidth' => $bandwidthKb, // Save as KB for consistency with BSS responses
+                'bandwidth' => $bandwidthKb,
                 'completed_date' => now(),
                 'with_device' => (bool) $data['with_device'],
                 'device_id' => $data['device_id'] ?? null,
@@ -170,14 +184,15 @@ abstract class BaseSurveyService extends BaseApiService
                 'customer_survey_order_id' => $surveyOrderId,
                 'status' => $isManualSurvey ? FFDServiceProvisionStatus::Waiting->value : FFDServiceProvisionStatus::Completed->value,
                 'cable_length' => $resource['distance'] ?? null,
-                'cable_type' => $resource['cable_type'] ?? null,
+                'cable_type' => $cableType,
+                'media_type' => $mediaType,
                 'lat' => isset($resource['latitude']) ? round((float) $resource['latitude'], 8) : null,
                 'long' => isset($resource['longitude']) ? round((float) $resource['longitude'], 8) : null,
-                'area_code' => $resource['area_code'] ?? null,
-                'area_name' => $resource['area_name'] ?? null,
+                'area_code' => $areaCode,
+                'area_name' => $areaName,
+                'zone_code' => $zoneCode,
             ]);
 
-            // Use dynamic customer BSS classification from BaseApiService helper
             $profile = $this->getCustomerProfile();
 
             $requestData = [
@@ -242,42 +257,48 @@ abstract class BaseSurveyService extends BaseApiService
 
         // All fields are critical and required - no field should be tampered
         $criticalFields = ['neid', 'distance', 'cable_type', 'latitude', 'longitude', 'area_code', 'area_name'];
+        $optionalFields = ['zone_code'];
 
-        // Validate and decrypt all critical fields
         foreach ($criticalFields as $field) {
-            if (isset($data[$field]) && !is_null($data[$field]) && $data[$field] !== '') {
+            if (isset($data[$field]) && $data[$field] !== '') {
                 try {
                     $decrypted[$field] = Crypt::decryptString($data[$field]);
                 } catch (\Exception $e) {
-                    // Invalid or tampered encrypted data - stop processing immediately
-                    AppLogger::api()->error('Failed to decrypt critical resource field - possible tampering detected', [
-                        'field' => $field,
-                        'operation' => 'decrypt_resource_fields',
-                        'error' => $e->getMessage(),
-                    ]);
                     return null;
                 }
             } else {
-                // Critical field is missing - stop processing
-                AppLogger::api()->error('Critical resource field is missing', [
-                    'field' => $field,
-                    'operation' => 'decrypt_resource_fields',
-                ]);
                 return null;
+            }
+        }
+
+        foreach ($optionalFields as $field) {
+            if (isset($data[$field]) && $data[$field] !== '') {
+                try {
+                    $decrypted[$field] = Crypt::decryptString($data[$field]);
+                } catch (\Exception $e) {
+                    // Optional field - continue
+                }
             }
         }
 
         return $decrypted;
     }
 
-    // parseBandwidth is inherited from BaseApiService
+    protected function deriveMediaTypeFromCableType(?string $cableType): ?string
+    {
+        if ($cableType === null || $cableType === '') {
+            return null;
+        }
+
+        return match ($cableType) {
+            '3' => MediaType::PON->value,
+            '1', '2' => MediaType::COPPER->value,
+            default => MediaType::PON->value,
+        };
+    }
 
     /**
-     * Format coordinate value for XML (longitude/latitude)
-     * Ensures the value is properly formatted as a numeric string
-     * 
-     * @param string|null $coordinate The coordinate value (decrypted)
-     * @return string Formatted coordinate value
+     * Format coordinate value for XML.
      */
     protected function formatCoordinate(?string $coordinate): string
     {

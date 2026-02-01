@@ -47,6 +47,7 @@ type SurveyRow = {
     survey_is_manual?: boolean;
     // Backend-provided action flags (single source of truth)
     is_paid?: boolean;
+    can_continue?: boolean; // For manual surveys: can proceed to device selection
     can_pay?: boolean;
     can_subscribe?: boolean;
     can_change_offer?: boolean;

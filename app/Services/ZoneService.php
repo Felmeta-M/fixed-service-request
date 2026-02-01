@@ -6,57 +6,70 @@ use App\Models\EthioZone;
 use App\Models\SurveyOrder;
 use App\Models\TelecomRegion;
 use App\Models\Zone;
-use App\Support\CustomerContext;
 
 /**
- * ZoneService - Single source of truth for all zone operations.
- *
- * Public API (consistent naming):
- * 1. getZoneCodeForCustomerAddress() → For <com:CustomerAddressInfo> XML
- * 2. getZoneCodeForAccountInfo()     → For <com:AccountInfo> XML
- *
- * Both return zone code, but resolve it differently based on context.
- * All functions return value or null - consuming classes decide to throw.
+ * ZoneService - Zone resolution for subscription XML payloads.
  */
 class ZoneService
 {
-    // =========================================================================
-    // PUBLIC API - Consistent naming, different resolution paths
-    // =========================================================================
-
     /**
-     * Get zone code for <com:CustomerAddressInfo> XML.
-     *
-     * Purpose: Customer's registered location (where customer is from).
-     * Returns: Zone code (e.g., "CAAZ", "NAAZ", "EAAZ")
-     *
-     * Priority: customer context → passed data
+     * Get zone code for CustomerAddressInfo XML.
+     * Priority: survey_order.zone_code → area lookup → customer zone fallback
+     * 2. survey_order.area_code → telecom_regions → ethio_zones
+     * 3. Final fallback: $data['zone'] (customer zone) → zones table → zone_code
      */
     public function getZoneCodeForCustomerAddress(?array $data = null): ?string
     {
-        return $this->fromCustomerContext()
-            ?? $this->fromData($data);
+        $surveyOrderId = $data['survey_order_id'] ?? null;
+        
+        if ($surveyOrderId) {
+            $surveyOrder = SurveyOrder::where('customer_survey_order_id', $surveyOrderId)->first();
+            
+            if ($surveyOrder) {
+                if ($surveyOrder->zone_code) {
+                    return $surveyOrder->zone_code;
+                }
+                
+                $zoneCode = $this->getZoneCodeFromAreaCode($surveyOrder->area_code, $surveyOrder->area_name);
+                if ($zoneCode) {
+                    return $zoneCode;
+                }
+            }
+        }
+        
+        $customerZoneId = $data['zone'] ?? $data['address']['zone'] ?? null;
+        if ($customerZoneId) {
+            return $this->getZoneCodeById($customerZoneId);
+        }
+        
+        return null;
     }
 
     /**
-     * Get zone code for <com:AccountInfo> XML.
-     *
-     * Purpose: Service origin location (where service originates from).
-     * Returns: EthioZone ID (e.g., "21", "22") - the BSS zone identifier
-     *
-     * Priority: survey_order.zone_code → customer context → passed data → area_code
+     * Get zone code for AccountInfo XML.
+     * Priority: survey_order.zone_code → area lookup → customer zone fallback
      */
     public function getZoneCodeForAccountInfo(string $surveyOrderId, ?array $data = null): ?string
     {
         $surveyOrder = SurveyOrder::where('customer_survey_order_id', $surveyOrderId)->first();
 
-        $zoneCode = $this->resolveAccountInfoZoneCode($surveyOrder, $data);
+        if ($surveyOrder) {
+            if ($surveyOrder->zone_code) {
+                return $surveyOrder->zone_code;
+            }
 
-        if (!$zoneCode) {
-            return null;
+            $zoneCode = $this->getZoneCodeFromAreaCode($surveyOrder->area_code, $surveyOrder->area_name);
+            if ($zoneCode) {
+                return $zoneCode;
+            }
         }
 
-        return $this->toEthioZoneId($zoneCode);
+        $customerZoneId = $data['zone'] ?? $data['address']['zone'] ?? null;
+        if ($customerZoneId) {
+            return $this->getZoneCodeById($customerZoneId);
+        }
+
+        return null;
     }
 
     /**
@@ -144,6 +157,79 @@ class ZoneService
     }
 
     /**
+     * Get EthioZone code from area_name or area_code.
+     * Priority: area_name → telecom_regions, then area_code → telecom_regions
+     */
+    public function getZoneCodeFromAreaCode(?string $areaCode, ?string $areaName = null): ?string
+    {
+        if ($areaName) {
+            $ethioZone = $this->findEthioZoneByAreaName($areaName);
+            if ($ethioZone) {
+                return $ethioZone->code;
+            }
+        }
+
+        if (!$areaCode) {
+            return null;
+        }
+
+        $telecomRegion = TelecomRegion::where('area_id', $areaCode)
+            ->where('status', true)
+            ->first();
+
+        if (!$telecomRegion?->zone) {
+            return null;
+        }
+
+        return $this->findEthioZoneByZoneName($telecomRegion->zone)?->code;
+    }
+
+    /**
+     * Find EthioZone by area name from resource response.
+     * Looks up telecom_regions table to find the zone.
+     *
+     * Priority:
+     * 1. Exact match on telecom_regions.area_name
+     * 2. Partial match on telecom_regions.area_name
+     * 3. Direct match on ethio_zones.name
+     */
+    private function findEthioZoneByAreaName(string $areaName): ?EthioZone
+    {
+        $areaName = trim($areaName);
+        
+        if (empty($areaName)) {
+            return null;
+        }
+
+        // Priority 1: Exact match on telecom_regions.area_name
+        $telecomRegion = TelecomRegion::whereRaw('UPPER(area_name) = ?', [strtoupper($areaName)])
+            ->where('status', true)
+            ->first();
+        
+        if ($telecomRegion?->zone) {
+            $ethioZone = $this->findEthioZoneByZoneName($telecomRegion->zone);
+            if ($ethioZone) {
+                return $ethioZone;
+            }
+        }
+
+        // Priority 2: Partial match on telecom_regions.area_name
+        $telecomRegion = TelecomRegion::whereRaw('UPPER(area_name) LIKE ?', ['%' . strtoupper($areaName) . '%'])
+            ->where('status', true)
+            ->first();
+        
+        if ($telecomRegion?->zone) {
+            $ethioZone = $this->findEthioZoneByZoneName($telecomRegion->zone);
+            if ($ethioZone) {
+                return $ethioZone;
+            }
+        }
+
+        // Priority 3: Direct match on ethio_zones.name (in case area_name is already a zone name)
+        return $this->findEthioZoneByZoneName($areaName);
+    }
+
+    /**
      * Get all active EthioZones for selection dropdown.
      *
      * Returns: Array formatted for dropdown [{ value, label }, ...]
@@ -166,120 +252,8 @@ class ZoneService
     }
 
     // =========================================================================
-    // ACCOUNT INFO RESOLUTION - Priority chain
-    // =========================================================================
-
-    /**
-     * Resolve zone code for AccountInfo with priority chain.
-     */
-    private function resolveAccountInfoZoneCode(?SurveyOrder $surveyOrder, ?array $data): ?string
-    {
-        // Priority 1: Survey order zone_code (service origin from BSS)
-        if ($code = $this->fromSurveyOrder($surveyOrder)) {
-            return $code;
-        }
-
-        // Priority 2: Customer context (logged-in customer's zone)
-        if ($code = $this->fromCustomerContextToEthioZoneCode()) {
-            return $code;
-        }
-
-        // Priority 3: Passed data (webhooks/new customer)
-        if ($code = $this->fromDataToEthioZoneCode($data)) {
-            return $code;
-        }
-
-        // Priority 4: Area code fallback (legacy telecom region)
-        return $this->fromAreaCode($surveyOrder?->area_code);
-    }
-
-    // =========================================================================
-    // SOURCE FUNCTIONS - Individual zone sources
-    // =========================================================================
-
-    /**
-     * From survey order record.
-     */
-    private function fromSurveyOrder(?SurveyOrder $surveyOrder): ?string
-    {
-        return $surveyOrder?->zone_code;
-    }
-
-    /**
-     * From customer context → zone_code.
-     * Path: customer.zone → zones.zone_code
-     */
-    private function fromCustomerContext(): ?string
-    {
-        return $this->getZoneCodeById(CustomerContext::zone());
-    }
-
-    /**
-     * From customer context → EthioZone code.
-     * Path: customer.zone → zones.zone_code → ethio_zones.code
-     * Note: zones.zone_code IS the EthioZone code, so return directly
-     */
-    private function fromCustomerContextToEthioZoneCode(): ?string
-    {
-        return $this->fromCustomerContext();
-    }
-
-    /**
-     * From data array → zone_code.
-     * Path: data.zone → zones.zone_code
-     */
-    private function fromData(?array $data): ?string
-    {
-        $zoneId = $this->extractZoneId($data);
-
-        return $zoneId ? $this->getZoneCodeById($zoneId) : null;
-    }
-
-    /**
-     * From data array → EthioZone code.
-     * Path: data.zone → zones.zone_code → ethio_zones.code
-     * Note: zones.zone_code IS the EthioZone code, so return directly
-     */
-    private function fromDataToEthioZoneCode(?array $data): ?string
-    {
-        return $this->fromData($data);
-    }
-
-    /**
-     * From area_code → EthioZone code (legacy fallback).
-     * Path: area_code → telecom_regions.zone → ethio_zones.code
-     */
-    private function fromAreaCode(?string $areaCode): ?string
-    {
-        if (!$areaCode) {
-            return null;
-        }
-
-        $telecomRegion = TelecomRegion::where('area_id', $areaCode)
-            ->where('status', true)
-            ->first();
-
-        if (!$telecomRegion?->zone) {
-            return null;
-        }
-
-        return $this->findEthioZoneByZoneName($telecomRegion->zone)?->code;
-    }
-
-    // =========================================================================
     // LOOKUP FUNCTIONS - Database operations
     // =========================================================================
-
-    /**
-     * Convert zone code/name to EthioZone ID.
-     */
-    private function toEthioZoneId(string $zoneCode): ?string
-    {
-        $ethioZone = EthioZone::where('code', $zoneCode)->where('status', true)->first()
-            ?? EthioZone::where('name', $zoneCode)->where('status', true)->first();
-
-        return $ethioZone ? (string) $ethioZone->id : null;
-    }
 
     /**
      * Find EthioZone by zone name with suffix handling.
@@ -309,19 +283,4 @@ class ZoneService
                 ->first();
     }
 
-    // =========================================================================
-    // HELPER FUNCTIONS
-    // =========================================================================
-
-    /**
-     * Extract zone ID from data array.
-     */
-    private function extractZoneId(?array $data): int|string|null
-    {
-        if (!$data) {
-            return null;
-        }
-
-        return $data['zone'] ?? $data['address']['zone'] ?? null;
-    }
 }

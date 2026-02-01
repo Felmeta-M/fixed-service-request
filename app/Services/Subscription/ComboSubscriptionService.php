@@ -140,13 +140,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       $internetPasswordEncoded = \App\Helpers\InternetCredentialsHelper::getDefaultPassword();
       $internetPassword = 'REDACTED_PASSWORD'; // Plain text password for customer SMS/DB
 
-      // Get dynamic zone_code for CustomerAddressInfo EthioZoneOrRegion
-      // This will throw an exception with a clear message if zone_code cannot be determined
       $customerEthioZone = $this->getZoneCodeForCustomerAddress($data);
-
-
-      // Get dynamic ethio_zone id for AccountInfo ethioZoneOrRegion
-      // This will throw an exception with a clear message if ethio_zone id cannot be determined
       $accountEthioZone = $this->getZoneCodeForAccountInfo($data['survey_order_id'], $data);
 
       // Store password in data array for XML template access

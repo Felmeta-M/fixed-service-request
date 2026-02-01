@@ -10,7 +10,6 @@ use App\Services\Payment\PaymentService;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Services\ZoneService;
-use App\Support\CustomerContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Throwable;
@@ -224,74 +223,38 @@ abstract class BaseSubscriptionService extends BaseApiService
         }
     }
 
-    /** Service-specific constants */
     abstract protected function offeringId(): int;
     abstract protected function businessCode(): string;
     abstract protected function networkType(): int;
 
-    /**
-     * Get zone code for CustomerAddressInfo XML.
-     * Delegates to ZoneService - single source of truth.
-     *
-     * @throws \RuntimeException If zone code cannot be found
-     */
     protected function getZoneCodeForCustomerAddress(array $data): string
     {
         $zoneCode = $this->zoneService->getZoneCodeForCustomerAddress($data);
 
         if (!$zoneCode) {
-            AppLogger::api()->error('Zone code not found for CustomerAddressInfo', [
-                'data_keys' => array_keys($data),
-                'has_customer_context' => CustomerContext::isAuthenticated(),
-            ]);
-            throw new \RuntimeException(
-                'Unable to process subscription: Zone information is missing. Please provide a valid zone selection.'
-            );
+            throw new \RuntimeException('Zone information is missing. Please contact support.');
         }
 
         return $zoneCode;
     }
 
-    /**
-     * Get zone code for AccountInfo XML.
-     * Delegates to ZoneService - single source of truth.
-     *
-     * @throws \RuntimeException If zone code cannot be found
-     */
     protected function getZoneCodeForAccountInfo(string $surveyOrderId, ?array $data = null): string
     {
         $zoneCode = $this->zoneService->getZoneCodeForAccountInfo($surveyOrderId, $data);
 
         if (!$zoneCode) {
-            AppLogger::api()->error('Zone code not found for AccountInfo', [
-                'survey_order_id' => $surveyOrderId,
-                'has_customer_context' => CustomerContext::isAuthenticated(),
-            ]);
-            throw new \RuntimeException(
-                'Unable to process subscription: Zone information is missing. Please contact support.'
-            );
+            throw new \RuntimeException('Zone information is missing. Please contact support.');
         }
 
         return $zoneCode;
     }
 
-    /**
-     * Get zone code by zone ID.
-     * Delegates to ZoneService - single source of truth.
-     *
-     * @throws \RuntimeException If zone code cannot be found
-     */
     protected function getZoneCodeById(int|string $zoneId): string
     {
         $zoneCode = $this->zoneService->getZoneCodeById($zoneId);
 
         if (!$zoneCode) {
-            AppLogger::api()->error('Zone code not found for zone ID', [
-                'zone_id' => $zoneId,
-            ]);
-            throw new \RuntimeException(
-                'Unable to process: The selected zone is not found in our system. Please contact support.'
-            );
+            throw new \RuntimeException('Zone not found in our system. Please contact support.');
         }
 
         return $zoneCode;

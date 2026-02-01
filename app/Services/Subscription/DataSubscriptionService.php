@@ -111,12 +111,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       $username = substr($namePart . $randomSuffix, 0, 11); // Max 11 chars tota 
 
 
-      // Get dynamic zone_code for CustomerAddressInfo EthioZoneOrRegion
-      // This will throw an exception with a clear message if zone_code cannot be determined
       $customerEthioZone = $this->getZoneCodeForCustomerAddress($data);
-
-      // Get dynamic ethio_zone id for AccountInfo ethioZoneOrRegion
-      // This will throw an exception with a clear message if ethio_zone id cannot be determined
       $accountEthioZone = $this->getZoneCodeForAccountInfo($data['survey_order_id'], $data);
 
       // Business defaults

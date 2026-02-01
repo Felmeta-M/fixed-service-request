@@ -59,10 +59,18 @@ export function useCreateComplaint() {
 
             return response;
         },
-        onSuccess: () => {
+        onSuccess: (response) => {
             // Invalidate related queries - use the correct query key
             queryClient.invalidateQueries({ queryKey: ['localTTs'] });
-            showSuccessToast('Complaint submitted successfully!');
+            
+            // Check if this is an existing TT or a new one
+            const ttData = response?.data;
+            if (ttData?.is_existing) {
+                showSuccessToast(`A trouble ticket already exists: ${ttData.tt_serial_no}`);
+            } else {
+                showSuccessToast(`Complaint submitted successfully! TT: ${ttData?.tt_serial_no || ''}`);
+            }
+            
             setTimeout(() => {
                 router.visit('/complaints', { preserveScroll: false });
             }, 1000);
@@ -94,9 +102,16 @@ export function useCreateComplaintGuest() {
 
             return response;
         },
-        onSuccess: () => {
+        onSuccess: (response) => {
             queryClient.invalidateQueries({ queryKey: ['localTTs'] });
-            showSuccessToast('Complaint submitted successfully!');
+            
+            // Check if this is an existing TT or a new one
+            const ttData = response?.data;
+            if (ttData?.is_existing) {
+                showSuccessToast(`A trouble ticket already exists: ${ttData.tt_serial_no}`);
+            } else {
+                showSuccessToast(`Complaint submitted successfully! TT: ${ttData?.tt_serial_no || ''}`);
+            }
             // No redirect - guest stays on page; caller can close modal via onSuccess
         },
     });

@@ -21,19 +21,23 @@ export interface ResourceCheckRequest {
 export interface ResourceCheckResponse {
     success: boolean;
     message: string;
+    error_code?: string;
+    errors?: {
+        require_manual_survey?: boolean;
+    };
     data?: {
         distance: string;
         ava_port: string;
         neid: string;
         nename: string;
         typeid: string;
-        // These fields are encrypted by the backend and must be forwarded as-is to survey create.
         longitude: string;
         latitude: string;
         cable_type: string;
         cable_type_desc: string;
         area_code: string;
         area_name: string;
+        zone_code?: string;
     };
 }
 
@@ -49,21 +53,22 @@ export const useResourceChecker = () => {
         }: {
             coordinates: { latitude: number; longitude: number };
             customerName?: string;
-        }): Promise<{ available: boolean; message: string; data?: ResourceCheckResponse['data'] }> => {
+        }): Promise<{ 
+            available: boolean; 
+            message: string; 
+            requireManualSurvey?: boolean;
+            data?: ResourceCheckResponse['data'];
+        }> => {
             if (!token) throw new Error('Authentication required');
 
             const requestData: ResourceCheckRequest = {
                 prod_spec_code: 'C_P_UFBI_E',
                 event_code: '101',
-
-                // extracted from Inertia user
                 cust_id: user?.id?.toString(),
                 cust_name: user?.name || customerName,
                 cust_addr: user?.address ?? 'Not Provided',
-
                 longitude: coordinates.longitude.toString(),
                 latitude: coordinates.latitude.toString(),
-
                 number_line: '1',
                 acc_nbr: '-1',
                 bandwidth: '',
@@ -71,15 +76,22 @@ export const useResourceChecker = () => {
                 combo_flag: '0',
             };
 
-            // Use the app API so we get the encrypted fields that survey-create expects.
             const response = await apiClient.post<ResourceCheckResponse>(`/resource-check`, requestData, {
                 token,
             });
 
-            // Check if response is successful
+            // Check if manual survey is required (zone not resolvable)
+            if (!response.success && response.errors?.require_manual_survey) {
+                return {
+                    available: false,
+                    message: response.message || 'Manual survey required for this location',
+                    requireManualSurvey: true,
+                    data: undefined,
+                };
+            }
+
             if (response.success) {
-                // If data is null, no resource is available
-                if (!response.data || response.data === null) {
+                if (!response.data) {
                     return {
                         available: false,
                         message: 'No available resources in this area',
@@ -87,14 +99,8 @@ export const useResourceChecker = () => {
                     };
                 }
 
-                // Process the resource data
                 const resource = response.data;
                 const availablePorts = parseInt(resource.ava_port) || 0;
-
-                // `distance`, `cable_type`, `latitude`, `longitude`, `neid`, `area_code`, `area_name` are encrypted by the backend (Crypt::encryptString),
-                // and the SOAP call already receives `radius=200`, so we treat ports>0 as availability.
-                // IMPORTANT: Even when ports <= 0 (resource not available), we still return the encrypted resource data
-                // because it contains encrypted fields that must be forwarded to survey/create API.
                 const isAvailable = availablePorts > 0;
 
                 return {
@@ -102,12 +108,10 @@ export const useResourceChecker = () => {
                     message: isAvailable
                         ? `Resource available in this area`
                         : 'No available resources in this area',
-                    // Always return resource data (even when not available) as it contains encrypted fields needed for survey creation
                     data: resource,
                 };
             }
 
-            // Response was not successful
             return {
                 available: false,
                 message: response.message || 'Resource check failed',
@@ -119,7 +123,12 @@ export const useResourceChecker = () => {
     const checkResourceAvailability = async (
         coordinates: { latitude: number; longitude: number },
         customerName?: string,
-    ): Promise<{ available: boolean; message: string; data?: ResourceCheckResponse['data'] }> => {
+    ): Promise<{ 
+        available: boolean; 
+        message: string; 
+        requireManualSurvey?: boolean;
+        data?: ResourceCheckResponse['data'];
+    }> => {
         try {
             const result = await mutation.mutateAsync({ coordinates, customerName });
             return result;

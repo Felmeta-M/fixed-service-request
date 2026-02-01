@@ -799,19 +799,23 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                     </div>
                 </div>
 
-                {/* Submit Button */}
-                <div className="flex justify-between pt-2 gap-4">
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-3 pt-4">
                     <Button
                         type="button"
                         variant="outline"
                         onClick={onBack}
                         disabled={submitting}
-                        className="flex items-center gap-2"
+                        className="flex items-center justify-center gap-2 w-full"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Back
                     </Button>
-                    <Button type="submit" disabled={submitting || createSurveyMutation.isPending} className="bg-primary hover:bg-primary/90">
+                    <Button 
+                        type="submit" 
+                        disabled={submitting || createSurveyMutation.isPending} 
+                        className="bg-primary hover:bg-primary/90 w-full"
+                    >
                         {(submitting || createSurveyMutation.isPending) ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -820,7 +824,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                         ) : (
                             <>
                                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                                Submit
+                                Submit Manual Request
                             </>
                         )}
                     </Button>

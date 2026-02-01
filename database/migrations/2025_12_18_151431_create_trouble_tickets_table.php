@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('mobile_no');
             $table->string('trouble_title');
             $table->string('trouble_reason');
-            $table->text('tt_description');
+            $table->text('tt_description')->nullable();
             $table->string('tt_serial_no')->unique();
             $table->string('status')->default('pending');
             $table->timestamps();

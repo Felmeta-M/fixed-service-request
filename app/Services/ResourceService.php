@@ -12,6 +12,11 @@ class ResourceService extends BaseApiService
     protected int $timeout = 10;
     protected int $rateLimit = 100;
 
+    public function __construct(
+        protected readonly ZoneService $zoneService,
+    ) {
+    }
+
     protected function endpoint(): string
     {
         return config('services.check_resource.endpoint');
@@ -253,24 +258,34 @@ XML;
             ]);
         }
 
-        // Step 7: Get shortest resource
         $shortestResource = $this->getShortestResource($resources);
 
-        if ($shortestResource) {
-            return ApiResponse::success($shortestResource, message: 'Resource found');
-        } else {
-            // No resource found - return LOCATION_REVIEW_NEEDED for manual review
-            AppLogger::api()->info('Resource check: No resource found - manual review needed', [
-                'latitude' => $data['latitude'] ?? null,
-                'longitude' => $data['longitude'] ?? null,
-                'operation' => 'resource_check',
-            ]);
+        if (!$shortestResource) {
             return ApiResponse::error(
                 'LOCATION_REVIEW_NEEDED: No resource found at this location. Please continue with manual request for review.',
                 ErrorCode::VALIDATION_ERROR,
-                422
+                422,
+                ['require_manual_survey' => true]
             );
         }
+
+        $areaCode = $shortestResource['area_code_raw'] ?? null;
+        $areaName = $shortestResource['area_name_raw'] ?? null;
+        $zoneCode = $this->zoneService->getZoneCodeFromAreaCode($areaCode, $areaName);
+
+        if (!$zoneCode) {
+            return ApiResponse::error(
+                'MANUAL_SURVEY_REQUIRED: Your location requires manual verification. Please submit a manual survey request.',
+                ErrorCode::VALIDATION_ERROR,
+                422,
+                ['require_manual_survey' => true]
+            );
+        }
+
+        $shortestResource['zone_code'] = Crypt::encryptString($zoneCode);
+        unset($shortestResource['area_code_raw'], $shortestResource['area_name_raw']);
+
+        return ApiResponse::success($shortestResource, message: 'Resource found');
     }
 
     public function getShortestResource(array $resources): ?array
@@ -284,6 +299,10 @@ XML;
                 return null;
             }
 
+            // Preserve raw values for zone lookup before encryption
+            $resource['area_code_raw'] = (string) ($resource['area_code'] ?? '');
+            $resource['area_name_raw'] = (string) ($resource['area_name'] ?? '');
+
             // Encrypt sensitive fields
             $resource['neid'] = Crypt::encryptString((string) $resource['neid']);
             $resource['distance'] = Crypt::encryptString((string) $resource['distance']);
@@ -292,7 +311,6 @@ XML;
             $resource['latitude'] = Crypt::encryptString((string) $resource['latitude']);
             $resource['area_code'] = Crypt::encryptString((string) ($resource['area_code'] ?? ''));
             $resource['area_name'] = Crypt::encryptString((string) ($resource['area_name'] ?? ''));
-
 
             return $resource;
         } catch (\Exception $e) {

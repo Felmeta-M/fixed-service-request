@@ -51,6 +51,7 @@ interface ServiceFormData {
         cable_type_desc: string;
         area_code: string;
         area_name: string;
+        zone_code?: string;
     };
     bandwidthNumericValue?: number;
     resourceMessage?: string;
@@ -199,31 +200,16 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 showSuccessToast(result.message || 'Resource available!', { id: toastId });
                 nextStep();
             } else {
-                // Check if this is a location review needed (Ethiopia but outside Addis Ababa)
-                const isLocationReviewNeeded = result.message && result.message.includes('LOCATION_REVIEW_NEEDED');
+                // Check if manual survey is required (zone not resolvable or location review needed)
+                const requiresManualSurvey = result.requireManualSurvey || 
+                    (result.message && (
+                        result.message.includes('MANUAL_SURVEY_REQUIRED') ||
+                        result.message.includes('LOCATION_REVIEW_NEEDED')
+                    ));
 
-                // Check if this is a validation error (e.g., geo-fencing) that should be shown as a toast
-                const isValidationError = result.message && (
-                    result.message.includes('Addis Ababa') ||
-                    result.message.includes('available within') ||
-                    result.message.includes('city limits') ||
-                    result.message.includes('Invalid') ||
-                    result.message.includes('required')
-                );
-
-                if (isLocationReviewNeeded) {
-                    // For Ethiopia locations outside Addis Ababa, show manual step dialog
-                    // Don't show error toast - let the Location Review Needed dialog handle it
-                    toast.dismiss(toastId);
-                    // The modal will be shown automatically via useEffect in location-setup-step when resourceAvailable is false
-                } else if (isValidationError) {
-                    // Show error toast for validation errors (outside Ethiopia, invalid coordinates, etc.)
-                    showErrorToast(result.message, { id: toastId });
-                } else {
-                    // Don't show error toast here - the modal will be shown in location-setup-step
-                    // Just dismiss the loading toast
-                    toast.dismiss(toastId);
-                    // The modal will be shown automatically via useEffect in location-setup-step when resourceAvailable is false
+                toast.dismiss(toastId);
+                if (requiresManualSurvey) {
+                    setShowManualStep(true);
                 }
             }
         } catch (error) {
@@ -449,25 +435,30 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
                 {/* Navigation Buttons */}
                 {showNavigation && !isLastStep && (
-                    <div className="mt-2 flex justify-between pt-2">
-                        <Button variant="outline" onClick={prevStep} disabled={currentStep === 0} className="flex items-center space-x-2">
+                    <div className="mt-4 flex flex-col gap-3 pt-2">
+                        <Button 
+                            variant="outline" 
+                            onClick={prevStep} 
+                            disabled={currentStep === 0} 
+                            className="flex w-full items-center justify-center space-x-2"
+                        >
                             <ArrowLeft className="h-4 w-4" />
-                            Back
+                            <span>Back</span>
                         </Button>
 
                         <Button
                             onClick={checkResourceAndProceed}
                             disabled={!canProceedToNextStep() || hasActiveSurvey || checkingResource}
-                            className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
+                            className="flex w-full items-center justify-center space-x-2 bg-primary hover:bg-primary/90"
                         >
                             {checkingResource ? (
                                 <>
                                     <Loader2 className="h-4 w-4 animate-spin" />
-                                    Checking Availability...
+                                    <span>Checking Availability...</span>
                                 </>
                             ) : (
                                 <>
-                                    Next
+                                    <span>Next</span>
                                     <ChevronRight className="h-4 w-4" />
                                 </>
                             )}

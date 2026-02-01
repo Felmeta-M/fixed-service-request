@@ -417,12 +417,12 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
             </div>
 
             {/* Submit Actions */}
-            <div className="flex flex-row justify-between gap-3 border-t border-border/50 pt-6 sm:flex-row sm:justify-between sm:gap-4">
+            <div className="flex flex-col gap-3 border-t border-border/50 pt-6">
                 <Button
                     variant="outline"
                     onClick={onBack}
                     disabled={submitting || createSurveyMutation.isPending}
-                    className="w-full sm:w-auto"
+                    className="w-full"
                 >
                     {t('common.back')}
                 </Button>
@@ -430,7 +430,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 <Button
                     onClick={handleSubmit}
                     disabled={submitting || createSurveyMutation.isPending || !formData.resourceAvailable}
-                    className="w-full bg-primary hover:bg-primary/90 focus:ring-2 focus:ring-primary/20 sm:w-auto"
+                    className="w-full bg-primary hover:bg-primary/90 focus:ring-2 focus:ring-primary/20"
                 >
                     {(submitting || createSurveyMutation.isPending) ? (
                         <>

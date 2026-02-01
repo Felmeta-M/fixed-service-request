@@ -68,6 +68,7 @@ type Survey = {
     };
     // Backend-provided action flags (single source of truth)
     is_paid?: boolean;
+    can_continue?: boolean; // For manual surveys: can proceed to device selection
     can_pay?: boolean;
     can_subscribe?: boolean;
     can_change_offer?: boolean;
@@ -325,19 +326,9 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const isInternetOrCombo = survey.main_offer_id === INTERNET_OFFER_ID || survey.main_offer_id === COMBO_OFFER_ID;
     const canUpgradeDowngrade = canChangeOffer && isInternetOrCombo;
 
-    // Check if survey can be resumed (approved manual survey that needs device selection)
-    // A survey can be resumed if:
-    // 1. It's a manual survey (survey_is_manual = true)
-    // 2. Status indicates ready/approved state
-    // 3. can_pay or can_subscribe is true
-    const statusCode = String(survey.status_code ?? '');
-    const statusStr = String(survey.status ?? '');
-    // Use status_code (stable) with fallback to legacy status labels
-    const RESUMABLE_STATUS_CODES = ['ready', 'assessment_complete', 'device_selection'];
-    const RESUMABLE_LEGACY_STATUSES = ['Ready', '2', 'Approved', '8', 'Survey Completed'];
-    const isResumableStatus = RESUMABLE_STATUS_CODES.includes(statusCode) || RESUMABLE_LEGACY_STATUSES.includes(statusStr);
-    const isManualSurvey = survey.survey_is_manual === true;
-    const canResume = isManualSurvey && isResumableStatus && (canPay || canSubscribe);
+    // Use backend's can_continue flag (single source of truth)
+    // can_continue: manual survey + completed + no subscription + no device selected + no failure
+    const canResume = survey.can_continue ?? false;
 
     const handleResume = () => {
         const surveyOrderId = survey.customer_survey_order_id;

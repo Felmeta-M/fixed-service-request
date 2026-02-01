@@ -46,6 +46,30 @@ class CreateTTService extends BaseApiService
 
             $accessNumber = $data['access_number'];
             $sessionKey = "tt_lookup_{$accessNumber}";
+            
+            // Step 1.5: Prevent duplicate submissions and return cached results
+            $dedupeKey = "tt_create_result_{$accessNumber}";
+            $cachedResult = cache()->get($dedupeKey);
+            
+            if ($cachedResult) {
+                // Check if it's an actual result (has tt_serial_no) vs still pending
+                if (!empty($cachedResult['tt_serial_no'])) {
+                    AppLogger::api()->info('CreateTT: Returning cached TT result', [
+                        'access_number' => $accessNumber,
+                        'tt_serial_no' => $cachedResult['tt_serial_no'],
+                    ]);
+                    return ApiResponse::success($cachedResult);
+                }
+                
+                // Still processing from another request
+                AppLogger::api()->info('CreateTT: Request already in progress, please wait', [
+                    'access_number' => $accessNumber,
+                ]);
+                return ApiResponse::error('A request is already being processed for this service. Please wait a moment and try again.', 429);
+            }
+            
+            // Mark this request as in-progress (10 second window for processing time)
+            cache()->put($dedupeKey, ['pending' => true], 10);
 
             // Step 2: Check for cached session data (from lookupServiceNumber)
             $cachedData = session()->get($sessionKey);
@@ -117,27 +141,41 @@ class CreateTTService extends BaseApiService
 
             // Step 5: Build XML with queried customer data (no additional API call)
             $xmlPayload = $this->buildRequestXml($data);
+
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsed = $this->parseResponseXml($xmlResponse, $data);
-
-            // Step 6: Clear session cache on successful TT creation
+            
+            // Step 6: Clear session cache and update dedupe cache on successful TT creation
             $parsedData = $parsed->getData(true);
             if (($parsedData['success'] ?? false) && !empty($parsedData['data']['tt_serial_no'])) {
                 session()->forget($sessionKey);
+                
+                // Cache the result for duplicate requests (30 seconds)
+                cache()->put($dedupeKey, $parsedData['data'], 30);
+                
                 AppLogger::api()->info('CreateTT: Session cache cleared after successful TT creation', [
                     'access_number' => $accessNumber,
                     'tt_serial_no' => $parsedData['data']['tt_serial_no'],
                 ]);
+            } else {
+                // Clear pending flag on failure
+                cache()->forget($dedupeKey);
             }
 
             return $parsed;
         } catch (RuntimeException $e) {
+            // Clear pending flag on error
+            cache()->forget($dedupeKey ?? "tt_create_result_{$data['access_number']}");
+            
             AppLogger::api()->error('CreateTT: Runtime error', [
                 'error' => $e->getMessage(),
                 'access_number' => $data['access_number'] ?? null,
             ]);
             return ApiResponse::safeError($e, 'Failed to create trouble ticket. Please try again.');
         } catch (\Throwable $e) {
+            // Clear pending flag on error
+            cache()->forget($dedupeKey ?? "tt_create_result_{$data['access_number']}");
+            
             AppLogger::api()->error('CreateTT: Exception', [
                 'error' => $e->getMessage(),
                 'access_number' => $data['access_number'] ?? null,
@@ -247,8 +285,8 @@ class CreateTTService extends BaseApiService
 
         // Third-party requires ttDescription to be non-empty
         // Fall back to trouble_reason_label or title if description is empty
-        $ttDescription = !empty($data['tt_description']) 
-            ? $data['tt_description'] 
+        $ttDescription = !empty($data['tt_description'])
+            ? $data['tt_description']
             : ($data['trouble_reason_label'] ?? $title ?? 'Service issue reported');
 
         //faulty number
@@ -344,6 +382,23 @@ XML;
 
         $success = $resultCode === '0';
 
+        // Check if TT already exists for this service (third-party returns existing TT number)
+        // Example: "There is already CCT for the service and the TT No is CCT2026020125113539."
+        if (!$success && preg_match('/TT No is ([A-Z0-9]+)/i', $description, $matches)) {
+            $existingTtNo = $matches[1];
+            AppLogger::api()->info('CreateTT: TT already exists for service, returning existing TT', [
+                'access_number' => $payload['access_number'],
+                'existing_tt_no' => $existingTtNo,
+            ]);
+            
+            return ApiResponse::success([
+                'success' => true,
+                'message' => "A trouble ticket already exists for this service: {$existingTtNo}",
+                'tt_serial_no' => $existingTtNo,
+                'is_existing' => true,
+            ]);
+        }
+
         // DO NOT persist if TT creation failed
         if (!$success || empty($ttSerialNo) || $ttSerialNo === '-1') {
             return ApiResponse::error($description ?: 'TT creation failed.', 422);
@@ -380,18 +435,11 @@ XML;
         $ticket = TroubleTicket::updateOrCreate(
             ['tt_serial_no' => $ttSerialNo],
             [
-                // Who created the TT:
-                // - Logged-in user: their customer_code
-                // - Anonymous user: service number's account_code
                 'customer_code' => $creatorCode,
-
-                // Service owner info (from queried service number)
                 'service_owner_code' => $serviceOwnerCode,
                 'service_owner_name' => $serviceOwnerName,
                 'service_owner_type' => $customer['customer_type'] ?? '',
                 'service_owner_level' => $customer['customer_level'] ?? '',
-
-                // Service location/address for TT detail display
                 'region' => $addresses['address1'] ?? '',
                 'zone' => $addresses['address3'] ?? '',
                 'city' => $addresses['address2'] ?? '',
@@ -399,8 +447,6 @@ XML;
                 'wereda' => $addresses['address4'] ?? '',
                 'kebele' => $addresses['address5'] ?? '',
                 'house_no' => $addresses['address6'] ?? '',
-
-                // TT details
                 'access_number' => $payload['access_number'],
                 'contact_person' => $payload['contact_person'],
                 'mobile_no' => $payload['mobile_no'],

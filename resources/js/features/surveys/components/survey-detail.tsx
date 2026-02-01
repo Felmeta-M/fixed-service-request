@@ -31,7 +31,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import { BandwidthChangeDialog } from './bandwidth-change-dialog';
 import { CancelConfirmationDialog } from './cancel-confirmation-dialog';
 import { ManualSurveyDeviceSelection } from './manual-survey-device-selection';
-import { ArrowUpToLineIcon, ArrowDownToLineIcon, X, ChevronRight } from 'lucide-react';
+import { ArrowUpToLineIcon, ArrowDownToLineIcon, X } from 'lucide-react';
 import { formatBandwidthLabel } from '@/hooks/use-bandwidth-options';
 
 type AuthUser = {
@@ -511,11 +511,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                 </p>
                                 <Button
                                     onClick={handleContinueClick}
-                                    className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white h-9 sm:h-10"
+                                    className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white h-9 sm:h-10"
                                 >
-                                    <Package className="mr-2 h-4 w-4 shrink-0" />
                                     <span>Continue</span>
-                                    <ChevronRight className="ml-2 h-4 w-4 shrink-0" />
                                 </Button>
                             </div>
                         </div>
@@ -714,11 +712,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                         </p>
                                         <Button
                                             onClick={handleContinueClick}
-                                            className="w-full bg-green-600 hover:bg-green-700 text-white h-9 sm:h-10"
+                                            className="w-full bg-primary hover:bg-primary/90 text-white h-9 sm:h-10"
                                         >
-                                            <Package className="mr-2 h-4 w-4 shrink-0" />
                                             <span>Continue</span>
-                                            <ChevronRight className="ml-2 h-4 w-4 shrink-0" />
                                         </Button>
                                     </div>
                                 </>

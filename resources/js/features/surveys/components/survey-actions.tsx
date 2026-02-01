@@ -1,7 +1,7 @@
 import { useCancelSurveyOrder, useChangePrimaryOffering, useCreateSubscription, useDeleteSurveyOrder } from '@/hooks/use-api-mutations';
 import { useTranslation } from '@/hooks/use-translation';
 import { router, usePage } from '@inertiajs/react';
-import { ArrowDownToLineIcon, ArrowUpToLineIcon, ArrowRight, Eye, X } from 'lucide-react';
+import { ArrowDownToLineIcon, ArrowUpToLineIcon, Eye, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
@@ -329,11 +329,20 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     // Use backend's can_continue flag (single source of truth)
     // can_continue: manual survey + completed + no subscription + no device selected + no failure
     const canResume = survey.can_continue ?? false;
+    const isManualSurvey = survey.survey_is_manual === true;
 
     const handleResume = () => {
         const surveyOrderId = survey.customer_survey_order_id;
         if (!surveyOrderId) return;
         router.visit(`/services/resume/${surveyOrderId}`);
+    };
+
+    const handleContinueManual = () => {
+        if (canResume) {
+            handleResume();
+        } else {
+            navigateToDetails();
+        }
     };
 
     // Helper: Get primary order ID (customer_subscription_order_id for auto, customer_survey_order_id for manual)
@@ -429,10 +438,9 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     return (
         <>
             <div className="flex items-center justify-end gap-2">
-                {/* Continue button for resumable manual surveys (approved, needs device selection) */}
-                {canResume && (
-                    <Button onClick={handleResume} disabled={loading} className="gap-1 bg-et-green px-3 text-white hover:bg-et-green/90" size="sm">
-                        <ArrowRight className="h-3 w-3" />
+                {/* Continue button for manual surveys - goes to device selection when can_continue, else to detail */}
+                {isManualSurvey && (
+                    <Button onClick={handleContinueManual} disabled={loading} className="bg-primary hover:bg-primary/90 px-3 text-white" size="sm">
                         {t('buttons.continue')}
                     </Button>
                 )}

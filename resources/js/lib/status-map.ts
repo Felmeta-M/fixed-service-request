@@ -42,7 +42,7 @@ export const StatusConfig: Record<StatusCode, {
 
     // Assessment phase (user-friendly labels - no "Survey")
     'waiting_assessment': { label: 'In Progress', text: 'text-white', bg: 'bg-et-yellow', variant: 'secondary' },
-    'assessment_complete': { label: 'Resource Allocated', text: 'text-white', bg: 'bg-et-green', variant: 'default' },
+    'assessment_complete': { label: 'Survey Completed', text: 'text-white', bg: 'bg-primary', variant: 'default' },
 
     // Device & Payment
     'device_selection': { label: 'Select Device', text: 'text-white', bg: 'bg-et-light-blue', variant: 'secondary' },

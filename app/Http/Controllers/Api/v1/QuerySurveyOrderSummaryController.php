@@ -24,10 +24,14 @@ class QuerySurveyOrderSummaryController extends Controller
                 'errors'  => $e->errors(),
             ], 422);
         } catch (\SoapFault $e) {
+            // Log the actual SOAP error but don't expose to user
+            \Log::error('SurveyOrderSummary SOAP error', [
+                'error' => $e->getMessage(),
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'SOAP request failed',
-                'error'   => $e->getMessage(),
+                'message' => 'Unable to retrieve order summary. Please try again later.',
             ], 500);
         } catch (\Throwable $e) {
             // Catch-all for unexpected errors

@@ -1,4 +1,5 @@
 import { useCancelSurveyOrder, useChangePrimaryOffering, useCreateSubscription, useDeleteSurveyOrder } from '@/hooks/use-api-mutations';
+import { useTranslation } from '@/hooks/use-translation';
 import { router, usePage } from '@inertiajs/react';
 import { ArrowDownToLineIcon, ArrowUpToLineIcon, ArrowRight, Eye, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -82,6 +83,7 @@ interface SurveyActionsProps {
 }
 
 export default function SurveyActions({ survey, onActionComplete, onUpdatingChange }: SurveyActionsProps) {
+    const { t } = useTranslation();
     const [openCancelDialog, setOpenCancelDialog] = useState(false);
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
     const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
@@ -440,7 +442,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 {canResume && (
                     <Button onClick={handleResume} disabled={loading} className="gap-1 bg-et-green px-3 text-white hover:bg-et-green/90" size="sm">
                         <ArrowRight className="h-3 w-3" />
-                        Continue
+                        {t('buttons.continue')}
                     </Button>
                 )}
 
@@ -450,10 +452,10 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                         {loading ? (
                             <>
                                 <div className="h-3 w-3 animate-spin rounded-full border-b-2 border-white"></div>
-                                Preparing...
+                                {t('buttons.preparing')}
                             </>
                         ) : (
-                            <>Pay Now</>
+                            <>{t('buttons.pay_now')}</>
                         )}
                     </Button>
                 )}
@@ -461,12 +463,12 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 {/* Subscribe button for auto surveys (not for resumable manual surveys) */}
                 {canSubscribe && !canResume && (
                     <Button onClick={onSubscribeClick} disabled={loading || isSubmitting} className="gap-1 bg-primary px-2 text-white" size="sm">
-                        {isSubmitting || createSubscriptionMutation.isPending ? 'Subscribing...' : 'Activate Service'}
+                        {isSubmitting || createSubscriptionMutation.isPending ? t('buttons.subscribing') : t('buttons.activate_service')}
                     </Button>
                 )}
                 <Button variant="ghost" size="sm" onClick={() => handleRowClick(survey as SurveyRow)} className="h-8 gap-1.5 px-2">
                     <Eye className="h-4 w-4 shrink-0" />
-                    <span>View detail</span>
+                    <span>{t('buttons.view_detail')}</span>
                 </Button>
                 {/* {canCancel && ( */}
 
@@ -491,24 +493,24 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                                 <>
                                     <DropdownMenuItem onClick={handleUpgrade} className="flex items-center gap-2 cursor-pointer">
                                         <ArrowUpToLineIcon className="h-4 w-4" />
-                                        <span>Upgrade</span>
+                                        <span>{t('buttons.upgrade')}</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={handleDowngrade} className="flex items-center gap-2 cursor-pointer">
                                         <ArrowDownToLineIcon className="h-4 w-4" />
-                                        <span>Downgrade</span>
+                                        <span>{t('buttons.downgrade')}</span>
                                     </DropdownMenuItem>
                                 </>
                             )}
                             {canCancel && (
                                 <DropdownMenuItem onClick={() => { setIsTerminateAction(false); setOpenCancelDialog(true); }} className="flex cursor-pointer items-center gap-2 text-destructive">
                                     <X className="h-4 w-4" />
-                                    <span>Cancel Request</span>
+                                    <span>{t('buttons.cancel_request')}</span>
                                 </DropdownMenuItem>
                             )}
                             {canTerminate && (
                                 <DropdownMenuItem onClick={() => { setIsTerminateAction(true); setOpenCancelDialog(true); }} className="flex cursor-pointer items-center gap-2 text-destructive">
                                     <X className="h-4 w-4" />
-                                    <span>Terminate Service</span>
+                                    <span>{t('buttons.terminate_service')}</span>
                                 </DropdownMenuItem>
                             )}
                         </DropdownMenuContent>

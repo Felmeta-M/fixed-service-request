@@ -93,11 +93,10 @@ class SubsriptionController extends Controller
                 'data' => $data ?? [],
             ]);
 
-            return response()->json([
-                'success' => false,
-                // 'message' => 'Something went wrong. Please try again later.',
-                'message' => $e->getMessage(),
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return \App\Services\ApiResponse::safeError(
+                $e,
+                'Subscription creation failed. Please try again later.'
+            );
         }
     }
     /** 

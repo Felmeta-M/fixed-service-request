@@ -42,12 +42,12 @@ class CustomerService extends BaseApiService
             AppLogger::api()->error('Customer create failed', [
                 'error' => $e->getMessage(),
             ]);
-            return ApiResponse::error($e->getMessage(), 500);
+            return ApiResponse::safeError($e, 'Customer registration failed. Please try again.');
         } catch (Throwable $e) {
             AppLogger::api()->error('Customer create exception', [
                 'error' => $e->getMessage(),
             ]);
-            return ApiResponse::fromException($e, 'Customer create failed.');
+            return ApiResponse::safeError($e, 'Customer registration failed. Please try again.');
         }
     }
 

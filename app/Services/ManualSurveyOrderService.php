@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\SurveyOrder;
 use App\Models\Zone;
 use App\Services\Logging\AppLogger;
+use App\Services\Payment\DeviceFeeCalculatorService;
 use App\Services\Payment\PaymentCalculatorService;
 use App\Services\Payment\PaymentService;
 use Illuminate\Http\JsonResponse;
@@ -35,7 +36,8 @@ class ManualSurveyOrderService extends BaseApiService
 
     public function __construct(
         protected PaymentCalculatorService $paymentCalculator,
-        protected PaymentService $paymentService
+        protected PaymentService $paymentService,
+        protected DeviceFeeCalculatorService $deviceFeeCalculator
     ) {
         $this->config = config('services.ng');
     }
@@ -68,7 +70,7 @@ class ManualSurveyOrderService extends BaseApiService
                 'error' => $e->getMessage(),
             ]);
 
-            return ApiResponse::error($e->getMessage(), 500);
+            return ApiResponse::safeError($e, 'Manual survey order creation failed. Please try again.');
         } catch (Throwable $e) {
             AppLogger::api()->error('Manual survey order creation failed', [
                 'exception' => $e->getMessage(),
@@ -322,41 +324,8 @@ XML;
         // Calculate fees without cable charge for manual survey
         $fees = $this->paymentCalculator->calculateFeesWithoutCable($survey, $requestData);
 
-        // Calculate device fee from selected device prices
-        // Device storage logic:
-        // - Voice-only (1207609454): device_id contains voice device
-        // - Broadband (1457567289): device_id contains internet device
-        // - Combo (180427974): device_id contains internet device, device_voice_id contains voice device
-        $deviceFee = 0;
-        if ($survey->with_device) {
-            $mainOfferId = (int) $survey->main_offer_id;
-            $isCombo = $mainOfferId === 180427974;
-            $isVoiceOnly = $mainOfferId === 1207609454;
-
-            if ($isCombo) {
-                // Combo service: device_id is internet, device_voice_id is voice
-                if ($survey->device_id) {
-                    $internetDevice = \App\Models\AvailableDevice::find($survey->device_id);
-                    $deviceFee += $internetDevice ? (float) $internetDevice->price : 0;
-                }
-                if ($survey->device_voice_id) {
-                    $voiceDevice = \App\Models\AvailableDevice::find($survey->device_voice_id);
-                    $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
-                }
-            } elseif ($isVoiceOnly) {
-                // Voice-only service: device_id contains voice device
-                if ($survey->device_id) {
-                    $voiceDevice = \App\Models\AvailableDevice::find($survey->device_id);
-                    $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
-                }
-            } else {
-                // Broadband service: device_id contains internet device
-                if ($survey->device_id) {
-                    $internetDevice = \App\Models\AvailableDevice::find($survey->device_id);
-                    $deviceFee += $internetDevice ? (float) $internetDevice->price : 0;
-                }
-            }
-        }
+        // Calculate device fee using dedicated service
+        $deviceFee = $this->deviceFeeCalculator->calculate($survey);
 
         $totalAmount = $fees['total_amount'] + $deviceFee;
 

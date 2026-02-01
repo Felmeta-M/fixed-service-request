@@ -68,11 +68,14 @@ class NidController extends Controller
                 'data'     => $response, // service response
             ]);
         } catch (\Exception $e) {
-            // Handle service errors gracefully
+            // Handle service errors gracefully - sanitize message for user
             return response()->json([
                 'success'  => false,
                 'ret_code' => '2',
-                'message'  => $e->getMessage(),
+                'message'  => \App\Services\ApiResponse::sanitizeMessage(
+                    $e->getMessage(),
+                    'Identity verification failed. Please try again.'
+                ),
             ], 500);
         }
     }

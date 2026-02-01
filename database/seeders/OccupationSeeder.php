@@ -15,16 +15,16 @@ class OccupationSeeder extends Seeder
     public function run(): void
     {
         DB::table('occupations')->insert([
-            ['id' => 25, 'name' => 'Journalist'],
-            ['id' => 43, 'name' => 'Farming / Agriculture'],
-            ['id' => 42, 'name' => 'Artists & Public Figures'],
-            ['id' => 41, 'name' => 'Housewife / Homemaker'],
-            ['id' => 39, 'name' => 'Retail & Service Workers'],
-            ['id' => 38, 'name' => 'Health Care Workers'],
-            ['id' => 37, 'name' => 'Blue-Collar Workers'],
-            ['id' => 36, 'name' => 'Professionals'],
-            ['id' => 35, 'name' => 'Executives'],
-            ['id' => 34, 'name' => 'Student'],
+            ['id' => 25, 'code' => '25', 'name' => 'Journalist', 'status' => true],
+            ['id' => 43, 'code' => '43', 'name' => 'Farming / Agriculture', 'status' => true],
+            ['id' => 42, 'code' => '42', 'name' => 'Artists & Public Figures', 'status' => true],
+            ['id' => 41, 'code' => '41', 'name' => 'Housewife / Homemaker', 'status' => true],
+            ['id' => 39, 'code' => '39', 'name' => 'Retail & Service Workers', 'status' => true],
+            ['id' => 38, 'code' => '38', 'name' => 'Health Care Workers', 'status' => true],
+            ['id' => 37, 'code' => '37', 'name' => 'Blue-Collar Workers', 'status' => true],
+            ['id' => 36, 'code' => '36', 'name' => 'Professionals', 'status' => true],
+            ['id' => 35, 'code' => '35', 'name' => 'Executives', 'status' => true],
+            ['id' => 34, 'code' => '34', 'name' => 'Student', 'status' => true],
         ]);
     }
 }

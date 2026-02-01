@@ -155,6 +155,10 @@ export function useCreateCustomer() {
 
 /**
  * Hook for creating a survey
+ * 
+ * After successful survey creation, waits 7.5 seconds for third-party
+ * activation to complete before resolving. This ensures the backend
+ * has time to process the service activation with external systems.
  */
 export function useCreateSurvey() {
     const token = useAuthToken();
@@ -175,6 +179,10 @@ export function useCreateSurvey() {
                     'Failed to create service request. Please try again.';
                 throw new Error(errorMsg);
             }
+
+            // Wait for third-party activation to complete
+            // Backend triggers activation after survey creation, this gives time for processing
+            await new Promise(resolve => setTimeout(resolve, 7500)); // 7.5 seconds
 
             return response;
         },

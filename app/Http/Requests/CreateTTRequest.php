@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class CreateTTRequest extends FormRequest
 {
@@ -44,17 +43,20 @@ class CreateTTRequest extends FormRequest
 
     public function rules(): array
     {
-        // |regex:/^0(9|7)\d{8}$/
-        // return $this->all();
+        $isOther = $this->input('trouble_reason_label') === 'Other';
+
         return [
-            'account_number'   => 'nullable|string',
-            'access_number'    => ['required'], //, 'regex:/^0(9)\d{8}$/'
-            'contact_person'   => 'required|string',
-            'mobile_no'        => 'required',
-            'trouble_title'    => 'nullable|string',
-            'trouble_reason'   => 'required|string',
-            'tt_description'   => [Rule::requiredIf(fn () => $this->input('trouble_reason') === 'other'), 'nullable', 'string'],
-            'occurrence_date'  => 'nullable|date',
+            'account_number' => 'nullable|string',
+            'access_number' => ['required'], //, 'regex:/^0(9)\d{8}$/'
+            'contact_person' => 'required|string',
+            'mobile_no' => 'required',
+            'trouble_title' => 'nullable|string',
+            'trouble_reason' => 'required|string',
+            'trouble_reason_label' => 'nullable|string', // The display label for the reason (e.g., "Bill Problem/Balance Lost")
+            'tt_description' => $isOther
+                ? ['required', 'string', 'min:2']
+                : ['nullable', 'string'],
+            'occurrence_date' => 'nullable|date',
         ];
     }
 
@@ -63,6 +65,7 @@ class CreateTTRequest extends FormRequest
         return [
             'mobile_no.regex' => 'Mobile number must be a valid Ethio Telecom number (09XXXXXXXX).',
             'tt_description.required' => 'Description is required when "Other" is selected.',
+            'tt_description.min' => 'Description must be at least 2 characters.',
         ];
     }
 }

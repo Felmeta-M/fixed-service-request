@@ -6,7 +6,7 @@ use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Payment;
 use App\Models\SurveyOrder;
 use App\Services\Logging\AppLogger;
-use App\Services\Subscription\SubscriptionServiceFactory;
+use App\Services\Subscription\ServiceActivationService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +15,7 @@ class PaymentService
 {
 
     public function __construct(
-        protected SubscriptionServiceFactory $factory
+        protected ServiceActivationService $activationService
     ) {
     }
     /**
@@ -87,7 +87,7 @@ class PaymentService
      */
     public function markAsPaid(Payment $payment): Payment
     {
-        $payment->update(['status' => 11]); // Payment status: Paid
+        $payment->update(['status' => Payment::STATUS_PAID]); // Payment status: Paid
         return $payment;
     }
 
@@ -105,7 +105,7 @@ class PaymentService
      */
     public function markAsFailed(Payment $payment): Payment
     {
-        $payment->update(['status' => 'failed']);
+        $payment->update(['status' => Payment::STATUS_FAILED]);
         return $payment;
     }
 
@@ -159,74 +159,14 @@ class PaymentService
                 ['trans_id' => $providerPayload['transId'] ?? null]
             );
 
-            try {
-                $this->serviceSubscription($payment->customer_survey_order_id);
-            } catch (\Throwable $e) {
-                AppLogger::payment()->error('Service subscription failed after payment', [
-                    'order_id' => $payment->customer_survey_order_id,
-                    'error' => $e->getMessage(),
-                    'trace' => array_slice($e->getTrace(), 0, 5),
-                ]);
-            }
+            // Auto-activate service after successful payment
+            // If activation fails, customer can manually subscribe later
+            $this->activationService->activate($payment->customer_survey_order_id);
         } else {
             AppLogger::payment()->warning('Payment not completed', [
                 'order_id' => $payment->customer_survey_order_id,
                 'trade_status' => $providerPayload['trade_status'] ?? 'unknown',
             ]);
-        }
-    }
-
-    public function serviceSubscription(string $customerSurveyOrderId)
-    {
-        // $customerSurveyOrderId = $request->get('customerSurveyOrderId');
-        $record = DB::table('survey_orders as sr')
-            ->join('customers as c', 'c.code', '=', 'sr.customer_code')
-            ->where('sr.customer_survey_order_id', $customerSurveyOrderId)
-            ->orderByDesc('sr.id')
-            ->select([
-                'sr.customer_code',
-                'sr.main_offer_id',
-                'c.name',
-                'c.phone_number',
-                'c.zone',
-            ])
-            ->first();
-
-        if (!$record) {
-            AppLogger::payment()->warning('Survey order or customer not found for subscription', [
-                'customer_survey_order_id' => $customerSurveyOrderId,
-            ]);
-            return false;
-        }
-
-        $data = [
-            'survey_order_id' => $customerSurveyOrderId,
-            'customer_code' => $record->customer_code,
-            'name' => trim($record->name),
-            'main_offer_id' => $record->main_offer_id,
-            'sms_no' => $record->phone_number,
-            'zone' => $record->zone,
-        ];
-
-        try {
-            // Call the third-party subscription service
-            $service = $this->factory->make($data['main_offer_id']);
-            $service->create($data);
-
-            AppLogger::payment()->info('Service subscription created successfully', [
-                'survey_order_id' => $customerSurveyOrderId,
-                'main_offer_id' => $data['main_offer_id'],
-                'customer_code' => $data['customer_code'],
-            ]);
-
-            return true;
-        } catch (\Throwable $e) {
-            AppLogger::payment()->error('Service subscription failed', [
-                'survey_order_id' => $customerSurveyOrderId,
-                'main_offer_id' => $data['main_offer_id'],
-                'error' => $e->getMessage(),
-            ]);
-            return false;
         }
     }
 

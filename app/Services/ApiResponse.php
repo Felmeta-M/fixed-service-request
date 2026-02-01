@@ -18,14 +18,127 @@ use Throwable;
  * - Request ID tracking
  * - Debug information in development
  * - Automatic logging of errors
+ * - Error message sanitization to prevent sensitive data leakage
  *
  * Usage:
  *   return ApiResponse::success($data);
  *   return ApiResponse::error('Not found', ErrorCode::NOT_FOUND);
  *   return ApiResponse::fromException($exception);
+ *   return ApiResponse::safeError($exception, 'Custom fallback message');
  */
 class ApiResponse
 {
+    /**
+     * Patterns that indicate sensitive error messages that should not be exposed to users.
+     * These patterns match database errors, connection issues, and internal system details.
+     */
+    private static array $sensitivePatterns = [
+        // Database errors
+        '/SQLSTATE\[/',
+        '/PDO/',
+        '/pgbouncer/i',
+        '/postgres/i',
+        '/mysql/i',
+        '/sqlite/i',
+        '/deadlock/i',
+        '/duplicate.*key/i',
+        '/foreign.*key.*constraint/i',
+        '/unique.*constraint/i',
+        '/connection.*refused/i',
+        '/connection.*timed.*out/i',
+        '/too.*many.*connections/i',
+        // Third-party/external service errors
+        '/SOAP/i',
+        '/cURL/i',
+        '/HTTP.*error/i',
+        '/SSL.*certificate/i',
+        '/connection.*reset/i',
+        '/socket/i',
+        '/timeout.*expired/i',
+        // Internal system errors
+        '/file_get_contents/i',
+        '/fopen/i',
+        '/include.*failed/i',
+        '/require.*failed/i',
+        '/class.*not.*found/i',
+        '/undefined.*method/i',
+        '/undefined.*property/i',
+        '/undefined.*variable/i',
+        '/undefined.*index/i',
+        '/stack.*trace/i',
+        '/vendor\//',
+        '/at.*line.*\d+/',
+        // Redis/Cache errors
+        '/redis/i',
+        '/memcache/i',
+        // Server configuration
+        '/permission.*denied/i',
+        '/no.*such.*file/i',
+        '/disk.*quota/i',
+    ];
+
+    /**
+     * Sanitize an error message to remove sensitive information.
+     * Returns a generic message if the original contains sensitive patterns.
+     *
+     * @param string $message The original error message
+     * @param string $fallback The fallback message to use if sensitive content detected
+     * @return string Safe message for user display
+     */
+    public static function sanitizeMessage(
+        string $message,
+        string $fallback = 'An unexpected error occurred. Please try again later.'
+    ): string {
+        // In debug mode, allow all messages (for development only)
+        if (config('app.debug')) {
+            return $message;
+        }
+
+        // Check for sensitive patterns
+        foreach (self::$sensitivePatterns as $pattern) {
+            if (preg_match($pattern, $message)) {
+                return $fallback;
+            }
+        }
+
+        // Also sanitize if message is too technical (contains stack-trace-like content)
+        if (strlen($message) > 500 || preg_match('/\n.*\n/', $message)) {
+            return $fallback;
+        }
+
+        return $message;
+    }
+
+    /**
+     * Create a safe error response from an exception.
+     * Logs the full error but returns sanitized message to user.
+     *
+     * @param Throwable $e The exception
+     * @param string $fallbackMessage User-friendly message to show if original is sensitive
+     * @param ErrorCode $errorCode Error code for the response
+     * @param int $status HTTP status code
+     * @return JsonResponse
+     */
+    public static function safeError(
+        Throwable $e,
+        string $fallbackMessage = 'An unexpected error occurred. Please try again later.',
+        ErrorCode $errorCode = ErrorCode::INTERNAL_ERROR,
+        int $status = 500
+    ): JsonResponse {
+        // Always log the full error for debugging
+        AppLogger::default()->error('API Error: ' . $e->getMessage(), [
+            'exception' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => array_slice($e->getTrace(), 0, 3),
+        ]);
+
+        // Sanitize the message before returning to user
+        $safeMessage = self::sanitizeMessage($e->getMessage(), $fallbackMessage);
+
+        return self::error($safeMessage, $errorCode, $status);
+    }
+
     /**
      * Create a successful response
      */

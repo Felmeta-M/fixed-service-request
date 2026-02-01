@@ -325,6 +325,8 @@ class SurveyOrder extends Model
      * - No subscription order yet
      * - For manual surveys: device must be selected first (with_device is not null)
      * - Either: (Completed + free service) OR (Completed + paid)
+     * - OR: Waiting status with payment already made (allows manual subscription when
+     *       third-party activation failed but customer has paid)
      */
     public static function checkCanSubscribe(
         int $status,
@@ -344,9 +346,20 @@ class SurveyOrder extends Model
             return false;
         }
 
-        // Must be completed status
-        if ($status !== FFDServiceProvisionStatus::Completed->value) {
+        // Allow subscription if:
+        // 1. Completed status (normal flow), OR
+        // 2. Waiting status with payment already made (third-party activation failed but paid)
+        $isCompleted = $status === FFDServiceProvisionStatus::Completed->value;
+        $isWaitingWithPayment = $status === FFDServiceProvisionStatus::Waiting->value 
+            && !empty($paymentTransId);
+
+        if (!$isCompleted && !$isWaitingWithPayment) {
             return false;
+        }
+
+        // If waiting with payment, allow manual subscription
+        if ($isWaitingWithPayment) {
+            return true;
         }
 
         // Free service: no payment required
@@ -410,7 +423,7 @@ class SurveyOrder extends Model
      * Check if order needs status refresh (for raw Query Builder data).
      * For WAITING orders - check if status changed.
      */
-    public static function needsRefresh(object $order, int $minutesThreshold = 3): bool
+    public static function needsRefresh(object $order, int $minutesThreshold = 5): bool
     {
         $status = (int) $order->status;
 

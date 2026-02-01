@@ -63,7 +63,6 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       $data['with_device'] = $surveyOrder->with_device ?? false;
 
       $xml = $this->buildXml($data);
-      Log::info('DataSubscriptionService buildXml', ['xml' => $xml]);
       // Add internet credentials to data for parseResponse
       $data['internet_account'] = $this->internetAccount;
       $data['internet_password'] = $this->internetPassword;

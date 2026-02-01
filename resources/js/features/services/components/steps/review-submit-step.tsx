@@ -6,6 +6,7 @@ import { CheckCircle, Loader2, Wifi, MapPin, User, Phone, Building2, Router, Glo
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCreateSurvey } from '@/hooks/use-api-mutations';
+import { useTranslation } from '@/hooks/use-translation';
 
 interface ReviewSubmitStepProps {
     formData: {
@@ -83,8 +84,8 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
     };
 
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
+    const { t } = useTranslation();
     const [submitting, setSubmitting] = useState(false);
-    const [waitingForProcessing, setWaitingForProcessing] = useState(false);
 
     const serviceInfo = serviceTypes[formData.serviceType as keyof typeof serviceTypes];
     const createSurveyMutation = useCreateSurvey();
@@ -198,15 +199,9 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                     duration: 5000,
                 });
 
-                // Reset submitting since API call is complete
+                // Mutation already waited for third-party processing (7.5s delay in hook)
                 setSubmitting(false);
-                // Show waiting state while third-party processes the order
-                setWaitingForProcessing(true);
-                // Wait 7.5 seconds for third-party processing before transitioning
-                setTimeout(() => {
-                    setWaitingForProcessing(false);
-                    onNext?.(String(surveyId));
-                }, 7500); // 7.5 seconds - middle of 5-10 second range
+                onNext?.(String(surveyId));
             },
             onError: (err: Error) => {
                 setSubmitting(false);
@@ -379,104 +374,6 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                     </div>
                 </div>
 
-                {/* Location Details (match Resource Details layout) */}
-                {/* <Card>
-                    <CardContent>
-                        <h3 className="mb-4 font-semibold text-gray-900">Location</h3>
-                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4"> */}
-                {/*<div>*/}
-                {/*    <span className="text-sm text-gray-600">Latitude</span>*/}
-                {/*    <p className="font-mono font-semibold">{formData.latitude.toFixed(6)}</p>*/}
-                {/*</div>*/}
-                {/*<div>*/}
-                {/*    <span className="text-sm text-gray-600">Longitude</span>*/}
-                {/*    <p className="font-mono font-semibold">{formData.longitude.toFixed(6)}</p>*/}
-                {/*</div>*/}
-                {/* <div>
-                                <span className="text-sm text-gray-600">Resource</span>
-                                <p className="font-semibold">
-                                    <Badge className={formData.resourceAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                                        {formData.resourceAvailable ? 'Available' : 'Not Available'}
-                                    </Badge>
-                                </p>
-                            </div>
-                            <div>
-                                <span className="text-sm text-gray-600">Address</span> */}
-                {/*<p className="font-semibold">{formData.address || '-'}</p>*/}
-                {/* </div>
-                        </div>
-                    </CardContent>
-                </Card> */}
-
-                {/* Location Details Card */}
-                {/* <Card className="w-full shadow-sm transition-all duration-300 hover:shadow-md">
-                    <CardContent className="p-4 sm:p-6">
-                        <div className="mb-5 flex items-center gap-3 border-b border-border/50 pb-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/20">
-                                <MapPin className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-semibold text-foreground">Location Details</h3>
-                                <p className="text-xs text-muted-foreground">Installation address and coordinates</p>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4"> */}
-                            {/* Address */}
-                            {/* {formData.address && (
-                                <div className="flex flex-col gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                                        <span className="text-sm font-medium text-muted-foreground">Address</span>
-                                    </div>
-                                    <div className="rounded-lg border border-border/50 bg-muted/30 p-3 pl-6">
-                                        <p className="text-sm text-foreground break-words">{formData.address}</p>
-                                    </div>
-                                </div>
-                            )} */}
-
-                            {/* Coordinates */}
-                            {/* <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border/50">
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-xs font-medium text-muted-foreground">Latitude</span>
-                                    <p className="text-sm font-mono font-semibold text-foreground">
-                                        {formData.latitude.toFixed(6)}
-                                    </p>
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-xs font-medium text-muted-foreground">Longitude</span>
-                                    <p className="text-sm font-mono font-semibold text-foreground">
-                                        {formData.longitude.toFixed(6)}
-                                    </p>
-                                </div>
-                            </div> */}
-
-                            {/* Resource Status */}
-                            {/* {formData.resourceData && (
-                                <div className="pt-2 border-t border-border/50">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-muted-foreground">Resource Status</span>
-                                        <Badge
-                                            className={
-                                                formData.resourceAvailable
-                                                    ? 'bg-green-100 text-green-800 border-green-200 hover:bg-green-100'
-                                                    : 'bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-100'
-                                            }
-                                        >
-                                            {formData.resourceAvailable ? 'Available' : 'Review Needed'}
-                                        </Badge>
-                                    </div>
-                                    {formData.resourceData.distance && (
-                                        <p className="mt-2 text-xs text-muted-foreground">
-                                            Distance: {formData.resourceData.distance}m
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card> */}
-
                 {/* Contact Details Card */}
                 <div className="w-full">
                     <div className="sm:p-4">
@@ -519,59 +416,31 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 </div>
             </div>
 
-            {/* Resource Details */}
-            {/*{formData.resourceData && (*/}
-            {/*    <Card>*/}
-            {/*        <CardContent>*/}
-            {/*            <h3 className="mb-4 font-semibold text-gray-900">Resource Details</h3>*/}
-            {/*            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">*/}
-            {/*                <div>*/}
-            {/*                    <span className="text-sm text-gray-600">Available Ports</span>*/}
-            {/*                    <p className="font-semibold">{formData.resourceData.ava_port}</p>*/}
-            {/*                </div>*/}
-            {/*                <div>*/}
-            {/*                    <span className="text-sm text-gray-600">Distance</span>*/}
-            {/*                    <p className="font-semibold">{formData.resourceData.distance}m</p>*/}
-            {/*                </div>*/}
-            {/*                <div>*/}
-            {/*                    <span className="text-sm text-gray-600">Node ID</span>*/}
-            {/*                    <p className="font-semibold">{formData.resourceData.neid}</p>*/}
-            {/*                </div>*/}
-            {/*                <div>*/}
-            {/*                    <span className="text-sm text-gray-600">Technology</span>*/}
-            {/*                    <p className="font-semibold">{formData.resourceData.cable_type_desc}</p>*/}
-            {/*                </div>*/}
-            {/*            </div>*/}
-            {/*        </CardContent>*/}
-            {/*    </Card>*/}
-            {/*)}*/}
-
-
             {/* Submit Actions */}
             <div className="flex flex-row justify-between gap-3 border-t border-border/50 pt-6 sm:flex-row sm:justify-between sm:gap-4">
                 <Button
                     variant="outline"
                     onClick={onBack}
-                    disabled={submitting || createSurveyMutation.isPending || waitingForProcessing}
+                    disabled={submitting || createSurveyMutation.isPending}
                     className="w-full sm:w-auto"
                 >
-                    Back
+                    {t('common.back')}
                 </Button>
 
                 <Button
                     onClick={handleSubmit}
-                    disabled={submitting || createSurveyMutation.isPending || waitingForProcessing || !formData.resourceAvailable}
+                    disabled={submitting || createSurveyMutation.isPending || !formData.resourceAvailable}
                     className="w-full bg-primary hover:bg-primary/90 focus:ring-2 focus:ring-primary/20 sm:w-auto"
                 >
-                    {(submitting || createSurveyMutation.isPending || waitingForProcessing) ? (
+                    {(submitting || createSurveyMutation.isPending) ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin shrink-0" />
-                            <span>{waitingForProcessing ? 'Preparing subscription...' : 'Processing...'}</span>
+                            <span>{t('buttons.processing')}</span>
                         </>
                     ) : (
                         <>
                             <CheckCircle className="mr-2 h-4 w-4 shrink-0" />
-                            <span>Submit Request</span>
+                            <span>{t('buttons.submit_request')}</span>
                         </>
                     )}
                 </Button>

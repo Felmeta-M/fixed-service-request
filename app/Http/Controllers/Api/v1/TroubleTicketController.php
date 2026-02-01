@@ -234,12 +234,13 @@ class TroubleTicketController extends Controller
                         'name' => $networkName,
                     ],
                     // Trouble ticket reasons for this network type
+                    // Use id as value to ensure uniqueness (reason_path may have duplicates)
                     'trouble_reasons' => $troubleReasons->map(fn($reason) => [
                         'id' => $reason->id,
                         'reason_path' => $reason->reason_path,
                         'reason' => $reason->reason,
                         'label' => $reason->reason,
-                        'value' => $reason->reason_path,
+                        'value' => (string) $reason->id, // Use ID for unique value
                     ])->values(),
                 ],
             ]);

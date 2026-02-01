@@ -46,14 +46,19 @@ export const complaintSchema = z.object({
 
     // trouble_reason is now dynamic - accepts any string (reason_path from API)
     trouble_reason: z.string().min(1, 'Trouble reason is required'),
+    
+    // The display label for the reason (e.g., "Bill Problem/Balance Lost") - used as TT title
+    trouble_reason_label: z.string().optional(),
 
     tt_description: z.string().optional(),
 }).superRefine((data, ctx) => {
-    // When "Other" is selected, description is required
-    if (data.trouble_reason === TroubleReasons.OTHER || data.trouble_reason?.toLowerCase().includes('other')) {
+    // When "Other" is selected, description is required with min 2 characters
+    if (data.trouble_reason_label === 'Other') {
         const desc = (data.tt_description ?? '').trim();
         if (!desc) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Description is required when "Other" is selected', path: ['tt_description'] });
+        } else if (desc.length < 2) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Description must be at least 2 characters', path: ['tt_description'] });
         }
     }
 });

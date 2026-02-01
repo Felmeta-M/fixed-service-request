@@ -27,6 +27,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
 import { type ServiceActionFocus } from '@/lib/service-action-rules';
 import { useCreateSubscription, useCreatePaymentOrder, useCancelSurveyOrder, useChangePrimaryOffering } from '@/hooks/use-api-mutations';
+import { useTranslation } from '@/hooks/use-translation';
 import { BandwidthChangeDialog } from './bandwidth-change-dialog';
 import { CancelConfirmationDialog } from './cancel-confirmation-dialog';
 import { ManualSurveyDeviceSelection } from './manual-survey-device-selection';
@@ -128,6 +129,7 @@ const mediaTypeMap: Record<string, { label: string; description: string }> = {
 
 export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = false, onBack }: SurveyDetailProps) {
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
+    const { t } = useTranslation();
 
     const createSubscriptionMutation = useCreateSubscription();
     const createPaymentOrderMutation = useCreatePaymentOrder();
@@ -424,18 +426,16 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
         <div className="w-full max-w-full space-y-4 overflow-x-hidden px-2 py-2 sm:px-4 sm:py-4 lg:px-6">
             {/* Header - Only show when NOT in flow context */}
             {!isInFlow && (
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-2 min-w-0">
-                        <Link href="/services" className="shrink-0">
-                            <Button variant="ghost" size="sm" className="gap-1 h-9">
-                                <ArrowLeft className="h-4 w-4 shrink-0" />
-                                <span className="hidden sm:inline">Back</span>
-                            </Button>
-                        </Link>
-                        <div className="min-w-0 flex-1">
-                            <h1 className="text-lg font-semibold text-foreground sm:text-xl">Request Details</h1>
-                            <p className="text-xs text-muted-foreground sm:text-sm">Review your service request information</p>
-                        </div>
+                <div className="flex flex-col gap-2">
+                    <Link href="/services" className="shrink-0 w-fit">
+                        <Button variant="ghost" size="sm" className="gap-1 h-9">
+                            <ArrowLeft className="h-4 w-4 shrink-0" />
+                            <span>{t('common.back')}</span>
+                        </Button>
+                    </Link>
+                    <div>
+                        <h1 className="text-lg font-semibold text-foreground sm:text-xl">Request Details</h1>
+                        <p className="text-xs text-muted-foreground sm:text-sm">Review your service request information</p>
                     </div>
                 </div>
             )}
@@ -557,11 +557,10 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                             <span className="text-xs sm:text-sm text-muted-foreground">Processing Mode</span>
                             <Badge
                                 variant="outline"
-                                className={`w-fit text-xs ${
-                                    isManualSurvey
+                                className={`w-fit text-xs ${isManualSurvey
                                         ? 'border-et-blue bg-et-blue/10 text-et-blue'
                                         : 'border-primary bg-primary/10 text-primary'
-                                }`}
+                                    }`}
                             >
                                 {isManualSurvey ? 'Manual' : 'Auto'}
                             </Badge>
@@ -581,7 +580,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                             </>
                         )}
                     </div>
-                </div>  
+                </div>
 
                 {/* Subscription Information */}
                 <div className="w-full">
@@ -880,8 +879,8 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <p className="font-medium">
-                                            {canSubscribe
-                                                ? 'Ready to activate your service?'
+                                        {canSubscribe
+                                            ? 'Ready to activate your service?'
                                             : canPay
                                                 ? 'Complete payment to activate'
                                                 : canUpgradeDowngrade
@@ -901,7 +900,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
 
                                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
                                     <Link href="/services">
-                                        <Button variant="outline" className="w-full sm:w-auto">Back</Button>
+                                        <Button variant="outline" className="w-full sm:w-auto">{t('common.back')}</Button>
                                     </Link>
 
                                     {canSubscribe && (
@@ -913,12 +912,12 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                             {loading && createSubscriptionMutation.isPending ? (
                                                 <>
                                                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent shrink-0" />
-                                                    <span>Processing...</span>
+                                                    <span>{t('buttons.processing')}</span>
                                                 </>
                                             ) : (
                                                 <>
                                                     <CheckCircle2 className="h-4 w-4 shrink-0" />
-                                                    <span>Subscribe</span>
+                                                    <span>{t('buttons.activate_service')}</span>
                                                 </>
                                             )}
                                         </Button>
@@ -933,12 +932,12 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                             {loading && createPaymentOrderMutation.isPending ? (
                                                 <>
                                                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent shrink-0" />
-                                                    <span>Processing...</span>
+                                                    <span>{t('buttons.processing')}</span>
                                                 </>
                                             ) : (
                                                 <>
                                                     <CreditCard className="h-4 w-4 shrink-0" />
-                                                    <span>Pay {totalAmount} ETB</span>
+                                                    <span>{t('buttons.pay_now')} {totalAmount} ETB</span>
                                                 </>
                                             )}
                                         </Button>
@@ -953,7 +952,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                                 className="w-full gap-2 sm:w-auto h-9 sm:h-10"
                                             >
                                                 <ArrowUpToLineIcon className="h-4 w-4 shrink-0" />
-                                                <span>Upgrade</span>
+                                                <span>{t('buttons.upgrade')}</span>
                                             </Button>
                                             <Button
                                                 onClick={() => setOpenDowngradeDialog(true)}
@@ -962,7 +961,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                                 className="w-full gap-2 sm:w-auto h-9 sm:h-10"
                                             >
                                                 <ArrowDownToLineIcon className="h-4 w-4 shrink-0" />
-                                                <span>Downgrade</span>
+                                                <span>{t('buttons.downgrade')}</span>
                                             </Button>
                                         </>
                                     )}
@@ -975,7 +974,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                             className="w-full gap-2 sm:w-auto h-9 sm:h-10"
                                         >
                                             <X className="h-4 w-4 shrink-0" />
-                                            <span>Cancel</span>
+                                            <span>{t('common.cancel')}</span>
                                         </Button>
                                     )}
 
@@ -987,7 +986,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                             className="w-full gap-2 sm:w-auto h-9 sm:h-10"
                                         >
                                             <X className="h-4 w-4 shrink-0" />
-                                            <span>Terminate</span>
+                                            <span>{t('buttons.terminate_service')}</span>
                                         </Button>
                                     )}
                                 </div>
@@ -1004,13 +1003,13 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                         <Link href="/services" className="w-full sm:w-auto">
                             <Button variant="outline" className="w-full sm:w-auto gap-2 h-9 sm:h-10">
                                 <ArrowLeft className="h-4 w-4 shrink-0" />
-                                <span>Back</span>
+                                <span>{t('common.back')}</span>
                             </Button>
                         </Link>
                     ) : onBack ? (
                         <Button variant="outline" onClick={onBack} className="w-full sm:w-auto gap-2 h-9 sm:h-10">
                             <ArrowLeft className="h-4 w-4 shrink-0" />
-                            <span>Back</span>
+                            <span>{t('common.back')}</span>
                         </Button>
                     ) : null}
                 </div>

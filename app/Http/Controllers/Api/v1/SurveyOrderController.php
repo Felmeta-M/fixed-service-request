@@ -9,6 +9,7 @@ use App\Http\Requests\ManualSurveyOrderRequest;
 use App\Http\Requests\SurveyOrderFormRequest;
 use App\Models\SurveyOrder;
 use App\Services\ManualSurveyOrderService;
+use App\Services\Payment\DeviceFeeCalculatorService;
 use App\Services\QueryPurchasedOfferingService;
 use App\Services\QuerySurveyOrderService;
 use App\Services\QuerySubscriptionOrderStatusService;
@@ -31,7 +32,8 @@ class SurveyOrderController extends Controller
         protected readonly QuerySurveyOrderService $querySurveyOrderService,
         protected readonly QuerySubscriptionOrderStatusService $querySubscriptionOrderStatusService,
         protected readonly QueryPurchasedOfferingService $queryPurchasedOfferingService,
-        protected readonly ManualSurveyOrderService $manualSurveyOrderService
+        protected readonly ManualSurveyOrderService $manualSurveyOrderService,
+        protected readonly DeviceFeeCalculatorService $deviceFeeCalculator
     ) {
     }
 
@@ -508,11 +510,10 @@ class SurveyOrderController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return response()->json([
-                'success' => false,
-                // 'message' => 'Something went wrong. Please try again later.',
-                'message' => $e->getMessage(),
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return \App\Services\ApiResponse::safeError(
+                $e,
+                'Failed to create service request. Please try again later.'
+            );
         }
     }
 
@@ -997,37 +998,9 @@ class SurveyOrderController extends Controller
                 'device_voice_id' => $withDevice ? $deviceVoiceId : null,
             ]);
 
-            // Calculate device fee
-            $deviceFee = 0;
-            if ($withDevice) {
-                $mainOfferId = (int) $surveyOrder->main_offer_id;
-                $isCombo = $mainOfferId === 180427974;
-                $isVoiceOnly = $mainOfferId === 1207609454;
-
-                if ($isCombo) {
-                    // Combo: device_id is internet, device_voice_id is voice
-                    if ($deviceId) {
-                        $internetDevice = \App\Models\AvailableDevice::find($deviceId);
-                        $deviceFee += $internetDevice ? (float) $internetDevice->price : 0;
-                    }
-                    if ($deviceVoiceId) {
-                        $voiceDevice = \App\Models\AvailableDevice::find($deviceVoiceId);
-                        $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
-                    }
-                } elseif ($isVoiceOnly) {
-                    // Voice only: device_id contains voice device
-                    if ($deviceId) {
-                        $voiceDevice = \App\Models\AvailableDevice::find($deviceId);
-                        $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
-                    }
-                } else {
-                    // Broadband: device_id contains internet device
-                    if ($deviceId) {
-                        $internetDevice = \App\Models\AvailableDevice::find($deviceId);
-                        $deviceFee += $internetDevice ? (float) $internetDevice->price : 0;
-                    }
-                }
-            }
+            // Refresh to get updated device IDs, then calculate fee using dedicated service
+            $surveyOrder->refresh();
+            $deviceFee = $this->deviceFeeCalculator->calculate($surveyOrder);
 
             // Calculate subscription fee using PaymentCalculatorService
             // Manual surveys use calculateFeesWithoutCable (no cable charge for manual surveys)

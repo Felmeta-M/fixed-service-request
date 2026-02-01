@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\Logging\AppLogger;
 use App\Support\CustomerContext;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
@@ -26,9 +27,9 @@ class EcafService extends BaseApiService
             $parsedXml = $this->parseResponse($xmlResponse);
             return ApiResponse::success($parsedXml);
         } catch (\RuntimeException $e) {
-            return ApiResponse::error($e->getMessage(), 500);
+            return ApiResponse::safeError($e, 'Document upload failed. Please try again.');
         } catch (\Throwable $e) {
-            return ApiResponse::fromException($e, 'Ecaf upload failed.');
+            return ApiResponse::safeError($e, 'Document upload failed. Please try again.');
         }
     }
 
@@ -115,7 +116,10 @@ XML;
                 'rejectedCount' => $rejectedCount,
             ]);
         } catch (\Exception $e) {
-            return ApiResponse::error('Failed to parse SOAP response: ' . $e->getMessage());
+            AppLogger::api()->error('EcafService: SOAP parsing failed', [
+                'error' => $e->getMessage(),
+            ]);
+            return ApiResponse::safeError($e, 'Failed to process document response. Please try again.');
         }
     }
 

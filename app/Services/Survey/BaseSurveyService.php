@@ -6,11 +6,13 @@ use App\Services\ApiResponse;
 use App\Services\BaseApiService;
 use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
+use App\Services\Payment\DeviceFeeCalculatorService;
 use App\Services\Payment\PaymentCalculatorService;
 use App\Services\Payment\PaymentService;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Services\ResourceService;
+use App\Services\Subscription\ServiceActivationService;
 use App\Services\Logging\AppLogger;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +27,8 @@ abstract class BaseSurveyService extends BaseApiService
 
     public function __construct(
         protected readonly PaymentService $payment_service,
+        protected readonly ServiceActivationService $activationService,
+        protected readonly DeviceFeeCalculatorService $deviceFeeCalculator,
         protected readonly QueryAvailableNumberService $queryAvailableNumberService,
         protected readonly ReserveNumberService $reserveNumberService,
     ) {
@@ -150,7 +154,11 @@ abstract class BaseSurveyService extends BaseApiService
             $bandwidthKb = $this->parseBandwidth($data['bandwidth']);
         }
 
-        DB::transaction(function () use ($surveyOrderId, $data, $resource, $serviceNumber, $bandwidthKb) {
+        // Track total amount for auto-subscription decision
+        $totalAmount = 0;
+        $isManualSurvey = (bool) ($data['survey_is_manual'] ?? false);
+
+        DB::transaction(function () use ($surveyOrderId, $data, $resource, $serviceNumber, $bandwidthKb, &$totalAmount, $isManualSurvey) {
             $survey = SurveyOrder::create([
                 ...$data,
                 'bandwidth' => $bandwidthKb, // Save as KB for consistency with BSS responses
@@ -160,7 +168,7 @@ abstract class BaseSurveyService extends BaseApiService
                 'device_voice_id' => $data['device_voice_id'] ?? null,
                 'service_number' => $serviceNumber,
                 'customer_survey_order_id' => $surveyOrderId,
-                'status' => $data['survey_is_manual'] ? FFDServiceProvisionStatus::Waiting->value : FFDServiceProvisionStatus::Completed->value,
+                'status' => $isManualSurvey ? FFDServiceProvisionStatus::Waiting->value : FFDServiceProvisionStatus::Completed->value,
                 'cable_length' => $resource['distance'] ?? null,
                 'cable_type' => $resource['cable_type'] ?? null,
                 'lat' => isset($resource['latitude']) ? round((float) $resource['latitude'], 8) : null,
@@ -188,8 +196,8 @@ abstract class BaseSurveyService extends BaseApiService
             $calculator = app(PaymentCalculatorService::class);
             $fees = $calculator->calculateFees($survey, $requestData);
 
-            // Calculate device fee from selected device prices
-            $deviceFee = $this->calculateDeviceFee($survey);
+            // Calculate device fee using dedicated service
+            $deviceFee = $this->deviceFeeCalculator->calculate($survey);
 
             $totalAmount = $fees['total_amount'] + $deviceFee;
 
@@ -202,6 +210,20 @@ abstract class BaseSurveyService extends BaseApiService
                 'total_amount' => $totalAmount,
             ]);
         });
+
+        // Auto-activate for free services (non-manual surveys only)
+        // Manual surveys need device selection first, so skip auto-activation
+        // 
+        // IMPORTANT: This activation is INDEPENDENT of the DB transaction above.
+        // The survey/payment records are already committed at this point.
+        // If activation fails, the survey is still valid and customer can manually subscribe later.
+        if ($totalAmount < 1 && !$isManualSurvey) {
+            // Wait for third-party system to be ready to process activation
+            // after survey creation (min 7.5ms required)
+            usleep(10000); // 10ms
+
+            $this->activationService->activate($surveyOrderId);
+        }
     }
 
     /**
@@ -277,55 +299,6 @@ abstract class BaseSurveyService extends BaseApiService
 
         // Format as decimal with up to 8 decimal places
         return (string) round((float) $coordinate, 8);
-    }
-
-    /**
-     * Calculate device fee from selected device prices.
-     * Device storage logic:
-     * - Voice-only (1207609454): device_id contains voice device
-     * - Broadband (1457567289): device_id contains internet device
-     * - Combo (180427974): device_id contains internet device, device_voice_id contains voice device
-     *
-     * @param SurveyOrder $survey Survey order with device information
-     * @return float Total device fee
-     */
-    protected function calculateDeviceFee(SurveyOrder $survey): float
-    {
-        $deviceFee = 0.0;
-
-        if (!$survey->with_device) {
-            return $deviceFee;
-        }
-
-        $mainOfferId = (int) $survey->main_offer_id;
-        $isCombo = $mainOfferId === 180427974;
-        $isVoiceOnly = $mainOfferId === 1207609454;
-
-        if ($isCombo) {
-            // Combo service: device_id is internet, device_voice_id is voice
-            if ($survey->device_id) {
-                $internetDevice = \App\Models\AvailableDevice::find($survey->device_id);
-                $deviceFee += $internetDevice ? (float) $internetDevice->price : 0;
-            }
-            if ($survey->device_voice_id) {
-                $voiceDevice = \App\Models\AvailableDevice::find($survey->device_voice_id);
-                $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
-            }
-        } elseif ($isVoiceOnly) {
-            // Voice-only service: device_id contains voice device
-            if ($survey->device_id) {
-                $voiceDevice = \App\Models\AvailableDevice::find($survey->device_id);
-                $deviceFee += $voiceDevice ? (float) $voiceDevice->price : 0;
-            }
-        } else {
-            // Broadband service: device_id contains internet device
-            if ($survey->device_id) {
-                $internetDevice = \App\Models\AvailableDevice::find($survey->device_id);
-                $deviceFee += $internetDevice ? (float) $internetDevice->price : 0;
-            }
-        }
-
-        return $deviceFee;
     }
 
     /**

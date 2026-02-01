@@ -175,5 +175,36 @@
     "location.detected_excellent": "Location detected with excellent accuracy",
     "location.detected_good": "Location detected with good accuracy",
     "location.detected_fair": "Location detected with fair accuracy. Consider selecting on the map for better precision.",
-    "location.detected_poor": "Location accuracy is poor. Please select your location on the map for better accuracy."
+    "location.detected_poor": "Location accuracy is poor. Please select your location on the map for better accuracy.",
+
+    "buttons.activate_service": "Activate Service",
+    "buttons.processing": "Processing...",
+    "buttons.subscribing": "Subscribing...",
+    "buttons.pay_now": "Pay Now",
+    "buttons.continue": "Continue",
+    "buttons.view_detail": "View detail",
+    "buttons.submit_request": "Submit Request",
+    "buttons.preparing": "Preparing...",
+    "buttons.cancel_request": "Cancel Request",
+    "buttons.terminate_service": "Terminate Service",
+    "buttons.upgrade": "Upgrade",
+    "buttons.downgrade": "Downgrade",
+    "buttons.retry": "Retry",
+    "buttons.go_back": "Go Back",
+    "buttons.try_again": "Try Again",
+
+    "actions.activating": "Activating...",
+    "actions.cancelling": "Cancelling...",
+    "actions.terminating": "Terminating...",
+    "actions.deleting": "Deleting...",
+    "actions.updating": "Updating...",
+
+    "messages.subscription_success": "Subscription created successfully!",
+    "messages.subscription_activated": "Your service subscription has been activated.",
+    "messages.subscription_failed": "Subscription failed. Please try again.",
+    "messages.request_created": "Service request created successfully!",
+    "messages.request_submitted": "Your service request has been submitted and is now being processed.",
+    "messages.payment_success": "Payment successful!",
+    "messages.payment_failed": "Payment failed. Please try again.",
+    "messages.operation_failed": "Operation failed. Please try again."
 }

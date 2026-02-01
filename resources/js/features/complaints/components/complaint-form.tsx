@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ComplaintFormValues, complaintSchema, TroubleReasons, DynamicTroubleReason, ServiceLookupResponse } from '@/types/complaint';
+import { ComplaintFormValues, complaintSchema, DynamicTroubleReason, ServiceLookupResponse } from '@/types/complaint';
 import { useForm } from '@inertiajs/react';
 import { showErrorToast, showSuccessToast } from '@/lib/toast-helpers';
 import { apiClient } from '@/lib/api-client';
@@ -59,6 +59,7 @@ export function ComplaintForm({
         contact_person: defaultValues.contact_person ?? '',
         mobile_no: defaultValues.mobile_no ?? '',
         trouble_reason: defaultValues.trouble_reason,
+        trouble_reason_label: defaultValues.trouble_reason_label ?? '',
         tt_description: defaultValues.tt_description ?? '',
     };
     const { data, setData, errors, setError, clearErrors, reset } = useForm<ComplaintFormValues>(
@@ -99,7 +100,11 @@ export function ComplaintForm({
                 setLookupDone(true);
                 
                 // Reset trouble reason selection since options changed
-                setData('trouble_reason', '');
+                setData({
+                    ...data,
+                    trouble_reason: '',
+                    trouble_reason_label: '',
+                });
                 
                 showSuccessToast(`Service verified (${response.data.network.name})`);
             } else {
@@ -140,12 +145,18 @@ export function ComplaintForm({
 
     // Reset lookup when service number changes
     const handleServiceNumberChange = (value: string) => {
-        setData('access_number', value);
         if (lookupDone) {
             setLookupDone(false);
             setNetworkInfo(null);
             setTroubleReasons(FALLBACK_REASONS);
-            setData('trouble_reason', '');
+            setData({
+                ...data,
+                access_number: value,
+                trouble_reason: '',
+                trouble_reason_label: '',
+            });
+        } else {
+            setData('access_number', value);
         }
     };
 
@@ -181,9 +192,8 @@ export function ComplaintForm({
         });
     };
 
-    // Check if description is required (when "Other" or similar is selected)
-    const isDescriptionRequired = data.trouble_reason === TroubleReasons.OTHER || 
-        data.trouble_reason?.toLowerCase().includes('other');
+    // Description is required only when "Other" is selected
+    const isDescriptionRequired = data.trouble_reason_label === 'Other';
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -272,7 +282,16 @@ export function ComplaintForm({
                     </label>
                     <Select
                         value={data.trouble_reason || ''}
-                        onValueChange={(value) => setData('trouble_reason', value)}
+                        onValueChange={(value) => {
+                            // Find the selected reason to get its label
+                            const selectedReason = troubleReasons.find(r => r.value === value);
+                            // Set both trouble_reason and trouble_reason_label together
+                            setData({
+                                ...data,
+                                trouble_reason: value,
+                                trouble_reason_label: selectedReason?.reason ?? value,
+                            });
+                        }}
                         disabled={!lookupDone && troubleReasons === FALLBACK_REASONS}
                     >
                         <SelectTrigger>

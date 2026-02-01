@@ -11,7 +11,9 @@ class Occupation extends Model
      * Only allow specific fields to prevent mass assignment attacks.
      */
     protected $fillable = [
+        'code',
         'name',
+        'status',
     ];
 
     /**

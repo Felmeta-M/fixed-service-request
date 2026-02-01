@@ -221,21 +221,19 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
     <MainLayout>
       <div className="w-full space-y-4 px-4 py-2 lg:px-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.visit('/complaints')}
-              className="flex items-center"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <div className="flex flex-row items-center gap-2">
-              {/* <h1 className="text-2xl font-bold tracking-tight">TT Details</h1> */}
-              <p className="text-muted-foreground">Trouble Ticket: {ttNumber}</p>
-            </div>
+        <div className="flex flex-col gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.visit('/complaints')}
+            className="flex items-center gap-1 w-fit h-9"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back</span>
+          </Button>
+          <div>
+            <h1 className="text-lg font-semibold text-foreground sm:text-xl">Ticket Details</h1>
+            <p className="text-xs text-muted-foreground sm:text-sm">Trouble Ticket: {ttNumber}</p>
           </div>
         </div>
 

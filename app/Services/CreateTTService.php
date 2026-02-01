@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\TroubleTicket;
+use App\Models\TroubleTicketReason;
 use App\Services\ApiResponse;
 use App\Services\BaseApiService;
 use App\Services\Logging\AppLogger;
@@ -112,7 +113,7 @@ class CreateTTService extends BaseApiService
             $data['queried_customer'] = $customerData;
 
             // Use tt_description as trouble_title to minimize customer journey
-            $data['trouble_title'] = $data['tt_description'] ?? 'Fixed Services Complaint';
+            $data['trouble_title'] = $data['tt_description'] ?? $data['trouble_reason'];
 
             // Step 5: Build XML with queried customer data (no additional API call)
             $xmlPayload = $this->buildRequestXml($data);
@@ -135,13 +136,13 @@ class CreateTTService extends BaseApiService
                 'error' => $e->getMessage(),
                 'access_number' => $data['access_number'] ?? null,
             ]);
-            return ApiResponse::error($e->getMessage(), 500);
+            return ApiResponse::safeError($e, 'Failed to create trouble ticket. Please try again.');
         } catch (\Throwable $e) {
             AppLogger::api()->error('CreateTT: Exception', [
                 'error' => $e->getMessage(),
                 'access_number' => $data['access_number'] ?? null,
             ]);
-            return ApiResponse::fromException($e, 'Create TT failed.');
+            return ApiResponse::safeError($e, 'Failed to create trouble ticket. Please try again.');
         }
     }
 
@@ -185,7 +186,9 @@ class CreateTTService extends BaseApiService
         $customerId = $customer['customer_id'] ?? '';
         $customerCode = $customer['customer_code'] ?? "";
         $subscriberId = $subscriber['subscriber']['subscriber_id'] ?? '';
-        $title = $customer['title'] ?? '1';
+        // Use trouble_reason_label as title if provided (e.g., "Bill Problem/Balance Lost")
+        // Falls back to customer title or default
+        $title = $data['trouble_reason_label'] ?? $customer['title'] ?? 'Service Issue';
 
         // Get customer name - API may return name in ExtParams.CustomerName instead of FirstName
         $customerNameFromExt = $extParams['CustomerName'] ?? '';
@@ -210,10 +213,10 @@ class CreateTTService extends BaseApiService
         $custSubCategory = $customer['customer_subcategory'] ?? ($extParams['CustSubCategory'] ?? '1');
 
         // Address from queried data (Address1=Region, Address2=City, Address3=Zone, Address4=Wereda, Address5=Kebele, Address6=HouseNo)
-        $ethioZone = $extParams['address1'] ?? 'aa';
-        $adminRegion = $addresses['address2'] ?? 'aa';
-        $zone = $addresses['address3'] ?? 'aa';
-        $city = $addresses['address2'] ?? $zone;
+        $ethioZone = !empty($extParams['address1']) ? $extParams['address1'] : '21';
+        $adminRegion = !empty($addresses['address2']) ? $addresses['address2'] : '5'; //Todo: change to region_id
+        $zone = !empty($addresses['address3']) ? $addresses['address3'] : 'aa';
+        $city = !empty($addresses['address2']) ? $addresses['address2'] : $zone;
         $subCity = $zone;
         $wereda = !empty($addresses['address4']) ? $addresses['address4'] : 'new';
         $kebele = !empty($addresses['address5']) ? $addresses['address5'] : 'new';
@@ -233,8 +236,20 @@ class CreateTTService extends BaseApiService
         $contactPerson = $data['contact_person'];
         $mobileNo = '0' . substr($data['mobile_no'], -9); // Add 0 prefix and take last 9 digits
         $troubleTitle = $name;
-        $troubleReason = $data['trouble_reason'];
-        $ttDescription = $data['tt_description'] ?? '';
+
+        // Look up trouble reason path from ID (frontend sends reason ID as value)
+        $troubleReasonId = $data['trouble_reason'];
+        $troubleReasonRecord = TroubleTicketReason::find($troubleReasonId);
+        $troubleReason = $troubleReasonRecord?->reason_path ?? $troubleReasonId;
+
+        // Store the looked-up reason_path for later use in parseResponseXml
+        $data['trouble_reason_path'] = $troubleReason;
+
+        // Third-party requires ttDescription to be non-empty
+        // Fall back to trouble_reason_label or title if description is empty
+        $ttDescription = !empty($data['tt_description']) 
+            ? $data['tt_description'] 
+            : ($data['trouble_reason_label'] ?? $title ?? 'Service issue reported');
 
         //faulty number
         $faultLocation = $data['fault_location'] ?? '';
@@ -243,6 +258,7 @@ class CreateTTService extends BaseApiService
         // Timestamps
         $acceptTime = date('YmdHis');
         $occurrenceDate = date('YmdHis');
+
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:eth="http://www.example.org/EthioSPMInterfaceSheet/">
@@ -259,13 +275,12 @@ class CreateTTService extends BaseApiService
          
          <customerType>{$customerType}</customerType>
          <customerLevel>{$customerLevel}</customerLevel>
-
          <customerCategory>{$customerCategory}</customerCategory>
          <custSubCategory>{$custSubCategory}</custSubCategory>
 
          <custID>{$customerId}</custID>
          <subsID>{$subscriberId}</subsID>
-         <adminRegion>{$adminRegion}</adminRegion>
+         <adminRegion>5</adminRegion>
          <zone>{$zone}</zone>
          <city>{$city}</city>
          <subCity>{$subCity}</subCity>
@@ -283,7 +298,7 @@ class CreateTTService extends BaseApiService
          <accessNumber>{$accessNumber}</accessNumber>
          <acctNumber>{$accountCode}</acctNumber>
          <!--Optional:-->
-<!--         <additionalFaultyNbr></additionalFaultyNbr>-->
+         <additionalFaultyNbr></additionalFaultyNbr>
          <contactPerson>{$contactPerson}</contactPerson>
          <mobileNo>{$mobileNo}</mobileNo>
     
@@ -294,7 +309,7 @@ class CreateTTService extends BaseApiService
          <!--Optional:-->
          <expectFeedbackTime>{$expectFeedbackTime}</expectFeedbackTime>
          <!--Optional:-->
-         <faultLocation>{$faultLocation}</faultLocation>
+         <faultLocation></faultLocation>
          <sendSMS>Yes</sendSMS>
          <ttDescription>{$ttDescription}</ttDescription>         
       </eth:createTT>
@@ -389,8 +404,8 @@ XML;
                 'access_number' => $payload['access_number'],
                 'contact_person' => $payload['contact_person'],
                 'mobile_no' => $payload['mobile_no'],
-                'trouble_title' => $payload['trouble_title'],
-                'trouble_reason' => $payload['trouble_reason'],
+                'trouble_title' => $payload['trouble_reason_label'] ?? $payload['trouble_title'] ?? '',
+                'trouble_reason' => $payload['trouble_reason_path'] ?? $payload['trouble_reason'],
                 'tt_description' => $payload['tt_description'],
                 'status' => 'open',
             ]

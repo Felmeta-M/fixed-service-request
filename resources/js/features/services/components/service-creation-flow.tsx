@@ -435,12 +435,12 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
                 {/* Navigation Buttons */}
                 {showNavigation && !isLastStep && (
-                    <div className="mt-4 flex flex-col gap-3 pt-2">
+                    <div className="mt-2 flex justify-between pt-2">
                         <Button 
                             variant="outline" 
                             onClick={prevStep} 
                             disabled={currentStep === 0} 
-                            className="flex w-full items-center justify-center space-x-2"
+                            className="flex items-center space-x-2"
                         >
                             <ArrowLeft className="h-4 w-4" />
                             <span>Back</span>
@@ -449,7 +449,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                         <Button
                             onClick={checkResourceAndProceed}
                             disabled={!canProceedToNextStep() || hasActiveSurvey || checkingResource}
-                            className="flex w-full items-center justify-center space-x-2 bg-primary hover:bg-primary/90"
+                            className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
                         >
                             {checkingResource ? (
                                 <>

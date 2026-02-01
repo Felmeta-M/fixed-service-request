@@ -35,9 +35,9 @@ export function DeviceOptionSelector({
     // Show message only when explicitly set to false (not undefined/null)
     const isWithoutDevice = value === false;
     const isWithDevice = value === true;
-    // When undefined, use empty string so nothing is selected initially
+    // When undefined or null, use empty string so nothing is selected initially
     // When explicitly set, use the corresponding value
-    const displayValue = value === undefined ? '' : value ? 'with' : 'without';
+    const displayValue = (value === undefined || value === null) ? '' : value ? 'with' : 'without';
     const isCombo = serviceType === '180427974';
     const isVoiceOnly = serviceType === '1207609454';
 

@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useSurveyDetail } from '@/features/surveys/hooks/use-surveys';
+import { useUpdateSurveyDevice } from '@/hooks/use-api-mutations';
 import { Link, usePage } from '@inertiajs/react';
 import { AlertCircle, Loader2, MoveLeftIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { toast } from 'sonner';
 import { DeviceSelectionStep } from './steps/device-selection-step';
 import { SubscriptionPaymentStep } from './steps/subscription-payment-step';
 
@@ -60,6 +62,11 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
     });
 
     const [isTransitioningToSubscription, setIsTransitioningToSubscription] = useState(false);
+    const [isUpdatingDevice, setIsUpdatingDevice] = useState(false);
+    const deviceUpdateInProgressRef = useRef(false);
+
+    // Mutations
+    const updateDeviceMutation = useUpdateSurveyDevice();
 
     // Fetch existing survey data
     const surveyDetailQuery = useSurveyDetail(surveyOrderId);
@@ -75,7 +82,8 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
                 serviceType: surveyData.main_offer_id || '',
                 bandwidth: surveyData.bandwidth || '',
                 customerType: surveyData.customer_type || 'residential',
-                withDevice: surveyData.with_device,
+                // For manual surveys, with_device is null - default to true (with device)
+                withDevice: surveyData.with_device ?? true,
                 contactPerson: user?.name || 'Customer',
                 contactNo: user?.phone || '',
                 contactEmail: user?.email || '',
@@ -95,7 +103,8 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
     useEffect(() => {
         if (currentStep === 2) {
             setFormData((prev) => {
-                if (prev.withDevice === undefined) {
+                // Check for null or undefined (null comes from API when not set)
+                if (prev.withDevice === undefined || prev.withDevice === null) {
                     return { ...prev, withDevice: true };
                 }
                 return prev;
@@ -167,7 +176,10 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
     }
 
     // Check if survey can be resumed
-    const canResume = surveyData.can_pay || surveyData.can_subscribe;
+    // can_continue: for manual surveys that need device selection first
+    // can_pay: can proceed to payment
+    // can_subscribe: can proceed to subscription
+    const canResume = surveyData.can_continue || surveyData.can_pay || surveyData.can_subscribe;
     if (!canResume) {
         return (
             <div className="w-full space-y-6 px-4 py-2 lg:px-6">
@@ -193,6 +205,55 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
         );
     }
 
+    // Handle device selection save and proceed to payment
+    const handleDeviceSelectionNext = async () => {
+        // Prevent double execution using ref (handles rapid clicks before state updates)
+        if (deviceUpdateInProgressRef.current) {
+            return;
+        }
+        deviceUpdateInProgressRef.current = true;
+        setIsUpdatingDevice(true);
+
+        try {
+            // Check if device is already selected on backend (from previous save)
+            // If so, skip the API call and proceed directly
+            const currentSurveyData = surveyDetailQuery.data?.data;
+            const deviceAlreadySelected = currentSurveyData?.with_device !== null && currentSurveyData?.with_device !== undefined;
+
+            if (!deviceAlreadySelected) {
+                // Build device update payload
+                const deviceData = {
+                    customer_survey_order_id: surveyOrderId,
+                    with_device: formData.withDevice ?? false,
+                    device_id: formData.deviceId || null,
+                    device_voice_id: formData.deviceVoiceId || null,
+                };
+
+                // Update device selection on backend
+                await updateDeviceMutation.mutateAsync(deviceData);
+
+                // Refresh survey data to get updated payment info
+                await surveyDetailQuery.refetch();
+            }
+
+            // Proceed to payment step
+            setIsTransitioningToSubscription(true);
+            nextStep();
+        } catch (error: any) {
+            // If device was already selected, proceed anyway
+            if (error?.message?.includes('already been selected')) {
+                await surveyDetailQuery.refetch();
+                setIsTransitioningToSubscription(true);
+                nextStep();
+            } else {
+                toast.error('Failed to save device selection. Please try again.');
+            }
+        } finally {
+            setIsUpdatingDevice(false);
+            deviceUpdateInProgressRef.current = false;
+        }
+    };
+
     const renderStepContent = () => {
         switch (internalStep) {
             case 0: // Device Selection
@@ -200,14 +261,12 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
                     <DeviceSelectionStep
                         formData={formData}
                         onUpdate={updateFormData}
-                        onNext={() => {
-                            setIsTransitioningToSubscription(true);
-                            nextStep();
-                        }}
+                        onNext={handleDeviceSelectionNext}
                         onBack={() => {
                             // Go back to services list since there's no previous step in resume flow
                             window.location.href = route('services');
                         }}
+                        disabled={isUpdatingDevice}
                     />
                 );
             case 1: // Payment / Subscription

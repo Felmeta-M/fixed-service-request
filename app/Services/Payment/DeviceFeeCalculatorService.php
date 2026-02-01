@@ -39,14 +39,14 @@ class DeviceFeeCalculatorService
      * Calculate device fee from raw IDs (useful when survey hasn't been persisted yet).
      *
      * @param int $mainOfferId The main offer ID
-     * @param int|null $deviceId The primary device ID
-     * @param int|null $deviceVoiceId The voice device ID (for combo services)
+     * @param string|int|null $deviceId The primary device ID (UUID or int)
+     * @param string|int|null $deviceVoiceId The voice device ID for combo services (UUID or int)
      * @return float Total device fee
      */
     public function calculateFromIds(
         int $mainOfferId,
-        ?int $deviceId,
-        ?int $deviceVoiceId = null
+        string|int|null $deviceId,
+        string|int|null $deviceVoiceId = null
     ): float {
         $deviceFee = 0.0;
 
@@ -70,10 +70,10 @@ class DeviceFeeCalculatorService
     /**
      * Get the price of a device by ID.
      *
-     * @param int|null $deviceId Device ID
+     * @param string|int|null $deviceId Device ID (UUID or int)
      * @return float Device price or 0 if not found
      */
-    private function getDevicePrice(?int $deviceId): float
+    private function getDevicePrice(string|int|null $deviceId): float
     {
         if (!$deviceId) {
             return 0.0;

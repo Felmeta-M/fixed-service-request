@@ -133,19 +133,12 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       $namePart = substr($sanitizedName, 0, 8); // Up to 8 chars from name
       $randomSuffix = strtolower(Str::random(3)); // 3 random chars for uniqueness
       $username = substr($namePart . $randomSuffix, 0, 11); // Max 11 chars total
-      $email = $username . '@ethio.et'; // 11 + 9 = 20 chars total
-
-      // Password for BSS (encoded) and customer (plain text)
-      // The BSS password is an encrypted/hashed value, not simple base64-encoded text
-      $internetPasswordEncoded = \App\Helpers\InternetCredentialsHelper::getDefaultPassword();
-      $internetPassword = 'REDACTED_PASSWORD'; // Plain text password for customer SMS/DB
 
       $customerEthioZone = $this->getZoneCodeForCustomerAddress($data);
       $accountEthioZone = $this->getZoneCodeForAccountInfo($data['survey_order_id'], $data);
 
-      // Store password in data array for XML template access
-      $data['internet_password'] = $internetPassword;
       $data['completed_date'] = $this->completedDate();
+      $email = $this->generateEmail();
 
       $xml = <<<XML
   <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
@@ -344,8 +337,8 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
                   <com:SLAPriority>0</com:SLAPriority>
-                  <com:InternetAccount>{$email}</com:InternetAccount>
-                  <com:InternetPassword>{$internetPasswordEncoded}</com:InternetPassword>
+                  <com:InternetAccount>{$username}</com:InternetAccount>
+                  <com:InternetPassword>REDACTED_PASSWORD=</com:InternetPassword>
                   <com:CallCenterAccess>980,894</com:CallCenterAccess>
                   <com:SubLanguage>2002</com:SubLanguage>
                   <com:IVRLanguage>2060</com:IVRLanguage>

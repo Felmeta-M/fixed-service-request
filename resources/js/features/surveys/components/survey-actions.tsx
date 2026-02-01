@@ -438,15 +438,15 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     return (
         <>
             <div className="flex items-center justify-end gap-2">
-                {/* Continue button for manual surveys - goes to device selection when can_continue, else to detail */}
-                {isManualSurvey && (
-                    <Button onClick={handleContinueManual} disabled={loading} className="bg-primary hover:bg-primary/90 px-3 text-white" size="sm">
+                {/* Continue button for manual surveys - visible but disabled when can_continue is false */}
+                {isManualSurvey && !canSubscribe && !canPay && (
+                    <Button onClick={handleContinueManual} disabled={loading || !canResume} className="bg-primary hover:bg-primary/90 px-3 text-white" size="sm">
                         {t('buttons.continue')}
                     </Button>
                 )}
 
-                {/* Pay button for auto surveys that can pay (not for resumable manual surveys) */}
-                {canPay && !canResume && (
+                {/* Pay button - for surveys that need payment (manual or auto) */}
+                {canPay && (
                     <Button onClick={() => navigateToDetails('payment')} disabled={loading} className="gap-1 bg-primary px-4 text-white" size="sm">
                         {loading ? (
                             <>
@@ -459,8 +459,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                     </Button>
                 )}
 
-                {/* Subscribe button for auto surveys (not for resumable manual surveys) */}
-                {canSubscribe && !canResume && (
+                {/* Subscribe/Activate button - for surveys that can subscribe (manual or auto) */}
+                {canSubscribe && (
                     <Button onClick={onSubscribeClick} disabled={loading || isSubmitting} className="gap-1 bg-primary px-2 text-white" size="sm">
                         {isSubmitting || createSubscriptionMutation.isPending ? t('buttons.subscribing') : t('buttons.activate_service')}
                     </Button>

@@ -255,7 +255,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                         </com:InstanceProperty>
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
-                  {$this->buildSupplementaryOfferingList($data)}
+                  <!-- {$this->buildSupplementaryOfferingList($data)} -->
                   <com:SLAPriority>6</com:SLAPriority>
                   <com:InternetAccount>{$username}</com:InternetAccount>
                   <com:InternetPassword>REDACTED_PASSWORD=</com:InternetPassword>

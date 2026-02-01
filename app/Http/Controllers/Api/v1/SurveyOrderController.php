@@ -181,6 +181,13 @@ class SurveyOrderController extends Controller
 
                 //manual survey order
                 if ($isManual && empty($order->customer_subscription_order_id)) {
+                    // Skip BSS query for completed manual surveys - no need to re-check
+                    // Survey result is final once completed
+                    if ((int) $order->status === FFDServiceProvisionStatus::Completed->value) {
+                        $timestampUpdates[] = $order->id;
+                        continue;
+                    }
+                    
                     // Manual survey: Use survey order service with customer_survey_order_id
                     $surveyResponse = $this->querySurveyOrderService
                         ->querySurveyOrderDetail($order->customer_survey_order_id);
@@ -288,17 +295,28 @@ class SurveyOrderController extends Controller
                         if ($hasAllRequiredFields) {
                             // All required fields present: mark as Completed and save survey result
                             $statusUpdates[$order->id] = FFDServiceProvisionStatus::Completed->value;
-                            $surveyResultUpdates[$order->id] = [
+                            
+                            $surveyResultData = [
                                 'media_type' => $mediaType,
                                 'cable_type' => $cableType,
                                 'line_indicator' => $lineIndicator,
                                 'survey_failure_reason' => null, // Clear any previous failure reason
                                 'zone_code' => $zoneCode, // Store zone code if found
                             ];
-
-                            // Queue notification for manual survey completion
-                            // Only notify if status is actually changing to Completed
-                            if ($order->status !== FFDServiceProvisionStatus::Completed->value) {
+                            
+                            // STRICT: Never touch device fields if device is already selected
+                            // Device fields are managed exclusively by update-device endpoint
+                            $deviceAlreadySelected = $order->with_device !== null;
+                            
+                            // Only reset device selection when:
+                            // 1. Status is FIRST changing to Completed, AND
+                            // 2. Device has NOT been selected yet
+                            if ($order->status !== FFDServiceProvisionStatus::Completed->value && !$deviceAlreadySelected) {
+                                $surveyResultData['with_device'] = null;
+                                $surveyResultData['device_id'] = null;
+                                $surveyResultData['device_voice_id'] = null;
+                                
+                                // Queue notification for manual survey completion
                                 $manualSurveyCompletedNotifications[] = [
                                     'phone' => $order->contact_no ?? null,
                                     'customer_name' => $order->contact_person ?? 'Customer',
@@ -306,6 +324,8 @@ class SurveyOrderController extends Controller
                                     'order_number' => $order->customer_survey_order_id,
                                 ];
                             }
+                            
+                            $surveyResultUpdates[$order->id] = $surveyResultData;
                         } else {
                             // Missing required fields: only update status from BSS response
                             // Don't update survey result fields until all data is available
@@ -972,7 +992,7 @@ class SurveyOrderController extends Controller
                 ], Response::HTTP_BAD_REQUEST);
             }
 
-            // Prevent device selection if already selected
+            // Prevent device re-selection if already selected (first selection only)
             if ($surveyOrder->with_device !== null) {
                 return response()->json([
                     'success' => false,

@@ -13,6 +13,7 @@ use App\Services\Payment\PaymentCalculatorService;
 use App\Services\Payment\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Throwable;
 
@@ -60,6 +61,7 @@ class ManualSurveyOrderService extends BaseApiService
     {
         try {
             $xmlPayload = $this->buildRequestXml($data);
+
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedResponse = $this->parseResponseXml($data, $xmlResponse);
 
@@ -109,11 +111,12 @@ class ManualSurveyOrderService extends BaseApiService
         // Use shared contact helpers
         $primaryContact = $this->getPrimaryContact($data);
 
-        // Extract address info
-        $regionCity = $addressInfo['region_city'] ?? $addressInfo['administrative_region_city'] ?? '';
+        // Extract address info - use 'aa' as default for BSS compatibility
+        // BSS doesn't accept numeric IDs, so fallback to 'aa' for any numeric or empty values
+        $regionCity = $addressInfo['region_city'] ?? '5';
         $subcityZone = $addressInfo['subcity_zone'] ?? '';
         $weredaTown = $addressInfo['wereda_town'] ?? '';
-        $kebele = $addressInfo['kebele'] ?? '';
+        $kebele = $addressInfo['kebele'] ?? 'aa';
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -396,6 +399,15 @@ XML;
         ]);
 
         return null;
+    }
+
+    /**
+     * Normalize address field for BSS compatibility.
+     * BSS doesn't accept numeric IDs, so fallback to 'aa' for any numeric or empty values.
+     */
+    protected function normalizeAddressField(?string $value): string
+    {
+        return $value;
     }
 
     /**

@@ -226,6 +226,34 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             return;
         }
 
+        // Validate address selection (region, zone, woreda are mandatory)
+        if (!selectedAddress.region) {
+            setSubmitting(false);
+            setManualFlowErrors({ region: 'Please select a region' });
+            toast.error('Region selection is required', {
+                description: 'Please select your region for the service installation address.',
+            });
+            return;
+        }
+
+        if (!selectedAddress.zone) {
+            setSubmitting(false);
+            setManualFlowErrors({ zone: 'Please select a zone' });
+            toast.error('Zone selection is required', {
+                description: 'Please select your zone for the service installation address.',
+            });
+            return;
+        }
+
+        if (!selectedAddress.woreda) {
+            setSubmitting(false);
+            setManualFlowErrors({ woreda: 'Please select a woreda' });
+            toast.error('Woreda selection is required', {
+                description: 'Please select your woreda for the service installation address.',
+            });
+            return;
+        }
+
         // Validate telecom zone selection (mandatory)
         if (!selectedTelecomRegion) {
             setSubmitting(false);

@@ -200,17 +200,10 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 showSuccessToast(result.message || 'Resource available!', { id: toastId });
                 nextStep();
             } else {
-                // Check if manual survey is required (zone not resolvable or location review needed)
-                const requiresManualSurvey = result.requireManualSurvey || 
-                    (result.message && (
-                        result.message.includes('MANUAL_SURVEY_REQUIRED') ||
-                        result.message.includes('LOCATION_REVIEW_NEEDED')
-                    ));
-
+                // Resource not available - dismiss toast and let location-setup-step show the dialog
+                // The dialog will notify user and offer "Continue Manually" option
                 toast.dismiss(toastId);
-                if (requiresManualSurvey) {
-                    setShowManualStep(true);
-                }
+                // Don't automatically show manual step - let the dialog handle it
             }
         } catch (error) {
             // Extract error message from API error

@@ -102,17 +102,13 @@ export function LocationSetupStep({
         }
     }, []);
 
-    // Show modal when resource is not available, but only if user hasn't seen it yet
+    // Show dialog when resource is not available for any reason
     useEffect(() => {
-        // Only show Location Review Needed dialog if:
-        // 1. Resource is not available AND
-        // 2. The message indicates location is in Ethiopia but outside Addis Ababa (LOCATION_REVIEW_NEEDED)
-        const isLocationReviewNeeded = formData.resourceMessage && formData.resourceMessage.includes('LOCATION_REVIEW_NEEDED');
-        
-        if (formData.resourceAvailable === false && !hasSeenResourceDialog && isLocationReviewNeeded) {
+        // Show resource unavailable dialog if resource check failed and user hasn't seen it yet
+        if (formData.resourceAvailable === false && !hasSeenResourceDialog) {
             setShowResourceUnavailableDialog(true);
         }
-    }, [formData.resourceAvailable, formData.resourceMessage, hasSeenResourceDialog]);
+    }, [formData.resourceAvailable, hasSeenResourceDialog]);
 
     // Handle "Continue Manually" button click - show manual step in flow
     const handleContinueManually = () => {

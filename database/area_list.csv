@@ -1,51 +1,35 @@
 area_code,area_name,zone_name
-178,Sarbat,SWAAZ
-180,Sidist Killo,NAAZ
-182,Leghar,NAAZ
-184,Nefas Silk,SAAZ
-186,Addis Ketema,WAAZ
-189,Bole Medhanealem,EAAZ
-1982,Ayertena,SWAAZ
-1986,Mekanisa,SWAAZ
-1987,Keraniyo,SWAAZ
-2002,Alemgena,SWAAZ
-2019,Arada,WAAZ
-2021,Frensay,NAAZ
-2022,Addisu Gebeya,WAAZ
-2044,Arat Killo,NAAZ
-2045,Shero Mada,NAAZ
-2047,Ledeta,SWAAZ
-2048,Kasanches,NAAZ
-2049,Olompia,NAAZ
-2053,Kirkos,NAAZ
-2054,Hana Mariam,SAAZ
-2055,Kality,SAAZ
-2056,Akaki,SAAZ
-2061,Kolfe,WAAZ
-2063,Shegola,WAAZ
-2065,Asko,WAAZ
-2066,Burayu,WAAZ
-2075,Merkato,WAAZ
-2087,Lamberet,NAAZ
-2089,Bole Michael,SAAZ
-2090,Gerji,EAAZ
-2091,Kotebe,NAAZ
-5249,Sholla Gebeya,NAAZ
-5907,Gofa,SAAZ
-5908,Gotera,SAAZ
-5909,Lancha,SAAZ
-5938,Gurd Sholla,EAAZ
-5939,Atiklet Tera,WAAZ
-5940,Ayat,EAAZ
-5941,Summit,EAAZ
-5942,Lebu,SWAAZ
-5950,Tekle Haymanot,NAAZ
-5952,Bole Bulbula,SAAZ
-5963,Atlas,EAAZ
-5969,Ashewa Meda,WAAZ
-5974,Goro Figa,EAAZ
-6044,Bole Arabsa,EAAZ
-6045,Yeka Abado,EAAZ
-60040,Koye Feche,SAAZ
-60060,Summit 72,EAAZ
-60080,Bole Michael,SAAZ
+177,SWAAZ-Bus.Admin,SWAAZ
+179,NAAZ-Bus.Admin,NAAZ
+181,NAAZ-2-Bus.Admin,NAAZ
+183,SAAZ-Bus.Admin,SAAZ
+185,WAAZ-Bus.Admin,WAAZ
+187,EAAZ-Bus.Admin,EAAZ
+1981,South Western AA Zone,SWAAZ
+1988,KetenaHulet Paystation,SWAAZ
+2018,Northern AA Zone,NAAZ
+2043,Entoto Business Area,NAAZ
+2046,Northern AA Zone-2,NAAZ
+2050,ECA-Pay station,NAAZ
+2051,AU-Paystation,NAAZ
+2052,Southern AA Zone,SAAZ
+2057,Gofa Business Area,SAAZ
+2059,Gotera Paystation,SAAZ
+2060,Western AA Zone,WAAZ
+2086,Eastern AA Zone,EAAZ
+2092,London Cafa Business Area,EAAZ
+5263,SARBETSHOP,SWAAZ
+5267,SARBET SHOP,SWAAZ
+5268,NEW BOLE LONDON NOVIS SHOP,EAAZ
+5269,KIDESTE-MARIAM SHOP,NAAZ
+5270,NEW LEGEHAR SHOP,NAAZ
+5271,MESALEMIA SHOP,WAAZ
+5272,SARIS SHOP,SAAZ
+5296,Churchill residential Shop,NAAZ
+5313,GURD SHOLA SHOP,EAAZ
+5821,Sarbet 2,SWAAZ
+5955,Alembank Business Area,SWAAZ
+5962,Legetafo Business Area,EAAZ
+5965,Bole Millennium Business Area,EAAZ
+5966,Wolete Business Area,SWAAZ
+5970,Enqulal Fabrica Area,WAAZ

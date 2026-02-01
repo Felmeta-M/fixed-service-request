@@ -4,9 +4,9 @@ namespace App\Enums;
 
 enum OfferId: int
 {
-    case FixedData  = 1457567289;
+    case FixedData = 1457567289;
     case FixedVoice = 1207609454;
-    case FixedCombo = 180427974;
+    case FixedCombo = 102647257;
 
     /**
      * Check if the offer ID represents a combo service.

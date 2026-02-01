@@ -20,10 +20,10 @@ import SurveyActions from './survey-actions';
 const typeMap = {
     // '1457567289': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
     // '1207609454': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
-    // '180427974': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
+    // '102647257': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
     '1457567289': { label: 'Internet', text: 'text-et-blue', bg: 'bg-blue-400', icon: Wifi },
     '1207609454': { label: 'Voice', text: 'text-primary', bg: 'bg-purple-400', icon: Phone },
-    '180427974': { label: 'Combo', text: 'text-et-green', bg: 'bg-green-400', icon: Box },
+    '102647257': { label: 'Combo', text: 'text-et-green', bg: 'bg-green-400', icon: Box },
 };
 
 interface SurveyTableProps {
@@ -180,11 +180,10 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                         <div>
                             <Badge
                                 variant="outline"
-                                className={`flex items-center gap-1.5 bg-white ${
-                                    isManual
+                                className={`flex items-center gap-1.5 bg-white ${isManual
                                         ? 'border-et-blue bg-et-blue/10 text-et-blue'
                                         : 'border-primary bg-primary/10 text-primary'
-                                }`}
+                                    }`}
                             >
                                 <span className="text-xs font-medium">{isManual ? 'Manual' : 'Auto'}</span>
                             </Badge>
@@ -237,7 +236,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                             <SurveyActions
                                 survey={survey}
                                 onActionComplete={() => onSurveyUpdate?.()}
-                                onUpdatingChange={() => {}}
+                                onUpdatingChange={() => { }}
                             />
                         </div>
                     );

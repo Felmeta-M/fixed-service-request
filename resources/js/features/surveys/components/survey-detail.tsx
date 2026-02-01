@@ -100,7 +100,7 @@ type SurveyDetailProps = {
 };
 
 const INTERNET_OFFER_ID = '1457567289';
-const COMBO_OFFER_ID = '180427974';
+const COMBO_OFFER_ID = '102647257';
 
 const serviceTypeMap = {
     [INTERNET_OFFER_ID]: { label: 'Internet', icon: Wifi, color: 'text-blue-600' },
@@ -556,8 +556,8 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                             <Badge
                                 variant="outline"
                                 className={`w-fit text-xs ${isManualSurvey
-                                        ? 'border-et-blue bg-et-blue/10 text-et-blue'
-                                        : 'border-primary bg-primary/10 text-primary'
+                                    ? 'border-et-blue bg-et-blue/10 text-et-blue'
+                                    : 'border-primary bg-primary/10 text-primary'
                                     }`}
                             >
                                 {isManualSurvey ? 'Manual' : 'Auto'}

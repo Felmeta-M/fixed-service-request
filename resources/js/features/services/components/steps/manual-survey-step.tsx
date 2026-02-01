@@ -332,7 +332,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                 const serviceTypes: Record<string, string> = {
                     '1457567289': 'Fixed Broadband',
                     '1207609454': 'Fixed Voice',
-                    '180427974': 'Combo Services',
+                    '102647257': 'Combo Services',
                 };
                 const newSurvey = {
                     id: surveyId,
@@ -401,7 +401,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
     const serviceTypes: Record<string, string> = {
         '1457567289': 'Fixed Broadband',
         '1207609454': 'Fixed Voice',
-        '180427974': 'Combo Services',
+        '102647257': 'Combo Services',
     };
 
     return (
@@ -839,9 +839,9 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                         <ArrowLeft className="h-4 w-4" />
                         Back
                     </Button>
-                    <Button 
-                        type="submit" 
-                        disabled={submitting || createSurveyMutation.isPending} 
+                    <Button
+                        type="submit"
+                        disabled={submitting || createSurveyMutation.isPending}
                         className="bg-primary hover:bg-primary/90 w-full"
                     >
                         {(submitting || createSurveyMutation.isPending) ? (

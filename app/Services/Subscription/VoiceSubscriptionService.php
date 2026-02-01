@@ -11,6 +11,7 @@ use App\Services\QueryAvailableNumberService;
 use App\Services\QuerySubscriptionOrderStatusService;
 use App\Services\ReserveNumberService;
 use App\Services\ZoneService;
+use App\Enums\OfferId;
 
 class VoiceSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
@@ -25,7 +26,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
 
    protected function offeringId(): int
    {
-      return 1207609454;
+      return OfferId::FixedVoice->value;
    }
 
    protected function businessCode(): string

@@ -23,7 +23,7 @@
 // import { cn } from '@/lib/utils';
 
 // interface DeviceSelectorProps {
-//     serviceType?: string; // '1457567289' (broadband), '1207609454' (voice), '180427974' (combo)
+//     serviceType?: string; // '1457567289' (broadband), '1207609454' (voice), '102647257' (combo)
 //     mediaType?: string; // 'PON' (fiber) or 'COPPER' - from manual survey result
 //     selectedDeviceId?: string; // For single selection (broadband/voice)
 //     selectedDeviceInternetId?: string; // For combo internet device
@@ -37,7 +37,7 @@
 // const SERVICE_TYPES = {
 //     BROADBAND: '1457567289',
 //     VOICE: '1207609454',
-//     COMBO: '180427974',
+//     COMBO: '102647257',
 // };
 
 // export function DeviceSelector({
@@ -52,10 +52,10 @@
 //     disabled,
 // }: DeviceSelectorProps) {
 //     const isCombo = serviceType === SERVICE_TYPES.COMBO;
-    
+
 //     // Track which device images have failed to load (by device ID)
 //     const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
-    
+
 //     // Track which device cards have expanded specifications (by device ID)
 //     const [expandedSpecs, setExpandedSpecs] = useState<Set<string>>(new Set());
 
@@ -71,7 +71,7 @@
 //     const broadbandDevices = isCombo
 //         ? allDevices.filter((d: AvailableDevice) => d.device_type === 'broadband' || d.device_type === 'universal')
 //         : [];
-    
+
 //     const voiceDevices = isCombo
 //         ? allDevices.filter((d: AvailableDevice) => d.device_type === 'voice' || d.device_type === 'universal')
 //         : [];
@@ -576,7 +576,7 @@
 // const SERVICE_TYPES = {
 //     BROADBAND: '1457567289',
 //     VOICE: '1207609454',
-//     COMBO: '180427974',
+//     COMBO: '102647257',
 // };
 
 // const SPEC_CATEGORIES = {
@@ -625,7 +625,7 @@
 //     showTabs = true,
 // }: DeviceSelectorProps) {
 //     const isCombo = serviceType === SERVICE_TYPES.COMBO;
-    
+
 //     const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
 //     const [expandedSpecs, setExpandedSpecs] = useState<Set<string>>(new Set());
 //     const [activeTab, setActiveTab] = useState<string>('all');
@@ -640,7 +640,7 @@
 //         const broadband = isCombo
 //             ? allDevices.filter((d: AvailableDevice) => d.device_type === 'broadband' || d.device_type === 'universal')
 //             : [];
-        
+
 //         const voice = isCombo
 //             ? allDevices.filter((d: AvailableDevice) => d.device_type === 'voice' || d.device_type === 'universal')
 //             : [];
@@ -653,7 +653,7 @@
 
 //     const filteredDevices = useMemo(() => {
 //         if (!showTabs) return displayDevices;
-        
+
 //         switch (activeTab) {
 //             case 'featured':
 //                 return displayDevices.filter((d: AvailableDevice) => featuredDevices.includes(d));
@@ -1007,7 +1007,7 @@
 //                                             renderSpecificationCategory(category, specs)
 //                                         )}
 //                                     </div>
-                                    
+
 //                                     {/* View All Details Button */}
 //                                     <div className="mt-4 pt-4 border-t">
 //                                         <Button
@@ -1347,14 +1347,14 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAvailableDevices, AvailableDevice } from '@/hooks/use-available-devices';
-import { 
-    CheckCircle, 
-    Loader2, 
-    Package, 
-    Wifi, 
-    Phone, 
-    Zap, 
-    Network, 
+import {
+    CheckCircle,
+    Loader2,
+    Package,
+    Wifi,
+    Phone,
+    Zap,
+    Network,
     Radio,
     Thermometer,
     MapPin,
@@ -1391,7 +1391,7 @@ interface DeviceSelectorProps {
 const SERVICE_TYPES = {
     BROADBAND: '1457567289',
     VOICE: '1207609454',
-    COMBO: '180427974',
+    COMBO: '102647257',
 };
 
 export function DeviceSelector({
@@ -1406,7 +1406,7 @@ export function DeviceSelector({
     disabled,
 }: DeviceSelectorProps) {
     const isCombo = serviceType === SERVICE_TYPES.COMBO;
-    
+
     const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
     const [expandedSpecs, setExpandedSpecs] = useState<Set<string>>(new Set());
 
@@ -1419,7 +1419,7 @@ export function DeviceSelector({
         const broadband = isCombo
             ? allDevices.filter((d: AvailableDevice) => d.device_type === 'broadband' || d.device_type === 'universal')
             : [];
-        
+
         const voice = isCombo
             ? allDevices.filter((d: AvailableDevice) => d.device_type === 'voice' || d.device_type === 'universal')
             : [];
@@ -1562,10 +1562,10 @@ export function DeviceSelector({
         const handleMainContentClick = (e: React.MouseEvent) => {
             // Only trigger device selection if clicking on non-button areas
             const target = e.target as HTMLElement;
-            const isButton = target.tagName === 'BUTTON' || 
-                           target.closest('button') || 
-                           target.closest('[data-specs-area]');
-            
+            const isButton = target.tagName === 'BUTTON' ||
+                target.closest('button') ||
+                target.closest('[data-specs-area]');
+
             if (!isButton) {
                 handleDeviceSelect(device, onSelect ? () => onSelect() : undefined);
             }
@@ -1670,8 +1670,8 @@ export function DeviceSelector({
                                     onClick={(e) => toggleSpecs(device.id, e)}
                                     className={cn(
                                         "flex items-center justify-between w-full transition-colors duration-200",
-                                        specsExpanded 
-                                            ? "text-primary" 
+                                        specsExpanded
+                                            ? "text-primary"
                                             : "text-gray-600 hover:text-gray-900"
                                     )}
                                 >
@@ -1686,7 +1686,7 @@ export function DeviceSelector({
                                 </button>
 
                                 {/* Expandable Specifications */}
-                                <div 
+                                <div
                                     className={cn(
                                         "overflow-hidden transition-all duration-300 ease-in-out",
                                         specsExpanded ? "max-h-[500px] opacity-100 mt-3" : "max-h-0 opacity-0"

@@ -20,7 +20,7 @@ class AvailableDeviceController extends Controller
      * Display a listing of active available devices - cached Query Builder
      *
      * Query parameters:
-     * - service_type: Filter by service type ('1457567289' for broadband, '1207609454' for voice, '180427974' for combo)
+     * - service_type: Filter by service type ('1457567289' for broadband, '1207609454' for voice, '102647257' for combo)
      * - device_type: Direct filter by device type ('broadband', 'voice', 'universal')
      * - vendor: Filter by vendor name
      */
@@ -58,7 +58,7 @@ class AvailableDeviceController extends Controller
                     // Voice service - show voice and universal devices
                     $query->whereIn('device_type', ['voice', 'universal']);
                 }
-                // For combo ('180427974'), return all active devices
+                // For combo ('102647257'), return all active devices
             }
 
             // Direct device_type filter (takes precedence if provided)
@@ -73,23 +73,23 @@ class AvailableDeviceController extends Controller
                 }
             }
 
-                // Filter by vendor
-                if ($request->has('vendor')) {
-                    $query->where('vendor', $request->vendor);
-                }
+            // Filter by vendor
+            if ($request->has('vendor')) {
+                $query->where('vendor', $request->vendor);
+            }
 
-                // Filter by media type (PON for fiber, COPPER for copper)
-                // Used for manual surveys to filter devices based on infrastructure
-                if ($request->has('media_type')) {
-                    $mediaType = strtoupper($request->media_type);
-                    $query->where(function ($q) use ($mediaType) {
-                        $q->where('media_type', $mediaType)
-                          ->orWhere('media_type', 'UNIVERSAL');
-                    });
-                }
+            // Filter by media type (PON for fiber, COPPER for copper)
+            // Used for manual surveys to filter devices based on infrastructure
+            if ($request->has('media_type')) {
+                $mediaType = strtoupper($request->media_type);
+                $query->where(function ($q) use ($mediaType) {
+                    $q->where('media_type', $mediaType)
+                        ->orWhere('media_type', 'UNIVERSAL');
+                });
+            }
 
-                return $query->orderBy('price', 'asc')->get();
-            });
+            return $query->orderBy('price', 'asc')->get();
+        });
 
 
         // Transform devices

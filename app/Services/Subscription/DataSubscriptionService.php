@@ -14,6 +14,7 @@ use App\Services\ReserveNumberService;
 use App\Services\ZoneService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use App\Enums\OfferId;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
@@ -29,7 +30,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
    protected function offeringId(): int
    {
-      return 1457567289; // FBB OR DATA
+      return OfferId::FixedData->value; // FBB OR DATA
    }
 
    protected function businessCode(): string

@@ -12,6 +12,7 @@ use App\Services\ReserveNumberService;
 use App\Services\ZoneService;
 use App\Support\CustomerContext;
 use Illuminate\Support\Str;
+use App\Enums\OfferId;
 
 class ComboSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
@@ -26,7 +27,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
 
    protected function offeringId(): int
    {
-      return 180427974;
+      return OfferId::FixedCombo->value;
    }
 
    protected function businessCode(): string
@@ -271,7 +272,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
                         <com:OfferingId>
-                           <com:OfferingId>180427974</com:OfferingId>
+                           <com:OfferingId>{$this->offeringId()}</com:OfferingId>
                         </com:OfferingId>
                         
                      </com:NewPrimaryOffering>

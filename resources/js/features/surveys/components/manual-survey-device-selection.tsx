@@ -19,7 +19,7 @@ interface ManualSurveyDeviceSelectionProps {
 const SERVICE_TYPES = {
     BROADBAND: '1457567289',
     VOICE: '1207609454',
-    COMBO: '180427974',
+    COMBO: '102647257',
 };
 
 export function ManualSurveyDeviceSelection({

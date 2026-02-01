@@ -40,7 +40,7 @@ class ServiceTypeSeeder extends Seeder
                 'updated_at' => $now,
             ],
             [
-                'code' => '180427974',
+                'code' => '102647257',
                 'name' => 'Combo Services',
                 'description' => 'Bundle of internet and voice services',
                 'icon' => 'Package',

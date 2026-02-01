@@ -21,7 +21,7 @@ interface DeviceSelectionStepProps {
 }
 
 export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabled = false }: DeviceSelectionStepProps) {
-    const isCombo = formData.serviceType === '180427974';
+    const isCombo = formData.serviceType === '102647257';
     const isVoiceOnly = formData.serviceType === '1207609454';
 
     // Check if device selection is valid for proceeding

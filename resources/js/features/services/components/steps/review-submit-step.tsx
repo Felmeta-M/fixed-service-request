@@ -70,7 +70,7 @@ interface ReviewSubmitStepProps {
 const serviceTypes = {
     '1457567289': { name: 'Fixed Broadband', icon: Wifi, color: 'blue' },
     '1207609454': { name: 'Fixed Voice', icon: Wifi, color: 'green' },
-    '180427974': { name: 'Combo Services', icon: Wifi, color: 'purple' },
+    '102647257': { name: 'Combo Services', icon: Wifi, color: 'purple' },
 };
 
 export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepProps) {
@@ -152,19 +152,19 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 area_code: (encryptedResource as any).area_code ?? '',
                 area_name: (encryptedResource as any).area_name ?? '',
             },
-            
+
             // OPTIONAL - Only send if different from defaults
             ...(formData.bandwidth && { bandwidth: formData.bandwidth }),
             ...(formData.withDevice !== undefined && { with_device: formData.withDevice }),
             // Device handling:
             // - Voice-only (1207609454): use device_id from deviceVoiceId
             // - Broadband (1457567289): use device_id from deviceId
-            // - Combo (180427974): use device_id for internet, device_voice_id for voice
+            // - Combo (102647257): use device_id for internet, device_voice_id for voice
             ...(formData.serviceType === '1207609454' && formData.deviceVoiceId && { device_id: formData.deviceVoiceId }),
             ...(formData.serviceType === '1457567289' && formData.deviceId && { device_id: formData.deviceId }),
-            ...(formData.serviceType === '180427974' && formData.deviceId && { device_id: formData.deviceId }),
-            ...(formData.serviceType === '180427974' && formData.deviceVoiceId && { device_voice_id: formData.deviceVoiceId }),
-            
+            ...(formData.serviceType === '102647257' && formData.deviceId && { device_id: formData.deviceId }),
+            ...(formData.serviceType === '102647257' && formData.deviceVoiceId && { device_voice_id: formData.deviceVoiceId }),
+
             // Contact - only send if user provided custom values
             ...(formData.contactPerson && { contact_person: formData.contactPerson }),
             ...(formData.contactNo && { contact_no: formData.contactNo }),
@@ -259,7 +259,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                             </div>
 
                             {/* Bandwidth - only for Internet and Combo services */}
-                            {(formData.serviceType === '1457567289' || formData.serviceType === '180427974') && (
+                            {(formData.serviceType === '1457567289' || formData.serviceType === '102647257') && (
                                 <div className="flex flex-row justify-between gap-2 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex items-center gap-2">
                                         <Wifi className="h-4 w-4 text-primary shrink-0" />
@@ -281,7 +281,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                             </div> */}
 
                             {/* Device info - only for Internet and Combo services */}
-                            {(formData.serviceType === '1457567289' || formData.serviceType === '180427974') && (
+                            {(formData.serviceType === '1457567289' || formData.serviceType === '102647257') && (
                                 <div className="flex flex-col gap-2 pt-2 border-t border-border/50">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Router className="h-4 w-4 text-primary shrink-0" />
@@ -291,7 +291,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                         {formData.withDevice === undefined ? (
                                             <p className="text-sm text-muted-foreground">Not selected</p>
                                         ) : formData.withDevice ? (
-                                            formData.serviceType === '180427974' ? (
+                                            formData.serviceType === '102647257' ? (
                                                 // Combo service - show internet and/or voice device(s)
                                                 <div className="space-y-3">
                                                     {formData.selectedDeviceInternet ? (

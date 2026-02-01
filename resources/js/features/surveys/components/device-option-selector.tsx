@@ -38,7 +38,7 @@ export function DeviceOptionSelector({
     // When undefined or null, use empty string so nothing is selected initially
     // When explicitly set, use the corresponding value
     const displayValue = (value === undefined || value === null) ? '' : value ? 'with' : 'without';
-    const isCombo = serviceType === '180427974';
+    const isCombo = serviceType === '102647257';
     const isVoiceOnly = serviceType === '1207609454';
 
     const handleDeviceSelect = (device: AvailableDevice) => {
@@ -107,16 +107,16 @@ export function DeviceOptionSelector({
             {isWithoutDevice && (
                 <div className="rounded-lg border border-[#068BCC] px-4 py-3">
                     <div className="flex items-center gap-4">
-                    <BadgeCheck  fill="white" className="h-10 w-10 text-[#068BCC]" />
-                    <div>
-                    <p className="text-sm font-medium text-[#068BCC] mb-2">
-                        Please ensure your device is one of the supported models:
-                    </p>
-                    <ul className="list-disc space-y-1 pl-4 sm:pl-8 text-sm text-[#068BCC]">
-                        <li>Huawei Device</li>
-                        <li>ZTE Device</li>
-                    </ul>
-                    </div>
+                        <BadgeCheck fill="white" className="h-10 w-10 text-[#068BCC]" />
+                        <div>
+                            <p className="text-sm font-medium text-[#068BCC] mb-2">
+                                Please ensure your device is one of the supported models:
+                            </p>
+                            <ul className="list-disc space-y-1 pl-4 sm:pl-8 text-sm text-[#068BCC]">
+                                <li>Huawei Device</li>
+                                <li>ZTE Device</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             )}

@@ -322,7 +322,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
     // Upgrade/Downgrade is only available for Internet and Combo services
     const INTERNET_OFFER_ID = '1457567289';
-    const COMBO_OFFER_ID = '180427974';
+    const COMBO_OFFER_ID = '102647257';
     const isInternetOrCombo = survey.main_offer_id === INTERNET_OFFER_ID || survey.main_offer_id === COMBO_OFFER_ID;
     const canUpgradeDowngrade = canChangeOffer && isInternetOrCombo;
 

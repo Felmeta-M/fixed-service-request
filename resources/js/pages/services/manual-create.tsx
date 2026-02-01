@@ -188,7 +188,7 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
                 const serviceTypes: Record<string, string> = {
                     '1457567289': 'Fixed Broadband',
                     '1207609454': 'Fixed Voice',
-                    '180427974': 'Combo Services',
+                    '102647257': 'Combo Services',
                 };
                 const newSurvey = {
                     id: surveyId,
@@ -230,7 +230,7 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
     const serviceTypes: Record<string, string> = {
         '1457567289': 'Fixed Broadband',
         '1207609454': 'Fixed Voice',
-        '180427974': 'Combo Services',
+        '102647257': 'Combo Services',
     };
 
     return (

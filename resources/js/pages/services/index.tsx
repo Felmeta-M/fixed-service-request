@@ -27,10 +27,10 @@ import { useEffect, useMemo, useState } from 'react';
 const typeMap = {
     // '1943913918': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
     // '1207609454': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
-    // '180427974': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
+    // '102647257': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
     '1943913918': { label: 'Internet', text: 'text-et-blue', bg: 'bg-blue-400', icon: Wifi },
     '1207609454': { label: 'Voice', text: 'text-primary', bg: 'bg-purple-400', icon: Phone },
-    '180427974': { label: 'Combo', text: 'text-et-green', bg: 'bg-green-400', icon: Box },
+    '102647257': { label: 'Combo', text: 'text-et-green', bg: 'bg-green-400', icon: Box },
 };
 
 interface DashboardStats {
@@ -75,7 +75,7 @@ export default function CustomerDashboard() {
     });
 
     const { auth } = usePage().props;
-    
+
     // Fetch dynamic service types
     const { serviceTypes, loading: loadingServiceTypes } = useServiceTypes();
 
@@ -117,8 +117,8 @@ export default function CustomerDashboard() {
     const matchesCategory = (survey: any, category: 'ACTIVE' | 'PENDING' | 'COMPLETED' | 'SUSPENDED') => {
         const statusCode = String(survey.status_code ?? '');
         const statusLabel = String(survey.status ?? '');
-        return STATUS_CODES[category].includes(statusCode as any) || 
-               STATUS_LABELS[category].includes(statusLabel as any);
+        return STATUS_CODES[category].includes(statusCode as any) ||
+            STATUS_LABELS[category].includes(statusLabel as any);
     };
 
     // Calculate dashboard stats from survey data

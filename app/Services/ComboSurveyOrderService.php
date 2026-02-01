@@ -13,7 +13,9 @@ class ComboSurveyOrderService extends BaseApiService
     protected int $timeout = 10;
     protected int $rateLimit = 15;
 
-    public function __construct() {}
+    public function __construct()
+    {
+    }
 
     public function createSurveyOrder(array $data, array $resourceCheck = []): JsonResponse
     {
@@ -133,7 +135,7 @@ XML;
             <com:SurveyType>{$data['survey_type']}</com:SurveyType>
             <com:TelecomRegion>{$data['telecom_region']}</com:TelecomRegion>
             <com:OperType>{$data['oper_type']}</com:OperType>
-            <com:MainOfferId>180427974</com:MainOfferId>
+            <com:MainOfferId>102647257</com:MainOfferId>
             <com:SurveyAddressInfo>
                <com:AdministrativeRegionOrCity>{$data['survey_address_info']['region_city']}</com:AdministrativeRegionOrCity>
                <com:SubcityOrZone>{$data['survey_address_info']['subcity_zone']}</com:SubcityOrZone>
@@ -171,21 +173,21 @@ XML;
         $responseHeader = $responseMsg->ResponseHeader->children($namespaces['com']);
         $responseBody = $responseMsg->HandleSurveyOrderRespBody->children($namespaces['com']);
 
-        $retCode = (string)$responseHeader->RetCode;
-        $retMsg = (string)$responseHeader->RetMsg;
+        $retCode = (string) $responseHeader->RetCode;
+        $retMsg = (string) $responseHeader->RetMsg;
 
         if ($retCode !== '0') {
             return ApiResponse::error('Unable to create Fixed Combo survey order');
         }
 
-        $customerSurveyOrderId = (string)$responseBody->CustomerSurveyOrderId;
+        $customerSurveyOrderId = (string) $responseBody->CustomerSurveyOrderId;
 
         $this->createLocalSurveyOrder($customerSurveyOrderId, $data, $resourceCheck);
 
         return [
             'ret_code' => $retCode,
             'ret_msg' => $retMsg,
-            'response_time' => (string)$responseHeader->ResponseTime,
+            'response_time' => (string) $responseHeader->ResponseTime,
             'customer_survey_order_id' => $customerSurveyOrderId,
         ];
     }
@@ -201,11 +203,11 @@ XML;
             'customer_survey_order_id' => $customerSurveyOrderId,
             'status' => FFDServiceProvisionStatus::Completed->value,
             'cable_length' => $resourceCheck['distance'] ?? null,
-            'cable_type'   => $resourceCheck['cable_type'] ?? null,
-            'lat'          => $resourceCheck['latitude'] ?? null,
-            'long'         => $resourceCheck['longitude'] ?? null,
-            'area_code'    => $areaCode,
-            'area_name'    => $areaName,
+            'cable_type' => $resourceCheck['cable_type'] ?? null,
+            'lat' => $resourceCheck['latitude'] ?? null,
+            'long' => $resourceCheck['longitude'] ?? null,
+            'area_code' => $areaCode,
+            'area_name' => $areaName,
         ]);
     }
 

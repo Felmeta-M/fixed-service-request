@@ -65,6 +65,7 @@ export function GoogleLocationMap({
     const [showAccuracyCircle, setShowAccuracyCircle] = useState(true);
     const [detectionStatus, setDetectionStatus] = useState<string>('');
     const [, forceUpdate] = useState({});
+    const [currentMapType, setCurrentMapType] = useState<google.maps.MapTypeId | string>('roadmap');
     
     const markerRef = useRef<google.maps.Marker | null>(null);
     const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
@@ -178,6 +179,14 @@ export function GoogleLocationMap({
             if (showCoverageArea) {
                 loadCoverageArea(loadedMap);
             }
+            
+            // Listen for map type changes to preserve user's selection
+            loadedMap.addListener('maptypeid_changed', () => {
+                const newMapType = loadedMap.getMapTypeId();
+                if (newMapType) {
+                    setCurrentMapType(newMapType);
+                }
+            });
         },
         [selectedLocation, showCoverageArea, loadCoverageArea],
     );
@@ -674,12 +683,14 @@ export function GoogleLocationMap({
                     onUnmount={onUnmount}
                     onClick={onMapClick}
                     options={{
+                        mapTypeId: currentMapType as google.maps.MapTypeId,
                         streetViewControl: true,
                         mapTypeControl: true,
                         fullscreenControl: true,
                         zoomControl: true,
                         gestureHandling: 'greedy',
-                        // mapTypeId: 'satellite',
+                        // Disable double-click zoom to prevent accidental map type resets
+                        disableDoubleClickZoom: true,
                         styles: [
                             { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'on' }] },
                             { featureType: 'transit', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },

@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { useGoogleMaps } from '@/contexts/google-maps-context';
 import { useTranslation } from '@/hooks/use-translation';
 import { GoogleMap, Marker } from '@react-google-maps/api';
-import { CheckCircle2, Loader2, MapPin, RefreshCw, XCircle } from 'lucide-react';
+import { CheckCircle2, Loader2, RefreshCw, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface CoverageAreaMapProps {
@@ -29,6 +29,7 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
     const [selectedLocation, setSelectedLocation] = useState<google.maps.LatLngLiteral | null>(null);
     const [availabilityStatus, setAvailabilityStatus] = useState<AvailabilityStatus>('idle');
     const [availabilityMessage, setAvailabilityMessage] = useState<string>('');
+    const [currentMapType, setCurrentMapType] = useState<google.maps.MapTypeId | string>('roadmap');
 
     // Use the centralized Google Maps context
     const { isLoaded: isScriptLoaded, loadError: jsApiLoadError } = useGoogleMaps();
@@ -247,14 +248,19 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
     }, [map, loadCoverageArea]);
 
     // Initialize map
-    const onLoad = useCallback(
-        (loadedMap: google.maps.Map) => {
-            setMap(loadedMap);
-            setIsMapReady(true);
-            setScriptLoadError(null);
-        },
-        [],
-    );
+    const onLoad = useCallback((loadedMap: google.maps.Map) => {
+        setMap(loadedMap);
+        setIsMapReady(true);
+        setScriptLoadError(null);
+
+        // Listen for map type changes to preserve user's selection
+        loadedMap.addListener('maptypeid_changed', () => {
+            const newMapType = loadedMap.getMapTypeId();
+            if (newMapType) {
+                setCurrentMapType(newMapType);
+            }
+        });
+    }, []);
 
     // Load coverage area when map is ready
     useEffect(() => {
@@ -321,20 +327,13 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
     };
 
     return (
-        <div 
-            className="relative overflow-hidden rounded-xl shadow-lg bg-gray-100"
-            style={containerStyle}
-        >
+        <div className="relative overflow-hidden rounded-xl bg-gray-100 shadow-lg" style={containerStyle}>
             {/* Script load error */}
             {scriptLoadError && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-gray-100">
-                    <div className="text-center px-4">
-                        <p className="mb-3 text-sm font-medium text-red-600">
-                            {scriptLoadError}
-                        </p>
-                        <p className="text-xs text-gray-600">
-                            Please check your Google Maps API key configuration.
-                        </p>
+                    <div className="px-4 text-center">
+                        <p className="mb-3 text-sm font-medium text-red-600">{scriptLoadError}</p>
+                        <p className="text-xs text-gray-600">Please check your Google Maps API key configuration.</p>
                     </div>
                 </div>
             )}
@@ -344,9 +343,7 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-gray-100">
                     <div className="text-center">
                         <Loader2 className="mx-auto mb-3 h-10 w-10 animate-spin text-primary" />
-                        <p className="text-sm font-medium text-gray-700">
-                            {t('coverage_map.loading_map')}
-                        </p>
+                        <p className="text-sm font-medium text-gray-700">{t('coverage_map.loading_map')}</p>
                     </div>
                 </div>
             )}
@@ -356,9 +353,7 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                 <div className="absolute top-20 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-white/95 px-4 py-2 shadow-md backdrop-blur-sm sm:top-24">
                     <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                        <p className="text-xs font-medium text-gray-700 sm:text-sm">
-                            {t('coverage_map.loading_coverage')}
-                        </p>
+                        <p className="text-xs font-medium text-gray-700 sm:text-sm">{t('coverage_map.loading_coverage')}</p>
                     </div>
                 </div>
             )}
@@ -367,23 +362,14 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
             {loadError && !isCoverageLoading && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-gray-100/90">
                     <div className="text-center">
-                        <p className="mb-3 text-sm font-medium text-gray-700">
-                            {t('coverage_map.load_failed')}
-                        </p>
-                        <Button
-                            type="button"
-                            onClick={retryLoadCoverage}
-                            size="sm"
-                            variant="outline"
-                        >
+                        <p className="mb-3 text-sm font-medium text-gray-700">{t('coverage_map.load_failed')}</p>
+                        <Button type="button" onClick={retryLoadCoverage} size="sm" variant="outline">
                             <RefreshCw className="mr-2 h-4 w-4" />
                             {t('coverage_map.retry')}
                         </Button>
                     </div>
                 </div>
             )}
-
-            
 
             {/* Center button - responsive */}
             {/* {isCoverageLoaded && !loadError && (
@@ -403,21 +389,12 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
             {availabilityStatus !== 'idle' && (
                 <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center px-3 pb-3">
                     <div className="inline-flex max-w-xl items-center gap-2 rounded-md bg-white/95 px-3 py-1.5 text-[11px] text-gray-700 shadow-sm backdrop-blur-sm sm:text-xs">
-                        {availabilityStatus === 'inside' && (
-                            <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0 text-emerald-600" />
-                        )}
-                        {availabilityStatus === 'outside' && (
-                            <XCircle className="h-3.5 w-3.5 flex-shrink-0 text-red-500" />
-                        )}
-                        {availabilityStatus === 'checking' && (
-                            <Loader2 className="h-3.5 w-3.5 flex-shrink-0 animate-spin text-primary" />
-                        )}
-                        {availabilityStatus === 'error' && (
-                            <span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-amber-500" />
-                        )}
+                        {availabilityStatus === 'inside' && <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0 text-emerald-600" />}
+                        {availabilityStatus === 'outside' && <XCircle className="h-3.5 w-3.5 flex-shrink-0 text-red-500" />}
+                        {availabilityStatus === 'checking' && <Loader2 className="h-3.5 w-3.5 flex-shrink-0 animate-spin text-primary" />}
+                        {availabilityStatus === 'error' && <span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-amber-500" />}
                         <p className="truncate">
-                            {availabilityMessage ||
-                                'Tap on the map to verify if your exact location is within the current coverage.'}
+                            {availabilityMessage || 'Tap on the map to verify if your exact location is within the current coverage.'}
                         </p>
                     </div>
                 </div>
@@ -429,26 +406,22 @@ export function CoverageAreaMap({ googleMapsApiKey, height = '500px' }: Coverage
                     mapContainerStyle={mapContainerStyle}
                     center={defaultCenter}
                     zoom={11}
-                    // Allow users to switch between roadmap and satellite views
-                    // mapTypeId={google.maps.MapTypeId.ROADMAP}
                     onLoad={onLoad}
                     onUnmount={onUnmount}
                     options={{
-                        mapTypeId: google.maps.MapTypeId.ROADMAP,
+                        mapTypeId: currentMapType as google.maps.MapTypeId,
                         streetViewControl: false,
                         // Show map type control so users can choose Satellite
                         mapTypeControl: true,
                         mapTypeControlOptions: {
                             style: google.maps.MapTypeControlStyle.DEFAULT,
-                            mapTypeIds: [
-                                google.maps.MapTypeId.ROADMAP,
-                                google.maps.MapTypeId.SATELLITE,
-                                google.maps.MapTypeId.HYBRID,
-                            ],
+                            mapTypeIds: [google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.SATELLITE, google.maps.MapTypeId.HYBRID],
                         },
                         fullscreenControl: true,
                         zoomControl: true,
                         gestureHandling: 'cooperative',
+                        // Disable double-click zoom to prevent accidental map type changes
+                        // disableDoubleClickZoom: true,
                         // Enable place / POI labels so users can see shops, malls, restaurants, etc.
                         styles: [
                             {

@@ -1,38 +1,38 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { useCancelSurveyOrder, useChangePrimaryOffering, useCreatePaymentOrder, useCreateSubscription } from '@/hooks/use-api-mutations';
+import { formatBandwidthLabel } from '@/hooks/use-bandwidth-options';
+import { useTranslation } from '@/hooks/use-translation';
+import { type ServiceActionFocus } from '@/lib/service-action-rules';
 import { getStatusInfo } from '@/lib/status-map';
+import { showErrorToast, showLoadingToast, showSuccessToast } from '@/lib/toast-helpers';
 import { Link, router, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
 import {
     AlertTriangle,
+    ArrowDownToLineIcon,
     ArrowLeft,
+    ArrowUpToLineIcon,
+    Cable,
     CheckCircle2,
     CreditCard,
     FileText,
     Gauge,
+    HandHelping,
+    Hash,
     Mail,
     Package,
     Phone,
     User,
     Wifi,
+    X,
     Zap,
-    Calendar,
-    Hash,
-    Cable,
-    HandHelping,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
-import { type ServiceActionFocus } from '@/lib/service-action-rules';
-import { useCreateSubscription, useCreatePaymentOrder, useCancelSurveyOrder, useChangePrimaryOffering } from '@/hooks/use-api-mutations';
-import { useTranslation } from '@/hooks/use-translation';
 import { BandwidthChangeDialog } from './bandwidth-change-dialog';
 import { CancelConfirmationDialog } from './cancel-confirmation-dialog';
 import { ManualSurveyDeviceSelection } from './manual-survey-device-selection';
-import { ArrowUpToLineIcon, ArrowDownToLineIcon, X } from 'lucide-react';
-import { formatBandwidthLabel } from '@/hooks/use-bandwidth-options';
 
 type AuthUser = {
     api_token: string;
@@ -144,7 +144,12 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
     const [isTerminateAction, setIsTerminateAction] = useState(false);
     const [showDeviceSelection, setShowDeviceSelection] = useState(false);
 
-    const loading = createSubscriptionMutation.isPending || createPaymentOrderMutation.isPending || cancelMutation.isPending || changePrimaryOfferingMutation.isPending || isSubmitting;
+    const loading =
+        createSubscriptionMutation.isPending ||
+        createPaymentOrderMutation.isPending ||
+        cancelMutation.isPending ||
+        changePrimaryOfferingMutation.isPending ||
+        isSubmitting;
 
     const payment = paymentDetails?.data;
     const customer_survey_order_id = payment?.customer_survey_order_id ?? surveyDetails?.customer_survey_order_id ?? '';
@@ -153,7 +158,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
 
     const amountRaw = payment?.amount ?? payment?.total_amount;
     const amount = Number(amountRaw);
-    const totalAmountNumber = (amountRaw !== null && amountRaw !== undefined && Number.isFinite(amount)) ? amount : undefined;
+    const totalAmountNumber = amountRaw !== null && amountRaw !== undefined && Number.isFinite(amount) ? amount : undefined;
     const totalAmount = (totalAmountNumber ?? 0).toFixed(2);
     const isFree = totalAmountNumber !== undefined && totalAmountNumber <= 0;
 
@@ -241,7 +246,6 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
         return formatBandwidthLabel(bandwidth);
     };
 
-
     const onPaymentConfirm = () => {
         if (!customer_survey_order_id || !user.customer_code || !totalAmountNumber) {
             showErrorToast('Missing required information for payment');
@@ -265,7 +269,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                 onError: (error: Error) => {
                     showErrorToast(error.message || 'Failed to process payment. Please try again.');
                 },
-            }
+            },
         );
     };
 
@@ -394,14 +398,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
         return (
             <div className="w-full space-y-4 px-4 py-4 lg:px-6">
                 {/* Header with back button */}
-                <div className="flex items-center gap-4 mb-6">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setShowDeviceSelection(false)}
-                        className="h-8 w-8"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
+                <div className="mb-6 flex items-center gap-4 text-[#068BCC]">
+                    <Button variant="ghost" size="icon" onClick={() => setShowDeviceSelection(false)} className="h-8 w-8">
+                        <ArrowLeft className="h-4 w-4 text-[#068BCC]" />
                     </Button>
                     <div>
                         <h2 className="text-lg font-semibold">Select Device</h2>
@@ -427,10 +426,10 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
             {/* Header - Only show when NOT in flow context */}
             {!isInFlow && (
                 <div className="flex flex-col gap-2">
-                    <Link href="/services" className="shrink-0 w-fit">
-                        <Button variant="ghost" size="sm" className="gap-1 h-9">
-                            <ArrowLeft className="h-4 w-4 shrink-0" />
-                            <span>{t('common.back')}</span>
+                    <Link href="/services" className="w-fit shrink-0 hover:text-[#068BCC]">
+                        <Button variant="ghost" size="sm" className="h-9 gap-1 text-[#068BCC] hover:text-[#068BCC]">
+                            <ArrowLeft className="h-4 w-4 shrink-0 text-[#068BCC]" />
+                            <span className="hover:text-[#068BCC]">{t('common.back')}</span>
                         </Button>
                     </Link>
                     <div>
@@ -444,19 +443,22 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
             <div className="w-full">
                 <div className="">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${serviceType.label === 'Internet' ? 'bg-primary' :
-                                serviceType.label === 'Voice' ? 'bg-primary' :
-                                    'bg-primary'
-                                }`}>
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                            <div
+                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                                    serviceType.label === 'Internet' ? 'bg-primary' : serviceType.label === 'Voice' ? 'bg-primary' : 'bg-primary'
+                                }`}
+                            >
                                 <HandHelping className="h-5 w-5 text-white" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <div className="text-lg sm:text-xl truncate">{serviceType.label} Service</div>
-                                <p className="text-xs sm:text-sm text-muted-foreground truncate">{surveyTypeInfo.label}</p>
+                                <div className="truncate text-lg sm:text-xl">{serviceType.label} Service</div>
+                                <p className="truncate text-xs text-muted-foreground sm:text-sm">{surveyTypeInfo.label}</p>
                             </div>
                         </div>
-                        <span className={`inline-flex items-center rounded-lg px-3 py-1.5 text-xs sm:text-sm font-semibold shrink-0 ${statusInfo.bg} ${statusInfo.text}`}>
+                        <span
+                            className={`inline-flex shrink-0 items-center rounded-lg px-3 py-1.5 text-xs font-semibold sm:text-sm ${statusInfo.bg} ${statusInfo.text}`}
+                        >
                             {statusInfo.label}
                         </span>
                     </div>
@@ -468,22 +470,14 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                 <div className="w-full">
                     <div className="sm:p-4">
                         <div className="flex items-start gap-3 sm:gap-4">
-                            <div className="rounded-full bg-red-100 p-2 sm:p-3 shrink-0">
-                                <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
+                            <div className="shrink-0 rounded-full bg-red-100 p-2 sm:p-3">
+                                <AlertTriangle className="h-5 w-5 text-red-600 sm:h-6 sm:w-6" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h4 className="font-semibold text-base sm:text-lg text-red-800 mb-2">
-                                    Request Could Not Be Processed
-                                </h4>
-                                <p className="text-sm text-red-700 mb-3 break-words">
-                                    {surveyDetails.survey_failure_reason}
-                                </p>
-                                <p className="text-xs sm:text-sm text-gray-600">
-                                    Please contact our support team or submit a new service request.
-                                </p>
-                                <p className="text-xs text-gray-500 mt-3 break-all">
-                                    Reference: {customer_survey_order_id}
-                                </p>
+                                <h4 className="mb-2 text-base font-semibold text-red-800 sm:text-lg">Request Could Not Be Processed</h4>
+                                <p className="mb-3 text-sm break-words text-red-700">{surveyDetails.survey_failure_reason}</p>
+                                <p className="text-xs text-gray-600 sm:text-sm">Please contact our support team or submit a new service request.</p>
+                                <p className="mt-3 text-xs break-all text-gray-500">Reference: {customer_survey_order_id}</p>
                             </div>
                         </div>
                     </div>
@@ -496,22 +490,18 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                 <div className="w-full">
                     <div className="sm:p-4">
                         <div className="flex items-start gap-3 sm:gap-4">
-                            <div className="rounded-full bg-green-100 p-2 sm:p-3 shrink-0">
-                                <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+                            <div className="shrink-0 rounded-full bg-green-100 p-2 sm:p-3">
+                                <CheckCircle2 className="h-5 w-5 text-green-600 sm:h-6 sm:w-6" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h4 className="font-semibold text-base sm:text-lg text-green-800 mb-2">
-                                    Assessment Complete
-                                </h4>
-                                <p className="text-sm text-green-700 mb-1">
+                                <h4 className="mb-2 text-base font-semibold text-green-800 sm:text-lg">Assessment Complete</h4>
+                                <p className="mb-1 text-sm text-green-700">
                                     Your location supports <strong>{surveyDetails?.media_type === 'PON' ? 'Fiber' : 'Copper'}</strong> connection.
                                 </p>
-                                <p className="text-xs sm:text-sm text-gray-600 mb-4">
-                                    Please select a device to continue with your order.
-                                </p>
+                                <p className="mb-4 text-xs text-gray-600 sm:text-sm">Please select a device to continue with your order.</p>
                                 <Button
                                     onClick={handleContinueClick}
-                                    className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white h-9 sm:h-10"
+                                    className="h-9 w-full bg-primary text-white hover:bg-primary/90 sm:h-10 sm:w-auto"
                                 >
                                     <span>Continue</span>
                                 </Button>
@@ -523,7 +513,6 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
 
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
-
                 {/* Request Information */}
                 <div className="w-full">
                     <div className="sm:p-4">
@@ -532,48 +521,49 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                             <span>Request Information</span>
                         </div>
                     </div>
-                    <div className="space-y-3 p-4 sm:p-6 pt-0">
-                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                            <span className="text-xs sm:text-sm text-muted-foreground">Request Number</span>
-                            <span className="font-mono text-xs sm:text-sm font-medium break-all sm:break-normal">{customer_survey_order_id || 'N/A'}</span>
+                    <div className="space-y-3 p-4 pt-0 sm:p-6">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <span className="text-xs text-muted-foreground sm:text-sm">Request Number</span>
+                            <span className="font-mono text-xs font-medium break-all sm:text-sm sm:break-normal">
+                                {customer_survey_order_id || 'N/A'}
+                            </span>
                         </div>
                         <Separator />
-                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                            <span className="text-xs sm:text-sm text-muted-foreground">Service Type</span>
-                            <span className="flex items-center gap-2 text-xs sm:text-sm font-medium">
-                                <ServiceIcon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 ${serviceType.color}`} />
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <span className="text-xs text-muted-foreground sm:text-sm">Service Type</span>
+                            <span className="flex items-center gap-2 text-xs font-medium sm:text-sm">
+                                <ServiceIcon className={`h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 ${serviceType.color}`} />
                                 <span>{serviceType.label}</span>
                             </span>
                         </div>
                         <Separator />
-                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                            <span className="text-xs sm:text-sm text-muted-foreground">Request Type</span>
-                            <span className="text-xs sm:text-sm font-medium">{surveyTypeInfo.label}</span>
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <span className="text-xs text-muted-foreground sm:text-sm">Request Type</span>
+                            <span className="text-xs font-medium sm:text-sm">{surveyTypeInfo.label}</span>
                         </div>
                         <Separator />
-                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                            <span className="text-xs sm:text-sm text-muted-foreground">Processing Mode</span>
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <span className="text-xs text-muted-foreground sm:text-sm">Processing Mode</span>
                             <Badge
                                 variant="outline"
-                                className={`w-fit text-xs ${isManualSurvey
-                                    ? 'border-et-blue bg-et-blue/10 text-et-blue'
-                                    : 'border-primary bg-primary/10 text-primary'
-                                    }`}
+                                className={`w-fit text-xs ${
+                                    isManualSurvey ? 'border-et-blue bg-et-blue/10 text-et-blue' : 'border-primary bg-primary/10 text-primary'
+                                }`}
                             >
                                 {isManualSurvey ? 'Manual' : 'Auto'}
                             </Badge>
                         </div>
                         <Separator />
-                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                            <span className="text-xs sm:text-sm text-muted-foreground">Created</span>
-                            <span className="text-xs sm:text-sm font-medium break-words">{formatDate(surveyDetails?.created_at)}</span>
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <span className="text-xs text-muted-foreground sm:text-sm">Created</span>
+                            <span className="text-xs font-medium break-words sm:text-sm">{formatDate(surveyDetails?.created_at)}</span>
                         </div>
                         {surveyDetails?.updated_at && surveyDetails.updated_at !== surveyDetails.created_at && (
                             <>
                                 <Separator />
-                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                                    <span className="text-xs sm:text-sm text-muted-foreground">Last Updated</span>
-                                    <span className="text-xs sm:text-sm font-medium break-words">{formatDate(surveyDetails?.updated_at)}</span>
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                    <span className="text-xs text-muted-foreground sm:text-sm">Last Updated</span>
+                                    <span className="text-xs font-medium break-words sm:text-sm">{formatDate(surveyDetails?.updated_at)}</span>
                                 </div>
                             </>
                         )}
@@ -589,9 +579,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                         </div>
                     </div>
                     <div className="space-y-3 sm:p-4">
-                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                            <span className="text-xs sm:text-sm text-muted-foreground">Order Number</span>
-                            <span className="font-mono text-xs sm:text-sm font-medium break-all sm:break-normal">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <span className="text-xs text-muted-foreground sm:text-sm">Order Number</span>
+                            <span className="font-mono text-xs font-medium break-all sm:text-sm sm:break-normal">
                                 {customer_subscription_order_id || <span className="text-muted-foreground">—</span>}
                             </span>
                         </div>
@@ -599,26 +589,30 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                         {/* For Combo services, show both Voice and FBB numbers */}
                         {surveyDetails?.main_offer_id === COMBO_OFFER_ID ? (
                             <>
-                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                                    <span className="text-xs sm:text-sm text-muted-foreground">Voice Number</span>
-                                    <span className="flex items-center gap-2 text-xs sm:text-sm font-medium">
-                                        <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-violet-500" />
-                                        <span className="break-all sm:break-normal">{service_number || <span className="text-muted-foreground">Awaiting</span>}</span>
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                    <span className="text-xs text-muted-foreground sm:text-sm">Voice Number</span>
+                                    <span className="flex items-center gap-2 text-xs font-medium sm:text-sm">
+                                        <Phone className="h-3.5 w-3.5 shrink-0 text-violet-500 sm:h-4 sm:w-4" />
+                                        <span className="break-all sm:break-normal">
+                                            {service_number || <span className="text-muted-foreground">Awaiting</span>}
+                                        </span>
                                     </span>
                                 </div>
                                 <Separator />
-                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                                    <span className="text-xs sm:text-sm text-muted-foreground">FBB/Data Number</span>
-                                    <span className="flex items-center gap-2 text-xs sm:text-sm font-medium">
-                                        <Wifi className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-blue-500" />
-                                        <span className="break-all sm:break-normal">{surveyDetails?.fbb_service_number || <span className="text-muted-foreground">Awaiting</span>}</span>
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                    <span className="text-xs text-muted-foreground sm:text-sm">FBB/Data Number</span>
+                                    <span className="flex items-center gap-2 text-xs font-medium sm:text-sm">
+                                        <Wifi className="h-3.5 w-3.5 shrink-0 text-blue-500 sm:h-4 sm:w-4" />
+                                        <span className="break-all sm:break-normal">
+                                            {surveyDetails?.fbb_service_number || <span className="text-muted-foreground">Awaiting</span>}
+                                        </span>
                                     </span>
                                 </div>
                             </>
                         ) : (
-                            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                                <span className="text-xs sm:text-sm text-muted-foreground">Service Number</span>
-                                <span className="text-xs sm:text-sm font-medium break-all sm:break-normal">
+                            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                <span className="text-xs text-muted-foreground sm:text-sm">Service Number</span>
+                                <span className="text-xs font-medium break-all sm:text-sm sm:break-normal">
                                     {service_number || <span className="text-muted-foreground">Awaiting</span>}
                                 </span>
                             </div>
@@ -627,10 +621,10 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                         {(surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID) && (
                             <>
                                 <Separator />
-                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                                    <span className="text-xs sm:text-sm text-muted-foreground">Bandwidth</span>
-                                    <span className="flex items-center gap-2 text-xs sm:text-sm font-medium">
-                                        <Gauge className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-muted-foreground" />
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                    <span className="text-xs text-muted-foreground sm:text-sm">Bandwidth</span>
+                                    <span className="flex items-center gap-2 text-xs font-medium sm:text-sm">
+                                        <Gauge className="h-3.5 w-3.5 shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
                                         <span>{bandwidthDisplay || <span className="text-muted-foreground">Not available</span>}</span>
                                     </span>
                                 </div>
@@ -638,12 +632,13 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                         )}
                         <Separator />
                         {surveyDetails?.with_device !== undefined && (
-                            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                                <span className="text-xs sm:text-sm text-muted-foreground">Device</span>
-                                <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 text-xs font-medium w-fit ${surveyDetails?.with_device
-                                    ? 'bg-emerald-100 text-emerald-700'
-                                    : 'bg-gray-100 text-gray-600'
-                                    }`}>
+                            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                <span className="text-xs text-muted-foreground sm:text-sm">Device</span>
+                                <span
+                                    className={`inline-flex w-fit items-center gap-1.5 rounded-md px-2.5 py-0.5 text-xs font-medium ${
+                                        surveyDetails?.with_device ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
+                                    }`}
+                                >
                                     {surveyDetails?.with_device ? (
                                         <>
                                             <Package className="h-3 w-3 shrink-0" />
@@ -660,21 +655,22 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
 
                 {/* Infrastructure Info Card - Show media type and cable type */}
                 {(surveyDetails?.media_type || surveyDetails?.cable_type !== null) && !surveyDetails?.survey_failure_reason && (
-                    <div className={`w-full ${canContinue ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' : ''}`}>
+                    <div className={`w-full ${canContinue ? 'border-green-200 bg-gradient-to-br from-green-50 to-emerald-50' : ''}`}>
                         <div className="sm:p-4">
                             <div className="flex flex-wrap items-center gap-2 text-base sm:text-lg">
                                 <Cable className="h-4 w-4 shrink-0 text-emerald-600" />
                                 <span>Infrastructure Details</span>
-                                {canContinue && (
-                                    <Badge className="ml-auto sm:ml-2 bg-green-100 text-green-700 border-green-200 text-xs">Ready</Badge>
-                                )}
+                                {canContinue && <Badge className="ml-auto border-green-200 bg-green-100 text-xs text-green-700 sm:ml-2">Ready</Badge>}
                             </div>
                         </div>
                         <div className="space-y-3 sm:p-4">
                             {surveyDetails?.media_type && (
-                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                                    <span className="text-xs sm:text-sm text-muted-foreground">Media Type</span>
-                                    <Badge variant="outline" className={`w-fit text-xs ${surveyDetails.media_type === 'PON' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                    <span className="text-xs text-muted-foreground sm:text-sm">Media Type</span>
+                                    <Badge
+                                        variant="outline"
+                                        className={`w-fit text-xs ${surveyDetails.media_type === 'PON' ? 'border-blue-200 bg-blue-50 text-blue-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}
+                                    >
                                         {mediaTypeMap[surveyDetails.media_type]?.label || surveyDetails.media_type}
                                     </Badge>
                                 </div>
@@ -683,9 +679,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                 <Separator />
                             )}
                             {surveyDetails.cable_type !== null && surveyDetails.cable_type !== undefined && (
-                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                                    <span className="text-xs sm:text-sm text-muted-foreground">Cable Type</span>
-                                    <Badge variant="outline" className="w-fit text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                    <span className="text-xs text-muted-foreground sm:text-sm">Cable Type</span>
+                                    <Badge variant="outline" className="w-fit border-emerald-200 bg-emerald-50 text-xs text-emerald-700">
                                         {cableTypeMap[Number(surveyDetails.cable_type)]?.label || `Type ${surveyDetails.cable_type}`}
                                     </Badge>
                                 </div>
@@ -693,9 +689,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                             {surveyDetails.line_indicator !== null && surveyDetails.line_indicator !== undefined && (
                                 <>
                                     <Separator />
-                                    <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                                        <span className="text-xs sm:text-sm text-muted-foreground">Installation</span>
-                                        <Badge variant="outline" className="w-fit text-xs bg-gray-50 text-gray-700 border-gray-200">
+                                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                        <span className="text-xs text-muted-foreground sm:text-sm">Installation</span>
+                                        <Badge variant="outline" className="w-fit border-gray-200 bg-gray-50 text-xs text-gray-700">
                                             {surveyDetails.line_indicator === 0 ? 'Same Line' : 'Separate Line'}
                                         </Badge>
                                     </div>
@@ -707,12 +703,10 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                 <>
                                     <Separator className="my-4" />
                                     <div className="pt-2">
-                                        <p className="text-xs sm:text-sm text-muted-foreground mb-3">
-                                            Select a device to continue with your order.
-                                        </p>
+                                        <p className="mb-3 text-xs text-muted-foreground sm:text-sm">Select a device to continue with your order.</p>
                                         <Button
                                             onClick={handleContinueClick}
-                                            className="w-full bg-primary hover:bg-primary/90 text-white h-9 sm:h-10"
+                                            className="h-9 w-full bg-primary text-white hover:bg-primary/90 sm:h-10"
                                         >
                                             <span>Continue</span>
                                         </Button>
@@ -731,27 +725,29 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                 <div className="flex flex-wrap items-center gap-2 text-base sm:text-lg">
                                     <Wifi className="h-4 w-4 shrink-0 text-et-blue" />
                                     <span>Default Internet Credentials</span>
-                                    <Badge variant="outline" className="ml-auto sm:ml-2 text-xs bg-white">For Device Config</Badge>
+                                    <Badge variant="outline" className="ml-auto bg-white text-xs sm:ml-2">
+                                        For Device Config
+                                    </Badge>
                                 </div>
                             </div>
                             <div className="space-y-3 sm:p-4">
-                                <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
-                                    <span className="text-xs sm:text-sm text-muted-foreground">Username</span>
-                                    <span className="font-mono text-xs sm:text-sm font-medium text-blue-700 bg-white px-2 py-1 rounded break-all sm:break-normal">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <span className="text-xs text-muted-foreground sm:text-sm">Username</span>
+                                    <span className="rounded bg-white px-2 py-1 font-mono text-xs font-medium break-all text-blue-700 sm:text-sm sm:break-normal">
                                         {surveyDetails.internet_account}
                                     </span>
                                 </div>
                                 <Separator />
-                                <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
-                                    <span className="text-xs sm:text-sm text-muted-foreground">Password</span>
-                                    <span className="font-mono text-xs sm:text-sm font-medium text-blue-700 bg-white px-2 py-1 rounded break-all sm:break-normal">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <span className="text-xs text-muted-foreground sm:text-sm">Password</span>
+                                    <span className="rounded bg-white px-2 py-1 font-mono text-xs font-medium break-all text-blue-700 sm:text-sm sm:break-normal">
                                         {surveyDetails.internet_password || '••••••••'}
                                     </span>
                                 </div>
-                                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                    <p className="text-xs text-amber-800 break-words">
-                                        <strong>Important:</strong> Use these credentials to configure your internet device/router.
-                                        Keep them secure and do not share with others.
+                                <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                                    <p className="text-xs break-words text-amber-800">
+                                        <strong>Important:</strong> Use these credentials to configure your internet device/router. Keep them secure
+                                        and do not share with others.
                                     </p>
                                 </div>
                             </div>
@@ -767,25 +763,25 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                         </div>
                     </div>
                     <div className="space-y-3 sm:p-4">
-                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                            <span className="text-xs sm:text-sm text-muted-foreground">Name</span>
-                            <span className="text-xs sm:text-sm font-medium break-words">{user.name}</span>
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <span className="text-xs text-muted-foreground sm:text-sm">Name</span>
+                            <span className="text-xs font-medium break-words sm:text-sm">{user.name}</span>
                         </div>
                         <Separator />
-                        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                            <span className="text-xs sm:text-sm text-muted-foreground">Phone</span>
-                            <span className="flex items-center gap-2 text-xs sm:text-sm font-medium">
-                                <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-muted-foreground" />
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <span className="text-xs text-muted-foreground sm:text-sm">Phone</span>
+                            <span className="flex items-center gap-2 text-xs font-medium sm:text-sm">
+                                <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
                                 <span className="break-all sm:break-normal">{user.phone}</span>
                             </span>
                         </div>
                         {user.email && (
                             <>
                                 <Separator />
-                                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
-                                    <span className="text-xs sm:text-sm text-muted-foreground">Email</span>
-                                    <span className="flex items-center gap-2 text-xs sm:text-sm font-medium">
-                                        <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-muted-foreground" />
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                    <span className="text-xs text-muted-foreground sm:text-sm">Email</span>
+                                    <span className="flex items-center gap-2 text-xs font-medium sm:text-sm">
+                                        <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground sm:h-4 sm:w-4" />
                                         <span className="break-all sm:break-normal">{user.email}</span>
                                     </span>
                                 </div>
@@ -804,7 +800,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                     <span>Payment Summary</span>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className={`inline-flex items-center rounded-md px-2 sm:px-3 py-1 text-xs sm:text-sm font-semibold ${payment?.status === 'Paid' ? 'bg-et-green text-white' : 'bg-et-yellow text-gray-900'}`}>
+                                    <span
+                                        className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold sm:px-3 sm:text-sm ${payment?.status === 'Paid' ? 'bg-et-green text-white' : 'bg-et-yellow text-gray-900'}`}
+                                    >
                                         {payment?.status || (isPaid ? 'Paid' : 'Pending')}
                                     </span>
                                     {payment?.merch_order_id && (
@@ -817,47 +815,59 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                         </div>
                         <div className="sm:p-4">
                             {/* Invoice Table */}
-                            <div className="rounded-lg border bg-muted/30 overflow-x-auto">
+                            <div className="overflow-x-auto rounded-lg border bg-muted/30">
                                 <table className="w-full min-w-[300px]">
                                     <thead>
                                         <tr className="border-b bg-muted/50">
-                                            <th className="px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">Description</th>
-                                            <th className="px-3 sm:px-4 py-2 sm:py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Amount (ETB)</th>
+                                            <th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:px-4 sm:py-3">
+                                                Description
+                                            </th>
+                                            <th className="px-3 py-2 text-right text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:px-4 sm:py-3">
+                                                Amount (ETB)
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
                                         {subscriptionFee > 0 && (
                                             <tr>
-                                                <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">Subscription Fee</td>
-                                                <td className="px-3 sm:px-4 py-2 sm:py-3 text-right text-xs sm:text-sm font-medium tabular-nums">{subscriptionFee.toFixed(2)}</td>
+                                                <td className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">Subscription Fee</td>
+                                                <td className="px-3 py-2 text-right text-xs font-medium tabular-nums sm:px-4 sm:py-3 sm:text-sm">
+                                                    {subscriptionFee.toFixed(2)}
+                                                </td>
                                             </tr>
                                         )}
                                         {cableCharge > 0 && (
                                             <tr>
-                                                <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">
+                                                <td className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">
                                                     Cable Charge
                                                     {cableLength && <span className="ml-1 text-muted-foreground">({cableLength}m)</span>}
                                                 </td>
-                                                <td className="px-3 sm:px-4 py-2 sm:py-3 text-right text-xs sm:text-sm font-medium tabular-nums">{cableCharge.toFixed(2)}</td>
+                                                <td className="px-3 py-2 text-right text-xs font-medium tabular-nums sm:px-4 sm:py-3 sm:text-sm">
+                                                    {cableCharge.toFixed(2)}
+                                                </td>
                                             </tr>
                                         )}
                                         {deviceFee > 0 && (
                                             <tr>
-                                                <td className="px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">Device Fee</td>
-                                                <td className="px-3 sm:px-4 py-2 sm:py-3 text-right text-xs sm:text-sm font-medium tabular-nums">{deviceFee.toFixed(2)}</td>
+                                                <td className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">Device Fee</td>
+                                                <td className="px-3 py-2 text-right text-xs font-medium tabular-nums sm:px-4 sm:py-3 sm:text-sm">
+                                                    {deviceFee.toFixed(2)}
+                                                </td>
                                             </tr>
                                         )}
                                     </tbody>
                                     <tfoot>
                                         <tr className="border-t-2 bg-muted/50">
-                                            <td className="px-3 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-semibold">Total Amount</td>
-                                            <td className="px-3 sm:px-4 py-3 sm:py-4 text-right text-base sm:text-lg font-bold text-primary tabular-nums">{totalAmount}</td>
+                                            <td className="px-3 py-3 text-xs font-semibold sm:px-4 sm:py-4 sm:text-sm">Total Amount</td>
+                                            <td className="px-3 py-3 text-right text-base font-bold text-primary tabular-nums sm:px-4 sm:py-4 sm:text-lg">
+                                                {totalAmount}
+                                            </td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
                             {payment?.payment_order_id && (
-                                <p className="mt-3 text-center text-xs text-muted-foreground break-all">
+                                <p className="mt-3 text-center text-xs break-all text-muted-foreground">
                                     Payment Reference: {payment.payment_order_id}
                                 </p>
                             )}
@@ -878,36 +888,38 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                         {canSubscribe
                                             ? 'Ready to activate your service?'
                                             : canPay
-                                                ? 'Complete payment to activate'
-                                                : canUpgradeDowngrade
-                                                    ? 'Manage your service'
-                                                    : 'Actions'}
+                                              ? 'Complete payment to activate'
+                                              : canUpgradeDowngrade
+                                                ? 'Manage your service'
+                                                : 'Actions'}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
                                         {canSubscribe
                                             ? 'Click Subscribe to activate your service'
                                             : canPay
-                                                ? `Amount due: ${totalAmount} ETB`
-                                                : canUpgradeDowngrade
-                                                    ? 'Upgrade or downgrade your bandwidth'
-                                                    : 'Choose an action below'}
+                                              ? `Amount due: ${totalAmount} ETB`
+                                              : canUpgradeDowngrade
+                                                ? 'Upgrade or downgrade your bandwidth'
+                                                : 'Choose an action below'}
                                     </p>
                                 </div>
 
                                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
                                     <Link href="/services">
-                                        <Button variant="outline" className="w-full sm:w-auto">{t('common.back')}</Button>
+                                        <Button variant="outline" className="w-full sm:w-auto">
+                                            {t('common.back')}
+                                        </Button>
                                     </Link>
 
                                     {canSubscribe && (
                                         <Button
                                             onClick={onSubscribeConfirm}
                                             disabled={loading || isSubmitting || !customer_survey_order_id}
-                                            className={`w-full gap-2 sm:w-auto h-9 sm:h-10 ${focusFlash && focusSafe === 'subscribe' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                                            className={`h-9 w-full gap-2 sm:h-10 sm:w-auto ${focusFlash && focusSafe === 'subscribe' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                                         >
                                             {loading && createSubscriptionMutation.isPending ? (
                                                 <>
-                                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent shrink-0" />
+                                                    <div className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                                     <span>{t('buttons.processing')}</span>
                                                 </>
                                             ) : (
@@ -923,17 +935,19 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                         <Button
                                             onClick={onPaymentConfirm}
                                             disabled={loading || !customer_survey_order_id}
-                                            className={`w-full gap-2 sm:w-auto h-9 sm:h-10 ${focusFlash && focusSafe === 'payment' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                                            className={`h-9 w-full gap-2 sm:h-10 sm:w-auto ${focusFlash && focusSafe === 'payment' ? 'ring-2 ring-primary ring-offset-2' : ''}`}
                                         >
                                             {loading && createPaymentOrderMutation.isPending ? (
                                                 <>
-                                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent shrink-0" />
+                                                    <div className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                                     <span>{t('buttons.processing')}</span>
                                                 </>
                                             ) : (
                                                 <>
                                                     <CreditCard className="h-4 w-4 shrink-0" />
-                                                    <span>{t('buttons.pay_now')} {totalAmount} ETB</span>
+                                                    <span>
+                                                        {t('buttons.pay_now')} {totalAmount} ETB
+                                                    </span>
                                                 </>
                                             )}
                                         </Button>
@@ -945,7 +959,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                                 onClick={() => setOpenUpgradeDialog(true)}
                                                 disabled={loading}
                                                 variant="outline"
-                                                className="w-full gap-2 sm:w-auto h-9 sm:h-10"
+                                                className="h-9 w-full gap-2 sm:h-10 sm:w-auto"
                                             >
                                                 <ArrowUpToLineIcon className="h-4 w-4 shrink-0" />
                                                 <span>{t('buttons.upgrade')}</span>
@@ -954,7 +968,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                                 onClick={() => setOpenDowngradeDialog(true)}
                                                 disabled={loading}
                                                 variant="outline"
-                                                className="w-full gap-2 sm:w-auto h-9 sm:h-10"
+                                                className="h-9 w-full gap-2 sm:h-10 sm:w-auto"
                                             >
                                                 <ArrowDownToLineIcon className="h-4 w-4 shrink-0" />
                                                 <span>{t('buttons.downgrade')}</span>
@@ -964,10 +978,13 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
 
                                     {canCancel && (
                                         <Button
-                                            onClick={() => { setIsTerminateAction(false); setOpenCancelDialog(true); }}
+                                            onClick={() => {
+                                                setIsTerminateAction(false);
+                                                setOpenCancelDialog(true);
+                                            }}
                                             disabled={loading}
                                             variant="destructive"
-                                            className="w-full gap-2 sm:w-auto h-9 sm:h-10"
+                                            className="h-9 w-full gap-2 sm:h-10 sm:w-auto"
                                         >
                                             <X className="h-4 w-4 shrink-0" />
                                             <span>{t('common.cancel')}</span>
@@ -976,10 +993,13 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
 
                                     {canTerminate && (
                                         <Button
-                                            onClick={() => { setIsTerminateAction(true); setOpenCancelDialog(true); }}
+                                            onClick={() => {
+                                                setIsTerminateAction(true);
+                                                setOpenCancelDialog(true);
+                                            }}
                                             disabled={loading}
                                             variant="destructive"
-                                            className="w-full gap-2 sm:w-auto h-9 sm:h-10"
+                                            className="h-9 w-full gap-2 sm:h-10 sm:w-auto"
                                         >
                                             <X className="h-4 w-4 shrink-0" />
                                             <span>{t('buttons.terminate_service')}</span>
@@ -997,14 +1017,14 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                 <div className="flex justify-center pt-4">
                     {!isInFlow ? (
                         <Link href="/services" className="w-full sm:w-auto">
-                            <Button variant="outline" className="w-full sm:w-auto gap-2 h-9 sm:h-10">
-                                <ArrowLeft className="h-4 w-4 shrink-0" />
+                            <Button variant="outline" className="h-9 w-full gap-2 text-[#068BCC] sm:h-10 sm:w-auto">
+                                <ArrowLeft className="h-4 w-4 shrink-0 text-[#068BCC]" />
                                 <span>{t('common.back')}</span>
                             </Button>
                         </Link>
                     ) : onBack ? (
-                        <Button variant="outline" onClick={onBack} className="w-full sm:w-auto gap-2 h-9 sm:h-10">
-                            <ArrowLeft className="h-4 w-4 shrink-0" />
+                        <Button variant="outline" onClick={onBack} className="h-9 w-full gap-2 text-[#068BCC] sm:h-10 sm:w-auto">
+                            <ArrowLeft className="h-4 w-4 shrink-0 text-[#068BCC]" />
                             <span>{t('common.back')}</span>
                         </Button>
                     ) : null}
@@ -1017,12 +1037,21 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                 onOpenChange={setOpenCancelDialog}
                 onConfirm={handleCancel}
                 loading={cancelMutation.isPending}
-                title={isTerminateAction ? "Terminate Service" : "Cancel Service Request"}
-                description={isTerminateAction
-                    ? "Are you sure you want to terminate this service? This action cannot be undone."
-                    : "Are you sure you want to cancel this service request? This action cannot be undone."
+                title={isTerminateAction ? 'Terminate Service' : 'Cancel Service Request'}
+                description={
+                    isTerminateAction
+                        ? 'Are you sure you want to terminate this service? This action cannot be undone.'
+                        : 'Are you sure you want to cancel this service request? This action cannot be undone.'
                 }
-                confirmText={cancelMutation.isPending ? (isTerminateAction ? 'Terminating...' : 'Cancelling...') : (isTerminateAction ? 'Yes, Terminate' : 'Yes, Cancel')}
+                confirmText={
+                    cancelMutation.isPending
+                        ? isTerminateAction
+                            ? 'Terminating...'
+                            : 'Cancelling...'
+                        : isTerminateAction
+                          ? 'Yes, Terminate'
+                          : 'Yes, Cancel'
+                }
                 cancelText="No, Keep It"
             />
 

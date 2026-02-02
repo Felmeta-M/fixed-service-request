@@ -1,9 +1,9 @@
+import { MobileStepIndicator } from '@/components/common/mobile-step-indicator';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Link, router } from '@inertiajs/react';
 import { ArrowLeft, FileText, LogOut, MapPin, RouterIcon, Wifi } from 'lucide-react';
-import { MobileStepIndicator } from '@/components/common/mobile-step-indicator';
 
 interface SiteHeaderProps {
     title: string;
@@ -28,7 +28,7 @@ export function SiteHeader({ title, isServiceCreation = false, currentStep = 0, 
 
     return (
         <>
-            <header className="flex h-(--header-height) px-2 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+            <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b px-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
                 <div className="flex w-full items-center gap-1 lg:gap-2 lg:px-6">
                     <SidebarTrigger />
 
@@ -59,7 +59,7 @@ export function SiteHeader({ title, isServiceCreation = false, currentStep = 0, 
 
             {/* Mobile Step Indicator */}
             {showMobileSteps && (
-                <div className="md:hidden border-b border-gray-200">
+                <div className="border-b border-gray-200 md:hidden">
                     <MobileStepIndicator currentStep={currentStep} steps={steps} />
                 </div>
             )}

@@ -41,7 +41,7 @@ type SurveyRow = {
     service_number?: string | null;
     main_offer_id?: string;
     status?: string;
-    status_code?: string;  // Stable status code for logic (decoupled from display label)
+    status_code?: string; // Stable status code for logic (decoupled from display label)
     created_at?: string;
     updated_at?: string;
     survey_is_manual?: boolean;
@@ -67,14 +67,19 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
     const filteredSurveys = React.useMemo(() => {
         return surveys.filter((s) => {
             const offerId = String(s.main_offer_id ?? '');
-            const status = String(s.status ?? '');
+            const statusCode = String(s.status_code ?? '');
+            const statusLabel = String(s.status ?? '');
 
-            const matchesType = typeFilter ? offerId.includes(typeFilter) : true;
-            const matchesStatus = statusFilter ? status.toLowerCase() === statusFilter.toLowerCase() : true;
+            // Type filter: exact match on main_offer_id
+            const matchesType = typeFilter ? offerId === typeFilter : true;
+            // Status filter: compare against status_code (primary) or status label (fallback)
+            const matchesStatus = statusFilter
+                ? statusCode.toLowerCase() === statusFilter.toLowerCase() || statusLabel.toLowerCase() === statusFilter.toLowerCase()
+                : true;
             const matchesGlobal = globalFilter
                 ? s.customer_survey_order_id?.toString().includes(globalFilter) ||
-                offerId.includes(globalFilter) ||
-                status.toLowerCase().includes(globalFilter.toLowerCase())
+                  offerId.includes(globalFilter) ||
+                  statusLabel.toLowerCase().includes(globalFilter.toLowerCase())
                 : true;
             return matchesType && matchesStatus && matchesGlobal;
         });
@@ -125,9 +130,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                     if (!subscriptionOrderId) {
                         return <span className="text-xs text-gray-400">—</span>;
                     }
-                    return (
-                        <span className="text-sm font-normal text-gray-900">{subscriptionOrderId}</span>
-                    );
+                    return <span className="text-sm font-normal text-gray-900">{subscriptionOrderId}</span>;
                 },
             },
             {
@@ -180,10 +183,9 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                         <div>
                             <Badge
                                 variant="outline"
-                                className={`flex items-center gap-1.5 bg-white ${isManual
-                                        ? 'border-et-blue bg-et-blue/10 text-et-blue'
-                                        : 'border-primary bg-primary/10 text-primary'
-                                    }`}
+                                className={`flex items-center gap-1.5 bg-white ${
+                                    isManual ? 'border-et-blue bg-et-blue/10 text-et-blue' : 'border-primary bg-primary/10 text-primary'
+                                }`}
                             >
                                 <span className="text-xs font-medium">{isManual ? 'Manual' : 'Auto'}</span>
                             </Badge>
@@ -233,11 +235,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                     const survey = row.original;
                     return (
                         <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                            <SurveyActions
-                                survey={survey}
-                                onActionComplete={() => onSurveyUpdate?.()}
-                                onUpdatingChange={() => { }}
-                            />
+                            <SurveyActions survey={survey} onActionComplete={() => onSurveyUpdate?.()} onUpdatingChange={() => {}} />
                         </div>
                     );
                 },
@@ -284,10 +282,10 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
     }
 
     return (
-        <div className="w-full max-w-full flex flex-col justify-start gap-6">
-            <div className="overflow-hidden rounded-lg bg-white shadow-sm w-full">
-                <div className="overflow-x-auto w-full">
-                    <Table className="min-w-[700px] w-full">
+        <div className="flex w-full max-w-full flex-col justify-start gap-6">
+            <div className="w-full overflow-hidden rounded-lg bg-white shadow-sm">
+                <div className="w-full overflow-x-auto">
+                    <Table className="w-full min-w-[700px]">
                         <TableHeader className="bg-gray-50">
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id}>

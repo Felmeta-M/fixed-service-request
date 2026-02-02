@@ -1,16 +1,9 @@
-import {
-    AppSidebar,
-    StepCustomerIcon,
-    StepDeviceIcon,
-    StepPaymentIcon,
-    StepReviewIcon,
-    StepServiceIcon,
-} from '@/components/app/app-sidebar';
+import { AppSidebar } from '@/components/app/app-sidebar';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { usePage } from '@inertiajs/react';
-import { MapPin } from 'lucide-react';
+import { CreditCard, FileText, MapPin, RouterIcon, User, Wifi } from 'lucide-react';
 import { ReactNode } from 'react';
 
 interface MainLayoutProps {
@@ -30,17 +23,17 @@ export default function MainLayout({ children, currentStep = 0, isNewCustomer = 
     const isServiceCreation = page.url.startsWith('/services/create');
 
     const steps = [
-        ...(isNewCustomer ? [{ name: 'Customer Information', icon: StepCustomerIcon }] : []),
-        { name: 'Service Information', icon: StepServiceIcon },
+        ...(isNewCustomer ? [{ name: 'Customer Information', icon: User }] : []),
+        { name: 'Service Information', icon: Wifi },
         { name: 'Location Information', icon: MapPin },
-        { name: 'Device Information', icon: StepDeviceIcon },
-        { name: 'Review & Submit', icon: StepReviewIcon },
-        { name: 'Payment / Subscribe', icon: StepPaymentIcon },
+        { name: 'Device Information', icon: RouterIcon },
+        { name: 'Review & Submit', icon: FileText },
+        { name: 'Payment / Subscribe', icon: CreditCard },
     ];
 
     return (
         <SidebarProvider
-            className="overflow-x-hidden h-screen"
+            className="overflow-x-hidden"
             style={
                 {
                     '--sidebar-width': 'calc(var(--spacing) * 72)',
@@ -49,7 +42,7 @@ export default function MainLayout({ children, currentStep = 0, isNewCustomer = 
             }
         >
             <AppSidebar currentStep={currentStep} mode={isServiceCreation ? 'create' : 'list'} steps={steps} />
-            <SidebarInset className="overflow-x-hidden overflow-y-auto bg-gray-50">
+            <SidebarInset className="overflow-x-hidden">
                 <div className="md:hidden">
                     <SiteHeader
                         title={isServiceCreation ? 'Create new service' : headerSegment}
@@ -58,8 +51,8 @@ export default function MainLayout({ children, currentStep = 0, isNewCustomer = 
                         steps={steps}
                     />
                 </div>
-                <main className="flex max-w-full flex-1 flex-col overflow-x-hidden bg-white">{children}</main>
-                <Toaster richColors position="top-right" />
+                <main className="flex max-w-full flex-1 flex-col overflow-x-hidden py-2">{children}</main>
+                <Toaster position="top-center" />
             </SidebarInset>
         </SidebarProvider>
     );

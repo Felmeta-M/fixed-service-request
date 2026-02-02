@@ -1,17 +1,11 @@
+import { ComplaintsIcon, StepServiceIcon } from '@/components/app/app-sidebar';
 import { Footer } from '@/components/layout/footer';
-import { useTranslation } from '@/hooks/use-translation';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Toaster } from '@/components/ui/sonner';
-import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-} from '@/components/ui/sheet';
 import { ComplaintForm } from '@/features/complaints/components/complaint-form';
 import { useCreateComplaintGuest } from '@/hooks/use-api-mutations';
-import { LocaleSwitcher } from '@/components/common';
+import { useTranslation } from '@/hooks/use-translation';
 import { Link, usePage } from '@inertiajs/react';
 import { LayoutDashboard, LogIn, LogOut, Menu, X } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
@@ -36,7 +30,7 @@ export default function GuestLayout({ children }: Props) {
     // Smooth scroll to section
     const scrollToSection = useCallback((sectionId: string) => {
         setIsMobileMenuOpen(false);
-        
+
         // Check if we're on the home page
         if (window.location.pathname === '/') {
             const element = document.getElementById(sectionId);
@@ -50,7 +44,7 @@ export default function GuestLayout({ children }: Props) {
     }, []);
 
     return (
-        <div className="mx-auto ">
+        <div className="mx-auto">
             <header key={locale} className="sticky top-0 z-50 mx-auto w-full bg-gradient-to-r from-[#F5FBF6] via-[#FEFFFE] to-[#F4F7FB]">
                 <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 items-center justify-between">
@@ -68,17 +62,17 @@ export default function GuestLayout({ children }: Props) {
                                 <nav className="flex items-center space-x-6">
                                     <button
                                         onClick={() => scrollToSection('services')}
-                                        className="text-sm font-medium text-gray-700 transition-colors hover:text-primary"
+                                        className="text-md cursor-pointer font-medium text-gray-700 transition-colors hover:text-primary"
                                     >
-                                        {t('nav.services')}
+                                        <span>{t('nav.services')}</span>
                                     </button>
                                     {!auth?.user && (
                                         <button
                                             type="button"
                                             onClick={openCreateTicket}
-                                            className="text-sm font-medium text-gray-700 transition-colors hover:text-primary"
+                                            className="text-md cursor-pointer font-medium text-gray-700 transition-colors hover:text-primary"
                                         >
-                                            {t('nav.complaints')}
+                                            <span>{t('nav.complaints')}</span>
                                         </button>
                                     )}
                                     {/* <button
@@ -120,81 +114,100 @@ export default function GuestLayout({ children }: Props) {
                         </div>
 
                         <div className="flex md:hidden">
-                            <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
-                                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                            <Button
+                                variant="ghost"
+                                size="default"
+                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                                className="h-14 w-14 shrink-0 p-0"
+                            >
+                                {isMobileMenuOpen ? <X className="size-8" /> : <Menu className="size-8" />}
                             </Button>
                         </div>
                     </div>
                 </div>
                 {isMobileMenuOpen && (
-                    <div className="border-t bg-gradient-to-r from-[#F5FBF6] via-[#FEFFFE] to-[#F4F7FB] backdrop-blur-sm md:hidden">
-                        <div className="mx-auto max-w-7xl space-y-2 px-4 py-4">
-                            <button
-                                onClick={() => scrollToSection('services')}
-                                className="block w-full py-2 text-left text-sm font-medium text-gray-700 hover:text-primary"
-                            >
-                                {t('nav.services')}
-                            </button>
-                            {!auth?.user && (
-                                <button
-                                    type="button"
-                                    onClick={openCreateTicket}
-                                    className="block w-full py-2 text-left text-sm font-medium text-gray-700 hover:text-primary"
-                                >
-                                    {t('nav.complaints')}
-                                </button>
-                            )}
-                            {/* <button
-                                onClick={() => scrollToSection('coverage')}
-                                className="block w-full py-2 text-left text-sm font-medium text-gray-700 hover:text-primary"
-                            >
-                                {t('nav.coverage')}
-                            </button> */}
+                    <div className="border-t bg-gradient-to-r from-[#F5FBF6] via-[#FEFFFE] to-[#F4F7FB]/90 backdrop-blur-md md:hidden">
+                        <div className="mx-auto flex max-w-md">
+                            <div className="w-full space-y-3 rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm shadow-black/5">
+                                {/* <div className="flex items-center justify-between pb-2">
+                                    <span className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/80">
+                                        {t('nav.menu')}
+                                    </span>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 rounded-full text-gray-500 hover:bg-gray-100"
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div> */}
 
-                            {/* Language Switcher */}
-                            <div className="py-2 border-t border-gray-100">
-                                <LocaleSwitcher />
+                                <div className="space-y-2">
+                                    <button
+                                        onClick={() => scrollToSection('services')}
+                                        className="text-md flex min-h-[2.75rem] w-full items-center justify-between rounded-xl px-3 py-2 font-medium text-gray-800 transition hover:text-primary"
+                                    >
+                                        <span className="flex items-center">{t('nav.services')}</span>
+                                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-primary">
+                                            <StepServiceIcon className="h-8 w-8" />
+                                        </span>
+                                    </button>
+
+                                    {!auth?.user && (
+                                        <button
+                                            type="button"
+                                            onClick={openCreateTicket}
+                                            className="text-md flex min-h-[2.75rem] w-full items-center justify-between rounded-xl px-3 py-2 font-medium text-gray-800 transition hover:text-primary"
+                                        >
+                                            <span className="flex items-center">{t('nav.complaints')}</span>
+                                            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary">
+                                                <ComplaintsIcon className="h-5 w-5" />
+                                            </span>
+                                        </button>
+                                    )}
+                                </div>
+
+                                {auth?.user ? (
+                                    <div className="border-t border-dashed border-gray-200">
+                                        <Link
+                                            href={route('services')}
+                                            className="flex min-h-[2.75rem] w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-gray-800 transition hover:text-primary"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                        >
+                                            <span className="flex items-center">{t('nav.dashboard')}</span>
+                                            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary">
+                                                <LayoutDashboard className="h-6 w-6" />
+                                            </span>
+                                        </Link>
+
+                                        <Link
+                                            href={route('logout')}
+                                            method="post"
+                                            as="button"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="block w-full"
+                                        >
+                                            <Button
+                                                variant="outline"
+                                                className="flex w-full items-center justify-center gap-2 rounded-xl text-red-600 hover:text-red-700 hover:opacity-90"
+                                            >
+                                                <LogOut className="h-4 w-4" />
+                                                <span>{t('nav.log_out')}</span>
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2 border-t border-dashed border-gray-200 pt-3">
+                                        <Link href={route('otp.phone')} className="block cursor-pointer" onClick={() => setIsMobileMenuOpen(false)}>
+                                            <Button className="text-md flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 font-semibold text-white shadow-md shadow-primary/20 hover:opacity-90">
+                                                <LogIn className="h-5 w-5" />
+                                                <span>{t('nav.login_to_account')}</span>
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                )}
                             </div>
-
-                            {auth?.user ? (
-                                <>
-                                    {/* Dashboard */}
-                                    <Link
-                                        href={route('services')}
-                                        className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <LayoutDashboard className="h-4 w-4" />
-                                            <span>{t('nav.dashboard')}</span>
-                                        </div>
-                                    </Link>
-
-                                    {/* Logout */}
-                                    <Link
-                                        href={route('logout')}
-                                        method="post"
-                                        as="button"
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                        className="w-full"
-                                    >
-                                        <Button variant="outline" className="flex w-full items-center justify-center gap-2">
-                                            <LogOut className="h-4 w-4" />
-                                            <span>{t('nav.log_out')}</span>
-                                        </Button>
-                                    </Link>
-                                </>
-                            ) : (
-                                <>
-                                    {/* Login */}
-                                    <Link href={route('otp.phone')} className="block cursor-pointer pt-3" onClick={() => setIsMobileMenuOpen(false)}>
-                                        <Button className="br-primary flex w-full items-center justify-center space-x-2 text-white hover:opacity-90">
-                                            <LogIn className="h-4 w-4" />
-                                            <span>{t('nav.login_to_account')}</span>
-                                        </Button>
-                                    </Link>
-                                </>
-                            )}
                         </div>
                     </div>
                 )}
@@ -206,12 +219,10 @@ export default function GuestLayout({ children }: Props) {
 
             {/* Create Ticket Sheet - for unauthenticated users, slides in from right */}
             <Sheet open={isCreateTicketOpen} onOpenChange={setIsCreateTicketOpen}>
-                <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto px-2">
+                <SheetContent side="right" className="w-full overflow-y-auto px-2 sm:max-w-lg">
                     <SheetHeader className="px-2">
                         <SheetTitle>{t('nav.create_ticket')}</SheetTitle>
-                        <SheetDescription>
-                            {t('complaints.guest_form_description')}
-                        </SheetDescription>
+                        <SheetDescription>{t('complaints.guest_form_description')}</SheetDescription>
                     </SheetHeader>
                     <div className="flex-1 overflow-y-auto px-2">
                         <ComplaintForm

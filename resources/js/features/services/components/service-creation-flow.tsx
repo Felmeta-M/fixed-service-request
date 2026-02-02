@@ -1,12 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSurveyList } from '@/features/surveys/hooks/use-surveys';
 import { useResourceChecker } from '@/lib/resource-check';
+import { showErrorToast, showLoadingToast, showSuccessToast } from '@/lib/toast-helpers';
 import { Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, ChevronRight, FileText, Loader2, MoveLeftIcon } from 'lucide-react';
+import { ArrowLeft, ChevronRight, FileText, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
 import { CustomerCreationStep } from './steps/customer-creation-step';
 import { DeviceSelectionStep } from './steps/device-selection-step';
 import { LocationSetupStep } from './steps/location-setup-step';
@@ -93,7 +92,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const [isTransitioningToSubscription, setIsTransitioningToSubscription] = useState(false); // Track transition to subscription step
     const surveyListQuery = useSurveyList();
     const surveys = useMemo(() => {
-        return surveyListQuery.data?.pages.flatMap(page => page.data) ?? [];
+        return surveyListQuery.data?.pages.flatMap((page) => page.data) ?? [];
     }, [surveyListQuery.data]);
     const { checkResourceAvailability } = useResourceChecker();
 
@@ -112,11 +111,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
                 setFormData((prev) => {
                     // Only update if values actually changed to prevent unnecessary re-renders
-                    if (
-                        prev.contactPerson === contactPerson &&
-                        prev.contactNo === contactNo &&
-                        prev.contactEmail === contactEmail
-                    ) {
+                    if (prev.contactPerson === contactPerson && prev.contactNo === contactNo && prev.contactEmail === contactEmail) {
                         return prev;
                     }
                     return {
@@ -126,8 +121,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                         contactEmail,
                     };
                 });
-            } catch (error) {
-            }
+            } catch (error) {}
         };
 
         loadUserData();
@@ -207,9 +201,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             }
         } catch (error) {
             // Extract error message from API error
-            const errorMessage = error instanceof Error
-                ? error.message
-                : 'An unexpected error occurred during resource check.';
+            const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during resource check.';
             showErrorToast(errorMessage, { id: toastId });
             updateFormData({
                 resourceAvailable: false,
@@ -241,10 +233,10 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         switch (adjustedStep) {
             case 0: // Service Selection
                 // Validate service type, bandwidth (for broadband/combo), and terms acceptance
-                const hasValidService = formData.serviceType && (
-                    formData.serviceType === '1207609454' || // Voice doesn't need bandwidth
-                    formData.bandwidth // Broadband and Combo need bandwidth
-                );
+                const hasValidService =
+                    formData.serviceType &&
+                    (formData.serviceType === '1207609454' || // Voice doesn't need bandwidth
+                        formData.bandwidth); // Broadband and Combo need bandwidth
                 const hasAcceptedTerms = formData.termsAccepted === true;
                 return hasValidService && hasAcceptedTerms;
             case 1: // Location Setup
@@ -306,14 +298,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                     />
                 );
             case 2: // Device Selection (NEW STEP)
-                return (
-                    <DeviceSelectionStep
-                        formData={formData}
-                        onUpdate={updateFormData}
-                        onNext={nextStep}
-                        onBack={prevStep}
-                    />
-                );
+                return <DeviceSelectionStep formData={formData} onUpdate={updateFormData} onNext={nextStep} onBack={prevStep} />;
             case 3: // Review & Submit
                 return (
                     <ReviewSubmitStep
@@ -376,29 +361,21 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
     return (
         <div className="w-full space-y-6 px-4 py-2 lg:px-6">
-            <div className="pb-0 pt-0">
+            <div className="pt-0 pb-0">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center justify-start gap-4 sm:gap-10 pl-2">
-                        <Link href={route("services")} className='hidden sm:block'>
-                            <Button
-                                variant="link"
-                                size="icon"
-                                className="h-10 w-10 text-[#068BCC]"
-                            >
+                    <div className="flex items-center justify-start gap-4 pl-2 sm:gap-10">
+                        <Link href={route('services')} className="hidden sm:block">
+                            <Button variant="link" size="icon" className="h-10 w-10 text-[#068BCC]">
                                 <ArrowLeft className="h-5 w-5 text-[#068BCC]" /> Back
                             </Button>
                         </Link>
                         <div className="flex flex-col">
-                        <div className="text-lg font-bold text-gray-900 lg:text-xl">
-                            {shouldShowManualStep
-                                ? stepTitles[stepTitles.length - 1]?.title
-                                : stepTitles[currentStep]?.title}
-                        </div>
-                        <div className="text-sm text-gray-500 lg:text-base">
-                            {shouldShowManualStep
-                                ? stepTitles[stepTitles.length - 1]?.description
-                                : stepTitles[currentStep]?.description}
-                        </div>
+                            <div className="text-lg font-bold text-gray-900 lg:text-xl">
+                                {shouldShowManualStep ? stepTitles[stepTitles.length - 1]?.title : stepTitles[currentStep]?.title}
+                            </div>
+                            <div className="text-sm text-gray-500 lg:text-base">
+                                {shouldShowManualStep ? stepTitles[stepTitles.length - 1]?.description : stepTitles[currentStep]?.description}
+                            </div>
                         </div>
                     </div>
 
@@ -429,13 +406,13 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 {/* Navigation Buttons */}
                 {showNavigation && !isLastStep && (
                     <div className="mt-2 flex justify-between pt-2">
-                        <Button 
-                            variant="outline" 
-                            onClick={prevStep} 
-                            disabled={currentStep === 0} 
-                            className="flex items-center space-x-2"
+                        <Button
+                            variant="outline"
+                            onClick={prevStep}
+                            disabled={currentStep === 0}
+                            className="flex items-center space-x-2 text-[#068BCC]"
                         >
-                            <ArrowLeft className="h-4 w-4" />
+                            <ArrowLeft className="h-4 w-4 text-[#068BCC]" />
                             <span>Back</span>
                         </Button>
 

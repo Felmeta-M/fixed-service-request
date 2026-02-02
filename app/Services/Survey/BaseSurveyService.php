@@ -166,21 +166,26 @@ abstract class BaseSurveyService extends BaseApiService
             $areaName = $resource['area_name'] ?? null;
             $zoneCode = $resource['zone_code'] ?? null;
             $cableType = $resource['cable_type'] ?? null;
-            
+
             if (!$zoneCode && !$isManualSurvey) {
                 $zoneCode = $this->zoneService->getZoneCodeFromAreaCode($areaCode, $areaName);
             }
-            
+
             $mediaType = $isManualSurvey ? null : $this->deriveMediaTypeFromCableType($cableType);
 
             // Fetch device_offer_id from the selected device (critical for subscription)
             $deviceOfferId = null;
-            $deviceName = null;
-            $freeType = null;
             $deviceId = $data['device_id'] ?? null;
             if ($deviceId) {
                 $device = \App\Models\AvailableDevice::find($deviceId);
                 $deviceOfferId = $device?->offer_id;
+            }
+
+            $deviceVoiceOfferId = null;
+            $deviceVoiceId = $data['device_voice_id'] ?? null;
+            if ($deviceVoiceId) {
+                $deviceVoice = \App\Models\AvailableDevice::find($deviceVoiceId);
+                $deviceVoiceOfferId = $deviceVoice?->offer_id;
             }
 
             $survey = SurveyOrder::create([
@@ -189,8 +194,9 @@ abstract class BaseSurveyService extends BaseApiService
                 'completed_date' => now(),
                 'with_device' => (bool) $data['with_device'],
                 'device_id' => $deviceId,
-                'device_voice_id' => $data['device_voice_id'] ?? null,
                 'device_offer_id' => $deviceOfferId,
+                'device_voice_id' => $deviceVoiceId,
+                'device_voice_offer_id' => $deviceVoiceOfferId,
                 'service_number' => $serviceNumber,
                 'customer_survey_order_id' => $surveyOrderId,
                 'status' => $isManualSurvey ? FFDServiceProvisionStatus::Waiting->value : FFDServiceProvisionStatus::Completed->value,

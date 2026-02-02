@@ -359,8 +359,8 @@ XML;
       $originalFee = $oneOffFee['original_fee'];
       $taxFee = $oneOffFee['tax_fee']; // in birr
       $calculatedFee = $oneOffFee['calculated_fee']; // in birr
-      $feeItemCode = $device->item_code;
-      $feeItemName = $device->item_name ?? 'Device purchase';
+      $itemCode = $device->item_code;
+      $itemName = $device->item_name ?? 'Device purchase';
       $feeType = 'One-Off Change';
       $currencyId = 1048; // ETB
       $payType = 1; // CASH
@@ -370,8 +370,8 @@ XML;
 
       return <<<XML
 <com:CalcOneOffFeeETC>
-    <com:FeeItemCode>{$feeItemCode}</com:FeeItemCode>
-    <com:FeeItemName>{$feeItemName}</com:FeeItemName>
+    <com:FeeItemCode>{$itemCode}</com:FeeItemCode>
+    <com:FeeItemName>{$itemName}</com:FeeItemName>
     <com:FeeType>{$feeType}</com:FeeType>
     <com:CurrencyID>{$currencyId}</com:CurrencyID>
     <com:CaculatedFee>{$calculatedFee}</com:CaculatedFee>

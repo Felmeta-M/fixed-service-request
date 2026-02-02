@@ -26,7 +26,7 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
       // Use shared helpers for timestamps
       $transactionId = $this->transactionId();
       $processTime = $this->processTime();
-      $sessionId = $cfg['session_id'] ?? uniqid();
+      $sessionId = $this->sessionId();
       $completedDate = $this->completedDate();
 
       // Customer and contact info already set by applyDefaults() in base class

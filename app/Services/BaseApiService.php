@@ -53,6 +53,51 @@ abstract class BaseApiService
         return $this->processTime();
     }
 
+    protected function sessionId(): string
+    {
+        return uniqid();
+    }
+
+    protected function version(): string
+    {
+        return '1';
+    }
+
+    protected function language(): string
+    {
+        return '2002';
+    }
+
+    protected function channelId(): string
+    {
+        return '116';
+    }
+
+    protected function technicalChannelId(): string
+    {
+        return '53';
+    }
+
+    protected function tenantId(): string
+    {
+        return config('services.ng.tenant_id');
+    }
+
+    protected function accessUser(): string
+    {
+        return config('services.ng.access_user');
+    }
+
+    protected function accessPwd(): string
+    {
+        return config('services.ng.access_pwd');
+    }
+
+    protected function operatorId(): string
+    {
+        return config('services.ng.operator_id');
+    }
+
     // ========================================
     // CUSTOMER CONTEXT HELPERS (DRY)
     // ========================================

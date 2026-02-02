@@ -144,27 +144,27 @@ XML;
             foreach ($feeChildren->TaxInfo as $tax) {
                 $taxChildren = $tax->children($namespaces['com']);
                 $taxes[] = [
-                    'code' => (string)$taxChildren->TaxCode,
-                    'name' => (string)$taxChildren->TaxName,
-                    'fee' => (string)$taxChildren->TaxFee,
-                    'rate' => (string)$taxChildren->TaxRate,
+                    'code' => (string) $taxChildren->TaxCode,
+                    'name' => (string) $taxChildren->TaxName,
+                    'fee' => (string) $taxChildren->TaxFee,
+                    'rate' => (string) $taxChildren->TaxRate,
                 ];
             }
 
             $extParams = [];
             foreach ($feeChildren->ExtParamList->ParameterInfo as $param) {
                 $paramChildren = $param->children($namespaces['com']);
-                $extParams[(string)$paramChildren->ParamName] = (string)$paramChildren->ParamValue;
+                $extParams[(string) $paramChildren->ParamName] = (string) $paramChildren->ParamValue;
             }
 
             $parsed['fees'][] = [
                 // 'item_code'      => (string) $feeChildren->FeeItemCode,
-                'item_name' => (string)$feeChildren->FeeItemName,
+                'item_name' => (string) $feeChildren->FeeItemName,
                 // 'fee_type'       => (string) $feeChildren->FeeType,
                 // 'currency_id'    => (string) $feeChildren->CurrencyID,
-                'calculated_fee' => (string)$feeChildren->CaculatedFee,
-                'original_fee' => (string)$feeChildren->OriginalFee,
-                'discount_fee' => (string)$feeChildren->DiscountFee,
+                'calculated_fee' => (string) $feeChildren->CaculatedFee,
+                'original_fee' => (string) $feeChildren->OriginalFee,
+                'discount_fee' => (string) $feeChildren->DiscountFee,
                 // 'pay_type'       => (string) $feeChildren->PayType,
                 'taxes' => $taxes,
                 // 'ext_params'     => $extParams,

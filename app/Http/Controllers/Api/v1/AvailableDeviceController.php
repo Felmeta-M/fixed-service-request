@@ -31,8 +31,9 @@ class AvailableDeviceController extends Controller
 
         $devices = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($request) {
             $query = DB::table('available_devices')
-                // ->where('is_active', true)
+                ->where('is_active', true)
                 ->whereNull('deleted_at')
+                ->where('stock_quantity', '>', 0)
                 ->select([
                     'id',
                     'name',
@@ -123,6 +124,9 @@ class AvailableDeviceController extends Controller
         $device = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($id) {
             return DB::table('available_devices')
                 ->where('id', $id)
+                ->whereNull('deleted_at')
+                ->where('is_active', true)
+                ->where('stock_quantity', '>', 0)
                 ->first();
         });
 

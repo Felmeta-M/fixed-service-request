@@ -75,10 +75,13 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       // Use shared helper to hydrate customer data
       $data = $this->hydrateWithCustomerData($data);
 
-      // Add with_device flag from survey order for conditional XML generation
+      // Add with_device flag, device_id, and device_offer_id from survey order for conditional XML generation
       $data['with_device'] = $surveyOrder->with_device ?? false;
+      $data['device_id'] = $surveyOrder->device_id ?? null;
+      $data['device_offer_id'] = $surveyOrder->device_offer_id ?? null;
 
       $xml = $this->buildXml($data);
+
       // Add internet credentials to data for parseResponse
       $data['internet_account'] = $this->internetAccount;
       $data['internet_password'] = $this->internetPassword;
@@ -103,6 +106,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
       return $subscriber;
    }
+
 
    protected function buildXml(array $data): string
    {
@@ -271,13 +275,19 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                         </com:InstanceProperty>
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
-                  <!-- {$this->buildSupplementaryOfferingList($data)} -->
+
+                  {$this->buildSupplementaryOfferingList($data)}
+
                   <com:SLAPriority>6</com:SLAPriority>
                   <com:InternetAccount>{$username}</com:InternetAccount>
                   <com:InternetPassword>REDACTED_PASSWORD=</com:InternetPassword>
                   <com:CallCenterAccess>994</com:CallCenterAccess>
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>
+
+             <!-- one off fee resource -->
+             {$this->oneOffFeeCalculation($data)}
+
             <com:ExternalOperid>{$data['external_oper_id']}</com:ExternalOperid>
             <com:InstallmentCompletedDate>{$data['installment_date']}</com:InstallmentCompletedDate>
          </ser:CreateNewSubscriberReqBody>
@@ -302,11 +312,25 @@ XML;
          return '';
       }
 
+      // Get device offer_id: first from survey order, then fallback to fetching from available_devices
+      $deviceOfferId = $data['device_offer_id'] ?? null;
+
+      // Fallback: fetch offer_id from available_devices using device_id
+      if (empty($deviceOfferId) && !empty($data['device_id'])) {
+         $device = \App\Models\AvailableDevice::find($data['device_id']);
+         $deviceOfferId = $device?->offer_id;
+      }
+
+      // If still no offer_id, skip device offering (no valid offer_id available)
+      if (empty($deviceOfferId)) {
+         return '';
+      }
+
       return <<<XML
                   <com:SupplementaryOfferingList>
                      <com:OfferingInstance>
                         <com:OfferingId>
-                           <com:OfferingId>1827012365</com:OfferingId>
+                           <com:OfferingId>{$deviceOfferId}</com:OfferingId>
                         </com:OfferingId>
                         <com:InstanceProperty>
                            <com:PropertyCode>50135</com:PropertyCode>
@@ -323,6 +347,66 @@ XML;
                   </com:SupplementaryOfferingList>
 XML;
    }
+
+   protected function oneOffFeeCalculation(array $data)
+   {
+      $device = \App\Models\AvailableDevice::find($data['device_id']);
+      if (empty($device)) {
+         return '';
+      }
+
+      $oneOffFee = $this->calculateOneOffFee((float) $device->price, (float) $device->discount);
+      $originalFee = $oneOffFee['original_fee'];
+      $taxFee = $oneOffFee['tax_fee']; // in birr
+      $calculatedFee = $oneOffFee['calculated_fee']; // in birr
+      $feeItemCode = $device->item_code;
+      $feeItemName = $device->item_name ?? 'Device purchase';
+      $feeType = 'One-Off Change';
+      $currencyId = 1048; // ETB
+      $payType = 1; // CASH
+      $taxCode = 'CC_TAX_VAT'; // VAT
+      $taxName = 'VAT'; // VAT
+      $discountFee = $oneOffFee['discount_fee']; // in birr
+
+      return <<<XML
+<com:CalcOneOffFeeETC>
+    <com:FeeItemCode>{$feeItemCode}</com:FeeItemCode>
+    <com:FeeItemName>{$feeItemName}</com:FeeItemName>
+    <com:FeeType>{$feeType}</com:FeeType>
+    <com:CurrencyID>{$currencyId}</com:CurrencyID>
+    <com:CaculatedFee>{$calculatedFee}</com:CaculatedFee>
+    <com:OriginalFee>{$originalFee}</com:OriginalFee>
+    <com:DiscountFee>{$discountFee}</com:DiscountFee>
+    <com:TaxInfo>
+        <com:TaxCode>{$taxCode}</com:TaxCode>
+        <com:TaxName>{$taxName}</com:TaxName>
+        <com:TaxFee>{$taxFee}</com:TaxFee>
+        <com:TaxRate>0.15</com:TaxRate>
+    </com:TaxInfo>
+    <com:PayType>{$payType}</com:PayType>
+</com:CalcOneOffFeeETC>
+XML;
+   }
+
+   protected function calculateOneOffFee(
+      float $price,
+      float $discount = 0.0, // in percentage
+      float $taxRate = 0.15,
+      int $precision = 4
+   ): array {
+      $taxFee = round($price * $taxRate, $precision); // in birr
+      $discountFee = round($price * $discount, $precision); // in birr
+      $calculatedFee = round($price + $taxFee - $discountFee, $precision); // in birr
+
+      return [
+         'original_fee' => round($price, $precision), // in birr
+         'tax_rate' => $taxRate,
+         'tax_fee' => $taxFee, // in birr
+         'calculated_fee' => $calculatedFee,
+         'discount_fee' => $discountFee,
+      ];
+   }
+
 
    protected function parseResponse(string $xml, array $data): array
    {

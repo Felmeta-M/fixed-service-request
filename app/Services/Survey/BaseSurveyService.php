@@ -173,13 +173,24 @@ abstract class BaseSurveyService extends BaseApiService
             
             $mediaType = $isManualSurvey ? null : $this->deriveMediaTypeFromCableType($cableType);
 
+            // Fetch device_offer_id from the selected device (critical for subscription)
+            $deviceOfferId = null;
+            $deviceName = null;
+            $freeType = null;
+            $deviceId = $data['device_id'] ?? null;
+            if ($deviceId) {
+                $device = \App\Models\AvailableDevice::find($deviceId);
+                $deviceOfferId = $device?->offer_id;
+            }
+
             $survey = SurveyOrder::create([
                 ...$data,
                 'bandwidth' => $bandwidthKb,
                 'completed_date' => now(),
                 'with_device' => (bool) $data['with_device'],
-                'device_id' => $data['device_id'] ?? null,
+                'device_id' => $deviceId,
                 'device_voice_id' => $data['device_voice_id'] ?? null,
+                'device_offer_id' => $deviceOfferId,
                 'service_number' => $serviceNumber,
                 'customer_survey_order_id' => $surveyOrderId,
                 'status' => $isManualSurvey ? FFDServiceProvisionStatus::Waiting->value : FFDServiceProvisionStatus::Completed->value,

@@ -23,6 +23,19 @@ class AvailableDevice extends Model
         'model',
         'device_type',
         'media_type',
+        'item_code',
+        'offer_id',
+        'item_name',
+        'item_type',
+        'currency_id',
+        'calculated_fee',
+        'original_fee',
+        'discount_fee',
+        'tax_code',
+        'tax_name',
+        'tax_fee',
+        'tax_rate',
+        'pay_type',
         'price',
         'description',
         'status',
@@ -62,7 +75,7 @@ class AvailableDevice extends Model
     {
         return $query->where(function ($q) use ($type) {
             $q->where('device_type', $type)
-              ->orWhere('device_type', 'universal');
+                ->orWhere('device_type', 'universal');
         });
     }
 
@@ -76,7 +89,7 @@ class AvailableDevice extends Model
 
         return $query->where(function ($q) use ($mediaType) {
             $q->where('media_type', $mediaType)
-              ->orWhere('media_type', 'UNIVERSAL');
+                ->orWhere('media_type', 'UNIVERSAL');
         });
     }
 }

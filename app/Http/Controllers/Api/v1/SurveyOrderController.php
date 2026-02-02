@@ -1011,11 +1011,19 @@ class SurveyOrderController extends Controller
                 ], Response::HTTP_BAD_REQUEST);
             }
 
+            // Get device offer_id from the selected device
+            $deviceOfferId = null;
+            if ($withDevice && $deviceId) {
+                $device = \App\Models\AvailableDevice::find($deviceId);
+                $deviceOfferId = $device?->offer_id;
+            }
+
             // Update device selection on survey order
             $surveyOrder->update([
                 'with_device' => $withDevice,
                 'device_id' => $withDevice ? $deviceId : null,
                 'device_voice_id' => $withDevice ? $deviceVoiceId : null,
+                'device_offer_id' => $deviceOfferId,
             ]);
 
             // Refresh to get updated device IDs, then calculate fee using dedicated service
@@ -1056,6 +1064,7 @@ class SurveyOrderController extends Controller
                 'with_device' => $withDevice,
                 'device_id' => $deviceId,
                 'device_voice_id' => $deviceVoiceId,
+                'device_offer_id' => $deviceOfferId,
                 'subscription_fee' => $subscriptionFee,
                 'device_fee' => $deviceFee,
                 'total_amount' => $totalAmount,

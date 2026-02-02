@@ -73,6 +73,7 @@ class SurveyOrder extends Model
         'with_device',
         'device_id',
         'device_voice_id',
+        'device_offer_id',
         'survey_is_manual',
         'zone_code',
     ];

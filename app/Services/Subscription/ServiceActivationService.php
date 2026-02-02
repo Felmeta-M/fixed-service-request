@@ -41,6 +41,10 @@ class ServiceActivationService
                 'sr.zone_code',
                 'sr.area_code',
                 'sr.area_name',
+                'sr.with_device',
+                'sr.device_id',
+                'sr.device_voice_id',
+                'sr.device_offer_id',
                 'c.name',
                 'c.phone_number',
             ])

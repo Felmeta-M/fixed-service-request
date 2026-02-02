@@ -170,7 +170,7 @@ class SurveyOrderForm
 
                 Section::make('Device Information')
                     ->columnSpanFull()
-                    ->columns(3)
+                    ->columns(4)
                     ->collapsible()
                     ->collapsed()
                     ->schema([
@@ -183,6 +183,9 @@ class SurveyOrderForm
                             ->disabled(),
                         TextInput::make('device_voice_id')
                             ->label('Voice Device ID')
+                            ->disabled(),
+                        TextInput::make('device_offer_id')
+                            ->label('Device Offer ID')
                             ->disabled(),
                     ]),
 

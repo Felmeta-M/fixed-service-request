@@ -361,32 +361,21 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
     return (
         <div className="w-full space-y-6 px-4 py-2 lg:px-6">
-            <div className="pt-0 pb-0">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center justify-start gap-4 pl-2 sm:gap-10">
-                        <Link href={route('services')} className="hidden sm:block">
-                            <Button variant="link" size="icon" className="h-10 w-10 text-[#068BCC]">
-                                <ArrowLeft className="h-5 w-5 text-[#068BCC]" /> Back
-                            </Button>
-                        </Link>
-                        <div className="flex flex-col">
-                            <div className="text-lg font-bold text-gray-900 lg:text-xl">
-                                {shouldShowManualStep ? stepTitles[stepTitles.length - 1]?.title : stepTitles[currentStep]?.title}
-                            </div>
-                            <div className="text-sm text-gray-500 lg:text-base">
-                                {shouldShowManualStep ? stepTitles[stepTitles.length - 1]?.description : stepTitles[currentStep]?.description}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Desktop step indicator */}
-                    {/* <div className="hidden items-center space-x-4 sm:flex">
-                        <div className="flex items-center space-x-2 text-sm text-gray-500">
-                            <span>
-                                Step {shouldShowManualStep ? totalSteps : currentStep + 1} of {totalSteps}
-                            </span>
-                        </div>
-                    </div> */}
+            {/* Header - matching service detail page styling */}
+            <div className="flex flex-col gap-2">
+                <Link href={route('services')} className="w-fit shrink-0 hover:text-[#068BCC]">
+                    <Button variant="ghost" size="sm" className="h-9 gap-1 text-[#068BCC] hover:text-[#068BCC]">
+                        <ArrowLeft className="h-4 w-4 shrink-0 text-[#068BCC]" />
+                        <span className="hover:text-[#068BCC]">Back</span>
+                    </Button>
+                </Link>
+                <div>
+                    <h1 className="text-lg font-semibold text-foreground sm:text-xl">
+                        {shouldShowManualStep ? stepTitles[stepTitles.length - 1]?.title : stepTitles[currentStep]?.title}
+                    </h1>
+                    <p className="text-xs text-muted-foreground sm:text-sm">
+                        {shouldShowManualStep ? stepTitles[stepTitles.length - 1]?.description : stepTitles[currentStep]?.description}
+                    </p>
                 </div>
             </div>
             <div className="relative">

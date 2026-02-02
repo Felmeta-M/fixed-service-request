@@ -1,12 +1,11 @@
 /**
  * Mutation hooks for API operations (POST, PUT, DELETE)
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
-import { useAuthToken } from './use-auth-token';
-import { router } from '@inertiajs/react';
-import { toast } from 'sonner';
 import { showSuccessToast } from '@/lib/toast-helpers';
+import { router } from '@inertiajs/react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuthToken } from './use-auth-token';
 
 /**
  * Parse API error messages for complaints
@@ -62,7 +61,7 @@ export function useCreateComplaint() {
         onSuccess: (response) => {
             // Invalidate related queries - use the correct query key
             queryClient.invalidateQueries({ queryKey: ['localTTs'] });
-            
+
             // Check if this is an existing TT or a new one
             const ttData = response?.data;
             if (ttData?.is_existing) {
@@ -70,7 +69,7 @@ export function useCreateComplaint() {
             } else {
                 showSuccessToast(`Complaint submitted successfully! TT: ${ttData?.tt_serial_no || ''}`);
             }
-            
+
             setTimeout(() => {
                 router.visit('/complaints', { preserveScroll: false });
             }, 1000);
@@ -87,7 +86,7 @@ export function useCreateComplaintGuest() {
 
     return useMutation({
         mutationFn: async (data: any) => {
-            const response = await apiClient.post<any>('/tt/create-guest', data, { 
+            const response = await apiClient.post<any>('/tt/create-guest', data, {
                 token: undefined,
                 skipAuthRedirect: true, // Public endpoint - don't redirect on auth errors
             });
@@ -104,7 +103,7 @@ export function useCreateComplaintGuest() {
         },
         onSuccess: (response) => {
             queryClient.invalidateQueries({ queryKey: ['localTTs'] });
-            
+
             // Check if this is an existing TT or a new one
             const ttData = response?.data;
             if (ttData?.is_existing) {
@@ -170,7 +169,7 @@ export function useCreateCustomer() {
 
 /**
  * Hook for creating a survey
- * 
+ *
  * After successful survey creation, waits 7.5 seconds for third-party
  * activation to complete before resolving. This ensures the backend
  * has time to process the service activation with external systems.
@@ -189,15 +188,13 @@ export function useCreateSurvey() {
 
             if (!isSuccess) {
                 const errorMsg =
-                    (response as any).data?.original?.message ||
-                    (response as any).message ||
-                    'Failed to create service request. Please try again.';
+                    (response as any).data?.original?.message || (response as any).message || 'Failed to create service request. Please try again.';
                 throw new Error(errorMsg);
             }
 
             // Wait for third-party activation to complete
             // Backend triggers activation after survey creation, this gives time for processing
-            await new Promise(resolve => setTimeout(resolve, 7500)); // 7.5 seconds
+            await new Promise((resolve) => setTimeout(resolve, 5000)); // 5 seconds
 
             return response;
         },
@@ -301,11 +298,7 @@ export function useConfirmFeedback() {
     return useMutation({
         mutationFn: async (data: { tt_no: string; result_code: '0' | '1'; desc: string }) => {
             if (!token) throw new Error('Authentication token required');
-            const response = await apiClient.post<any>(
-                `${import.meta.env.VITE_API_BASE_URL}/tt/confirm-feedback`,
-                data,
-                { token }
-            );
+            const response = await apiClient.post<any>(`${import.meta.env.VITE_API_BASE_URL}/tt/confirm-feedback`, data, { token });
             if (!response.success) {
                 throw new Error(response.message || 'Failed to confirm feedback');
             }
@@ -498,12 +491,7 @@ export function useUpdateSurveyDevice() {
 
     return useMutation({
         retry: false,
-        mutationFn: async (data: {
-            customer_survey_order_id: string;
-            with_device: boolean;
-            device_id?: string;
-            device_voice_id?: string;
-        }) => {
+        mutationFn: async (data: { customer_survey_order_id: string; with_device: boolean; device_id?: string; device_voice_id?: string }) => {
             if (!token) throw new Error('Authentication token required');
             const response = await apiClient.post<any>('/survey-requests/update-device', data, {
                 token,
@@ -522,4 +510,3 @@ export function useUpdateSurveyDevice() {
         },
     });
 }
-

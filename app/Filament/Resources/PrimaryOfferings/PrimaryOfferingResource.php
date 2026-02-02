@@ -11,6 +11,7 @@ use App\Filament\Resources\PrimaryOfferings\Schemas\PrimaryOfferingInfolist;
 use App\Filament\Resources\PrimaryOfferings\Tables\PrimaryOfferingsTable;
 use App\Models\PrimaryOffering;
 use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -20,7 +21,10 @@ class PrimaryOfferingResource extends Resource
 {
     protected static ?string $model = PrimaryOffering::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::Gift;
+    protected static string|UnitEnum|null $navigationGroup = 'Service Management';
+
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {

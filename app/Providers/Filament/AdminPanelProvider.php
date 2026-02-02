@@ -63,6 +63,8 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make()
                     ->label('Service Management'),
                 NavigationGroup::make()
+                    ->label(label: 'Trouble Ticket Management'),
+                NavigationGroup::make()
                     ->label('User Management'),
                 NavigationGroup::make()
                     ->label(fn(): string => __('navigation.settings'))

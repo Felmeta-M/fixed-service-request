@@ -28,9 +28,24 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       parent::__construct($payment_service, $queryAvailableNumberService, $reserveNumberService, $zoneService);
    }
 
-   protected function offeringId(): int
+   protected function mainOfferingId(): int
    {
       return OfferId::FixedData->value; // FBB OR DATA
+   }
+
+   protected function fbbOfferingId(): int
+   {
+      return OfferId::FixedData->value;
+   }
+
+   protected function voiceOfferingId(): int
+   {
+      return OfferId::FixedVoice->value;
+   }
+
+   protected function comboOfferingId(): int
+   {
+      return OfferId::FixedCombo->value;
    }
 
    protected function businessCode(): string
@@ -242,7 +257,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
                         <com:OfferingId>
-                           <com:OfferingId>{$this->offeringId()}</com:OfferingId>
+                           <com:OfferingId>{$this->mainOfferingId()}</com:OfferingId>
                         </com:OfferingId>
                          <com:InstanceProperty>
                            <com:PropertyCode>50135</com:PropertyCode>

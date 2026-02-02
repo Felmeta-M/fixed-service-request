@@ -25,7 +25,22 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       parent::__construct($payment_service, $queryAvailableNumberService, $reserveNumberService, $zoneService);
    }
 
-   protected function offeringId(): int
+   protected function mainOfferingId(): int
+   {
+      return OfferId::FixedCombo->value;
+   }
+
+   protected function fbbOfferingId(): string
+   {
+      return OfferId::FixedData->value;
+   }
+
+   protected function voiceOfferingId(): string
+   {
+      return OfferId::FixedVoice->value;
+   }
+
+   protected function comboOfferingId(): string
    {
       return OfferId::FixedCombo->value;
    }
@@ -87,35 +102,28 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       // Get config values
       $cfg = config('services.ng');
 
-      // Get voice service number from pool (no reserve/release needed for combo)
-      // Just fetch available number and use it directly in subscription
-      $depId = '1766044689199549668';
-      $numberList = $this->queryAvailableNumberService->queryAvailableNumbers([
-         'pay_mode' => '1',
-         'tele_type' => '4',
-         'need_query_by_dept' => false,
-         'res_cnt' => 100,
-         'dept_id' => $depId,
-      ]);
 
-      if (empty($numberList)) {
-         throw new \RuntimeException('No available voice service numbers in pool');
-      }
+      // $depId = '1766044689199549668';
+      // $numberList = $this->queryAvailableNumberService->queryAvailableNumbers([
+      //    'pay_mode' => '1',
+      //    'tele_type' => '4',
+      //    'need_query_by_dept' => false,
+      //    'res_cnt' => 100,
+      //    'dept_id' => $depId,
+      // ]);
 
-      // Filter by level '6' and get the first one
-      $filtered = array_filter($numberList, fn($item) => $item['Level'] === '6');
-      if (empty($filtered)) {
-         throw new \RuntimeException('No voice service numbers with required level');
-      }
+      // if (empty($numberList)) {
+      //    throw new \RuntimeException('No available voice service numbers in pool');
+      // }
 
-      $voiceServiceNumber = reset($filtered)['ServiceNumber'];
+      // $filtered = array_filter($numberList, fn($item) => $item['Level'] === '6');
+      // if (empty($filtered)) {
+      //    throw new \RuntimeException('No voice service numbers with required level');
+      // }
 
-      AppLogger::api()->info('Voice service number fetched for combo subscription', [
-         'service_number' => $voiceServiceNumber,
-         'survey_order_id' => $data['survey_order_id'] ?? null,
-         'dept_id' => $depId,
-      ]);
-      // Use shared helpers for customer data
+      $voiceServiceNumber = "116189998"; // reset($filtered)['ServiceNumber'];
+
+
       $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
 
       // Get dynamic customer profile and address data
@@ -260,21 +268,21 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:PaymentMode>
                      <com:PaymentMode>CASH</com:PaymentMode>
                   </com:PaymentMode>
-                  
                </com:AccountInfo>
+
                <com:IsCombo>1</com:IsCombo>
             </com:CustomerBusiOrder>
             <com:SubBusiOrderlist>
-               <com:BusinessCode>CO015</com:BusinessCode>
+               <com:BusinessCode>{$this->businessCode()}</com:BusinessCode>
                <!--You have a CHOICE of the next 2 items at this level-->
                <com:GroupSubInfo>
                   <com:ExternalSequnce>?</com:ExternalSequnce>
+
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
                         <com:OfferingId>
-                           <com:OfferingId>{$this->offeringId()}</com:OfferingId>
+                           <com:OfferingId>{$this->mainOfferingId()}</com:OfferingId>
                         </com:OfferingId>
-                        
                      </com:NewPrimaryOffering>
                      <com:EffectiveMode>0</com:EffectiveMode>
   
@@ -288,13 +296,12 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                            <com:PropertyType>1</com:PropertyType>
                            <com:Value>2</com:Value>
                         </com:InstanceProperty>
-                 
                   </com:PrimaryOffering>
-                  
                </com:GroupSubInfo>
+
             </com:SubBusiOrderlist>
             <com:SubBusiOrderlist>
-               <com:BusinessCode>CO015</com:BusinessCode>
+               <com:BusinessCode>{$this->businessCode()}</com:BusinessCode>
                <com:SubscriberInfo>
                   <com:ServiceNumber>{$voiceServiceNumber}</com:ServiceNumber>
                   <com:NetworkType>4</com:NetworkType>
@@ -302,7 +309,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
                         <com:OfferingId>
-                           <com:OfferingId>1207609454</com:OfferingId>
+                           <com:OfferingId>{$this->voiceOfferingId()}</com:OfferingId>
                         </com:OfferingId>
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
@@ -315,7 +322,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
             </com:SubBusiOrderlist>
 
             <com:SubBusiOrderlist>
-               <com:BusinessCode>CO015</com:BusinessCode>
+               <com:BusinessCode>{$this->businessCode()}</com:BusinessCode>
                <com:SubscriberInfo>
                   <com:SubType>0</com:SubType>
                   <com:SubLanguage>{$profile['primary_language']}</com:SubLanguage>
@@ -323,7 +330,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
                         <com:OfferingId>
-                           <com:OfferingId>1457567289</com:OfferingId>
+                           <com:OfferingId>{$this->fbbOfferingId()}</com:OfferingId>
                         </com:OfferingId>
                         <com:InstanceProperty>
                            <com:PropertyCode>50135</com:PropertyCode>
@@ -359,8 +366,8 @@ XML;
       return [
          'xml' => $xml,
          'voice_service_number' => $voiceServiceNumber,
-         'internet_account' => $email,
-         'internet_password' => $internetPassword,
+         'internet_account' => $username,
+         'internet_password' => 'REDACTED_PASSWORD=',
       ];
    }
 

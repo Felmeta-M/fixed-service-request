@@ -9,6 +9,7 @@ use RuntimeException;
 use App\Services\QueryAvailableNumberService;
 use App\Services\ReserveNumberService;
 use App\Services\Payment\PaymentService;
+use App\Enums\OfferId;
 
 
 class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
@@ -27,7 +28,7 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
 
     protected function mainOfferId(): int
     {
-        return 1207609454;
+        return OfferId::FixedVoice->value;
     }
 
     protected function buildXml(array $data, array $resource): string
@@ -55,6 +56,8 @@ class VoiceSurveyService extends BaseSurveyService implements SurveyInterface
         }
 
         $data['service_number'] = $this->serviceNumber;
+
+        $data['main_offer_id'] = $this->mainOfferId();
 
 
         return <<<XML

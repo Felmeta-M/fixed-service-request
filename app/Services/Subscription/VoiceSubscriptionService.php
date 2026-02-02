@@ -24,7 +24,22 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
       parent::__construct($payment_service, $queryAvailableNumberService, $reserveNumberService, $zoneService);
    }
 
-   protected function offeringId(): int
+   protected function mainOfferingId(): int
+   {
+      return OfferId::FixedVoice->value;
+   }
+
+   protected function fbbOfferingId(): int
+   {
+      return OfferId::FixedData->value;
+   }
+
+   protected function comboOfferingId(): int
+   {
+      return OfferId::FixedCombo->value;
+   }
+
+   protected function voiceOfferingId(): int
    {
       return OfferId::FixedVoice->value;
    }
@@ -250,7 +265,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
                         <com:OfferingId>
-                           <com:OfferingId>{$this->offeringId()}</com:OfferingId>
+                           <com:OfferingId>{$this->mainOfferingId()}</com:OfferingId>
                         </com:OfferingId>
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>

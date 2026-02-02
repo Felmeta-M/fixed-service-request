@@ -151,8 +151,10 @@ abstract class BaseSubscriptionService extends BaseApiService
             throw new \RuntimeException('Survey order not found: ' . $surveyOrderId);
         }
 
-        if ($surveyOrder->customer_subscription_order_id && 
-            $surveyOrder->status === FFDServiceProvisionStatus::Completed->value) {
+        if (
+            $surveyOrder->customer_subscription_order_id &&
+            $surveyOrder->status === FFDServiceProvisionStatus::Completed->value
+        ) {
             AppLogger::api()->warning('Attempted duplicate subscription', [
                 'survey_order_id' => $surveyOrderId,
                 'current_status' => $surveyOrder->status,
@@ -223,7 +225,7 @@ abstract class BaseSubscriptionService extends BaseApiService
         }
     }
 
-    abstract protected function offeringId(): int;
+    abstract protected function mainOfferingId(): int;
     abstract protected function businessCode(): string;
     abstract protected function networkType(): int;
 

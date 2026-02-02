@@ -7,12 +7,13 @@ use App\Services\Logging\AppLogger;
 use App\Support\CustomerContext;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
+use App\Enums\OfferId;
 
 class DataSurveyService extends BaseSurveyService implements SurveyInterface
 {
     protected function mainOfferId(): int
     {
-        return 1457567289;
+        return OfferId::FixedData->value;
     }
 
     protected function buildXml(array $data, array $resource): string
@@ -31,7 +32,10 @@ class DataSurveyService extends BaseSurveyService implements SurveyInterface
             'contact_no' => $data['contact_no'],
             'contact_email' => $data['contact_email'],
         ];
+
         $customerCode = $data['customer_code'];
+
+        $data['main_offer_id'] = $this->mainOfferId();
 
         // Bandwidth already has default from applyDefaults()
         $bandwidth = $this->parseBandwidth($data['bandwidth']);

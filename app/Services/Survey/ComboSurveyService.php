@@ -5,12 +5,13 @@ namespace App\Services\Survey;
 use App\Services\ApiResponse;
 use App\Support\CustomerContext;
 use RuntimeException;
+use App\Enums\OfferId;
 
 class ComboSurveyService extends BaseSurveyService implements SurveyInterface
 {
    protected function mainOfferId(): int
    {
-      return 180427974;
+      return OfferId::FixedCombo->value;
    }
 
    protected function mainBandwidth(array $data): ?int
@@ -37,7 +38,9 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
       ];
 
       // Values already have defaults from applyDefaults() in base class
-      $mainOfferId = $data['main_offer_id'] ?? $this->mainOfferId();
+
+      $data['main_offer_id'] = $this->mainOfferId();
+
       $bandwidth = $this->parseBandwidth($data['bandwidth']);
 
       // Get dynamic survey address info from customer or request data
@@ -52,11 +55,11 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
       ];
 
       // Use resource data for sub surveys
-      $neid = $resource['neid'] ?? '700041565830';
-      $cableType = $resource['cable_type'] ?? '3';
+      $neid = $resource['neid'] ?? '';
+      $cableType = $resource['cable_type'] ?? '';
 
       // Sub survey 1: Voice
-      $subSurvey1MainOfferId = '1207609454';
+      $subSurvey1MainOfferId = OfferId::FixedVoice->value;
       $subSurvey1ExtParams = [
          ['ParamName' => 'NEID', 'ParamValue' => $neid],
          ['ParamName' => 'CABLETYPE', 'ParamValue' => $cableType],
@@ -64,7 +67,7 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
       ];
 
       // Sub survey 2: Data
-      $subSurvey2MainOfferId = '1457567289';
+      $subSurvey2MainOfferId = OfferId::FixedData->value;
       $subSurvey2ExtParams = [
          ['ParamName' => 'NEID', 'ParamValue' => $neid],
          ['ParamName' => 'CABLETYPE', 'ParamValue' => $cableType],
@@ -101,7 +104,7 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
                 <com:SurveyType>{$data['survey_type']}</com:SurveyType>
                 <com:TelecomRegion>{$data['telecom_region']}</com:TelecomRegion>
                 <com:OperType>{$data['oper_type']}</com:OperType>
-                <com:MainOfferId>{$mainOfferId}</com:MainOfferId>
+                <com:MainOfferId>{$this->mainOfferId()}</com:MainOfferId>
 
                 <com:SurveyAddressInfo>
                     <com:AdministrativeRegionOrCity>{$surveyAddressInfo['administrative_region_or_city']}</com:AdministrativeRegionOrCity>
@@ -130,7 +133,7 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
                     </com:ExtParamList>
                 </com:SubSurveyinfoList>
 
-                <com:bandwidth>1024</com:bandwidth>
+                <com:bandwidth>{$bandwidth}</com:bandwidth>
                 <com:ContactPerson>{$primaryContact['contact_person']}</com:ContactPerson>
                 <com:ContactNo>{$primaryContact['contact_no']}</com:ContactNo>
                 <com:ContactEmail>{$primaryContact['contact_email']}</com:ContactEmail>

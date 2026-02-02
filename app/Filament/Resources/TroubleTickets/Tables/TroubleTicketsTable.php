@@ -73,6 +73,8 @@ class TroubleTicketsTable
                 TextColumn::make('house_no')
                     ->searchable(),
             ])
+            ->recordUrl(null)
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 TrashedFilter::make(),
             ])

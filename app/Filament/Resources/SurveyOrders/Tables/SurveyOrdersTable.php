@@ -85,6 +85,7 @@ class SurveyOrdersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
+            ->recordUrl(null)
             ->filters([
                 SelectFilter::make('status')
                     ->label('Status')

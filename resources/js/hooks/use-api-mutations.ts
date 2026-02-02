@@ -194,7 +194,7 @@ export function useCreateSurvey() {
 
             // Wait for third-party activation to complete
             // Backend triggers activation after survey creation, this gives time for processing
-            await new Promise((resolve) => setTimeout(resolve, 5000)); // 5 seconds
+            await new Promise((resolve) => setTimeout(resolve, 7500)); // 7.5 seconds
 
             return response;
         },

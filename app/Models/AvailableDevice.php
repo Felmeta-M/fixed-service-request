@@ -27,15 +27,7 @@ class AvailableDevice extends Model
         'offer_id',
         'item_name',
         'item_type',
-        'currency_id',
-        'calculated_fee',
-        'original_fee',
         'discount_fee',
-        'tax_code',
-        'tax_name',
-        'tax_fee',
-        'tax_rate',
-        'pay_type',
         'price',
         'description',
         'status',
@@ -56,6 +48,7 @@ class AvailableDevice extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'discount_fee' => 'decimal:4',
         'stock_quantity' => 'integer',
         'specifications' => 'array',
     ];

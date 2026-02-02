@@ -244,11 +244,13 @@ class CreateTTService extends BaseApiService
         $name = trim("{$firstName} {$middleName} {$lastName}") ?: 'Customer';
 
         // BSS Classification from queried data
-        $customerType = $customer['customer_type'] ?? '1';
-        $customerLevel = $customer['customer_level'] ?? '8';
-        // Get category from ExtParams if not in customer object
-        $customerCategory = $customer['customer_category'] ?? ($extParams['CustomerCategory'] ?? '1');
-        $custSubCategory = $customer['customer_subcategory'] ?? ($extParams['CustSubCategory'] ?? '1');
+        // Third-party API expects NUMERIC codes, not string values
+        $customerType = !empty($customer['customer_type']) ? $customer['customer_type'] : '1';
+        $customerLevel = !empty($customer['customer_level']) ? $customer['customer_level'] : '8';
+        
+        // Get category from ExtParams if not in customer object (also numeric codes)
+        $customerCategory = !empty($customer['customer_category']) ? $customer['customer_category'] : (!empty($extParams['CustomerCategory']) ? $extParams['CustomerCategory'] : '1');
+        $custSubCategory = !empty($customer['customer_subcategory']) ? $customer['customer_subcategory'] : (!empty($extParams['CustSubCategory']) ? $extParams['CustSubCategory'] : '1');
 
         // Address from queried data (Address1=Region, Address2=City, Address3=Zone, Address4=Wereda, Address5=Kebele, Address6=HouseNo)
         $ethioZone = !empty($extParams['address1']) ? $extParams['address1'] : '21';

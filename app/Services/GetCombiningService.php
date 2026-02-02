@@ -88,7 +88,22 @@ XML;
             throw new \RuntimeException((string) $header->RetMsg);
         }
 
-        $body = $response->GetCombiningBody;
+        // Access GetCombiningBody with proper namespace context
+        $combiningBody = $response->children($namespaces['quer'])->GetCombiningBody;
+        $body = $combiningBody->children($namespaces['quer']);
+
+        // Extract customer type and level with explicit logging for debugging
+        $customerType = (string) $body->CustomerType;
+        $customerLevel = (string) $body->CustomerLevel;
+
+        // Log parsed values for debugging
+        Log::debug('GetCombiningService Parsed Values', [
+            'customer_type' => $customerType,
+            'customer_level' => $customerLevel,
+            'customer_type_empty' => empty($customerType),
+            'customer_level_empty' => empty($customerLevel),
+            'first_name' => (string) $body->FirstName,
+        ]);
 
         return [
             'subscriber' => [
@@ -101,9 +116,11 @@ XML;
                 'customer_id' => (string) $body->CustomerId,
                 'customer_code' => (string) $body->CustomerCode,
                 'first_name' => (string) $body->FirstName,
+                'middle_name' => (string) $body->MiddleName,
+                'last_name' => (string) $body->LastName,
                 'nationality' => (string) $body->Nationality,
-                'customer_type' => (string) $body->CustomerType,
-                'customer_level' => (string) $body->CustomerLevel,
+                'customer_type' => $customerType,
+                'customer_level' => $customerLevel,
                 'customer_language' => (string) $body->CustomerLanguage,
                 'gender' => (string) $body->Gender,
                 'status' => (string) $body->Status,
@@ -114,9 +131,9 @@ XML;
                 'account_code' => (string) $body->AccountCode,
             ],
 
-            'addresses' => $this->parseAddresses($body, $namespaces),
+            'addresses' => $this->parseAddresses($combiningBody, $namespaces),
 
-            'ext_params' => $this->parseExtParams($body, $namespaces),
+            'ext_params' => $this->parseExtParams($combiningBody, $namespaces),
 
             'payment' => [
                 'pay_type' => (string) $body->PayType,
@@ -126,36 +143,52 @@ XML;
         ];
     }
 
-    protected function parseAddresses($body, array $namespaces): array
+    protected function parseAddresses($combiningBody, array $namespaces): array
     {
         $addresses = [];
 
-        foreach ($body->AddressInfoList->children($namespaces['bas'])->AddressInfo ?? [] as $addr) {
-            $addresses[] = [
-                'address_class' => (string) $addr->AddressClass,
-                'contact_seq' => (string) $addr->ContactSeq,
-                'address_type' => (string) $addr->AddressType,
-                'local_id' => (string) $addr->LocalId,
-                'address1' => (string) $addr->Address1,
-                'address2' => (string) $addr->Address2,
-                'address3' => (string) $addr->Address3,
-                'address4' => (string) $addr->Address4,
-                'address5' => (string) $addr->Address5,
-                'address6' => (string) $addr->Address6,
-                'address9' => (string) $addr->Address9,
-                'address11' => (string) $addr->Address11,
-            ];
+        // Access AddressInfoList through quer namespace, then AddressInfo through bas namespace
+        $bodyChildren = $combiningBody->children($namespaces['quer']);
+        $addressInfoList = $bodyChildren->AddressInfoList;
+        
+        if ($addressInfoList) {
+            foreach ($addressInfoList->children($namespaces['bas'])->AddressInfo ?? [] as $addr) {
+                $addrChildren = $addr->children($namespaces['bas']);
+                $addresses[] = [
+                    'address_class' => (string) $addrChildren->AddressClass,
+                    'contact_seq' => (string) $addrChildren->ContactSeq,
+                    'address_type' => (string) $addrChildren->AddressType,
+                    'local_id' => (string) $addrChildren->LocalId,
+                    'address1' => (string) $addrChildren->Address1,
+                    'address2' => (string) $addrChildren->Address2,
+                    'address3' => (string) $addrChildren->Address3,
+                    'address4' => (string) $addrChildren->Address4,
+                    'address5' => (string) $addrChildren->Address5,
+                    'address6' => (string) $addrChildren->Address6,
+                    'address9' => (string) $addrChildren->Address9,
+                    'address10' => (string) $addrChildren->Address10,
+                    'address11' => (string) $addrChildren->Address11,
+                    'address12' => (string) $addrChildren->Address12,
+                ];
+            }
         }
 
         return $addresses;
     }
 
-    protected function parseExtParams($body, array $namespaces): array
+    protected function parseExtParams($combiningBody, array $namespaces): array
     {
         $params = [];
 
-        foreach ($body->ExtParamList->children($namespaces['bas'])->ParameterInfo ?? [] as $param) {
-            $params[(string) $param->ParamName] = (string) $param->ParamValue;
+        // Access ExtParamList through quer namespace, then ParameterInfo through bas namespace
+        $bodyChildren = $combiningBody->children($namespaces['quer']);
+        $extParamList = $bodyChildren->ExtParamList;
+        
+        if ($extParamList) {
+            foreach ($extParamList->children($namespaces['bas'])->ParameterInfo ?? [] as $param) {
+                $paramChildren = $param->children($namespaces['bas']);
+                $params[(string) $paramChildren->ParamName] = (string) $paramChildren->ParamValue;
+            }
         }
 
         return $params;

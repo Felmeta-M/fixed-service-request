@@ -1,12 +1,11 @@
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useCancelSurveyOrder, useChangePrimaryOffering, useCreateSubscription, useDeleteSurveyOrder } from '@/hooks/use-api-mutations';
 import { useTranslation } from '@/hooks/use-translation';
+import { showErrorToast, showLoadingToast, showSuccessToast } from '@/lib/toast-helpers';
 import { router, usePage } from '@inertiajs/react';
 import { ArrowDownToLineIcon, ArrowUpToLineIcon, Eye, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
-import { showErrorToast, showSuccessToast, showLoadingToast } from '@/lib/toast-helpers';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { BandwidthChangeDialog } from './bandwidth-change-dialog';
 import { CancelConfirmationDialog } from './cancel-confirmation-dialog';
 import DeleteConfirmationDialog from './delete-confirmation-dialog';
@@ -107,7 +106,12 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isSubmittingRef = useRef(false);
 
-    const loading = cancelMutation.isPending || deleteMutation.isPending || createSubscriptionMutation.isPending || changePrimaryOfferingMutation.isPending || isSubmitting;
+    const loading =
+        cancelMutation.isPending ||
+        deleteMutation.isPending ||
+        createSubscriptionMutation.isPending ||
+        changePrimaryOfferingMutation.isPending ||
+        isSubmitting;
 
     const { main_offer_id } = survey;
 
@@ -120,7 +124,6 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     }, [user]);
 
     const handleApiError = (result: unknown, context: string = '', toastId?: string | number) => {
-
         let errorMessage = 'An unexpected error occurred. Please try again.';
 
         const r = (typeof result === 'object' && result !== null ? (result as Record<string, unknown>) : {}) as Record<string, unknown>;
@@ -435,44 +438,67 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         router.visit(`/services/${id}?${orderIdParam}`);
     };
 
+    // Determine the primary action for this row
+    const getPrimaryAction = () => {
+        if (canSubscribe) return 'activate';
+        if (canPay) return 'pay';
+        if (isManualSurvey && canResume) return 'continue';
+        return null;
+    };
+
+    const primaryAction = getPrimaryAction();
+    const hasDropdownActions = canUpgradeDowngrade || canCancel || canTerminate;
+
     return (
         <>
-            <div className="flex items-center justify-end gap-2">
-                {/* Continue button for manual surveys - visible but disabled when can_continue is false */}
-                {isManualSurvey && !canSubscribe && !canPay && (
-                    <Button onClick={handleContinueManual} disabled={loading || !canResume} className="bg-primary hover:bg-primary/90 px-3 text-white" size="sm">
-                        {t('buttons.continue')}
-                    </Button>
-                )}
+            <div className="flex items-center justify-end gap-1.5">
+                {/* Primary Action Button - Fixed width container for alignment */}
+                <div className="flex w-[110px] justify-end">
+                    {primaryAction === 'activate' && (
+                        <Button
+                            onClick={onSubscribeClick}
+                            disabled={loading || isSubmitting}
+                            className="w-full gap-1 bg-primary text-xs text-white"
+                            size="sm"
+                        >
+                            {isSubmitting || createSubscriptionMutation.isPending ? t('buttons.subscribing') : t('buttons.activate_service')}
+                        </Button>
+                    )}
+                    {primaryAction === 'pay' && (
+                        <Button
+                            onClick={() => navigateToDetails('payment')}
+                            disabled={loading}
+                            className="w-full gap-1 bg-primary text-xs text-white"
+                            size="sm"
+                        >
+                            {loading ? t('buttons.preparing') : t('buttons.pay_now')}
+                        </Button>
+                    )}
+                    {primaryAction === 'continue' && (
+                        <Button
+                            onClick={handleContinueManual}
+                            disabled={loading}
+                            className="w-full bg-primary text-xs text-white hover:bg-primary/90"
+                            size="sm"
+                        >
+                            {t('buttons.continue')}
+                        </Button>
+                    )}
+                </div>
 
-                {/* Pay button - for surveys that need payment (manual or auto) */}
-                {canPay && (
-                    <Button onClick={() => navigateToDetails('payment')} disabled={loading} className="gap-1 bg-primary px-4 text-white" size="sm">
-                        {loading ? (
-                            <>
-                                <div className="h-3 w-3 animate-spin rounded-full border-b-2 border-white"></div>
-                                {t('buttons.preparing')}
-                            </>
-                        ) : (
-                            <>{t('buttons.pay_now')}</>
-                        )}
-                    </Button>
-                )}
-
-                {/* Subscribe/Activate button - for surveys that can subscribe (manual or auto) */}
-                {canSubscribe && (
-                    <Button onClick={onSubscribeClick} disabled={loading || isSubmitting} className="gap-1 bg-primary px-2 text-white" size="sm">
-                        {isSubmitting || createSubscriptionMutation.isPending ? t('buttons.subscribing') : t('buttons.activate_service')}
-                    </Button>
-                )}
-                <Button variant="ghost" size="sm" onClick={() => handleRowClick(survey as SurveyRow)} className="h-8 gap-1.5 px-2">
-                    <Eye className="h-4 w-4 shrink-0" />
-                    <span>{t('buttons.view_detail')}</span>
+                {/* View Detail Button - Always visible */}
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRowClick(survey as SurveyRow)}
+                    className="h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
+                >
+                    <Eye className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">{t('buttons.view_detail')}</span>
                 </Button>
-                {/* {canCancel && ( */}
 
-                {/* Show dropdown only if there are actions available */}
-                {(canUpgradeDowngrade || canCancel || canTerminate) && (
+                {/* Actions Dropdown Menu - Only show if there are additional actions */}
+                {hasDropdownActions && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={loading}>
@@ -487,27 +513,42 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                                 </svg>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuContent align="end" className="w-44">
+                            {/* Upgrade/Downgrade options */}
                             {canUpgradeDowngrade && (
                                 <>
-                                    <DropdownMenuItem onClick={handleUpgrade} className="flex items-center gap-2 cursor-pointer">
+                                    <DropdownMenuItem onClick={handleUpgrade} className="flex cursor-pointer items-center gap-2">
                                         <ArrowUpToLineIcon className="h-4 w-4" />
                                         <span>{t('buttons.upgrade')}</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={handleDowngrade} className="flex items-center gap-2 cursor-pointer">
+                                    <DropdownMenuItem onClick={handleDowngrade} className="flex cursor-pointer items-center gap-2">
                                         <ArrowDownToLineIcon className="h-4 w-4" />
                                         <span>{t('buttons.downgrade')}</span>
                                     </DropdownMenuItem>
                                 </>
                             )}
+
+                            {/* Cancel/Terminate options */}
                             {canCancel && (
-                                <DropdownMenuItem onClick={() => { setIsTerminateAction(false); setOpenCancelDialog(true); }} className="flex cursor-pointer items-center gap-2 text-destructive">
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setIsTerminateAction(false);
+                                        setOpenCancelDialog(true);
+                                    }}
+                                    className="flex cursor-pointer items-center gap-2 text-destructive focus:text-destructive"
+                                >
                                     <X className="h-4 w-4" />
                                     <span>{t('buttons.cancel_request')}</span>
                                 </DropdownMenuItem>
                             )}
                             {canTerminate && (
-                                <DropdownMenuItem onClick={() => { setIsTerminateAction(true); setOpenCancelDialog(true); }} className="flex cursor-pointer items-center gap-2 text-destructive">
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setIsTerminateAction(true);
+                                        setOpenCancelDialog(true);
+                                    }}
+                                    className="flex cursor-pointer items-center gap-2 text-destructive focus:text-destructive"
+                                >
                                     <X className="h-4 w-4" />
                                     <span>{t('buttons.terminate_service')}</span>
                                 </DropdownMenuItem>
@@ -515,19 +556,6 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                         </DropdownMenuContent>
                     </DropdownMenu>
                 )}
-                {/* )} */}
-
-                {/* {canCancel && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setOpenCancelDialog(true)}
-                        disabled={loading}
-                        className="gap-1 px-2"
-                    >
-                        Cancel
-                    </Button>
-                )} */}
             </div>
 
             <CancelConfirmationDialog
@@ -535,12 +563,15 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 onOpenChange={setOpenCancelDialog}
                 onConfirm={handleCancel}
                 loading={loading}
-                title={isTerminateAction ? "Terminate Service" : "Cancel Service Request"}
-                description={isTerminateAction
-                    ? "Are you sure you want to terminate this service? This action cannot be undone."
-                    : "Are you sure you want to cancel this service request? This action cannot be undone."
+                title={isTerminateAction ? 'Terminate Service' : 'Cancel Service Request'}
+                description={
+                    isTerminateAction
+                        ? 'Are you sure you want to terminate this service? This action cannot be undone.'
+                        : 'Are you sure you want to cancel this service request? This action cannot be undone.'
                 }
-                confirmText={loading ? (isTerminateAction ? 'Terminating...' : 'Cancelling...') : (isTerminateAction ? 'Yes, Terminate' : 'Yes, Cancel')}
+                confirmText={
+                    loading ? (isTerminateAction ? 'Terminating...' : 'Cancelling...') : isTerminateAction ? 'Yes, Terminate' : 'Yes, Cancel'
+                }
                 cancelText="No, Keep It"
             />
 

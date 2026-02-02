@@ -14,7 +14,7 @@ import {
     getSortedRowModel,
     useReactTable,
 } from '@tanstack/react-table';
-import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, Home, Globe, RefreshCw } from 'lucide-react';
+import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Eye, Globe, Home, RefreshCw } from 'lucide-react';
 import * as React from 'react';
 
 // Same empty-state icon as services page for consistency
@@ -25,7 +25,15 @@ function NoTicketsIcon() {
             <line x1="6" y1="17" x2="42" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-400" />
             <line x1="6" y1="25" x2="20" y2="25" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-400" />
             <line x1="6" y1="33" x2="20" y2="33" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-gray-400" />
-            <path d="M30 34L36 24L42 34" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" className="text-gray-800" />
+            <path
+                d="M30 34L36 24L42 34"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+                className="text-gray-800"
+            />
         </svg>
     );
 }
@@ -55,16 +63,16 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
     const getStatusBadge = (status: string) => {
         const displayStatus = status || 'N/A';
         const lowerStatus = displayStatus.toLowerCase();
-        
+
         // Color coding based on status category (not transformation)
         // Yellow: waiting/pending states
-        // Blue: in-progress/active states  
+        // Blue: in-progress/active states
         // Green: success/completed states
         // Gray: closed/finished states
         // Red: failed/cancelled states
-        
+
         let colorClass = '';
-        
+
         if (lowerStatus.includes('pending') || lowerStatus.includes('waiting')) {
             colorClass = 'text-yellow-700 border-yellow-200 bg-yellow-50';
         } else if (lowerStatus.includes('progress') || lowerStatus.includes('active') || lowerStatus.includes('processing')) {
@@ -76,19 +84,19 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
         } else if (lowerStatus.includes('cancelled') || lowerStatus.includes('failed') || lowerStatus.includes('rejected')) {
             colorClass = 'text-red-700 border-red-200 bg-red-50';
         }
-        
+
         // Display the actual backend status value (formatted for readability)
-        const formattedStatus = displayStatus.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        
-        return <Badge variant="outline" className={colorClass}>{formattedStatus}</Badge>;
+        const formattedStatus = displayStatus.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+        return (
+            <Badge variant="outline" className={colorClass}>
+                {formattedStatus}
+            </Badge>
+        );
     };
 
     const getSourceIcon = (source: 'local' | 'external') => {
-        return source === 'local' ? (
-            <Home className="h-4 w-4 text-purple-600" />
-        ) : (
-            <Globe className="h-4 w-4 text-cyan-600" />
-        );
+        return source === 'local' ? <Home className="h-4 w-4 text-purple-600" /> : <Globe className="h-4 w-4 text-cyan-600" />;
     };
 
     const formatDate = (dateString: string) => {
@@ -139,7 +147,7 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
                 header: 'Service Owner',
                 cell: ({ getValue }) => {
                     const name = getValue<string>();
-                    return <span className="text-gray-800 font-medium">{name || '—'}</span>;
+                    return <span className="font-medium text-gray-800">{name || '—'}</span>;
                 },
             },
             {
@@ -157,9 +165,7 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
                     const tt = row.original;
                     return (
                         <div className="max-w-xs">
-                            <div className="text-xs text-muted-foreground capitalize">
-                                {tt.trouble_reason?.replace('_', ' ') || 'N/A'}
-                            </div>
+                            <div className="text-xs text-muted-foreground capitalize">{tt.trouble_reason?.replace('_', ' ') || 'N/A'}</div>
                         </div>
                     );
                 },
@@ -179,7 +185,7 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
                 cell: ({ getValue }) => {
                     const raw = getValue<string>();
                     if (!raw) return '-';
-                    return <span className="text-gray-600 whitespace-nowrap">{formatDate(raw)}</span>;
+                    return <span className="whitespace-nowrap text-gray-600">{formatDate(raw)}</span>;
                 },
             },
             {
@@ -201,10 +207,10 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleRowClick(tt)}
-                                className="h-8 w-8 p-0"
+                                className="h-8 gap-1.5 px-2 text-muted-foreground hover:text-foreground"
                             >
                                 <Eye className="h-4 w-4" />
-                                <span className="sr-only">View details</span>
+                                <span>View detail</span>
                             </Button>
                         </div>
                     );
@@ -243,11 +249,9 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
     if (!tts || tts.length === 0) {
         return (
             <Card className="rounded-lg border border-gray-200 bg-white shadow-none">
-                <CardContent className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <CardContent className="flex flex-col items-center justify-center px-6 py-16 text-center">
                     <h3 className="mb-2 text-lg font-bold text-gray-900">No trouble tickets found</h3>
-                    <p className="mb-6 text-sm text-gray-500">
-                        You haven't created any tickets yet.
-                    </p>
+                    <p className="mb-6 text-sm text-gray-500">You haven't created any tickets yet.</p>
                     <NoTicketsIcon />
                 </CardContent>
             </Card>
@@ -276,8 +280,7 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
                                     <TableRow
                                         key={row.id}
                                         data-state={row.getIsSelected() && 'selected'}
-                                        className="border-b border-gray-100 transition-colors hover:bg-gray-50/50 cursor-pointer"
-                                        onClick={() => handleRowClick(row.original)}
+                                        className="border-b border-gray-100 transition-colors hover:bg-gray-50/50"
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id} className="py-3">
@@ -345,4 +348,3 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
         </div>
     );
 }
-

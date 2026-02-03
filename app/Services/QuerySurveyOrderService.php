@@ -9,6 +9,23 @@ class QuerySurveyOrderService extends BaseApiService
     protected int $timeout = 10;
     protected int $rateLimit = 15;
 
+    /**
+     * BSS survey response param CODES → local attribute names (stored in survey_orders).
+     * The API returns numeric/code keys; we never persist codes, only these local names.
+     *
+     * @var array<string, string> BSS param code (e.g. "50005") => survey_orders column name
+     */
+    public const BSS_SURVEY_PARAM_TO_ATTRIBUTE = [
+        '50001'        => 'zone_name',           // Zone name (e.g. CAAZ); we lookup zone_code in ethio_zones
+        '50005'        => 'media_type',          // PON | COPPER | -1 (failed)
+        '50056'        => 'cable_type',          // 0=copper, 1=fiber, 2=EPON, 3=GPON, 5=without survey
+        '50112'        => 'line_indicator',      // 0=same line, 1=separate line
+        '2147'         => 'cable_length',         // Cable length (numeric)
+        '1924'         => 'other_related_cost',  // Other related cost (numeric)
+        'CauseContent' => 'survey_failure_reason', // When 50005 = -1
+        '328'          => 'survey_status',      // Internal status
+    ];
+
     protected function endpoint(): string
     {
         return config('services.ng.endpoint');
@@ -144,19 +161,11 @@ XML;
     }
 
     /**
-     * Extract key survey result fields from ExtParamList.
+     * Extract survey result from BSS ExtParamList and return an array keyed by LOCAL attribute names.
      *
-     * Critical params for manual surveys (device selection):
-     * - 50001: zone_name (e.g., "CAAZ", "NAAZ", "EAAZ") - used to lookup zone_code
-     * - 50005: media_type (PON/COPPER, or -1 if survey failed)
-     * - 50056: cable_type (0=copper, 1=fiber, 2=EPON, 3=GPON, 5=without survey)
-     * - 50112: line_indicator (0=same line, 1=separate line)
-     * - CauseContent: Failure reason when 50005 = -1 (e.g., "Need rehabilitation")
-     * - 328: status indicator (1=created)
-     *
-     * Survey result logic:
-     * - If 50005 = -1: Survey FAILED, extract CauseContent as failure reason
-     * - If 50005 = PON/COPPER: Survey COMPLETED, proceed to device selection
+     * Mapping: see self::BSS_SURVEY_PARAM_TO_ATTRIBUTE (BSS code → survey_orders column).
+     * Logic: 50005 = -1 → survey failed (use CauseContent as survey_failure_reason);
+     *        50005 = PON/COPPER → completed (media_type, cable_type, line_indicator, etc.).
      */
     private function extractSurveyResultFields(array $params): array
     {
@@ -173,11 +182,17 @@ XML;
             }
         }
 
+        // 2147 = Cable Length, 1924 = other_related_cost (from BSS response)
+        $cableLength = isset($params['2147']) ? (float) $params['2147'] : null;
+        $otherRelatedCost = isset($params['1924']) ? (float) $params['1924'] : null;
+
         return [
             'zone_name' => $params['50001'] ?? null, // Zone name from BSS parameter 50001 (e.g., "CAAZ")
             'media_type' => $isSurveyFailed ? null : ($mediaTypeRaw ?? null),
             'cable_type' => isset($params['50056']) ? (int) $params['50056'] : null,
             'line_indicator' => isset($params['50112']) ? (int) $params['50112'] : 0,
+            'cable_length' => $cableLength,   // BSS param 2147
+            'other_related_cost' => $otherRelatedCost, // BSS param 1924
             'survey_failed' => $isSurveyFailed,
             'survey_failure_reason' => $failureReason,
             'survey_status' => isset($params['328']) ? (int) $params['328'] : null,

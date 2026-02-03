@@ -22,6 +22,7 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete, onLoadCo
     type PaymentDetails = {
         status?: string;
         cable_charge?: string | number | null;
+        other_related_cost?: string | number | null;
         subscription_fee?: string | number | null;
         device_fee?: string | number | null;
         device_price?: string | number | null;
@@ -44,6 +45,7 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete, onLoadCo
         service_number?: string | null;
         fbb_service_number?: string | null;
         cable_length?: string | number | null;
+        cable_length_chargeable?: number | null;
         cable_type?: string | null;
         with_device?: boolean;
         lat?: string | number | null;
@@ -81,6 +83,7 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete, onLoadCo
               service_number: surveyDetailQuery.data.data.service_number,
               fbb_service_number: surveyDetailQuery.data.data.fbb_service_number,
               cable_length: surveyDetailQuery.data.data.cable_length,
+              cable_length_chargeable: surveyDetailQuery.data.data.cable_length_chargeable ?? undefined,
               cable_type: null,
               with_device: surveyDetailQuery.data.data.with_device,
               lat: null,

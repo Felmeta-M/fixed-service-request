@@ -52,7 +52,8 @@ type SurveyDetails = {
     internet_account?: string | null;
     internet_password?: string | null;
     bandwidth?: string | null;
-    cable_length?: string | number | null;
+    cable_length?: string | number | null; // Total meters (BSS 2147)
+    cable_length_chargeable?: number | null; // Meters over 500 (customer pays only for this)
     cable_type?: number | string | null; // BSS param 50056: 0=copper, 1=fiber, 2=EPON, 3=GPON, 5=without survey
     media_type?: string | null; // BSS param 50005: PON (fiber) or COPPER, null if failed
     line_indicator?: number | null; // BSS param 50112: 0=same line, 1=separate line
@@ -87,6 +88,7 @@ type PaymentDetailsData = {
     total_amount?: string | number | null;
     status?: string;
     cable_charge?: string | number | null;
+    other_related_cost?: string | number | null; // Labour & material (BSS 1924)
     subscription_fee?: string | number | null;
     device_fee?: string | number | null;
     device_items?: DeviceItem[];
@@ -231,11 +233,19 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
 
     const subscriptionFee = toNumber(payment?.subscription_fee);
     const cableCharge = toNumber(payment?.cable_charge);
+    const otherRelatedCost = toNumber(payment?.other_related_cost);
     const deviceFee = toNumber(payment?.device_fee);
-    const cableLengthRaw = surveyDetails?.cable_length;
-    const cableLength = cableLengthRaw === null || cableLengthRaw === undefined || cableLengthRaw === '' ? null : String(cableLengthRaw);
+    // Chargeable length: meters over 500 (customer pays only for this); backend sends cable_length_chargeable
+    const cableLengthChargeableRaw = surveyDetails?.cable_length_chargeable;
+    const cableLengthChargeable =
+        cableLengthChargeableRaw !== null && cableLengthChargeableRaw !== undefined && cableLengthChargeableRaw !== ''
+            ? Number(cableLengthChargeableRaw)
+            : (() => {
+                  const total = surveyDetails?.cable_length != null ? Number(surveyDetails.cable_length) : NaN;
+                  return Number.isFinite(total) && total > 500 ? Math.round((total - 500) * 100) / 100 : 0;
+              })();
 
-    const hasPaymentItems = subscriptionFee > 0 || cableCharge > 0 || deviceFee > 0;
+    const hasPaymentItems = subscriptionFee > 0 || cableCharge > 0 || otherRelatedCost > 0 || deviceFee > 0;
 
     const formatDate = (dateString?: string) => {
         if (!dateString) return 'N/A';
@@ -847,10 +857,24 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                             <tr>
                                                 <td className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">
                                                     Cable Charge
-                                                    {cableLength && <span className="ml-1 text-muted-foreground">({cableLength}m)</span>}
+                                                    {cableLengthChargeable > 0 && (
+                                                        <span className="ml-1 text-muted-foreground">
+                                                            ({cableLengthChargeable}m over 500m)
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="px-3 py-2 text-right text-xs font-medium tabular-nums sm:px-4 sm:py-3 sm:text-sm">
                                                     {cableCharge.toFixed(2)}
+                                                </td>
+                                            </tr>
+                                        )}
+                                        {otherRelatedCost > 0 && (
+                                            <tr>
+                                                <td className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">
+                                                    Labour &amp; Material
+                                                </td>
+                                                <td className="px-3 py-2 text-right text-xs font-medium tabular-nums sm:px-4 sm:py-3 sm:text-sm">
+                                                    {otherRelatedCost.toFixed(2)}
                                                 </td>
                                             </tr>
                                         )}

@@ -231,7 +231,9 @@ abstract class BaseSurveyService extends BaseApiService
             // Calculate device fee using dedicated service
             $deviceFee = $this->deviceFeeCalculator->calculate($survey);
 
-            $totalAmount = $fees['total_amount'] + $deviceFee;
+            // Labour/material cost from survey (BSS 1924)
+            $otherRelatedCost = (float) ($survey->other_related_cost ?? 0);
+            $totalAmount = $fees['total_amount'] + $deviceFee + $otherRelatedCost;
 
             $this->payment_service->createOrUpdatePayment([
                 'customer_survey_order_id' => $survey->customer_survey_order_id,
@@ -239,6 +241,7 @@ abstract class BaseSurveyService extends BaseApiService
                 'subscription_fee' => $fees['subscription_fee'],
                 'cable_charge' => $fees['cable_charge'],
                 'device_fee' => $deviceFee,
+                'other_related_cost' => $otherRelatedCost,
                 'total_amount' => $totalAmount,
             ]);
         });

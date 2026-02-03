@@ -14,6 +14,7 @@ type SurveyDetails = {
     main_offer_id: string;
     bandwidth?: string | null;
     cable_length?: string | number | null;
+    cable_length_chargeable?: number | null; // meters over 500 (chargeable)
     cable_type?: number | string | null; // BSS param 50056
     media_type?: string | null; // BSS param 50005: PON or COPPER
     line_indicator?: number | null; // BSS param 50112
@@ -36,6 +37,7 @@ type PaymentDetailsData = {
     subscription_fee?: string | number | null;
     device_fee?: string | number | null;
     cable_charge?: string | number | null;
+    other_related_cost?: string | number | null;
     total_amount?: string | number | null;
     payment_order_id?: string | null;
     merch_order_id?: string | null;
@@ -60,6 +62,7 @@ export default function SurveyShowPage() {
             main_offer_id: surveyDetailQuery.data.data.main_offer_id,
             bandwidth: surveyDetailQuery.data.data.bandwidth,
             cable_length: surveyDetailQuery.data.data.cable_length,
+            cable_length_chargeable: surveyDetailQuery.data.data.cable_length_chargeable ?? undefined,
             cable_type: surveyDetailQuery.data.data.cable_type,
             media_type: surveyDetailQuery.data.data.media_type,
             line_indicator: surveyDetailQuery.data.data.line_indicator,

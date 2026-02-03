@@ -50,6 +50,7 @@ class Payment extends Model
         'cable_charge',
         'subscription_fee',
         'device_fee',
+        'other_related_cost',
         'service_number',
         'status',
         'service_details',

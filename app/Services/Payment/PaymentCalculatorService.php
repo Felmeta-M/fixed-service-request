@@ -115,9 +115,11 @@ class PaymentCalculatorService
 
     /**
      * Calculate cable charge.
+     * Uses cable_length when present (e.g. manual survey BSS 2147), else cable_charge as length input.
      */
     protected function calculateCableCharge(SurveyOrder $survey): float
     {
-        return $this->cableChargeService->calculate($survey->cable_charge, $survey->cable_type);
+        $length = $survey->cable_length ?? $survey->cable_charge;
+        return $this->cableChargeService->calculate($length, $survey->cable_type);
     }
 }

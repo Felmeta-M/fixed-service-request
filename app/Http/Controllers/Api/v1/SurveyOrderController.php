@@ -66,6 +66,7 @@ class SurveyOrderController extends Controller
                     'survey_orders.bandwidth',
                     'survey_orders.cable_length',
                     'survey_orders.cable_type',
+                    'survey_orders.other_related_cost',
                     'survey_orders.media_type',
                     'survey_orders.line_indicator',
                     'survey_orders.survey_failure_reason',
@@ -76,13 +77,14 @@ class SurveyOrderController extends Controller
                     'payments.id as payment_id',
                     'payments.subscription_fee as payment_subscription_fee',
                     'payments.device_fee as payment_device_fee',
-                    'payments.cable_charge as payment_cable_charge',
-                    'payments.total_amount as payment_total_amount',
-                    'payments.status as payment_status',
-                    'payments.trans_id as payment_trans_id',
-                    'payments.merch_order_id as payment_merch_order_id',
-                    'payments.payment_order_id as payment_payment_order_id',
-                ]);
+                'payments.cable_charge as payment_cable_charge',
+                'payments.other_related_cost as payment_other_related_cost',
+                'payments.total_amount as payment_total_amount',
+                'payments.status as payment_status',
+                'payments.trans_id as payment_trans_id',
+                'payments.merch_order_id as payment_merch_order_id',
+                'payments.payment_order_id as payment_payment_order_id',
+            ]);
 
             // Handle search parameter - search in both customer_survey_order_id and customer_subscription_order_id
             if ($request->filled('search')) {
@@ -107,13 +109,56 @@ class SurveyOrderController extends Controller
             $ordersToRefresh = collect($surveyOrders->items())
                 ->filter(fn($order) => SurveyOrder::needsRefresh($order));
 
-            // Batch refresh orders (for WAITING status - check order status)
+            $freshRows = collect(); // Re-fetched rows after batch refresh so list shows synced data
             if ($ordersToRefresh->isNotEmpty()) {
                 $this->batchRefreshOrders($ordersToRefresh);
+                // Re-fetch refreshed orders so the list response shows synced data (status, survey result)
+                $refreshedIds = $ordersToRefresh->pluck('id')->all();
+                $freshRows = DB::table('survey_orders')
+                    ->leftJoin('payments', 'survey_orders.customer_survey_order_id', '=', 'payments.customer_survey_order_id')
+                    ->whereIn('survey_orders.id', $refreshedIds)
+                    ->select([
+                        'survey_orders.id',
+                        'survey_orders.customer_survey_order_id',
+                        'survey_orders.customer_subscription_order_id',
+                        'survey_orders.survey_is_manual',
+                        'survey_orders.survey_type',
+                        'survey_orders.customer_code',
+                        'survey_orders.status',
+                        'survey_orders.main_offer_id',
+                        'survey_orders.service_number',
+                        'survey_orders.fbb_service_number',
+                        'survey_orders.bandwidth',
+                        'survey_orders.cable_length',
+                        'survey_orders.cable_type',
+                        'survey_orders.other_related_cost',
+                        'survey_orders.media_type',
+                        'survey_orders.line_indicator',
+                        'survey_orders.survey_failure_reason',
+                        'survey_orders.with_device',
+                        'survey_orders.last_checked_at',
+                        'survey_orders.created_at',
+                        'survey_orders.updated_at',
+                        'payments.id as payment_id',
+                        'payments.subscription_fee as payment_subscription_fee',
+                        'payments.device_fee as payment_device_fee',
+                        'payments.cable_charge as payment_cable_charge',
+                        'payments.other_related_cost as payment_other_related_cost',
+                        'payments.total_amount as payment_total_amount',
+                        'payments.status as payment_status',
+                        'payments.trans_id as payment_trans_id',
+                        'payments.merch_order_id as payment_merch_order_id',
+                        'payments.payment_order_id as payment_payment_order_id',
+                    ])
+                    ->get()
+                    ->keyBy('id');
             }
 
-            // Transform raw data to API format
-            $transformedItems = collect($surveyOrders->items())->map(fn($item) => $this->transformOrder($item));
+            // Use fresh data for refreshed orders so sync is visible in the list response
+            $transformedItems = collect($surveyOrders->items())->map(function ($item) use ($freshRows) {
+                $row = $freshRows->has($item->id) ? $freshRows->get($item->id) : $item;
+                return $this->transformOrder($row);
+            });
 
             return response()->json([
                 'data' => $transformedItems,
@@ -183,13 +228,13 @@ class SurveyOrderController extends Controller
 
                 //manual survey order
                 if ($isManual && empty($order->customer_subscription_order_id)) {
-                    // Skip BSS query for completed manual surveys - no need to re-check
-                    // Survey result is final once completed
+                    // Close updates: once manual survey is Completed we do not re-query BSS or overwrite survey result.
+                    // All required attributes were persisted once on success; customer continues with device selection (by cable type) → payment → activate.
                     if ((int) $order->status === FFDServiceProvisionStatus::Completed->value) {
                         $timestampUpdates[] = $order->id;
                         continue;
                     }
-                    
+
                     // Manual survey: Use survey order service with customer_survey_order_id
                     $surveyResponse = $this->querySurveyOrderService
                         ->querySurveyOrderDetail($order->customer_survey_order_id);
@@ -222,6 +267,8 @@ class SurveyOrderController extends Controller
                 // For manual surveys, check survey_result to determine actual status
                 // If 50005 = -1, survey FAILED regardless of BSS order status
                 if ($isManual && !empty($response['survey_result'])) {
+                    // survey_result keys are LOCAL attribute names; BSS sends param CODES.
+                    // Mapping: QuerySurveyOrderService::BSS_SURVEY_PARAM_TO_ATTRIBUTE (e.g. 50005→media_type, 2147→cable_length, 1924→other_related_cost).
                     $surveyResult = $response['survey_result'];
 
                     if (!empty($surveyResult['survey_failed'])) {
@@ -229,11 +276,13 @@ class SurveyOrderController extends Controller
                         // Override status to Failed and save failure reason
                         $statusUpdates[$order->id] = FFDServiceProvisionStatus::Failed->value;
                         $surveyResultUpdates[$order->id] = [
-                            'media_type' => null,
-                            'cable_type' => null,
-                            'line_indicator' => null,
+                            'media_type' => null, // BSS param 50005
+                            'cable_type' => null, // BSS param 50056
+                            'line_indicator' => null, // BSS param 50112
                             'survey_failure_reason' => $surveyResult['survey_failure_reason'] ?? 'Survey failed',
                             'zone_code' => null, // Clear zone code on failure
+                            'cable_length' => null, // BSS param 2147
+                            'other_related_cost' => null, // BSS param 1924
                         ];
 
                         // Queue notification for manual survey failure
@@ -248,14 +297,14 @@ class SurveyOrderController extends Controller
                             ];
                         }
                     } else {
-                        // Survey COMPLETED (50005 = PON/COPPER)
-                        // CRITICAL: Only mark as Completed and update survey result fields
-                        // if ALL required fields (media_type, cable_type, line_indicator) have values
+                        // Survey COMPLETED (BSS 50005 = PON/COPPER). Values below are local names; BSS sends code numbers.
+                        // Required: media_type (50005), cable_type (50056), line_indicator (50112)
                         $mediaType = $surveyResult['media_type'] ?? null;
                         $cableType = $surveyResult['cable_type'] ?? null;
                         $lineIndicator = $surveyResult['line_indicator'] ?? null;
-                        // Parameter 50001 from BSS contains the zone name/abbreviation (e.g., "CAAZ", "NAAZ", "EAAZ")
-                        $zoneName = $surveyResult['zone_name'] ?? null;
+                        $cableLength = $surveyResult['cable_length'] ?? null;       // BSS 2147
+                        $otherRelatedCost = $surveyResult['other_related_cost'] ?? null; // BSS 1924
+                        $zoneName = $surveyResult['zone_name'] ?? null;             // BSS 50001 → lookup zone_code
 
                         // Lookup zone code from zone name (parameter 50001 from BSS survey response)
                         // The BSS returns zone name like "CAAZ" (Central Addis Ababa Zone), we lookup the code in ethio_zones table
@@ -295,21 +344,25 @@ class SurveyOrderController extends Controller
                         );
 
                         if ($hasAllRequiredFields) {
-                            // All required fields present: mark as Completed and save survey result
+                            // Success: persist ALL required attributes once, then close survey result updates (no further BSS overwrite).
+                            // Customer flow: device selection (filtered by cable type) → payment → activate service.
                             $statusUpdates[$order->id] = FFDServiceProvisionStatus::Completed->value;
-                            
+
+                            // Persist all required attributes (BSS codes already mapped by QuerySurveyOrderService)
                             $surveyResultData = [
                                 'media_type' => $mediaType,
                                 'cable_type' => $cableType,
                                 'line_indicator' => $lineIndicator,
-                                'survey_failure_reason' => null, // Clear any previous failure reason
-                                'zone_code' => $zoneCode, // Store zone code if found
+                                'cable_length' => $cableLength,
+                                'other_related_cost' => $otherRelatedCost,
+                                'survey_failure_reason' => null,
+                                'zone_code' => $zoneCode,
                             ];
-                            
+
                             // STRICT: Never touch device fields if device is already selected
                             // Device fields are managed exclusively by update-device endpoint
                             $deviceAlreadySelected = $order->with_device !== null;
-                            
+
                             // Only reset device selection when:
                             // 1. Status is FIRST changing to Completed, AND
                             // 2. Device has NOT been selected yet
@@ -317,7 +370,7 @@ class SurveyOrderController extends Controller
                                 $surveyResultData['with_device'] = null;
                                 $surveyResultData['device_id'] = null;
                                 $surveyResultData['device_voice_id'] = null;
-                                
+
                                 // Queue notification for manual survey completion
                                 $manualSurveyCompletedNotifications[] = [
                                     'phone' => $order->contact_no ?? null,
@@ -326,22 +379,14 @@ class SurveyOrderController extends Controller
                                     'order_number' => $order->customer_survey_order_id,
                                 ];
                             }
-                            
+
                             $surveyResultUpdates[$order->id] = $surveyResultData;
                         } else {
-                            // Missing required fields: only update status from BSS response
-                            // Don't update survey result fields until all data is available
-                            // But still try to store ethio zone code if available
+                            // Do not persist: we only save survey result when ALL required attributes are present (success).
+                            // Only update status to Waiting until BSS returns full survey result.
                             $newStatus = (int) $response['status'];
                             if ($newStatus >= 1 && $newStatus <= 8) {
                                 $statusUpdates[$order->id] = FFDServiceProvisionStatus::Waiting->value;
-                            }
-
-                            // Store zone code even if other fields are missing
-                            if ($zoneCode) {
-                                $surveyResultUpdates[$order->id] = [
-                                    'zone_code' => $zoneCode,
-                                ];
                             }
                         }
                     }
@@ -403,14 +448,27 @@ class SurveyOrderController extends Controller
         }
 
         // Update survey result fields for manual surveys (individual updates for now)
-        // These fields are critical for device selection after manual survey completion
-        // Note: We update ALL fields including null to clear previous values (e.g., clear failure_reason on success)
+        // All allowed columns are persisted so media_type, cable_type, line_indicator, cable_length, other_related_cost, zone_code, etc. are saved
+        $allowedSurveyResultColumns = [
+            'media_type',
+            'cable_type',
+            'line_indicator',
+            'cable_length',
+            'other_related_cost',
+            'survey_failure_reason',
+            'zone_code',
+            'with_device',
+            'device_id',
+            'device_voice_id',
+            'updated_at',
+        ];
         foreach ($surveyResultUpdates as $orderId => $fields) {
             if (!empty($fields)) {
                 $fields['updated_at'] = now();
-                DB::table('survey_orders')
-                    ->where('id', $orderId)
-                    ->update($fields);
+                $payload = array_intersect_key($fields, array_flip($allowedSurveyResultColumns));
+                if (!empty($payload)) {
+                    SurveyOrder::where('id', $orderId)->update($payload);
+                }
             }
         }
 
@@ -592,6 +650,7 @@ class SurveyOrderController extends Controller
                 'payments.subscription_fee as payment_subscription_fee',
                 'payments.device_fee as payment_device_fee',
                 'payments.cable_charge as payment_cable_charge',
+                'payments.other_related_cost as payment_other_related_cost',
                 'payments.total_amount as payment_total_amount',
                 'payments.status as payment_status',
                 'payments.payment_order_id as payment_payment_order_id',
@@ -660,6 +719,19 @@ class SurveyOrderController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Cable length chargeable (meters over 500). Customer pays only for length > 500; first 500 m are free.
+     * Used for payment summary display (e.g. "Cable (X m over 500 m): Y birr").
+     */
+    protected function cableLengthChargeable($cableLength): ?float
+    {
+        if ($cableLength === null || $cableLength === '') {
+            return null;
+        }
+        $length = (float) $cableLength;
+        return $length <= 500 ? 0.0 : round($length - 500, 2);
     }
 
     /**
@@ -769,8 +841,10 @@ class SurveyOrderController extends Controller
             // Backend is single source of truth - return formatted for display
             'bandwidth' => BandwidthHelper::format($order->bandwidth),
             'bandwidth_raw' => $order->bandwidth ?? null, // Raw KB value for debugging/API use
-            'cable_length' => $order->cable_length ?? null,
+            'cable_length' => $order->cable_length ?? null,   // BSS param 2147 (total meters)
+            'cable_length_chargeable' => $this->cableLengthChargeable($order->cable_length), // Meters over 500; customer pays only for this
             'cable_type' => $order->cable_type ?? null, // BSS param 50056: 0=copper, 1=fiber, 2=EPON, 3=GPON, 5=without survey
+            'other_related_cost' => $order->other_related_cost ?? null, // BSS param 1924 (labour/material)
             'media_type' => $order->media_type ?? null, // BSS param 50005: PON (fiber) or COPPER, null if failed
             'line_indicator' => $order->line_indicator ?? null, // BSS param 50112: 0=same line, 1=separate line
             'survey_failure_reason' => $order->survey_failure_reason ?? null, // Reason when survey failed (50005 = -1)
@@ -783,6 +857,7 @@ class SurveyOrderController extends Controller
                     'subscription_fee' => (float) ($order->payment_subscription_fee ?? 0),
                     'device_fee' => (float) ($order->payment_device_fee ?? 0),
                     'cable_charge' => (float) ($order->payment_cable_charge ?? 0),
+                    'other_related_cost' => (float) ($order->payment_other_related_cost ?? 0), // labour/material
                     'total_amount' => (float) ($order->payment_total_amount ?? 0),
                     'merch_order_id' => $order->payment_merch_order_id ?? null,
                     'status' => $this->getPaymentStatusLabel($paymentStatus),
@@ -1112,18 +1187,17 @@ class SurveyOrderController extends Controller
             $surveyOrder->refresh();
             $deviceFee = $this->deviceFeeCalculator->calculate($surveyOrder);
 
-            // Calculate subscription fee using PaymentCalculatorService
-            // Manual surveys use calculateFeesWithoutCable (no cable charge for manual surveys)
+            // Compute fees like auto survey: subscription + cable charge (from cable_length/cable_type) + device fee + other_related_cost
             $paymentCalculator = app(\App\Services\Payment\PaymentCalculatorService::class);
-            $fees = $paymentCalculator->calculateFeesWithoutCable($surveyOrder);
+            $fees = $paymentCalculator->calculateFees($surveyOrder);
             $subscriptionFee = (float) $fees['subscription_fee'];
-            $cableCharge = 0; // Manual surveys don't have cable charge
+            $cableCharge = (float) $fees['cable_charge'];
+            $otherRelatedCost = (float) ($surveyOrder->other_related_cost ?? 0);
 
-            // Total amount = subscription fee + device fee
-            $totalAmount = $subscriptionFee + $cableCharge + $deviceFee;
+            // Total amount = subscription fee + cable charge + device fee + other_related_cost (same structure as auto survey + BSS 1924)
+            $totalAmount = $subscriptionFee + $cableCharge + $deviceFee + $otherRelatedCost;
 
-            // Create or update payment record
-            // This follows the same pattern as auto surveys
+            // Create or update payment record (same pattern as auto surveys, plus other_related_cost)
             $customer = auth()->guard('api')->user();
             $customerCode = $customer ? $customer->customer_code : $surveyOrder->customer_code;
 
@@ -1134,6 +1208,7 @@ class SurveyOrderController extends Controller
                     'subscription_fee' => $subscriptionFee,
                     'cable_charge' => $cableCharge,
                     'device_fee' => $deviceFee,
+                    'other_related_cost' => $otherRelatedCost,
                     'total_amount' => $totalAmount,
                     'status' => \App\Models\Payment::STATUS_PENDING,
                     'updated_at' => now(),
@@ -1149,7 +1224,9 @@ class SurveyOrderController extends Controller
                 'device_offer_id' => $deviceOfferId,
                 'device_voice_offer_id' => $deviceVoiceOfferId,
                 'subscription_fee' => $subscriptionFee,
+                'cable_charge' => $cableCharge,
                 'device_fee' => $deviceFee,
+                'other_related_cost' => $otherRelatedCost,
                 'total_amount' => $totalAmount,
             ]);
 
@@ -1158,7 +1235,9 @@ class SurveyOrderController extends Controller
                 'message' => 'Device selection saved. You can now proceed to payment.',
                 'data' => [
                     'subscription_fee' => $subscriptionFee,
+                    'cable_charge' => $cableCharge,
                     'device_fee' => $deviceFee,
+                    'other_related_cost' => $otherRelatedCost,
                     'total_amount' => $totalAmount,
                 ],
             ]);

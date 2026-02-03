@@ -59,6 +59,7 @@ class PaymentService
                     'subscription_fee' => $data['subscription_fee'] ?? 0,
                     'cable_charge' => $data['cable_charge'] ?? 0,
                     'device_fee' => $data['device_fee'] ?? 0,
+                    'other_related_cost' => $data['other_related_cost'] ?? 0,
                     'customer_subscription_order_id' => $data['customer_subscription_order_id'] ?? null,
                     'status' => Payment::STATUS_PENDING,
                     'updated_at' => now(),

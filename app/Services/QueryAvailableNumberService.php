@@ -9,11 +9,12 @@ use RuntimeException;
 class QueryAvailableNumberService extends BaseApiService
 {
     protected int $timeout = 15;
-    protected int $rateLimit = 30;
+    protected int $rateLimit = 100;
 
     public function __construct(
         protected readonly ReserveNumberService $reserveNumberService,
-    ) {}
+    ) {
+    }
 
     protected function endpoint(): string
     {
@@ -105,7 +106,7 @@ class QueryAvailableNumberService extends BaseApiService
             'dept_id' => $data['dept_id'] ?? 'unknown',
         ]);
 
-        return $this->parseResponse($xmlResponse);  
+        return $this->parseResponse($xmlResponse);
     }
 
     /**
@@ -144,23 +145,18 @@ class QueryAvailableNumberService extends BaseApiService
         $config = config('services.ng');
 
         // Use shared helpers for dynamic values
-        $transactionId = $this->transactionId();
-        $processTime = $this->processTime();
+        $transactionId = $this->generateTransactionId();
 
         // Extract parameters with defaults
         $payMode = $data['pay_mode'] ?? '1';
         $teleType = $data['tele_type'] ?? '4';
-        $resCnt = $data['res_cnt'] ?? 100;
-        $needQueryByDept = ($data['need_query_by_dept'] ?? false) ? 'true' : 'false';
-        $deptId = $data['dept_id'] ?? '1766044689199549668';
+        $resCnt = $data['res_cnt'] ?? 15;
+        $deptId = $data['dept_id'];
 
-        // Config values with fallbacks
-        $version = $config['version'] ?? '1';
-        $language = $config['language'] ?? '2003';
-        $channelId = $config['channel_id'] ?? '35';
-        $techChannelId = $config['technical_channel_id'] ?? '51';
-        $tenantId = $config['tenant_id'] ?? '101';
-        $accessUser = $config['access_user'] ?? 'ecaf';
+        // Config values
+        $channelId = $config['channel_id'];
+        $techChannelId = $config['technical_channel_id'];
+        $accessUser = $config['access_user'];
         $accessPwd = $config['access_pwd'];
 
         return <<<XML
@@ -169,24 +165,17 @@ class QueryAvailableNumberService extends BaseApiService
    <soapenv:Body>
       <ser:QueryAvailableNumberReqMsg>
          <ser:RequestHeader>
-            <com:Version>{$version}</com:Version>
             <com:TransactionId>{$transactionId}</com:TransactionId>
-            <com:ProcessTime>{$processTime}</com:ProcessTime>
-            <com:Language>{$language}</com:Language>
             <com:ChannelId>{$channelId}</com:ChannelId>
             <com:TechnicalChannelId>{$techChannelId}</com:TechnicalChannelId>
-            <com:TenantId>{$tenantId}</com:TenantId>
             <com:AccessUser>{$accessUser}</com:AccessUser>
             <com:AccessPwd>{$accessPwd}</com:AccessPwd>
          </ser:RequestHeader>
          <ser:PayMode>{$payMode}</ser:PayMode>
          <ser:TeleType>{$teleType}</ser:TeleType>
-         <ser:NeedQueryByDept>{$needQueryByDept}</ser:NeedQueryByDept>
+         <ser:NeedQueryByDept>{$deptId}</ser:NeedQueryByDept>
          <ser:ResCnt>{$resCnt}</ser:ResCnt>
-         <ser:AdditionalProperty>
-            <com:Code>dept_id</com:Code>
-            <com:Value>{$deptId}</com:Value>
-         </ser:AdditionalProperty>
+         <ser:NeedQueryByDept>true</ser:NeedQueryByDept>
       </ser:QueryAvailableNumberReqMsg>
    </soapenv:Body>
 </soapenv:Envelope>
@@ -236,11 +225,11 @@ XML;
         foreach ($availableNumbers as $number) {
             $numberList[] = [
                 'ServiceNumber' => (string) $number->ServiceNumber,
-                'ItemCode'      => (string) $number->ItemCode,
-                'ResDeptId'     => (string) $number->ResDeptId,
-                'PayMode'       => (string) $number->PayMode,
-                'TeleType'      => (string) $number->TeleType,
-                'Level'         => (string) $number->Level,
+                'ItemCode' => (string) $number->ItemCode,
+                'ResDeptId' => (string) $number->ResDeptId,
+                'PayMode' => (string) $number->PayMode,
+                'TeleType' => (string) $number->TeleType,
+                'Level' => (string) $number->Level,
             ];
         }
 

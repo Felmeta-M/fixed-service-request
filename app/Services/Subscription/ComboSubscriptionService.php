@@ -4,6 +4,7 @@ namespace App\Services\Subscription;
 
 use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
+use App\Services\EcafService;
 use App\Services\Logging\AppLogger;
 use App\Services\Payment\PaymentService;
 use App\Services\QueryAvailableNumberService;
@@ -13,6 +14,7 @@ use App\Services\ZoneService;
 use App\Support\CustomerContext;
 use Illuminate\Support\Str;
 use App\Enums\OfferId;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ComboSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
@@ -22,8 +24,9 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       ReserveNumberService $reserveNumberService,
       PaymentService $payment_service,
       ZoneService $zoneService,
+      EcafService $ecafService,
    ) {
-      parent::__construct($payment_service, $queryAvailableNumberService, $reserveNumberService, $zoneService);
+      parent::__construct($payment_service, $queryAvailableNumberService, $reserveNumberService, $zoneService, $ecafService);
    }
 
    protected function mainOfferingId(): int
@@ -73,23 +76,27 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
          $payload['device_voice_offer_id'] = $surveyOrder->device_voice_offer_id ?? null;
       }
 
+      // Generate transaction ID once for the entire request (used in XML and stored in DB)
+      $payload['transaction_id'] = $this->generateTransactionId();
+
       try {
          // Build XML and get the voice service number and internet credentials
          $xmlData = $this->buildXmlWithServiceNumber($payload);
          $xml = $xmlData['xml'];
-         Log::info($xml);
          $voiceServiceNumber = $xmlData['voice_service_number'];
       } catch (\RuntimeException $e) {
-         // Return user-friendly error message for zone/area code lookup failures
-         AppLogger::api()->error('Failed to build XML due to missing zone/area information', [
+         $errorMessage = $e->getMessage();
+         $isRateLimitError = str_contains($errorMessage, 'Rate limit');
+
+         AppLogger::api()->error($isRateLimitError ? 'Subscription failed due to rate limit' : 'Failed to build XML', [
             'survey_order_id' => $payload['survey_order_id'] ?? null,
-            'error' => $e->getMessage(),
+            'error' => $errorMessage,
          ]);
 
          return [
             'success' => false,
-            'ret_code' => 'VALIDATION_ERROR',
-            'ret_msg' => $e->getMessage(),
+            'ret_code' => $isRateLimitError ? 'RATE_LIMIT_ERROR' : 'VALIDATION_ERROR',
+            'ret_msg' => $errorMessage,
             'customer_busi_order_id' => null,
             'extra_params' => [],
          ];
@@ -119,26 +126,44 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       // Get config values
       $cfg = config('services.ng');
 
+      $zoneName = $this->getZoneNameForAccountInfo($data['survey_order_id'], $data);
+      Log::info($zoneName);
+      $depIds = DB::table('number_pools')->where('zone', $zoneName)->pluck('dept_id');
 
-      $depId = '1766044689199549668';
-      $numberList = $this->queryAvailableNumberService->queryAvailableNumbers([
-         'pay_mode' => '1',
-         'tele_type' => '4',
-         'need_query_by_dept' => false,
-         'res_cnt' => 100,
-         'dept_id' => $depId,
-      ]);
-
-      if (empty($numberList)) {
-         throw new \RuntimeException('No available voice service numbers in pool');
+      if ($depIds->isEmpty()) {
+         throw new \RuntimeException("No department configured for zone: {$zoneName}. Please add zone to number pool.");
       }
 
-      $filtered = array_filter($numberList, fn($item) => $item['Level'] === '6');
-      if (empty($filtered)) {
-         throw new \RuntimeException('No voice service numbers with required level');
+      $voiceServiceNumber = null;
+
+      foreach ($depIds as $depId) {
+         $numberList = $this->queryAvailableNumberService->queryAvailableNumbers([
+            'pay_mode' => '1',
+            'tele_type' => '4',
+            'need_query_by_dept' => false,
+            'res_cnt' => 10,
+            'dept_id' => (string) $depId,
+         ]);
+
+         if (empty($numberList)) {
+            continue;
+         }
+
+         // Try Level 6 first (preferred), then fall back to any available number
+         $filtered = array_filter($numberList, fn($item) => $item['Level'] === '6');
+         if (!empty($filtered)) {
+            $voiceServiceNumber = reset($filtered)['ServiceNumber'];
+            break;
+         }
+
+         // Fall back to any available number (including Level 0)
+         $voiceServiceNumber = reset($numberList)['ServiceNumber'];
+         break;
       }
 
-      $voiceServiceNumber =  reset($filtered)['ServiceNumber'];
+      if ($voiceServiceNumber === null) {
+         throw new \RuntimeException('No voice service number found in any department pool for zone: ' . $zoneName);
+      }
 
 
       $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);
@@ -173,7 +198,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       <ser:CreateNewSubscriberReqMsg>
          <ser:RequestHeader>
             <com:Version>1</com:Version>
-            <com:TransactionId>{$this->transactionId()}</com:TransactionId>
+            <com:TransactionId>{$data['transaction_id']}</com:TransactionId>
             <com:SessionId>1</com:SessionId>
             <com:ProcessTime>{$this->processTime()}</com:ProcessTime>
             <com:ContactId>1</com:ContactId>
@@ -527,6 +552,11 @@ XML;
                // Update survey order with service numbers and internet credentials
                $updateData = [];
 
+               // Transaction ID for tracking
+               if (!empty($data['transaction_id'])) {
+                  $updateData['transaction_id'] = $data['transaction_id'];
+               }
+
                // Voice service number (we provide for combo)
                if ($voiceServiceNumber) {
                   $updateData['voice_service_number'] = $voiceServiceNumber;
@@ -586,6 +616,8 @@ XML;
                      ]);
                   }
                }
+
+               // ECAF upload moved to SurveyOrderController - triggered when status becomes Completed
             }
          } catch (\Throwable $e) {
             AppLogger::api()->exception($e, 'Failed to update survey order after combo subscription', [

@@ -10,61 +10,33 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EcafController extends Controller
 {
-    public function __construct(protected readonly EcafService $ecafService) {}
+    public function __construct(protected readonly EcafService $ecafService)
+    {
+    }
 
     public function upload(Request $request)
     {
         try {
             // ✅ Validate request
             $validated = $request->validate([
-                // 'cust_code'      => 'required|nullable',
-                // 'first_name'     => 'required|nullable',
-                // 'last_name'     => 'required|nullable',
-                // 'other_name'    => 'required|nullable',
-                'transaction_id'    => 'required|string',
-                'photo'      => 'required|string',
-                // 'images'         => 'required|array',
-                // 'images.*.type'  => 'required|integer',
-                // 'images.*.file'  => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+                'transaction_id' => 'required|string',
+                'photo' => 'required|string',
             ]);
 
-            // ✅ Convert images to base64
-            // $images = [];
-            // foreach ($request->file('images') as $index => $file) {
-            //     try {
-            //         $images[] = [
-            //             'type'    => $request->input("images.$index.type"),
-            //             'content' => $this->ecafService->imageToBase64($file),
-            //         ];
-            //     } catch (\Exception $e) {
-            //         Log::error("Image conversion failed", [
-            //             'file' => $file->getClientOriginalName(),
-            //             'error' => $e->getMessage(),
-            //         ]);
-
-            //         return response()->json([
-            //             'status'  => 'error',
-            //             'message' => "Failed to process image at index {$index}.",
-            //         ], Response::HTTP_BAD_REQUEST);
-            //     }
-            // }
-
-            // $data = $request->except('images');
-
             // ✅ Call ECAF service
-            $response = $this->ecafService->uploadFile($validated);
+            // $response = $this->ecafService->uploadFile($validated);
 
             return response()->json([
-                'status'  => 'success',
+                'status' => 'success',
                 'message' => 'Upload successful.',
-                'data'    => $response,
+                'data' => [],
             ], Response::HTTP_OK);
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Laravel validation error
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'Validation failed.',
-                'errors'  => $e->errors(),
+                'errors' => $e->errors(),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (\SoapFault $e) {
             // SOAP failure
@@ -73,7 +45,7 @@ class EcafController extends Controller
             ]);
 
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'ECAF service unavailable. Please try again later.',
             ], Response::HTTP_SERVICE_UNAVAILABLE);
         } catch (\Exception $e) {
@@ -84,7 +56,7 @@ class EcafController extends Controller
             ]);
 
             return response()->json([
-                'status'  => 'error',
+                'status' => 'error',
                 'message' => 'Something went wrong. Please contact support.',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }

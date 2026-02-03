@@ -5,6 +5,7 @@ namespace App\Services\Subscription;
 use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Services\ApiResponse;
+use App\Services\EcafService;
 use App\Services\Logging\AppLogger;
 use App\Services\Payment\PaymentService;
 use App\Services\QueryAvailableNumberService;
@@ -20,8 +21,9 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
       ReserveNumberService $reserveNumberService,
       PaymentService $payment_service,
       ZoneService $zoneService,
+      EcafService $ecafService,
    ) {
-      parent::__construct($payment_service, $queryAvailableNumberService, $reserveNumberService, $zoneService);
+      parent::__construct($payment_service, $queryAvailableNumberService, $reserveNumberService, $zoneService, $ecafService);
    }
 
    protected function mainOfferingId(): int

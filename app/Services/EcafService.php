@@ -22,7 +22,7 @@ class EcafService extends BaseApiService
     {
         try {
             $xmlPayload = $this->buildXml($data);
-            Log::info('EcafService uploadFile', ['xmlPayload' => $xmlPayload]);
+            Log::info($xmlPayload);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedXml = $this->parseResponse($xmlResponse);
             return ApiResponse::success($parsedXml);

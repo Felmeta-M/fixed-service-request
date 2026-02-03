@@ -4,8 +4,10 @@ namespace App\Services\Subscription;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\AvailableDevice;
+use App\Models\Customer;
 use App\Models\SurveyOrder;
 use App\Services\BaseApiService;
+use App\Services\EcafService;
 use App\Services\Logging\AppLogger;
 use App\Services\Payment\PaymentService;
 use App\Services\QueryAvailableNumberService;
@@ -18,7 +20,7 @@ use Throwable;
 abstract class BaseSubscriptionService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 30;
+    protected int $rateLimit = 360;
     protected ?string $serviceNumber = null;
 
     public function __construct(
@@ -26,6 +28,7 @@ abstract class BaseSubscriptionService extends BaseApiService
         protected readonly QueryAvailableNumberService $queryAvailableNumberService,
         protected readonly ReserveNumberService $reserveNumberService,
         protected readonly ZoneService $zoneService,
+        protected readonly EcafService $ecafService,
     ) {
     }
 
@@ -257,6 +260,21 @@ abstract class BaseSubscriptionService extends BaseApiService
         return $zoneCode;
     }
 
+    /**
+     * Get zone name (e.g. EAAZ, NAAZ) from telecom region for the survey order.
+     * Used to look up department ID from number_pools.
+     */
+    protected function getZoneNameForAccountInfo(string $surveyOrderId, ?array $data = null): string
+    {
+        $zoneName = $this->zoneService->getZoneNameForAccountInfo($surveyOrderId, $data);
+
+        if (!$zoneName) {
+            throw new \RuntimeException('Zone information is missing. Please contact support.');
+        }
+
+        return $zoneName;
+    }
+
     protected function getZoneCodeById(int|string $zoneId): string
     {
         $zoneCode = $this->zoneService->getZoneCodeById($zoneId);
@@ -339,7 +357,7 @@ XML;
         $currencyId = 1048; // ETB
         $payType = 1; // CASH
         $taxCode = 'CC_TAX_VAT';
-        $taxName = 'VAT';
+        $taxName = 'V';
         $discountFee = $oneOffFee['discount_fee'];
 
         return <<<XML
@@ -406,5 +424,69 @@ XML;
             'device_id' => $deviceId,
             'device_offer_id' => $data['device_offer_id'] ?? null,
         ];
+    }
+
+    /**
+     * Upload ECAF document after successful subscription.
+     * Non-blocking - errors are logged but don't fail the subscription.
+     *
+     * @param string $surveyOrderId Customer survey order ID
+     * @param string $transactionId Transaction ID used in subscription
+     * @param string $serviceType Service type for logging
+     */
+    protected function uploadEcafDocument(string $surveyOrderId, string $transactionId, string $serviceType): void
+    {
+        try {
+            // Get customer photo from survey order's customer
+            $surveyOrder = SurveyOrder::with('customer')->where('customer_survey_order_id', $surveyOrderId)->first();
+
+            if (!$surveyOrder?->customer) {
+                AppLogger::api()->warning('ECAF upload skipped: customer not found', [
+                    'survey_order_id' => $surveyOrderId,
+                    'service_type' => $serviceType,
+                ]);
+                return;
+            }
+
+            $photo = $surveyOrder->customer->picture;
+
+            if (empty($photo)) {
+                AppLogger::api()->warning('ECAF upload skipped: customer photo not available', [
+                    'survey_order_id' => $surveyOrderId,
+                    'customer_code' => $surveyOrder->customer->code,
+                    'service_type' => $serviceType,
+                ]);
+                return;
+            }
+
+            // Upload ECAF document
+            $response = $this->ecafService->uploadFile([
+                'transaction_id' => $transactionId,
+                'photo' => $photo,
+            ]);
+
+            if ($response['success'] ?? false) {
+                AppLogger::api()->info('ECAF document uploaded successfully', [
+                    'survey_order_id' => $surveyOrderId,
+                    'transaction_id' => $transactionId,
+                    'service_type' => $serviceType,
+                ]);
+            } else {
+                AppLogger::api()->warning('ECAF document upload returned error', [
+                    'survey_order_id' => $surveyOrderId,
+                    'transaction_id' => $transactionId,
+                    'service_type' => $serviceType,
+                    'response' => $response,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Log but don't fail the subscription
+            AppLogger::api()->warning('ECAF document upload failed', [
+                'survey_order_id' => $surveyOrderId,
+                'transaction_id' => $transactionId,
+                'service_type' => $serviceType,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

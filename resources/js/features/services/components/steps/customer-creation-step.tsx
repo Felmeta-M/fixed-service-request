@@ -16,7 +16,7 @@ import { ArrowLeft, Building, CheckCircle, AlertCircle, FileIcon, MapPinIcon, Ph
 import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { useGetCustomer, useCreateCustomer, useUploadEcaf } from '@/hooks/use-api-mutations';
+import { useGetCustomer, useCreateCustomer } from '@/hooks/use-api-mutations';
 import verifiedIcon from '@/images/Vector.png';
 
 type ApiError = {
@@ -274,7 +274,6 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
     // TanStack Query hooks - use user's API token
     const { data: customerData, isLoading: isLoadingCustomer, error: customerError } = useGetCustomer(user?.customer_sub_id);
     const createCustomerMutation = useCreateCustomer();
-    const uploadEcafMutation = useUploadEcaf();
 
     // Fields that should be read-only when filled from NID - UPDATED
     const NID_READONLY_FIELDS = [
@@ -670,60 +669,11 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
                     // Update toast to show success
                     toast.success('Customer created successfully!', {
                         id: submissionToast,
-                        description: 'Now processing photo upload...',
                         duration: 3000,
                     });
 
-                    // Step 3: Upload photo if exists
-                    const base64Photo = localStorage.getItem('customer_photo_base64');
-                    if (base64Photo) {
-                        setSubmissionState((prev) => ({
-                            ...prev,
-                            isUploadingPhoto: true,
-                        }));
-
-                        const photoToast = toast.loading('Uploading customer photo...', {
-                            description: 'Please wait',
-                            duration: Infinity,
-                        });
-
-                        const ecafData = {
-                            cust_code: customer.customer_code || customer.customer_id,
-                            first_name: data.first_name,
-                            last_name: data.last_name,
-                            other_name: data.middle_name || '',
-                            transaction_id: customer.transaction_id || `txn_${Date.now()}`,
-                            photo: base64Photo,
-                        };
-
-                        uploadEcafMutation.mutate(ecafData, {
-                            onSuccess: () => {
-                                toast.success('Photo uploaded successfully!', {
-                                    id: photoToast,
-                                    duration: 3000,
-                                });
-                                setSubmissionState((prev) => ({
-                                    ...prev,
-                                    isUploadingPhoto: false,
-                                }));
-                                completeCustomerSetup();
-                            },
-                            onError: (error: Error) => {
-                                toast.warning('Customer created but photo upload failed', {
-                                    id: photoToast,
-                                    description: error.message,
-                                    duration: 5000,
-                                });
-                                setSubmissionState((prev) => ({
-                                    ...prev,
-                                    isUploadingPhoto: false,
-                                }));
-                                completeCustomerSetup();
-                            },
-                        });
-                    } else {
-                        completeCustomerSetup();
-                    }
+                    // Complete customer setup (ECAF upload happens automatically during subscription)
+                    completeCustomerSetup();
                 },
                 onError: (error: Error) => {
                     const apiError = handleApiError(error);

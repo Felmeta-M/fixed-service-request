@@ -5,6 +5,7 @@ namespace App\Services\Subscription;
 use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Services\ApiResponse;
+use App\Services\EcafService;
 use App\Services\GetCombiningService;
 use App\Services\Logging\AppLogger;
 use App\Services\Payment\PaymentService;
@@ -24,8 +25,9 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       QueryAvailableNumberService $queryAvailableNumberService,
       ReserveNumberService $reserveNumberService,
       ZoneService $zoneService,
+      EcafService $ecafService,
    ) {
-      parent::__construct($payment_service, $queryAvailableNumberService, $reserveNumberService, $zoneService);
+      parent::__construct($payment_service, $queryAvailableNumberService, $reserveNumberService, $zoneService, $ecafService);
    }
 
    protected function mainOfferingId(): int
@@ -80,7 +82,11 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       $data['device_id'] = $surveyOrder->device_id ?? null;
       $data['device_offer_id'] = $surveyOrder->device_offer_id ?? null;
 
+      // Generate transaction ID once for the entire request (used in XML and stored in DB)
+      $data['transaction_id'] = $this->generateTransactionId();
+
       $xml = $this->buildXml($data);
+      Log::info($xml);
 
       // Add internet credentials to data for parseResponse
       $data['internet_account'] = $this->internetAccount;
@@ -171,7 +177,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       <ser:CreateNewSubscriberReqMsg>
          <ser:RequestHeader>
             <com:Version>1</com:Version>
-            <com:TransactionId>{$this->transactionId()}</com:TransactionId>
+            <com:TransactionId>{$data['transaction_id']}</com:TransactionId>
             <com:SessionId>1</com:SessionId>
             <com:ProcessTime>{$this->processTime()}</com:ProcessTime>
             <com:ContactId>1</com:ContactId>
@@ -411,11 +417,13 @@ XML;
             // Update SurveyOrder with service number and internet credentials
             $internetAccount = $data['internet_account'] ?? null;
             $internetPassword = $data['internet_password'] ?? null;
+            $transactionId = $data['transaction_id'] ?? null;
 
             $this->updateSurveyOrderWithSubscriptionData(
                $surveyOrderId,
                $res['customer_busi_order_id'],
                [
+                  'transaction_id' => $transactionId,
                   'data_service_number' => $serviceNo,
                   'internet_account' => $internetAccount,
                   'internet_password' => $internetPassword,
@@ -456,6 +464,8 @@ XML;
                   ]);
                }
             }
+
+            // ECAF upload moved to SurveyOrderController - triggered when status becomes Completed
          } else {
             // Log Huawei error response
             AppLogger::api()->warning('Data subscription request failed', [

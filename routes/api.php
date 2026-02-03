@@ -7,7 +7,6 @@ use App\Http\Controllers\Api\v1\BandwidthOptionController;
 use App\Http\Controllers\Api\v1\CancelSurveyOrderController;
 use App\Http\Controllers\Api\v1\ChangeOfferController;
 use App\Http\Controllers\Api\v1\CustomerController;
-use App\Http\Controllers\Api\v1\EcafController;
 use App\Http\Controllers\Api\v1\GeocodingController;
 use App\Http\Controllers\Api\v1\GetCombiningController;
 use App\Http\Controllers\Api\v1\LocationController;
@@ -94,14 +93,11 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware(['auth:api'])->group(function () {
 
-        // Heavy operations: Customer creation and ECAF upload
+        // Heavy operations: Customer creation
         Route::middleware(['throttle:api_heavy'])->group(function () {
             Route::prefix('customer')->group(function () {
                 Route::post('/create', [CustomerController::class, 'store']);
-                Route::post('/ecaf', [EcafController::class, 'upload']);
             });
-
-            Route::post('ecaf-upload', [EcafController::class, 'upload']);
 
             Route::prefix('survey')->group(function () {
                 Route::post('/create', [SurveyOrderController::class, 'store']);

@@ -73,6 +73,21 @@ class ZoneService
     }
 
     /**
+     * Get zone name for AccountInfo (e.g. EAAZ, NAAZ) from telecom region.
+     * Used to look up department ID from number_pools by zone name.
+     */
+    public function getZoneNameForAccountInfo(string $surveyOrderId, ?array $data = null): ?string
+    {
+        $zoneCode = $this->getZoneCodeForAccountInfo($surveyOrderId, $data);
+
+        if (!$zoneCode) {
+            return null;
+        }
+
+        return EthioZone::where('code', $zoneCode)->where('status', true)->value('name');
+    }
+
+    /**
      * Get zone code by zone ID.
      * Used by external consumers (CustomerService, ManualSurveyOrderService, etc.)
      */

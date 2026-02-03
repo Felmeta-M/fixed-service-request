@@ -24,7 +24,7 @@ use RuntimeException;
 abstract class BaseSurveyService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 30;
+    protected int $rateLimit = 360;
 
     protected ?string $serviceNumber = null;
 
@@ -270,7 +270,7 @@ abstract class BaseSurveyService extends BaseApiService
         if ($totalAmount < 1 && !$isManualSurvey) {
             // Wait for third-party system to be ready to process activation
             // after survey creation (min 7.5ms required)
-            usleep(10000); // 10ms
+            usleep(15000); // 15 seconds
 
             $this->activationService->activate($surveyOrderId);
         }

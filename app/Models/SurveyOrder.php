@@ -41,6 +41,7 @@ class SurveyOrder extends Model
         'customer_code',
         'customer_survey_order_id',
         'customer_subscription_order_id',
+        'transaction_id',
         'main_offer_id',
         'voice_service_number',
         'data_service_number',
@@ -126,7 +127,7 @@ class SurveyOrder extends Model
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class, 'customer_code', 'customer_code');
+        return $this->belongsTo(Customer::class, 'customer_code', 'code');
     }
 
     public function payment()

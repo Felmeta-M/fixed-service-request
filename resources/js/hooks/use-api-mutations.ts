@@ -224,24 +224,8 @@ export function useResourceCheck() {
     });
 }
 
-/**
- * Hook for uploading ECAF document
- */
-export function useUploadEcaf() {
-    const token = useAuthToken();
-
-    return useMutation({
-        mutationFn: async (data: any) => {
-            if (!token) throw new Error('Authentication required');
-            // Handle both FormData and JSON payloads
-            if (data instanceof FormData) {
-                return apiClient.post('/ecaf-upload', data, { token });
-            }
-            return apiClient.post('/ecaf-upload', data, { token });
-        },
-        // Toast handled by component
-    });
-}
+// ECAF upload is now handled automatically by backend during subscription
+// Removed useUploadEcaf hook - no longer needed in frontend
 
 /**
  * Hook for NID OTP verification

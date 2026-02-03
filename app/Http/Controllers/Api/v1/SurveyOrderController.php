@@ -26,6 +26,7 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 use App\Services\ZoneService;
+use App\Services\EcafService;
 
 class SurveyOrderController extends Controller
 {
@@ -35,7 +36,8 @@ class SurveyOrderController extends Controller
         protected readonly QuerySubscriptionOrderStatusService $querySubscriptionOrderStatusService,
         protected readonly QueryPurchasedOfferingService $queryPurchasedOfferingService,
         protected readonly ManualSurveyOrderService $manualSurveyOrderService,
-        protected readonly DeviceFeeCalculatorService $deviceFeeCalculator
+        protected readonly DeviceFeeCalculatorService $deviceFeeCalculator,
+        protected readonly EcafService $ecafService
     ) {
     }
 
@@ -199,6 +201,7 @@ class SurveyOrderController extends Controller
         $timestampUpdates = [];
         $manualSurveyCompletedNotifications = []; // Track manual surveys that completed for SMS notifications
         $manualSurveyFailedNotifications = []; // Track manual surveys that failed for SMS notifications
+        $ecafUploads = []; // Track orders that transition to Completed for ECAF upload
 
         foreach ($orders as $order) {
             try {
@@ -396,6 +399,17 @@ class SurveyOrderController extends Controller
                     $newStatus = (int) $response['status'];
                     if ($newStatus >= 1 && $newStatus <= 8) {
                         $statusUpdates[$order->id] = $newStatus;
+
+                        // Track subscription orders that transition TO Completed for ECAF upload
+                        if ($newStatus === FFDServiceProvisionStatus::Completed->value &&
+                            (int) $order->status !== FFDServiceProvisionStatus::Completed->value &&
+                            !empty($order->transaction_id)) {
+                            $ecafUploads[] = [
+                                'survey_order_id' => $order->customer_survey_order_id,
+                                'transaction_id' => $order->transaction_id,
+                                'customer_code' => $order->customer_code,
+                            ];
+                        }
                     }
                 }
 
@@ -517,6 +531,64 @@ class SurveyOrderController extends Controller
                     ]);
                 }
             }
+        }
+
+        // Upload ECAF documents for orders that transitioned to Completed (non-blocking)
+        foreach ($ecafUploads as $ecafData) {
+            try {
+                $this->uploadEcafForOrder($ecafData);
+            } catch (Throwable $e) {
+                AppLogger::api()->warning('ECAF upload failed during status refresh', [
+                    'survey_order_id' => $ecafData['survey_order_id'],
+                    'transaction_id' => $ecafData['transaction_id'],
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Upload ECAF document for a completed subscription order.
+     * Gets customer photo from the customer table and uploads to ECAF service.
+     */
+    protected function uploadEcafForOrder(array $ecafData): void
+    {
+        $customerCode = $ecafData['customer_code'];
+        $transactionId = $ecafData['transaction_id'];
+        $surveyOrderId = $ecafData['survey_order_id'];
+
+        // Get customer photo
+        $customer = DB::table('customers')
+            ->where('code', $customerCode)
+            ->whereNull('deleted_at')
+            ->select('picture')
+            ->first();
+
+        if (!$customer || empty($customer->picture)) {
+            AppLogger::api()->warning('ECAF upload skipped: customer photo not available', [
+                'survey_order_id' => $surveyOrderId,
+                'customer_code' => $customerCode,
+            ]);
+            return;
+        }
+
+        // Upload ECAF document
+        $response = $this->ecafService->uploadFile([
+            'transaction_id' => $transactionId,
+            'photo' => $customer->picture,
+        ]);
+
+        if ($response['success'] ?? false) {
+            AppLogger::api()->info('ECAF document uploaded successfully', [
+                'survey_order_id' => $surveyOrderId,
+                'transaction_id' => $transactionId,
+            ]);
+        } else {
+            AppLogger::api()->warning('ECAF document upload returned error', [
+                'survey_order_id' => $surveyOrderId,
+                'transaction_id' => $transactionId,
+                'response' => $response,
+            ]);
         }
     }
 

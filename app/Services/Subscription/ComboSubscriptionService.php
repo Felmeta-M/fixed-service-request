@@ -120,25 +120,25 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       $cfg = config('services.ng');
 
 
-      // $depId = '1766044689199549668';
-      // $numberList = $this->queryAvailableNumberService->queryAvailableNumbers([
-      //    'pay_mode' => '1',
-      //    'tele_type' => '4',
-      //    'need_query_by_dept' => false,
-      //    'res_cnt' => 100,
-      //    'dept_id' => $depId,
-      // ]);
+      $depId = '1766044689199549668';
+      $numberList = $this->queryAvailableNumberService->queryAvailableNumbers([
+         'pay_mode' => '1',
+         'tele_type' => '4',
+         'need_query_by_dept' => false,
+         'res_cnt' => 100,
+         'dept_id' => $depId,
+      ]);
 
-      // if (empty($numberList)) {
-      //    throw new \RuntimeException('No available voice service numbers in pool');
-      // }
+      if (empty($numberList)) {
+         throw new \RuntimeException('No available voice service numbers in pool');
+      }
 
-      // $filtered = array_filter($numberList, fn($item) => $item['Level'] === '6');
-      // if (empty($filtered)) {
-      //    throw new \RuntimeException('No voice service numbers with required level');
-      // }
+      $filtered = array_filter($numberList, fn($item) => $item['Level'] === '6');
+      if (empty($filtered)) {
+         throw new \RuntimeException('No voice service numbers with required level');
+      }
 
-      $voiceServiceNumber = "116189998"; // reset($filtered)['ServiceNumber'];
+      $voiceServiceNumber =  reset($filtered)['ServiceNumber'];
 
 
       $data['customer_code'] = $this->customerCode($data['customer_code'] ?? null);

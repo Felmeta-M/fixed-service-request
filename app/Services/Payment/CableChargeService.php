@@ -31,7 +31,11 @@ class CableChargeService
         }
 
         $cableLength = (float) $cableLength;
-        $unitPrice = $this->unitPrices[(int) $cableType] ?? 0;
+        $cableTypeInt = (int) $cableType;
+        if (!isset($this->unitPrices[$cableTypeInt])) {
+            return 0.0;
+        }
+        $unitPrice = $this->unitPrices[$cableTypeInt];
 
         if ($cableLength <= 500) {
             return 0.0;

@@ -43,6 +43,8 @@ class SurveyOrder extends Model
         'main_offer_id',
         'service_number',
         'fbb_service_number',
+        'voice_service_number',
+        'data_service_number',
         'internet_account',
         'internet_password',
         'survey_type',

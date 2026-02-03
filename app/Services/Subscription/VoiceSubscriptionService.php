@@ -356,11 +356,11 @@ XML;
             return ApiResponse::error('Business order ID not found in response.');
          }
 
-         // Update survey order status - subscription successful
+         // Update survey order status and voice service number
          $this->persistSubscription(
             $data['survey_order_id'],
             $customerBusiOrderId,
-            null, // Voice subscription doesn't update service_number here
+            $this->serviceNumber,
             'voice'
          );
 

@@ -64,9 +64,15 @@ abstract class BaseSubscriptionService extends BaseApiService
                 'customer_subscription_order_id' => $customerSubscriptionOrderId,
             ];
 
-            // Include service_number if provided (e.g., for data subscriptions)
+            // Include service_number and voice/data columns if provided
             if ($serviceNumber !== null) {
                 $updateData['service_number'] = $serviceNumber;
+                if ($serviceType === 'voice') {
+                    $updateData['voice_service_number'] = $serviceNumber;
+                }
+                if ($serviceType === 'data') {
+                    $updateData['data_service_number'] = $serviceNumber;
+                }
             }
 
             $updated = SurveyOrder::where('customer_survey_order_id', $surveyOrderId)

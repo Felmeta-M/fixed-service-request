@@ -417,6 +417,7 @@ XML;
                $res['customer_busi_order_id'],
                [
                   'service_number' => $serviceNo,
+                  'data_service_number' => $serviceNo,
                   'internet_account' => $internetAccount,
                   'internet_password' => $internetPassword,
                ],

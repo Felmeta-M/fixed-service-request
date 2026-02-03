@@ -835,6 +835,8 @@ class SurveyOrderController extends Controller
             'main_offer_id' => $order->main_offer_id,
             'service_number' => $order->service_number ?? null,
             'fbb_service_number' => $order->fbb_service_number ?? null,
+            'voice_service_number' => $order->voice_service_number ?? null, // Voice line (survey details)
+            'data_service_number' => $order->data_service_number ?? null,   // Data/FBB line (survey details)
             // Internet credentials for device configuration (Data and Combo services)
             'internet_account' => $order->internet_account ?? null,
             'internet_password' => $order->internet_password ?? null,

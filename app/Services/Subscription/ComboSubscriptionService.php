@@ -530,11 +530,13 @@ XML;
                // Voice service number (we provide for combo)
                if ($voiceServiceNumber) {
                   $updateData['service_number'] = $voiceServiceNumber;
+                  $updateData['voice_service_number'] = $voiceServiceNumber;
                }
 
                // FBB/Data service number (BSS returns for combo)
                if ($fbbServiceNumber) {
                   $updateData['fbb_service_number'] = $fbbServiceNumber;
+                  $updateData['data_service_number'] = $fbbServiceNumber;
                }
 
                // Internet credentials for device configuration

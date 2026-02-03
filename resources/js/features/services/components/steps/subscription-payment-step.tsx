@@ -30,7 +30,6 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete, onLoadCo
         amount?: string | number | null;
         customer_survey_order_id?: string;
         customer_subscription_order_id?: string | null;
-        service_number?: string | null;
         payment_order_id?: string | null;
         merch_order_id?: string | null;
     };
@@ -42,8 +41,8 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete, onLoadCo
         survey_type?: string | null;
         main_offer_id?: string;
         bandwidth?: string | null;
-        service_number?: string | null;
-        fbb_service_number?: string | null;
+        voice_service_number?: string | null;
+        data_service_number?: string | null;
         cable_length?: string | number | null;
         cable_length_chargeable?: number | null;
         cable_type?: string | null;
@@ -80,8 +79,8 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete, onLoadCo
               survey_type: surveyDetailQuery.data.data.survey_type,
               main_offer_id: surveyDetailQuery.data.data.main_offer_id,
               bandwidth: surveyDetailQuery.data.data.bandwidth,
-              service_number: surveyDetailQuery.data.data.service_number,
-              fbb_service_number: surveyDetailQuery.data.data.fbb_service_number,
+              voice_service_number: surveyDetailQuery.data.data.voice_service_number,
+              data_service_number: surveyDetailQuery.data.data.data_service_number,
               cable_length: surveyDetailQuery.data.data.cable_length,
               cable_length_chargeable: surveyDetailQuery.data.data.cable_length_chargeable ?? undefined,
               cable_type: null,

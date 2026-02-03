@@ -71,11 +71,11 @@ class SurveyOrderForm
                         TextInput::make('bandwidth')
                             ->label('Bandwidth')
                             ->disabled(),
-                        TextInput::make('service_number')
-                            ->label('Service Number')
+                        TextInput::make('voice_service_number')
+                            ->label('Voice Service Number')
                             ->disabled(),
-                        TextInput::make('fbb_service_number')
-                            ->label('FBB Service Number')
+                        TextInput::make('data_service_number')
+                            ->label('Data/FBB Service Number')
                             ->disabled(),
                         TextInput::make('internet_account')
                             ->label('Internet Account')

@@ -65,14 +65,17 @@ class PaymentCalculatorService
 
     /**
      * Call OneOffFeeService for Voice/Combo, fallback to default if fails.
+     * Accepts service_number or voice_service_number (one-off fee is for voice line).
      */
     protected function fetchVoiceComboFee(?array $requestData): int
     {
-        if (empty($requestData['service_number'])) {
+        $serviceNumber = $requestData['service_number'] ?? $requestData['voice_service_number'] ?? null;
+        if (empty($serviceNumber)) {
             return $this->defaultFee();
         }
 
-        $response = $this->oneOffFeeService->calculateOneOffFee($requestData);
+        $payload = array_merge($requestData ?? [], ['service_number' => $serviceNumber]);
+        $response = $this->oneOffFeeService->calculateOneOffFee($payload);
         $data = $response->getData(true);
 
         if (!($data['success'] ?? false)) {

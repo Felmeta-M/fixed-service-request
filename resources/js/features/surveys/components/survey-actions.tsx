@@ -28,7 +28,8 @@ type Contact = {
 type SurveyRow = {
     customer_survey_order_id?: string;
     customer_subscription_order_id?: string | null;
-    service_number?: string | null;
+    voice_service_number?: string | null;
+    data_service_number?: string | null;
     main_offer_id?: string;
     status?: string;
     created_at?: string;
@@ -52,6 +53,9 @@ type AuthUser = {
     };
 };
 
+const INTERNET_OFFER_ID = '1457567289';
+const COMBO_OFFER_ID = '102647257';
+
 type Survey = {
     customer_survey_order_id?: string | number;
     customer_subscription_order_id?: string | null;
@@ -61,6 +65,8 @@ type Survey = {
     customer_code?: string | number;
     external_operid?: string;
     survey_is_manual?: boolean;
+    voice_service_number?: string | null;
+    data_service_number?: string | null;
     payment?: {
         total_amount?: number | string;
         status?: string;
@@ -220,8 +226,13 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
         setOpenDowngradeDialog(true);
     };
 
+    // For bandwidth change API: Combo uses data line; Voice/Data use single line
+    const primaryServiceNumber = survey.main_offer_id === COMBO_OFFER_ID
+        ? survey.data_service_number
+        : (survey.voice_service_number ?? survey.data_service_number);
+
     const handleBandwidthChange = (bandwidth: string, mode: 'upgrade' | 'downgrade') => {
-        const serviceNumber = survey.service_number as string;
+        const serviceNumber = primaryServiceNumber as string;
         if (!serviceNumber) {
             const errorMsg = 'Service number is required for bandwidth change';
             setError(errorMsg);
@@ -324,8 +335,6 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     const canTerminate = survey.can_terminate ?? false;
 
     // Upgrade/Downgrade is only available for Internet and Combo services
-    const INTERNET_OFFER_ID = '1457567289';
-    const COMBO_OFFER_ID = '102647257';
     const isInternetOrCombo = survey.main_offer_id === INTERNET_OFFER_ID || survey.main_offer_id === COMBO_OFFER_ID;
     const canUpgradeDowngrade = canChangeOffer && isInternetOrCombo;
 
@@ -625,7 +634,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 loading={changePrimaryOfferingMutation.isPending}
                 mode="upgrade"
                 currentBandwidth={(survey as { bandwidth?: string }).bandwidth}
-                serviceNumber={survey.service_number as string}
+                serviceNumber={(primaryServiceNumber ?? '') as string}
             />
 
             <BandwidthChangeDialog
@@ -635,7 +644,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 loading={changePrimaryOfferingMutation.isPending}
                 mode="downgrade"
                 currentBandwidth={(survey as { bandwidth?: string }).bandwidth}
-                serviceNumber={survey.service_number as string}
+                serviceNumber={(primaryServiceNumber ?? '') as string}
             />
         </>
     );

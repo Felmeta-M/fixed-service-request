@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
+use App\Enums\OfferId;
 use App\Models\SurveyOrder;
 use App\Services\QuerySubscriptionOrderStatusService;
 use App\Support\CustomerContext;
@@ -185,9 +186,10 @@ XML;
          return ApiResponse::error('Survey request not found');
       }
 
-      // 1. If service number already exists in DB → reuse it
-      if ($surveyRequest->service_number) {
-         $numberService = $surveyRequest->service_number;
+      // 1. If service number already exists in DB → reuse it (voice or data line)
+      $existingNumber = $surveyRequest->voice_service_number ?? $surveyRequest->data_service_number;
+      if ($existingNumber) {
+         $numberService = $existingNumber;
       } else {
          // 2. If not existing → get new service number
          $numberService = $this->getAvailableNumberServices();
@@ -195,13 +197,18 @@ XML;
          if (!$numberService) {
             return ApiResponse::error('Unable to reserve number service');
          }
-         // 3. Save new service number to DB
-         $surveyRequest->update([
-            'service_number' => $numberService,
+         // 3. Save new service number to DB (voice/data by offer type)
+         $offerType = OfferId::tryFromInt((int) $surveyRequest->main_offer_id);
+         $update = [
             'status' => FFDServiceProvisionStatus::Completed->value,
             'subscribed_at' => now(),
-            // TODO: update completed_date based on survey result
-         ]);
+         ];
+         if ($offerType?->isBroadband()) {
+            $update['data_service_number'] = $numberService;
+         } else {
+            $update['voice_service_number'] = $numberService;
+         }
+         $surveyRequest->update($update);
       }
 
       return ApiResponse::success([

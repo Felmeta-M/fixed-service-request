@@ -53,18 +53,18 @@ class ChangePrimaryOfferingService extends BaseApiService
     ): array {
         try {
             // Determine the correct service number for BSS API:
-            // - Combo services: use fbb_service_number (the data/FBB line)
-            // - Data/Voice services: use service_number
+            // - Combo services: use data_service_number (the data/FBB line)
+            // - Data/Voice services: use voice_service_number or data_service_number
             $isComboService = (int) $surveyOrder->main_offer_id === OfferId::FixedCombo->value;
             $surveyOrderServiceNumber = $isComboService
-                ? $surveyOrder->fbb_service_number
-                : $surveyOrder->service_number;
+                ? ($surveyOrder->data_service_number ?? $surveyOrder->voice_service_number)
+                : ($surveyOrder->voice_service_number ?? $surveyOrder->data_service_number);
 
             AppLogger::api()->debug('Determined service number for change offer', [
                 'main_offer_id' => $surveyOrder->main_offer_id,
                 'is_combo_service' => $isComboService,
-                'service_number' => $surveyOrder->service_number,
-                'fbb_service_number' => $surveyOrder->fbb_service_number,
+                'voice_service_number' => $surveyOrder->voice_service_number,
+                'data_service_number' => $surveyOrder->data_service_number,
                 'used_service_number' => $surveyOrderServiceNumber,
                 'operation' => 'change_primary_offering',
             ]);
@@ -84,7 +84,7 @@ class ChangePrimaryOfferingService extends BaseApiService
             }
 
             $data['object_id_type'] = self::OBJECT_TYPE_SUBSCRIBER;
-            $data['object_id'] = $surveyOrderServiceNumber; // fbb service number
+            $data['object_id'] = $surveyOrderServiceNumber; // data line for combo, else voice/data
             $data['old_offering_id'] = OfferId::FixedData->value;
             $data['new_offering_id'] = OfferId::FixedData->value;
             $data['bandwidth'] = $this->parseBandwidth($bandwidth);

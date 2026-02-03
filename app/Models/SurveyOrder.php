@@ -27,7 +27,8 @@ class SurveyOrder extends Model
         'status',
         'customer_code',
         'main_offer_id',
-        'service_number',
+        'voice_service_number',
+        'data_service_number',
         'with_device',
     ];
 
@@ -41,8 +42,6 @@ class SurveyOrder extends Model
         'customer_survey_order_id',
         'customer_subscription_order_id',
         'main_offer_id',
-        'service_number',
-        'fbb_service_number',
         'voice_service_number',
         'data_service_number',
         'internet_account',
@@ -93,7 +92,6 @@ class SurveyOrder extends Model
     ];
 
     protected $dates = ['completed_date'];
-
 
     protected $casts = [
         'with_device' => 'boolean',

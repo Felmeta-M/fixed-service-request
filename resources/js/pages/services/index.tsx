@@ -95,10 +95,6 @@ export default function CustomerDashboard() {
         surveyListQuery.refetch();
     };
 
-    useEffect(() => {
-        // Initial fetch is handled by the query
-    }, []);
-
     // Helper: Check if survey matches a status category (uses status_code with legacy fallback)
     const matchesCategory = (survey: any, category: 'ACTIVE' | 'PENDING' | 'COMPLETED' | 'SUSPENDED') => {
         const statusCode = String(survey.status_code ?? '');

@@ -496,10 +496,10 @@ XML;
             $paramValue = (string) $pChildren->ParamValue;
             $res['extra_params'][$paramName] = $paramValue;
 
-            // Log FBB number extraction for combo services
+            // Log FBB/Data number extraction for combo services
             if ($paramName === 'FBBNUMBER') {
-               AppLogger::api()->info('FBB service number extracted from BSS response', [
-                  'fbb_service_number' => $paramValue,
+               AppLogger::api()->info('Data service number extracted from BSS response', [
+                  'data_service_number' => $paramValue,
                ]);
             }
          }
@@ -512,8 +512,8 @@ XML;
        * Update survey order when subscription is successful
        * 
        * For Combo services:
-       * - service_number: Voice service number (we provided)
-       * - fbb_service_number: Data/FBB service number (BSS returns in FBBNUMBER)
+       * - voice_service_number: Voice service number (we provided)
+       * - data_service_number: Data/FBB service number (BSS returns in FBBNUMBER)
        */
       if ($res['success'] && !empty($res['customer_busi_order_id'])) {
          try {
@@ -529,13 +529,11 @@ XML;
 
                // Voice service number (we provide for combo)
                if ($voiceServiceNumber) {
-                  $updateData['service_number'] = $voiceServiceNumber;
                   $updateData['voice_service_number'] = $voiceServiceNumber;
                }
 
                // FBB/Data service number (BSS returns for combo)
                if ($fbbServiceNumber) {
-                  $updateData['fbb_service_number'] = $fbbServiceNumber;
                   $updateData['data_service_number'] = $fbbServiceNumber;
                }
 

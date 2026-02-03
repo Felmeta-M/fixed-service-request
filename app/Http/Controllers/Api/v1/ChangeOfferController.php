@@ -40,8 +40,9 @@ class ChangeOfferController extends Controller
             ], 404);
         }
 
-        // Validate required fields from survey order
-        if (!$surveyOrder->service_number) {
+        // Validate required fields from survey order (use new attributes)
+        $primaryNumber = $surveyOrder->voice_service_number ?? $surveyOrder->data_service_number;
+        if (!$primaryNumber) {
             return response()->json([
                 'success' => false,
                 'message' => 'Service number is missing in survey order.',
@@ -63,7 +64,7 @@ class ChangeOfferController extends Controller
         }
 
         return $this->changeOfferService->changePrimaryOffering(
-            serviceNumber: $surveyOrder->service_number,
+            serviceNumber: $primaryNumber,
             oldOfferingId: $surveyOrder->main_offer_id,
             newOfferingId: $surveyOrder->main_offer_id,
             oldValue: $surveyOrder->bandwidth,

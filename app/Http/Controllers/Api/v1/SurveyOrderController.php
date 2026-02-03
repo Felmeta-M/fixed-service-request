@@ -61,8 +61,8 @@ class SurveyOrderController extends Controller
                     'survey_orders.customer_code',
                     'survey_orders.status',
                     'survey_orders.main_offer_id',
-                    'survey_orders.service_number',
-                    'survey_orders.fbb_service_number',
+                    'survey_orders.voice_service_number',
+                    'survey_orders.data_service_number',
                     'survey_orders.bandwidth',
                     'survey_orders.cable_length',
                     'survey_orders.cable_type',
@@ -126,8 +126,8 @@ class SurveyOrderController extends Controller
                         'survey_orders.customer_code',
                         'survey_orders.status',
                         'survey_orders.main_offer_id',
-                        'survey_orders.service_number',
-                        'survey_orders.fbb_service_number',
+                        'survey_orders.voice_service_number',
+                        'survey_orders.data_service_number',
                         'survey_orders.bandwidth',
                         'survey_orders.cable_length',
                         'survey_orders.cable_type',
@@ -638,14 +638,66 @@ class SurveyOrderController extends Controller
 
     /**
      * Fetch survey order with payment data.
+     * Explicitly select current survey_orders columns (voice_service_number, data_service_number)
+     * so we never select dropped columns (service_number, fbb_service_number) and ensure new attributes are from DB.
      */
     protected function fetchSurveyOrder(?string $subscriptionOrderId, ?string $surveyOrderId): ?object
     {
+        $surveyOrderColumns = [
+            'survey_orders.id',
+            'survey_orders.customer_id',
+            'survey_orders.customer_code',
+            'survey_orders.customer_survey_order_id',
+            'survey_orders.customer_subscription_order_id',
+            'survey_orders.main_offer_id',
+            'survey_orders.voice_service_number',
+            'survey_orders.data_service_number',
+            'survey_orders.internet_account',
+            'survey_orders.internet_password',
+            'survey_orders.survey_type',
+            'survey_orders.telecom_region',
+            'survey_orders.area_code',
+            'survey_orders.area_name',
+            'survey_orders.oper_type',
+            'survey_orders.customer_type',
+            'survey_orders.bandwidth',
+            'survey_orders.contact_person',
+            'survey_orders.contact_no',
+            'survey_orders.contact_email',
+            'survey_orders.sec_contact_person',
+            'survey_orders.sec_contact_no',
+            'survey_orders.sec_contact_email',
+            'survey_orders.status',
+            'survey_orders.cancel_reason',
+            'survey_orders.completed_date',
+            'survey_orders.subscribed_at',
+            'survey_orders.cable_length',
+            'survey_orders.cable_type',
+            'survey_orders.cable_charge',
+            'survey_orders.other_related_cost',
+            'survey_orders.media_type',
+            'survey_orders.line_indicator',
+            'survey_orders.survey_failure_reason',
+            'survey_orders.lat',
+            'survey_orders.long',
+            'survey_orders.with_device',
+            'survey_orders.device_id',
+            'survey_orders.device_voice_id',
+            'survey_orders.device_offer_id',
+            'survey_orders.device_voice_offer_id',
+            'survey_orders.survey_is_manual',
+            'survey_orders.zone_code',
+            'survey_orders.last_checked_at',
+            'survey_orders.last_synced_status',
+            'survey_orders.created_at',
+            'survey_orders.updated_at',
+            'survey_orders.deleted_at',
+        ];
+
         $query = DB::table('survey_orders')
             ->leftJoin('payments', 'survey_orders.customer_survey_order_id', '=', 'payments.customer_survey_order_id')
             ->whereNull('survey_orders.deleted_at')
-            ->select([
-                'survey_orders.*',
+            ->select(array_merge($surveyOrderColumns, [
                 'payments.id as payment_id',
                 'payments.subscription_fee as payment_subscription_fee',
                 'payments.device_fee as payment_device_fee',
@@ -656,7 +708,7 @@ class SurveyOrderController extends Controller
                 'payments.payment_order_id as payment_payment_order_id',
                 'payments.merch_order_id as payment_merch_order_id',
                 'payments.trans_id as payment_trans_id',
-            ]);
+            ]));
 
         if ($subscriptionOrderId) {
             $query->where('survey_orders.customer_subscription_order_id', (string) $subscriptionOrderId);
@@ -674,19 +726,20 @@ class SurveyOrderController extends Controller
      */
     protected function refreshOfferingIfNeeded(object $order): bool
     {
-        // Only for completed orders with subscription and service_number
+        // Only for completed orders with subscription and a service number
         if ((int) $order->status !== FFDServiceProvisionStatus::Completed->value) {
             return false;
         }
 
-        if (empty($order->customer_subscription_order_id) || empty($order->service_number)) {
+        $primaryNumber = $order->data_service_number ?? $order->voice_service_number ?? null;
+        if (empty($order->customer_subscription_order_id) || empty($primaryNumber)) {
             return false;
         }
 
         try {
-            // Query current purchased offering
+            // Query current purchased offering (Combo: data line; Voice/Data: single line)
             $response = $this->queryPurchasedOfferingService
-                ->queryByServiceNumber($order->service_number);
+                ->queryByServiceNumber($primaryNumber);
 
             if (empty($response['success'])) {
                 return false;
@@ -833,10 +886,8 @@ class SurveyOrderController extends Controller
             'survey_type' => $order->survey_type ?? '',
             'customer_code' => $order->customer_code,
             'main_offer_id' => $order->main_offer_id,
-            'service_number' => $order->service_number ?? null,
-            'fbb_service_number' => $order->fbb_service_number ?? null,
-            'voice_service_number' => $order->voice_service_number ?? null, // Voice line (survey details)
-            'data_service_number' => $order->data_service_number ?? null,   // Data/FBB line (survey details)
+            'voice_service_number' => $order->voice_service_number ?? null,
+            'data_service_number' => $order->data_service_number ?? null,
             // Internet credentials for device configuration (Data and Combo services)
             'internet_account' => $order->internet_account ?? null,
             'internet_password' => $order->internet_password ?? null,

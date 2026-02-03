@@ -128,7 +128,7 @@ class VoiceSubscriptionService extends BaseSubscriptionService implements Subscr
 
       $serviceNumber = SurveyOrder::query()
          ->where('customer_survey_order_id', $data['survey_order_id'])
-         ->value('service_number');
+         ->value('voice_service_number');
 
       if (!$serviceNumber) {
          AppLogger::api()->error('Service number not found in survey order', [
@@ -425,7 +425,7 @@ XML;
             // Update the survey order to keep the number
             try {
                SurveyOrder::where('customer_survey_order_id', $data['survey_order_id'] ?? null)
-                  ->update(['service_number' => $this->serviceNumber]);
+                  ->update(['voice_service_number' => $this->serviceNumber]);
             } catch (\Throwable $e) {
                AppLogger::api()->exception($e, 'Failed to update survey order with re-reserved number', [
                   'service_number' => $this->serviceNumber,

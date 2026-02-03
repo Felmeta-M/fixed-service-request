@@ -17,7 +17,8 @@ interface Survey {
     contact_person?: string;
     main_offer_id?: string;
     service_type?: string;
-    service_number?: string | null;
+    voice_service_number?: string | null;
+    data_service_number?: string | null;
     cancellation_reason?: string;
     payment?: {
         subscription_fee?: number | string;
@@ -67,8 +68,8 @@ interface SurveyDetailResponse {
         cable_length?: string | number | null;
         with_device?: boolean;
         status?: string | number | null;
-        service_number?: string | null;
-        fbb_service_number?: string | null;
+        voice_service_number?: string | null;
+        data_service_number?: string | null;
         internet_account?: string | null;
         internet_password?: string | null;
         created_at?: string;

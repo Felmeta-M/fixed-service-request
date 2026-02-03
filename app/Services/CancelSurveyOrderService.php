@@ -103,24 +103,25 @@ XML;
 
         if ($surveyOrder) {
             /**
-             * Release reserved service number BEFORE deleting
+             * Release reserved service number(s) BEFORE deleting (voice and/or data line)
              */
-            if ($surveyOrder->service_number) {
+            $numbersToRelease = array_filter([
+                $surveyOrder->voice_service_number,
+                $surveyOrder->data_service_number,
+            ]);
+            foreach ($numbersToRelease as $serviceNumber) {
                 try {
                     $this->reserveNumberService->unpick([
                         'res_type_id' => 10,
                         'oper_type'   => 1030,
-                        'res_code'    => $surveyOrder->service_number,
+                        'res_code'    => $serviceNumber,
                     ]);
                 } catch (\Throwable $e) {
                     Log::error('Failed to release service number', [
-                        'service_number' => $surveyOrder->service_number,
+                        'service_number' => $serviceNumber,
                         'survey_order_id' => $surveyOrder->id,
                         'error' => $e->getMessage(),
                     ]);
-
-                    // Decide if delete should stop or continue
-                    // return; // ← uncomment if you want to stop deletion
                 }
             }
             /**

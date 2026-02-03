@@ -309,10 +309,15 @@ XML;
             return;
         }
 
-        // Build request data for subscription fee calculation
+        // Primary number for fee calculation and payment: use survey's new attributes first
+        $primaryNumber = $survey->voice_service_number ?? $survey->data_service_number ?? $data['service_number'] ?? $data['voice_service_number'] ?? $data['data_service_number'] ?? null;
+
+        // Build request data for subscription fee calculation (one-off fee uses voice number for Voice/Combo)
         $profile = $this->getCustomerProfile();
         $requestData = [
-            'service_number' => $data['service_number'] ?? null,
+            'service_number' => $primaryNumber,
+            'voice_service_number' => $survey->voice_service_number,
+            'data_service_number' => $survey->data_service_number,
             'offering_id' => $survey->main_offer_id,
             'network_type' => 4, // Fixed network
             'sub_type' => 0,
@@ -334,7 +339,7 @@ XML;
 
         $this->paymentService->createOrUpdatePayment([
             'customer_survey_order_id' => $survey->customer_survey_order_id,
-            'service_number' => $data['service_number'] ?? null,
+            'service_number' => $primaryNumber,
             'subscription_fee' => $fees['subscription_fee'],
             'cable_charge' => 0,
             'device_fee' => $deviceFee,

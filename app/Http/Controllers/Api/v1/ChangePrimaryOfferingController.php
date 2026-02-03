@@ -46,12 +46,10 @@ class ChangePrimaryOfferingController extends Controller
             'bandwidth' => 'required|string',
         ]);
 
-        // Look up survey order by service number
-        // For Data service type: matches service_number
-        // For Combo service type: matches fbb_service_number (the data/bandwidth service)
+        // Look up survey order by service number (voice or data line)
         $surveyOrder = SurveyOrder::where(function ($query) use ($validated) {
-                $query->where('service_number', $validated['service_number'])
-                    ->orWhere('fbb_service_number', $validated['service_number']);
+                $query->where('voice_service_number', $validated['service_number'])
+                    ->orWhere('data_service_number', $validated['service_number']);
             })
             ->whereNotNull('customer_subscription_order_id')
             ->latest()

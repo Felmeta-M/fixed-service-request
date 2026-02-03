@@ -71,12 +71,12 @@ class SurveyOrderInfolist
                         TextEntry::make('bandwidth')
                             ->label('Bandwidth')
                             ->placeholder('-'),
-                        TextEntry::make('service_number')
-                            ->label('Service Number')
+                        TextEntry::make('voice_service_number')
+                            ->label('Voice Service Number')
                             ->placeholder('-')
                             ->copyable(),
-                        TextEntry::make('fbb_service_number')
-                            ->label('FBB Service Number')
+                        TextEntry::make('data_service_number')
+                            ->label('Data/FBB Service Number')
                             ->placeholder('-'),
                         TextEntry::make('internet_account')
                             ->label('Internet Account')

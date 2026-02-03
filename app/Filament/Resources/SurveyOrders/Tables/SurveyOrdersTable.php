@@ -31,8 +31,12 @@ class SurveyOrdersTable
                     ->label('Customer')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('service_number')
-                    ->label('Service No.')
+                TextColumn::make('voice_service_number')
+                    ->label('Voice No.')
+                    ->searchable()
+                    ->placeholder('-'),
+                TextColumn::make('data_service_number')
+                    ->label('Data No.')
                     ->searchable()
                     ->placeholder('-'),
                 TextColumn::make('status')

@@ -6,6 +6,7 @@ use App\Services\ApiResponse;
 use App\Services\BaseApiService;
 use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
+use App\Enums\OfferId;
 use App\Enums\MediaType;
 use App\Services\Payment\DeviceFeeCalculatorService;
 use App\Services\Payment\PaymentCalculatorService;
@@ -150,6 +151,15 @@ abstract class BaseSurveyService extends BaseApiService
     ): void {
 
         $serviceNumber = $data['service_number'] ?? $this->serviceNumber ?? null;
+        $mainOfferId = (int) ($data['main_offer_id'] ?? 0);
+        $offerType = OfferId::tryFromInt($mainOfferId);
+        $voiceServiceNumber = ($offerType && !$offerType->isBroadband()) ? $serviceNumber : null;
+        $dataServiceNumber = ($offerType && $offerType->isBroadband()) ? $serviceNumber : null;
+        if ($offerType?->isCombo()) {
+            // Combo: at survey create we typically have voice first; data may come later from BSS
+            $voiceServiceNumber = $serviceNumber;
+            $dataServiceNumber = null;
+        }
 
         // Convert bandwidth to KB for consistent storage (BSS returns KB format)
         $bandwidthKb = null;
@@ -161,7 +171,7 @@ abstract class BaseSurveyService extends BaseApiService
         $totalAmount = 0;
         $isManualSurvey = (bool) ($data['survey_is_manual'] ?? false);
 
-        DB::transaction(function () use ($surveyOrderId, $data, $resource, $serviceNumber, $bandwidthKb, &$totalAmount, $isManualSurvey) {
+        DB::transaction(function () use ($surveyOrderId, $data, $resource, $serviceNumber, $voiceServiceNumber, $dataServiceNumber, $bandwidthKb, &$totalAmount, $isManualSurvey) {
             $areaCode = $resource['area_code'] ?? null;
             $areaName = $resource['area_name'] ?? null;
             $zoneCode = $resource['zone_code'] ?? null;
@@ -197,7 +207,8 @@ abstract class BaseSurveyService extends BaseApiService
                 'device_voice_id' => $deviceVoiceId,
                 'device_offer_id' => $deviceOfferId,
                 'device_voice_offer_id' => $deviceVoiceOfferId,
-                'service_number' => $serviceNumber,
+                'voice_service_number' => $voiceServiceNumber,
+                'data_service_number' => $dataServiceNumber,
                 'customer_survey_order_id' => $surveyOrderId,
                 'status' => $isManualSurvey ? FFDServiceProvisionStatus::Waiting->value : FFDServiceProvisionStatus::Completed->value,
                 'cable_length' => $resource['distance'] ?? null,
@@ -214,6 +225,8 @@ abstract class BaseSurveyService extends BaseApiService
 
             $requestData = [
                 'service_number' => $serviceNumber,
+                'voice_service_number' => $survey->voice_service_number,
+                'data_service_number' => $survey->data_service_number,
                 'offering_id' => $survey->main_offer_id,
                 'network_type' => 4, // Fixed network
                 'sub_type' => 0,
@@ -235,9 +248,11 @@ abstract class BaseSurveyService extends BaseApiService
             $otherRelatedCost = (float) ($survey->other_related_cost ?? 0);
             $totalAmount = $fees['total_amount'] + $deviceFee + $otherRelatedCost;
 
+            // Use new attributes for payment primary number
+            $paymentPrimaryNumber = $survey->voice_service_number ?? $survey->data_service_number;
             $this->payment_service->createOrUpdatePayment([
                 'customer_survey_order_id' => $survey->customer_survey_order_id,
-                'service_number' => $survey->service_number,
+                'service_number' => $paymentPrimaryNumber,
                 'subscription_fee' => $fees['subscription_fee'],
                 'cable_charge' => $fees['cable_charge'],
                 'device_fee' => $deviceFee,

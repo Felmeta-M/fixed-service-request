@@ -64,9 +64,8 @@ abstract class BaseSubscriptionService extends BaseApiService
                 'customer_subscription_order_id' => $customerSubscriptionOrderId,
             ];
 
-            // Include service_number and voice/data columns if provided
+            // Set voice/data service number based on type (legacy columns removed)
             if ($serviceNumber !== null) {
-                $updateData['service_number'] = $serviceNumber;
                 if ($serviceType === 'voice') {
                     $updateData['voice_service_number'] = $serviceNumber;
                 }
@@ -90,7 +89,7 @@ abstract class BaseSubscriptionService extends BaseApiService
             AppLogger::api()->info('Survey order updated after subscription', [
                 'survey_order_id' => $surveyOrderId,
                 'customer_subscription_order_id' => $customerSubscriptionOrderId,
-                'service_number' => $serviceNumber ?? $this->serviceNumber,
+                'voice_or_data_service_number' => $serviceNumber ?? $this->serviceNumber,
                 'service_type' => $serviceType,
             ]);
 

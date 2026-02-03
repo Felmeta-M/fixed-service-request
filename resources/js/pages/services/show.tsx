@@ -23,7 +23,8 @@ type SurveyDetails = {
     survey_failure_reason?: string | null; // Reason when survey failed
     survey_is_manual?: boolean; // True for manual surveys
     status?: string | number | null;
-    service_number?: string | null;
+    voice_service_number?: string | null;
+    data_service_number?: string | null;
     created_at?: string;
     updated_at?: string;
     // Backend-provided action flags (single source of truth)
@@ -111,8 +112,8 @@ export default function ServiceShowPage() {
             survey_failure_reason: surveyDetailQuery.data.data.survey_failure_reason,
             survey_is_manual: surveyDetailQuery.data.data.survey_is_manual,
             status: surveyDetailQuery.data.data.status,
-            service_number: surveyDetailQuery.data.data.service_number,
-            fbb_service_number: surveyDetailQuery.data.data.fbb_service_number,
+            voice_service_number: surveyDetailQuery.data.data.voice_service_number,
+            data_service_number: surveyDetailQuery.data.data.data_service_number,
             internet_account: surveyDetailQuery.data.data.internet_account,
             internet_password: surveyDetailQuery.data.data.internet_password,
             with_device: surveyDetailQuery.data.data.with_device,

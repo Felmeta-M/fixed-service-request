@@ -15,8 +15,8 @@ class SurveyOrderResource extends JsonResource
             'customer_subscription_order_id' => $this->customer_subscription_order_id,
             'survey_type' => $this->survey_type,
             'main_offer_id' => $this->main_offer_id,
-            'service_number' => $this->service_number,
-            'fbb_service_number' => $this->fbb_service_number,
+            'voice_service_number' => $this->voice_service_number,
+            'data_service_number' => $this->data_service_number,
             // Backend is single source of truth - return formatted for display
             'bandwidth' => BandwidthHelper::format($this->bandwidth),
             'bandwidth_raw' => $this->bandwidth, // Raw KB value for debugging/API use

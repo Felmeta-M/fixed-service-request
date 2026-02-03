@@ -47,8 +47,8 @@ type SurveyDetails = {
     customer_survey_order_id?: string;
     customer_subscription_order_id?: string | null;
     main_offer_id?: string;
-    service_number?: string | null;
-    fbb_service_number?: string | null;
+    voice_service_number?: string | null;
+    data_service_number?: string | null;
     internet_account?: string | null;
     internet_password?: string | null;
     bandwidth?: string | null;
@@ -83,7 +83,6 @@ type DeviceItem = {
 type PaymentDetailsData = {
     customer_survey_order_id?: string;
     customer_subscription_order_id?: string | null;
-    service_number?: string | null;
     amount?: string | number | null;
     total_amount?: string | number | null;
     status?: string;
@@ -163,7 +162,10 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
     const payment = paymentDetails?.data;
     const customer_survey_order_id = payment?.customer_survey_order_id ?? surveyDetails?.customer_survey_order_id ?? '';
     const customer_subscription_order_id = payment?.customer_subscription_order_id ?? surveyDetails?.customer_subscription_order_id ?? null;
-    const service_number = surveyDetails?.service_number ?? payment?.service_number ?? null;
+    const voiceNumber = surveyDetails?.voice_service_number ?? null;
+    const dataNumber = surveyDetails?.data_service_number ?? null;
+    // Primary service number for API calls: Combo uses data line; Voice/Data use single line
+    const primaryServiceNumber = surveyDetails?.main_offer_id === COMBO_OFFER_ID ? (dataNumber ?? voiceNumber) : (voiceNumber ?? dataNumber);
 
     const amountRaw = payment?.amount ?? payment?.total_amount;
     const amount = Number(amountRaw);
@@ -368,7 +370,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
     };
 
     const handleBandwidthChange = (bandwidth: string, mode: 'upgrade' | 'downgrade') => {
-        if (!service_number) {
+        if (!primaryServiceNumber) {
             showErrorToast('Service number is required for bandwidth change');
             return;
         }
@@ -377,7 +379,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
 
         changePrimaryOfferingMutation.mutate(
             {
-                service_number: service_number,
+                service_number: primaryServiceNumber,
                 bandwidth: bandwidth,
             },
             {
@@ -603,37 +605,25 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                             </span>
                         </div>
                         <Separator />
-                        {/* For Combo services, show both Voice and FBB numbers */}
-                        {surveyDetails?.main_offer_id === COMBO_OFFER_ID ? (
-                            <>
-                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                                    <span className="text-xs text-muted-foreground sm:text-sm">Voice Number</span>
-                                    <span className="flex items-center gap-2 text-xs font-medium sm:text-sm">
-                                        <Phone className="h-3.5 w-3.5 shrink-0 text-violet-500 sm:h-4 sm:w-4" />
-                                        <span className="break-all sm:break-normal">
-                                            {service_number || <span className="text-muted-foreground">Awaiting</span>}
-                                        </span>
-                                    </span>
-                                </div>
-                                <Separator />
-                                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                                    <span className="text-xs text-muted-foreground sm:text-sm">FBB/Data Number</span>
-                                    <span className="flex items-center gap-2 text-xs font-medium sm:text-sm">
-                                        <Wifi className="h-3.5 w-3.5 shrink-0 text-blue-500 sm:h-4 sm:w-4" />
-                                        <span className="break-all sm:break-normal">
-                                            {surveyDetails?.fbb_service_number || <span className="text-muted-foreground">Awaiting</span>}
-                                        </span>
-                                    </span>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                                <span className="text-xs text-muted-foreground sm:text-sm">Service Number</span>
-                                <span className="text-xs font-medium break-all sm:text-sm sm:break-normal">
-                                    {service_number || <span className="text-muted-foreground">Awaiting</span>}
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <span className="text-xs text-muted-foreground sm:text-sm">Voice Service Number</span>
+                            <span className="flex items-center gap-2 text-xs font-medium sm:text-sm">
+                                <Phone className="h-3.5 w-3.5 shrink-0 text-violet-500 sm:h-4 sm:w-4" />
+                                <span className="break-all sm:break-normal">
+                                    {voiceNumber || <span className="text-muted-foreground">—</span>}
                                 </span>
-                            </div>
-                        )}
+                            </span>
+                        </div>
+                        <Separator />
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <span className="text-xs text-muted-foreground sm:text-sm">Data Service Number</span>
+                            <span className="flex items-center gap-2 text-xs font-medium sm:text-sm">
+                                <Wifi className="h-3.5 w-3.5 shrink-0 text-blue-500 sm:h-4 sm:w-4" />
+                                <span className="break-all sm:break-normal">
+                                    {dataNumber || <span className="text-muted-foreground">—</span>}
+                                </span>
+                            </span>
+                        </div>
                         {/* Only show bandwidth for Internet and Combo services (not Voice) */}
                         {(surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID) && (
                             <>
@@ -1128,7 +1118,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                 loading={changePrimaryOfferingMutation.isPending}
                 mode="upgrade"
                 currentBandwidth={surveyDetails?.bandwidth ?? undefined}
-                serviceNumber={service_number ?? ''}
+                serviceNumber={primaryServiceNumber ?? ''}
             />
 
             <BandwidthChangeDialog
@@ -1138,7 +1128,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                 loading={changePrimaryOfferingMutation.isPending}
                 mode="downgrade"
                 currentBandwidth={surveyDetails?.bandwidth ?? undefined}
-                serviceNumber={service_number ?? ''}
+                serviceNumber={primaryServiceNumber ?? ''}
             />
         </div>
     );

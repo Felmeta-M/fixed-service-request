@@ -1,7 +1,6 @@
 import SurveyTable from '@/features/surveys/components/survey-table';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
-import { useEffect } from 'react';
 
 function NoServicesIcon() {
     return (
@@ -28,10 +27,8 @@ interface ServiceListProps {
 }
 
 export function ServiceList({ surveys, loading, error, onSurveyUpdate, globalFilter, typeFilter, statusFilter }: ServiceListProps) {
-
-    useEffect(() => {
-        onSurveyUpdate();
-    }, []);
+    // Note: Initial data fetch happens automatically via useSurveyList() in parent.
+    // Do NOT call onSurveyUpdate() on mount - it causes TDZ errors with TanStack Query context.
 
     if (loading) {
         return (

@@ -26,19 +26,11 @@ const typeMap = {
     '102647257': { label: 'Combo', text: 'text-et-green', bg: 'bg-green-400', icon: Box },
 };
 
-interface SurveyTableProps {
-    surveys: SurveyRow[];
-    loading?: boolean;
-    onSurveyUpdate: () => void;
-    globalFilter: string;
-    typeFilter: string;
-    statusFilter: string;
-}
-
 type SurveyRow = {
     customer_survey_order_id?: string;
     customer_subscription_order_id?: string | null;
-    service_number?: string | null;
+    voice_service_number?: string | null;
+    data_service_number?: string | null;
     main_offer_id?: string;
     status?: string;
     status_code?: string; // Stable status code for logic (decoupled from display label)
@@ -55,6 +47,15 @@ type SurveyRow = {
     can_terminate?: boolean;
     [key: string]: unknown;
 };
+
+interface SurveyTableProps {
+    surveys: SurveyRow[];
+    loading?: boolean;
+    onSurveyUpdate: () => void;
+    globalFilter: string;
+    typeFilter: string;
+    statusFilter: string;
+}
 
 export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFilter, typeFilter, statusFilter }: SurveyTableProps) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -134,19 +135,25 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                 },
             },
             {
-                accessorKey: 'service_number',
-                header: 'Service Number',
-                cell: ({ getValue }) => {
-                    const serviceNumber = getValue<string>() ?? null; // null-safe
-
+                id: 'voice_service_number',
+                header: 'Voice Number',
+                cell: ({ row }) => {
+                    const v = row.original.voice_service_number;
                     return (
                         <div>
-                            {/* <Badge
-                                variant="outline"
-                                className="flex items-center gap-1.5 bg-white"
-                            > */}
-                            <span className="text-sm font-medium">{serviceNumber || '—'}</span>
-                            {/* </Badge> */}
+                            <span className="text-sm font-medium">{v || '—'}</span>
+                        </div>
+                    );
+                },
+            },
+            {
+                id: 'data_service_number',
+                header: 'Data Number',
+                cell: ({ row }) => {
+                    const d = row.original.data_service_number;
+                    return (
+                        <div>
+                            <span className="text-sm font-medium">{d || '—'}</span>
                         </div>
                     );
                 },

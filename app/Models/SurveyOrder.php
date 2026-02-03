@@ -65,6 +65,7 @@ class SurveyOrder extends Model
         'cable_length',
         'cable_type',
         'cable_charge',
+        'other_related_cost',
         'media_type',
         'line_indicator',
         'survey_failure_reason',
@@ -74,6 +75,7 @@ class SurveyOrder extends Model
         'device_id',
         'device_voice_id',
         'device_offer_id',
+        'device_voice_offer_id',
         'survey_is_manual',
         'zone_code',
     ];

@@ -3,6 +3,7 @@
 namespace App\Services\Subscription;
 
 use App\Enums\FFDServiceProvisionStatus;
+use App\Models\AvailableDevice;
 use App\Models\SurveyOrder;
 use App\Services\BaseApiService;
 use App\Services\Logging\AppLogger;
@@ -260,5 +261,145 @@ abstract class BaseSubscriptionService extends BaseApiService
         }
 
         return $zoneCode;
+    }
+
+    /**
+     * Builds the SupplementaryOfferingList XML section conditionally based on with_device flag.
+     * Shared by Data and Combo subscription services for device offerings.
+     *
+     * @param array $data Must contain with_device, optionally device_offer_id and device_id
+     * @return string XML fragment or empty string
+     */
+    protected function buildSupplementaryOfferingList(array $data): string
+    {
+        $withDevice = (bool) ($data['with_device'] ?? false);
+
+        if (!$withDevice) {
+            return '';
+        }
+
+        $deviceOfferId = $data['device_offer_id'] ?? null;
+
+        if (empty($deviceOfferId) && !empty($data['device_id'])) {
+            $device = AvailableDevice::find($data['device_id']);
+            $deviceOfferId = $device?->offer_id;
+        }
+
+        if (empty($deviceOfferId)) {
+            return '';
+        }
+
+        return <<<XML
+                  <com:SupplementaryOfferingList>
+                     <com:OfferingInstance>
+                        <com:OfferingId>
+                           <com:OfferingId>{$deviceOfferId}</com:OfferingId>
+                        </com:OfferingId>
+                        <com:InstanceProperty>
+                           <com:PropertyCode>50135</com:PropertyCode>
+                           <com:PropertyType>1</com:PropertyType>
+                           <com:Value>2701DTU</com:Value>
+                        </com:InstanceProperty>
+                        <com:InstanceProperty>
+                           <com:PropertyCode>50134</com:PropertyCode>
+                           <com:PropertyType>1</com:PropertyType>
+                           <com:Value>2</com:Value>
+                        </com:InstanceProperty>
+                     </com:OfferingInstance>
+                     <com:EffectiveMode>0</com:EffectiveMode>
+                  </com:SupplementaryOfferingList>
+XML;
+    }
+
+    /**
+     * Builds CalcOneOffFeeETC XML for device one-off fee. Shared by Data and Combo subscription services.
+     *
+     * @param array $data Must contain device_id
+     * @return string XML fragment or empty string
+     */
+    protected function oneOffFeeCalculation(array $data): string
+    {
+        $device = AvailableDevice::find($data['device_id'] ?? null);
+        if (empty($device)) {
+            return '';
+        }
+
+        $oneOffFee = $this->calculateOneOffFee((float) $device->price, (float) $device->discount);
+        $originalFee = $oneOffFee['original_fee'];
+        $taxFee = $oneOffFee['tax_fee'];
+        $calculatedFee = $oneOffFee['calculated_fee'];
+        $itemCode = $device->item_code;
+        $itemName = $device->item_name ?? 'Device purchase';
+        $feeType = 'One-Off Change';
+        $currencyId = 1048; // ETB
+        $payType = 1; // CASH
+        $taxCode = 'CC_TAX_VAT';
+        $taxName = 'VAT';
+        $discountFee = $oneOffFee['discount_fee'];
+
+        return <<<XML
+<com:CalcOneOffFeeETC>
+    <com:FeeItemCode>{$itemCode}</com:FeeItemCode>
+    <com:FeeItemName>{$itemName}</com:FeeItemName>
+    <com:FeeType>{$feeType}</com:FeeType>
+    <com:CurrencyID>{$currencyId}</com:CurrencyID>
+    <com:CaculatedFee>{$calculatedFee}</com:CaculatedFee>
+    <com:OriginalFee>{$originalFee}</com:OriginalFee>
+    <com:DiscountFee>{$discountFee}</com:DiscountFee>
+    <com:TaxInfo>
+        <com:TaxCode>{$taxCode}</com:TaxCode>
+        <com:TaxName>{$taxName}</com:TaxName>
+        <com:TaxFee>{$taxFee}</com:TaxFee>
+        <com:TaxRate>0.15</com:TaxRate>
+    </com:TaxInfo>
+    <com:PayType>{$payType}</com:PayType>
+</com:CalcOneOffFeeETC>
+XML;
+    }
+
+    /**
+     * Calculates one-off fee (price, tax, discount). Shared by Data and Combo subscription services.
+     *
+     * @param float $price Base price in birr
+     * @param float $discount Discount (e.g. percentage as decimal)
+     * @param float $taxRate Tax rate (default 0.15)
+     * @param int $precision Decimal precision
+     * @return array{original_fee: float, tax_rate: float, tax_fee: float, calculated_fee: float, discount_fee: float}
+     */
+    protected function calculateOneOffFee(
+        float $price,
+        float $discount = 0.0,
+        float $taxRate = 0.15,
+        int $precision = 4
+    ): array {
+        $taxFee = round($price * $taxRate, $precision);
+        $discountFee = round($price * $discount, $precision);
+        $calculatedFee = round($price + $taxFee - $discountFee, $precision);
+
+        return [
+            'original_fee' => round($price, $precision),
+            'tax_rate' => $taxRate,
+            'tax_fee' => $taxFee,
+            'calculated_fee' => $calculatedFee,
+            'discount_fee' => $discountFee,
+        ];
+    }
+
+    /**
+     * Builds data array for data/FBB device (SupplementaryOfferingList and oneOffFeeCalculation).
+     * Used by Data subscription and by Combo's data SubBusiOrderlist.
+     *
+     * @param array $data Full payload with device_id, device_offer_id
+     * @return array With with_device, device_id, device_offer_id keyed for base class methods
+     */
+    protected function dataDeviceData(array $data): array
+    {
+        $deviceId = $data['device_id'] ?? null;
+
+        return [
+            'with_device' => !empty($deviceId),
+            'device_id' => $deviceId,
+            'device_offer_id' => $data['device_offer_id'] ?? null,
+        ];
     }
 }

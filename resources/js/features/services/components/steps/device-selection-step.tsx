@@ -83,24 +83,24 @@ export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabl
         }
     };
 
-    const handleDeviceSelect = (device: AvailableDevice) => {
+    const handleDeviceSelect = (device: AvailableDevice | null) => {
         onUpdate({
-            selectedDevice: device,
-            deviceId: device.id,
+            selectedDevice: device ?? null,
+            deviceId: device?.id ?? null,
         });
     };
 
-    const handleInternetDeviceSelect = (device: AvailableDevice) => {
+    const handleInternetDeviceSelect = (device: AvailableDevice | null) => {
         onUpdate({
-            selectedDeviceInternet: device,
-            deviceId: device.id,
+            selectedDeviceInternet: device ?? null,
+            deviceId: device?.id ?? null,
         });
     };
 
-    const handleVoiceDeviceSelect = (device: AvailableDevice) => {
+    const handleVoiceDeviceSelect = (device: AvailableDevice | null) => {
         onUpdate({
-            selectedDeviceVoice: device,
-            deviceVoiceId: device.id,
+            selectedDeviceVoice: device ?? null,
+            deviceVoiceId: device?.id ?? null,
         });
     };
 

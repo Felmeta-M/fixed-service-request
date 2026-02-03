@@ -205,7 +205,6 @@ export function ComplaintForm({
                     </label>
                     <div className="relative">
                         <Input
-                            placeholder="Enter service number"
                             value={data.access_number}
                             onChange={(e) => handleServiceNumberChange(e.target.value)}
                             className="pr-12"
@@ -248,7 +247,6 @@ export function ComplaintForm({
                         Mobile Number <Required />
                     </label>
                     <Input
-                        placeholder="09XXXXXXXX"
                         value={data.mobile_no}
                         onChange={(e) => {
                             const value = e.target.value.replace(/[^0-9+]/g, '').slice(0, 13);
@@ -262,8 +260,7 @@ export function ComplaintForm({
                     <label className="text-sm font-medium">
                         Contact Person <Required />
                     </label>
-                    <Input 
-                        placeholder="Enter contact person name"
+                    <Input
                         value={data.contact_person} 
                         onChange={(e) => setData('contact_person', e.target.value)} 
                     />
@@ -295,7 +292,7 @@ export function ComplaintForm({
                         disabled={!lookupDone && troubleReasons === FALLBACK_REASONS}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder={lookupDone ? "Select trouble reason" : "Search service number first"} />
+                            <SelectValue placeholder="" />
                         </SelectTrigger>
                         <SelectContent>
                             {troubleReasons.map((reason) => (
@@ -318,7 +315,6 @@ export function ComplaintForm({
                         Description {isDescriptionRequired && <Required />}
                     </label>
                     <Textarea
-                        placeholder="Describe your issue in detail..."
                         rows={compact ? 3 : 5}
                         value={data.tt_description || ''}
                         onChange={(e) => setData('tt_description', e.target.value)}

@@ -59,7 +59,7 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
       $cableType = $resource['cable_type'] ?? '';
 
       // Sub survey 1: Voice
-      $subSurvey1MainOfferId = OfferId::FixedVoice->value;
+      $subSurveyVoiceOfferId = OfferId::FixedVoice->value;
       $subSurvey1ExtParams = [
          ['ParamName' => 'NEID', 'ParamValue' => $neid],
          ['ParamName' => 'CABLETYPE', 'ParamValue' => $cableType],
@@ -67,7 +67,7 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
       ];
 
       // Sub survey 2: Data
-      $subSurvey2MainOfferId = OfferId::FixedData->value;
+      $subSurveyDataOfferId = OfferId::FixedData->value;
       $subSurvey2ExtParams = [
          ['ParamName' => 'NEID', 'ParamValue' => $neid],
          ['ParamName' => 'CABLETYPE', 'ParamValue' => $cableType],
@@ -116,7 +116,7 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
                 </com:SurveyAddressInfo>
 
                 <com:SubSurveyinfoList>
-                    <com:MainOfferId>{$subSurvey1MainOfferId}</com:MainOfferId>
+                    <com:MainOfferId>{$subSurveyVoiceOfferId}</com:MainOfferId>
                     <com:ExtParamList>
                         <com:ParameterInfo><com:ParamName>{$subSurvey1ExtParams[0]['ParamName']}</com:ParamName><com:ParamValue>{$subSurvey1ExtParams[0]['ParamValue']}</com:ParamValue></com:ParameterInfo>
                         <com:ParameterInfo><com:ParamName>{$subSurvey1ExtParams[1]['ParamName']}</com:ParamName><com:ParamValue>{$subSurvey1ExtParams[1]['ParamValue']}</com:ParamValue></com:ParameterInfo>
@@ -125,7 +125,7 @@ class ComboSurveyService extends BaseSurveyService implements SurveyInterface
                 </com:SubSurveyinfoList>
 
                 <com:SubSurveyinfoList>
-                    <com:MainOfferId>{$subSurvey2MainOfferId}</com:MainOfferId>
+                    <com:MainOfferId>{$subSurveyDataOfferId}</com:MainOfferId>
                     <com:bandwidth>{$bandwidth}</com:bandwidth>
                     <com:ExtParamList>
                         <com:ParameterInfo><com:ParamName>{$subSurvey2ExtParams[0]['ParamName']}</com:ParamName><com:ParamValue>{$subSurvey2ExtParams[0]['ParamValue']}</com:ParamValue></com:ParameterInfo>

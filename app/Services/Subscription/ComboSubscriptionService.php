@@ -13,6 +13,7 @@ use App\Services\ZoneService;
 use App\Support\CustomerContext;
 use Illuminate\Support\Str;
 use App\Enums\OfferId;
+use Illuminate\Support\Facades\Log;
 
 class ComboSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
 {
@@ -40,6 +41,12 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       return OfferId::FixedVoice->value;
    }
 
+   /** Secondary offering ID for combo voice SubBusiOrderlist (BSS sub-offering). */
+   protected function voiceRetailOfferingId(): string
+   {
+      return '507426219';
+   }
+
    protected function comboOfferingId(): string
    {
       return OfferId::FixedCombo->value;
@@ -57,10 +64,20 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
 
    public function create(array $payload): array
    {
+      $surveyOrder = SurveyOrder::where('customer_survey_order_id', $payload['survey_order_id'] ?? '')->first();
+      if ($surveyOrder) {
+         $payload['with_device'] = $surveyOrder->with_device ?? false;
+         $payload['device_id'] = $surveyOrder->device_id ?? null;
+         $payload['device_offer_id'] = $surveyOrder->device_offer_id ?? null;
+         $payload['device_voice_id'] = $surveyOrder->device_voice_id ?? null;
+         $payload['device_voice_offer_id'] = $surveyOrder->device_voice_offer_id ?? null;
+      }
+
       try {
          // Build XML and get the voice service number and internet credentials
          $xmlData = $this->buildXmlWithServiceNumber($payload);
          $xml = $xmlData['xml'];
+         Log::info($xml);
          $voiceServiceNumber = $xmlData['voice_service_number'];
       } catch (\RuntimeException $e) {
          // Return user-friendly error message for zone/area code lookup failures
@@ -306,13 +323,28 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:ServiceNumber>{$voiceServiceNumber}</com:ServiceNumber>
                   <com:NetworkType>4</com:NetworkType>
                   <com:SubType>1</com:SubType>
+
                   <com:PrimaryOffering>
                      <com:NewPrimaryOffering>
                         <com:OfferingId>
                            <com:OfferingId>{$this->voiceOfferingId()}</com:OfferingId>
+                           <com:OfferingId>{$this->voiceRetailOfferingId()}</com:OfferingId>
                         </com:OfferingId>
+                        <com:InstanceProperty>
+                           <com:PropertyCode>50135</com:PropertyCode>
+                           <com:PropertyType>1</com:PropertyType>
+                           <com:Value>2701DTU</com:Value>
+                        </com:InstanceProperty>
+                        <com:InstanceProperty>
+                           <com:PropertyCode>50134</com:PropertyCode>
+                           <com:PropertyType>1</com:PropertyType>
+                           <com:Value>2</com:Value>
+                        </com:InstanceProperty>
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
+
+                  {$this->buildSupplementaryOfferingList($this->voiceDeviceData($data))}
+
                   <com:SLAPriority>0</com:SLAPriority>
                   <com:CallCenterAccess>980,894</com:CallCenterAccess>
                   <com:SubLanguage>2002</com:SubLanguage>
@@ -320,6 +352,9 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:GreenFlag>1</com:GreenFlag>
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>
+
+            <!-- one off fee resource (voice device for combo) -->
+            {$this->oneOffFeeCalculation($this->voiceDeviceData($data))}
 
             <com:SubBusiOrderlist>
                <com:BusinessCode>{$this->businessCode()}</com:BusinessCode>
@@ -344,6 +379,9 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                         </com:InstanceProperty>
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
+
+                  {$this->buildSupplementaryOfferingList($this->dataDeviceData($data))}
+
                   <com:SLAPriority>0</com:SLAPriority>
                   <com:InternetAccount>{$username}</com:InternetAccount>
                   <com:InternetPassword>REDACTED_PASSWORD=</com:InternetPassword>
@@ -353,6 +391,9 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:GreenFlag>1</com:GreenFlag>
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>
+
+            <!-- one off fee resource (data device for combo) -->
+            {$this->oneOffFeeCalculation($this->dataDeviceData($data))}
 
             <com:ExternalOperid>9527</com:ExternalOperid>
             <com:ExternalOperName>helloworld</com:ExternalOperName>
@@ -368,6 +409,23 @@ XML;
          'voice_service_number' => $voiceServiceNumber,
          'internet_account' => $username,
          'internet_password' => 'REDACTED_PASSWORD=',
+      ];
+   }
+
+   /**
+    * Builds data array for voice device (SupplementaryOfferingList and oneOffFeeCalculation).
+    * Combo uses device_voice_id and device_voice_offer_id for the voice SubBusiOrderlist.
+    *
+    * @param array $data Full payload with device_voice_id, device_voice_offer_id
+    * @return array With with_device, device_id, device_offer_id keyed for base class methods
+    */
+   protected function voiceDeviceData(array $data): array
+   {
+      $deviceVoiceId = $data['device_voice_id'] ?? null;
+      return [
+         'with_device' => !empty($deviceVoiceId),
+         'device_id' => $deviceVoiceId,
+         'device_offer_id' => $data['device_voice_offer_id'] ?? null,
       ];
    }
 

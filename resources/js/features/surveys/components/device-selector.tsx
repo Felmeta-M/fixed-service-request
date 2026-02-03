@@ -1382,9 +1382,9 @@ interface DeviceSelectorProps {
     selectedDeviceId?: string;
     selectedDeviceInternetId?: string;
     selectedDeviceVoiceId?: string;
-    onDeviceSelect?: (device: AvailableDevice) => void;
-    onInternetDeviceSelect?: (device: AvailableDevice) => void;
-    onVoiceDeviceSelect?: (device: AvailableDevice) => void;
+    onDeviceSelect?: (device: AvailableDevice | null) => void; // null = unselect/toggle off
+    onInternetDeviceSelect?: (device: AvailableDevice | null) => void;
+    onVoiceDeviceSelect?: (device: AvailableDevice | null) => void;
     disabled?: boolean;
 }
 
@@ -1761,7 +1761,7 @@ export function DeviceSelector({
                                         {renderDeviceCard(
                                             device,
                                             isSelected,
-                                            () => onInternetDeviceSelect?.(device),
+                                            () => onInternetDeviceSelect?.(isSelected ? null : device),
                                             'device-internet'
                                         )}
                                     </div>
@@ -1788,7 +1788,7 @@ export function DeviceSelector({
                                         {renderDeviceCard(
                                             device,
                                             isSelected,
-                                            () => onVoiceDeviceSelect?.(device),
+                                            () => onVoiceDeviceSelect?.(isSelected ? null : device),
                                             'device-voice'
                                         )}
                                     </div>
@@ -1810,6 +1810,7 @@ export function DeviceSelector({
         );
     }
 
+    // Single service (data/broadband or voice): device is mandatory when "With device" — no unselect
     return (
         <div className="space-y-4">
             <Label className="text-sm font-medium">

@@ -13,9 +13,9 @@ interface DeviceOptionSelectorProps {
     selectedDevice?: AvailableDevice | null; // For single service (broadband/voice)
     selectedDeviceInternet?: AvailableDevice | null; // For combo internet device
     selectedDeviceVoice?: AvailableDevice | null; // For combo voice device
-    onDeviceSelect?: (device: AvailableDevice) => void; // For single service
-    onInternetDeviceSelect?: (device: AvailableDevice) => void; // For combo internet
-    onVoiceDeviceSelect?: (device: AvailableDevice) => void; // For combo voice
+    onDeviceSelect?: (device: AvailableDevice | null) => void; // For single service (null = unselect)
+    onInternetDeviceSelect?: (device: AvailableDevice | null) => void; // For combo internet
+    onVoiceDeviceSelect?: (device: AvailableDevice | null) => void; // For combo voice
     disabled?: boolean;
 }
 
@@ -41,22 +41,16 @@ export function DeviceOptionSelector({
     const isCombo = serviceType === '102647257';
     const isVoiceOnly = serviceType === '1207609454';
 
-    const handleDeviceSelect = (device: AvailableDevice) => {
-        if (onDeviceSelect) {
-            onDeviceSelect(device);
-        }
+    const handleDeviceSelect = (device: AvailableDevice | null) => {
+        onDeviceSelect?.(device);
     };
 
-    const handleInternetDeviceSelect = (device: AvailableDevice) => {
-        if (onInternetDeviceSelect) {
-            onInternetDeviceSelect(device);
-        }
+    const handleInternetDeviceSelect = (device: AvailableDevice | null) => {
+        onInternetDeviceSelect?.(device);
     };
 
-    const handleVoiceDeviceSelect = (device: AvailableDevice) => {
-        if (onVoiceDeviceSelect) {
-            onVoiceDeviceSelect(device);
-        }
+    const handleVoiceDeviceSelect = (device: AvailableDevice | null) => {
+        onVoiceDeviceSelect?.(device);
     };
 
     return (

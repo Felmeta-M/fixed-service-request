@@ -276,7 +276,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                      </com:NewPrimaryOffering>
                   </com:PrimaryOffering>
 
-                  {$this->buildSupplementaryOfferingList($data)}
+                  {$this->buildSupplementaryOfferingList($this->dataDeviceData($data))}
 
                   <com:SLAPriority>6</com:SLAPriority>
                   <com:InternetAccount>{$username}</com:InternetAccount>
@@ -285,8 +285,8 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>
 
-             <!-- one off fee resource -->
-             {$this->oneOffFeeCalculation($data)}
+             <!-- one off fee resource (data device) -->
+             {$this->oneOffFeeCalculation($this->dataDeviceData($data))}
 
             <com:ExternalOperid>{$data['external_oper_id']}</com:ExternalOperid>
             <com:InstallmentCompletedDate>{$data['installment_date']}</com:InstallmentCompletedDate>
@@ -295,116 +295,6 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
    </soapenv:Body>
 </soapenv:Envelope>
 XML;
-   }
-
-
-   /**
-    * Builds the SupplementaryOfferingList XML section conditionally based on with_device flag.
-    *
-    * @param array $data
-    * @return string
-    */
-   protected function buildSupplementaryOfferingList(array $data): string
-   {
-      $withDevice = (bool) ($data['with_device'] ?? false);
-
-      if (!$withDevice) {
-         return '';
-      }
-
-      // Get device offer_id: first from survey order, then fallback to fetching from available_devices
-      $deviceOfferId = $data['device_offer_id'] ?? null;
-
-      // Fallback: fetch offer_id from available_devices using device_id
-      if (empty($deviceOfferId) && !empty($data['device_id'])) {
-         $device = \App\Models\AvailableDevice::find($data['device_id']);
-         $deviceOfferId = $device?->offer_id;
-      }
-
-      // If still no offer_id, skip device offering (no valid offer_id available)
-      if (empty($deviceOfferId)) {
-         return '';
-      }
-
-      return <<<XML
-                  <com:SupplementaryOfferingList>
-                     <com:OfferingInstance>
-                        <com:OfferingId>
-                           <com:OfferingId>{$deviceOfferId}</com:OfferingId>
-                        </com:OfferingId>
-                        <com:InstanceProperty>
-                           <com:PropertyCode>50135</com:PropertyCode>
-                           <com:PropertyType>1</com:PropertyType>
-                           <com:Value>2701DTU</com:Value>
-                        </com:InstanceProperty>
-                        <com:InstanceProperty>
-                           <com:PropertyCode>50134</com:PropertyCode>
-                           <com:PropertyType>1</com:PropertyType>
-                           <com:Value>2</com:Value>
-                        </com:InstanceProperty>
-                     </com:OfferingInstance>
-                     <com:EffectiveMode>0</com:EffectiveMode>
-                  </com:SupplementaryOfferingList>
-XML;
-   }
-
-   protected function oneOffFeeCalculation(array $data)
-   {
-      $device = \App\Models\AvailableDevice::find($data['device_id']);
-      if (empty($device)) {
-         return '';
-      }
-
-      $oneOffFee = $this->calculateOneOffFee((float) $device->price, (float) $device->discount);
-      $originalFee = $oneOffFee['original_fee'];
-      $taxFee = $oneOffFee['tax_fee']; // in birr
-      $calculatedFee = $oneOffFee['calculated_fee']; // in birr
-      $itemCode = $device->item_code;
-      $itemName = $device->item_name ?? 'Device purchase';
-      $feeType = 'One-Off Change';
-      $currencyId = 1048; // ETB
-      $payType = 1; // CASH
-      $taxCode = 'CC_TAX_VAT'; // VAT
-      $taxName = 'VAT'; // VAT
-      $discountFee = $oneOffFee['discount_fee']; // in birr
-
-      return <<<XML
-<com:CalcOneOffFeeETC>
-    <com:FeeItemCode>{$itemCode}</com:FeeItemCode>
-    <com:FeeItemName>{$itemName}</com:FeeItemName>
-    <com:FeeType>{$feeType}</com:FeeType>
-    <com:CurrencyID>{$currencyId}</com:CurrencyID>
-    <com:CaculatedFee>{$calculatedFee}</com:CaculatedFee>
-    <com:OriginalFee>{$originalFee}</com:OriginalFee>
-    <com:DiscountFee>{$discountFee}</com:DiscountFee>
-    <com:TaxInfo>
-        <com:TaxCode>{$taxCode}</com:TaxCode>
-        <com:TaxName>{$taxName}</com:TaxName>
-        <com:TaxFee>{$taxFee}</com:TaxFee>
-        <com:TaxRate>0.15</com:TaxRate>
-    </com:TaxInfo>
-    <com:PayType>{$payType}</com:PayType>
-</com:CalcOneOffFeeETC>
-XML;
-   }
-
-   protected function calculateOneOffFee(
-      float $price,
-      float $discount = 0.0, // in percentage
-      float $taxRate = 0.15,
-      int $precision = 4
-   ): array {
-      $taxFee = round($price * $taxRate, $precision); // in birr
-      $discountFee = round($price * $discount, $precision); // in birr
-      $calculatedFee = round($price + $taxFee - $discountFee, $precision); // in birr
-
-      return [
-         'original_fee' => round($price, $precision), // in birr
-         'tax_rate' => $taxRate,
-         'tax_fee' => $taxFee, // in birr
-         'calculated_fee' => $calculatedFee,
-         'discount_fee' => $discountFee,
-      ];
    }
 
 

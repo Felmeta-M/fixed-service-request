@@ -73,6 +73,12 @@ type SurveyDetails = {
     can_terminate?: boolean;
 };
 
+type DeviceItem = {
+    name: string;
+    price: number;
+    type: 'data' | 'voice';
+};
+
 type PaymentDetailsData = {
     customer_survey_order_id?: string;
     customer_subscription_order_id?: string | null;
@@ -83,6 +89,7 @@ type PaymentDetailsData = {
     cable_charge?: string | number | null;
     subscription_fee?: string | number | null;
     device_fee?: string | number | null;
+    device_items?: DeviceItem[];
     payment_order_id?: string | null;
     merch_order_id?: string | null;
 };
@@ -847,14 +854,49 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                                 </td>
                                             </tr>
                                         )}
-                                        {deviceFee > 0 && (
-                                            <tr>
-                                                <td className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">Device Fee</td>
-                                                <td className="px-3 py-2 text-right text-xs font-medium tabular-nums sm:px-4 sm:py-3 sm:text-sm">
-                                                    {deviceFee.toFixed(2)}
-                                                </td>
-                                            </tr>
-                                        )}
+                                        {(() => {
+                                            const deviceItems = payment?.device_items ?? [];
+                                            if (deviceItems.length > 0) {
+                                                return (
+                                                    <>
+                                                        {deviceItems.map((item, index) => (
+                                                            <tr key={index}>
+                                                                <td className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">
+                                                                    {item.type === 'voice' ? 'Voice device' : 'Data device'}
+                                                                    {item.name ? ` — ${item.name}` : ''}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-right text-xs font-medium tabular-nums sm:px-4 sm:py-3 sm:text-sm">
+                                                                    {Number(item.price).toFixed(2)}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                        <tr>
+                                                            <td colSpan={2} className="px-3 py-1.5 text-xs text-muted-foreground sm:px-4">
+                                                                Device prices include 15% VAT (VAS tax).
+                                                            </td>
+                                                        </tr>
+                                                    </>
+                                                );
+                                            }
+                                            if (deviceFee > 0) {
+                                                return (
+                                                    <>
+                                                        <tr>
+                                                            <td className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">Device Fee</td>
+                                                            <td className="px-3 py-2 text-right text-xs font-medium tabular-nums sm:px-4 sm:py-3 sm:text-sm">
+                                                                {deviceFee.toFixed(2)}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colSpan={2} className="px-3 py-1.5 text-xs text-muted-foreground sm:px-4">
+                                                                Device prices include 15% VAT (VAS tax).
+                                                            </td>
+                                                        </tr>
+                                                    </>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                     </tbody>
                                     <tfoot>
                                         <tr className="border-t-2 bg-muted/50">

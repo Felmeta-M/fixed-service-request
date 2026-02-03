@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Enums\FFDServiceProvisionStatus;
+use App\Enums\OfferId;
 use App\Helpers\BandwidthHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ManualSurveyOrderRequest;
 use App\Http\Requests\SurveyOrderFormRequest;
+use App\Models\AvailableDevice;
 use App\Models\SurveyOrder;
 use App\Services\ManualSurveyOrderService;
 use App\Services\Payment\DeviceFeeCalculatorService;
@@ -661,6 +663,75 @@ class SurveyOrderController extends Controller
     }
 
     /**
+     * Build device line items for payment summary (each device with name and price).
+     *
+     * @return array{device_items: array<int, array{name: string, price: float, type: string}>}
+     */
+    protected function buildPaymentDeviceItems(object $order): array
+    {
+        $items = [];
+        $mainOfferId = (int) ($order->main_offer_id ?? 0);
+        $offerType = OfferId::tryFromInt($mainOfferId);
+
+        if ($offerType?->isCombo()) {
+            if (!empty($order->device_id)) {
+                $device = AvailableDevice::find($order->device_id);
+                if ($device) {
+                    $items[] = [
+                        'name' => $device->item_name ?? $device->name ?? 'Internet Device',
+                        'price' => (float) $device->price,
+                        'type' => 'data',
+                    ];
+                }
+            }
+            if (!empty($order->device_voice_id)) {
+                $device = AvailableDevice::find($order->device_voice_id);
+                if ($device) {
+                    $items[] = [
+                        'name' => $device->item_name ?? $device->name ?? 'Voice Device',
+                        'price' => (float) $device->price,
+                        'type' => 'voice',
+                    ];
+                }
+            }
+        } elseif ($offerType?->isVoiceOnly()) {
+            if (!empty($order->device_voice_id)) {
+                $device = AvailableDevice::find($order->device_voice_id);
+                if ($device) {
+                    $items[] = [
+                        'name' => $device->item_name ?? $device->name ?? 'Voice Device',
+                        'price' => (float) $device->price,
+                        'type' => 'voice',
+                    ];
+                }
+            }
+            if (empty($items) && !empty($order->device_id)) {
+                $device = AvailableDevice::find($order->device_id);
+                if ($device) {
+                    $items[] = [
+                        'name' => $device->item_name ?? $device->name ?? 'Voice Device',
+                        'price' => (float) $device->price,
+                        'type' => 'voice',
+                    ];
+                }
+            }
+        } else {
+            if (!empty($order->device_id)) {
+                $device = AvailableDevice::find($order->device_id);
+                if ($device) {
+                    $items[] = [
+                        'name' => $device->item_name ?? $device->name ?? 'Device',
+                        'price' => (float) $device->price,
+                        'type' => 'data',
+                    ];
+                }
+            }
+        }
+
+        return ['device_items' => $items];
+    }
+
+    /**
      * Transform raw order data to API response format.
      */
     protected function transformOrder(object $order): array
@@ -707,14 +778,17 @@ class SurveyOrderController extends Controller
             'with_device' => $withDevice,
             'created_at' => $order->created_at,
             'updated_at' => $order->updated_at,
-            'payment' => $paymentId ? [
-                'subscription_fee' => (float) ($order->payment_subscription_fee ?? 0),
-                'device_fee' => (float) ($order->payment_device_fee ?? 0),
-                'cable_charge' => (float) ($order->payment_cable_charge ?? 0),
-                'total_amount' => (float) ($order->payment_total_amount ?? 0),
-                'merch_order_id' => $order->payment_merch_order_id ?? null,
-                'status' => $this->getPaymentStatusLabel($paymentStatus),
-            ] : null,
+            'payment' => $paymentId ? array_merge(
+                [
+                    'subscription_fee' => (float) ($order->payment_subscription_fee ?? 0),
+                    'device_fee' => (float) ($order->payment_device_fee ?? 0),
+                    'cable_charge' => (float) ($order->payment_cable_charge ?? 0),
+                    'total_amount' => (float) ($order->payment_total_amount ?? 0),
+                    'merch_order_id' => $order->payment_merch_order_id ?? null,
+                    'status' => $this->getPaymentStatusLabel($paymentStatus),
+                ],
+                $this->buildPaymentDeviceItems($order)
+            ) : null,
             'status_code' => $this->getStatusCode($order),  // Stable code for frontend logic
             'status' => $this->getStatusLabel($order),       // Display label (frontend can override)
             'is_paid' => SurveyOrder::checkIsPaid($paymentStatus, $paymentTransId),
@@ -1011,11 +1085,18 @@ class SurveyOrderController extends Controller
                 ], Response::HTTP_BAD_REQUEST);
             }
 
-            // Get device offer_id from the selected device
+            // Get device offer_id from the selected device (data device)
             $deviceOfferId = null;
             if ($withDevice && $deviceId) {
                 $device = \App\Models\AvailableDevice::find($deviceId);
                 $deviceOfferId = $device?->offer_id;
+            }
+
+            // Get device_voice_offer_id for combo (voice device)
+            $deviceVoiceOfferId = null;
+            if ($withDevice && $deviceVoiceId) {
+                $deviceVoice = \App\Models\AvailableDevice::find($deviceVoiceId);
+                $deviceVoiceOfferId = $deviceVoice?->offer_id;
             }
 
             // Update device selection on survey order
@@ -1024,6 +1105,7 @@ class SurveyOrderController extends Controller
                 'device_id' => $withDevice ? $deviceId : null,
                 'device_voice_id' => $withDevice ? $deviceVoiceId : null,
                 'device_offer_id' => $deviceOfferId,
+                'device_voice_offer_id' => $deviceVoiceOfferId,
             ]);
 
             // Refresh to get updated device IDs, then calculate fee using dedicated service
@@ -1065,6 +1147,7 @@ class SurveyOrderController extends Controller
                 'device_id' => $deviceId,
                 'device_voice_id' => $deviceVoiceId,
                 'device_offer_id' => $deviceOfferId,
+                'device_voice_offer_id' => $deviceVoiceOfferId,
                 'subscription_fee' => $subscriptionFee,
                 'device_fee' => $deviceFee,
                 'total_amount' => $totalAmount,

@@ -72,16 +72,16 @@ export function ManualSurveyDeviceSelection({
         }
     };
 
-    const handleDeviceSelect = (device: AvailableDevice) => {
-        setSelectedDevice(device);
+    const handleDeviceSelect = (device: AvailableDevice | null) => {
+        setSelectedDevice(device ?? null);
     };
 
-    const handleInternetDeviceSelect = (device: AvailableDevice) => {
-        setSelectedDeviceInternet(device);
+    const handleInternetDeviceSelect = (device: AvailableDevice | null) => {
+        setSelectedDeviceInternet(device ?? null);
     };
 
-    const handleVoiceDeviceSelect = (device: AvailableDevice) => {
-        setSelectedDeviceVoice(device);
+    const handleVoiceDeviceSelect = (device: AvailableDevice | null) => {
+        setSelectedDeviceVoice(device ?? null);
     };
 
     const handleContinue = async () => {

@@ -209,7 +209,7 @@ export default function CustomerDashboard() {
     }
 
     const StatCard = ({ title, value, description, loading: isLoading }: any) => (
-        <Card className="overflow-hidden rounded-xl border border-gray-400 bg-white py-4 shadow-none sm:py-8">
+        <Card className="overflow-hidden rounded-xl border border-primary bg-white py-4 shadow-none sm:py-8">
             <CardContent className="px-3 pt-0 sm:px-5">
                 {isLoading ? (
                     <div className="space-y-2 sm:space-y-3">
@@ -223,7 +223,7 @@ export default function CustomerDashboard() {
                     <div className="space-y-1 sm:space-y-2">
                         <div className="flex items-center justify-between gap-2">
                             <p className="text-xs font-medium text-gray-600 sm:text-base">{title}</p>
-                            <p className="text-xl font-bold text-gray-900 sm:text-3xl">{value}</p>
+                            <p className="text-xl font-bold text-gray-900 text-primary sm:text-3xl">{value}</p>
                         </div>
                         <p className="hidden text-sm text-gray-400 sm:block">{description}</p>
                     </div>
@@ -296,7 +296,7 @@ export default function CustomerDashboard() {
                                         placeholder="Search service"
                                         value={globalFilter}
                                         onChange={(e) => setGlobalFilter(e.target.value)}
-                                        className="h-8 w-full border-gray-400 pl-9 text-sm sm:w-[200px] lg:w-[240px]"
+                                        className="h-8 w-full border-primary pl-9 text-sm sm:w-[200px] lg:w-[240px]"
                                         size="sm"
                                     />
                                 </div>
@@ -306,7 +306,7 @@ export default function CustomerDashboard() {
                                         variant={hasActiveFilters ? 'default' : 'outline'}
                                         size="sm"
                                         onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                                        className="flex items-center gap-1.5 border-gray-400"
+                                        className="flex items-center gap-1.5 border-primary"
                                     >
                                         <Filter className="h-4 w-4" />
                                         <span className="sm:inline">Filter</span>
@@ -319,7 +319,7 @@ export default function CustomerDashboard() {
                                         onClick={() => refetch()}
                                         disabled={loading}
                                         title="Refresh services list"
-                                        className="border-gray-400"
+                                        className="border-primary"
                                     >
                                         <RefreshCw className={cn('h-4 w-4', isRefetching && 'animate-spin')} />
                                         <span className="ml-1.5 hidden sm:inline">Refresh</span>

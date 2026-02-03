@@ -248,7 +248,7 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
 
     if (!tts || tts.length === 0) {
         return (
-            <Card className="rounded-lg border border-gray-200 bg-white shadow-none">
+            <Card className="rounded-lg border border-primary bg-white shadow-none">
                 <CardContent className="flex flex-col items-center justify-center px-6 py-16 text-center">
                     <h3 className="mb-2 text-lg font-bold text-gray-900">No trouble tickets found</h3>
                     <p className="mb-6 text-sm text-gray-500">You haven't created any tickets yet.</p>

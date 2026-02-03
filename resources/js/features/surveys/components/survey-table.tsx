@@ -136,7 +136,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
             },
             {
                 id: 'voice_service_number',
-                header: 'Voice Number',
+                header: 'Fixed Line Number',
                 cell: ({ row }) => {
                     const v = row.original.voice_service_number;
                     return (

@@ -1,17 +1,14 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { usePage } from '@inertiajs/react';
-import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, MapPin } from 'lucide-react';
-import { useEffect, useState, useMemo } from 'react';
-import { toast } from 'sonner';
-import { router } from '@inertiajs/react';
 import { useCreateSurvey, useGetCustomer } from '@/hooks/use-api-mutations';
-import { useRegions, useWoredas, useZones, useTelecomRegionsByZone } from '@/hooks/use-regions';
 import { formatBandwidthLabel } from '@/hooks/use-bandwidth-options';
+import { useRegions, useTelecomRegionsByZone, useWoredas, useZones } from '@/hooks/use-regions';
+import { router, usePage } from '@inertiajs/react';
+import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, MapPin } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 interface AuthUser {
     id?: number;
@@ -86,9 +83,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
     const createSurveyMutation = useCreateSurvey();
 
     // Fetch customer data to get address information for fallback
-    const { data: customerData, isLoading: isLoadingCustomer } = useGetCustomer(
-        (user as AuthUser)?.customer_sub_id
-    );
+    const { data: customerData, isLoading: isLoadingCustomer } = useGetCustomer((user as AuthUser)?.customer_sub_id);
 
     // Address dropdown hooks
     const { regions: regionOptions, loading: loadingRegions } = useRegions();
@@ -183,9 +178,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
         Object.entries(errors).forEach(([apiField, errorMessages]) => {
             const formField = mapApiFieldToFormField(apiField);
             // Handle both string and array formats
-            const errorMessage = Array.isArray(errorMessages)
-                ? errorMessages[0]
-                : errorMessages;
+            const errorMessage = Array.isArray(errorMessages) ? errorMessages[0] : errorMessages;
 
             if (errorMessage) {
                 formErrors[formField] = errorMessage;
@@ -348,7 +341,8 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
 
                 toast.success('Service request created successfully!', {
                     id: submissionToast,
-                    description: 'Your manual request has been submitted. Our team will review your location and contact you within 1-2 business days.',
+                    description:
+                        'Your manual request has been submitted. Our team will review your location and contact you within 1-2 business days.',
                     duration: 5000,
                 });
 
@@ -371,9 +365,10 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                     setManualFlowErrors(validationErrors);
 
                     errorMessage = 'Please correct the validation errors below.';
-                    errorDescription = Object.keys(validationErrors).length > 0
-                        ? `${Object.keys(validationErrors).length} field${Object.keys(validationErrors).length > 1 ? 's' : ''} need${Object.keys(validationErrors).length > 1 ? '' : 's'} attention.`
-                        : 'Validation failed. Please check your input.';
+                    errorDescription =
+                        Object.keys(validationErrors).length > 0
+                            ? `${Object.keys(validationErrors).length} field${Object.keys(validationErrors).length > 1 ? 's' : ''} need${Object.keys(validationErrors).length > 1 ? '' : 's'} attention.`
+                            : 'Validation failed. Please check your input.';
 
                     // Scroll to first error field
                     const firstErrorField = Object.keys(validationErrors)[0];
@@ -408,17 +403,12 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
         <div className="space-y-4">
             <form onSubmit={handleSubmit}>
                 <div className="mt-4">
-                    <div >
-                        <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <FieldGroup className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             {formData.serviceType && (
                                 <Field>
                                     <FieldLabel>Service Type</FieldLabel>
-                                    <Input
-                                        type="text"
-                                        value={serviceTypes[formData.serviceType] || 'Unknown'}
-                                        disabled
-                                        className="bg-gray-50"
-                                    />
+                                    <Input type="text" value={serviceTypes[formData.serviceType] || 'Unknown'} disabled className="bg-gray-50" />
                                 </Field>
                             )}
 
@@ -483,7 +473,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                     required
                                 />
                                 {manualFlowErrors.phone && (
-                                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                    <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
                                         <AlertCircle className="h-4 w-4" />
                                         {manualFlowErrors.phone}
                                     </p>
@@ -498,7 +488,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                         <div className="font-semibold text-lg">Location Information</div>
                         <div className="text-sm text-gray-500">Your selected location details - you can edit the address to be more specific</div>
                     </div> */}
-                    <div className="flex flex-col gap-4 w-1/2   ">
+                    <div className="flex w-1/2 flex-col gap-4">
                         {/* <Field>
                             <FieldLabel htmlFor="manual-phone">
                                 Contact Phone Number <span className="text-red-500">*</span>
@@ -529,7 +519,6 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 </p>
                             )}
                         </Field> */}
-
 
                         {/* <Field>
                             <FieldLabel htmlFor="manual-address">
@@ -579,7 +568,8 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                         <div>
                             <h3 className="text-lg font-semibold text-gray-900">Installation Address</h3>
                             <p className="mt-1 text-sm text-gray-500">
-                                Please provide the exact location where you would like the service to be installed. This helps us check availability and plan the connection.
+                                Please provide the exact location where you would like the service to be installed. This helps us check availability
+                                and plan the connection.
                             </p>
                         </div>
                     </div>
@@ -622,7 +612,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 </SelectContent>
                             </Select>
                             {manualFlowErrors.region && (
-                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
                                     <AlertCircle className="h-4 w-4" />
                                     {manualFlowErrors.region}
                                 </p>
@@ -659,11 +649,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 >
                                     <SelectValue
                                         placeholder={
-                                            !selectedAddress.region
-                                                ? 'First select region'
-                                                : loadingZones
-                                                    ? 'Loading zones...'
-                                                    : 'Select zone'
+                                            !selectedAddress.region ? 'First select region' : loadingZones ? 'Loading zones...' : 'Select zone'
                                         }
                                     />
                                 </SelectTrigger>
@@ -676,7 +662,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 </SelectContent>
                             </Select>
                             {manualFlowErrors.zone && (
-                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
                                     <AlertCircle className="h-4 w-4" />
                                     {manualFlowErrors.zone}
                                 </p>
@@ -709,11 +695,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 >
                                     <SelectValue
                                         placeholder={
-                                            !selectedAddress.zone
-                                                ? 'First select zone'
-                                                : loadingWoredas
-                                                    ? 'Loading woredas...'
-                                                    : 'Select woreda'
+                                            !selectedAddress.zone ? 'First select zone' : loadingWoredas ? 'Loading woredas...' : 'Select woreda'
                                         }
                                     />
                                 </SelectTrigger>
@@ -726,7 +708,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 </SelectContent>
                             </Select>
                             {manualFlowErrors.woreda && (
-                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
                                     <AlertCircle className="h-4 w-4" />
                                     {manualFlowErrors.woreda}
                                 </p>
@@ -760,7 +742,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 required={isKebeleRequired}
                             />
                             {manualFlowErrors.kebele && (
-                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
                                     <AlertCircle className="h-4 w-4" />
                                     {manualFlowErrors.kebele}
                                 </p>
@@ -769,9 +751,9 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
 
                         {/* Nearest Telecom Zone - Mandatory */}
                         <div className="col-span-1 md:col-span-2">
-                            <div className="rounded-lg bg-blue-50/50 p-4 border border-blue-100/50">
+                            <div className="rounded-lg border border-blue-100/50 bg-blue-50/50 p-4">
                                 <Field>
-                                    <FieldLabel htmlFor="manual-telecom-zone" className="text-gray-700 flex items-center gap-2">
+                                    <FieldLabel htmlFor="manual-telecom-zone" className="flex items-center gap-2 text-gray-700">
                                         Nearest ethio telecom zone {selectedTelecomRegion ? '' : <span className="text-red-500">*</span>}
                                         <span className="text-xs font-normal text-gray-500">(Required for technical assignment)</span>
                                     </FieldLabel>
@@ -789,7 +771,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                             className={
                                                 manualFlowErrors.telecom_region
                                                     ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
-                                                    : 'bg-white border-blue-200 focus:border-blue-400 focus:ring-blue-100'
+                                                    : 'border-blue-200 bg-white focus:border-blue-400 focus:ring-blue-100'
                                             }
                                         >
                                             <SelectValue
@@ -797,10 +779,10 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                                     !selectedAddress.zone
                                                         ? 'First select zone to see nearby telecom zones'
                                                         : loadingTelecomRegions
-                                                            ? 'Searching for nearby zones...'
-                                                            : telecomRegionOptions.length === 0
-                                                                ? 'No telecom zones found in this area'
-                                                                : 'Select the nearest telecom zone'
+                                                          ? 'Searching for nearby zones...'
+                                                          : telecomRegionOptions.length === 0
+                                                            ? 'No telecom zones found in this area'
+                                                            : 'Select the nearest telecom zone'
                                                 }
                                             />
                                         </SelectTrigger>
@@ -813,7 +795,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                         </SelectContent>
                                     </Select>
                                     {manualFlowErrors.telecom_region && (
-                                        <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                                        <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
                                             <AlertCircle className="h-4 w-4" />
                                             {manualFlowErrors.telecom_region}
                                         </p>
@@ -828,23 +810,19 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col gap-3 pt-4">
+                <div className="flex flex-col justify-between gap-3 pt-4 sm:flex-row">
                     <Button
                         type="button"
                         variant="outline"
                         onClick={onBack}
                         disabled={submitting}
-                        className="flex items-center justify-center gap-2 w-full"
+                        className="flex w-full items-center justify-center gap-2"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Back
                     </Button>
-                    <Button
-                        type="submit"
-                        disabled={submitting || createSurveyMutation.isPending}
-                        className="bg-primary hover:bg-primary/90 w-full"
-                    >
-                        {(submitting || createSurveyMutation.isPending) ? (
+                    <Button type="submit" disabled={submitting || createSurveyMutation.isPending} className="w-full bg-primary hover:bg-primary/90">
+                        {submitting || createSurveyMutation.isPending ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 Submitting Request...
@@ -861,4 +839,3 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
         </div>
     );
 }
-

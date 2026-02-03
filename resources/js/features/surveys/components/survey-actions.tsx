@@ -4,7 +4,7 @@ import { useCancelSurveyOrder, useChangePrimaryOffering, useCreateSubscription, 
 import { useTranslation } from '@/hooks/use-translation';
 import { showErrorToast, showLoadingToast, showSuccessToast } from '@/lib/toast-helpers';
 import { router, usePage } from '@inertiajs/react';
-import { ArrowDownToLineIcon, ArrowUpToLineIcon, Eye, X } from 'lucide-react';
+import { ArrowDownToLineIcon, ArrowUpToLineIcon, ChevronRight, Eye, Loader2, MoreVertical, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { BandwidthChangeDialog } from './bandwidth-change-dialog';
 import { CancelConfirmationDialog } from './cancel-confirmation-dialog';
@@ -451,111 +451,141 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
     return (
         <>
-            <div className="flex items-center justify-end gap-1.5">
-                {/* Primary Action Button - Fixed width container for alignment */}
-                <div className="flex w-[110px] justify-end">
+            <div className="flex items-center justify-end gap-2">
+                {/* Primary Action Button - Fixed width container for perfect alignment */}
+                <div className="flex min-w-[120px] justify-end">
                     {primaryAction === 'activate' && (
                         <Button
                             onClick={onSubscribeClick}
                             disabled={loading || isSubmitting}
-                            className="w-full gap-1 bg-primary text-xs text-white"
+                            className="group relative h-8 w-full gap-1.5 overflow-hidden px-3 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:opacity-90 hover:shadow-md disabled:opacity-50"
                             size="sm"
                         >
-                            {isSubmitting || createSubscriptionMutation.isPending ? t('buttons.subscribing') : t('buttons.activate_service')}
+                            {isSubmitting || createSubscriptionMutation.isPending ? (
+                                <>
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    <span>{t('buttons.subscribing')}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>{t('buttons.activate_service')}</span>
+                                </>
+                            )}
                         </Button>
                     )}
                     {primaryAction === 'pay' && (
                         <Button
                             onClick={() => navigateToDetails('payment')}
                             disabled={loading}
-                            className="w-full gap-1 bg-primary text-xs text-white"
+                            className="group h-8 w-full gap-1.5 px-3 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:opacity-90 hover:shadow-md disabled:opacity-50"
                             size="sm"
                         >
-                            {loading ? t('buttons.preparing') : t('buttons.pay_now')}
+                            {loading ? (
+                                <>
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    <span>{t('buttons.preparing')}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>{t('buttons.pay_now')}</span>
+                                </>
+                            )}
                         </Button>
                     )}
                     {primaryAction === 'continue' && (
                         <Button
                             onClick={handleContinueManual}
                             disabled={loading}
-                            className="w-full bg-primary text-xs text-white hover:bg-primary/90"
+                            className="group h-8 w-full gap-1.5 px-3 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:opacity-90 hover:shadow-md disabled:opacity-50"
                             size="sm"
                         >
-                            {t('buttons.continue')}
+                            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                            <span>{t('buttons.continue')}</span>
                         </Button>
                     )}
                 </div>
 
-                {/* View Detail Button - Always visible */}
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRowClick(survey as SurveyRow)}
-                    className="h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
-                >
-                    <Eye className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">{t('buttons.view_detail')}</span>
-                </Button>
+                {/* View Detail Button - Fixed width for consistent alignment */}
+                <div className="flex w-[100px] justify-center">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRowClick(survey as SurveyRow)}
+                        className="h-8 gap-1.5 px-3 text-xs font-medium text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                    >
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>{t('buttons.view_detail')}</span>
+                    </Button>
+                </div>
 
-                {/* Actions Dropdown Menu - Only show if there are additional actions */}
-                {hasDropdownActions && (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={loading}>
-                                <span className="sr-only">Open menu</span>
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                                    />
-                                </svg>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
-                            {/* Upgrade/Downgrade options */}
-                            {canUpgradeDowngrade && (
-                                <>
-                                    <DropdownMenuItem onClick={handleUpgrade} className="flex cursor-pointer items-center gap-2">
-                                        <ArrowUpToLineIcon className="h-4 w-4" />
-                                        <span>{t('buttons.upgrade')}</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={handleDowngrade} className="flex cursor-pointer items-center gap-2">
-                                        <ArrowDownToLineIcon className="h-4 w-4" />
-                                        <span>{t('buttons.downgrade')}</span>
-                                    </DropdownMenuItem>
-                                </>
-                            )}
+                {/* Actions Dropdown Menu - Fixed width for alignment */}
+                <div className="flex w-8 justify-center">
+                    {hasDropdownActions ? (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-slate-500 transition-all duration-200 hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-1 focus-visible:ring-slate-300 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                    disabled={loading}
+                                >
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 p-1">
+                                {/* Upgrade/Downgrade options */}
+                                {canUpgradeDowngrade && (
+                                    <>
+                                        <DropdownMenuItem
+                                            onClick={handleUpgrade}
+                                            className="flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                                        >
+                                            <ArrowUpToLineIcon className="h-4 w-4 text-emerald-600" />
+                                            <span>{t('buttons.upgrade')}</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            onClick={handleDowngrade}
+                                            className="flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                                        >
+                                            <ArrowDownToLineIcon className="h-4 w-4 text-amber-600" />
+                                            <span>{t('buttons.downgrade')}</span>
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
 
-                            {/* Cancel/Terminate options */}
-                            {canCancel && (
-                                <DropdownMenuItem
-                                    onClick={() => {
-                                        setIsTerminateAction(false);
-                                        setOpenCancelDialog(true);
-                                    }}
-                                    className="flex cursor-pointer items-center gap-2 text-destructive focus:text-destructive"
-                                >
-                                    <X className="h-4 w-4" />
-                                    <span>{t('buttons.cancel_request')}</span>
-                                </DropdownMenuItem>
-                            )}
-                            {canTerminate && (
-                                <DropdownMenuItem
-                                    onClick={() => {
-                                        setIsTerminateAction(true);
-                                        setOpenCancelDialog(true);
-                                    }}
-                                    className="flex cursor-pointer items-center gap-2 text-destructive focus:text-destructive"
-                                >
-                                    <X className="h-4 w-4" />
-                                    <span>{t('buttons.terminate_service')}</span>
-                                </DropdownMenuItem>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
+                                {/* Cancel/Terminate options */}
+                                {canCancel && (
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            setIsTerminateAction(false);
+                                            setOpenCancelDialog(true);
+                                        }}
+                                        className="flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 focus:bg-red-50 focus:text-red-700 dark:text-red-400 dark:hover:bg-red-950/50 dark:focus:bg-red-950/50"
+                                    >
+                                        <X className="h-4 w-4" />
+                                        <span>{t('buttons.cancel_request')}</span>
+                                    </DropdownMenuItem>
+                                )}
+                                {canTerminate && (
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            setIsTerminateAction(true);
+                                            setOpenCancelDialog(true);
+                                        }}
+                                        className="flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 focus:bg-red-50 focus:text-red-700 dark:text-red-400 dark:hover:bg-red-950/50 dark:focus:bg-red-950/50"
+                                    >
+                                        <X className="h-4 w-4" />
+                                        <span>{t('buttons.terminate_service')}</span>
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : (
+                        /* Empty placeholder to maintain alignment when no dropdown actions */
+                        <div className="h-8 w-8" />
+                    )}
+                </div>
             </div>
 
             <CancelConfirmationDialog

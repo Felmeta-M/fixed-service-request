@@ -176,17 +176,12 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
             },
             {
                 accessorKey: 'survey_is_manual',
-                header: 'Type',
+                header: 'Survey Type',
                 cell: ({ getValue }) => {
                     const isManual = getValue<boolean>();
                     return (
                         <div>
-                            <Badge
-                                variant="outline"
-                                className={`flex items-center gap-1.5 bg-white ${
-                                    isManual ? 'border-et-blue bg-et-blue/10 text-et-blue' : 'border-primary bg-primary/10 text-primary'
-                                }`}
-                            >
+                            <Badge variant="outline" className={`flex items-center gap-1.5 bg-white ${isManual ? 'text-et-blue' : 'text-primary'}`}>
                                 <span className="text-xs font-medium">{isManual ? 'Manual' : 'Auto'}</span>
                             </Badge>
                         </div>
@@ -195,7 +190,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
             },
             {
                 accessorKey: 'status',
-                header: 'Status',
+                header: 'Order Status',
                 cell: ({ getValue, row }) => {
                     // Use status_code (stable) with fallback to status label
                     const statusStr = getValue<string>();

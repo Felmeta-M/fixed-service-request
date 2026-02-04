@@ -1,8 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DeviceOptionSelector } from '@/features/surveys/components/device-option-selector';
 import { AvailableDevice } from '@/hooks/use-available-devices';
-import { ArrowLeft, ChevronRight, RouterIcon } from 'lucide-react';
+import { ArrowLeft, ChevronRight } from 'lucide-react';
 
 interface DeviceSelectionStepProps {
     formData: {
@@ -131,7 +130,7 @@ export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabl
                 </div>
             </div>
 
-            <div className="flex flex-col gap-3 pt-4">
+            <div className="flex flex-col justify-between gap-3 pt-4 sm:flex-row">
                 <Button variant="outline" onClick={onBack} disabled={disabled} className="flex w-full items-center justify-center gap-2">
                     <ArrowLeft className="h-4 w-4" />
                     Back

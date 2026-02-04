@@ -232,7 +232,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
             },
             {
                 id: 'actions',
-                header: () => <div className="flex justify-end px-2">Actions</div>,
+                header: () => <div className="flex justify-end px-2">Required Actions</div>,
                 cell: ({ row }) => {
                     const survey = row.original;
                     return (

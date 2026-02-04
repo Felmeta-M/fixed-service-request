@@ -171,11 +171,19 @@ class QueryAvailableNumberService extends BaseApiService
             <com:AccessUser>{$accessUser}</com:AccessUser>
             <com:AccessPwd>{$accessPwd}</com:AccessPwd>
          </ser:RequestHeader>
-         <ser:PayMode>{$payMode}</ser:PayMode>
-         <ser:TeleType>{$teleType}</ser:TeleType>
-         <ser:NeedQueryByDept>{$deptId}</ser:NeedQueryByDept>
-         <ser:ResCnt>{$resCnt}</ser:ResCnt>
-         <ser:NeedQueryByDept>true</ser:NeedQueryByDept>
+
+         <ser:NeedQueryByDept>0</ser:NeedQueryByDept>
+            <ser:TeleType>{$teleType}</ser:TeleType>
+            <ser:ResCnt>{$resCnt}</ser:ResCnt>
+            <!-- <ser:AdditionalProperty>
+                <com:Code>Level ID</com:Code>
+                <com:Value>6</com:Value>
+            </ser:AdditionalProperty> -->
+            <ser:AdditionalProperty>
+                <com:Code>dept_id</com:Code>
+                <com:Value>{$deptId}</com:Value>
+            </ser:AdditionalProperty>
+
       </ser:QueryAvailableNumberReqMsg>
    </soapenv:Body>
 </soapenv:Envelope>

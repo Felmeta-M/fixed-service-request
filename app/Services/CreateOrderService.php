@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Helpers\TelebirrHelper;
+use App\Models\Payment;
 use App\Services\Logging\AppLogger;
 use App\Services\Payment\PaymentService;
 use Illuminate\Support\Carbon;
@@ -40,21 +41,78 @@ class CreateOrderService
     }
 
     /**
-     * Create an order and return the rawRequest string
+     * Create an order and return the rawRequest string.
      *
-     * @param string $title
-     * @param string $amount
-     * @return string
+     * BULLETPROOF DOUBLE PAYMENT PROTECTION:
+     * 1. Check if payment is already paid in our DB → stop
+     * 2. Use cache lock to prevent concurrent requests
+     * 3. If payment was initiated before, query Telebirr for status
+     * 4. If Telebirr says paid but our DB doesn't → confirm & stop
+     * 5. Only then create a new payment intent
+     *
      * @throws RuntimeException
      */
     public function createOrder(array $data): string
     {
-        // 1️⃣ Get Fabric token (cached)
-        $tokenService = app(FabricTokenService::class);
+        $orderId = $data['customerSurveyOrderId'];
+        $lockKey = "payment_lock:{$orderId}";
 
+        // 1️⃣ Acquire lock to prevent concurrent payment attempts (10 second window)
+        $lock = Cache::lock($lockKey, 10);
+
+        if (!$lock->get()) {
+            AppLogger::payment()->warning('Payment request blocked - another request in progress', [
+                'order_id' => $orderId,
+            ]);
+            throw new RuntimeException('A payment request is already being processed. Please wait a moment and try again.');
+        }
+
+        try {
+            // 2️⃣ Check if payment already exists and is paid
+            $payment = $this->paymentService->find($orderId);
+
+            if ($payment->isPaid()) {
+                AppLogger::payment()->warning('Double payment attempt blocked - already paid', [
+                    'order_id' => $orderId,
+                    'trans_id' => $payment->trans_id,
+                ]);
+                throw new RuntimeException('Your payment has already been processed. No further action is needed.');
+            }
+
+            // 3️⃣ Get Fabric token (cached)
+            $fabricToken = $this->getFabricToken();
+
+            // 4️⃣ If payment was previously initiated, verify status with Telebirr
+            if ($this->isPaymentInitiated($orderId)) {
+                $this->verifyAndReconcileTelebirrPayment($fabricToken, $payment);
+
+                // Re-check after reconciliation (payment might have been confirmed)
+                $payment->refresh();
+                if ($payment->isPaid()) {
+                    throw new RuntimeException('Your payment has already been processed. No further action is needed.');
+                }
+            }
+
+            // 5️⃣ Create a NEW payment intent with Telebirr
+            $prepay_id = $this->requestCreateOrder($fabricToken, $data);
+
+            // 6️⃣ Build rawRequest string for H5 page
+            return $this->createRawRequest($prepay_id);
+
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
+     * Get cached Fabric token or request a new one.
+     */
+    protected function getFabricToken(): string
+    {
         $fabricToken = Cache::get('fabricToken');
 
         if (!$fabricToken) {
+            $tokenService = app(FabricTokenService::class);
             $fabricToken = $tokenService->applyFabricToken();
 
             $expirationDate = Carbon::createFromFormat(
@@ -65,41 +123,52 @@ class CreateOrderService
             Cache::put('fabricToken', $fabricToken, $expirationDate);
         }
 
-        /**
-         * 2️⃣ Manual query fallback (ONLY to detect completed payment)
-         */
-        // if ($this->isPaymentInitiated($data['customerSurveyOrderId'])) {
+        return is_object($fabricToken) ? $fabricToken->token : $fabricToken;
+    }
 
-        //     $queryOrder = $this->requestQueryOrder($fabricToken->token, $data);
-        //     Log::info($queryOrder);
+    /**
+     * Verify payment status with Telebirr and reconcile if paid externally.
+     * This catches cases where customer paid but webhook failed.
+     */
+    protected function verifyAndReconcileTelebirrPayment(string $fabricToken, Payment $payment): void
+    {
+        try {
+            $queryResult = $this->requestQueryOrder($fabricToken, $payment->merch_order_id);
 
-        //     // Normalize provider response
-        //     $queryOrder = is_object($queryOrder)
-        //         ? (array) $queryOrder
-        //         : ($queryOrder ?? []);
+            if (!$queryResult) {
+                return;
+            }
 
-        //     // ✅ Payment already completed → confirm & STOP
-        //     if (($queryOrder['trade_status'] ?? null) === 'Completed') {
+            // Normalize response
+            $queryResult = is_object($queryResult) ? (array) $queryResult : $queryResult;
+            $bizContent = $queryResult['biz_content'] ?? $queryResult;
 
-        //         $payment = app(PaymentService::class)
-        //             ->find($data['customerSurveyOrderId']);
+            // Check if Telebirr reports this payment as completed
+            $tradeStatus = $bizContent['trade_status'] ?? null;
 
-        //         app(PaymentService::class)
-        //             ->confirmPayment($payment, $queryOrder);
+            if ($tradeStatus === 'Completed') {
+                AppLogger::payment()->warning('Payment completed on Telebirr but not in DB - reconciling', [
+                    'order_id' => $payment->customer_survey_order_id,
+                    'merch_order_id' => $payment->merch_order_id,
+                    'trans_id' => $bizContent['transId'] ?? null,
+                ]);
 
-        //         throw new RuntimeException('Payment already completed.');
-        //     }
-        // }
+                // Confirm the payment in our system
+                $this->paymentService->confirmPayment($payment, [
+                    'trade_status' => 'Completed',
+                    'transId' => $bizContent['transId'] ?? null,
+                    'total_amount' => $bizContent['total_amount'] ?? $payment->total_amount,
+                    'payment_order_id' => $bizContent['payment_order_id'] ?? null,
+                ]);
+            }
 
-        /**
-         * 3️⃣ Always create a NEW payment intent
-         */
-        $prepay_id = $this->requestCreateOrder($fabricToken->token, $data);
-
-        /**
-         * 4️⃣ Build rawRequest string for H5 page
-         */
-        return $this->createRawRequest($prepay_id);
+        } catch (\Throwable $e) {
+            // Log but don't fail - allow creating new payment attempt
+            AppLogger::payment()->warning('Failed to verify Telebirr payment status', [
+                'order_id' => $payment->customer_survey_order_id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
 
@@ -142,11 +211,14 @@ class CreateOrderService
         return $object->biz_content->prepay_id ?? null;
     }
 
-    protected function requestQueryOrder($fabricToken, array $data)
+    /**
+     * Query order status from Telebirr using the existing merch_order_id.
+     */
+    protected function requestQueryOrder(string $fabricToken, string $merchOrderId): ?object
     {
         $url = $this->baseUrl . '/payment/v1/merchant/queryOrder';
 
-        $payload = self::createQueryObject($data);
+        $payload = $this->buildQueryPayload($merchOrderId);
 
         $response = Http::logged('CreateOrderService', 'payment')
             ->withHeaders([
@@ -155,24 +227,43 @@ class CreateOrderService
                 'Authorization' => $fabricToken,
             ])
             ->withOptions([
-                'verify' => false, // app()->isProduction()
+                'verify' => false,
             ])
-            ->post($url, $payload); // convert JSON string to array
+            ->post($url, $payload);
 
         if ($response->failed()) {
-            AppLogger::payment()->error('Telebirr query order request failed', [
+            AppLogger::payment()->warning('Telebirr query order request failed', [
                 'status_code' => $response->status(),
-                'response' => $response->body(),
+                'response' => substr($response->body(), 0, 500),
+                'merch_order_id' => $merchOrderId,
             ]);
-            throw new RuntimeException("Create order request failed.");
+            return null;
         }
 
-        AppLogger::payment()->debug('Telebirr query order response', [
-            'response' => $response->json(),
-        ]);
+        return $response->object();
+    }
 
-        $object = $response->object();
-        return $object ?? null;
+    /**
+     * Build query payload for existing merch_order_id.
+     */
+    protected function buildQueryPayload(string $merchOrderId): array
+    {
+        $request = [
+            'nonce_str' => (string) TelebirrHelper::createNonceStr(),
+            'method' => 'payment.queryorder',
+            'timestamp' => (string) TelebirrHelper::createTimeStamp(),
+            'version' => '1.0',
+            'biz_content' => [
+                'appid' => $this->merchantAppId,
+                'merch_code' => $this->merchantCode,
+                'merch_order_id' => $merchOrderId,
+            ],
+            'sign_type' => 'SHA256WithRSA',
+        ];
+
+        $request['sign'] = app(TelebirrSignerService::class)->sign($request);
+
+        return $request;
     }
 
     /**
@@ -188,7 +279,7 @@ class CreateOrderService
             throw new RuntimeException("Your payment has already been processed. No further action is needed.");
         }
 
-        $amount = number_format((float) $payment->amount, 2, '.', '');
+        $amount = number_format((float) $payment->total_amount, 2, '.', '');
 
         $payment->update([
             'merch_order_id' => $merchantOrderId,
@@ -240,37 +331,6 @@ class CreateOrderService
     }
 
 
-    protected function createQueryObject(array $data): array
-    {
-        $merchantOrderId = TelebirrHelper::createMerchantOrderId();
-
-        $payment = $this->paymentService->find($data['customerSurveyOrderId']);
-
-        if ($payment->isPaid()) { // Payment status: Paid
-            throw new RuntimeException("Your payment has already been processed. No further action is needed.");
-        }
-
-        $request = [
-            'nonce_str' => (string) TelebirrHelper::createNonceStr(),
-            'method' => 'payment.queryorder',
-            'timestamp' => (string) TelebirrHelper::createTimeStamp(),
-            'version' => '1.0',
-            'biz_content' => [],
-        ];
-
-        $biz = [
-            'appid' => $this->merchantAppId,
-            'merch_code' => $this->merchantCode,
-            'merch_order_id' => (string) $merchantOrderId
-        ];
-
-        $request['biz_content'] = $biz;
-        $request['sign_type'] = 'SHA256WithRSA';
-
-        $request['sign'] = app(TelebirrSignerService::class)->sign($request);
-
-        return $request;
-    }
 
     /**
      * Build rawRequest string for H5 page
@@ -298,7 +358,5 @@ class CreateOrderService
         $rawRequest = $this->webBaseUrl . $rawRequest . "&version=1.0&trade_type=Checkout";
 
         return trim((string) $rawRequest);
-
-        return $rawRequest;
     }
 }

@@ -140,7 +140,7 @@ services:
     networks:
       - ffd_net
     deploy:
-      replicas: 8
+      replicas: 1
     logging:
       driver: "json-file"
       options:

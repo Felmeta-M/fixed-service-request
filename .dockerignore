@@ -104,15 +104,13 @@ Thumbs.db
 Homestead.json
 Homestead.yaml
 
-# Frontend tooling (not needed at runtime)
+# Frontend tooling (linters/formatters not needed; build configs ARE needed)
 .prettierrc
 .prettierignore
 .editorconfig
 eslint.config.js
-tsconfig.json
-vite.config.ts
+# Keep vite.config.ts, tsconfig.json, package.json, pnpm-lock.yaml for pnpm build
 components.json
-pnpm-workspace.yaml
 
 # Other frameworks (unused)
 .next

@@ -2,13 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\OfferId;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Form request for manual survey order creation.
  *
  * Validates all required and optional fields for creating a manual survey order
- * via the BSS IECAF system.
+ * via the BSS IECAF system. main_offer_id must be Fixed Data, Fixed Voice, or Fixed Combo.
  */
 class ManualSurveyOrderRequest extends FormRequest
 {
@@ -30,7 +32,15 @@ class ManualSurveyOrderRequest extends FormRequest
         return [
             // Required fields
             'survey_type' => ['required', 'string', 'in:EIC08,EIC01,EIC02,EIC03,EIC04,EIC05,EIC06,EIC07'],
-            'main_offer_id' => ['required', 'string', 'max:50'],
+            'main_offer_id' => [
+                'required',
+                'string',
+                Rule::in([
+                    (string) OfferId::FixedData->value,
+                    (string) OfferId::FixedVoice->value,
+                    (string) OfferId::FixedCombo->value,
+                ]),
+            ],
             'bandwidth' => ['optional', 'integer', 'min:1'],
             'telecom_region' => ['optional', 'string', 'max:100'],
 
@@ -69,6 +79,7 @@ class ManualSurveyOrderRequest extends FormRequest
     {
         return [
             'survey_type.in' => 'The survey type must be a valid survey type code (e.g., EIC08).',
+            'main_offer_id.in' => 'Invalid service type for manual survey. Use Fixed Broadband (1457567289), Fixed Voice (1207609454), or Combo (102647257).',
         ];
     }
 

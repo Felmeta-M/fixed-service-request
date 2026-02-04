@@ -16,6 +16,12 @@ export default defineConfig({
         react(),
         tailwindcss(),
     ],
+    // Explicit entry so Vite 6 does not fall back to index.html (Laravel uses plugin input)
+    build: {
+        rollupOptions: {
+            input: ['resources/css/app.css', 'resources/js/app.tsx'],
+        },
+    },
     define: {
         'process.env': {
             VITE_API_BASE_URL: process.env.VITE_API_BASE_URL,

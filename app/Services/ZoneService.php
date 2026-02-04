@@ -89,7 +89,7 @@ class ZoneService
 
     /**
      * Get zone code by zone ID.
-     * Used by external consumers (CustomerService, ManualSurveyOrderService, etc.)
+     * Used by external consumers (CustomerService, Survey\Manual\* manual survey services, etc.)
      */
     public function getZoneCodeById(int|string|null $zoneId): ?string
     {

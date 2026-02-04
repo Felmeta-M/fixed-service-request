@@ -9,10 +9,22 @@ if [ ! -f "$APP_DIR/vendor/autoload.php" ]; then
   composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 fi
 
+# Immutable: sync public from image to public_volume (shared with nginx)
+if [ -d "$APP_DIR/public_volume" ]; then
+  # Always sync on startup to ensure build assets are current
+  echo "📤 Syncing public assets to public_volume..."
+  cp -a "$APP_DIR/public/." "$APP_DIR/public_volume/"
+fi
+
 echo "🧹 Setting Laravel permissions..."
 
-# Create all required storage directories
+# Create all required storage directories (volumes mount over storage/app and storage/logs)
 echo "📁 Creating storage directories..."
+# Ensure keys is a directory (Telebirr/RSA); fix if volume has a file named keys from prior state
+if [ -e "$APP_DIR/storage/app/keys" ] && [ ! -d "$APP_DIR/storage/app/keys" ]; then
+  rm -f "$APP_DIR/storage/app/keys"
+fi
+mkdir -p $APP_DIR/storage/app/keys
 mkdir -p $APP_DIR/storage/app/public
 mkdir -p $APP_DIR/storage/framework/{cache,sessions,views,testing}
 mkdir -p $APP_DIR/storage/logs/{api,auth,payment,security,http,business,jobs,performance,audit,json}
@@ -45,6 +57,13 @@ for channel in api auth payment security http business jobs performance audit js
   chmod -R 775 "$CHANNEL_DIR" 2>/dev/null || true
   find "$CHANNEL_DIR" -type f -exec chmod 664 {} \; 2>/dev/null || true
 done
+
+# Clear Laravel caches so no stale paths from host/previous runs (avoids 500 after immutable switch)
+if [ -f "$APP_DIR/artisan" ]; then
+  php "$APP_DIR/artisan" config:clear 2>/dev/null || true
+  php "$APP_DIR/artisan" cache:clear 2>/dev/null || true
+  php "$APP_DIR/artisan" view:clear 2>/dev/null || true
+fi
 
 echo "✅ Permissions configured."
 

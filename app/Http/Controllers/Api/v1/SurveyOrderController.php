@@ -10,8 +10,8 @@ use App\Http\Requests\ManualSurveyOrderRequest;
 use App\Http\Requests\SurveyOrderFormRequest;
 use App\Models\AvailableDevice;
 use App\Models\SurveyOrder;
-use App\Services\ManualSurveyOrderService;
 use App\Services\Payment\DeviceFeeCalculatorService;
+use App\Services\Survey\Manual\ManualSurveyServiceFactory;
 use App\Services\QueryPurchasedOfferingService;
 use App\Services\QuerySurveyOrderService;
 use App\Services\QuerySubscriptionOrderStatusService;
@@ -19,6 +19,7 @@ use App\Services\Logging\AppLogger;
 use App\Services\Survey\SurveyServiceFactory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
+use InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +36,7 @@ class SurveyOrderController extends Controller
         protected readonly QuerySurveyOrderService $querySurveyOrderService,
         protected readonly QuerySubscriptionOrderStatusService $querySubscriptionOrderStatusService,
         protected readonly QueryPurchasedOfferingService $queryPurchasedOfferingService,
-        protected readonly ManualSurveyOrderService $manualSurveyOrderService,
+        protected readonly ManualSurveyServiceFactory $manualSurveyServiceFactory,
         protected readonly DeviceFeeCalculatorService $deviceFeeCalculator,
         protected readonly EcafService $ecafService
     ) {
@@ -79,14 +80,14 @@ class SurveyOrderController extends Controller
                     'payments.id as payment_id',
                     'payments.subscription_fee as payment_subscription_fee',
                     'payments.device_fee as payment_device_fee',
-                'payments.cable_charge as payment_cable_charge',
-                'payments.other_related_cost as payment_other_related_cost',
-                'payments.total_amount as payment_total_amount',
-                'payments.status as payment_status',
-                'payments.trans_id as payment_trans_id',
-                'payments.merch_order_id as payment_merch_order_id',
-                'payments.payment_order_id as payment_payment_order_id',
-            ]);
+                    'payments.cable_charge as payment_cable_charge',
+                    'payments.other_related_cost as payment_other_related_cost',
+                    'payments.total_amount as payment_total_amount',
+                    'payments.status as payment_status',
+                    'payments.trans_id as payment_trans_id',
+                    'payments.merch_order_id as payment_merch_order_id',
+                    'payments.payment_order_id as payment_payment_order_id',
+                ]);
 
             // Handle search parameter - search in both customer_survey_order_id and customer_subscription_order_id
             if ($request->filled('search')) {
@@ -401,9 +402,11 @@ class SurveyOrderController extends Controller
                         $statusUpdates[$order->id] = $newStatus;
 
                         // Track subscription orders that transition TO Completed for ECAF upload
-                        if ($newStatus === FFDServiceProvisionStatus::Completed->value &&
+                        if (
+                            $newStatus === FFDServiceProvisionStatus::Completed->value &&
                             (int) $order->status !== FFDServiceProvisionStatus::Completed->value &&
-                            !empty($order->transaction_id)) {
+                            !empty($order->transaction_id)
+                        ) {
                             $ecafUploads[] = [
                                 'survey_order_id' => $order->customer_survey_order_id,
                                 'transaction_id' => $order->transaction_id,
@@ -624,9 +627,10 @@ class SurveyOrderController extends Controller
             //     ], Response::HTTP_CONFLICT);
             // }
 
-            // For manual surveys, use the manual service (no geo-fencing/resource validation)
+            // For manual surveys, route by main_offer_id to Data / Voice / Combo manual service
             if (!empty($data['survey_is_manual'])) {
-                return $this->manualSurveyOrderService->createSurveyOrder($data);
+                $mainOfferId = (int) $data['main_offer_id'];
+                return $this->manualSurveyServiceFactory->make($mainOfferId)->createSurveyOrder($data);
             }
 
             // For auto surveys, use the factory-based service (requires encrypted resource data)
@@ -657,6 +661,11 @@ class SurveyOrderController extends Controller
                 'success' => false,
                 'message' => 'Database error occurred.',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (Throwable $e) {
             AppLogger::business()->error('SurveyOrder store error', [
                 'error' => $e->getMessage(),
@@ -1192,8 +1201,10 @@ class SurveyOrderController extends Controller
                 ], Response::HTTP_CONFLICT);
             }
 
-            // Create the manual survey order via BSS
-            $result = $this->manualSurveyOrderService->createSurveyOrder($data);
+            // Create the manual survey order via BSS (Fixed Data or Fixed Voice)
+            $result = $this->manualSurveyServiceFactory
+                ->make((int) $data['main_offer_id'])
+                ->createSurveyOrder($data);
 
             return $result;
         } catch (ValidationException $e) {
@@ -1215,6 +1226,11 @@ class SurveyOrderController extends Controller
                 'success' => false,
                 'message' => 'Database error occurred while creating manual survey order.',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (Throwable $e) {
             AppLogger::business()->exception($e, 'Manual survey order creation failed');
 

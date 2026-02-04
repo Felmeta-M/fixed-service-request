@@ -39,6 +39,9 @@ COPY . .
 # Run composer install now that all files exist
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress --ansi
 
+# Build frontend assets (Vite + React)
+RUN pnpm install --frozen-lockfile && pnpm run build
+
 # Copy entrypoint & PHP-FPM config
 COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf

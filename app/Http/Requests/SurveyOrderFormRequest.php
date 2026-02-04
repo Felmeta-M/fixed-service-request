@@ -1,9 +1,10 @@
 <?php
 
-
 namespace App\Http\Requests;
 
+use App\Enums\OfferId;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class SurveyOrderFormRequest extends FormRequest
 {
@@ -14,11 +15,25 @@ class SurveyOrderFormRequest extends FormRequest
 
     public function rules(): array
     {
+        $manualOfferIds = [
+            (string) OfferId::FixedData->value,   // 1457567289
+            (string) OfferId::FixedVoice->value,  // 1207609454
+            (string) OfferId::FixedCombo->value,   // 102647257
+        ];
+
         return [
             // ============================================================
             // REQUIRED FIELDS
             // ============================================================
-            'main_offer_id' => 'required|string',                        // Service type (voice/data/combo)
+            'main_offer_id' => [
+                'required',
+                'string',
+                Rule::when(
+                    $this->boolean('survey_is_manual'),
+                    Rule::in($manualOfferIds),
+                    []
+                ),
+            ],
             'survey_address_info' => 'required|array',                   // Location info (encrypted from resource check)
             
             // ============================================================
@@ -48,6 +63,16 @@ class SurveyOrderFormRequest extends FormRequest
             'device_id' => 'nullable|uuid|exists:available_devices,id',
             'device_voice_id' => 'nullable|uuid|exists:available_devices,id',
             'survey_is_manual' => 'nullable|boolean',                    // Default: false
+        ];
+    }
+
+    /**
+     * Custom messages for manual survey validation.
+     */
+    public function messages(): array
+    {
+        return [
+            'main_offer_id.in' => 'Invalid service type for manual survey. Please select Fixed Broadband, Fixed Voice, or Combo.',
         ];
     }
 }

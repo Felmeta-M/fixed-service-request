@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ManualSurveyOrderRequest;
 use App\Http\Requests\SurveyOrderFormRequest;
 use App\Models\AvailableDevice;
+use App\Models\Customer;
 use App\Models\SurveyOrder;
 use App\Services\Payment\DeviceFeeCalculatorService;
 use App\Services\Survey\Manual\ManualSurveyServiceFactory;
@@ -28,6 +29,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 use App\Services\ZoneService;
 use App\Services\EcafService;
+use App\Services\DeviceStockService;
 
 class SurveyOrderController extends Controller
 {
@@ -38,7 +40,8 @@ class SurveyOrderController extends Controller
         protected readonly QueryPurchasedOfferingService $queryPurchasedOfferingService,
         protected readonly ManualSurveyServiceFactory $manualSurveyServiceFactory,
         protected readonly DeviceFeeCalculatorService $deviceFeeCalculator,
-        protected readonly EcafService $ecafService
+        protected readonly EcafService $ecafService,
+        protected readonly DeviceStockService $deviceStockService,
     ) {
     }
 
@@ -74,6 +77,8 @@ class SurveyOrderController extends Controller
                     'survey_orders.line_indicator',
                     'survey_orders.survey_failure_reason',
                     'survey_orders.with_device',
+                    'survey_orders.device_id',
+                    'survey_orders.device_voice_id',
                     'survey_orders.last_checked_at',
                     'survey_orders.created_at',
                     'survey_orders.updated_at',
@@ -89,12 +94,14 @@ class SurveyOrderController extends Controller
                     'payments.payment_order_id as payment_payment_order_id',
                 ]);
 
-            // Handle search parameter - search in both customer_survey_order_id and customer_subscription_order_id
+            // Handle search parameter - search in order IDs, voice_service_number, and data_service_number
             if ($request->filled('search')) {
                 $searchTerm = $request->input('search');
                 $query->where(function ($q) use ($searchTerm) {
                     $q->where('survey_orders.customer_survey_order_id', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('survey_orders.customer_subscription_order_id', 'like', '%' . $searchTerm . '%');
+                        ->orWhere('survey_orders.customer_subscription_order_id', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('survey_orders.voice_service_number', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('survey_orders.data_service_number', 'like', '%' . $searchTerm . '%');
                 });
             }
 
@@ -139,6 +146,8 @@ class SurveyOrderController extends Controller
                         'survey_orders.line_indicator',
                         'survey_orders.survey_failure_reason',
                         'survey_orders.with_device',
+                        'survey_orders.device_id',
+                        'survey_orders.device_voice_id',
                         'survey_orders.last_checked_at',
                         'survey_orders.created_at',
                         'survey_orders.updated_at',
@@ -966,9 +975,12 @@ class SurveyOrderController extends Controller
             'customer_subscription_order_id' => $subscriptionOrderId,
             'survey_type' => $order->survey_type ?? '',
             'customer_code' => $order->customer_code,
+            'customer' => $this->buildCustomerInfo($order->customer_code ?? null),
             'main_offer_id' => $order->main_offer_id,
             'voice_service_number' => $order->voice_service_number ?? null,
             'data_service_number' => $order->data_service_number ?? null,
+            'device' => $this->buildDeviceInfo($order->device_id ?? null),
+            'voice_device' => $this->buildDeviceInfo($order->device_voice_id ?? null),
             // Internet credentials for device configuration (Data and Combo services)
             'internet_account' => $order->internet_account ?? null,
             'internet_password' => $order->internet_password ?? null,
@@ -1016,6 +1028,54 @@ class SurveyOrderController extends Controller
             'can_cancel' => SurveyOrder::checkCanCancel($status, $subscriptionOrderId, $paymentTransId),
             'can_terminate' => SurveyOrder::checkCanTerminate($status, $subscriptionOrderId),
         ];
+    }
+
+    /**
+     * Build customer info for survey order resource (cached per request to avoid N+1).
+     */
+    protected function buildCustomerInfo(?string $customerCode): ?array
+    {
+        if (empty($customerCode)) {
+            return null;
+        }
+
+        static $cache = [];
+        if (!isset($cache[$customerCode])) {
+            $customer = Customer::where('code', $customerCode)->first();
+            $cache[$customerCode] = $customer ? [
+                'code' => $customer->code,
+                'name' => $customer->name ?? null,
+                'phone_number' => $customer->phone_number ?? null,
+            ] : null;
+        }
+
+        return $cache[$customerCode];
+    }
+
+    /**
+     * Build device info for survey order resource (cached per request to avoid N+1).
+     */
+    protected function buildDeviceInfo(?string $deviceId): ?array
+    {
+        if (empty($deviceId)) {
+            return null;
+        }
+
+        static $cache = [];
+        if (!isset($cache[$deviceId])) {
+            $device = AvailableDevice::find($deviceId);
+            $cache[$deviceId] = $device ? [
+                'id' => $device->id,
+                'name' => $device->name ?? null,
+                'vendor' => $device->vendor ?? null,
+                'model' => $device->model ?? null,
+                'price' => $device->price !== null ? (float) $device->price : null,
+                'device_type' => $device->device_type ?? null,
+                'media_type' => $device->media_type ?? null,
+            ] : null;
+        }
+
+        return $cache[$deviceId];
     }
 
     /**
@@ -1299,6 +1359,18 @@ class SurveyOrderController extends Controller
                     'success' => false,
                     'message' => 'Cannot change device selection after payment.',
                 ], Response::HTTP_BAD_REQUEST);
+            }
+
+            // Validate stock availability before allowing device selection
+            if ($withDevice) {
+                try {
+                    $this->deviceStockService->validateStock($deviceId, $deviceVoiceId);
+                } catch (\RuntimeException $e) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $e->getMessage(),
+                    ], Response::HTTP_BAD_REQUEST);
+                }
             }
 
             // Get device offer_id from the selected device (data device)

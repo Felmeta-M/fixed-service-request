@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Enums\FFDServiceProvisionStatus;
 use App\Models\Payment;
 use App\Models\SurveyOrder;
+use App\Services\DeviceStockService;
 use App\Services\Logging\AppLogger;
 use App\Services\Subscription\ServiceActivationService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -15,7 +16,8 @@ class PaymentService
 {
 
     public function __construct(
-        protected ServiceActivationService $activationService
+        protected ServiceActivationService $activationService,
+        protected DeviceStockService $deviceStockService,
     ) {
     }
     /**
@@ -160,6 +162,9 @@ class PaymentService
                 ['trans_id' => $providerPayload['transId'] ?? null]
             );
 
+            // Deduct device stock after successful payment (for orders with devices)
+            $this->deductDeviceStock($payment->customer_survey_order_id);
+
             // Auto-activate service after successful payment
             // If activation fails, customer can manually subscribe later
             $this->activationService->activate($payment->customer_survey_order_id);
@@ -167,6 +172,23 @@ class PaymentService
             AppLogger::payment()->warning('Payment not completed', [
                 'order_id' => $payment->customer_survey_order_id,
                 'trade_status' => $providerPayload['trade_status'] ?? 'unknown',
+            ]);
+        }
+    }
+
+    /**
+     * Deduct device stock after successful payment.
+     * Handles both data devices (device_id) and voice devices (device_voice_id).
+     */
+    protected function deductDeviceStock(string $customerSurveyOrderId): void
+    {
+        try {
+            $this->deviceStockService->deductStockForOrder($customerSurveyOrderId);
+        } catch (\Throwable $e) {
+            // Log but don't fail - payment was already successful
+            AppLogger::payment()->error('Failed to deduct device stock after payment', [
+                'order_id' => $customerSurveyOrderId,
+                'error' => $e->getMessage(),
             ]);
         }
     }

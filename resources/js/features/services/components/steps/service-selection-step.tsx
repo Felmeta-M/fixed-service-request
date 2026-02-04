@@ -154,7 +154,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                         checked={formData.termsAccepted || false}
                         onCheckedChange={(checked) => onUpdate({ termsAccepted: checked === true })}
                         disabled={hasActiveSurvey}
-                        className="mt-0.5 border-gray-300 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                        className="mt-0.5 border-gray-600 p-1 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                     />
                     <label
                         htmlFor="terms-acceptance"

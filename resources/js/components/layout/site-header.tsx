@@ -1,10 +1,9 @@
 import { MobileStepIndicator } from '@/components/common/mobile-step-indicator';
-import { BroadbandIcon } from '@/components/icons/service-icons';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Link, router } from '@inertiajs/react';
-import { ArrowLeft, FileText, LogOut, MapPin, RouterIcon } from 'lucide-react';
+import { ArrowLeft, FileText, LogOut, MapPin, RouterIcon, Wifi } from 'lucide-react';
 
 interface SiteHeaderProps {
     title: string;
@@ -14,7 +13,8 @@ interface SiteHeaderProps {
 }
 
 const createServiceSteps = [
-    { name: 'Service Information', icon: BroadbandIcon },
+    { name: 'Service Information', icon: Wifi },
+    // { name: 'Service Information', icon: BroadbandIcon },
     { name: 'Location Information', icon: MapPin },
     { name: 'Device Information', icon: RouterIcon },
     { name: 'Review & Submit', icon: FileText },

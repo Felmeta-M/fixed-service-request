@@ -250,15 +250,24 @@ abstract class BaseApiService
     }
 
     /**
+     * Rate limit key: subclasses may override to use per-user key (e.g. auth id) instead of IP.
+     * When behind a proxy, all users share one IP so per-IP limiting is too strict for batch operations.
+     */
+    protected function rateLimitKey(): string
+    {
+        $ip = Request::ip() ?? 'unknown';
+        return "{$ip}:{$this->endpoint()}";
+    }
+
+    /**
      * Rate-limited request execution
      */
     protected function executeRequest(string $xmlPayload): string
     {
-        $ip = Request::ip() ?? 'unknown';
-        $key = "{$ip}:{$this->endpoint()}";
+        $key = $this->rateLimitKey();
 
         if (RateLimiter::tooManyAttempts($key, $this->rateLimit)) {
-            throw new RuntimeException("Rate limit exceeded for IP {$ip}. Try again later.");
+            throw new RuntimeException('Rate limit exceeded. Try again later.');
         }
 
         RateLimiter::hit($key, $this->decaySeconds);

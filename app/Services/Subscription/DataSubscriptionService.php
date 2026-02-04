@@ -14,7 +14,6 @@ use App\Services\QuerySubscriptionOrderStatusService;
 use App\Services\ReserveNumberService;
 use App\Services\ZoneService;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 use App\Enums\OfferId;
 
 class DataSubscriptionService extends BaseSubscriptionService implements SubscriptionInterface
@@ -86,7 +85,6 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
       $data['transaction_id'] = $this->generateTransactionId();
 
       $xml = $this->buildXml($data);
-      Log::info($xml);
 
       // Add internet credentials to data for parseResponse
       $data['internet_account'] = $this->internetAccount;

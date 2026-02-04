@@ -6,7 +6,6 @@ use App\Services\Logging\AppLogger;
 use App\Support\CustomerContext;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Log;
 
 class EcafService extends BaseApiService
 {
@@ -22,7 +21,6 @@ class EcafService extends BaseApiService
     {
         try {
             $xmlPayload = $this->buildXml($data);
-            Log::info($xmlPayload);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedXml = $this->parseResponse($xmlResponse);
             return ApiResponse::success($parsedXml);

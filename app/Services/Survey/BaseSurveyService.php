@@ -270,7 +270,7 @@ abstract class BaseSurveyService extends BaseApiService
         if ($totalAmount < 1 && !$isManualSurvey) {
             // Wait for third-party system to be ready to process activation
             // after survey creation (min 7.5ms required)
-            usleep(15000); // 15 seconds
+            usleep(20000); // 20 seconds
 
             $this->activationService->activate($surveyOrderId);
         }

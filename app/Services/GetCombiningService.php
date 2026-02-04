@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Log;
-
 class GetCombiningService extends BaseApiService
 {
     protected int $timeout = 30;
@@ -19,7 +17,6 @@ class GetCombiningService extends BaseApiService
         try {
             $xmlRequest = $this->buildXml($serviceNumber);
             $xmlResponse = $this->executeRequest($xmlRequest);
-            Log::info('GetCombiningService Response', ['xmlResponse' => $xmlResponse]);
             return ApiResponse::success(
                 $this->parseResponse($xmlResponse)
             );
@@ -95,15 +92,6 @@ XML;
         // Extract customer type and level with explicit logging for debugging
         $customerType = (string) $body->CustomerType;
         $customerLevel = (string) $body->CustomerLevel;
-
-        // Log parsed values for debugging
-        Log::debug('GetCombiningService Parsed Values', [
-            'customer_type' => $customerType,
-            'customer_level' => $customerLevel,
-            'customer_type_empty' => empty($customerType),
-            'customer_level_empty' => empty($customerLevel),
-            'first_name' => (string) $body->FirstName,
-        ]);
 
         return [
             'subscriber' => [

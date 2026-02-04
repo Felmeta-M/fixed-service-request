@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
-use Illuminate\Support\Facades\Log;
 
 class CustomerService extends BaseApiService
 {
@@ -29,7 +28,6 @@ class CustomerService extends BaseApiService
             }
             $data['ethio_zone_or_region'] = $this->getZoneCodeById($zoneId);
             $xmlPayload = $this->buildXml($data);
-            Log::info('CustomerService buildXml', ['xmlPayload' => $xmlPayload]);
             $xmlResponse = $this->executeRequest($xmlPayload);
 
             AppLogger::api()->debug('Customer create response received', [

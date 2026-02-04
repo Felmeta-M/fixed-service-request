@@ -55,6 +55,9 @@ Thumbs.db
 /phpstan.neon
 /phpstan-baseline.neon
 /.php-cs-fixer.cache
+.env
+.env.production
+.env.backup
 .env.testing
 .env.local
 .env.local.backup

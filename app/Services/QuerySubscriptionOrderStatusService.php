@@ -4,18 +4,35 @@ namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Services\Logging\AppLogger;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Request;
 use RuntimeException;
 
 /**
  * Query Subscription Order Status Service
- * 
+ *
  * Queries the BSS system to get the current status of a subscription order.
  * Used to track the progress of service provisioning orders (Data, Voice, Combo).
  */
 class QuerySubscriptionOrderStatusService extends BaseApiService
 {
     protected int $timeout = 15;
-    protected int $rateLimit = 30;
+    /** @var int Requests per user per decay window (dashboard can trigger many status calls per page load) */
+    protected int $rateLimit = 90;
+    /** @var int 2 minutes - enough for a few page refreshes without blocking */
+    protected int $decaySeconds = 120;
+
+    /**
+     * Per-user rate limit key so multiple users behind same proxy (e.g. 172.18.0.1) don't share one bucket.
+     */
+    protected function rateLimitKey(): string
+    {
+        $user = Auth::user();
+        $identifier = $user
+            ? ('user:' . ($user->customer_code ?? (string) $user->id))
+            : (Request::ip() ?? 'guest');
+        return "{$identifier}:{$this->endpoint()}";
+    }
 
     protected function endpoint(): string
     {

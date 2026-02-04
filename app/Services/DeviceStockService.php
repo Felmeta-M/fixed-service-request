@@ -242,24 +242,10 @@ class DeviceStockService
 
     /**
      * Clear device listing cache after stock changes.
+     * Bumps cache version so GET /api/v1/available-devices returns fresh stock.
      */
     protected function clearDeviceCache(): void
     {
-        // Clear the main device list caches
-        Cache::forget('available_devices:list');
-
-        // Pattern-based cache clearing for filtered lists (if using Redis)
-        // For other cache drivers, consider using cache tags
-        try {
-            $redis = Cache::getStore();
-            if (method_exists($redis, 'getRedis')) {
-                $keys = $redis->getRedis()->keys('*available_devices*');
-                foreach ($keys as $key) {
-                    Cache::forget(str_replace(config('cache.prefix') . ':', '', $key));
-                }
-            }
-        } catch (\Throwable $e) {
-            // Silently fail - cache will expire naturally
-        }
+        \App\Http\Controllers\Api\v1\AvailableDeviceController::clearCache();
     }
 }

@@ -29,6 +29,8 @@ export interface UseAvailableDevicesOptions {
 export function useAvailableDevices(serviceType?: string, mediaType?: string) {
     const { data, isLoading, error } = useQuery({
         queryKey: ['available-devices', serviceType, mediaType],
+        staleTime: 0, // Always consider data stale so stock changes (e.g. set to 0) show up
+        refetchOnMount: 'always', // Refetch when component mounts so list is fresh
         queryFn: async () => {
             const params: Record<string, string> = {};
             if (serviceType) {

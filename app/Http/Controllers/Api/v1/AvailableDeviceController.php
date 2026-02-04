@@ -14,7 +14,8 @@ use Log;
 class AvailableDeviceController extends Controller
 {
     private const CACHE_PREFIX = 'available_devices';
-    private const CACHE_TTL = 1800; // 30 minutes
+    private const CACHE_VERSION_KEY = 'available_devices_list_version';
+    private const CACHE_TTL = 60; // 1 minute - keep short so stock changes appear quickly
 
     /**
      * Display a listing of active available devices - cached Query Builder
@@ -26,8 +27,9 @@ class AvailableDeviceController extends Controller
      */
     public function index(Request $request)
     {
-        // Build cache key based on filters
-        $cacheKey = $this->buildCacheKey($request);
+        // Build cache key including version so stock changes invalidate cache
+        $cacheVersion = Cache::get(self::CACHE_VERSION_KEY, 0);
+        $cacheKey = $this->buildCacheKey($request) . ':v' . $cacheVersion;
 
         $devices = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($request) {
             $query = DB::table('available_devices')
@@ -46,6 +48,7 @@ class AvailableDeviceController extends Controller
                     'image_url',
                     'specifications',
                     'is_active',
+                    'stock_quantity',
                 ]);
 
             // Filter by service type (maps to device type)
@@ -111,7 +114,10 @@ class AvailableDeviceController extends Controller
             ];
         })->values()->all();
 
-        return ApiResponse::success($devicesData);
+        $response = ApiResponse::success($devicesData);
+        $response->header('Cache-Control', 'no-store, no-cache, max-age=0');
+
+        return $response;
     }
 
     /**
@@ -119,7 +125,8 @@ class AvailableDeviceController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $cacheKey = self::CACHE_PREFIX . ':single:' . $id;
+        $cacheVersion = Cache::get(self::CACHE_VERSION_KEY, 0);
+        $cacheKey = self::CACHE_PREFIX . ':single:' . $id . ':v' . $cacheVersion;
 
         $device = Cache::remember($cacheKey, self::CACHE_TTL, function () use ($id) {
             return DB::table('available_devices')
@@ -178,12 +185,11 @@ class AvailableDeviceController extends Controller
     }
 
     /**
-     * Clear device cache (call when devices are modified)
+     * Clear device list cache (call when devices or stock are modified).
+     * Bumps version so all list caches (any filter) are invalidated on next request.
      */
     public static function clearCache(): void
     {
-        Cache::forget(self::CACHE_PREFIX . ':list');
-        // Also clear filtered caches by pattern if using Redis
-        // For file/database cache, you may need to track keys
+        Cache::increment(self::CACHE_VERSION_KEY);
     }
 }

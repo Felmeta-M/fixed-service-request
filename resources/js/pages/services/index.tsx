@@ -297,7 +297,7 @@ export default function CustomerDashboard() {
                                         placeholder="Search service"
                                         value={globalFilter}
                                         onChange={(e) => setGlobalFilter(e.target.value)}
-                                        className="h-8 w-full border-primary pl-9 text-sm sm:w-[200px] lg:w-[240px]"
+                                        className="h-8 w-full border-primary pl-9 text-sm sm:w-[220px] lg:w-[260px]"
                                         size="sm"
                                     />
                                 </div>

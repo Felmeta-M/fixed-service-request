@@ -1,3 +1,4 @@
+import { BroadbandIcon, ComboIcon } from '@/components/icons/service-icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -25,7 +26,6 @@ import {
     Package,
     Phone,
     User,
-    Wifi,
     X,
     Zap,
 } from 'lucide-react';
@@ -111,9 +111,9 @@ const INTERNET_OFFER_ID = '1457567289';
 const COMBO_OFFER_ID = '102647257';
 
 const serviceTypeMap = {
-    [INTERNET_OFFER_ID]: { label: 'Internet', icon: Wifi, color: 'text-blue-600' },
+    [INTERNET_OFFER_ID]: { label: 'Internet', icon: BroadbandIcon, color: 'text-blue-600' },
     '1207609454': { label: 'Voice', icon: Phone, color: 'text-violet-600' },
-    [COMBO_OFFER_ID]: { label: 'Combo', icon: Package, color: 'text-emerald-600' },
+    [COMBO_OFFER_ID]: { label: 'Combo', icon: ComboIcon, color: 'text-emerald-600' },
 };
 
 const surveyTypeMap = {
@@ -609,19 +609,15 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                             <span className="text-xs text-muted-foreground sm:text-sm">Voice Service Number</span>
                             <span className="flex items-center gap-2 text-xs font-medium sm:text-sm">
                                 <Phone className="h-3.5 w-3.5 shrink-0 text-violet-500 sm:h-4 sm:w-4" />
-                                <span className="break-all sm:break-normal">
-                                    {voiceNumber || <span className="text-muted-foreground">—</span>}
-                                </span>
+                                <span className="break-all sm:break-normal">{voiceNumber || <span className="text-muted-foreground">—</span>}</span>
                             </span>
                         </div>
                         <Separator />
                         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                             <span className="text-xs text-muted-foreground sm:text-sm">Data Service Number</span>
                             <span className="flex items-center gap-2 text-xs font-medium sm:text-sm">
-                                <Wifi className="h-3.5 w-3.5 shrink-0 text-blue-500 sm:h-4 sm:w-4" />
-                                <span className="break-all sm:break-normal">
-                                    {dataNumber || <span className="text-muted-foreground">—</span>}
-                                </span>
+                                <BroadbandIcon className="h-3.5 w-3.5 shrink-0 text-blue-500 sm:h-4 sm:w-4" />
+                                <span className="break-all sm:break-normal">{dataNumber || <span className="text-muted-foreground">—</span>}</span>
                             </span>
                         </div>
                         {/* Only show bandwidth for Internet and Combo services (not Voice) */}
@@ -730,7 +726,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                         <div className="w-full bg-et-light-blue/10">
                             <div className="sm:p-4">
                                 <div className="flex flex-wrap items-center gap-2 text-base sm:text-lg">
-                                    <Wifi className="h-4 w-4 shrink-0 text-et-blue" />
+                                    <BroadbandIcon className="h-4 w-4 shrink-0 text-et-blue" />
                                     <span>Default Internet Credentials</span>
                                     <Badge variant="outline" className="ml-auto bg-white text-xs sm:ml-2">
                                         For Device Config
@@ -848,9 +844,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                                 <td className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">
                                                     Cable Charge
                                                     {cableLengthChargeable > 0 && (
-                                                        <span className="ml-1 text-muted-foreground">
-                                                            ({cableLengthChargeable}m over 500m)
-                                                        </span>
+                                                        <span className="ml-1 text-muted-foreground">({cableLengthChargeable}m over 500m)</span>
                                                     )}
                                                 </td>
                                                 <td className="px-3 py-2 text-right text-xs font-medium tabular-nums sm:px-4 sm:py-3 sm:text-sm">
@@ -860,9 +854,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                         )}
                                         {otherRelatedCost > 0 && (
                                             <tr>
-                                                <td className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">
-                                                    Labour &amp; Material
-                                                </td>
+                                                <td className="px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm">Labour &amp; Material</td>
                                                 <td className="px-3 py-2 text-right text-xs font-medium tabular-nums sm:px-4 sm:py-3 sm:text-sm">
                                                     {otherRelatedCost.toFixed(2)}
                                                 </td>
@@ -961,11 +953,19 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                 </div>
 
                                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
-                                    <Link href="/services">
-                                        <Button variant="outline" className="w-full sm:w-auto">
-                                            {t('common.back')}
+                                    {!isInFlow ? (
+                                        <Link href="/services">
+                                            <Button variant="outline" className="flex items-center space-x-2 text-[#068BCC]">
+                                                <ArrowLeft className="h-4 w-4 text-[#068BCC]" />
+                                                <span>{t('common.back')}</span>
+                                            </Button>
+                                        </Link>
+                                    ) : onBack ? (
+                                        <Button variant="outline" onClick={onBack} className="flex items-center space-x-2 text-[#068BCC]">
+                                            <ArrowLeft className="h-4 w-4 text-[#068BCC]" />
+                                            <span>{t('common.back')}</span>
                                         </Button>
-                                    </Link>
+                                    ) : null}
 
                                     {canSubscribe && (
                                         <Button

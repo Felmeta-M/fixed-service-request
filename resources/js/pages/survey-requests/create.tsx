@@ -1,5 +1,4 @@
-import LocationMap from '@/features/services/components/location-map';
-import { BandwidthSelector } from '@/features/surveys/components/bandwidth-selector';
+import { BroadbandIcon, ComboIcon } from '@/components/icons/service-icons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import LocationMap from '@/features/services/components/location-map';
+import { BandwidthSelector } from '@/features/surveys/components/bandwidth-selector';
+import { useCreateSurvey } from '@/hooks/use-api-mutations';
 import { useBandwidthOptions } from '@/hooks/use-bandwidth-options';
 import { useServiceTypes } from '@/hooks/use-service-types';
 import SimpleLayout from '@/layouts/simple-layout';
@@ -14,27 +16,14 @@ import { formatCoordinate, formatCoordinatesForAPI, parseCoordinate } from '@/li
 import { useResourceChecker } from '@/lib/resource-check';
 import { SurveyRequest, SurveyRequestFormValues } from '@/types/survey';
 import { Link, router, useForm } from '@inertiajs/react';
-import { useCreateSurvey } from '@/hooks/use-api-mutations';
-import {
-    ArrowLeft,
-    ChevronDown,
-    ChevronUp,
-    FileText,
-    Loader2,
-    MapPin,
-    Navigation,
-    Package,
-    Phone,
-    Search,
-    Wifi
-} from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, FileText, Loader2, MapPin, Navigation, Phone, Search } from 'lucide-react';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 
 // Icon mapping for dynamic service types
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-    Wifi: Wifi,
+    Wifi: BroadbandIcon,
     Phone: Phone,
-    Package: Package,
+    Package: ComboIcon,
 };
 
 export default function Create() {
@@ -62,7 +51,6 @@ export default function Create() {
 
     const [hasValidLocation, setHasValidLocation] = useState(false);
     const { checkResourceAvailability } = useResourceChecker();
-
 
     const { data, setData } = useForm<SurveyRequestFormValues>('createSurvey', {
         customer_code: '',
@@ -149,8 +137,7 @@ export default function Create() {
                         contactNo = kycData.identity?.phone || '';
                         contactEmail = kycData.email || 'customer@ethiotelecom.et';
                         customerCode = kycData.customer_data.customer.code;
-                    } catch (e) {
-                    }
+                    } catch (e) {}
                 }
 
                 const customerDataString = localStorage.getItem('activeCustomer');
@@ -170,8 +157,7 @@ export default function Create() {
                             contactEmail = customer.email || contactEmail;
                             customerCode = customer.code;
                         }
-                    } catch (e) {
-                    }
+                    } catch (e) {}
                 }
 
                 setData((prev) => ({
@@ -467,7 +453,6 @@ export default function Create() {
         }
     };
 
-
     const validateForm = (): boolean => {
         const newErrors: Record<string, string> = {};
 
@@ -583,7 +568,7 @@ export default function Create() {
 
     const getServiceIcon = (serviceType: string) => {
         const found = serviceTypes.find((st) => st.code === serviceType);
-        return iconMap[found?.icon || 'Wifi'] || Wifi;
+        return iconMap[found?.icon || 'Wifi'] || BroadbandIcon;
     };
 
     const getServiceName = (serviceType: string) => {
@@ -685,7 +670,7 @@ export default function Create() {
                                 {/* Service Type Selection */}
                                 <div className="space-y-4">
                                     <div className="flex items-center space-x-2">
-                                        <Wifi className="h-5 w-5 text-primary" />
+                                        <BroadbandIcon className="h-5 w-5 text-primary" />
                                         <Label className="text-lg font-semibold text-gray-900">Service Type *</Label>
                                     </div>
                                     {loadingServiceTypes ? (
@@ -694,49 +679,51 @@ export default function Create() {
                                             <span className="ml-2 text-gray-600">Loading service types...</span>
                                         </div>
                                     ) : (
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                        {serviceOptions.map((service) => {
-                                            const IconComponent = service.icon;
-                                            const isSelected = data.main_offer_id === service.id;
+                                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                            {serviceOptions.map((service) => {
+                                                const IconComponent = service.icon;
+                                                const isSelected = data.main_offer_id === service.id;
 
-                                            return (
-                                                <div
-                                                    key={service.id}
-                                                    onClick={() => handleChange('main_offer_id', service.id)}
-                                                    className={`cursor-pointer rounded-xl border-2 p-4 text-left transition-all duration-200 hover:shadow-md ${isSelected
-                                                        ? 'border-primary bg-gradient-to-br from-primary/5 to-primary/10 shadow-md'
-                                                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                                return (
+                                                    <div
+                                                        key={service.id}
+                                                        onClick={() => handleChange('main_offer_id', service.id)}
+                                                        className={`cursor-pointer rounded-xl border-2 p-4 text-left transition-all duration-200 hover:shadow-md ${
+                                                            isSelected
+                                                                ? 'border-primary bg-gradient-to-br from-primary/5 to-primary/10 shadow-md'
+                                                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                         }`}
-                                                >
-                                                    <div className="flex items-start space-x-3">
-                                                        <div
-                                                            className={`rounded-lg p-2 transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
+                                                    >
+                                                        <div className="flex items-start space-x-3">
+                                                            <div
+                                                                className={`rounded-lg p-2 transition-colors ${
+                                                                    isSelected ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
                                                                 }`}
-                                                        >
-                                                            <IconComponent className="h-5 w-5" />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <h3 className={`font-semibold ${isSelected ? 'text-primary' : 'text-gray-900'}`}>
-                                                                {service.name}
-                                                            </h3>
-                                                            <p className="mt-1 text-sm text-gray-600">{service.description}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="mt-3 flex items-center justify-between">
-                                                        {service.recommended && (
-                                                            <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Recommended</Badge>
-                                                        )}
-                                                        {isSelected && (
-                                                            <div className="flex items-center space-x-1 text-primary">
-                                                                <div className="h-2 w-2 rounded-full bg-primary"></div>
-                                                                <span className="text-xs font-medium">Selected</span>
+                                                            >
+                                                                <IconComponent className="h-5 w-5" />
                                                             </div>
-                                                        )}
+                                                            <div className="flex-1">
+                                                                <h3 className={`font-semibold ${isSelected ? 'text-primary' : 'text-gray-900'}`}>
+                                                                    {service.name}
+                                                                </h3>
+                                                                <p className="mt-1 text-sm text-gray-600">{service.description}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="mt-3 flex items-center justify-between">
+                                                            {service.recommended && (
+                                                                <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Recommended</Badge>
+                                                            )}
+                                                            {isSelected && (
+                                                                <div className="flex items-center space-x-1 text-primary">
+                                                                    <div className="h-2 w-2 rounded-full bg-primary"></div>
+                                                                    <span className="text-xs font-medium">Selected</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     )}
                                     {formErrors.serviceType && <p className="mt-2 text-sm text-red-600">{formErrors.serviceType}</p>}
                                 </div>

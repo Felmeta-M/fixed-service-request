@@ -1,3 +1,4 @@
+import { BroadbandIcon, ComboIcon } from '@/components/icons/service-icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,16 +9,16 @@ import MainLayout from '@/layouts/main-layout';
 import { getStatusInfo, statusOptions } from '@/lib/status-map';
 import { cn } from '@/lib/utils';
 import { Link, router, usePage } from '@inertiajs/react';
-import { AlertCircle, Box, ChevronDown, ChevronUp, Filter, Phone, Plus, RefreshCw, Search, UserPlus, Wifi, X } from 'lucide-react';
+import { AlertCircle, ChevronDown, ChevronUp, Filter, Phone, Plus, RefreshCw, Search, UserPlus, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const typeMap = {
-    // '1943913918': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
+    // '1943913918': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: BroadbandIcon },
     // '1207609454': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
-    // '102647257': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
-    '1943913918': { label: 'Internet', text: 'text-et-blue', bg: 'bg-blue-400', icon: Wifi },
+    // '102647257': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: ComboIcon },
+    '1943913918': { label: 'Internet', text: 'text-et-blue', bg: 'bg-blue-400', icon: BroadbandIcon },
     '1207609454': { label: 'Voice', text: 'text-primary', bg: 'bg-purple-400', icon: Phone },
-    '102647257': { label: 'Combo', text: 'text-et-green', bg: 'bg-green-400', icon: Box },
+    '102647257': { label: 'Combo', text: 'text-et-green', bg: 'bg-green-400', icon: ComboIcon },
 };
 
 interface DashboardStats {

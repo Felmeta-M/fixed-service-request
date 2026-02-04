@@ -1,10 +1,11 @@
+import { BroadbandIcon } from '@/components/icons/service-icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSurveyList } from '@/features/surveys/hooks/use-surveys';
 import { useTranslation } from '@/hooks/use-translation';
 import MainLayout from '@/layouts/main-layout';
 import { usePage } from '@inertiajs/react';
-import { BarChart3, Package, Phone, RefreshCw, TrendingUp, Users, Wifi } from 'lucide-react';
+import { BarChart3, Package, Phone, RefreshCw, TrendingUp, Users } from 'lucide-react';
 import { useMemo } from 'react';
 
 // Mock chart components - replace with actual chart library
@@ -42,12 +43,12 @@ export default function Dashboard() {
     const { auth } = usePage<{ auth: { user: any } }>().props;
     const { user } = auth;
     const { t } = useTranslation();
-    
+
     // Flatten paginated data from infinite query
     const surveys = useMemo(() => {
-        return surveyListQuery.data?.pages.flatMap(page => page.data) ?? [];
+        return surveyListQuery.data?.pages.flatMap((page) => page.data) ?? [];
     }, [surveyListQuery.data]);
-    
+
     const loading = surveyListQuery.isLoading;
     const refetch = () => surveyListQuery.refetch();
 
@@ -66,8 +67,8 @@ export default function Dashboard() {
                 const type = survey.main_offer_id?.includes('1457567289')
                     ? 'broadband'
                     : survey.main_offer_id?.includes('1207609454')
-                        ? 'voice'
-                        : 'combo';
+                      ? 'voice'
+                      : 'combo';
                 acc[type] = (acc[type] || 0) + 1;
                 return acc;
             },
@@ -103,7 +104,7 @@ export default function Dashboard() {
     ];
 
     const serviceTypeData = [
-        { name: t('service_type.broadband'), value: stats.broadband, icon: Wifi, color: 'text-blue-600' },
+        { name: t('service_type.broadband'), value: stats.broadband, icon: BroadbandIcon, color: 'text-blue-600' },
         { name: t('service_type.voice'), value: stats.voice, icon: Phone, color: 'text-green-600' },
         { name: t('service_type.combo'), value: stats.combo, icon: Package, color: 'text-purple-600' },
     ];
@@ -170,7 +171,7 @@ export default function Dashboard() {
                         <Card>
                             <CardHeader className="pb-2">
                                 <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                                    <Wifi className="h-4 w-4 text-blue-600" />
+                                    <BroadbandIcon className="h-4 w-4 text-blue-600" />
                                     {t('dashboard.success_rate')}
                                 </CardTitle>
                             </CardHeader>

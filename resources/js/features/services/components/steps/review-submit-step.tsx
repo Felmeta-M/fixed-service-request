@@ -1,12 +1,12 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { BroadbandIcon, ComboIcon } from '@/components/icons/service-icons';
 import { Badge } from '@/components/ui/badge';
-import { usePage } from '@inertiajs/react';
-import { CheckCircle, Loader2, Wifi, MapPin, User, Phone, Building2, Router, Globe, PhoneCall, HandHelping } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import { useCreateSurvey } from '@/hooks/use-api-mutations';
 import { useTranslation } from '@/hooks/use-translation';
+import { usePage } from '@inertiajs/react';
+import { ArrowLeft, CheckCircle, Globe, HandHelping, Loader2, Phone, Router, User } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface ReviewSubmitStepProps {
     formData: {
@@ -68,9 +68,9 @@ interface ReviewSubmitStepProps {
 }
 
 const serviceTypes = {
-    '1457567289': { name: 'Fixed Broadband', icon: Wifi, color: 'blue' },
-    '1207609454': { name: 'Fixed Voice', icon: Wifi, color: 'green' },
-    '102647257': { name: 'Combo Services', icon: Wifi, color: 'purple' },
+    '1457567289': { name: 'Fixed Broadband', icon: BroadbandIcon, color: 'blue' },
+    '1207609454': { name: 'Fixed Voice', icon: Phone, color: 'green' },
+    '102647257': { name: 'Combo Services', icon: ComboIcon, color: 'purple' },
 };
 
 export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepProps) {
@@ -175,7 +175,6 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
 
         createSurveyMutation.mutate(submitData, {
             onSuccess: (response) => {
-
                 const responseData = response.data;
 
                 const { customer_survey_order_id: surveyId } = responseData;
@@ -214,7 +213,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
         });
     };
 
-    const ServiceIcon = serviceInfo?.icon || Wifi;
+    const ServiceIcon = serviceInfo?.icon || BroadbandIcon;
 
     return (
         <div className="w-full max-w-full space-y-6 overflow-x-hidden">
@@ -237,7 +236,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 <div className="w-full">
                     <div className="sm:p-4">
                         <div className="mb-2 flex items-center gap-3 border-b border-border/50 pb-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg  ring-1 ring-primary/20">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ring-1 ring-primary/20">
                                 <HandHelping className="h-5 w-5 text-primary" />
                             </div>
                             <div>
@@ -250,10 +249,10 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                             {/* Service Type */}
                             <div className="flex flex-row justify-between gap-2 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Globe className="h-4 w-4 text-primary shrink-0" />
+                                    <Globe className="h-4 w-4 shrink-0 text-primary" />
                                     <span className="text-sm font-medium text-muted-foreground">Service Type</span>
                                 </div>
-                                <Badge variant="outline" className="w-fit  text-primary hover:bg-primary/20">
+                                <Badge variant="outline" className="w-fit text-primary hover:bg-primary/20">
                                     {serviceInfo?.name}
                                 </Badge>
                             </div>
@@ -262,7 +261,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                             {(formData.serviceType === '1457567289' || formData.serviceType === '102647257') && (
                                 <div className="flex flex-row justify-between gap-2 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex items-center gap-2">
-                                        <Wifi className="h-4 w-4 text-primary shrink-0" />
+                                        <BroadbandIcon className="h-4 w-4 shrink-0 text-primary" />
                                         <span className="text-sm font-medium text-muted-foreground">Bandwidth</span>
                                     </div>
                                     <p className="text-sm font-semibold text-foreground">{formData.bandwidth || '-'}</p>
@@ -282,9 +281,9 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
 
                             {/* Device info - only for Internet and Combo services */}
                             {(formData.serviceType === '1457567289' || formData.serviceType === '102647257') && (
-                                <div className="flex flex-col gap-2 pt-2 border-t border-border/50">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Router className="h-4 w-4 text-primary shrink-0" />
+                                <div className="flex flex-col gap-2 border-t border-border/50 pt-2">
+                                    <div className="mb-2 flex items-center gap-2">
+                                        <Router className="h-4 w-4 shrink-0 text-primary" />
                                         <span className="text-sm font-medium text-muted-foreground">Device</span>
                                     </div>
                                     <div className="pl-6">
@@ -296,13 +295,14 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                                 <div className="space-y-3">
                                                     {formData.selectedDeviceInternet ? (
                                                         <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
-                                                            <p className="text-xs font-medium text-muted-foreground mb-1">Internet/Data</p>
+                                                            <p className="mb-1 text-xs font-medium text-muted-foreground">Internet/Data</p>
                                                             <p className="text-sm font-semibold text-foreground">
                                                                 {formData.selectedDeviceInternet.name}
                                                             </p>
                                                             <p className="text-xs text-muted-foreground">
                                                                 {formData.selectedDeviceInternet.vendor}
-                                                                {formData.selectedDeviceInternet.model && ` • ${formData.selectedDeviceInternet.model}`}
+                                                                {formData.selectedDeviceInternet.model &&
+                                                                    ` • ${formData.selectedDeviceInternet.model}`}
                                                             </p>
                                                             <p className="mt-1 text-sm font-semibold text-primary">
                                                                 {new Intl.NumberFormat('en-ET', {
@@ -316,7 +316,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                                     ) : null}
                                                     {formData.selectedDeviceVoice ? (
                                                         <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
-                                                            <p className="text-xs font-medium text-muted-foreground mb-1">Voice/Phone</p>
+                                                            <p className="mb-1 text-xs font-medium text-muted-foreground">Voice/Phone</p>
                                                             <p className="text-sm font-semibold text-foreground">
                                                                 {formData.selectedDeviceVoice.name}
                                                             </p>
@@ -335,7 +335,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                                         </div>
                                                     ) : null}
                                                     {!formData.selectedDeviceInternet && !formData.selectedDeviceVoice && (
-                                                        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                                                        <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-700">
                                                             No device selected
                                                         </Badge>
                                                     )}
@@ -343,9 +343,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                             ) : formData.selectedDevice ? (
                                                 // Single service device
                                                 <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
-                                                    <p className="text-sm font-semibold text-foreground">
-                                                        {formData.selectedDevice.name}
-                                                    </p>
+                                                    <p className="text-sm font-semibold text-foreground">{formData.selectedDevice.name}</p>
                                                     <p className="text-xs text-muted-foreground">
                                                         {formData.selectedDevice.vendor}
                                                         {formData.selectedDevice.model && ` • ${formData.selectedDevice.model}`}
@@ -360,12 +358,14 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                                     </p>
                                                 </div>
                                             ) : (
-                                                <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                                                <Badge variant="outline" className="border-orange-200 bg-orange-50 text-orange-700">
                                                     With Device (Not selected)
                                                 </Badge>
                                             )
                                         ) : (
-                                            <Badge variant="outline" className="w-fit">Without Device</Badge>
+                                            <Badge variant="outline" className="w-fit">
+                                                Without Device
+                                            </Badge>
                                         )}
                                     </div>
                                 </div>
@@ -378,7 +378,7 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 <div className="w-full">
                     <div className="sm:p-4">
                         <div className="mb-2 flex items-center gap-3 border-b border-border/50 pb-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg  ring-1 ring-primary/20">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ring-1 ring-primary/20">
                                 <User className="h-5 w-5 text-primary" />
                             </div>
                             <div>
@@ -388,19 +388,19 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
-                            <div className="flex flex-col sm:flex row justify-between gap-2">
+                            <div className="row flex flex-col justify-between gap-2 sm:flex">
                                 <div className="flex items-center gap-2">
-                                    <User className="h-4 w-4 text-primary shrink-0" />
+                                    <User className="h-4 w-4 shrink-0 text-primary" />
                                     <span className="text-sm font-medium text-muted-foreground">Contact Person</span>
                                 </div>
-                                <p className="text-sm font-semibold text-foreground pl-6">{formData.contactPerson || user.name || 'Customer'}</p>
+                                <p className="pl-6 text-sm font-semibold text-foreground">{formData.contactPerson || user.name || 'Customer'}</p>
                             </div>
-                            <div className="flex flex-col sm:flex row justify-between gap-2">
+                            <div className="row flex flex-col justify-between gap-2 sm:flex">
                                 <div className="flex items-center gap-2">
-                                    <Phone className="h-4 w-4 text-primary shrink-0" />
+                                    <Phone className="h-4 w-4 shrink-0 text-primary" />
                                     <span className="text-sm font-medium text-muted-foreground">Phone</span>
                                 </div>
-                                <p className="text-sm font-semibold text-foreground pl-6">{formData.contactNo || user.phone || '-'}</p>
+                                <p className="pl-6 text-sm font-semibold text-foreground">{formData.contactNo || user.phone || '-'}</p>
                             </div>
                             {/* {formData.contactEmail && (
                                 <div className="flex flex-col sm:flex row justify-between gap-2">
@@ -417,24 +417,25 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
             </div>
 
             {/* Submit Actions */}
-            <div className="flex flex-col gap-3 border-t border-border/50 pt-6">
+            <div className="mt-2 flex justify-between border-t border-border/50 pt-4">
                 <Button
                     variant="outline"
                     onClick={onBack}
                     disabled={submitting || createSurveyMutation.isPending}
-                    className="w-full"
+                    className="flex items-center space-x-2 text-[#068BCC]"
                 >
-                    {t('common.back')}
+                    <ArrowLeft className="h-4 w-4 text-[#068BCC]" />
+                    <span>{t('common.back')}</span>
                 </Button>
 
                 <Button
                     onClick={handleSubmit}
                     disabled={submitting || createSurveyMutation.isPending || !formData.resourceAvailable}
-                    className="w-full bg-primary hover:bg-primary/90 focus:ring-2 focus:ring-primary/20"
+                    className="flex items-center space-x-2 bg-primary hover:bg-primary/90 focus:ring-2 focus:ring-primary/20"
                 >
-                    {(submitting || createSurveyMutation.isPending) ? (
+                    {submitting || createSurveyMutation.isPending ? (
                         <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin shrink-0" />
+                            <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin" />
                             <span>{t('buttons.processing')}</span>
                         </>
                     ) : (

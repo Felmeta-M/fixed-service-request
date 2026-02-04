@@ -1,16 +1,19 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { apiClient } from '@/lib/api-client';
+import { showErrorToast, showSuccessToast } from '@/lib/toast-helpers';
 import { ComplaintFormValues, complaintSchema, DynamicTroubleReason, ServiceLookupResponse } from '@/types/complaint';
 import { useForm } from '@inertiajs/react';
-import { showErrorToast, showSuccessToast } from '@/lib/toast-helpers';
-import { apiClient } from '@/lib/api-client';
-import { Search, Loader2, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Loader2, Search } from 'lucide-react';
+import { useState } from 'react';
 
 type CreateComplaintMutation = {
-    mutate: (data: ComplaintFormValues, options?: { onSuccess?: () => void; onError?: (error: Error & { parsed?: { type: string; text: string } }) => void }) => void;
+    mutate: (
+        data: ComplaintFormValues,
+        options?: { onSuccess?: () => void; onError?: (error: Error & { parsed?: { type: string; text: string } }) => void },
+    ) => void;
     isPending: boolean;
 };
 
@@ -40,14 +43,7 @@ const FALLBACK_REASONS: DynamicTroubleReason[] = [
     { id: 5, reason_path: 'other', reason: 'Other', label: 'Other', value: 'other' },
 ];
 
-export function ComplaintForm({
-    createMutation,
-    defaultValues = {},
-    onSuccess,
-    onCancel,
-    compact = false,
-    token,
-}: ComplaintFormProps) {
+export function ComplaintForm({ createMutation, defaultValues = {}, onSuccess, onCancel, compact = false, token }: ComplaintFormProps) {
     // Service lookup state
     const [isSearching, setIsSearching] = useState(false);
     const [lookupDone, setLookupDone] = useState(false);
@@ -62,14 +58,12 @@ export function ComplaintForm({
         trouble_reason_label: defaultValues.trouble_reason_label ?? '',
         tt_description: defaultValues.tt_description ?? '',
     };
-    const { data, setData, errors, setError, clearErrors, reset } = useForm<ComplaintFormValues>(
-        initialValues as ComplaintFormValues
-    );
+    const { data, setData, errors, setError, clearErrors, reset } = useForm<ComplaintFormValues>(initialValues as ComplaintFormValues);
 
     // Lookup service number to get customer info and dynamic trouble reasons
     const handleServiceLookup = async () => {
         const serviceNumber = data.access_number?.trim();
-        
+
         if (!serviceNumber || serviceNumber.length < 6) {
             setError('access_number', 'Please enter a valid service number (at least 6 characters)');
             return;
@@ -82,30 +76,30 @@ export function ComplaintForm({
             const response = await apiClient.post<ServiceLookupResponse>(
                 '/tt/lookup-service',
                 { service_number: serviceNumber },
-                { 
+                {
                     token: token ?? undefined,
                     skipAuthRedirect: true, // Public endpoint - don't redirect on auth errors
-                }
+                },
             );
 
             if (response.success && response.data) {
                 // Update network info
                 setNetworkInfo(response.data.network);
-                
+
                 // Update trouble reasons from API
                 if (response.data.trouble_reasons && response.data.trouble_reasons.length > 0) {
                     setTroubleReasons(response.data.trouble_reasons);
                 }
-                
+
                 setLookupDone(true);
-                
+
                 // Reset trouble reason selection since options changed
                 setData({
                     ...data,
                     trouble_reason: '',
                     trouble_reason_label: '',
                 });
-                
+
                 showSuccessToast(`Service verified (${response.data.network.name})`);
             } else {
                 // API returned success: false
@@ -117,24 +111,24 @@ export function ComplaintForm({
         } catch (error: any) {
             // Handle API errors gracefully - don't redirect, just show error message
             let errorMessage = 'Failed to lookup service number. Please try again.';
-            
+
             // Extract message from different error formats
             if (error?.data?.message) {
                 errorMessage = error.data.message;
             } else if (error?.message) {
                 errorMessage = error.message;
             }
-            
+
             // For 404 errors, show a user-friendly message
             if (error?.status === 404) {
                 errorMessage = 'Service number not found. Please verify the number and try again.';
             }
-            
+
             // For network/timeout errors
             if (error?.status === 408 || error?.name === 'AbortError') {
                 errorMessage = 'Request timed out. Please check your connection and try again.';
             }
-            
+
             showErrorToast(errorMessage);
             setError('access_number', errorMessage);
             setLookupDone(false);
@@ -204,19 +198,15 @@ export function ComplaintForm({
                         Service Number <Required />
                     </label>
                     <div className="relative">
-                        <Input
-                            value={data.access_number}
-                            onChange={(e) => handleServiceNumberChange(e.target.value)}
-                            className="pr-12"
-                        />
+                        <Input value={data.access_number} onChange={(e) => handleServiceNumberChange(e.target.value)} className="pr-12" />
                         <button
                             type="button"
                             onClick={handleServiceLookup}
                             disabled={isSearching || !data.access_number?.trim()}
                             title="Search service number"
-                            className={`absolute right-1 top-1/2 -translate-y-1/2 flex h-8 w-10 items-center justify-center rounded-md transition-colors ${
-                                lookupDone 
-                                    ? 'bg-green-500 text-white hover:bg-green-600' 
+                            className={`absolute top-1/2 right-1 flex h-8 w-10 -translate-y-1/2 items-center justify-center rounded-md transition-colors ${
+                                lookupDone
+                                    ? 'bg-green-500 text-white hover:bg-green-600'
                                     : 'bg-primary text-white hover:bg-primary/90 disabled:bg-gray-300 disabled:text-gray-500'
                             }`}
                         >
@@ -230,14 +220,12 @@ export function ComplaintForm({
                         </button>
                     </div>
                     {errors.access_number && <p className="text-sm text-red-600">{errors.access_number}</p>}
-                    
+
                     {/* Network info display after successful lookup */}
                     {lookupDone && networkInfo && (
                         <div className="mt-2 rounded-md bg-green-50 p-2 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-400">
                             <p className="font-medium">Service verified</p>
-                            <p className="text-xs text-green-600 dark:text-green-500">
-                                Network: {networkInfo.name}
-                            </p>
+                            <p className="text-xs text-green-600 dark:text-green-500">Network: {networkInfo.name}</p>
                         </div>
                     )}
                 </div>
@@ -260,10 +248,7 @@ export function ComplaintForm({
                     <label className="text-sm font-medium">
                         Contact Person <Required />
                     </label>
-                    <Input
-                        value={data.contact_person} 
-                        onChange={(e) => setData('contact_person', e.target.value)} 
-                    />
+                    <Input value={data.contact_person} onChange={(e) => setData('contact_person', e.target.value)} />
                     {errors.contact_person && <p className="text-sm text-red-600">{errors.contact_person}</p>}
                 </div>
 
@@ -271,17 +256,13 @@ export function ComplaintForm({
                 <div className="space-y-1">
                     <label className="text-sm font-medium">
                         Trouble Reason <Required />
-                        {networkInfo && (
-                            <span className="ml-2 text-xs font-normal text-muted-foreground">
-                                ({networkInfo.name})
-                            </span>
-                        )}
+                        {networkInfo && <span className="ml-2 text-xs font-normal text-muted-foreground">({networkInfo.name})</span>}
                     </label>
                     <Select
                         value={data.trouble_reason || ''}
                         onValueChange={(value) => {
                             // Find the selected reason to get its label
-                            const selectedReason = troubleReasons.find(r => r.value === value);
+                            const selectedReason = troubleReasons.find((r) => r.value === value);
                             // Set both trouble_reason and trouble_reason_label together
                             setData({
                                 ...data,
@@ -292,7 +273,7 @@ export function ComplaintForm({
                         disabled={!lookupDone && troubleReasons === FALLBACK_REASONS}
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="" />
+                            <SelectValue placeholder="Select trouble reason" />
                         </SelectTrigger>
                         <SelectContent>
                             {troubleReasons.map((reason) => (
@@ -304,21 +285,13 @@ export function ComplaintForm({
                     </Select>
                     {errors.trouble_reason && <p className="text-sm text-red-600">{errors.trouble_reason}</p>}
                     {!lookupDone && (
-                        <p className="text-xs text-muted-foreground">
-                            Please search the service number to load available trouble reasons
-                        </p>
+                        <p className="text-xs text-muted-foreground">Please search the service number to load available trouble reasons</p>
                     )}
                 </div>
 
                 <div className={`space-y-1 ${compact ? '' : 'lg:col-span-2'}`}>
-                    <label className="text-sm font-medium">
-                        Description {isDescriptionRequired && <Required />}
-                    </label>
-                    <Textarea
-                        rows={compact ? 3 : 5}
-                        value={data.tt_description || ''}
-                        onChange={(e) => setData('tt_description', e.target.value)}
-                    />
+                    <label className="text-sm font-medium">Description {isDescriptionRequired && <Required />}</label>
+                    <Textarea rows={compact ? 3 : 5} value={data.tt_description || ''} onChange={(e) => setData('tt_description', e.target.value)} />
                     {errors.tt_description && <p className="text-sm text-red-600">{errors.tt_description}</p>}
                 </div>
             </div>

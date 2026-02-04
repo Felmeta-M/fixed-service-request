@@ -810,27 +810,31 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col justify-between gap-3 pt-4 sm:flex-row">
+                <div className="mt-2 flex justify-between pt-2">
                     <Button
                         type="button"
                         variant="outline"
                         onClick={onBack}
                         disabled={submitting}
-                        className="flex w-full items-center justify-center gap-2"
+                        className="flex items-center space-x-2 text-[#068BCC]"
                     >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back
+                        <ArrowLeft className="h-4 w-4 text-[#068BCC]" />
+                        <span>Back</span>
                     </Button>
-                    <Button type="submit" disabled={submitting || createSurveyMutation.isPending} className="w-full bg-primary hover:bg-primary/90">
+                    <Button
+                        type="submit"
+                        disabled={submitting || createSurveyMutation.isPending}
+                        className="flex items-center space-x-2 bg-primary hover:bg-primary/90"
+                    >
                         {submitting || createSurveyMutation.isPending ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Submitting Request...
+                                <span>Submitting Request...</span>
                             </>
                         ) : (
                             <>
                                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                                Submit Manual Request
+                                <span>Submit Manual Request</span>
                             </>
                         )}
                     </Button>

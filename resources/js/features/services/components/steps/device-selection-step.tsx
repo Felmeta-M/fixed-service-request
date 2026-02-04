@@ -130,17 +130,13 @@ export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabl
                 </div>
             </div>
 
-            <div className="flex flex-col justify-between gap-3 pt-4 sm:flex-row">
-                <Button variant="outline" onClick={onBack} disabled={disabled} className="flex w-full items-center justify-center gap-2">
-                    <ArrowLeft className="h-4 w-4" />
-                    Back
+            <div className="mt-2 flex justify-between pt-2">
+                <Button variant="outline" onClick={onBack} disabled={disabled} className="flex items-center space-x-2 text-[#068BCC]">
+                    <ArrowLeft className="h-4 w-4 text-[#068BCC]" />
+                    <span>Back</span>
                 </Button>
-                <Button
-                    onClick={onNext}
-                    disabled={!canProceed() || disabled}
-                    className="flex w-full items-center justify-center gap-2 bg-primary hover:bg-primary/90"
-                >
-                    Next
+                <Button onClick={onNext} disabled={!canProceed() || disabled} className="flex items-center space-x-2 bg-primary hover:bg-primary/90">
+                    <span>Next</span>
                     <ChevronRight className="h-4 w-4" />
                 </Button>
             </div>

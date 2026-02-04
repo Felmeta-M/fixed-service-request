@@ -1,3 +1,4 @@
+import { BroadbandIcon, ComboIcon } from '@/components/icons/service-icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,17 +14,17 @@ import {
     getSortedRowModel,
     useReactTable,
 } from '@tanstack/react-table';
-import { ArrowUpDown, Box, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileText, Phone, RefreshCw, Wifi } from 'lucide-react';
+import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileText, Phone, RefreshCw } from 'lucide-react';
 import * as React from 'react';
 import SurveyActions from './survey-actions';
 
 const typeMap = {
-    // '1457567289': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: Wifi },
+    // '1457567289': { label: 'Internet', text: 'text-blue-700', bg: 'bg-blue-400', icon: BroadbandIcon },
     // '1207609454': { label: 'Voice', text: 'text-purple-700', bg: 'bg-purple-400', icon: Phone },
-    // '102647257': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: Box },
-    '1457567289': { label: 'Internet', text: 'text-et-blue', bg: 'bg-blue-400', icon: Wifi },
+    // '102647257': { label: 'Combo', text: 'text-green-700', bg: 'bg-green-400', icon: ComboIcon },
+    '1457567289': { label: 'Internet', text: 'text-et-blue', bg: 'bg-blue-400', icon: BroadbandIcon },
     '1207609454': { label: 'Voice', text: 'text-primary', bg: 'bg-purple-400', icon: Phone },
-    '102647257': { label: 'Combo', text: 'text-et-green', bg: 'bg-green-400', icon: Box },
+    '102647257': { label: 'Combo', text: 'text-et-green', bg: 'bg-green-400', icon: ComboIcon },
 };
 
 type SurveyRow = {

@@ -10,10 +10,16 @@ if [ ! -f "$APP_DIR/vendor/autoload.php" ]; then
 fi
 
 # Immutable: sync public from image to public_volume (shared with nginx)
+# This ensures build assets are available to nginx after image rebuild
 if [ -d "$APP_DIR/public_volume" ]; then
-  # Always sync on startup to ensure build assets are current
   echo "📤 Syncing public assets to public_volume..."
-  cp -a "$APP_DIR/public/." "$APP_DIR/public_volume/"
+  # Use rsync if available (faster for incremental), fallback to cp
+  if command -v rsync &> /dev/null; then
+    rsync -a --delete "$APP_DIR/public/" "$APP_DIR/public_volume/"
+  else
+    cp -a "$APP_DIR/public/." "$APP_DIR/public_volume/"
+  fi
+  echo "✅ Public assets synced (including /build)"
 fi
 
 echo "🧹 Setting Laravel permissions..."

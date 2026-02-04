@@ -2,7 +2,7 @@ FROM php:8.4-fpm
 
 # Install system packages and PHP extensions
 RUN apt-get update && apt-get install -y \
-    git curl unzip zip \
+    git curl unzip zip rsync \
     libpq-dev libzip-dev libicu-dev libxml2-dev libonig-dev \
     && docker-php-ext-install \
     pdo pdo_pgsql zip bcmath intl mbstring xml \
@@ -39,8 +39,23 @@ COPY . .
 # Run composer install now that all files exist
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress --ansi
 
+# Build-time args for Vite (these get inlined during build)
+ARG VITE_APP_NAME="Fixed services provision system"
+ARG VITE_API_BASE_URL=https://fixedservices.ethiotelecom.et/api/v1
+ARG VITE_API_PUBLIC_URL=https://fixedservices.ethiotelecom.et/api/v1
+
 # Build frontend assets (Vite + React)
-RUN pnpm install --frozen-lockfile && pnpm run build
+# Note: vite.config.ts, tsconfig.json must NOT be in .dockerignore
+# Assets are built to /var/www/public/build/ and synced to public_volume at runtime
+RUN pnpm install --frozen-lockfile \
+    && VITE_APP_NAME="${VITE_APP_NAME}" \
+       VITE_API_BASE_URL="${VITE_API_BASE_URL}" \
+       VITE_API_PUBLIC_URL="${VITE_API_PUBLIC_URL}" \
+       pnpm run build \
+    && echo "✅ Frontend build complete: $(ls -la public/build/assets/*.css 2>/dev/null | wc -l) CSS, $(ls -la public/build/assets/*.js 2>/dev/null | wc -l) JS files"
+
+# Verify frontend build succeeded (fail fast if assets missing)
+RUN test -d /var/www/public/build/assets || (echo "❌ Frontend build failed - no assets!" && exit 1)
 
 # Copy entrypoint & PHP-FPM config
 COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh

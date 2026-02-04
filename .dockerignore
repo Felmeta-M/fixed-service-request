@@ -15,10 +15,8 @@
 .phpactor.json
 
 # Environment (never bake into image; use env_file at runtime)
-.env
 .env.*
 .env.backup
-.env.production
 .env.staging
 .env.local
 .env.testing

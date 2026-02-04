@@ -4,6 +4,10 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      args:
+        VITE_APP_NAME: "Fixed services provision system"
+        VITE_API_BASE_URL: https://fixedservices.ethiotelecom.et/api/v1
+        VITE_API_PUBLIC_URL: https://fixedservices.ethiotelecom.et/api/v1
     container_name: ffd_app
     restart: always
     env_file:
@@ -20,6 +24,13 @@ services:
         condition: service_healthy
       pgbouncer:
         condition: service_healthy
+    healthcheck:
+      # Verify PHP works AND build assets are synced to public_volume
+      test: ["CMD-SHELL", "php -r 'echo \"ok\";' && test -d /var/www/public_volume/build/assets"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - ffd_net
     # Cap resources so second app (bill complaints) on same host is not starved.
@@ -148,7 +159,8 @@ services:
       - fbb_storage:/var/www/storage:ro
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     networks:
       - ffd_net
     deploy:

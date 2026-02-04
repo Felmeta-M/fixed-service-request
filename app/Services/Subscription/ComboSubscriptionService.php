@@ -127,42 +127,21 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
       $cfg = config('services.ng');
 
       $zoneName = $this->getZoneNameForAccountInfo($data['survey_order_id'], $data);
-      Log::info($zoneName);
-      $depIds = DB::table('number_pools')->where('zone', $zoneName)->pluck('dept_id');
 
-      if ($depIds->isEmpty()) {
-         throw new \RuntimeException("No department configured for zone: {$zoneName}. Please add zone to number pool.");
-      }
+      // Try original zone first, then fallback to 'AA' if no numbers available
+      $voiceServiceNumber = $this->fetchVoiceServiceNumber($zoneName);
 
-      $voiceServiceNumber = null;
-
-      foreach ($depIds as $depId) {
-         $numberList = $this->queryAvailableNumberService->queryAvailableNumbers([
-            'pay_mode' => '1',
-            'tele_type' => '4',
-            'need_query_by_dept' => false,
-            'res_cnt' => 10,
-            'dept_id' => (string) $depId,
-         ]);
-
-         if (empty($numberList)) {
-            continue;
-         }
-
-         // Try Level 6 first (preferred), then fall back to any available number
-         $filtered = array_filter($numberList, fn($item) => $item['Level'] === '6');
-         if (!empty($filtered)) {
-            $voiceServiceNumber = reset($filtered)['ServiceNumber'];
-            break;
-         }
-
-         // Fall back to any available number (including Level 0)
-         $voiceServiceNumber = reset($numberList)['ServiceNumber'];
-         break;
+      if ($voiceServiceNumber === null && $zoneName !== 'AA') {
+         Log::channel('business')->warning("No voice numbers in zone [{$zoneName}], falling back to AA zone");
+         $voiceServiceNumber = $this->fetchVoiceServiceNumber('AA');
       }
 
       if ($voiceServiceNumber === null) {
-         throw new \RuntimeException('No voice service number found in any department pool for zone: ' . $zoneName);
+         Log::channel('business')->error("No voice service number available in zone [{$zoneName}] or fallback zone [AA]", [
+            'zone' => $zoneName,
+            'survey_order_id' => $data['survey_order_id'] ?? null,
+         ]);
+         throw new \RuntimeException("Something went wrong. Please try again later.");
       }
 
 
@@ -629,5 +608,47 @@ XML;
       }
 
       return $res;
+   }
+
+   /**
+    * Fetch an available voice service number from the given zone.
+    * Prefers Level 6 numbers, falls back to any available number.
+    *
+    * @param string $zoneName
+    * @return string|null The service number, or null if none available
+    */
+   protected function fetchVoiceServiceNumber(string $zoneName): ?string
+   {
+      $depIds = DB::table('number_pools')->where('zone', $zoneName)->pluck('dept_id');
+
+      if ($depIds->isEmpty()) {
+         Log::channel('business')->debug("No department configured for zone: {$zoneName}");
+         return null;
+      }
+
+      foreach ($depIds as $depId) {
+         $numberList = $this->queryAvailableNumberService->queryAvailableNumbers([
+            'pay_mode' => '1',
+            'tele_type' => '4',
+            'need_query_by_dept' => true,
+            'res_cnt' => 3,
+            'dept_id' => (string) $depId,
+         ]);
+
+         if (empty($numberList)) {
+            continue;
+         }
+
+         // Try Level 6 first (preferred), then fall back to any available number
+         $filtered = array_filter($numberList, fn($item) => $item['Level'] === '6');
+         if (!empty($filtered)) {
+            return reset($filtered)['ServiceNumber'];
+         }
+
+         // Fall back to any available number (including Level 0)
+         return reset($numberList)['ServiceNumber'];
+      }
+
+      return null;
    }
 }

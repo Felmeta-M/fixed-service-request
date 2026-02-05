@@ -93,6 +93,13 @@ export function useCreateComplaintGuest() {
 
             // Check for API-level failure (success: false)
             if (response?.success === false) {
+                // Check if this is a reCAPTCHA error
+                if (response.error_type === 'recaptcha') {
+                    const error = new Error(response.message);
+                    (error as any).parsed = { type: 'recaptcha', text: response.message };
+                    throw error;
+                }
+
                 const parsed = parseApiError(response.message);
                 const error = new Error(parsed.text);
                 (error as any).parsed = parsed;

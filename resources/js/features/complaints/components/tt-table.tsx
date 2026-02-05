@@ -210,7 +210,7 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
                                 className="h-8 gap-1.5 px-2 text-muted-foreground hover:text-foreground"
                             >
                                 <Eye className="h-4 w-4" />
-                                <span>View detail</span>
+                                <span className="hidden sm:inline">View detail</span>
                             </Button>
                         </div>
                     );
@@ -301,18 +301,18 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between border-t px-4 py-3">
-                    <div className="hidden flex-1 text-sm text-muted-foreground lg:flex">
+                <div className="flex flex-col items-center justify-between gap-3 border-t px-4 py-3 sm:flex-row">
+                    <div className="text-sm text-muted-foreground">
                         Showing {table.getRowModel().rows.length} of {tts.length} requests
                     </div>
-                    <div className="flex w-full items-center gap-8 lg:w-fit">
+                    <div className="flex w-full items-center justify-between gap-4 sm:w-fit sm:justify-end sm:gap-8">
                         <div className="flex w-fit items-center justify-center text-sm font-medium text-gray-700">
                             Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
                         </div>
-                        <div className="ml-auto flex items-center gap-2 lg:ml-0">
+                        <div className="flex items-center gap-1 sm:gap-2">
                             <Button
                                 variant="outline"
-                                className="hidden h-8 w-8 p-0 lg:flex"
+                                className="hidden h-8 w-8 p-0 sm:flex"
                                 onClick={() => table.setPageIndex(0)}
                                 disabled={!table.getCanPreviousPage()}
                             >
@@ -334,7 +334,7 @@ export default function TTTable({ tts, loading, onTTUpdate }: TTTableProps) {
                             </Button>
                             <Button
                                 variant="outline"
-                                className="hidden h-8 w-8 p-0 lg:flex"
+                                className="hidden h-8 w-8 p-0 sm:flex"
                                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                                 disabled={!table.getCanNextPage()}
                             >

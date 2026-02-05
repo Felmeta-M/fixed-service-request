@@ -90,7 +90,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
 
                             <label
                                 onClick={() => !hasActiveSurvey && handleServiceSelect(service.value)}
-                                className={`group relative flex h-full cursor-pointer flex-col rounded-xl border-2 p-6 transition-all duration-200 ${
+                                className={`group relative flex h-full cursor-pointer flex-col rounded-xl border-2 p-2 transition-all duration-200 sm:p-6 ${
                                     hasActiveSurvey
                                         ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
                                         : isSelected

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\TroubleTicket;
 use App\Services\QueryTTService;
 use App\Services\CreateTTService;
+use App\Services\RecaptchaService;
 use App\Services\Logging\AppLogger;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
@@ -32,9 +33,9 @@ class TroubleTicketController extends Controller
         protected readonly QueryTTDetailService $queryTTDetailService,
         protected readonly ConfirmFeedbackService $confirmFeedbackService,
         protected readonly QueryCustomerForTTService $queryCustomerForTTService,
-        protected readonly GetCombiningService $getCombiningService
-    ) {
-    }
+        protected readonly GetCombiningService $getCombiningService,
+        protected readonly RecaptchaService $recaptchaService
+    ) {}
 
     /**
      * Query customer by service number before TT creation
@@ -259,7 +260,7 @@ class TroubleTicketController extends Controller
 
     public function index(Request $request)
     {
-        $user = auth()->user();
+        $user = $request->user();
 
         try {
             // Use Query Builder for better performance - get all fields needed for list and detail views
@@ -491,6 +492,41 @@ class TroubleTicketController extends Controller
     public function store(CreateTTRequest $request)
     {
         $data = $request->validated();
+
+        // Verify reCAPTCHA for unauthenticated (guest) requests
+        if (!$request->user() && $this->recaptchaService->isEnabled()) {
+            $recaptchaToken = $data['recaptcha_token'] ?? null;
+
+            if (!$recaptchaToken) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Security verification is required.',
+                    'error_type' => 'recaptcha',
+                ], 422);
+            }
+
+            $verification = $this->recaptchaService->verify(
+                $recaptchaToken,
+                $request->ip()
+            );
+
+            if (!$verification['success']) {
+                AppLogger::api()->warning('reCAPTCHA verification failed for guest TT creation', [
+                    'ip' => $request->ip(),
+                    'message' => $verification['message'],
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $verification['message'],
+                    'error_type' => 'recaptcha',
+                ], 422);
+            }
+
+            // Remove recaptcha_token from data before passing to service
+            unset($data['recaptcha_token']);
+        }
+
         try {
             $result = $this->createTTService->createTT($data);
             return $result;

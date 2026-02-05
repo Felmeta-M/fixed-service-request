@@ -363,7 +363,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         <div className="w-full space-y-6 px-4 py-2 lg:px-6">
             {/* Header - matching service detail page styling */}
             <div className="flex flex-col gap-2">
-                <Link href={route('services')} className="w-fit shrink-0 hover:text-[#068BCC]">
+                <Link href={route('services')} className="hidden w-fit shrink-0 hover:text-[#068BCC] sm:block">
                     <Button variant="ghost" size="sm" className="h-9 gap-1 text-[#068BCC] hover:text-[#068BCC]">
                         <ArrowLeft className="h-4 w-4 shrink-0 text-[#068BCC]" />
                         <span className="hover:text-[#068BCC]">Back</span>

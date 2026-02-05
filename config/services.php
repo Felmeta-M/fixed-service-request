@@ -257,5 +257,26 @@ return [
         'password_length' => env('INTERNET_PASSWORD_LENGTH', 12),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Google reCAPTCHA Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for Google reCAPTCHA v2/v3 verification.
+    | Used to protect public forms (like guest complaint submission) from bots.
+    |
+    | Get your keys from: https://www.google.com/recaptcha/admin
+    |
+    | Important:
+    |   - site_key: Public key, exposed to frontend
+    |   - secret_key: Private key, NEVER expose to frontend
+    |
+    */
+    'recaptcha' => [
+        'site_key' => env('GOOGLE_RECAPTCHA_SITE_KEY'),
+        'secret_key' => env('GOOGLE_RECAPTCHA_SECRET_KEY'),
+        // Minimum score for reCAPTCHA v3 (0.0 to 1.0, higher = more likely human)
+        'min_score' => env('GOOGLE_RECAPTCHA_MIN_SCORE', 0.5),
+    ],
 
 ];

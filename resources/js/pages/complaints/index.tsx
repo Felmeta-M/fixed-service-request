@@ -227,48 +227,44 @@ export default function ComplaintsIndex() {
                         <h1 className="text-2xl font-bold tracking-tight">Trouble Tickets</h1>
                         <p className="text-muted-foreground">Manage and track your complaint tickets</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setShowFilters(!showFilters)}
-                                    className="flex items-center gap-2 border-primary"
-                                >
-                                    <Filter className="h-4 w-4" />
-                                    Filters
-                                    {hasActiveFilters && <span className="flex h-2 w-2 rounded-full bg-primary" />}
-                                    {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                                </Button>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="flex items-center gap-1.5 border-primary text-xs sm:gap-2 sm:text-sm"
+                        >
+                            <Filter className="h-4 w-4 shrink-0" />
+                            <span className="">Filters</span>
+                            {hasActiveFilters && <span className="flex h-2 w-2 shrink-0 rounded-full bg-primary" />}
+                            {showFilters ? <ChevronUp className="h-4 w-4 shrink-0" /> : <ChevronDown className="h-4 w-4 shrink-0" />}
+                        </Button>
 
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        if (activeTab === 'my-tickets') {
-                                            localTTsQuery.refetch();
-                                        } else if (activeTab === 'search') {
-                                            externalTTsQuery.refetch();
-                                            searchLocalTTsQuery.refetch();
-                                        }
-                                    }}
-                                    disabled={loading}
-                                    className="border border-primary"
-                                >
-                                    <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                                    Refresh
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="flex">
-                            <Link href="/complaints/create">
-                                <Button size="sm">
-                                    <Plus className="h-4 w-4" />
-                                    New Complaint
-                                </Button>
-                            </Link>
-                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                if (activeTab === 'my-tickets') {
+                                    localTTsQuery.refetch();
+                                } else if (activeTab === 'search') {
+                                    externalTTsQuery.refetch();
+                                    searchLocalTTsQuery.refetch();
+                                }
+                            }}
+                            disabled={loading}
+                            className="border border-primary text-xs sm:text-sm"
+                        >
+                            <RefreshCw className={`h-4 w-4 shrink-0 sm:mr-2 ${loading ? 'animate-spin' : ''}`} />
+                            <span className="hidden sm:inline">Refresh</span>
+                        </Button>
+
+                        <Link href="/complaints/create">
+                            <Button size="sm" className="text-xs sm:text-sm">
+                                <Plus className="h-4 w-4 shrink-0" />
+                                <span className="hidden sm:inline">New Complaint</span>
+                                <span className="sm:hidden">New Complaint</span>
+                            </Button>
+                        </Link>
                     </div>
                 </div>
 
@@ -341,10 +337,10 @@ export default function ComplaintsIndex() {
                       </div>
                     </div> */}
                                         {/* </div> */}
-                                        <div className="mt-2">
+                                        <div className="mt-2 sm:mt-0">
                                             {hasActiveFilters && (
-                                                <div className="mt-4 flex justify-end">
-                                                    <Button variant="outline" size="sm" onClick={clearFilters}>
+                                                <div className="mt-4 flex justify-center sm:justify-end">
+                                                    <Button variant="outline" size="sm" onClick={clearFilters} className="w-full sm:w-auto">
                                                         <X className="mr-2 h-4 w-4" />
                                                         Clear All Filters
                                                     </Button>
@@ -363,18 +359,20 @@ export default function ComplaintsIndex() {
                     <TabsContent value="search" className="space-y-6">
                         {/* Search Card */}
                         <Card>
-                            <CardContent className="pt-6">
+                            <CardContent className="p-4 pt-6 sm:p-6">
                                 <div className="space-y-4">
                                     <div>
-                                        <CardTitle className="text-lg">Search Trouble Tickets</CardTitle>
-                                        <CardDescription>Enter access number to search across local and external systems</CardDescription>
+                                        <CardTitle className="text-base sm:text-lg">Search Trouble Tickets</CardTitle>
+                                        <CardDescription className="text-xs sm:text-sm">
+                                            Enter access number to search across local and external systems
+                                        </CardDescription>
                                     </div>
 
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-col gap-2 sm:flex-row">
                                         <div className="relative flex-1">
                                             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                             <Input
-                                                placeholder="Enter access number (e.g., 9295853090)..."
+                                                placeholder="Enter access number..."
                                                 value={accessNumber}
                                                 onChange={(e) => setAccessNumber(e.target.value)}
                                                 onKeyPress={(e) => {
@@ -386,11 +384,12 @@ export default function ComplaintsIndex() {
                                                 disabled={loading}
                                             />
                                         </div>
-                                        <Button onClick={handleSearch} disabled={loading || !accessNumber.trim()}>
+                                        <Button onClick={handleSearch} disabled={loading || !accessNumber.trim()} className="w-full sm:w-auto">
                                             {loading ? (
                                                 <>
                                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                    Searching...
+                                                    <span className="hidden sm:inline">Searching...</span>
+                                                    <span className="sm:hidden">...</span>
                                                 </>
                                             ) : (
                                                 <>

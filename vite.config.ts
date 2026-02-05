@@ -27,6 +27,7 @@ export default defineConfig({
             VITE_API_BASE_URL: process.env.VITE_API_BASE_URL,
             VITE_API_PUBLIC_URL: process.env.VITE_API_PUBLIC_URL,
             VITE_NEXTAUTH_SECRET: process.env.VITE_NEXTAUTH_SECRET,
+            VITE_RECAPTCHA_SITE_KEY: process.env.VITE_RECAPTCHA_SITE_KEY,
         },
     },
     esbuild: {

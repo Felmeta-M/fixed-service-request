@@ -1,3 +1,4 @@
+import { isRecaptchaEnabled, Recaptcha } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -7,11 +8,11 @@ import { showErrorToast, showSuccessToast } from '@/lib/toast-helpers';
 import { ComplaintFormValues, complaintSchema, DynamicTroubleReason, ServiceLookupResponse } from '@/types/complaint';
 import { useForm } from '@inertiajs/react';
 import { CheckCircle2, Loader2, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 type CreateComplaintMutation = {
     mutate: (
-        data: ComplaintFormValues,
+        data: ComplaintFormValues & { recaptcha_token?: string },
         options?: { onSuccess?: () => void; onError?: (error: Error & { parsed?: { type: string; text: string } }) => void },
     ) => void;
     isPending: boolean;
@@ -30,6 +31,8 @@ type ComplaintFormProps = {
     compact?: boolean;
     /** Auth token for API calls (optional, for authenticated users) */
     token?: string | null;
+    /** Whether to require reCAPTCHA (default: true for guest, false if token provided) */
+    requireRecaptcha?: boolean;
 };
 
 const Required = () => <span className="ml-1 text-red-500">*</span>;
@@ -43,12 +46,25 @@ const FALLBACK_REASONS: DynamicTroubleReason[] = [
     { id: 5, reason_path: 'other', reason: 'Other', label: 'Other', value: 'other' },
 ];
 
-export function ComplaintForm({ createMutation, defaultValues = {}, onSuccess, onCancel, compact = false, token }: ComplaintFormProps) {
+export function ComplaintForm({
+    createMutation,
+    defaultValues = {},
+    onSuccess,
+    onCancel,
+    compact = false,
+    token,
+    requireRecaptcha,
+}: ComplaintFormProps) {
     // Service lookup state
     const [isSearching, setIsSearching] = useState(false);
     const [lookupDone, setLookupDone] = useState(false);
     const [networkInfo, setNetworkInfo] = useState<{ type: number; name: string } | null>(null);
     const [troubleReasons, setTroubleReasons] = useState<DynamicTroubleReason[]>(FALLBACK_REASONS);
+
+    // reCAPTCHA state - only required for guest users (no token)
+    const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+    const [recaptchaError, setRecaptchaError] = useState<string | null>(null);
+    const showRecaptcha = requireRecaptcha ?? (!token && isRecaptchaEnabled());
 
     const initialValues: Partial<ComplaintFormValues> & Pick<ComplaintFormValues, 'access_number' | 'contact_person' | 'mobile_no'> = {
         access_number: defaultValues.access_number ?? '',
@@ -59,6 +75,14 @@ export function ComplaintForm({ createMutation, defaultValues = {}, onSuccess, o
         tt_description: defaultValues.tt_description ?? '',
     };
     const { data, setData, errors, setError, clearErrors, reset } = useForm<ComplaintFormValues>(initialValues as ComplaintFormValues);
+
+    // Handle reCAPTCHA verification callback
+    const handleRecaptchaVerify = useCallback((token: string | null) => {
+        setRecaptchaToken(token);
+        if (token) {
+            setRecaptchaError(null);
+        }
+    }, []);
 
     // Lookup service number to get customer info and dynamic trouble reasons
     const handleServiceLookup = async () => {
@@ -157,6 +181,7 @@ export function ComplaintForm({ createMutation, defaultValues = {}, onSuccess, o
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         clearErrors();
+        setRecaptchaError(null);
 
         const validation = complaintSchema.safeParse(data);
 
@@ -168,9 +193,20 @@ export function ComplaintForm({ createMutation, defaultValues = {}, onSuccess, o
             return;
         }
 
-        createMutation.mutate(validation.data, {
+        // Validate reCAPTCHA for guest users
+        if (showRecaptcha && !recaptchaToken) {
+            setRecaptchaError('Please complete the security verification');
+            showErrorToast('Please complete the reCAPTCHA verification');
+            return;
+        }
+
+        // Prepare submission data with optional reCAPTCHA token
+        const submissionData = showRecaptcha ? { ...validation.data, recaptcha_token: recaptchaToken! } : validation.data;
+
+        createMutation.mutate(submissionData, {
             onSuccess: () => {
                 reset();
+                setRecaptchaToken(null);
                 onSuccess?.();
             },
             onError: (error: Error & { parsed?: { type: string; text: string } }) => {
@@ -178,6 +214,9 @@ export function ComplaintForm({ createMutation, defaultValues = {}, onSuccess, o
                     setError('mobile_no', error.parsed.text);
                     showErrorToast('Please correct the highlighted field.');
                 } else if (error.parsed?.type === 'business') {
+                    showErrorToast(error.parsed.text);
+                } else if (error.parsed?.type === 'recaptcha') {
+                    setRecaptchaError(error.parsed.text);
                     showErrorToast(error.parsed.text);
                 } else {
                     showErrorToast(error.message || 'Network error. Please try again.');
@@ -294,15 +333,29 @@ export function ComplaintForm({ createMutation, defaultValues = {}, onSuccess, o
                     <Textarea rows={compact ? 3 : 5} value={data.tt_description || ''} onChange={(e) => setData('tt_description', e.target.value)} />
                     {errors.tt_description && <p className="text-sm text-red-600">{errors.tt_description}</p>}
                 </div>
+
+                {/* reCAPTCHA - only shown for guest users */}
+                {showRecaptcha && (
+                    <div className={`space-y-1 ${compact ? '' : 'lg:col-span-2'}`}>
+                        <label className="text-sm font-medium">
+                            Security Verification <Required />
+                        </label>
+                        <Recaptcha onVerify={handleRecaptchaVerify} size={compact ? 'normal' : 'normal'} error={recaptchaError || undefined} />
+                    </div>
+                )}
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex flex-row justify-between gap-3 pt-4 sm:justify-end">
                 {onCancel && (
-                    <Button type="button" variant="outline" onClick={onCancel}>
+                    <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
                         Cancel
                     </Button>
                 )}
-                <Button type="submit" disabled={createMutation.isPending || !lookupDone}>
+                <Button
+                    type="submit"
+                    disabled={createMutation.isPending || !lookupDone || (showRecaptcha && !recaptchaToken)}
+                    className="w-full sm:w-auto"
+                >
                     {createMutation.isPending ? 'Submitting...' : 'Submit'}
                 </Button>
             </div>

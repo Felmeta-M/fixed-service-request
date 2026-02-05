@@ -99,14 +99,6 @@ class RecaptchaService
 
             $result = $response->json();
 
-            // Log verification attempt
-            AppLogger::api()->info('reCAPTCHA verification attempt', [
-                'success' => $result['success'] ?? false,
-                'error_codes' => $result['error-codes'] ?? [],
-                'score' => $result['score'] ?? null, // v3 only
-                'action' => $result['action'] ?? null, // v3 only
-            ]);
-
             if ($result['success'] ?? false) {
                 // For reCAPTCHA v3, also check the score
                 if (isset($result['score'])) {

@@ -54,6 +54,9 @@ return [
     | Single configuration for all BSS ECAF services. All survey, subscription,
     | customer, and offer services use these common parameters.
     |
+    | Use NG_* variables in .env. Same variable names in dev and production;
+    | credentials (values) come from each environment's .env file.
+    |
     */
     'ng' => [
         'endpoint' => env('NG_ENDPOINT'),
@@ -64,6 +67,7 @@ return [
         'tenant_id' => env('NG_TENANT_ID', '101'),
         'language' => env('NG_LANGUAGE', '2002'),
         'version' => env('NG_VERSION', '1'),
+        'operator_id' => env('NG_OPERATOR_ID', '53'),
     ],
 
     'ecaf' => [
@@ -152,7 +156,7 @@ return [
         // Frontend key - MUST be restricted in Google Cloud Console:
         // 1. Application restrictions: HTTP referrers (your domain only)
         // 2. API restrictions: Maps JavaScript API only
-        'maps_frontend_key' => env('GOOGLE_MAPS_FRONTEND_KEY', ''),
+        'maps_frontend_key' => env('GOOGLE_MAPS_FRONTEND_KEY'),
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
     ],

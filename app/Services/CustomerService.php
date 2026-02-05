@@ -30,10 +30,6 @@ class CustomerService extends BaseApiService
             $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
 
-            AppLogger::api()->debug('Customer create response received', [
-                'transaction_id' => $this->transactionId,
-            ]);
-
             $parsedXml = $this->parseResponse($xmlResponse, $data);
             return ApiResponse::success($parsedXml);
         } catch (RuntimeException $e) {
@@ -384,6 +380,14 @@ XML;
 
     protected function endpoint(): string
     {
-        return config('services.ng.endpoint');
+        $endpoint = config('services.ng.endpoint');
+
+        if (empty($endpoint)) {
+            throw new RuntimeException(
+                'NG_ENDPOINT is not configured. Please set NG_ENDPOINT in your .env file.'
+            );
+        }
+
+        return $endpoint;
     }
 }

@@ -1,10 +1,7 @@
 import { ComplaintsIcon, StepServiceIcon } from '@/components/app/app-sidebar';
 import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Toaster } from '@/components/ui/sonner';
-import { ComplaintForm } from '@/features/complaints/components/complaint-form';
-import { useCreateComplaintGuest } from '@/hooks/use-api-mutations';
 import { useTranslation } from '@/hooks/use-translation';
 import { Link, usePage } from '@inertiajs/react';
 import { LayoutDashboard, LogIn, LogOut, Menu, X } from 'lucide-react';
@@ -18,14 +15,7 @@ type Props = {
 export default function GuestLayout({ children }: Props) {
     const { auth } = usePage().props as { auth?: { user?: any } };
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
-    const createComplaintGuest = useCreateComplaintGuest();
     const { t, locale } = useTranslation();
-
-    const openCreateTicket = useCallback(() => {
-        setIsMobileMenuOpen(false);
-        setIsCreateTicketOpen(true);
-    }, []);
 
     // Smooth scroll to section
     const scrollToSection = useCallback((sectionId: string) => {
@@ -67,13 +57,12 @@ export default function GuestLayout({ children }: Props) {
                                         <span>{t('nav.services')}</span>
                                     </button>
                                     {!auth?.user && (
-                                        <button
-                                            type="button"
-                                            onClick={openCreateTicket}
+                                        <Link
+                                            href={route('complaint')}
                                             className="text-md cursor-pointer font-medium text-gray-700 transition-colors hover:text-primary"
                                         >
                                             <span>{t('nav.complaints')}</span>
-                                        </button>
+                                        </Link>
                                     )}
                                     {/* <button
                                         onClick={() => scrollToSection('coverage')}
@@ -155,16 +144,16 @@ export default function GuestLayout({ children }: Props) {
                                     </button>
 
                                     {!auth?.user && (
-                                        <button
-                                            type="button"
-                                            onClick={openCreateTicket}
+                                        <Link
+                                            href={route('complaint')}
+                                            onClick={() => setIsMobileMenuOpen(false)}
                                             className="text-md flex min-h-[2.75rem] w-full items-center justify-between rounded-xl px-3 py-2 font-medium text-gray-800 transition hover:text-primary"
                                         >
                                             <span className="flex items-center">{t('nav.complaints')}</span>
                                             <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary">
                                                 <ComplaintsIcon className="h-5 w-5" />
                                             </span>
-                                        </button>
+                                        </Link>
                                     )}
                                 </div>
 
@@ -215,25 +204,7 @@ export default function GuestLayout({ children }: Props) {
             <div>{children}</div>
 
             <Footer />
-            <Toaster />
-
-            {/* Create Ticket Sheet - for unauthenticated users, slides in from right */}
-            <Sheet open={isCreateTicketOpen} onOpenChange={setIsCreateTicketOpen}>
-                <SheetContent side="right" className="w-full overflow-y-auto px-2 sm:max-w-lg">
-                    <SheetHeader className="px-2">
-                        <SheetTitle>{t('nav.create_ticket')}</SheetTitle>
-                        <SheetDescription>{t('complaints.guest_form_description')}</SheetDescription>
-                    </SheetHeader>
-                    <div className="flex-1 overflow-y-auto px-2">
-                        <ComplaintForm
-                            createMutation={createComplaintGuest}
-                            onSuccess={() => setIsCreateTicketOpen(false)}
-                            onCancel={() => setIsCreateTicketOpen(false)}
-                            compact
-                        />
-                    </div>
-                </SheetContent>
-            </Sheet>
+            <Toaster position="top-right" />
         </div>
     );
 }

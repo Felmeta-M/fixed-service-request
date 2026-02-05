@@ -35,6 +35,7 @@ Route::post('/locale', function (Request $request) {
 Route::get('/', fn() => Inertia::render('home', [
     'googleMapsApiKey' => config('services.google.maps_frontend_key', ''),
 ]))->name('home');
+Route::get('/complaint', fn() => Inertia::render('complaint'))->name('complaint');
 Route::get('/terms', fn() => Inertia::render('terms'))->name('terms');
 Route::get('/verification', fn() => Inertia::render('Verification'))->name('verification');
 

@@ -1,10 +1,10 @@
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ButtonGroup } from '@/components/ui/button-group';
 import { useCancelSurveyOrder, useChangePrimaryOffering, useCreateSubscription, useDeleteSurveyOrder } from '@/hooks/use-api-mutations';
 import { useTranslation } from '@/hooks/use-translation';
 import { showErrorToast, showLoadingToast, showSuccessToast } from '@/lib/toast-helpers';
 import { router, usePage } from '@inertiajs/react';
-import { ArrowDownToLineIcon, ArrowUpToLineIcon, ChevronRight, Eye, Loader2, MoreVertical, X } from 'lucide-react';
+import { Loader2, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { BandwidthChangeDialog } from './bandwidth-change-dialog';
 import { CancelConfirmationDialog } from './cancel-confirmation-dialog';
@@ -227,9 +227,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     };
 
     // For bandwidth change API: Combo uses data line; Voice/Data use single line
-    const primaryServiceNumber = survey.main_offer_id === COMBO_OFFER_ID
-        ? survey.data_service_number
-        : (survey.voice_service_number ?? survey.data_service_number);
+    const primaryServiceNumber =
+        survey.main_offer_id === COMBO_OFFER_ID ? survey.data_service_number : (survey.voice_service_number ?? survey.data_service_number);
 
     const handleBandwidthChange = (bandwidth: string, mode: 'upgrade' | 'downgrade') => {
         const serviceNumber = primaryServiceNumber as string;
@@ -456,19 +455,19 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
     };
 
     const primaryAction = getPrimaryAction();
-    const hasDropdownActions = canUpgradeDowngrade || canCancel || canTerminate;
 
     return (
         <>
-            <div className="flex items-center justify-end gap-2">
-                {/* Primary Action Button - Fixed width container for perfect alignment */}
-                <div className="flex min-w-[120px] justify-end">
+            <div className="flex items-center justify-center">
+                <ButtonGroup className="shadow-sm">
+                    {/* Primary Action Button */}
                     {primaryAction === 'activate' && (
                         <Button
                             onClick={onSubscribeClick}
                             disabled={loading || isSubmitting}
-                            className="group relative h-8 w-full gap-1.5 overflow-hidden px-3 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:opacity-90 hover:shadow-md disabled:opacity-50"
+                            variant="default"
                             size="sm"
+                            className="gap-1.5 px-3 text-xs font-medium"
                         >
                             {isSubmitting || createSubscriptionMutation.isPending ? (
                                 <>
@@ -477,17 +476,20 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                                 </>
                             ) : (
                                 <>
+                                    {/* <Zap className="h-3.5 w-3.5" /> */}
                                     <span>{t('buttons.activate_service')}</span>
                                 </>
                             )}
                         </Button>
                     )}
+
                     {primaryAction === 'pay' && (
                         <Button
                             onClick={() => navigateToDetails('payment')}
                             disabled={loading}
-                            className="group h-8 w-full gap-1.5 px-3 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:opacity-90 hover:shadow-md disabled:opacity-50"
+                            variant="default"
                             size="sm"
+                            className="gap-1.5 px-3 text-xs font-medium"
                         >
                             {loading ? (
                                 <>
@@ -495,106 +497,49 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                                     <span>{t('buttons.preparing')}</span>
                                 </>
                             ) : (
-                                <>
-                                    <span>{t('buttons.pay_now')}</span>
-                                </>
+                                <span>{t('buttons.pay_now')}</span>
                             )}
                         </Button>
                     )}
+
                     {primaryAction === 'continue' && (
                         <Button
                             onClick={handleContinueManual}
                             disabled={loading}
-                            className="group h-8 w-full gap-1.5 px-3 text-xs font-medium text-white shadow-sm transition-all duration-200 hover:opacity-90 hover:shadow-md disabled:opacity-50"
+                            variant="default"
                             size="sm"
+                            className="gap-1.5 px-3 text-xs font-medium"
                         >
-                            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
                             <span>{t('buttons.continue')}</span>
                         </Button>
                     )}
-                </div>
 
-                {/* View Detail Button - Fixed width for consistent alignment */}
-                <div className="flex w-[100px] justify-center">
+                    {/* Upgrade Button - shown directly when available */}
+                    {canUpgradeDowngrade && (
+                        <Button
+                            onClick={handleUpgrade}
+                            disabled={loading}
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 bg-white px-3 text-xs font-medium text-primary hover:bg-primary/10 hover:text-primary"
+                        >
+                            {/* <ArrowUpToLineIcon className="h-3.5 w-3.5" /> */}
+                            <span>{t('buttons.upgrade')}</span>
+                        </Button>
+                    )}
+
+                    {/* View Detail Button */}
                     <Button
-                        variant="ghost"
+                        variant={primaryAction || canUpgradeDowngrade ? 'outline' : 'default'}
                         size="sm"
                         onClick={() => handleRowClick(survey as SurveyRow)}
-                        className="h-8 gap-1.5 px-3 text-xs font-medium text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                        className={`gap-1.5 px-3 text-xs font-medium ${primaryAction || canUpgradeDowngrade ? 'bg-white hover:bg-slate-50' : ''}`}
                     >
-                        <Eye className="h-3.5 w-3.5" />
+                        {/* <Eye className="h-3.5 w-3.5" /> */}
                         <span>{t('buttons.view_detail')}</span>
                     </Button>
-                </div>
-
-                {/* Actions Dropdown Menu - Fixed width for alignment */}
-                <div className="flex w-8 justify-center">
-                    {hasDropdownActions ? (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0 text-slate-500 transition-all duration-200 hover:bg-slate-100 hover:text-slate-700 focus-visible:ring-1 focus-visible:ring-slate-300 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                                    disabled={loading}
-                                >
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreVertical className="h-4 w-4" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48 p-1">
-                                {/* Upgrade/Downgrade options */}
-                                {canUpgradeDowngrade && (
-                                    <>
-                                        <DropdownMenuItem
-                                            onClick={handleUpgrade}
-                                            className="flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
-                                        >
-                                            <ArrowUpToLineIcon className="h-4 w-4 text-emerald-600" />
-                                            <span>{t('buttons.upgrade')}</span>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            onClick={handleDowngrade}
-                                            className="flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
-                                        >
-                                            <ArrowDownToLineIcon className="h-4 w-4 text-amber-600" />
-                                            <span>{t('buttons.downgrade')}</span>
-                                        </DropdownMenuItem>
-                                    </>
-                                )}
-
-                                {/* Cancel/Terminate options */}
-                                {canCancel && (
-                                    <DropdownMenuItem
-                                        onClick={() => {
-                                            setIsTerminateAction(false);
-                                            setOpenCancelDialog(true);
-                                        }}
-                                        className="flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 focus:bg-red-50 focus:text-red-700 dark:text-red-400 dark:hover:bg-red-950/50 dark:focus:bg-red-950/50"
-                                    >
-                                        <X className="h-4 w-4" />
-                                        <span>{t('buttons.cancel_request')}</span>
-                                    </DropdownMenuItem>
-                                )}
-                                {canTerminate && (
-                                    <DropdownMenuItem
-                                        onClick={() => {
-                                            setIsTerminateAction(true);
-                                            setOpenCancelDialog(true);
-                                        }}
-                                        className="flex cursor-pointer items-center gap-2.5 rounded-md px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 focus:bg-red-50 focus:text-red-700 dark:text-red-400 dark:hover:bg-red-950/50 dark:focus:bg-red-950/50"
-                                    >
-                                        <X className="h-4 w-4" />
-                                        <span>{t('buttons.terminate_service')}</span>
-                                    </DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    ) : (
-                        /* Empty placeholder to maintain alignment when no dropdown actions */
-                        <div className="h-8 w-8" />
-                    )}
-                </div>
+                </ButtonGroup>
             </div>
 
             <CancelConfirmationDialog

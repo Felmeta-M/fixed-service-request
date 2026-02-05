@@ -29,8 +29,9 @@ return [
         // Public pages
         'home',
         'terms',
+        'complaint',
         'dashboard',
-        
+
         // Authentication (OTP-based)
         'otp.phone',
         'otp.send',
@@ -39,40 +40,40 @@ return [
         'login',
         'register',
         'logout',
-        
+
         // Password management
         'password.request',
         'password.email',
         'password.confirm',
         'password.update',
         'password.store',
-        
+
         // Email verification
         'verification.send',
-        
+
         // Services (main customer-facing)
         'services',
         'services.create',
         'services.show',
         'services.manual-create',
         'services.subscription-success',
-        
+
         // Complaints/TT
         'complaints',
         'complaints.index',
         'complaints.create',
         'complaints.show',
-        
+
         // Profile & Settings
         'profile',
         'profile.edit',
         'profile.update',
         'profile.destroy',
-        
+
         // Customer management
         'customers.create',
         'customers.store',
-        
+
         // Subscriber routes
         'subscribers.index',
         'subscribers.create',
@@ -81,7 +82,7 @@ return [
         'subscribers.edit',
         'subscribers.update',
         'subscribers.destroy',
-        
+
         // Survey requests
         'survey-requests.index',
         'survey-requests.create',
@@ -90,7 +91,7 @@ return [
         'survey-requests.edit',
         'survey-requests.update',
         'survey-requests.destroy',
-        
+
         // Resource checks
         'resource-checks.index',
         'resource-checks.create',
@@ -98,7 +99,7 @@ return [
         'resource-checks.show',
         'resource-checks.edit',
         'resource-checks.update',
-        
+
         // Payment
         'payment.summary',
         'payment.success',

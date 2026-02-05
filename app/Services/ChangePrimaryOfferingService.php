@@ -55,23 +55,11 @@ class ChangePrimaryOfferingService extends BaseApiService
             // Determine the correct service number for BSS API:
             // - Combo services: use data_service_number (the data/FBB line)
             // - Data/Voice services: use voice_service_number or data_service_number
-            $isComboService = (int) $surveyOrder->main_offer_id === OfferId::FixedCombo->value;
-            $surveyOrderServiceNumber = $isComboService
-                ? ($surveyOrder->data_service_number ?? $surveyOrder->voice_service_number)
-                : ($surveyOrder->voice_service_number ?? $surveyOrder->data_service_number);
-
-            AppLogger::api()->debug('Determined service number for change offer', [
-                'main_offer_id' => $surveyOrder->main_offer_id,
-                'is_combo_service' => $isComboService,
-                'voice_service_number' => $surveyOrder->voice_service_number,
-                'data_service_number' => $surveyOrder->data_service_number,
-                'used_service_number' => $surveyOrderServiceNumber,
-                'operation' => 'change_primary_offering',
-            ]);
+            $serviceNumber = $surveyOrder->data_service_number;
 
             if (!$this->isValidBandwidthOption($bandwidth)) {
                 AppLogger::api()->warning('Invalid bandwidth option provided for upgrade', [
-                    'service_number' => $surveyOrderServiceNumber,
+                    'service_number' => $serviceNumber,
                     'bandwidth' => $bandwidth,
                     'operation' => 'change_primary_offering',
                 ]);
@@ -84,14 +72,14 @@ class ChangePrimaryOfferingService extends BaseApiService
             }
 
             $data['object_id_type'] = self::OBJECT_TYPE_SUBSCRIBER;
-            $data['object_id'] = $surveyOrderServiceNumber; // data line for combo, else voice/data
+            $data['object_id'] = $serviceNumber; // data service number
             $data['old_offering_id'] = OfferId::FixedData->value;
             $data['new_offering_id'] = OfferId::FixedData->value;
             $data['bandwidth'] = $this->parseBandwidth($bandwidth);
 
             $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
-            $result = $this->parseResponse($xmlResponse, $surveyOrderServiceNumber);
+            $result = $this->parseResponse($xmlResponse, $serviceNumber);
 
             // Return the parsed result
             if (!$result['success']) {
@@ -120,20 +108,10 @@ class ChangePrimaryOfferingService extends BaseApiService
 
                 $surveyOrder->update($updateData);
 
-                AppLogger::api()->info('Survey order updated after upgrade/downgrade', [
-                    'service_number' => $surveyOrderServiceNumber,
-                    'new_bandwidth' => $bandwidth,
-                    'new_bandwidth_kb' => $bandwidthKb,
-                    'customer_survey_order_id' => $surveyOrder->customer_survey_order_id,
-                    'old_subscription_order_id' => $existingSubscriptionOrderId,
-                    'new_subscription_order_id' => $newOrderId,
-                    'subscription_order_updated' => $subscriptionOrderUpdated,
-                    'operation' => 'change_primary_offering',
-                ]);
             } catch (\Throwable $e) {
                 // Log the error but don't fail the request - the API change was successful
                 AppLogger::api()->exception($e, 'Failed to update local data after successful change', [
-                    'service_number' => $surveyOrderServiceNumber,
+                    'service_number' => $serviceNumber,
                     'new_bandwidth' => $bandwidth,
                     'new_bandwidth_kb' => $bandwidthKb,
                     'new_order_id' => $newOrderId,
@@ -152,7 +130,7 @@ class ChangePrimaryOfferingService extends BaseApiService
             ];
         } catch (RuntimeException $e) {
             AppLogger::api()->exception($e, 'Runtime exception in change primary offering', [
-                'service_number' => $surveyOrderServiceNumber,
+                'service_number' => $serviceNumber,
                 'bandwidth' => $bandwidth,
                 'operation' => 'change_primary_offering',
             ]);
@@ -163,7 +141,7 @@ class ChangePrimaryOfferingService extends BaseApiService
             ];
         } catch (\Throwable $e) {
             AppLogger::api()->exception($e, 'Unexpected error in change primary offering', [
-                'service_number' => $surveyOrderServiceNumber,
+                'service_number' => $serviceNumber,
                 'bandwidth' => $bandwidth,
                 'operation' => 'change_primary_offering',
             ]);
@@ -302,39 +280,6 @@ class ChangePrimaryOfferingService extends BaseApiService
 XML;
     }
 
-    /**
-     * Parse SOAP XML response.
-     * 
-     * Expected success response structure:
-     * <soapenv:Envelope>
-     *   <soapenv:Body>
-     *     <ser:ChangePrimaryOfferingRspMsg>
-     *       <ser:ResponseHeader>
-     *         <com:ResponseTime>20260114114315</com:ResponseTime>
-     *         <com:RetCode>0</com:RetCode>
-     *         <com:RetMsg>success</com:RetMsg>
-     *         <com:AdditionalProperty>
-     *           <com:Code>CustOrderId</com:Code>
-     *           <com:Value>20000455498250</com:Value>
-     *         </com:AdditionalProperty>
-     *       </ser:ResponseHeader>
-     *     </ser:ChangePrimaryOfferingRspMsg>
-     *   </soapenv:Body>
-     * </soapenv:Envelope>
-     * 
-     * Error response structure (e.g., pending order):
-     * <soapenv:Envelope>
-     *   <soapenv:Body>
-     *     <ser:ChangePrimaryOfferingRspMsg>
-     *       <ser:ResponseHeader>
-     *         <com:ResponseTime>20260116125509</com:ResponseTime>
-     *         <com:RetCode>1219000165</com:RetCode>
-     *         <com:RetMsg>Error! The subscriber has pending order@149504001</com:RetMsg>
-     *       </ser:ResponseHeader>
-     *     </ser:ChangePrimaryOfferingRspMsg>
-     *   </soapenv:Body>
-     * </soapenv:Envelope>
-     */
     protected function parseResponse(string $xml, string $objectId): array
     {
         try {

@@ -90,7 +90,7 @@ class AvailableDeviceSeeder extends Seeder
                 'price' => 1100.00,
                 'description' => 'Reliable fixed line telephone apparatus for home or office use. Features clear and stable voice calls with support for local, national, and international calls. Works with network line power.',
                 'is_active' => true,
-                'image_url' => '/devices/orpat-1010-phone.png',
+                'image_url' => '/devices/orpat-1010-phone.svg',
                 'stock_quantity' => 60,
                 'specifications' => [
                     'service_type' => 'Fixed line telephone service',

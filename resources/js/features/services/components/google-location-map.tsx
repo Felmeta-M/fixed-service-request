@@ -2,18 +2,18 @@ import { Button } from '@/components/ui/button';
 import { useGoogleMaps } from '@/contexts/google-maps-context';
 import { formatCoordinate } from '@/lib/coordinate-utils';
 import { reverseGeocode } from '@/lib/geocoding';
-import { GoogleMap, Circle } from '@react-google-maps/api';
+import { Circle, GoogleMap } from '@react-google-maps/api';
 import { Layers, Loader2, Navigation, Target } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { AutocompleteSearch } from './map-search';
 import {
     LocationAccuracy,
     LocationAccuracyBadge,
-    getAccuracyLevel,
     getAccuracyCircleOptions,
     getAccuracyConfig,
+    getAccuracyLevel,
 } from './location-accuracy-indicator';
+import { AutocompleteSearch } from './map-search';
 
 interface GoogleLocationMapProps {
     onLocationSelect: (lat: number, lng: number, address?: string, accuracy?: LocationAccuracy) => void;
@@ -54,7 +54,7 @@ export function GoogleLocationMap({
     onAutoDetectStateChange,
 }: GoogleLocationMapProps) {
     const { isLoaded, loadError } = useGoogleMaps();
-    
+
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [isMapReady, setIsMapReady] = useState(false);
     const [isGeocoding, setIsGeocoding] = useState(false);
@@ -66,14 +66,14 @@ export function GoogleLocationMap({
     const [detectionStatus, setDetectionStatus] = useState<string>('');
     const [, forceUpdate] = useState({});
     const [currentMapType, setCurrentMapType] = useState<google.maps.MapTypeId | string>('roadmap');
-    
+
     const markerRef = useRef<google.maps.Marker | null>(null);
     const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
     const hasInitialized = useRef(false);
     const coverageDataRef = useRef<google.maps.Data.Feature[]>([]);
     const watchIdRef = useRef<number | null>(null);
     const autoDetectTriggeredRef = useRef(false);
-    
+
     // Use refs for synchronous tracking (not affected by React's async state updates)
     const isInternalActionRef = useRef(false);
     const currentPositionRef = useRef<{ lat: number; lng: number } | null>(null);
@@ -179,7 +179,7 @@ export function GoogleLocationMap({
             if (showCoverageArea) {
                 loadCoverageArea(loadedMap);
             }
-            
+
             // Listen for map type changes to preserve user's selection
             loadedMap.addListener('maptypeid_changed', () => {
                 const newMapType = loadedMap.getMapTypeId();
@@ -212,14 +212,17 @@ export function GoogleLocationMap({
     }, [map]);
 
     // Simple pan without animation - just move directly
-    const panTo = useCallback((lat: number, lng: number, zoom: number = 16) => {
-        if (!map) return;
-        map.panTo({ lat, lng });
-        if (map.getZoom() !== zoom) {
-            map.setZoom(zoom);
-        }
-        currentPositionRef.current = { lat, lng };
-    }, [map]);
+    const panTo = useCallback(
+        (lat: number, lng: number, zoom: number = 16) => {
+            if (!map) return;
+            map.panTo({ lat, lng });
+            if (map.getZoom() !== zoom) {
+                map.setZoom(zoom);
+            }
+            currentPositionRef.current = { lat, lng };
+        },
+        [map],
+    );
 
     // Get address from coordinates
     const getAddressFromCoordinates = useCallback(async (lat: number, lng: number): Promise<string> => {
@@ -234,37 +237,92 @@ export function GoogleLocationMap({
     }, []);
 
     // Update or create marker at position
-    const placeMarker = useCallback((lat: number, lng: number, animate: boolean = true) => {
-        if (!map) return;
+    const placeMarker = useCallback(
+        (lat: number, lng: number, animate: boolean = true) => {
+            if (!map) return;
 
-        // Remove existing marker
-        if (markerRef.current) {
-            markerRef.current.setMap(null);
-            markerRef.current = null;
-        }
+            // Remove existing marker
+            if (markerRef.current) {
+                markerRef.current.setMap(null);
+                markerRef.current = null;
+            }
 
-        // Create new marker
-        markerRef.current = new google.maps.Marker({
-            position: { lat, lng },
-            map: map,
-            title: 'Selected Location',
-            draggable: true,
-            animation: animate ? google.maps.Animation.DROP : undefined,
-        });
+            // Create new marker
+            markerRef.current = new google.maps.Marker({
+                position: { lat, lng },
+                map: map,
+                title: 'Selected Location',
+                draggable: true,
+                animation: animate ? google.maps.Animation.DROP : undefined,
+            });
 
-        // Drag end handler
-        markerRef.current.addListener('dragend', async (event: google.maps.MapMouseEvent) => {
-            if (!event.latLng) return;
+            // Drag end handler
+            markerRef.current.addListener('dragend', async (event: google.maps.MapMouseEvent) => {
+                if (!event.latLng) return;
 
-            const newLat = parseFloat(event.latLng.lat().toFixed(6));
-            const newLng = parseFloat(event.latLng.lng().toFixed(6));
+                const newLat = parseFloat(event.latLng.lat().toFixed(6));
+                const newLng = parseFloat(event.latLng.lng().toFixed(6));
 
-            // Mark as internal action
+                // Mark as internal action
+                isInternalActionRef.current = true;
+                currentPositionRef.current = { lat: newLat, lng: newLng };
+
+                // Pan map to follow marker
+                panTo(newLat, newLng);
+
+                const accuracy: LocationAccuracy = {
+                    meters: 0,
+                    level: 'excellent',
+                    timestamp: Date.now(),
+                };
+                setLocationAccuracy(accuracy);
+
+                const address = await getAddressFromCoordinates(newLat, newLng);
+                onLocationSelect(newLat, newLng, address, accuracy);
+
+                // Reset flag after a delay
+                setTimeout(() => {
+                    isInternalActionRef.current = false;
+                }, 100);
+            });
+
+            // Click handler for info window
+            markerRef.current.addListener('click', () => {
+                if (infoWindowRef.current && markerRef.current) {
+                    const position = markerRef.current.getPosition();
+                    if (position) {
+                        infoWindowRef.current.setContent(`
+                        <div class="p-2 max-w-xs">
+                            <strong class="text-sm font-semibold">Selected Location</strong><br>
+                            <span class="text-xs">Lat: ${formatCoordinate(position.lat())}</span><br>
+                            <span class="text-xs">Lng: ${formatCoordinate(position.lng())}</span>
+                        </div>
+                    `);
+                        infoWindowRef.current.open(map, markerRef.current);
+                    }
+                }
+            });
+
+            currentPositionRef.current = { lat, lng };
+        },
+        [map, panTo, getAddressFromCoordinates, onLocationSelect],
+    );
+
+    // Handle map click
+    const onMapClick = useCallback(
+        async (event: google.maps.MapMouseEvent) => {
+            if (!event.latLng || !map) return;
+
+            const lat = parseFloat(event.latLng.lat().toFixed(6));
+            const lng = parseFloat(event.latLng.lng().toFixed(6));
+
+            // Mark as internal action IMMEDIATELY (synchronous)
             isInternalActionRef.current = true;
-            currentPositionRef.current = { lat: newLat, lng: newLng };
+            currentPositionRef.current = { lat, lng };
 
-            // Pan map to follow marker
-            panTo(newLat, newLng);
+            // Pan and place marker
+            panTo(lat, lng, 16);
+            placeMarker(lat, lng);
 
             const accuracy: LocationAccuracy = {
                 meters: 0,
@@ -273,88 +331,42 @@ export function GoogleLocationMap({
             };
             setLocationAccuracy(accuracy);
 
-            const address = await getAddressFromCoordinates(newLat, newLng);
-            onLocationSelect(newLat, newLng, address, accuracy);
+            // Get address and notify parent
+            const address = await getAddressFromCoordinates(lat, lng);
+            onLocationSelect(lat, lng, address, accuracy);
 
-            // Reset flag after a delay
+            // Reset flag after parent state has updated
             setTimeout(() => {
                 isInternalActionRef.current = false;
             }, 100);
-        });
-
-        // Click handler for info window
-        markerRef.current.addListener('click', () => {
-            if (infoWindowRef.current && markerRef.current) {
-                const position = markerRef.current.getPosition();
-                if (position) {
-                    infoWindowRef.current.setContent(`
-                        <div class="p-2 max-w-xs">
-                            <strong class="text-sm font-semibold">Selected Location</strong><br>
-                            <span class="text-xs">Lat: ${formatCoordinate(position.lat())}</span><br>
-                            <span class="text-xs">Lng: ${formatCoordinate(position.lng())}</span>
-                        </div>
-                    `);
-                    infoWindowRef.current.open(map, markerRef.current);
-                }
-            }
-        });
-
-        currentPositionRef.current = { lat, lng };
-    }, [map, panTo, getAddressFromCoordinates, onLocationSelect]);
-
-    // Handle map click
-    const onMapClick = useCallback(async (event: google.maps.MapMouseEvent) => {
-        if (!event.latLng || !map) return;
-
-        const lat = parseFloat(event.latLng.lat().toFixed(6));
-        const lng = parseFloat(event.latLng.lng().toFixed(6));
-
-        // Mark as internal action IMMEDIATELY (synchronous)
-        isInternalActionRef.current = true;
-        currentPositionRef.current = { lat, lng };
-
-        // Pan and place marker
-        panTo(lat, lng, 16);
-        placeMarker(lat, lng);
-
-        const accuracy: LocationAccuracy = {
-            meters: 0,
-            level: 'excellent',
-            timestamp: Date.now(),
-        };
-        setLocationAccuracy(accuracy);
-
-        // Get address and notify parent
-        const address = await getAddressFromCoordinates(lat, lng);
-        onLocationSelect(lat, lng, address, accuracy);
-
-        // Reset flag after parent state has updated
-        setTimeout(() => {
-            isInternalActionRef.current = false;
-        }, 100);
-    }, [map, panTo, placeMarker, getAddressFromCoordinates, onLocationSelect]);
+        },
+        [map, panTo, placeMarker, getAddressFromCoordinates, onLocationSelect],
+    );
 
     // Handle search selection
-    const handleSearchSelect = useCallback(async (lat: number, lng: number, address: string) => {
-        // Mark as internal action
-        isInternalActionRef.current = true;
-        currentPositionRef.current = { lat, lng };
+    const handleSearchSelect = useCallback(
+        async (lat: number, lng: number, address: string) => {
+            // Mark as internal action
+            isInternalActionRef.current = true;
+            currentPositionRef.current = { lat, lng };
 
-        panTo(lat, lng, 16);
-        placeMarker(lat, lng);
+            panTo(lat, lng, 16);
+            placeMarker(lat, lng);
 
-        const accuracy: LocationAccuracy = {
-            meters: 0,
-            level: 'excellent',
-            timestamp: Date.now(),
-        };
-        setLocationAccuracy(accuracy);
-        onLocationSelect(lat, lng, address, accuracy);
+            const accuracy: LocationAccuracy = {
+                meters: 0,
+                level: 'excellent',
+                timestamp: Date.now(),
+            };
+            setLocationAccuracy(accuracy);
+            onLocationSelect(lat, lng, address, accuracy);
 
-        setTimeout(() => {
-            isInternalActionRef.current = false;
-        }, 100);
-    }, [panTo, placeMarker, onLocationSelect]);
+            setTimeout(() => {
+                isInternalActionRef.current = false;
+            }, 100);
+        },
+        [panTo, placeMarker, onLocationSelect],
+    );
 
     // Watch for EXTERNAL selectedLocation changes only
     useEffect(() => {
@@ -410,7 +422,7 @@ export function GoogleLocationMap({
 
         setIsGettingLocation(true);
         setDetectionStatus('Requesting location permission...');
-        
+
         const toastId = toast.loading('Detecting your location...', {
             description: 'Please allow location access when prompted',
         });
@@ -429,10 +441,10 @@ export function GoogleLocationMap({
         const processPosition = async (position: GeolocationPosition) => {
             updateCount++;
             const { latitude, longitude, accuracy } = position.coords;
-            
+
             if (!bestPosition || accuracy < bestPosition.coords.accuracy) {
                 bestPosition = position;
-                
+
                 const lat = parseFloat(latitude.toFixed(6));
                 const lng = parseFloat(longitude.toFixed(6));
                 const accuracyMeters = Math.round(accuracy);
@@ -445,13 +457,13 @@ export function GoogleLocationMap({
                 };
 
                 setLocationAccuracy(locationAccuracyData);
-                setDetectionStatus(`Accuracy: ±${accuracyMeters}m${accuracyLevel !== 'excellent' && accuracyLevel !== 'good' ? ' (improving...)' : ''}`);
+                setDetectionStatus(
+                    `Accuracy: ±${accuracyMeters}m${accuracyLevel !== 'excellent' && accuracyLevel !== 'good' ? ' (improving...)' : ''}`,
+                );
 
                 toast.loading(`Location detected (±${accuracyMeters}m)`, {
                     id: toastId,
-                    description: accuracyLevel === 'excellent' || accuracyLevel === 'good' 
-                        ? 'Good accuracy achieved!' 
-                        : 'Improving accuracy...',
+                    description: accuracyLevel === 'excellent' || accuracyLevel === 'good' ? 'Good accuracy achieved!' : 'Improving accuracy...',
                 });
 
                 // Mark as internal action
@@ -526,11 +538,11 @@ export function GoogleLocationMap({
             }
         }, maxWaitTime);
 
-        watchIdRef.current = navigator.geolocation.watchPosition(
-            processPosition,
-            handleError,
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
+        watchIdRef.current = navigator.geolocation.watchPosition(processPosition, handleError, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+        });
     }, [map, panTo, placeMarker, getAddressFromCoordinates, onLocationSelect]);
 
     const isCurrentlyAnimating = isAnimating !== undefined ? isAnimating : internalAnimatingRef.current;
@@ -550,7 +562,7 @@ export function GoogleLocationMap({
             <div className="w-full space-y-2">
                 <div className="relative w-full overflow-hidden rounded-sm bg-gray-100" style={mapContainerStyle}>
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center px-4">
+                        <div className="px-4 text-center">
                             <p className="mb-2 text-sm font-medium text-red-600">Failed to load Google Maps</p>
                             <p className="text-xs text-gray-600">Please check your internet connection.</p>
                         </div>
@@ -579,7 +591,7 @@ export function GoogleLocationMap({
         <div className="w-full space-y-2">
             {/* Search Bar and Buttons */}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="flex-1 min-w-0 w-full">
+                <div className="w-full min-w-0 flex-1">
                     <AutocompleteSearch
                         onPlaceSelect={handleSearchSelect}
                         isLoading={isCurrentlyAnimating}
@@ -587,24 +599,23 @@ export function GoogleLocationMap({
                         disabled={!isMapReady}
                     />
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto sm:shrink-0">
+                <div className="flex w-full gap-2 sm:w-auto sm:shrink-0">
                     <Button
                         type="button"
                         onClick={getCurrentLocation}
                         disabled={isGettingLocation || isCurrentlyAnimating || !isMapReady}
                         size="sm"
-                        className="h-8 sm:h-9 flex-1 sm:flex-initial sm:shrink-0 text-xs sm:text-sm"
+                        className="h-8 flex-1 text-xs sm:h-9 sm:flex-initial sm:shrink-0 sm:text-sm"
                     >
                         {isGettingLocation ? (
                             <>
-                                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                                 <span>Detecting...</span>
                             </>
                         ) : (
                             <>
                                 <Navigation className="h-4 w-4 shrink-0 sm:mr-1" />
-                                <span className="hidden sm:inline">Get My Location</span>
-                                <span className="sm:hidden text-xs">Get Location</span>
+                                <span>Get My Location</span>
                             </>
                         )}
                     </Button>
@@ -615,11 +626,10 @@ export function GoogleLocationMap({
                             disabled={!isMapReady || !isCoverageLoaded}
                             size="sm"
                             variant={isCoverageVisible ? 'default' : 'outline'}
-                            className="h-8 sm:h-9 shrink-0 text-xs sm:text-sm"
+                            className="h-8 shrink-0 text-xs sm:h-9 sm:text-sm"
                         >
                             <Layers className="h-4 w-4 shrink-0 sm:mr-1" />
-                            <span className="hidden sm:inline">{isCoverageVisible ? 'Hide' : 'Show'} Coverage</span>
-                            <span className="sm:hidden text-xs">{isCoverageVisible ? 'Hide' : 'Show'}</span>
+                            <span>{isCoverageVisible ? 'Hide' : 'Show'} Fiber Coverage</span>
                         </Button>
                     )}
                 </div>
@@ -627,7 +637,7 @@ export function GoogleLocationMap({
 
             {/* Detection Status */}
             {isGettingLocation && detectionStatus && (
-                <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-blue-50 border border-blue-200">
+                <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-2 py-2">
                     <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
                     <span className="text-sm text-blue-700">{detectionStatus}</span>
                 </div>
@@ -639,9 +649,7 @@ export function GoogleLocationMap({
                     <div className="flex items-center gap-2">
                         <LocationAccuracyBadge accuracy={locationAccuracy} size="sm" />
                         {locationAccuracy.level !== 'excellent' && locationAccuracy.level !== 'good' && (
-                            <span className="text-xs text-muted-foreground">
-                                Click on map for precise selection
-                            </span>
+                            <span className="text-xs text-muted-foreground">Click on map for precise selection</span>
                         )}
                     </div>
                     {locationAccuracy.meters > 0 && (
@@ -652,7 +660,7 @@ export function GoogleLocationMap({
                             onClick={() => setShowAccuracyCircle(!showAccuracyCircle)}
                             className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
                         >
-                            <Target className="h-3 w-3 mr-1" />
+                            <Target className="mr-1 h-3 w-3" />
                             {showAccuracyCircle ? 'Hide' : 'Show'} radius
                         </Button>
                     )}
@@ -670,7 +678,7 @@ export function GoogleLocationMap({
                     </div>
                 )}
 
-                <div className="absolute top-2 left-2 right-2 z-10 rounded-sm bg-white/90 px-2 py-1.5 text-[10px] font-medium text-gray-700 backdrop-blur-sm sm:right-14 sm:left-auto sm:px-3 sm:py-2 sm:text-xs">
+                <div className="absolute top-2 right-2 left-2 z-10 rounded-sm bg-white/90 px-2 py-1.5 text-[10px] font-medium text-gray-700 backdrop-blur-sm sm:right-14 sm:left-auto sm:px-3 sm:py-2 sm:text-xs">
                     <span className="hidden sm:inline">📍 Click on map or drag marker to select location</span>
                     <span className="sm:hidden">📍 Click map or drag marker</span>
                 </div>

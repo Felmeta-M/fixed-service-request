@@ -237,7 +237,7 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
                 cell: ({ row }) => {
                     const survey = row.original;
                     return (
-                        <div className="flex items-center justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                             <SurveyActions survey={survey} onActionComplete={() => onSurveyUpdate?.()} onUpdatingChange={() => {}} />
                         </div>
                     );

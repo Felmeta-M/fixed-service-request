@@ -328,7 +328,7 @@ export default function CustomerDashboard() {
                                     <Link href="/services/create" className="flex-1 sm:flex-none">
                                         <Button size="sm" className="w-full bg-primary hover:bg-primary/90 sm:w-auto">
                                             <Plus className="h-4 w-4" />
-                                            <span className="ml-1.5">Add services</span>
+                                            <span>New Service</span>
                                         </Button>
                                     </Link>
                                 </div>

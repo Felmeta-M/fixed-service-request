@@ -1,10 +1,9 @@
 import { Button } from '@/components/ui/button';
-import { ButtonGroup } from '@/components/ui/button-group';
 import { useCancelSurveyOrder, useChangePrimaryOffering, useCreateSubscription, useDeleteSurveyOrder } from '@/hooks/use-api-mutations';
 import { useTranslation } from '@/hooks/use-translation';
 import { showErrorToast, showLoadingToast, showSuccessToast } from '@/lib/toast-helpers';
 import { router, usePage } from '@inertiajs/react';
-import { Loader2, Play } from 'lucide-react';
+import { ArrowUpToLineIcon, Eye, Loader2, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { BandwidthChangeDialog } from './bandwidth-change-dialog';
 import { CancelConfirmationDialog } from './cancel-confirmation-dialog';
@@ -458,88 +457,83 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
 
     return (
         <>
-            <div className="flex items-center justify-center">
-                <ButtonGroup className="shadow-sm">
-                    {/* Primary Action Button */}
-                    {primaryAction === 'activate' && (
-                        <Button
-                            onClick={onSubscribeClick}
-                            disabled={loading || isSubmitting}
-                            variant="default"
-                            size="sm"
-                            className="gap-1.5 px-3 text-xs font-medium"
-                        >
-                            {isSubmitting || createSubscriptionMutation.isPending ? (
-                                <>
-                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                    <span>{t('buttons.subscribing')}</span>
-                                </>
-                            ) : (
-                                <>
-                                    {/* <Zap className="h-3.5 w-3.5" /> */}
-                                    <span>{t('buttons.activate_service')}</span>
-                                </>
-                            )}
-                        </Button>
-                    )}
-
-                    {primaryAction === 'pay' && (
-                        <Button
-                            onClick={() => navigateToDetails('payment')}
-                            disabled={loading}
-                            variant="default"
-                            size="sm"
-                            className="gap-1.5 px-3 text-xs font-medium"
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                    <span>{t('buttons.preparing')}</span>
-                                </>
-                            ) : (
-                                <span>{t('buttons.pay_now')}</span>
-                            )}
-                        </Button>
-                    )}
-
-                    {primaryAction === 'continue' && (
-                        <Button
-                            onClick={handleContinueManual}
-                            disabled={loading}
-                            variant="default"
-                            size="sm"
-                            className="gap-1.5 px-3 text-xs font-medium"
-                        >
-                            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
-                            <span>{t('buttons.continue')}</span>
-                        </Button>
-                    )}
-
-                    {/* Upgrade Button - shown directly when available */}
-                    {canUpgradeDowngrade && (
-                        <Button
-                            onClick={handleUpgrade}
-                            disabled={loading}
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5 bg-white px-3 text-xs font-medium text-primary hover:bg-primary/10 hover:text-primary"
-                        >
-                            {/* <ArrowUpToLineIcon className="h-3.5 w-3.5" /> */}
-                            <span>{t('buttons.upgrade')}</span>
-                        </Button>
-                    )}
-
-                    {/* View Detail Button */}
+            <div className="flex items-center justify-end gap-2">
+                {/* Primary Action Button */}
+                {primaryAction === 'activate' && (
                     <Button
-                        variant={primaryAction || canUpgradeDowngrade ? 'outline' : 'default'}
+                        onClick={onSubscribeClick}
+                        disabled={loading || isSubmitting}
+                        variant="default"
                         size="sm"
-                        onClick={() => handleRowClick(survey as SurveyRow)}
-                        className={`gap-1.5 px-3 text-xs font-medium ${primaryAction || canUpgradeDowngrade ? 'bg-white hover:bg-slate-50' : ''}`}
+                        className="h-8 gap-1.5 rounded-md px-3 text-xs font-medium shadow-sm"
                     >
-                        {/* <Eye className="h-3.5 w-3.5" /> */}
-                        <span>{t('buttons.view_detail')}</span>
+                        {isSubmitting || createSubscriptionMutation.isPending ? (
+                            <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <span>{t('buttons.subscribing')}</span>
+                            </>
+                        ) : (
+                            <span>{t('buttons.activate_service')}</span>
+                        )}
                     </Button>
-                </ButtonGroup>
+                )}
+
+                {primaryAction === 'pay' && (
+                    <Button
+                        onClick={() => navigateToDetails('payment')}
+                        disabled={loading}
+                        variant="default"
+                        size="sm"
+                        className="h-8 gap-1.5 rounded-md px-3 text-xs font-medium shadow-sm"
+                    >
+                        {loading ? (
+                            <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <span>{t('buttons.preparing')}</span>
+                            </>
+                        ) : (
+                            <span>{t('buttons.pay_now')}</span>
+                        )}
+                    </Button>
+                )}
+
+                {primaryAction === 'continue' && (
+                    <Button
+                        onClick={handleContinueManual}
+                        disabled={loading}
+                        variant="default"
+                        size="sm"
+                        className="h-8 gap-1.5 rounded-md px-3 text-xs font-medium shadow-sm"
+                    >
+                        {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+                        <span>{t('buttons.continue')}</span>
+                    </Button>
+                )}
+
+                {/* Upgrade Button */}
+                {canUpgradeDowngrade && (
+                    <Button
+                        onClick={handleUpgrade}
+                        disabled={loading}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-1.5 rounded-md border-primary px-3 text-xs font-medium text-primary shadow-sm hover:opacity-90"
+                    >
+                        <ArrowUpToLineIcon className="h-3.5 w-3.5" />
+                        <span>{t('buttons.upgrade')}</span>
+                    </Button>
+                )}
+
+                {/* View Detail Button */}
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleRowClick(survey as SurveyRow)}
+                    className="h-8 gap-1.5 rounded-md border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 hover:text-slate-900"
+                >
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>{t('buttons.view_detail')}</span>
+                </Button>
             </div>
 
             <CancelConfirmationDialog

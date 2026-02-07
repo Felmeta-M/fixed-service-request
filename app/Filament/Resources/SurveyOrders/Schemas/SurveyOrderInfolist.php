@@ -179,10 +179,10 @@ class SurveyOrderInfolist
                             ->label('With Device')
                             ->boolean(),
                         TextEntry::make('device.item_code')
-                            ->label('Device Item Code')
+                            ->label('FBB Device Item Code')
                             ->placeholder('-'),
                         TextEntry::make('voiceDevice.item_code')
-                            ->label('Voice Device Item Code')
+                            ->label('Fixedline Voice Device Item Code')
                             ->placeholder('-'),
                         TextEntry::make('device_offer_id')
                             ->label('Device Offer')

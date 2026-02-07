@@ -15,6 +15,7 @@ class Dashboard extends BaseDashboard
     public function filtersForm(Schema $schema): Schema
     {
         return $schema
+            ->columns(1)
             ->components([
                 Section::make('Date range')
                     ->description('Filter survey order stats by date')

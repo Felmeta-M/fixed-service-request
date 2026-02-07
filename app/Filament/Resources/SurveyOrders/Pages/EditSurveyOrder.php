@@ -16,8 +16,16 @@ class EditSurveyOrder extends EditRecord
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $record = $this->record;
-        $data['device'] = ['item_code' => $record->device?->item_code];
-        $data['voiceDevice'] = ['item_code' => $record->voiceDevice?->item_code];
+        $data['device'] = [
+            'name' => $record->device?->name,
+            'item_code' => $record->device?->item_code,
+            'offer_id' => $record->device?->offer_id,
+        ];
+        $data['voiceDevice'] = [
+            'name' => $record->voiceDevice?->name,
+            'item_code' => $record->voiceDevice?->item_code,
+            'offer_id' => $record->voiceDevice?->offer_id,
+        ];
 
         return $data;
     }

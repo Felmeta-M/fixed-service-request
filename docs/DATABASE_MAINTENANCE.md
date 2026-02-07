@@ -114,8 +114,8 @@ Run health checks:
 
 ## Related Configuration
 
-- PostgreSQL configuration: `compose.yml` (postgres service)
-- Connection pooling: `pgbouncer.ini`
+- PostgreSQL configuration: `compose.yml` (postgres service; `max_connections=300` for 250 concurrent web users)
+- Connection pooling: `pgbouncer.ini` (pool sizes aligned to concurrent users—see `docs/SCALING_AND_OPERATIONS.md`)
 - Database credentials: `.env` file
 
 ## Troubleshooting

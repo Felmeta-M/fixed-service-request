@@ -172,21 +172,21 @@ class SurveyOrderForm
                     ->columnSpanFull()
                     ->columns(4)
                     ->collapsible()
-                    ->collapsed()
                     ->schema([
                         Toggle::make('with_device')
                             ->label('With Device')
                             ->inline(false)
                             ->disabled(),
-                        TextInput::make('device_id')
-                            ->label('Device ID')
+                        TextInput::make('device.item_code')
+                            ->label('Fixed Broadband Item Code')
                             ->disabled(),
-                        TextInput::make('device_voice_id')
-                            ->label('Voice Device ID')
+                        TextInput::make('voiceDevice.item_code')
+                            ->label('Fix  Voice Item Code')
                             ->disabled(),
                         TextInput::make('device_offer_id')
-                            ->label('Device Offer ID')
+                            ->label('Fixed Broadband Offer')
                             ->disabled(),
+
                     ]),
 
                 Section::make('Dates & Status')

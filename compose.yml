@@ -34,11 +34,11 @@ services:
     networks:
       - ffd_net
     # Cap resources so second app (bill complaints) on same host is not starved.
-    # Sized for ~200 concurrent PHP workers (~80MB each). Swarm enforces; otherwise size host for both apps.
+    # Sized for 250 concurrent PHP workers (~80MB each). Swarm enforces; otherwise size host for both apps.
     deploy:
       resources:
         limits:
-          memory: 16g
+          memory: 20g
           cpus: "6"
         reservations:
           memory: 4g
@@ -205,7 +205,7 @@ services:
       -c random_page_cost=1.1
       -c autovacuum_vacuum_scale_factor=0.05
       -c autovacuum_analyze_scale_factor=0.02
-      -c max_connections=200
+      -c max_connections=300
     logging:
       driver: "json-file"
       options:
@@ -240,7 +240,7 @@ services:
     restart: always
     ports:
       - "6363:6379"
-    command: redis-server --maxmemory 8gb --maxmemory-policy allkeys-lru --appendonly yes --appendfsync everysec
+    command: redis-server --maxmemory 6gb --maxmemory-policy allkeys-lru --appendonly yes --appendfsync everysec
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s

@@ -172,18 +172,20 @@ class SurveyOrderInfolist
 
                 Section::make('Device Information')
                     ->columnSpanFull()
-                    ->columns(3)
+                    ->columns(4)
                     ->collapsible()
-                    ->collapsed()
                     ->schema([
                         IconEntry::make('with_device')
                             ->label('With Device')
                             ->boolean(),
-                        TextEntry::make('device_id')
-                            ->label('Device ID')
+                        TextEntry::make('device.item_code')
+                            ->label('Device Item Code')
                             ->placeholder('-'),
-                        TextEntry::make('device_voice_id')
-                            ->label('Voice Device ID')
+                        TextEntry::make('voiceDevice.item_code')
+                            ->label('Voice Device Item Code')
+                            ->placeholder('-'),
+                        TextEntry::make('device_offer_id')
+                            ->label('Device Offer')
                             ->placeholder('-'),
                     ]),
 

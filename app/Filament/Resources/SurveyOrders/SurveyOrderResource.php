@@ -66,6 +66,7 @@ class SurveyOrderResource extends Resource
         return parent::getRecordRouteBindingEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with(['device', 'voiceDevice']);
     }
 }

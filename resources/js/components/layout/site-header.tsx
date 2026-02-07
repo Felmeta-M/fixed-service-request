@@ -31,15 +31,16 @@ export function SiteHeader({ title, subtitle, isServiceCreation = false, current
     return (
         <>
             <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b px-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) md:border-b-0">
-                <div className="flex w-full items-center gap-1 lg:gap-2 lg:px-6">
-                    <SidebarTrigger />
+                <div className="flex w-full items-center gap-1 lg:gap-2 lg:px-12">
+                    {/* Mobile: sidebar trigger */}
+                    <SidebarTrigger className="md:hidden" />
 
                     <Link
                         href={isServiceCreation ? '/services' : '/'}
-                        className="hidden items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 md:flex"
+                        className="hidden items-center gap-1 text-sm font-medium text-[#068BCC] text-primary hover:text-primary/80 md:flex"
                     >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back
+                        <ArrowLeft className="h-4 w-4 text-[#068BCC]" />
+                        <span className="text-[#068BCC]">Back</span>
                     </Link>
 
                     {isServiceCreation && (
@@ -50,7 +51,12 @@ export function SiteHeader({ title, subtitle, isServiceCreation = false, current
                         </Link>
                     )}
 
-                    <Separator orientation="vertical" className="data-[orientation=vertical]:h-4" />
+                    {/* Mobile: show title */}
+                    <div className="min-w-0 flex-1 md:hidden">
+                        <h1 className="truncate text-sm font-semibold capitalize">{title}</h1>
+                    </div>
+
+                    <Separator orientation="vertical" className="hidden data-[orientation=vertical]:h-4 md:block" />
                     <div className="hidden md:block">
                         <h1 className="text-base font-semibold capitalize">{title}</h1>
                         {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
@@ -62,7 +68,7 @@ export function SiteHeader({ title, subtitle, isServiceCreation = false, current
                                 Step {currentStep + 1} of {steps.length}
                             </div>
                         )}
-                        <Button variant="ghost" size="sm" className="h-8" onClick={handleLogout}>
+                        <Button variant="ghost" size="sm" className="h-8 md:hidden" onClick={handleLogout}>
                             <LogOut className="h-4 w-4" />
                             <span className="sr-only">Log out</span>
                         </Button>

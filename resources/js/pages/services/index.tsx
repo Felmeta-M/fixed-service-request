@@ -209,8 +209,8 @@ export default function CustomerDashboard() {
         return 'pending';
     }
 
-    const StatCard = ({ title, value, description, loading: isLoading }: any) => (
-        <Card className="overflow-hidden rounded-xl border border-primary bg-white py-4 shadow-none sm:py-8">
+    const StatCard = ({ title, value, description, loading: isLoading, borderColor = 'border-primary' }: any) => (
+        <Card className={cn('overflow-hidden rounded-xl border-2 bg-white py-4 shadow-none sm:py-8', borderColor)}>
             <CardContent className="px-3 pt-0 sm:px-5">
                 {isLoading ? (
                     <div className="space-y-2 sm:space-y-3">
@@ -276,10 +276,34 @@ export default function CustomerDashboard() {
 
                 {/* Stats Grid - 2x2 on mobile, 4 columns on large screens */}
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-                    <StatCard title="Total Services" value={dashboardStats.totalServices} description="All your service requests" loading={loading} />
-                    <StatCard title="Active Services" value={dashboardStats.activeServices} description="Currently in progress" loading={loading} />
-                    <StatCard title="Pending Requests" value={dashboardStats.pendingRequests} description="Awaiting action" loading={loading} />
-                    <StatCard title="Completed" value={dashboardStats.completedServices} description="Successfully delivered" loading={loading} />
+                    <StatCard
+                        title="Total Services"
+                        value={dashboardStats.totalServices}
+                        description="All your service requests"
+                        loading={loading}
+                        borderColor="border-et-green"
+                    />
+                    <StatCard
+                        title="Active Services"
+                        value={dashboardStats.activeServices}
+                        description="Currently in progress"
+                        loading={loading}
+                        borderColor="border-et-blue"
+                    />
+                    <StatCard
+                        title="Pending Requests"
+                        value={dashboardStats.pendingRequests}
+                        description="Awaiting action"
+                        loading={loading}
+                        borderColor="border-et-yellow"
+                    />
+                    <StatCard
+                        title="Completed"
+                        value={dashboardStats.completedServices}
+                        description="Successfully delivered"
+                        loading={loading}
+                        borderColor="border-primary"
+                    />
                 </div>
 
                 <div className="border-0 pl-0 shadow-none">

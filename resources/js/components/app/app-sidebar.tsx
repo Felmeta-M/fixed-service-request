@@ -182,7 +182,7 @@ export function AppSidebar({ currentStep = 0, mode = 'list', steps, ...props }: 
     const displayMode = mode === 'create' || url.startsWith('/services/create') ? 'create' : 'list';
 
     return (
-        <Sidebar collapsible="icon" className="h-screen border-r-0" {...props}>
+        <Sidebar collapsible="icon" className="h-screen" {...props}>
             <SidebarHeader className={cn('mb-2 rounded-br-xl border-r-2 border-b-2 border-primary py-4', state !== 'collapsed' && 'mr-2')}>
                 <LogoSwitcher />
             </SidebarHeader>

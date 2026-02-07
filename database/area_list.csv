@@ -1,35 +1,16 @@
 area_code,area_name,zone_name
-177,SWAAZ-Bus.Admin,SWAAZ
-179,NAAZ-Bus.Admin,NAAZ
-181,NAAZ-2-Bus.Admin,NAAZ
-183,SAAZ-Bus.Admin,SAAZ
-185,WAAZ-Bus.Admin,WAAZ
-187,EAAZ-Bus.Admin,EAAZ
-1981,South Western AA Zone,SWAAZ
-1988,KetenaHulet Paystation,SWAAZ
-2018,Northern AA Zone,NAAZ
-2043,Entoto Business Area,NAAZ
-2046,Northern AA Zone-2,NAAZ
-2050,ECA-Pay station,NAAZ
-2051,AU-Paystation,NAAZ
-2052,Southern AA Zone,SAAZ
-2057,Gofa Business Area,SAAZ
-2059,Gotera Paystation,SAAZ
-2060,Western AA Zone,WAAZ
-2086,Eastern AA Zone,EAAZ
-2092,London Cafa Business Area,EAAZ
-5263,SARBETSHOP,SWAAZ
-5267,SARBET SHOP,SWAAZ
-5268,NEW BOLE LONDON NOVIS SHOP,EAAZ
-5269,KIDESTE-MARIAM SHOP,NAAZ
-5270,NEW LEGEHAR SHOP,NAAZ
-5271,MESALEMIA SHOP,WAAZ
-5272,SARIS SHOP,SAAZ
-5296,Churchill residential Shop,NAAZ
-5313,GURD SHOLA SHOP,EAAZ
-5821,Sarbet 2,SWAAZ
-5955,Alembank Business Area,SWAAZ
-5962,Legetafo Business Area,EAAZ
-5965,Bole Millennium Business Area,EAAZ
-5966,Wolete Business Area,SWAAZ
-5970,Enqulal Fabrica Area,WAAZ
+1336,AwashMelka Business Area,CWR
+1343,Lemen Business Area,CWR
+1984,Sebeta Senior Area,CWR
+1998,Dilela Business Area,CWR
+1999,Teji Business Area,CWR
+2000,Tefki Business Area,CWR
+2001,Asgori Business Area,CWR
+2003,Woleti Business Area,CWR
+2004,Bantu Business Area,CWR
+2031,Lemi Business Area,CNR
+2034,Sululeta Business Area,CNR
+2058,DebreGelane Business Area,SER
+2066,Burayou Area,WAAZ
+2111,Legedade Paystation,EAAZ
+60040,Koye Feche,SAAZ

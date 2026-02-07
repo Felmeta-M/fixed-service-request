@@ -22,9 +22,22 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     Package: (props) => <ComboIcon className={props.className ?? 'h-6 w-6 sm:h-8 sm:w-8'} />,
 };
 
+// Auto flow: minimum 10 Mbps. Manual flow gets 7M default when continuing manually.
+const MIN_BANDWIDTH_MBPS_AUTO = 10;
+
 export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: ServiceSelectionStepProps) {
     const { residentialOptions, enterpriseOptions, loading: loadingBandwidths } = useBandwidthOptions();
     const { serviceTypes, loading: loadingServiceTypes } = useServiceTypes();
+
+    // Auto flow only allows 10M+; 7M is for manual (set when they continue manually)
+    const residentialOptionsFiltered = useMemo(
+        () => residentialOptions.filter((o) => o.numericValue >= MIN_BANDWIDTH_MBPS_AUTO),
+        [residentialOptions],
+    );
+    const enterpriseOptionsFiltered = useMemo(
+        () => enterpriseOptions.filter((o) => o.numericValue >= MIN_BANDWIDTH_MBPS_AUTO),
+        [enterpriseOptions],
+    );
 
     // Transform service types for rendering
     const transformedServiceTypes = useMemo(() => {
@@ -136,8 +149,8 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                 <div className="mt-4 duration-500 animate-in fade-in fill-mode-forwards slide-in-from-top-4">
                     {/* <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8"> */}
                     <BandwidthSelector
-                        residentialOptions={residentialOptions}
-                        enterpriseOptions={enterpriseOptions}
+                        residentialOptions={residentialOptionsFiltered}
+                        enterpriseOptions={enterpriseOptionsFiltered}
                         loading={loadingBandwidths}
                         selectedBandwidth={formData.bandwidth}
                         onBandwidthChange={handleBandwidthChange}

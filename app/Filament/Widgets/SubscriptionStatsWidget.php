@@ -9,15 +9,15 @@ use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Builder;
 
-class SurveyOrderStatsWidget extends BaseWidget
+class SubscriptionStatsWidget extends BaseWidget
 {
     use InteractsWithPageFilters;
 
-    protected static ?int $sort = 1;
+    protected static ?int $sort = 2;
 
-    protected ?string $heading = 'Survey Orders';
+    protected ?string $heading = 'Subscriptions';
 
-    protected ?string $description = 'Survey phase — orders awaiting survey completion';
+    protected ?string $description = 'Subscription phase — orders that entered service activation';
 
     protected ?string $pollingInterval = null;
 
@@ -26,43 +26,38 @@ class SurveyOrderStatsWidget extends BaseWidget
         $dateFrom = $this->pageFilters['date_from'] ?? null;
         $dateTo = $this->pageFilters['date_to'] ?? null;
 
-        // Survey-phase: orders that have NOT yet entered subscription
+        // Subscription-phase: orders that HAVE a subscription order ID
         $query = SurveyOrder::query()
-            ->whereNull('customer_subscription_order_id')
+            ->whereNotNull('customer_subscription_order_id')
             ->when($dateFrom, fn (Builder $q) => $q->whereDate('created_at', '>=', $dateFrom))
             ->when($dateTo, fn (Builder $q) => $q->whereDate('created_at', '<=', $dateTo));
 
         $total = (clone $query)->count();
 
-        $created = (clone $query)->where('status', FFDServiceProvisionStatus::Created)->count();
+        $waiting = (clone $query)->where('status', FFDServiceProvisionStatus::Waiting)->count();
+
+        $completed = (clone $query)->where('status', FFDServiceProvisionStatus::Completed)->count();
 
         $processing = (clone $query)->where('status', FFDServiceProvisionStatus::Processing)->count();
-
-        $surveyCompleted = (clone $query)->where('status', FFDServiceProvisionStatus::Completed)->count();
-
-        $waiting = (clone $query)->where('status', FFDServiceProvisionStatus::Waiting)->count();
 
         $failed = (clone $query)->where('status', FFDServiceProvisionStatus::Failed)->count();
 
         $cancelled = (clone $query)->where('status', FFDServiceProvisionStatus::Cancelled)->count();
 
         return [
-            Stat::make('Total Surveys', $total)
-                ->description('Pre-subscription phase'),
-            Stat::make('Created', $created)
-                ->description('Newly created')
-                ->color('gray'),
-            Stat::make('Processing', $processing)
-                ->description('Survey in progress')
-                ->color('info'),
-            Stat::make('Survey Completed', $surveyCompleted)
-                ->description('Awaiting payment / subscription')
+            Stat::make('Total Subscribed', $total)
+                ->description('Entered subscription'),
+            Stat::make('Completed', $completed)
+                ->description('Service activated')
                 ->color('success'),
             Stat::make('Waiting', $waiting)
-                ->description('Waiting survey result')
+                ->description('Activation pending')
                 ->color('warning'),
+            Stat::make('Processing', $processing)
+                ->description('Being provisioned')
+                ->color('info'),
             Stat::make('Failed', $failed)
-                ->description('Survey failed')
+                ->description('Activation failed')
                 ->color('danger'),
             Stat::make('Cancelled', $cancelled)
                 ->description('Cancelled')

@@ -289,6 +289,10 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                             nextStep();
                         }}
                         onContinueManually={() => {
+                            // Default bandwidth to 7M for manual surveys if not already set
+                            if (!formData.bandwidth) {
+                                updateFormData({ bandwidth: '7M', bandwidthNumericValue: 7, customerType: 'residential' });
+                            }
                             setShowManualStep(true);
                         }}
                         hasSeenResourceDialog={hasSeenResourceDialog}

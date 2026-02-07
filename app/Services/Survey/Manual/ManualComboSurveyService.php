@@ -62,6 +62,7 @@ class ManualComboSurveyService extends BaseManualSurveyService
                 <com:SurveyType>{$data['survey_type']}</com:SurveyType>
                 <com:TelecomRegion>{$ctx['telecom_region']}</com:TelecomRegion>
                 <com:OperType>{$ctx['oper_type']}</com:OperType>
+                <com:IsCombo>1</com:IsCombo>
                 <com:MainOfferId>{$this->mainOfferId()}</com:MainOfferId>
 
                 <com:SurveyAddressInfo>

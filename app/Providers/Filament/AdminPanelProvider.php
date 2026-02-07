@@ -8,9 +8,15 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use App\Filament\Pages\Auth\Login as AuthLogin;
+use App\Filament\Pages\ChangePassword;
 use App\Filament\Pages\Dashboard;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use App\Filament\Widgets\PaymentStatsWidget;
+use App\Filament\Widgets\ServiceTypeStatsWidget;
+use App\Filament\Widgets\SubscriptionStatsWidget;
+use App\Filament\Widgets\SurveyModeStatsWidget;
 use App\Filament\Widgets\SurveyOrderStatsWidget;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
@@ -29,20 +35,36 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('ffd')
-            ->login()
+            ->login(AuthLogin::class)
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Lime,
+                'secondary' => Color::Emerald,
+                'accent' => Color::Sky,
+                'destructive' => Color::Red,
+                'success' => Color::Green,
+                'warning' => Color::Yellow,
+                'info' => Color::Blue,
+                'gray' => Color::Gray,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
+                ChangePassword::class,
+            ])
+            ->userMenuItems([
+                \Filament\Navigation\MenuItem::make()
+                    ->label(__('auth.change_password'))
+                    ->url(fn (): string => ChangePassword::getUrl())
+                    ->icon('heroicon-o-key'),
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 SurveyOrderStatsWidget::class,
-                // AccountWidget::class,
-                // FilamentInfoWidget::class,
+                SubscriptionStatsWidget::class,
+                PaymentStatsWidget::class,
+                ServiceTypeStatsWidget::class,
+                SurveyModeStatsWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

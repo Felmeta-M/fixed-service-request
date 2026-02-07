@@ -76,7 +76,6 @@ pint.json
 # Database dumps and large data (use volumes)
 *.sql
 *.gz
-/database/*.csv
 
 # Compose and Docker meta (not needed inside image)
 docker-compose*.yml

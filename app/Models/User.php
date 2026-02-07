@@ -27,6 +27,7 @@ class User extends Authenticatable implements FilamentUser
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
     ];
 
@@ -64,6 +65,28 @@ class User extends Authenticatable implements FilamentUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Normalize phone for storage and login: trim, digits only, last 9 digits, prefix 251.
+     * e.g. " 0912345678 ", "251912345678", "912345678" → 251912345678
+     */
+    public static function normalizePhone(?string $value): ?string
+    {
+        if (blank($value)) {
+            return null;
+        }
+        $digits = preg_replace('/\D/', '', trim($value));
+        if ($digits === '') {
+            return null;
+        }
+        $lastNine = strlen($digits) >= 9 ? substr($digits, -9) : $digits;
+        return $lastNine;
+    }
+
+    public function setPhoneAttribute(?string $value): void
+    {
+        $this->attributes['phone'] = self::normalizePhone($value);
     }
 
     public function canAccessPanel(Panel $panel): bool

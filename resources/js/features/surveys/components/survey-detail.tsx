@@ -177,7 +177,8 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
     const canPay = surveyDetails?.can_pay ?? false;
     const canSubscribe = surveyDetails?.can_subscribe ?? false;
     const canChangeOffer = surveyDetails?.can_change_offer ?? false;
-    const canCancel = surveyDetails?.can_cancel ?? false;
+    // Cancel button disabled on frontend per product requirement
+    const canCancel = false;
     const canTerminate = surveyDetails?.can_terminate ?? false;
     const isInternetOrCombo = surveyDetails?.main_offer_id === INTERNET_OFFER_ID || surveyDetails?.main_offer_id === COMBO_OFFER_ID;
     const canUpgradeDowngrade = canChangeOffer && isInternetOrCombo;

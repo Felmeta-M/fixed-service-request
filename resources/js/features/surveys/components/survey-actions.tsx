@@ -505,8 +505,14 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                         size="sm"
                         className="h-8 gap-1.5 rounded-md px-3 text-xs font-medium shadow-sm"
                     >
-                        {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
-                        <span>{t('buttons.continue')}</span>
+                        {loading ? (
+                            <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <span>{t('buttons.continuing')}</span>
+                            </>
+                        ) : (
+                            <span>{t('buttons.continue')}</span>
+                        )}
                     </Button>
                 )}
 

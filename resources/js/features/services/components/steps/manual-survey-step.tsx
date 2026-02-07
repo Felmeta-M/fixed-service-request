@@ -3,7 +3,7 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateSurvey, useGetCustomer } from '@/hooks/use-api-mutations';
-import { formatBandwidthLabel } from '@/hooks/use-bandwidth-options';
+import { formatBandwidthLabel, useBandwidthOptions } from '@/hooks/use-bandwidth-options';
 import { useRegions, useTelecomRegionsByZone, useWoredas, useZones } from '@/hooks/use-regions';
 import { router, usePage } from '@inertiajs/react';
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, MapPin } from 'lucide-react';
@@ -81,6 +81,13 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
     const [selectedTelecomRegion, setSelectedTelecomRegion] = useState('');
 
     const createSurveyMutation = useCreateSurvey();
+    const { residentialOptions, loading: loadingBandwidths } = useBandwidthOptions();
+
+    // Sort ascending; manual surveys allow all options (including 7M)
+    const sortedBandwidthOptions = useMemo(
+        () => [...residentialOptions].sort((a, b) => a.numericValue - b.numericValue),
+        [residentialOptions],
+    );
 
     // Fetch customer data to get address information for fallback
     const { data: customerData, isLoading: isLoadingCustomer } = useGetCustomer((user as AuthUser)?.customer_sub_id);
@@ -192,6 +199,13 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
         e.preventDefault();
         setManualFlowErrors({});
         setSubmitting(true);
+
+        // Validate bandwidth for Data/Combo (not Voice)
+        if (formData.serviceType !== '1207609454' && !formData.bandwidth) {
+            setManualFlowErrors({ bandwidth: 'Please select a bandwidth' });
+            setSubmitting(false);
+            return;
+        }
 
         // Validate phone number
         const phoneError = validatePhoneNumber(manualFlowData.phone);
@@ -412,15 +426,44 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 </Field>
                             )}
 
-                            {formData.bandwidth && (
+                            {/* Bandwidth selector — all options including 7M for manual surveys */}
+                            {formData.serviceType !== '1207609454' && (
                                 <Field>
-                                    <FieldLabel>Bandwidth</FieldLabel>
-                                    <Input
-                                        type="text"
-                                        value={formData.bandwidth ? formatBandwidthLabel(formData.bandwidth) : ''}
-                                        disabled
-                                        className="bg-gray-50"
-                                    />
+                                    <FieldLabel>
+                                        Bandwidth <span className="text-red-500">*</span>
+                                    </FieldLabel>
+                                    <Select
+                                        value={formData.bandwidth || ''}
+                                        onValueChange={(value) => {
+                                            const selected = sortedBandwidthOptions.find((o) => o.value === value);
+                                            if (onUpdate && selected) {
+                                                onUpdate({
+                                                    bandwidth: value,
+                                                    bandwidthNumericValue: selected.numericValue,
+                                                });
+                                            }
+                                        }}
+                                        disabled={submitting || loadingBandwidths}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue
+                                                placeholder={loadingBandwidths ? 'Loading...' : 'Select bandwidth'}
+                                            />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {sortedBandwidthOptions.map((opt) => (
+                                                <SelectItem key={opt.value} value={opt.value}>
+                                                    {opt.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {manualFlowErrors.bandwidth && (
+                                        <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
+                                            <AlertCircle className="h-4 w-4" />
+                                            {manualFlowErrors.bandwidth}
+                                        </p>
+                                    )}
                                 </Field>
                             )}
 

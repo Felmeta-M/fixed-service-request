@@ -15,6 +15,16 @@ class BandwidthOptionsTable
     {
         return $table
             ->columns([
+                TextColumn::make('residential_options')
+                    ->label('Residential Options')
+                    ->formatStateUsing(fn($state) => is_array($state) ? implode(', ', $state) : $state)
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('enterprise_options')
+                    ->label('Enterprise Options')
+                    ->formatStateUsing(fn($state) => is_array($state) ? implode(', ', $state) : $state)
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

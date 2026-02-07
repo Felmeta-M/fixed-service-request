@@ -81,7 +81,9 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
             const matchesGlobal = globalFilter
                 ? s.customer_survey_order_id?.toString().includes(globalFilter) ||
                   offerId.includes(globalFilter) ||
-                  statusLabel.toLowerCase().includes(globalFilter.toLowerCase())
+                  statusLabel.toLowerCase().includes(globalFilter.toLowerCase()) ||
+                  (s.voice_service_number && String(s.voice_service_number).includes(globalFilter)) ||
+                  (s.data_service_number && String(s.data_service_number).includes(globalFilter))
                 : true;
             return matchesType && matchesStatus && matchesGlobal;
         });

@@ -10,13 +10,25 @@ interface MainLayoutProps {
     children: ReactNode;
     currentStep?: number;
     isNewCustomer?: boolean;
+    headerTitle?: string;
+    headerSubtitle?: string;
 }
 
 const getHeader = (url: string) => {
     return url.split('/')[1].toLowerCase();
 };
 
-export default function MainLayout({ children, currentStep = 0, isNewCustomer = false }: MainLayoutProps) {
+const STEP_TITLES = [
+    { title: 'Service Information', subtitle: 'Choose your service type and configuration' },
+    { title: 'Location Information', subtitle: 'Select installation location and check availability' },
+    { title: 'Device Information', subtitle: 'Choose your device option' },
+    { title: 'Review & Submit', subtitle: 'Verify details and submit your request' },
+    { title: 'Payment / Subscribe', subtitle: 'Review charges and proceed to pay or subscribe' },
+];
+
+const NEW_CUSTOMER_STEP_TITLES = [{ title: 'Customer Information', subtitle: 'Create your customer profile' }, ...STEP_TITLES];
+
+export default function MainLayout({ children, currentStep = 0, isNewCustomer = false, headerTitle, headerSubtitle }: MainLayoutProps) {
     const page = usePage();
     const headerSegment = getHeader(page.url);
 
@@ -32,6 +44,13 @@ export default function MainLayout({ children, currentStep = 0, isNewCustomer = 
         { name: 'Payment / Subscribe', icon: CreditCard },
     ];
 
+    const stepTitles = isNewCustomer ? NEW_CUSTOMER_STEP_TITLES : STEP_TITLES;
+    const currentStepInfo = stepTitles[currentStep];
+
+    // Determine header title and subtitle
+    const resolvedTitle = headerTitle ?? (isServiceCreation ? (currentStepInfo?.title ?? 'Create New Service') : headerSegment);
+    const resolvedSubtitle = headerSubtitle ?? (isServiceCreation ? (currentStepInfo?.subtitle ?? '') : undefined);
+
     return (
         <SidebarProvider
             className="overflow-x-hidden"
@@ -44,16 +63,21 @@ export default function MainLayout({ children, currentStep = 0, isNewCustomer = 
         >
             <AppSidebar currentStep={currentStep} mode={isServiceCreation ? 'create' : 'list'} steps={steps} />
             <SidebarInset className="overflow-x-hidden">
-                <div className="md:hidden">
+                {/* Header: green top + bottom lines on desktop, py-4 matches sidebar header padding, mb-2 matches sidebar gap */}
+                <div className="md:mb-2 md:rounded-bl-xl md:border-b-2 md:border-l-2 md:border-primary md:py-4">
                     <SiteHeader
-                        title={isServiceCreation ? 'Create new service' : headerSegment}
+                        title={resolvedTitle}
+                        subtitle={resolvedSubtitle}
                         isServiceCreation={isServiceCreation}
                         currentStep={currentStep}
                         steps={steps}
                     />
                 </div>
-                <main className="flex max-w-full flex-1 flex-col overflow-x-hidden py-2">{children}</main>
-                <Toaster position="top-center" />
+                {/* Body: top border to match sidebar content border, no right/bottom borders */}
+                <main className="flex max-w-full flex-1 flex-col overflow-x-hidden py-2 md:rounded-tl-xl md:border-t-2 md:border-l-2 md:border-primary">
+                    {children}
+                </main>
+                <Toaster position="top-right" />
             </SidebarInset>
         </SidebarProvider>
     );

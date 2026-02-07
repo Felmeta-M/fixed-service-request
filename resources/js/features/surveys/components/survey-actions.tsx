@@ -519,7 +519,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                         size="sm"
                         className="h-8 gap-1.5 rounded-md border-primary px-3 text-xs font-medium text-primary shadow-sm hover:opacity-90"
                     >
-                        <ArrowUpToLineIcon className="h-3.5 w-3.5" />
+                        {/* <ArrowUpToLineIcon className="h-3.5 w-3.5" /> */}
                         <span>{t('buttons.upgrade')}</span>
                     </Button>
                 )}
@@ -531,7 +531,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                     onClick={() => handleRowClick(survey as SurveyRow)}
                     className="h-8 gap-1.5 rounded-md border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 hover:text-slate-900"
                 >
-                    <Eye className="h-3.5 w-3.5" />
+                    {/* <Eye className="h-3.5 w-3.5" /> */}
                     <span>{t('buttons.view_detail')}</span>
                 </Button>
             </div>

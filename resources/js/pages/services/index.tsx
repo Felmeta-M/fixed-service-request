@@ -264,10 +264,10 @@ export default function CustomerDashboard() {
     const firstName = auth.user?.name ? auth.user.name.split(' ')[0] : '';
 
     return (
-        <MainLayout>
+        <MainLayout headerSubtitle="Managing your service requests.">
             <div className="w-full max-w-full space-y-6 overflow-x-hidden px-4 py-2 lg:px-6">
-                {/* Header Section */}
-                <div className="flex min-w-0 flex-col justify-between gap-4 lg:flex-row lg:items-center">
+                {/* Header Section - only on mobile, desktop uses SiteHeader */}
+                <div className="flex min-w-0 flex-col justify-between gap-4 md:hidden lg:flex-row lg:items-center">
                     <div className="min-w-0">
                         <h1 className="text-2xl font-bold tracking-tight">Services</h1>
                         <p className="text-muted-foreground">{loading ? 'Loading your services...' : `Managing your service requests.`}</p>
@@ -328,7 +328,7 @@ export default function CustomerDashboard() {
                                     <Link href="/services/create" className="flex-1 sm:flex-none">
                                         <Button size="sm" className="w-full bg-primary hover:bg-primary/90 sm:w-auto">
                                             <Plus className="h-4 w-4" />
-                                            <span>New Service</span>
+                                            <span>New Service Request</span>
                                         </Button>
                                     </Link>
                                 </div>

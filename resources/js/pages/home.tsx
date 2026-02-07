@@ -8,12 +8,15 @@ import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import advancedGamingCard from '../images/advanced-gaming.svg';
+import basicInternetCard from '../images/basic-internet-and-communication.svg';
 import costEffectivePackages from '../images/cost-effective-packages.png';
+import entertainmentCard from '../images/entertainment-and-streaming.svg';
 import heroBgImage from '../images/hero-bg.png';
-import multipleSpeedOptions from '../images/multiple-speed-options.png';
+import multipleSpeedOptions from '../images/multiple-speed-options.svg';
 import singleBilling from '../images/single-billing.png';
-import technicalSupport from '../images/technical-support.png';
-import unlimitedData from '../images/unlimited-data.png';
+import technicalSupport from '../images/technical-support.svg';
+import unlimitedData from '../images/unlimited-data.svg';
 import voiceInternetBundle from '../images/voice-internet-bundle.png';
 
 interface HomePageProps {
@@ -494,6 +497,46 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </section>
+
+                        {/* PACKAGES SECTION */}
+                        <section className="relative px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
+                            <div className="relative z-10 mx-auto max-w-screen-2xl space-y-6">
+                                <h3 className="text-center text-xl font-semibold text-primary sm:mb-4 sm:text-2xl lg:text-4xl">
+                                    {t('home.packages.title')}
+                                </h3>
+                                {/* <p className="mx-auto mb-8 max-w-2xl text-center text-sm text-gray-600 sm:mb-12 sm:text-base">
+                                    {t('home.packages.subtitle')}
+                                </p> */}
+
+                                <div className="mt-14 grid grid-cols-1 gap-6 sm:mt-20 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+                                    {[
+                                        { image: basicInternetCard, titleKey: 'home.packages.basic.title' },
+                                        { image: entertainmentCard, titleKey: 'home.packages.entertainment.title' },
+                                        { image: advancedGamingCard, titleKey: 'home.packages.advanced.title' },
+                                    ].map((pkg, index) => (
+                                        <div key={index} className="group flex justify-center transition-transform duration-300 hover:-translate-y-2">
+                                            <img
+                                                src={pkg.image}
+                                                alt={t(pkg.titleKey)}
+                                                className="h-auto w-full max-w-[315px] rounded-2xl shadow-lg transition-shadow duration-300 group-hover:shadow-xl"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* <div className="mt-8 flex justify-center sm:mt-12">
+                                    <Link href={auth?.user ? route('services') : route('otp.phone')}>
+                                        <Button
+                                            size="lg"
+                                            className="bg-primary px-6 py-4 text-base font-semibold text-white shadow-lg transition hover:opacity-90 sm:px-8 sm:py-6 sm:text-lg"
+                                        >
+                                            {t('home.packages.cta')}
+                                            <ArrowRight className="ml-2 h-5 w-5" />
+                                        </Button>
+                                    </Link>
+                                </div> */}
                             </div>
                         </section>
 

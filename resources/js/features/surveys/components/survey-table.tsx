@@ -4,16 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getStatusInfo } from '@/lib/status-map';
 import { router } from '@inertiajs/react';
-import {
-    ColumnDef,
-    SortingState,
-    flexRender,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    useReactTable,
-} from '@tanstack/react-table';
+import { ColumnDef, SortingState, flexRender, getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table';
 import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileText, Phone, RefreshCw } from 'lucide-react';
 import * as React from 'react';
 import SurveyActions from './survey-actions';
@@ -255,14 +246,12 @@ export default function SurveyTable({ surveys, loading, onSurveyUpdate, globalFi
         state: {
             sorting,
             rowSelection,
-            globalFilter,
             pagination,
         },
         onSortingChange: setSorting,
         onRowSelectionChange: setRowSelection,
         onPaginationChange: setPagination,
         getCoreRowModel: getCoreRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
     });

@@ -17,7 +17,7 @@ import multipleSpeedOptions from '../images/multiple-speed-options.svg';
 import singleBilling from '../images/single-billing.png';
 import technicalSupport from '../images/technical-support.svg';
 import unlimitedData from '../images/unlimited-data.svg';
-import voiceInternetBundle from '../images/voice-internet-bundle.png';
+import voiceInternetBundle from '../images/voice-internet-bundle.svg';
 
 interface HomePageProps {
     googleMapsApiKey: string;

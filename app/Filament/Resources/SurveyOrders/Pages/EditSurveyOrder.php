@@ -13,6 +13,15 @@ class EditSurveyOrder extends EditRecord
 {
     protected static string $resource = SurveyOrderResource::class;
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $record = $this->record;
+        $data['device'] = ['item_code' => $record->device?->item_code];
+        $data['voiceDevice'] = ['item_code' => $record->voiceDevice?->item_code];
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

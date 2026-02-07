@@ -177,11 +177,17 @@ class SurveyOrderForm
                             ->label('With Device')
                             ->inline(false)
                             ->disabled(),
+                        TextInput::make('device.name')
+                            ->label('Fixed Broadband Device Name')
+                            ->disabled(),
                         TextInput::make('device.item_code')
                             ->label('Fixed Broadband Item Code')
                             ->disabled(),
                         TextInput::make('voiceDevice.item_code')
-                            ->label('Fix  Voice Item Code')
+                            ->label('Fixedline Voice Item Code')
+                            ->disabled(),
+                        TextInput::make('voiceDevice.name')
+                            ->label('Fixedline Voice Device Name')
                             ->disabled(),
                         TextInput::make('device_offer_id')
                             ->label('Fixed Broadband Offer')

@@ -64,7 +64,7 @@ class SurveyOrderFormRequest extends FormRequest
             'customer_type' => 'nullable|string',                        // Default: 'residential'
             'telecom_region' => 'nullable|string',                       // Default: from resource area_code
             'oper_type' => 'nullable|string|in:A,M',                     // Default: 'A' (new)
-            'bandwidth' => 'nullable|string',                            // Auto: min 10M; manual: min 7M
+            'bandwidth' => 'required|string|filled',                     // Required: Minimum 7M for all surveys
             'contact_person' => 'nullable|string',                       // Default: from customer profile
             'contact_no' => ['nullable', 'regex:/^(\+251|251|0)?(9)\d{8}$/'], // Default: from customer
             'contact_email' => 'nullable|email',                         // Default: from customer
@@ -86,26 +86,29 @@ class SurveyOrderFormRequest extends FormRequest
     }
 
     /**
-     * Auto surveys (non-manual): minimum bandwidth 10 Mbps for Data/Combo.
-     * Manual surveys: minimum 7 Mbps (validated in ManualSurveyOrderRequest / default 7M).
+     * Minimum bandwidth 7 Mbps for all survey orders.
+     * Bandwidth is required for all survey orders.
      */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
-            if ($this->boolean('survey_is_manual')) {
-                return;
-            }
-            $offerId = (string) ($this->input('main_offer_id') ?? '');
-            $dataOffer = (string) OfferId::FixedData->value;
-            $comboOffer = (string) OfferId::FixedCombo->value;
-            if ($offerId !== $dataOffer && $offerId !== $comboOffer) {
-                return; // Voice or other: no bandwidth minimum
-            }
-            $bandwidthMbps = $this->bandwidthMbps($this->input('bandwidth'));
-            if ($bandwidthMbps === null || $bandwidthMbps < 10) {
+            $bandwidth = $this->input('bandwidth');
+            
+            // Ensure bandwidth is provided and not empty
+            if (empty($bandwidth) || trim($bandwidth) === '') {
                 $validator->errors()->add(
                     'bandwidth',
-                    'For this flow, minimum bandwidth is 10 Mbps. Please select 10M or higher.'
+                    'Bandwidth is required for survey orders. Please select a bandwidth option.'
+                );
+                return;
+            }
+
+            // Validate minimum bandwidth of 7 Mbps for all survey orders
+            $bandwidthMbps = $this->bandwidthMbps($bandwidth);
+            if ($bandwidthMbps === null || $bandwidthMbps < 7) {
+                $validator->errors()->add(
+                    'bandwidth',
+                    'Minimum bandwidth is 7 Mbps. Please select 7M or higher.'
                 );
             }
         });

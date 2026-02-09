@@ -11,6 +11,7 @@ use App\Filament\Resources\SurveyOrders\Schemas\SurveyOrderInfolist;
 use App\Filament\Resources\SurveyOrders\Tables\SurveyOrdersTable;
 use App\Models\SurveyOrder;
 use BackedEnum;
+use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -59,6 +60,27 @@ class SurveyOrderResource extends Resource
             'view' => ViewSurveyOrder::route('/{record}'),
             'edit' => EditSurveyOrder::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+
+        $user = Filament::auth()->user();
+
+        // super_admin and admin see everything
+        if ($user && ! $user->hasAnyRole(['super_admin', 'admin'])) {
+            $areas = $user->areas ?? [];
+
+            if (! empty($areas)) {
+                $query->whereIn('area_code', $areas);
+            }
+        }
+
+        return $query;
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder

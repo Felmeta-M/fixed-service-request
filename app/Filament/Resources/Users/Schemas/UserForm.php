@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Users\Schemas;
 use App\Models\EthioZone;
 use App\Models\TelecomRegion;
 use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -94,6 +95,15 @@ class UserForm
                             ->afterStateUpdated(function (Set $set) {
                                 $set('areas', []);
                             })
+                            ->hintAction(
+                                Action::make('selectAllZones')
+                                    ->label('Select All')
+                                    ->icon('heroicon-m-check')
+                                    ->action(function (Set $set) {
+                                        $set('zones', EthioZone::where('status', true)->pluck('name')->toArray());
+                                        $set('areas', []);
+                                    })
+                            )
                             ->columnSpanFull(),
 
                         Select::make('areas')
@@ -114,6 +124,19 @@ class UserForm
                             ->multiple()
                             ->preload()
                             ->searchable()
+                            ->hintAction(
+                                Action::make('selectAllAreas')
+                                    ->label('Select All')
+                                    ->icon('heroicon-m-check')
+                                    ->action(function (Get $get, Set $set) {
+                                        $zones = $get('zones');
+                                        $query = TelecomRegion::where('status', true);
+                                        if (! empty($zones)) {
+                                            $query->whereIn('zone', $zones);
+                                        }
+                                        $set('areas', $query->pluck('area_id')->map(fn ($v) => (string) $v)->toArray());
+                                    })
+                            )
                             ->columnSpanFull(),
                     ])
                     ->columns(1)

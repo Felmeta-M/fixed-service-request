@@ -8,11 +8,11 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useBandwidthOptions } from '@/hooks/use-bandwidth-options';
-import { ArrowUpToLineIcon, ArrowDownToLineIcon } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { ArrowDownToLineIcon, ArrowUpToLineIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface BandwidthChangeDialogProps {
     open: boolean;
@@ -68,8 +68,8 @@ export function BandwidthChangeDialog({
 
     const isUpgrade = mode === 'upgrade';
     const Icon = isUpgrade ? ArrowUpToLineIcon : ArrowDownToLineIcon;
-    const iconColor = isUpgrade ? 'text-green-600' : 'text-orange-600';
-    const bgColor = isUpgrade ? 'bg-green-100' : 'bg-orange-100';
+    const iconColor = isUpgrade ? 'text-primary' : 'text-orange-600';
+    const bgColor = isUpgrade ? 'bg-primary/10' : 'bg-orange-100';
 
     return (
         <AlertDialog open={open} onOpenChange={!loading ? onOpenChange : undefined}>
@@ -79,9 +79,7 @@ export function BandwidthChangeDialog({
                         <div className={`flex h-10 w-10 items-center justify-center rounded-full ${bgColor}`}>
                             <Icon className={`h-5 w-5 ${iconColor}`} />
                         </div>
-                        <AlertDialogTitle>
-                            {isUpgrade ? 'Upgrade' : 'Downgrade'} Service Plan
-                        </AlertDialogTitle>
+                        <AlertDialogTitle>{isUpgrade ? 'Upgrade' : 'Downgrade'} Service Plan</AlertDialogTitle>
                     </div>
 
                     <AlertDialogDescription>
@@ -98,7 +96,7 @@ export function BandwidthChangeDialog({
                             <span className="font-medium">Service Number:</span> {serviceNumber}
                         </div>
                         {currentBandwidth && (
-                            <div className="text-sm text-gray-600 mt-1">
+                            <div className="mt-1 text-sm text-gray-600">
                                 <span className="font-medium">Current Bandwidth:</span> {currentBandwidth}
                             </div>
                         )}
@@ -110,11 +108,7 @@ export function BandwidthChangeDialog({
                     <Label className="text-sm font-medium text-gray-700">
                         New Bandwidth <span className="text-red-500">*</span>
                     </Label>
-                    <Select
-                        value={selectedBandwidth}
-                        onValueChange={setSelectedBandwidth}
-                        disabled={loading || loadingOptions}
-                    >
+                    <Select value={selectedBandwidth} onValueChange={setSelectedBandwidth} disabled={loading || loadingOptions}>
                         <SelectTrigger className="w-full">
                             <SelectValue placeholder={loadingOptions ? 'Loading options...' : 'Select bandwidth'} />
                         </SelectTrigger>
@@ -135,10 +129,10 @@ export function BandwidthChangeDialog({
                 </div>
 
                 {/* Info Note */}
-                <div className={`mt-4 rounded-md border p-3 ${isUpgrade ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}`}>
+                <div className={`mt-4 rounded-md border p-3 ${isUpgrade ? 'border-primary bg-primary/10' : 'border-orange-200 bg-orange-50'}`}>
                     <div className="flex items-start gap-2">
-                        <Icon className={`h-4 w-4 mt-0.5 ${iconColor}`} />
-                        <p className={`text-xs ${isUpgrade ? 'text-green-700' : 'text-orange-700'}`}>
+                        <Icon className={`mt-0.5 h-4 w-4 ${iconColor}`} />
+                        <p className={`text-xs ${isUpgrade ? 'text-primary' : 'text-orange-700'}`}>
                             {isUpgrade
                                 ? 'Upgrading your plan may result in additional charges based on the new bandwidth.'
                                 : 'Downgrading your plan will take effect on your next billing cycle.'}
@@ -155,7 +149,7 @@ export function BandwidthChangeDialog({
                     <AlertDialogAction
                         disabled={!selectedBandwidth || loading}
                         onClick={handleConfirm}
-                        className={isUpgrade ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'}
+                        className={isUpgrade ? 'bg-primary hover:bg-primary/80' : 'bg-orange-600 hover:bg-orange-700'}
                     >
                         {loading ? (
                             <div className="flex items-center gap-2">
@@ -171,4 +165,3 @@ export function BandwidthChangeDialog({
         </AlertDialog>
     );
 }
-

@@ -41,7 +41,7 @@ class ManualSurveyOrderRequest extends FormRequest
                     (string) OfferId::FixedCombo->value,
                 ]),
             ],
-            'bandwidth' => ['optional', 'integer', 'min:1'],
+            'bandwidth' => ['required', 'string', 'filled'],
             'telecom_region' => ['optional', 'string', 'max:100'],
 
             // Address information

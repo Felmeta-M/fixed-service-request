@@ -30,6 +30,7 @@ use Throwable;
 use App\Services\ZoneService;
 use App\Services\EcafService;
 use App\Services\DeviceStockService;
+use App\Support\CustomerContext;
 
 class SurveyOrderController extends Controller
 {
@@ -627,14 +628,44 @@ class SurveyOrderController extends Controller
             $data = $request->validated();
             $customer = auth()->user();
 
-            // Uncomment to enable blocking duplicate requests:
-            // $hasBlockedSurvey = SurveyOrder::blockedForNewRequest($customer?->customer_code)->exists();
-            // if ($hasBlockedSurvey) {
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => 'You already have an active or completed request.',
-            //     ], Response::HTTP_CONFLICT);
-            // }
+            // Get customer code from authenticated user or context
+            $customerCode = $this->getCustomerCode($customer, $data);
+
+            if (!$customerCode) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Customer code is required.',
+                ], 422);
+            }
+
+            // Validate bandwidth is provided (required for all survey orders)
+            $bandwidth = $data['bandwidth'] ?? null;
+            if (empty($bandwidth)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bandwidth is required for survey orders. Please select a bandwidth option.',
+                    'errors' => ['bandwidth' => ['Bandwidth is required for survey orders.']],
+                ], 422);
+            }
+
+            // Check for duplicate survey order: same customer_code, main_offer_id, survey_type, bandwidth within last 7 days
+            $mainOfferId = (int) ($data['main_offer_id'] ?? 0);
+            $surveyType = $data['survey_type'] ?? 'EIC08';
+
+            $duplicateValidation = SurveyOrder::validateDuplicate(
+                $customerCode,
+                $mainOfferId,
+                $surveyType,
+                $bandwidth,
+                7 // days
+            );
+
+            if ($duplicateValidation) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $duplicateValidation['message'],
+                ], Response::HTTP_CONFLICT);
+            }
 
             // For manual surveys, route by main_offer_id to Data / Voice / Combo manual service
             if (!empty($data['survey_is_manual'])) {
@@ -703,7 +734,7 @@ class SurveyOrderController extends Controller
             ], 400);
         }
 
-        // Fetch survey order with payment data
+        // Fetch survey order with payment data (using Query Builder for performance with joins)
         $surveyRequest = $this->fetchSurveyOrder($subscriptionOrderId, $surveyOrderId);
 
         if (!$surveyRequest) {
@@ -784,6 +815,7 @@ class SurveyOrderController extends Controller
             'survey_orders.deleted_at',
         ];
 
+        // Use Query Builder for performance (joins with payments)
         $query = DB::table('survey_orders')
             ->leftJoin('payments', 'survey_orders.customer_survey_order_id', '=', 'payments.customer_survey_order_id')
             ->whereNull('survey_orders.deleted_at')
@@ -800,9 +832,10 @@ class SurveyOrderController extends Controller
                 'payments.trans_id as payment_trans_id',
             ]));
 
+        // Apply order ID filter
         if ($subscriptionOrderId) {
             $query->where('survey_orders.customer_subscription_order_id', (string) $subscriptionOrderId);
-        } else {
+        } elseif ($surveyOrderId) {
             $query->where('survey_orders.customer_survey_order_id', (string) $surveyOrderId);
         }
 
@@ -1031,6 +1064,21 @@ class SurveyOrderController extends Controller
     }
 
     /**
+     * Get customer code from authenticated user or request data.
+     * 
+     * @param mixed $customer Authenticated user
+     * @param array $data Request data
+     * @return string|null Customer code or null if not found
+     */
+    protected function getCustomerCode($customer, array $data): ?string
+    {
+        return CustomerContext::code()
+            ?? $customer?->customer_code
+            ?? $data['customer_code']
+            ?? null;
+    }
+
+    /**
      * Build customer info for survey order resource (cached per request to avoid N+1).
      */
     protected function buildCustomerInfo(?string $customerCode): ?array
@@ -1248,9 +1296,7 @@ class SurveyOrderController extends Controller
             // ]);
 
             // Check for existing active survey orders for this customer
-            $hasBlockedSurvey = SurveyOrder::blockedForNewRequest($data['customer_code'])->exists();
-
-            if ($hasBlockedSurvey) {
+            if (SurveyOrder::hasBlockedSurvey($data['customer_code'])) {
                 AppLogger::business()->warning('Manual survey blocked - existing active order', [
                     'customer_code' => $data['customer_code'],
                 ]);

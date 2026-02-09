@@ -5,7 +5,7 @@
 import { toast } from 'sonner';
 
 // Higher durations for better user visibility
-const DEFAULT_DURATION = 5000;
+const DEFAULT_DURATION = 20000;
 
 /**
  * Show an error toast

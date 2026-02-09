@@ -2,33 +2,46 @@
 
 namespace App\Http\Controllers\Api\v1;
 
-use App\Models\BandwidthOption;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class BandwidthOptionController extends Controller
 {
-    private const CACHE_KEY = 'bandwidth_options:all';
+    private const CACHE_KEY_RESIDENTIAL = 'bandwidth_options:residential';
+    private const CACHE_KEY_ENTERPRISE = 'bandwidth_options:enterprise';
     private const CACHE_TTL = 3600; // 1 hour
 
     /**
-     * Display a listing - cached Query Builder
+     * Get bandwidth options (backward compatibility - returns only residential)
      */
     public function index()
     {
-        $options = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
-            return DB::table('bandwidth_options')
-                ->select(['id', 'residential_options', 'enterprise_options', 'created_at'])
-                ->get()
-                ->map(function ($option) {
-                    // Decode JSON fields
-                    $option->residential_options = json_decode($option->residential_options, true);
-                    $option->enterprise_options = json_decode($option->enterprise_options, true);
-                    return $option;
-                });
+        $options = Cache::remember(self::CACHE_KEY_RESIDENTIAL, self::CACHE_TTL, function () {
+            $data = DB::table('bandwidth_options')
+                ->select(['id', 'residential_options', 'created_at'])
+                ->first();
+
+            if (!$data) {
+                return null;
+            }
+
+            return [
+                [
+                    'id' => $data->id,
+                    'residential_options' => json_decode($data->residential_options, true),
+                    'enterprise_options' => [], // Empty array for backward compatibility
+                    'created_at' => $data->created_at,
+                ]
+            ];
         });
+
+        if (!$options) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bandwidth options not found'
+            ], 404);
+        }
 
         return response()->json([
             'success' => true,
@@ -36,124 +49,71 @@ class BandwidthOptionController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    /**
+     * Get residential bandwidth options only
+     */
+    public function residential()
     {
-        $data = $request->validate([
-            'residential' => 'required|array',
-            'enterprise' => 'required|array'
-        ]);
+        $options = Cache::remember(self::CACHE_KEY_RESIDENTIAL, self::CACHE_TTL, function () {
+            $data = DB::table('bandwidth_options')
+                ->select(['id', 'residential_options', 'created_at'])
+                ->first();
 
-        $option = BandwidthOption::create([
-            'residential' => json_encode($data['residential']),
-            'enterprise' => json_encode($data['enterprise']),
-        ]);
+            if (!$data) {
+                return null;
+            }
 
-        // Clear cache on modification
-        Cache::forget(self::CACHE_KEY);
+            return [
+                'id' => $data->id,
+                'residential_options' => json_decode($data->residential_options, true),
+                'created_at' => $data->created_at,
+            ];
+        });
+
+        if (!$options) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Residential bandwidth options not found'
+            ], 404);
+        }
 
         return response()->json([
             'success' => true,
-            'data' => $option
-        ], 201);
+            'data' => $options
+        ]);
     }
 
     /**
-     * Show single option - use cache if available
+     * Get enterprise bandwidth options only
      */
-    public function show($id)
+    public function enterprise()
     {
-        // Try to get from cached list first
-        $options = Cache::get(self::CACHE_KEY);
+        $options = Cache::remember(self::CACHE_KEY_ENTERPRISE, self::CACHE_TTL, function () {
+            $data = DB::table('bandwidth_options')
+                ->select(['id', 'enterprise_options', 'created_at'])
+                ->first();
 
-        if ($options) {
-            $option = collect($options)->firstWhere('id', (int) $id);
-            if ($option) {
-                return response()->json([
-                    'success' => true,
-                    'data' => $option
-                ]);
+            if (!$data) {
+                return null;
             }
-        }
 
-        // Fall back to direct query
-        $option = DB::table('bandwidth_options')->find($id);
+            return [
+                'id' => $data->id,
+                'enterprise_options' => json_decode($data->enterprise_options, true),
+                'created_at' => $data->created_at,
+            ];
+        });
 
-        if (!$option) {
+        if (!$options) {
             return response()->json([
                 'success' => false,
-                'message' => 'Bandwidth option not found'
+                'message' => 'Enterprise bandwidth options not found'
             ], 404);
         }
 
-        $option->residential = json_decode($option->residential, true);
-        $option->enterprise = json_decode($option->enterprise, true);
-
         return response()->json([
             'success' => true,
-            'data' => $option
-        ]);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $data = $request->validate([
-            'residential' => 'sometimes|array',
-            'enterprise' => 'sometimes|array'
-        ]);
-
-        $updateData = ['updated_at' => now()];
-
-        if (isset($data['residential'])) {
-            $updateData['residential'] = json_encode($data['residential']);
-        }
-
-        if (isset($data['enterprise'])) {
-            $updateData['enterprise'] = json_encode($data['enterprise']);
-        }
-
-        $updated = DB::table('bandwidth_options')
-            ->where('id', $id)
-            ->update($updateData);
-
-        if (!$updated) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Bandwidth option not found'
-            ], 404);
-        }
-
-        // Clear cache on modification
-        Cache::forget(self::CACHE_KEY);
-
-        $option = DB::table('bandwidth_options')->find($id);
-        $option->residential = json_decode($option->residential, true);
-        $option->enterprise = json_decode($option->enterprise, true);
-
-        return response()->json([
-            'success' => true,
-            'data' => $option
-        ]);
-    }
-
-    public function destroy($id)
-    {
-        $deleted = DB::table('bandwidth_options')
-            ->where('id', $id)
-            ->delete();
-
-        if (!$deleted) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Bandwidth option not found'
-            ], 404);
-        }
-
-        // Clear cache on modification
-        Cache::forget(self::CACHE_KEY);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Deleted successfully'
+            'data' => $options
         ]);
     }
 }

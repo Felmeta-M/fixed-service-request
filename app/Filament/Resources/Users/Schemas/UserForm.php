@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Users\Schemas;
 
 use App\Models\User;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -60,7 +59,6 @@ class UserForm
                             }
                         };
                     }),
-                DateTimePicker::make('email_verified_at'),
                 Select::make('roles')
                     ->label(__('Roles'))
                     ->multiple()
@@ -71,11 +69,6 @@ class UserForm
                     )
                     ->preload()
                     ->searchable(),
-                TextInput::make('password')
-                    ->password()
-                    ->required()
-                    ->dehydrated(fn ($state) => filled($state))
-                    ->visible(fn (Field $component): bool => ! $component->getRecord()?->getKey()),
             ]);
     }
 }

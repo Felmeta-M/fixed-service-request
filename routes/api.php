@@ -56,7 +56,10 @@ Route::prefix('v1')->group(function () {
     // Public read-only endpoints with moderate rate limiting
     Route::middleware(['throttle:api_public'])->group(function () {
         Route::apiResource('survey-types', SurveyTypeController::class);
-        Route::apiResource('bandwidth-options', BandwidthOptionController::class);
+        // Bandwidth options endpoints
+        Route::get('bandwidth-options', [BandwidthOptionController::class, 'index']); // Backward compatibility - returns only residential
+        Route::get('bandwidth-options/residential', [BandwidthOptionController::class, 'residential']);
+        Route::get('bandwidth-options/enterprise', [BandwidthOptionController::class, 'enterprise']);
         Route::apiResource('occupations', OccupationController::class);
         Route::apiResource('service-types', ServiceTypeController::class);
         Route::apiResource('education-levels', EducationLevelController::class);

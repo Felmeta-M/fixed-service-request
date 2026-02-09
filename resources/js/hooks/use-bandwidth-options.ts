@@ -1,15 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 
-interface BandwidthOptionResponse {
-    id: number;
-    residential_options: string[];
-    enterprise_options: string[];
-}
-
-interface BandwidthOptionsApiResponse {
+interface ResidentialOptionsApiResponse {
     success: boolean;
-    data: BandwidthOptionResponse[];
+    data: {
+        id: number;
+        residential_options: string[];
+        created_at: string;
+    };
 }
 
 export interface ProcessedBandwidthOption {
@@ -77,44 +75,30 @@ export const formatBandwidthLabel = (value: string): string => {
 };
 
 export function useBandwidthOptions() {
-    const { data, isLoading, error } = useQuery({
-        queryKey: ['bandwidth-options'],
+    // Fetch only residential options from /api/v1/bandwidth-options/residential
+    const { 
+        data: residentialData, 
+        isLoading, 
+        error 
+    } = useQuery({
+        queryKey: ['bandwidth-options', 'residential'],
         queryFn: async () => {
-            const response = await apiClient.get<BandwidthOptionsApiResponse>('/bandwidth-options');
-
-            if (response.success && response.data.length > 0) {
-                const bandwidthData = response.data[0];
-
-                // Process residential options
-                const formattedResidential = bandwidthData.residential_options.map((value) => ({
-                    label: formatBandwidthLabel(value),
-                    value,
-                    numericValue: parseBandwidthValue(value),
-                }));
-
-                // Process enterprise options
-                const formattedEnterprise = bandwidthData.enterprise_options.map((value) => ({
-                    label: formatBandwidthLabel(value),
-                    value,
-                    numericValue: parseBandwidthValue(value),
-                }));
-
-                return {
-                    residentialOptions: formattedResidential,
-                    enterpriseOptions: formattedEnterprise,
-                };
-            }
-
-            return {
-                residentialOptions: [],
-                enterpriseOptions: [],
-            };
+            const response = await apiClient.get<ResidentialOptionsApiResponse>('/bandwidth-options/residential');
+            return response;
         },
     });
 
+    // Process residential options
+    const residentialOptions = residentialData?.success && residentialData.data?.residential_options
+        ? residentialData.data.residential_options.map((value: string) => ({
+            label: formatBandwidthLabel(value),
+            value,
+            numericValue: parseBandwidthValue(value),
+        }))
+        : [];
+
     return {
-        residentialOptions: data?.residentialOptions || [],
-        enterpriseOptions: data?.enterpriseOptions || [],
+        residentialOptions,
         loading: isLoading,
         error: error ? (error instanceof Error ? error.message : 'Failed to fetch bandwidth options') : null,
         parseBandwidthValue,

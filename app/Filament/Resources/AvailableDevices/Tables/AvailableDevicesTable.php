@@ -27,7 +27,7 @@ class AvailableDevicesTable
                 TextColumn::make('model')
                     ->searchable(),
                 TextColumn::make('price')
-                    ->money()
+                    ->money('ETB', 0, true)
                     ->sortable(),
                 ImageColumn::make('image_url'),
                 TextColumn::make('stock_quantity')

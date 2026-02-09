@@ -181,7 +181,7 @@ export default function Create() {
         fetchUserDataFromLocalStorage();
     }, [setData]);
 
-    const { residentialOptions, enterpriseOptions, loading: loadingBandwidths, error: errorBandwidths } = useBandwidthOptions();
+    const { residentialOptions, loading: loadingBandwidths, error: errorBandwidths } = useBandwidthOptions();
 
     useEffect(() => {
         const hasCoords = data.survey_address_info.latitude !== 0 && data.survey_address_info.longitude !== 0;
@@ -731,13 +731,12 @@ export default function Create() {
                                 {data.main_offer_id === '1457567289' && (
                                     <BandwidthSelector
                                         residentialOptions={residentialOptions}
-                                        enterpriseOptions={enterpriseOptions}
                                         loading={loadingBandwidths}
                                         selectedBandwidth={selectedBandwidth}
                                         onBandwidthChange={(value, numericValue, type) => {
                                             setSelectedBandwidth(value);
                                             setBandwidthNumericValue(numericValue);
-                                            setData('customer_type', type);
+                                            setData('customer_type', 'residential');
                                             handleChange('bandwidth', numericValue.toString());
                                         }}
                                         error={formErrors.bandwidth}

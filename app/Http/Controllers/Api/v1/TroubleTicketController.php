@@ -21,6 +21,8 @@ use App\Http\Requests\ConfirmFeedbackRequest;
 use App\Services\QueryCustomerForTTService;
 use App\Services\GetCombiningService;
 use App\Models\TroubleTicketReason;
+use App\Support\CustomerContext;
+use App\Services\ApiResponse;
 
 class TroubleTicketController extends Controller
 {
@@ -492,6 +494,28 @@ class TroubleTicketController extends Controller
     public function store(CreateTTRequest $request)
     {
         $data = $request->validated();
+
+        // Authorization check: For authenticated users, ensure only one open trouble ticket is allowed
+        $authenticatedCustomerCode = CustomerContext::code();
+        if ($authenticatedCustomerCode) {
+            // Check if user already has an open trouble ticket
+            $existingOpenTicket = TroubleTicket::where('customer_code', $authenticatedCustomerCode)
+                ->whereNull('deleted_at')
+                ->whereIn('status', ['open', 'confirm'])
+                ->first();
+
+            if ($existingOpenTicket) {
+                AppLogger::api()->warning('Attempted to create duplicate trouble ticket', [
+                    'customer_code' => $authenticatedCustomerCode,
+                    'existing_tt_serial_no' => $existingOpenTicket->tt_serial_no,
+                ]);
+
+                return ApiResponse::error(
+                    "You already have an open trouble ticket (TT: {$existingOpenTicket->tt_serial_no}). Please wait for it to be resolved before creating a new one.",
+                    422
+                );
+            }
+        }
 
         // Verify reCAPTCHA for unauthenticated (guest) requests
         if (!$request->user() && $this->recaptchaService->isEnabled()) {

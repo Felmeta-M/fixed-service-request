@@ -26,17 +26,13 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 const MIN_BANDWIDTH_MBPS_AUTO = 10;
 
 export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: ServiceSelectionStepProps) {
-    const { residentialOptions, enterpriseOptions, loading: loadingBandwidths } = useBandwidthOptions();
+    const { residentialOptions, loading: loadingBandwidths } = useBandwidthOptions();
     const { serviceTypes, loading: loadingServiceTypes } = useServiceTypes();
 
     // Auto flow only allows 10M+; 7M is for manual (set when they continue manually)
     const residentialOptionsFiltered = useMemo(
         () => residentialOptions.filter((o) => o.numericValue >= MIN_BANDWIDTH_MBPS_AUTO),
         [residentialOptions],
-    );
-    const enterpriseOptionsFiltered = useMemo(
-        () => enterpriseOptions.filter((o) => o.numericValue >= MIN_BANDWIDTH_MBPS_AUTO),
-        [enterpriseOptions],
     );
 
     // Transform service types for rendering
@@ -64,7 +60,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
         onUpdate({ serviceType: serviceId });
     };
 
-    const handleBandwidthChange = (value: string, numericValue: number, type: string) => {
+    const handleBandwidthChange = (value: string, numericValue: number, type: 'residential') => {
         onUpdate({
             bandwidth: value,
             bandwidthNumericValue: numericValue,
@@ -150,7 +146,6 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                     {/* <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8"> */}
                     <BandwidthSelector
                         residentialOptions={residentialOptionsFiltered}
-                        enterpriseOptions={enterpriseOptionsFiltered}
                         loading={loadingBandwidths}
                         selectedBandwidth={formData.bandwidth}
                         onBandwidthChange={handleBandwidthChange}

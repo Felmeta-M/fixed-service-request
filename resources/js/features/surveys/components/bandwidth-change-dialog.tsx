@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { useBandwidthOptions } from '@/hooks/use-bandwidth-options';
+import { useBandwidthOptions, type ProcessedBandwidthOption } from '@/hooks/use-bandwidth-options';
 import { ArrowUpToLineIcon, ArrowDownToLineIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -22,6 +22,7 @@ interface BandwidthChangeDialogProps {
     mode: 'upgrade' | 'downgrade';
     currentBandwidth?: string;
     serviceNumber?: string;
+    customerType?: 'residential' | string;
 }
 
 export function BandwidthChangeDialog({
@@ -32,9 +33,10 @@ export function BandwidthChangeDialog({
     mode,
     currentBandwidth,
     serviceNumber,
+    customerType = 'residential', // Default to residential if not provided
 }: BandwidthChangeDialogProps) {
     const [selectedBandwidth, setSelectedBandwidth] = useState('');
-    const { residentialOptions, enterpriseOptions, loading: loadingOptions, parseBandwidthValue } = useBandwidthOptions();
+    const { residentialOptions, loading: loadingOptions, parseBandwidthValue } = useBandwidthOptions();
 
     // Reset selection when dialog opens
     useEffect(() => {
@@ -43,22 +45,24 @@ export function BandwidthChangeDialog({
         }
     }, [open]);
 
-    // Combine and sort all options
-    const allOptions = [...residentialOptions, ...enterpriseOptions]
-        .filter((v, i, arr) => arr.findIndex((o) => o.value === v.value) === i) // unique values
-        .sort((a, b) => a.numericValue - b.numericValue);
-
     // Parse current bandwidth value
     const currentNumericValue = currentBandwidth ? parseBandwidthValue(currentBandwidth) : 0;
 
+    // Only use residential options (enterprise options are not fetched)
+    const optionsToUse = residentialOptions;
+
     // Filter options based on mode (upgrade shows higher, downgrade shows lower)
-    const filteredOptions = allOptions.filter((option) => {
+    // For upgrade: only show residential options that are strictly greater than current bandwidth
+    // For downgrade: only show residential options that are strictly less than current bandwidth
+    const filteredOptions = optionsToUse.filter((option: ProcessedBandwidthOption) => {
         if (mode === 'upgrade') {
+            // Only show options strictly greater than current bandwidth
             return option.numericValue > currentNumericValue;
         } else {
+            // Only show options strictly less than current bandwidth
             return option.numericValue < currentNumericValue;
         }
-    });
+    }).sort((a: ProcessedBandwidthOption, b: ProcessedBandwidthOption) => a.numericValue - b.numericValue);
 
     const handleConfirm = () => {
         if (selectedBandwidth) {

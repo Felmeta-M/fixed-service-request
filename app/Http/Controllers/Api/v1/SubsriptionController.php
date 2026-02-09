@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSubscriptionRequest;
 use App\Models\SurveyOrder;
 use App\Services\Subscription\SubscriptionServiceFactory;
+use App\Services\ApiResponse;
+use App\Support\CustomerContext;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
@@ -19,7 +21,8 @@ class SubsriptionController extends Controller
 {
     public function __construct(
         protected SubscriptionServiceFactory $factory
-    ) {}
+    ) {
+    }
     /**
      * Display a listing of the resource.
      */
@@ -30,6 +33,7 @@ class SubsriptionController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     * Ensures users can only subscribe to their own survey orders (authorization check).
      */
     public function store(StoreSubscriptionRequest $request)
     {
@@ -44,6 +48,20 @@ class SubsriptionController extends Controller
                     'success' => false,
                     'message' => 'Survey order not found.',
                 ], 404);
+            }
+
+            // Authorization check: Ensure the authenticated user owns this survey order
+            $authenticatedCustomerCode = CustomerContext::code();
+            if ($authenticatedCustomerCode && $surveyOrder->customer_code !== $authenticatedCustomerCode) {
+                Log::warning('Unauthorized subscription attempt', [
+                    'authenticated_customer_code' => $authenticatedCustomerCode,
+                    'survey_order_customer_code' => $surveyOrder->customer_code,
+                    'survey_order_id' => $data['survey_order_id'],
+                ]);
+
+                return ApiResponse::unauthorized(
+                    'You are not authorized to subscribe to this survey order. You can only subscribe to your own orders.'
+                );
             }
 
             if (!$surveyOrder->canSubscribe()) {

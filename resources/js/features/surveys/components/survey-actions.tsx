@@ -580,6 +580,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 mode="upgrade"
                 currentBandwidth={(survey as { bandwidth?: string }).bandwidth}
                 serviceNumber={(primaryServiceNumber ?? '') as string}
+                customerType={(survey as { customer_type?: string }).customer_type === '1' || (survey as { customer_type?: string }).customer_type === 'enterprise' ? 'enterprise' : 'residential'}
             />
 
             <BandwidthChangeDialog
@@ -590,6 +591,7 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                 mode="downgrade"
                 currentBandwidth={(survey as { bandwidth?: string }).bandwidth}
                 serviceNumber={(primaryServiceNumber ?? '') as string}
+                customerType={(survey as { customer_type?: string }).customer_type === '1' || (survey as { customer_type?: string }).customer_type === 'enterprise' ? 'enterprise' : 'residential'}
             />
         </>
     );

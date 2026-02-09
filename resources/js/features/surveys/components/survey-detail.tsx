@@ -1120,6 +1120,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                 mode="upgrade"
                 currentBandwidth={surveyDetails?.bandwidth ?? undefined}
                 serviceNumber={primaryServiceNumber ?? ''}
+                customerType={surveyDetails?.customer_type === '1' || surveyDetails?.customer_type === 'enterprise' ? 'enterprise' : 'residential'}
             />
 
             <BandwidthChangeDialog
@@ -1130,6 +1131,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                 mode="downgrade"
                 currentBandwidth={surveyDetails?.bandwidth ?? undefined}
                 serviceNumber={primaryServiceNumber ?? ''}
+                customerType={surveyDetails?.customer_type === '1' || surveyDetails?.customer_type === 'enterprise' ? 'enterprise' : 'residential'}
             />
         </div>
     );

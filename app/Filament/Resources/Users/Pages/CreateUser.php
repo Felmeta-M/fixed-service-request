@@ -42,22 +42,18 @@ class CreateUser extends CreateRecord
         }
 
         // Send SMS with username (email) and password
+        // Phone is already normalized to last 9 digits by User::setPhoneAttribute()
         $phone = $this->record->phone;
 
         if ($phone && ! empty($this->plainPassword)) {
-            $digits = preg_replace('/\D/', '', $phone);
-            $lastNineDigits = strlen($digits) >= 9 ? substr($digits, -9) : $digits;
-
-            if ($lastNineDigits) {
-                $panel = Filament::getPanel('admin');
-                $message = __('auth.user_created_sms', [
-                    'name' => $this->record->name,
-                    'email' => $this->record->email,
-                    'password' => $this->plainPassword,
-                    'url' => $panel ? $panel->getUrl() : url('/ffd'),
-                ]);
-                dispatch(new SendSmsJob($lastNineDigits, $message));
-            }
+            $panel = Filament::getPanel('admin');
+            $message = __('auth.user_created_sms', [
+                'name' => $this->record->name,
+                'email' => $this->record->email,
+                'password' => $this->plainPassword,
+                'url' => $panel ? $panel->getUrl() : url('/ffd'),
+            ]);
+            dispatch(new SendSmsJob($phone, $message));
         }
     }
 }

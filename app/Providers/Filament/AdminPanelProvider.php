@@ -10,6 +10,8 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use App\Filament\Pages\Auth\Login as AuthLogin;
+use App\Filament\Pages\Auth\RequestPasswordReset;
+use App\Filament\Pages\Auth\ResetPassword;
 use App\Filament\Pages\ChangePassword;
 use App\Filament\Pages\Dashboard;
 use Filament\Enums\ThemeMode;
@@ -38,6 +40,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('ffd')
             ->login(AuthLogin::class)
+            ->passwordReset(RequestPasswordReset::class, ResetPassword::class)
             ->colors([
                 'primary' => Color::Lime,
             ])

@@ -1,12 +1,32 @@
-# Host nginx: reverse proxy to Docker nginx (fixed-service-request)
-# Copy to /etc/nginx/sites-available/fixedservices.conf and:
-#   sudo ln -s /etc/nginx/sites-available/fixedservices.conf /etc/nginx/sites-enabled/
-#   sudo nginx -t && sudo systemctl reload nginx
+# ============================================================================
+# Host-Level Reverse Proxy — Ethio Telecom Fixed Service Request
+# ============================================================================
 #
-# Replace /path/to/ with your real certificate and key paths.
-# Docker nginx must be listening on 127.0.0.1:9991 (compose.yml: "9991:80").
+# This config runs on the HOST machine's Nginx (not inside Docker).
+# It terminates SSL/TLS and proxies traffic to the Docker Nginx container.
+#
+# Traffic flow:
+#   Client (HTTPS :443) -> Host Nginx (this config) -> Docker Nginx (:9991) -> PHP-FPM
+#
+# Setup:
+#   1. Copy this file to /etc/nginx/sites-available/fixedservices.conf
+#   2. Create a symlink:
+#        sudo ln -s /etc/nginx/sites-available/fixedservices.conf /etc/nginx/sites-enabled/
+#   3. Replace /path/to/ with your real SSL certificate and key paths
+#   4. Ensure Docker Nginx is mapped to 127.0.0.1:9991 in docker-compose.yml:
+#        ports:
+#          - "127.0.0.1:9991:80"
+#   5. Test and reload:
+#        sudo nginx -t && sudo systemctl reload nginx
+# ============================================================================
 
-# HTTP – redirect to HTTPS
+
+# ---------------------------------------------------------------------------
+# HTTP Server — Redirect to HTTPS
+# ---------------------------------------------------------------------------
+# All plain HTTP requests are permanently redirected (301) to HTTPS.
+# This ensures all traffic is encrypted in transit.
+# ---------------------------------------------------------------------------
 server {
     listen 80;
     server_name fixedservices.ethiotelecom.et;
@@ -16,24 +36,75 @@ server {
     }
 }
 
-# HTTPS – SSL on host, proxy to Docker nginx
+
+# ---------------------------------------------------------------------------
+# HTTPS Server — SSL Termination + Reverse Proxy
+# ---------------------------------------------------------------------------
+# Handles TLS handshake, decrypts traffic, then forwards plain HTTP to
+# the Docker Nginx container on port 9991 (localhost only, not exposed
+# to the network).
+# ---------------------------------------------------------------------------
 server {
     listen 443 ssl http2;
     server_name fixedservices.ethiotelecom.et;
 
+    # -------------------------------------------------------------------
+    # SSL Certificate
+    # -------------------------------------------------------------------
+    # Replace these paths with your actual certificate and private key.
+    # For Let's Encrypt: /etc/letsencrypt/live/fixedservices.ethiotelecom.et/
+    # -------------------------------------------------------------------
     ssl_certificate     /path/to/server.crt;
     ssl_certificate_key /path/to/server.key;
+
+    # -------------------------------------------------------------------
+    # TLS Protocol & Cipher Configuration
+    # -------------------------------------------------------------------
+    # - Only TLSv1.2 and TLSv1.3 (TLSv1.0/1.1 are deprecated/insecure)
+    # - Server chooses the cipher (prefer_server_ciphers), not the client
+    # - Strong AEAD ciphers only (AES-GCM with ECDHE key exchange)
+    # -------------------------------------------------------------------
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
 
+    # -------------------------------------------------------------------
+    # Reverse Proxy to Docker Nginx
+    # -------------------------------------------------------------------
+    # proxy_pass:
+    #   Forwards decrypted traffic to Docker Nginx on localhost:9991.
+    #   The Docker container's port 80 is mapped to host port 9991.
+    #
+    # proxy_http_version 1.1:
+    #   Uses HTTP/1.1 for the backend connection (required for keepalive).
+    #
+    # Proxy Headers (critical for Laravel):
+    #   - Host:              Preserves the original hostname so Laravel
+    #                        generates correct URLs.
+    #   - X-Real-IP:         The actual client IP (for logging/rate limiting).
+    #   - X-Forwarded-For:   Chain of proxy IPs the request passed through.
+    #                        Laravel uses this via trustProxies to get the
+    #                        real client IP from request()->ip().
+    #   - X-Forwarded-Proto: The original protocol (https). This is CRITICAL
+    #                        for Laravel's signed URL validation, asset URL
+    #                        generation, and secure cookie handling. Without
+    #                        this, Laravel thinks the request is HTTP and
+    #                        signed URLs fail with 403 "Invalid signature".
+    #
+    # Buffer Settings:
+    #   Large buffers to handle Filament/Livewire responses which can
+    #   contain substantial HTML/JSON payloads and large headers
+    #   (session cookies, CSRF tokens, Livewire snapshots).
+    # -------------------------------------------------------------------
     location / {
         proxy_pass http://127.0.0.1:9991;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+
         proxy_buffer_size 128k;
         proxy_buffers 4 256k;
         proxy_busy_buffers_size 256k;

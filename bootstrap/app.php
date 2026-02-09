@@ -27,6 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // Trust reverse proxy (Nginx/Docker) so signed URLs, HTTPS detection, etc. work
+        $middleware->trustProxies(at: '*');
+
         // Security middleware (runs first)
         $middleware->prepend(SecurityHeaders::class);
 
@@ -50,6 +53,8 @@ return Application::configure(basePath: dirname(__DIR__))
             ])
             ->alias([
                 'otp.auth' => EnsureOtpAuthenticated::class,
+                // In production, enforce signed URLs; in dev/local, skip validation
+                'signed' => \App\Http\Middleware\ValidateSignedUrl::class,
             ]);
     })
     ->withSchedule(function (Schedule $schedule) {

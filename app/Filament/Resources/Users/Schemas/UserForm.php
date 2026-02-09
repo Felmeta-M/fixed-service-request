@@ -32,6 +32,7 @@ class UserForm
                     ->trim()
                     ->required()
                     ->formatStateUsing(fn ($state) => $state ? User::normalizePhone($state) : null)
+                    ->dehydrateStateUsing(fn ($state) => User::normalizePhone($state))
                     ->rule(static function (Field $component, $state): \Closure {
                         return function (string $attribute, $value, \Closure $fail) use ($component, $state): void {
                             $normalized = User::normalizePhone($value ?? $state);

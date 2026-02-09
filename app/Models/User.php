@@ -94,4 +94,19 @@ class User extends Authenticatable implements FilamentUser
         // return $this->hasRole('admin');
         return true;
     }
+
+    /**
+     * Boot the model.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            // Automatically set email_verified_at when creating a new user
+            if (empty($user->email_verified_at)) {
+                $user->email_verified_at = now();
+            }
+        });
+    }
 }

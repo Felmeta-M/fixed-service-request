@@ -32,7 +32,6 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->default()
             ->id('admin')
             ->path('ffd')
             ->login(AuthLogin::class)
@@ -55,7 +54,7 @@ class AdminPanelProvider extends PanelProvider
             ->userMenuItems([
                 \Filament\Navigation\MenuItem::make()
                     ->label(__('auth.change_password'))
-                    ->url(fn (): string => ChangePassword::getUrl())
+                    ->url(fn(): string => ChangePassword::getUrl())
                     ->icon('heroicon-o-key'),
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
@@ -83,6 +82,9 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
             ])
+            ->databaseTransactions()
+            ->databaseNotifications()
+            ->globalSearch(false)
             ->navigationGroups([
                 NavigationGroup::make()
                     ->label('Service Management'),

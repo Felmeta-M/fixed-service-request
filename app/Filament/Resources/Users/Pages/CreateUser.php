@@ -4,54 +4,58 @@ namespace App\Filament\Resources\Users\Pages;
 
 use App\Filament\Resources\Users\UserResource;
 use App\Jobs\SendSmsJob;
+use Filament\Facades\Filament;
 use Filament\Resources\Pages\CreateRecord;
+use Spatie\Permission\Models\Role;
 
 class CreateUser extends CreateRecord
 {
     protected static string $resource = UserResource::class;
 
-    /**
-     * Store the generated plain password before it gets hashed
-     */
     protected ?string $plainPassword = null;
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Generate a random password if not provided
         if (empty($data['password'])) {
-            // Generate a simple 8-character password (numbers and lowercase letters)
             $this->plainPassword = str()->random(8);
             $data['password'] = $this->plainPassword;
         } else {
-            // Store the provided password before creation (before it gets hashed)
             $this->plainPassword = $data['password'];
         }
-        
+
+        // Default is_active to true for new users
+        if (! isset($data['is_active'])) {
+            $data['is_active'] = true;
+        }
+
         return $data;
     }
 
     protected function afterCreate(): void
     {
-        $data = $this->form->getState();
-        $roles = $data['roles'] ?? [];
-        $this->record->roles()->sync($roles);
+        // If no roles were assigned, assign the default 'guest' role
+        if ($this->record->roles()->count() === 0) {
+            $guestRole = Role::where('name', 'guest')->where('guard_name', 'web')->first();
+            if ($guestRole) {
+                $this->record->assignRole($guestRole);
+            }
+        }
 
-        // Use the stored plain password (captured before hashing)
-        $plainPassword = $this->plainPassword;
-        
-        // Get phone and extract last 9 digits for SMS
+        // Send SMS with username (email) and password
         $phone = $this->record->phone;
-        if ($phone && !empty($plainPassword)) {
-            // Extract last 9 digits from phone number
+
+        if ($phone && ! empty($this->plainPassword)) {
             $digits = preg_replace('/\D/', '', $phone);
             $lastNineDigits = strlen($digits) >= 9 ? substr($digits, -9) : $digits;
-            
+
             if ($lastNineDigits) {
+                $panel = Filament::getPanel('admin');
                 $message = __('auth.user_created_sms', [
-                    'password' => $plainPassword, // Send simple/plain password
-                    'url' => filament()->getPanel()->getUrl(),
+                    'name' => $this->record->name,
+                    'email' => $this->record->email,
+                    'password' => $this->plainPassword,
+                    'url' => $panel ? $panel->getUrl() : url('/ffd'),
                 ]);
-                // Send SMS to the last 9 digits of the phone number
                 dispatch(new SendSmsJob($lastNineDigits, $message));
             }
         }

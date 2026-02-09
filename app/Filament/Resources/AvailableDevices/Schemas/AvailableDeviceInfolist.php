@@ -21,7 +21,7 @@ class AvailableDeviceInfolist
                 TextEntry::make('model')
                     ->placeholder('-'),
                 TextEntry::make('price')
-                    ->money(),
+                    ->money('ETB', 0, true),
                 TextEntry::make('description')
                     ->placeholder('-')
                     ->columnSpanFull(),

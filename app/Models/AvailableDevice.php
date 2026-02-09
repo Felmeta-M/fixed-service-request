@@ -30,7 +30,7 @@ class AvailableDevice extends Model
         'discount_fee',
         'price',
         'description',
-        'status',
+        'is_active',
         'image_url',
         'stock_quantity',
         'specifications',
@@ -51,6 +51,7 @@ class AvailableDevice extends Model
         'discount_fee' => 'decimal:4',
         'stock_quantity' => 'integer',
         'specifications' => 'array',
+        'is_active' => 'boolean',
     ];
 
     /**
@@ -58,7 +59,7 @@ class AvailableDevice extends Model
      */
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('is_active', true);
     }
 
     /**

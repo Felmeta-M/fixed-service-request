@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
+use Filament\Support\Icons\Heroicon;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -11,6 +12,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use App\Filament\Pages\Auth\Login as AuthLogin;
 use App\Filament\Pages\ChangePassword;
 use App\Filament\Pages\Dashboard;
+use Filament\Enums\ThemeMode;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use App\Filament\Widgets\PaymentStatsWidget;
@@ -27,6 +29,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
+
 class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
@@ -37,14 +40,10 @@ class AdminPanelProvider extends PanelProvider
             ->login(AuthLogin::class)
             ->colors([
                 'primary' => Color::Lime,
-                'secondary' => Color::Emerald,
-                'accent' => Color::Sky,
-                'destructive' => Color::Red,
-                'success' => Color::Green,
-                'warning' => Color::Yellow,
-                'info' => Color::Blue,
-                'gray' => Color::Gray,
             ])
+            ->defaultThemeMode(ThemeMode::Light)
+            ->brandLogo('/images/logo.png')
+            ->brandName('Ethio Telecom Fixed Service Request Management')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -82,18 +81,24 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
             ])
+            ->spa(hasPrefetching: true)
             ->databaseTransactions()
             ->databaseNotifications()
             ->globalSearch(false)
+            ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([
                 NavigationGroup::make()
-                    ->label('Service Management'),
+                    ->label('Service Management')
+                    ->icon(Heroicon::Cog6Tooth),
                 NavigationGroup::make()
-                    ->label(label: 'Trouble Ticket Management'),
+                    ->label(label: 'Trouble Ticket Management')
+                    ->icon(Heroicon::Ticket),
                 NavigationGroup::make()
-                    ->label('User Management'),
+                    ->label('User Management')
+                    ->icon(Heroicon::UserGroup),
                 NavigationGroup::make()
                     ->label(fn(): string => __('navigation.settings'))
+                    ->icon(Heroicon::Cog)
                     ->collapsed(),
             ]);
     }

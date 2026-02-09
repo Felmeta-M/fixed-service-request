@@ -117,7 +117,16 @@ class Login extends \Filament\Auth\Pages\Login
 
         $user = $guard->user();
 
-        if ($user instanceof FilamentUser && !$user->canAccessPanel(Filament::getCurrentPanel())) {
+        // Check if the account is deactivated — show a specific message
+        if ($user instanceof User && ! $user->is_active) {
+            $guard->logout();
+
+            throw ValidationException::withMessages([
+                'data.username' => __('auth.account_deactivated'),
+            ]);
+        }
+
+        if ($user instanceof FilamentUser && ! $user->canAccessPanel(Filament::getCurrentPanel())) {
             $guard->logout();
             $this->throwFailureValidationException();
         }

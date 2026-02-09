@@ -8,6 +8,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -25,18 +26,29 @@ class UsersTable
                 TextColumn::make('email')
                     ->label('Email address')
                     ->searchable(),
-                // TextColumn::make('roles')
-                //     ->getStateUsing(function (User $record) {
-                //         // Return array for badge() to create multiple badges
-                //         return $record->roles()->pluck('name')->toArray();
-                //     })
-                //     ->badge()
-                //     ->separator(',')
-                //     ->searchable(query: function ($query, $search) {
-                //         $query->whereHas('roles', function (Builder $q) use ($search) {
-                //             $q->where('name', 'like', "%{$search}%");
-                //         });
-                //     }),
+                TextColumn::make('roles')
+                    ->label(__('Roles'))
+                    ->getStateUsing(fn (User $record): array => $record->roles()->pluck('name')->toArray())
+                    ->badge()
+                    ->separator(', ')
+                    ->searchable(query: function (Builder $query, string $search): void {
+                        $query->whereHas('roles', function (Builder $q) use ($search): void {
+                            $q->where('name', 'like', '%' . $search . '%');
+                        });
+                    }),
+                TextColumn::make('zones')
+                    ->label('Zones')
+                    ->badge()
+                    ->getStateUsing(fn (User $record): array => $record->zones ?? [])
+                    ->toggleable(),
+                IconColumn::make('is_active')
+                    ->label('Status')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

@@ -3,69 +3,68 @@
 namespace App\Filament\Pages;
 
 use App\Jobs\SendSmsJob;
-use App\Traits\InteractsWithSMSGateway;
 use Closure;
 use Filament\Facades\Filament;
-use Filament\Forms;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
-class ChangePassword extends Page implements Forms\Contracts\HasForms
+class ChangePassword extends Page
 {
-    use Forms\Concerns\InteractsWithForms;
-    use InteractsWithSMSGateway;
-
     protected string $view = 'filament.pages.change-password';
 
     protected static bool $shouldRegisterNavigation = false;
 
-    public string $current_password = '';
+    public ?array $data = [];
 
-    public string $new_password = '';
-
-    public string $new_password_confirmation = '';
-
-    protected function getFormSchema(): array
+    public function mount(): void
     {
-        return [
-            TextInput::make('current_password')
-                ->label(__('auth.current_password'))
-                ->password()
-                ->revealable(filament()->arePasswordsRevealable())
-                ->required()
-                ->rule(function (): Closure {
-                    return function (string $attribute, $value, Closure $fail): void {
-                        $user = Filament::auth()->user();
-                        if (! $user || ! Hash::check($value, $user->getAuthPassword())) {
-                            $fail(__('auth.current_password_failed'));
-                        }
-                    };
-                }),
+        $this->form->fill();
+    }
 
-            TextInput::make('new_password')
-                ->label(__('auth.new_password'))
-                ->password()
-                ->revealable(filament()->arePasswordsRevealable())
-                ->required()
-                ->different('current_password')
-                ->rule(Password::defaults()),
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                TextInput::make('current_password')
+                    ->label(__('auth.current_password'))
+                    ->password()
+                    ->revealable(filament()->arePasswordsRevealable())
+                    ->required()
+                    ->rule(function (): Closure {
+                        return function (string $attribute, $value, Closure $fail): void {
+                            $user = Filament::auth()->user();
+                            if (! $user || ! Hash::check($value, $user->getAuthPassword())) {
+                                $fail(__('auth.current_password_failed'));
+                            }
+                        };
+                    }),
 
-            TextInput::make('new_password_confirmation')
-                ->label(__('auth.password_confirmation'))
-                ->password()
-                ->revealable(filament()->arePasswordsRevealable())
-                ->required()
-                ->same('new_password'),
-        ];
+                TextInput::make('new_password')
+                    ->label(__('auth.new_password'))
+                    ->password()
+                    ->revealable(filament()->arePasswordsRevealable())
+                    ->required()
+                    ->different('current_password')
+                    ->rule(Password::defaults()),
+
+                TextInput::make('new_password_confirmation')
+                    ->label(__('auth.password_confirmation'))
+                    ->password()
+                    ->revealable(filament()->arePasswordsRevealable())
+                    ->required()
+                    ->same('new_password'),
+            ])
+            ->statePath('data');
     }
 
     public function submit(): mixed
     {
-        $this->validate();
+        $data = $this->form->getState();
 
         $user = Filament::auth()->user();
         if (! $user) {
@@ -73,10 +72,11 @@ class ChangePassword extends Page implements Forms\Contracts\HasForms
                 ->title(__('auth.failed'))
                 ->danger()
                 ->send();
+
             return null;
         }
 
-        $user->password = $this->new_password;
+        $user->password = $data['new_password'];
         $user->save();
 
         Notification::make()
@@ -88,10 +88,12 @@ class ChangePassword extends Page implements Forms\Contracts\HasForms
             dispatch(new SendSmsJob($user->phone, __('auth.password_changed')));
         }
 
-        Auth::logoutOtherDevices($this->new_password);
+        Auth::logoutOtherDevices($data['new_password']);
 
         $this->form->fill();
 
-        return redirect()->intended(Filament::getPanel()->getUrl());
+        $panel = Filament::getPanel('admin');
+
+        return redirect()->intended($panel ? $panel->getUrl() : url('/ffd'));
     }
 }

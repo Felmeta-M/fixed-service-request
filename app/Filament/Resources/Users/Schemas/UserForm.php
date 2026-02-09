@@ -2,11 +2,19 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Models\EthioZone;
+use App\Models\TelecomRegion;
 use App\Models\User;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
+use Spatie\Permission\Models\Role;
 
 class UserForm
 {
@@ -60,15 +68,62 @@ class UserForm
                         };
                     }),
                 Select::make('roles')
-                    ->label(__('Roles'))
+                    ->relationship('roles', 'name', modifyQueryUsing: function (Builder $query) {
+                        $query->where('name', '!=', 'super_admin');
+                    })
                     ->multiple()
-                    ->relationship(
-                        name: 'roles',
-                        titleAttribute: 'name',
-                        modifyQueryUsing: fn ($query) => $query->where('guard_name', config('auth.defaults.guard', 'web'))
-                    )
+                    ->required()
                     ->preload()
-                    ->searchable(),
+                    ->searchable()
+                    ->default(function () {
+                        $guestRole = Role::where('name', 'guest')->where('guard_name', 'web')->first();
+                        return $guestRole ? [$guestRole->id] : [];
+                    })
+                    ->columnSpanFull(),
+
+                Section::make('Zone & Area Scope')
+                    ->description('Assign ethio zones and areas this user can access. Survey orders will be filtered by these areas.')
+                    ->schema([
+                        Select::make('zones')
+                            ->label('Ethio Zones')
+                            ->options(fn () => EthioZone::where('status', true)->orderBy('name')->pluck('name', 'name'))
+                            ->multiple()
+                            ->preload()
+                            ->searchable()
+                            ->live()
+                            ->afterStateUpdated(function (Set $set) {
+                                $set('areas', []);
+                            })
+                            ->columnSpanFull(),
+
+                        Select::make('areas')
+                            ->label('Areas (by Area ID)')
+                            ->options(function (Get $get) {
+                                $zones = $get('zones');
+                                if (empty($zones)) {
+                                    return TelecomRegion::where('status', true)
+                                        ->orderBy('area_name')
+                                        ->pluck('area_name', 'area_id');
+                                }
+
+                                return TelecomRegion::where('status', true)
+                                    ->whereIn('zone', $zones)
+                                    ->orderBy('area_name')
+                                    ->pluck('area_name', 'area_id');
+                            })
+                            ->multiple()
+                            ->preload()
+                            ->searchable()
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(1)
+                    ->columnSpanFull(),
+
+                Toggle::make('is_active')
+                    ->label('Active')
+                    ->helperText('Inactive users cannot log in to the panel.')
+                    ->default(true)
+                    ->columnSpanFull(),
             ]);
     }
 }

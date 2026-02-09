@@ -22,7 +22,7 @@ class AvailableDeviceForm
                 TextInput::make('price')
                     ->required()
                     ->numeric()
-                    ->prefix('$'),
+                    ->prefix('ETB'),
                 Textarea::make('description')
                     ->columnSpanFull(),
                 FileUpload::make('image_url')

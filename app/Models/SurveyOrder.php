@@ -171,49 +171,22 @@ class SurveyOrder extends Model
     }
 
     /**
-     * Check for duplicate survey order within the last 7 days.
-     * 
-     * Checks if a survey order exists with the same:
-     * - customer_code
-     * - main_offer_id
-     * - survey_type
-     * - bandwidth (normalized to KB)
-     * 
-     * Note: Bandwidth is required for all survey orders.
-     * 
+     * Check for duplicate survey order by customer_code, main_offer_id and survey_type only.
+     * Used after ruling out unsubscribed orders (customer_subscription_order_id null).
+     *
      * @param string $customerCode
      * @param int $mainOfferId
      * @param string $surveyType
-     * @param string|int $bandwidth Bandwidth in any format (will be normalized) - REQUIRED
-     * @param int $days Number of days to look back (default: 7)
      * @return SurveyOrder|null The duplicate survey order if found, null otherwise
-     * @throws \InvalidArgumentException If bandwidth is null or empty
      */
     public static function findDuplicate(
         string $customerCode,
         int $mainOfferId,
-        string $surveyType,
-        string|int $bandwidth,
-        int $days = 7
+        string $surveyType
     ): ?self {
-        // Validate bandwidth is provided (required)
-        if (empty($bandwidth)) {
-            throw new \InvalidArgumentException('Bandwidth is required for survey order duplicate check.');
-        }
-
-        // Normalize bandwidth for comparison (convert to KB if string format)
-        $bandwidthKb = self::normalizeBandwidthToKb($bandwidth);
-
-        if ($bandwidthKb === null) {
-            throw new \InvalidArgumentException('Invalid bandwidth format. Bandwidth must be a valid value.');
-        }
-
-        // Build query for duplicate check
         return self::where('customer_code', $customerCode)
             ->where('main_offer_id', $mainOfferId)
             ->where('survey_type', $surveyType)
-            ->where('bandwidth', $bandwidthKb)
-            ->where('created_at', '>=', now()->subDays($days))
             ->whereNull('deleted_at')
             ->first();
     }
@@ -238,22 +211,22 @@ class SurveyOrder extends Model
         if (is_string($bandwidth)) {
             // Parse bandwidth string (e.g., "10M", "10mbps", "1gbps") to KB
             $bandwidthLower = strtolower(trim($bandwidth));
-            
+
             // Handle MB format: "10M", "10mb", "10mbps"
             if (preg_match('/^(\d+)(m|mb|mbps)$/', $bandwidthLower, $matches)) {
                 return (int) $matches[1] * 1024; // MB to KB
             }
-            
+
             // Handle GB format: "1G", "1gb", "1gbps"
             if (preg_match('/^(\d+)(g|gb|gbps)$/', $bandwidthLower, $matches)) {
                 return (int) $matches[1] * 1024 * 1024; // GB to KB
             }
-            
+
             // If numeric string, assume it's already in KB
             if (is_numeric($bandwidth)) {
                 return (int) $bandwidth;
             }
-            
+
             return null;
         }
 
@@ -262,40 +235,67 @@ class SurveyOrder extends Model
     }
 
     /**
-     * Validate if a duplicate survey order exists and return validation result.
-     * 
-     * Note: Bandwidth is required for all survey orders.
-     * 
+     * Find an existing survey order for the same customer_code, main_offer_id, survey_type
+     * where customer_subscription_order_id is null (not yet subscribed).
+     * If such an order exists, the customer is not allowed to create another survey order
+     * until they complete/subscribe to that one.
+     *
      * @param string $customerCode
      * @param int $mainOfferId
      * @param string $surveyType
-     * @param string|int $bandwidth Bandwidth in any format (will be normalized) - REQUIRED
-     * @param int $days Number of days to look back (default: 7)
-     * @return array|null Returns array with 'exists' => true and 'survey_order' if duplicate found, null otherwise
-     * @throws \InvalidArgumentException If bandwidth is null or empty
+     * @return SurveyOrder|null
+     */
+    public static function findUnsubscribedSurveyOrder(
+        string $customerCode,
+        int $mainOfferId,
+        string $surveyType
+    ): ?self {
+        return self::where('customer_code', $customerCode)
+            ->where('main_offer_id', $mainOfferId)
+            ->where('survey_type', $surveyType)
+            ->whereNull('customer_subscription_order_id')
+            ->whereNull('deleted_at')
+            ->first();
+    }
+
+    /**
+     * Validate if a duplicate survey order exists and return validation result.
+     *
+     * Rules (in order):
+     * 1. If customer has an existing survey order (same customer_code, main_offer_id, survey_type)
+     *    with customer_subscription_order_id null, they are not allowed to create more until subscribed.
+     * 2. Duplicate by customer_code, main_offer_id, survey_type only (no bandwidth or date).
+     *
+     * @param string $customerCode
+     * @param int $mainOfferId
+     * @param string $surveyType
+     * @return array|null Returns array with 'exists' => true and 'survey_order' if duplicate/unsubscribed found, null otherwise
      */
     public static function validateDuplicate(
         string $customerCode,
         int $mainOfferId,
-        string $surveyType,
-        string|int $bandwidth,
-        int $days = 7
+        string $surveyType
     ): ?array {
-        // Validate bandwidth is provided
-        if (empty($bandwidth)) {
-            throw new \InvalidArgumentException('Bandwidth is required for survey order validation.');
-        }
-
-        $duplicate = self::findDuplicate($customerCode, $mainOfferId, $surveyType, $bandwidth, $days);
-        
-        if ($duplicate) {
+        // Rule 1: Customer cannot create more survey orders if they have one with customer_subscription_order_id null
+        $unsubscribed = self::findUnsubscribedSurveyOrder($customerCode, $mainOfferId, $surveyType);
+        if ($unsubscribed) {
             return [
                 'exists' => true,
-                'survey_order' => $duplicate,
-                'message' => 'You have already created a survey request with the same service type and bandwidth within the last 7 days. Please wait before creating a new request.',
+                'survey_order' => $unsubscribed,
+                'message' => 'You already have an active request for this service. Please wait for it to be completed before submitting a new request.',
             ];
         }
-        
+
+        // Rule 2: Duplicate by customer_code, main_offer_id, survey_type only
+        // $duplicate = self::findDuplicate($customerCode, $mainOfferId, $surveyType);
+        // if ($duplicate) {
+        //     return [
+        //         'exists' => true,
+        //         'survey_order' => $duplicate,
+        //         'message' => 'You have already created a survey request for this service type. Please use your existing order.',
+        //     ];
+        // }
+
         return null;
     }
 
@@ -324,13 +324,13 @@ class SurveyOrder extends Model
                 ->whereNull('deleted_at')
                 ->first();
         }
-        
+
         if ($surveyOrderId) {
             return self::where('customer_survey_order_id', $surveyOrderId)
                 ->whereNull('deleted_at')
                 ->first();
         }
-        
+
         return null;
     }
 
@@ -350,11 +350,11 @@ class SurveyOrder extends Model
         if ($subscriptionOrderId) {
             return $query->where('customer_subscription_order_id', $subscriptionOrderId);
         }
-        
+
         if ($surveyOrderId) {
             return $query->where('customer_survey_order_id', $surveyOrderId);
         }
-        
+
         return $query->whereRaw('1 = 0'); // Return empty result if neither ID provided
     }
 

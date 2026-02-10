@@ -648,16 +648,15 @@ class SurveyOrderController extends Controller
                 ], 422);
             }
 
-            // Check for duplicate survey order: same customer_code, main_offer_id, survey_type, bandwidth within last 7 days
+            // Validate: (1) no existing order with customer_subscription_order_id null for same customer/offer/type;
+            // (2) no duplicate by customer_code, main_offer_id, survey_type
             $mainOfferId = (int) ($data['main_offer_id'] ?? 0);
             $surveyType = $data['survey_type'] ?? 'EIC08';
 
             $duplicateValidation = SurveyOrder::validateDuplicate(
                 $customerCode,
                 $mainOfferId,
-                $surveyType,
-                $bandwidth,
-                7 // days
+                $surveyType
             );
 
             if ($duplicateValidation) {

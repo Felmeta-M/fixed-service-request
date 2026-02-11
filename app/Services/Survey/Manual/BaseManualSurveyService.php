@@ -29,7 +29,7 @@ use App\Support\CustomerContext;
 abstract class BaseManualSurveyService extends BaseApiService
 {
     protected int $timeout = 30;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 30;
     protected int $decaySeconds = 60;
 
     protected array $config;
@@ -133,7 +133,7 @@ abstract class BaseManualSurveyService extends BaseApiService
 
         $telecomRegion = $data['telecom_region']
             ?? $this->fetchZoneCode($zoneId)
-            ?? null;
+            ?? '';
 
         return [
             'transaction_id' => $this->generateTransactionId(),
@@ -247,8 +247,8 @@ abstract class BaseManualSurveyService extends BaseApiService
             'contact_email' => $primaryContact['contact_email'],
             'status' => FFDServiceProvisionStatus::Waiting->value,
             'survey_is_manual' => true,
-            'with_device' => null,
-            'device_id' => null,
+            'with_device' => $data['with_device'] ?? null,
+            'device_id' => $data['device_id'] ?? null,
             'device_voice_id' => null,
             'area_code' => $areaCode,
             'area_name' => $areaName,

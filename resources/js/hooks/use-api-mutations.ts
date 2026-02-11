@@ -188,7 +188,9 @@ export function useCreateSurvey() {
     return useMutation({
         mutationFn: async (data: any) => {
             if (!token) throw new Error('Authentication required');
-            const response = await apiClient.post<any>('/survey/create', data, { token });
+            const isManual = data?.survey_is_manual === true;
+            const endpoint = isManual ? '/survey/create-manual' : '/survey/create';
+            const response = await apiClient.post<any>(endpoint, data, { token });
 
             // Check for nested error structure (common in Laravel API wrappers)
             const isSuccess = (response as any).success && (response as any).data?.original?.success !== false;
@@ -199,9 +201,10 @@ export function useCreateSurvey() {
                 throw new Error(errorMsg);
             }
 
-            // Wait for third-party activation to complete
-            // Backend triggers activation after survey creation, this gives time for processing
-            await new Promise((resolve) => setTimeout(resolve, 7500)); // 7.5 seconds
+            // Wait for third-party activation (auto survey only); manual survey does not need this delay
+            if (!isManual) {
+                await new Promise((resolve) => setTimeout(resolve, 7500)); // 7.5 seconds
+            }
 
             return response;
         },

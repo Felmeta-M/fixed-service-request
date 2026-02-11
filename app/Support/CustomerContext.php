@@ -174,7 +174,7 @@ class CustomerContext
     /**
      * Get customer birthdate (YmdHis format for BSS).
      */
-    public static function birthdate(?string $fallback = '19900101'): string
+    public static function birthdate(?string $fallback = ''): string
     {
         $customer = self::customer();
         if ($customer?->birthdate) {
@@ -364,7 +364,7 @@ class CustomerContext
             'customer_type' => $overrides['customer_type'] ?? self::customerType('2'),
             'customer_category' => $overrides['customer_category'] ?? self::customerCategory('5'),
             'customer_subcategory' => $overrides['customer_subcategory'] ?? self::customerSubcategory('14'),
-            'customer_level' => $overrides['customer_level'] ?? self::customerLevel('2'),
+            'customer_level' => $overrides['customer_level'] ?? self::customerLevel('8'),
             'notification_mode' => $overrides['notification_mode'] ?? self::notificationMode('2'),
             'credit_class' => $overrides['credit_class'] ?? self::creditClass('Excellent'),
         ];

@@ -1,13 +1,10 @@
 import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCreateSurvey, useGetCustomer } from '@/hooks/use-api-mutations';
-import { formatBandwidthLabel, useBandwidthOptions } from '@/hooks/use-bandwidth-options';
-import { useRegions, useTelecomRegionsByZone, useWoredas, useZones } from '@/hooks/use-regions';
+import { useCreateSurvey } from '@/hooks/use-api-mutations';
 import { router, usePage } from '@inertiajs/react';
-import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, MapPin } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { AlertCircle, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface AuthUser {
@@ -63,93 +60,23 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
 
     const [manualFlowData, setManualFlowData] = useState({
-        phone: (user as AuthUser)?.phone || '',
         name: (user as AuthUser)?.name || '',
+        phone: (user as AuthUser)?.phone || '',
+        email: (user as AuthUser)?.email || '',
     });
 
-    const [address, setAddress] = useState(formData.address || '');
     const [manualFlowErrors, setManualFlowErrors] = useState<Record<string, string>>({});
     const [submitting, setSubmitting] = useState(false);
 
-    // Address selection state
-    const [selectedAddress, setSelectedAddress] = useState({
-        region: '',
-        zone: '',
-        woreda: '',
-        kebele: '',
-    });
-
-    // Telecom region selection state (for service installation area)
-    const [selectedTelecomRegion, setSelectedTelecomRegion] = useState('');
-
     const createSurveyMutation = useCreateSurvey();
-    const { residentialOptions, loading: loadingBandwidths } = useBandwidthOptions();
-
-    // Sort ascending; manual surveys allow all options (including 7M)
-    const sortedBandwidthOptions = useMemo(
-        () => [...residentialOptions].sort((a, b) => a.numericValue - b.numericValue),
-        [residentialOptions],
-    );
-
-    // Fetch customer data to get address information for fallback
-    const { data: customerData, isLoading: isLoadingCustomer } = useGetCustomer((user as AuthUser)?.customer_sub_id);
-
-    // Address dropdown hooks
-    const { regions: regionOptions, loading: loadingRegions } = useRegions();
-    const { zones: zoneOptions, loading: loadingZones } = useZones(selectedAddress.region);
-    const { woredas: woredaOptions, loading: loadingWoredas } = useWoredas(selectedAddress.zone);
-
-    // Telecom regions based on selected zone (for service installation area)
-    const { telecomRegions: telecomRegionOptions, loading: loadingTelecomRegions } = useTelecomRegionsByZone(selectedAddress.zone);
-
-    // Check if kebele is required based on region (not required for Addis Ababa)
-    const isKebeleRequired = useMemo(() => {
-        if (!selectedAddress.region) return false;
-
-        // Find the region name from the region options
-        const selectedRegion = regionOptions.find((r) => r.value === selectedAddress.region);
-        const regionName = selectedRegion?.label?.toLowerCase() || '';
-
-        // Addis Ababa region names (case-insensitive check)
-        const addisAbabaNames = ['addis ababa', 'addisababa', 'addis_ababa'];
-        const isAddisAbaba = addisAbabaNames.some((name) => regionName.includes(name));
-
-        return !isAddisAbaba; // Required for all regions except Addis Ababa
-    }, [selectedAddress.region, regionOptions]);
-
-    // Initialize address from customer data if available
-    useEffect(() => {
-        if (customerData && !selectedAddress.region) {
-            const customer = customerData?.data || customerData;
-            if (customer) {
-                const customerRegion = customer.region || customer.address?.region || '';
-                const customerZone = customer.zone || customer.address?.zone || '';
-                const customerWoreda = customer.woreda || customer.address?.woreda || '';
-                const customerKebele = customer.kebele || customer.address?.kebele || '';
-
-                if (customerRegion || customerZone || customerWoreda || customerKebele) {
-                    setSelectedAddress({
-                        region: customerRegion,
-                        zone: customerZone,
-                        woreda: customerWoreda,
-                        kebele: customerKebele,
-                    });
-                }
-            }
-        }
-    }, [customerData]);
-
-    // Sync address with formData when it changes
-    useEffect(() => {
-        setAddress(formData.address || '');
-    }, [formData.address]);
 
     // Initialize form data from user if not provided
     useEffect(() => {
         if (user) {
             setManualFlowData({
-                phone: (user as AuthUser)?.phone || '',
                 name: (user as AuthUser)?.name || '',
+                phone: (user as AuthUser)?.phone || '',
+                email: (user as AuthUser)?.email || '',
             });
         }
     }, [user]);
@@ -172,6 +99,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
         const fieldMap: Record<string, string> = {
             contact_no: 'phone',
             contact_person: 'name',
+            contact_email: 'email',
             survey_address_info: 'address',
             'survey_address_info.address': 'address',
             'survey_address_info.latitude': 'address',
@@ -210,6 +138,17 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                 setManualFlowErrors({ serviceType: 'Please select a service type' });
                 return;
             }
+            if (!manualFlowData.name?.trim()) {
+                setSubmitting(false);
+                setManualFlowErrors({ name: 'Contact name is required' });
+                return;
+            }
+            const phoneError = validatePhoneNumber(manualFlowData.phone);
+            if (phoneError) {
+                setSubmitting(false);
+                setManualFlowErrors({ phone: phoneError });
+                return;
+            }
             if (
                 formData.latitude == null ||
                 formData.longitude == null ||
@@ -223,10 +162,12 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                 return;
             }
 
-            // Only send client-selected data; customer_code, contact, survey_type, oper_type come from backend auth
             const submitData = {
                 main_offer_id: formData.serviceType,
                 bandwidth: '7M',
+                contact_person: manualFlowData.name.trim() || (user as AuthUser)?.name || '',
+                contact_no: manualFlowData.phone.trim() || (user as AuthUser)?.phone || '',
+                contact_email: manualFlowData.email.trim() || (user as AuthUser)?.email || '',
                 survey_address_info: {
                     latitude: String(formData.latitude),
                     longitude: String(formData.longitude),
@@ -283,9 +224,14 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             return;
         }
 
-        // Full manual flow validation
-        if (formData.serviceType !== '1207609454' && !formData.bandwidth) {
-            setManualFlowErrors({ bandwidth: 'Please select a bandwidth' });
+        // Full manual flow validation (bandwidth is fixed at 7M)
+        if (!formData.serviceType || !formData.serviceType.trim()) {
+            setManualFlowErrors({ serviceType: 'Please select a service type' });
+            setSubmitting(false);
+            return;
+        }
+        if (!manualFlowData.name?.trim()) {
+            setManualFlowErrors({ name: 'Contact name is required' });
             setSubmitting(false);
             return;
         }
@@ -297,14 +243,6 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             return;
         }
 
-        if (!address || !address.trim()) {
-            setSubmitting(false);
-            toast.error('Location address is required', {
-                description: 'Please enter a valid address for the service installation location.',
-            });
-            return;
-        }
-
         if (!formData.latitude || !formData.longitude || formData.latitude === 0 || formData.longitude === 0) {
             setSubmitting(false);
             toast.error('Please select a valid location on the map', {
@@ -313,91 +251,23 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             return;
         }
 
-        if (!selectedAddress.region) {
-            setSubmitting(false);
-            setManualFlowErrors({ region: 'Please select a region' });
-            toast.error('Region selection is required', {
-                description: 'Please select your region for the service installation address.',
-            });
-            return;
-        }
-
-        if (!selectedAddress.zone) {
-            setSubmitting(false);
-            setManualFlowErrors({ zone: 'Please select a zone' });
-            toast.error('Zone selection is required', {
-                description: 'Please select your zone for the service installation address.',
-            });
-            return;
-        }
-
-        if (!selectedAddress.woreda) {
-            setSubmitting(false);
-            setManualFlowErrors({ woreda: 'Please select a woreda' });
-            toast.error('Woreda selection is required', {
-                description: 'Please select your woreda for the service installation address.',
-            });
-            return;
-        }
-
-        if (!selectedTelecomRegion) {
-            setSubmitting(false);
-            setManualFlowErrors({ telecom_region: 'Please select a telecom zone' });
-            toast.error('Nearest ethiotelecom zone is required', {
-                description: 'Please select the nearest ethiotelecom zone for your service installation.',
-            });
-            return;
-        }
-
-        const encryptedResource = formData.resourceData;
-        const customer = customerData?.data || customerData;
-        const customerRegion = customer?.region || customer?.address?.region || '';
-        const customerZone = customer?.zone || customer?.address?.zone || '';
-        const customerWoreda = customer?.woreda || customer?.address?.woreda || '';
-        const customerKebele = customer?.kebele || customer?.address?.kebele || '';
-
-        const finalRegion = selectedAddress.region || customerRegion || '2';
-        const finalZone = selectedAddress.zone || customerZone || '11';
-        const finalWoreda = selectedAddress.woreda || customerWoreda || '141';
-        const finalKebele = selectedAddress.kebele || customerKebele || '';
-
+        // Backend resolves telecom_region from lat/long via ethio_shops; bandwidth fixed at 7M for manual
         const submitData = {
-            customer_code: (user as AuthUser)?.customer_code?.toString() || '',
-            customer_type: formData.customerType || 'residential',
-            survey_type: 'EIC08',
-            telecom_region: selectedTelecomRegion || '104',
-            oper_type: 'A',
             main_offer_id: formData.serviceType,
-            bandwidth: formData.bandwidth,
-            contact_person: manualFlowData.name.trim() || formData.contactPerson || (user as AuthUser)?.name || 'Customer',
-            contact_no: manualFlowData.phone.trim() || formData.contactNo || (user as AuthUser)?.phone || '',
-            contact_email: formData.contactEmail || (user as AuthUser)?.email || '',
+            bandwidth: '7M',
+            contact_person: manualFlowData.name.trim() || (user as AuthUser)?.name || '',
+            contact_no: manualFlowData.phone.trim() || (user as AuthUser)?.phone || '',
+            contact_email: manualFlowData.email.trim() || (user as AuthUser)?.email || '',
             survey_address_info: {
-                region_city: finalRegion,
-                subcity_zone: finalZone,
-                wereda_town: finalWoreda,
-                kebele: finalKebele,
-                address: address.trim(),
-                latitude: encryptedResource?.latitude ?? String(formData.latitude),
-                longitude: encryptedResource?.longitude ?? String(formData.longitude),
-                distance: encryptedResource?.distance ?? formData.distance ?? '',
-                cable_type: encryptedResource?.cable_type ?? formData.cable_type ?? '',
-                neid: encryptedResource?.neid ?? '',
-                nename: encryptedResource?.nename ?? '',
-                area_code: encryptedResource?.area_code ?? '',
-                area_name: encryptedResource?.area_name ?? '',
+                latitude: String(formData.latitude),
+                longitude: String(formData.longitude),
             },
             with_device: formData.withDevice,
             device_id: formData.deviceId || null,
-            completed_date: new Date()
-                .toISOString()
-                .replace(/[-:T.Z]/g, '')
-                .slice(0, 14),
-            external_operid: '512',
             survey_is_manual: true,
         };
 
-        const submissionToast = toast.loading('Creating your service request...', {
+    const submissionToast = toast.loading('Creating your service request...', {
             description: 'Please wait while we process your manual request',
         });
 
@@ -412,6 +282,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                     '1207609454': 'Fixed Voice',
                     '102647257': 'Combo Services',
                 };
+
                 const newSurvey = {
                     id: surveyId,
                     type: serviceTypes[formData.serviceType || ''] || 'Service Request',
@@ -492,7 +363,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                 <div className="mt-4">
                     <div>
                         <FieldGroup className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            {/* Minimal manual flow: only service type + bandwidth 7M + latitude + longitude */}
+                            {/* Minimal manual flow: service type, bandwidth 7M, contact (lat/long sent in payload, hidden from UI) */}
                             {isMinimal ? (
                                 <>
                                     <Field>
@@ -518,436 +389,136 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                         </Field>
                                     )}
                                     <Field>
-                                        <FieldLabel>Latitude</FieldLabel>
+                                        <FieldLabel htmlFor="manual-name-min">Contact Name <span className="text-red-500">*</span></FieldLabel>
                                         <Input
+                                            id="manual-name-min"
                                             type="text"
-                                            value={formData.latitude != null ? String(formData.latitude) : ''}
-                                            disabled
-                                            className="bg-gray-50"
+                                            placeholder="Your name"
+                                            value={manualFlowData.name}
+                                            onChange={(e) => {
+                                                setManualFlowData({ ...manualFlowData, name: e.target.value });
+                                                if (manualFlowErrors.name) setManualFlowErrors({ ...manualFlowErrors, name: '' });
+                                            }}
+                                            className={manualFlowErrors.name ? 'border-red-500 bg-red-50' : ''}
+                                            disabled={submitting}
                                         />
+                                        {manualFlowErrors.name && (
+                                            <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
+                                                <AlertCircle className="h-4 w-4" />
+                                                {manualFlowErrors.name}
+                                            </p>
+                                        )}
                                     </Field>
                                     <Field>
-                                        <FieldLabel>Longitude</FieldLabel>
+                                        <FieldLabel htmlFor="manual-phone-min">Contact Phone <span className="text-red-500">*</span></FieldLabel>
                                         <Input
-                                            type="text"
-                                            value={formData.longitude != null ? String(formData.longitude) : ''}
-                                            disabled
-                                            className="bg-gray-50"
+                                            id="manual-phone-min"
+                                            type="tel"
+                                            placeholder="+251 9XX XXX XXX"
+                                            value={manualFlowData.phone}
+                                            onChange={(e) => {
+                                                setManualFlowData({ ...manualFlowData, phone: e.target.value });
+                                                if (manualFlowErrors.phone) setManualFlowErrors({ ...manualFlowErrors, phone: '' });
+                                            }}
+                                            className={manualFlowErrors.phone ? 'border-red-500 bg-red-50' : ''}
+                                            disabled={submitting}
+                                        />
+                                        {manualFlowErrors.phone && (
+                                            <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
+                                                <AlertCircle className="h-4 w-4" />
+                                                {manualFlowErrors.phone}
+                                            </p>
+                                        )}
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel htmlFor="manual-email-min">Contact Email</FieldLabel>
+                                        <Input
+                                            id="manual-email-min"
+                                            type="email"
+                                            placeholder="email@example.com"
+                                            value={manualFlowData.email}
+                                            onChange={(e) => setManualFlowData({ ...manualFlowData, email: e.target.value })}
+                                            disabled={submitting}
                                         />
                                     </Field>
                                 </>
                             ) : (
                                 <>
-                            {formData.serviceType && (
-                                <Field>
-                                    <FieldLabel>Service Type</FieldLabel>
-                                    <Input type="text" value={serviceTypes[formData.serviceType] || 'Unknown'} disabled className="bg-gray-50" />
-                                </Field>
-                            )}
-
-                            {formData.serviceType !== '1207609454' && (
-                                <Field>
-                                    <FieldLabel>
-                                        Bandwidth <span className="text-red-500">*</span>
-                                    </FieldLabel>
-                                    <Select
-                                        value={formData.bandwidth || ''}
-                                        onValueChange={(value) => {
-                                            const selected = sortedBandwidthOptions.find((o) => o.value === value);
-                                            if (onUpdate && selected) {
-                                                onUpdate({
-                                                    bandwidth: value,
-                                                    bandwidthNumericValue: selected.numericValue,
-                                                });
-                                            }
-                                        }}
-                                        disabled={submitting || loadingBandwidths}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue
-                                                placeholder={loadingBandwidths ? 'Loading...' : 'Select bandwidth'}
-                                            />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {sortedBandwidthOptions.map((opt) => (
-                                                <SelectItem key={opt.value} value={opt.value}>
-                                                    {opt.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {manualFlowErrors.bandwidth && (
-                                        <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
-                                            <AlertCircle className="h-4 w-4" />
-                                            {manualFlowErrors.bandwidth}
-                                        </p>
+                                    {formData.serviceType && (
+                                        <Field>
+                                            <FieldLabel>Service Type</FieldLabel>
+                                            <Input type="text" value={serviceTypes[formData.serviceType] || 'Unknown'} disabled className="bg-gray-50" />
+                                        </Field>
                                     )}
-                                </Field>
-                            )}
 
-                            <Field>
-                                <FieldLabel htmlFor="manual-phone">
-                                    Contact Phone Number <span className="text-red-500">*</span>
-                                </FieldLabel>
-                                <Input
-                                    id="manual-phone"
-                                    type="tel"
-                                    placeholder="+251 9XX XXX XXX"
-                                    value={manualFlowData.phone}
-                                    onChange={(e) => {
-                                        setManualFlowData({ ...manualFlowData, phone: e.target.value });
-                                        if (manualFlowErrors.phone) {
-                                            setManualFlowErrors({ ...manualFlowErrors, phone: '' });
-                                        }
-                                    }}
-                                    className={
-                                        manualFlowErrors.phone
-                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
-                                            : ''
-                                    }
-                                    disabled={submitting}
-                                    required
-                                />
-                                {manualFlowErrors.phone && (
-                                    <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
-                                        <AlertCircle className="h-4 w-4" />
-                                        {manualFlowErrors.phone}
-                                    </p>
-                                )}
-                            </Field>
+                                    {formData.serviceType !== '1207609454' && (
+                                        <Field>
+                                            <FieldLabel>Bandwidth</FieldLabel>
+                                            <Input type="text" value="7 Mbps" disabled className="bg-gray-50" />
+                                        </Field>
+                                    )}
+
+                                    <Field>
+                                        <FieldLabel htmlFor="manual-name">Contact Name <span className="text-red-500">*</span></FieldLabel>
+                                        <Input
+                                            id="manual-name"
+                                            type="text"
+                                            placeholder="Your name"
+                                            value={manualFlowData.name}
+                                            onChange={(e) => {
+                                                setManualFlowData({ ...manualFlowData, name: e.target.value });
+                                                if (manualFlowErrors.name) setManualFlowErrors({ ...manualFlowErrors, name: '' });
+                                            }}
+                                            className={manualFlowErrors.name ? 'border-red-500 bg-red-50' : ''}
+                                            disabled={submitting}
+                                        />
+                                        {manualFlowErrors.name && (
+                                            <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
+                                                <AlertCircle className="h-4 w-4" />
+                                                {manualFlowErrors.name}
+                                            </p>
+                                        )}
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel htmlFor="manual-phone">
+                                            Contact Phone <span className="text-red-500">*</span>
+                                        </FieldLabel>
+                                        <Input
+                                            id="manual-phone"
+                                            type="tel"
+                                            placeholder="+251 9XX XXX XXX"
+                                            value={manualFlowData.phone}
+                                            onChange={(e) => {
+                                                setManualFlowData({ ...manualFlowData, phone: e.target.value });
+                                                if (manualFlowErrors.phone) setManualFlowErrors({ ...manualFlowErrors, phone: '' });
+                                            }}
+                                            className={manualFlowErrors.phone ? 'border-red-500 bg-red-50' : ''}
+                                            disabled={submitting}
+                                            required
+                                        />
+                                        {manualFlowErrors.phone && (
+                                            <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
+                                                <AlertCircle className="h-4 w-4" />
+                                                {manualFlowErrors.phone}
+                                            </p>
+                                        )}
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel htmlFor="manual-email">Contact Email</FieldLabel>
+                                        <Input
+                                            id="manual-email"
+                                            type="email"
+                                            placeholder=""
+                                            value={manualFlowData.email}
+                                            onChange={(e) => setManualFlowData({ ...manualFlowData, email: e.target.value })}
+                                            disabled={submitting}
+                                        />
+                                    </Field>
                                 </>
                             )}
                         </FieldGroup>
                     </div>
                 </div>
-
-                {!isMinimal && (
-                <div className="mt-2">
-                    {/* <div>
-                        <div className="font-semibold text-lg">Location Information</div>
-                        <div className="text-sm text-gray-500">Your selected location details - you can edit the address to be more specific</div>
-                    </div> */}
-                    <div className="flex w-1/2 flex-col gap-4">
-                        {/* <Field>
-                            <FieldLabel htmlFor="manual-phone">
-                                Contact Phone Number <span className="text-red-500">*</span>
-                            </FieldLabel>
-                            <Input
-                                id="manual-phone"
-                                type="tel"
-                                placeholder="+251 9XX XXX XXX"
-                                value={manualFlowData.phone}
-                                onChange={(e) => {
-                                    setManualFlowData({ ...manualFlowData, phone: e.target.value });
-                                    if (manualFlowErrors.phone) {
-                                        setManualFlowErrors({ ...manualFlowErrors, phone: '' });
-                                    }
-                                }}
-                                className={
-                                    manualFlowErrors.phone
-                                        ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
-                                        : ''
-                                }
-                                disabled={submitting}
-                                required
-                            />
-                            {manualFlowErrors.phone && (
-                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                                    <AlertCircle className="h-4 w-4" />
-                                    {manualFlowErrors.phone}
-                                </p>
-                            )}
-                        </Field> */}
-
-                        {/* <Field>
-                            <FieldLabel htmlFor="manual-address">
-                                Address <span className="text-red-500">*</span>
-                            </FieldLabel>
-                            <Textarea
-                                id="manual-address"
-                                rows={3}
-                                placeholder="Enter your specific location address"
-                                value={address}
-                                onChange={(e) => {
-                                    const newAddress = e.target.value;
-                                    setAddress(newAddress);
-                                    // Update parent formData
-                                    if (onUpdate) {
-                                        onUpdate({ address: newAddress });
-                                    }
-                                    // Clear error if exists
-                                    if (manualFlowErrors.address) {
-                                        setManualFlowErrors({ ...manualFlowErrors, address: '' });
-                                    }
-                                }}
-                                className={
-                                    manualFlowErrors.address
-                                        ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
-                                        : ''
-                                }
-                                disabled={submitting}
-                                required
-                            />
-                            {manualFlowErrors.address && (
-                                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                                    <AlertCircle className="h-4 w-4" />
-                                    {manualFlowErrors.address}
-                                </p>
-                            )}
-                        </Field> */}
-                    </div>
-                </div>
-
-                {/* Address Selection Dropdowns */}
-                <div className="mt-8 rounded-xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
-                    <div className="mb-6 flex items-start gap-4">
-                        <div className="hidden rounded-full bg-primary/10 p-2 sm:block">
-                            <MapPin className="h-6 w-6 text-primary" />
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900">Installation Address</h3>
-                            <p className="mt-1 text-sm text-gray-500">
-                                Please provide the exact location where you would like the service to be installed. This helps us check availability
-                                and plan the connection.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        <Field>
-                            <FieldLabel htmlFor="manual-region" className="text-gray-700">
-                                Region {selectedAddress.region ? '' : <span className="ml-1 text-red-500">*</span>}
-                            </FieldLabel>
-                            <Select
-                                value={selectedAddress.region}
-                                onValueChange={(value) => {
-                                    setSelectedAddress({
-                                        region: value,
-                                        zone: '',
-                                        woreda: '',
-                                        kebele: '',
-                                    });
-                                    if (manualFlowErrors.region) {
-                                        setManualFlowErrors({ ...manualFlowErrors, region: '' });
-                                    }
-                                }}
-                                disabled={submitting || loadingRegions}
-                            >
-                                <SelectTrigger
-                                    className={
-                                        manualFlowErrors.region
-                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
-                                            : 'bg-gray-50/50'
-                                    }
-                                >
-                                    <SelectValue placeholder={loadingRegions ? 'Loading regions...' : 'Select region'} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {regionOptions.map((region) => (
-                                        <SelectItem key={region.value} value={region.value}>
-                                            {region.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {manualFlowErrors.region && (
-                                <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
-                                    <AlertCircle className="h-4 w-4" />
-                                    {manualFlowErrors.region}
-                                </p>
-                            )}
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="manual-zone" className="text-gray-700">
-                                Zone {selectedAddress.zone ? '' : <span className="ml-1 text-red-500">*</span>}
-                            </FieldLabel>
-                            <Select
-                                value={selectedAddress.zone}
-                                onValueChange={(value) => {
-                                    setSelectedAddress({
-                                        ...selectedAddress,
-                                        zone: value,
-                                        woreda: '',
-                                        kebele: '',
-                                    });
-                                    // Reset telecom region when zone changes
-                                    setSelectedTelecomRegion('');
-                                    if (manualFlowErrors.zone) {
-                                        setManualFlowErrors({ ...manualFlowErrors, zone: '' });
-                                    }
-                                }}
-                                disabled={submitting || loadingZones || !selectedAddress.region}
-                            >
-                                <SelectTrigger
-                                    className={
-                                        manualFlowErrors.zone
-                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
-                                            : 'bg-gray-50/50'
-                                    }
-                                >
-                                    <SelectValue
-                                        placeholder={
-                                            !selectedAddress.region ? 'First select region' : loadingZones ? 'Loading zones...' : 'Select zone'
-                                        }
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {zoneOptions.map((zone) => (
-                                        <SelectItem key={zone.value} value={zone.value}>
-                                            {zone.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {manualFlowErrors.zone && (
-                                <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
-                                    <AlertCircle className="h-4 w-4" />
-                                    {manualFlowErrors.zone}
-                                </p>
-                            )}
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="manual-woreda" className="text-gray-700">
-                                Woreda {selectedAddress.woreda ? '' : <span className="ml-1 text-red-500">*</span>}
-                            </FieldLabel>
-                            <Select
-                                value={selectedAddress.woreda}
-                                onValueChange={(value) => {
-                                    setSelectedAddress({
-                                        ...selectedAddress,
-                                        woreda: value,
-                                    });
-                                    if (manualFlowErrors.woreda) {
-                                        setManualFlowErrors({ ...manualFlowErrors, woreda: '' });
-                                    }
-                                }}
-                                disabled={submitting || loadingWoredas || !selectedAddress.zone}
-                            >
-                                <SelectTrigger
-                                    className={
-                                        manualFlowErrors.woreda
-                                            ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
-                                            : 'bg-gray-50/50'
-                                    }
-                                >
-                                    <SelectValue
-                                        placeholder={
-                                            !selectedAddress.zone ? 'First select zone' : loadingWoredas ? 'Loading woredas...' : 'Select woreda'
-                                        }
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {woredaOptions.map((woreda) => (
-                                        <SelectItem key={woreda.value} value={woreda.value}>
-                                            {woreda.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {manualFlowErrors.woreda && (
-                                <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
-                                    <AlertCircle className="h-4 w-4" />
-                                    {manualFlowErrors.woreda}
-                                </p>
-                            )}
-                        </Field>
-
-                        <Field>
-                            <FieldLabel htmlFor="manual-kebele" className="text-gray-700">
-                                Kebele {isKebeleRequired && !selectedAddress.kebele ? <span className="ml-1 text-red-500">*</span> : ''}
-                            </FieldLabel>
-                            <Input
-                                id="manual-kebele"
-                                type="text"
-                                placeholder="Enter kebele name/number"
-                                value={selectedAddress.kebele}
-                                onChange={(e) => {
-                                    setSelectedAddress({
-                                        ...selectedAddress,
-                                        kebele: e.target.value,
-                                    });
-                                    if (manualFlowErrors.kebele) {
-                                        setManualFlowErrors({ ...manualFlowErrors, kebele: '' });
-                                    }
-                                }}
-                                className={
-                                    manualFlowErrors.kebele
-                                        ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
-                                        : 'bg-gray-50/50'
-                                }
-                                disabled={submitting}
-                                required={isKebeleRequired}
-                            />
-                            {manualFlowErrors.kebele && (
-                                <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
-                                    <AlertCircle className="h-4 w-4" />
-                                    {manualFlowErrors.kebele}
-                                </p>
-                            )}
-                        </Field>
-
-                        {/* Nearest Telecom Zone - Mandatory */}
-                        <div className="col-span-1 md:col-span-2">
-                            <div className="rounded-lg border border-blue-100/50 bg-blue-50/50 p-4">
-                                <Field>
-                                    <FieldLabel htmlFor="manual-telecom-zone" className="flex items-center gap-2 text-gray-700">
-                                        Nearest ethio telecom zone {selectedTelecomRegion ? '' : <span className="text-red-500">*</span>}
-                                        <span className="text-xs font-normal text-gray-500">(Required for technical assignment)</span>
-                                    </FieldLabel>
-                                    <Select
-                                        value={selectedTelecomRegion}
-                                        onValueChange={(value) => {
-                                            setSelectedTelecomRegion(value);
-                                            if (manualFlowErrors.telecom_region) {
-                                                setManualFlowErrors({ ...manualFlowErrors, telecom_region: '' });
-                                            }
-                                        }}
-                                        disabled={submitting || loadingTelecomRegions || !selectedAddress.zone}
-                                    >
-                                        <SelectTrigger
-                                            className={
-                                                manualFlowErrors.telecom_region
-                                                    ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-500'
-                                                    : 'border-blue-200 bg-white focus:border-blue-400 focus:ring-blue-100'
-                                            }
-                                        >
-                                            <SelectValue
-                                                placeholder={
-                                                    !selectedAddress.zone
-                                                        ? 'First select zone to see nearby telecom zones'
-                                                        : loadingTelecomRegions
-                                                          ? 'Searching for nearby zones...'
-                                                          : telecomRegionOptions.length === 0
-                                                            ? 'No telecom zones found in this area'
-                                                            : 'Select the nearest telecom zone'
-                                                }
-                                            />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {telecomRegionOptions.map((region) => (
-                                                <SelectItem key={region.value} value={region.value}>
-                                                    {region.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {manualFlowErrors.telecom_region && (
-                                        <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
-                                            <AlertCircle className="h-4 w-4" />
-                                            {manualFlowErrors.telecom_region}
-                                        </p>
-                                    )}
-                                    <p className="mt-2 text-xs text-gray-500">
-                                        Select the telecom office or zone closest to your installation address.
-                                    </p>
-                                </Field>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                )}
 
                 {/* Action Buttons */}
                 <div className="mt-2 flex justify-between pt-2">

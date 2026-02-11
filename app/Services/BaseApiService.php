@@ -139,10 +139,20 @@ abstract class BaseApiService
      */
     protected function getPrimaryContact(array $data = []): array
     {
+        $contactPerson = isset($data['contact_person']) && trim((string) $data['contact_person']) !== ''
+            ? trim((string) $data['contact_person'])
+            : $this->customerName('');
+        $contactNo = isset($data['contact_no']) && trim((string) $data['contact_no']) !== ''
+            ? $this->formatPhoneNumber($data['contact_no'])
+            : $this->formatPhoneNumber($this->customerPhone(''));
+        $contactEmail = isset($data['contact_email']) && trim((string) $data['contact_email']) !== ''
+            ? trim((string) $data['contact_email'])
+            : $this->customerEmail('');
+
         return [
-            'contact_person' => $data['contact_person'] ?? $this->customerName(''),
-            'contact_no' => $this->formatPhoneNumber($data['contact_no'] ?? $this->customerPhone('')),
-            'contact_email' => $data['contact_email'] ?? $this->customerEmail(''),
+            'contact_person' => $contactPerson,
+            'contact_no' => $contactNo,
+            'contact_email' => $contactEmail,
         ];
     }
 

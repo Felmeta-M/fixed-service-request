@@ -1292,23 +1292,29 @@ class SurveyOrderController extends Controller
         try {
             $data = $request->validated();
 
-            // AppLogger::business()->info('Manual survey order creation started', [
-            //     'customer_code' => $data['customer_code'],
-            //     'survey_type' => $data['survey_type'],
-            //     'telecom_region' => $data['telecom_region'],
-            // ]);
-
-            // Check for existing active survey orders for this customer
-            if (SurveyOrder::hasBlockedSurvey(CustomerContext::code())) {
-                AppLogger::business()->warning('Manual survey blocked - existing active order', [
-                    'customer_code' => CustomerContext::code(),
-                ]);
-
+            $customerCode = CustomerContext::code();
+            if (!$customerCode) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Customer already has an active survey order.',
-                ], Response::HTTP_CONFLICT);
+                    'message' => 'Customer code is required.',
+                ], 422);
             }
+
+            $data['customer_code'] = $customerCode;
+            $data['survey_type'] = $data['survey_type'] ?? 'EIC08';
+            $data['oper_type'] = $data['oper_type'] ?? 'A';
+
+            // Check for existing active survey orders for this customer
+            // if (SurveyOrder::hasBlockedSurvey($customerCode)) {
+            //     AppLogger::business()->warning('Manual survey blocked - existing active order', [
+            //         'customer_code' => $customerCode,
+            //     ]);
+
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'Customer already has an active survey order.',
+            //     ], Response::HTTP_CONFLICT);
+            // }
 
             // Create the manual survey order via BSS (Fixed Data or Fixed Voice)
             $result = $this->manualSurveyServiceFactory

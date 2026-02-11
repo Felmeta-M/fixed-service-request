@@ -23,7 +23,7 @@ class DataSurveyService extends BaseSurveyService implements SurveyInterface
         // Use shared helpers for timestamps
         $transactionId = $this->transactionId();
         $processTime = $this->processTime();
-        $sessionId = $cfg['session_id'] ?? uniqid();
+        $sessionId = $this->sessionId();
         $completedDate = $this->completedDate();
 
         // Contact and customer info already set by applyDefaults() in base class

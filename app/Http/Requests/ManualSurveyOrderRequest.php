@@ -30,7 +30,7 @@ class ManualSurveyOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'survey_type' => ['required', 'string', 'in:EIC08,EIC01,EIC02,EIC03,EIC04,EIC05,EIC06,EIC07'],
+            'survey_type' => ['nullable', 'string', 'in:EIC08,EIC01,EIC02,EIC03,EIC04,EIC05,EIC06,EIC07'],
             'main_offer_id' => [
                 'required',
                 'string',
@@ -44,6 +44,11 @@ class ManualSurveyOrderRequest extends FormRequest
             'survey_address_info.latitude' => ['required', 'numeric'],
             'survey_address_info.longitude' => ['required', 'numeric'],
             'bandwidth' => ['required', 'string', 'filled'],
+            'contact_person' => ['nullable', 'string'],
+            'contact_no' => ['nullable', 'regex:/^(\+251|251|0)?(9)\d{8}$/'],
+            'contact_email' => ['nullable', 'email:rfc,dns'],
+            'with_device' => ['nullable', 'boolean'],
+            'device_id' => ['nullable', 'string'],
         ];
     }
 
@@ -87,10 +92,15 @@ class ManualSurveyOrderRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        if ($this->has('survey_type')) {
-            $this->merge([
-                'survey_type' => strtoupper($this->survey_type),
-            ]);
+        if ($this->has('survey_type') && is_string($this->survey_type)) {
+            $this->merge(['survey_type' => strtoupper($this->survey_type)]);
+        }
+        $contactNo = $this->input('contact_no');
+        if (is_string($contactNo) && $contactNo !== '') {
+            $digits = preg_replace('/\D/', '', $contactNo);
+            if ($digits !== '') {
+                $this->merge(['contact_no' => $digits]);
+            }
         }
     }
 }

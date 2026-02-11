@@ -86,6 +86,20 @@ class SurveyOrderFormRequest extends FormRequest
     }
 
     /**
+     * Normalize contact_no so validation accepts numbers with spaces/dashes (e.g. "+251 91 234 5678").
+     */
+    protected function prepareForValidation(): void
+    {
+        $contactNo = $this->input('contact_no');
+        if (is_string($contactNo) && $contactNo !== '') {
+            $digits = preg_replace('/\D/', '', $contactNo);
+            if ($digits !== '') {
+                $this->merge(['contact_no' => $digits]);
+            }
+        }
+    }
+
+    /**
      * Minimum bandwidth 7 Mbps for all survey orders.
      * Bandwidth is required for all survey orders.
      */

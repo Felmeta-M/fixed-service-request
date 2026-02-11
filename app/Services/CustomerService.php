@@ -62,7 +62,7 @@ class CustomerService extends BaseApiService
         $data['customer_type'] = '1';           // Residential (fixed)
         $data['customer_category'] = '1';       // Category 1 (fixed)
         $data['customer_subcategory'] = '1';    // Subcategory 1 (fixed)
-        $data['customer_level'] = '7';          // level 8 Copper (fixed)
+        $data['customer_level'] = '8';          // level 8 Copper (fixed)
 
         // ============================================================
         // OPTIONAL FIELDS WITH DEFAULTS - Frontend can override these

@@ -49,6 +49,8 @@ type FormData = {
     cable_type?: string;
     neid?: string;
     nename?: string;
+    /** When true, show only bandwidth 7M + latitude/longitude (from require_manual_survey flow) */
+    isMinimalManualSurvey?: boolean;
 };
 
 interface ManualSurveyStepProps {
@@ -200,14 +202,94 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
         setManualFlowErrors({});
         setSubmitting(true);
 
-        // Validate bandwidth for Data/Combo (not Voice)
+        const isMinimal = formData.isMinimalManualSurvey === true;
+
+        if (isMinimal) {
+            if (!formData.serviceType || !formData.serviceType.trim()) {
+                setSubmitting(false);
+                setManualFlowErrors({ serviceType: 'Please select a service type' });
+                return;
+            }
+            if (
+                formData.latitude == null ||
+                formData.longitude == null ||
+                formData.latitude === 0 ||
+                formData.longitude === 0
+            ) {
+                setSubmitting(false);
+                toast.error('Location is required', {
+                    description: 'Latitude and longitude from your selected location are needed.',
+                });
+                return;
+            }
+
+            // Only send client-selected data; customer_code, contact, survey_type, oper_type come from backend auth
+            const submitData = {
+                main_offer_id: formData.serviceType,
+                bandwidth: '7M',
+                survey_address_info: {
+                    latitude: String(formData.latitude),
+                    longitude: String(formData.longitude),
+                },
+                with_device: formData.withDevice,
+                device_id: formData.deviceId || null,
+                survey_is_manual: true,
+            };
+
+            const submissionToast = toast.loading('Creating your service request...', {
+                description: 'Please wait while we process your manual request',
+            });
+
+            createSurveyMutation.mutate(submitData, {
+                onSuccess: (response: any) => {
+                    const responseData = response.data;
+                    const { customer_survey_order_id: surveyId } = responseData;
+                    const serviceTypes: Record<string, string> = {
+                        '1457567289': 'Fixed Broadband',
+                        '1207609454': 'Fixed Voice',
+                        '102647257': 'Combo Services',
+                    };
+                    const newSurvey = {
+                        id: surveyId,
+                        type: serviceTypes[formData.serviceType] || 'Service Request',
+                        status: 'waiting',
+                        createdAt: new Date().toISOString(),
+                        main_offer_id: formData.serviceType,
+                    };
+                    const existingSurveys = JSON.parse(localStorage.getItem('userSurveys') || '[]');
+                    existingSurveys.push(newSurvey);
+                    localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
+                    toast.success('Service request created successfully!', {
+                        id: submissionToast,
+                        description:
+                            'Your manual request has been submitted. Our team will review your location and contact you within 1-2 business days.',
+                        duration: 5000,
+                    });
+                    setTimeout(() => router.visit(route('services')), 1500);
+                },
+                onError: (error: Error) => {
+                    toast.dismiss(submissionToast);
+                    const errorData = (error as any).data;
+                    if (errorData?.errors) {
+                        setManualFlowErrors(parseValidationErrors(errorData.errors));
+                    } else {
+                        toast.error(error.message || 'Failed to create your service request. Please try again.', {
+                            duration: 5000,
+                        });
+                    }
+                    setSubmitting(false);
+                },
+            });
+            return;
+        }
+
+        // Full manual flow validation
         if (formData.serviceType !== '1207609454' && !formData.bandwidth) {
             setManualFlowErrors({ bandwidth: 'Please select a bandwidth' });
             setSubmitting(false);
             return;
         }
 
-        // Validate phone number
         const phoneError = validatePhoneNumber(manualFlowData.phone);
         if (phoneError) {
             setManualFlowErrors({ phone: phoneError });
@@ -215,7 +297,6 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             return;
         }
 
-        // Validate address
         if (!address || !address.trim()) {
             setSubmitting(false);
             toast.error('Location address is required', {
@@ -224,7 +305,6 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             return;
         }
 
-        // Validate location coordinates
         if (!formData.latitude || !formData.longitude || formData.latitude === 0 || formData.longitude === 0) {
             setSubmitting(false);
             toast.error('Please select a valid location on the map', {
@@ -233,7 +313,6 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             return;
         }
 
-        // Validate address selection (region, zone, woreda are mandatory)
         if (!selectedAddress.region) {
             setSubmitting(false);
             setManualFlowErrors({ region: 'Please select a region' });
@@ -261,7 +340,6 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             return;
         }
 
-        // Validate telecom zone selection (mandatory)
         if (!selectedTelecomRegion) {
             setSubmitting(false);
             setManualFlowErrors({ telecom_region: 'Please select a telecom zone' });
@@ -271,18 +349,13 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             return;
         }
 
-        // Build survey creation payload for manual survey
-        // Manual surveys don't require encrypted resource fields - they use different backend service
         const encryptedResource = formData.resourceData;
-
-        // Get customer address data for fallback
         const customer = customerData?.data || customerData;
         const customerRegion = customer?.region || customer?.address?.region || '';
         const customerZone = customer?.zone || customer?.address?.zone || '';
         const customerWoreda = customer?.woreda || customer?.address?.woreda || '';
         const customerKebele = customer?.kebele || customer?.address?.kebele || '';
 
-        // Use selected address if available, otherwise fallback to customer address
         const finalRegion = selectedAddress.region || customerRegion || '2';
         const finalZone = selectedAddress.zone || customerZone || '11';
         const finalWoreda = selectedAddress.woreda || customerWoreda || '141';
@@ -292,7 +365,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             customer_code: (user as AuthUser)?.customer_code?.toString() || '',
             customer_type: formData.customerType || 'residential',
             survey_type: 'EIC08',
-            telecom_region: selectedTelecomRegion || '104', // Use selected telecom region or fallback
+            telecom_region: selectedTelecomRegion || '104',
             oper_type: 'A',
             main_offer_id: formData.serviceType,
             bandwidth: formData.bandwidth,
@@ -300,13 +373,11 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
             contact_no: manualFlowData.phone.trim() || formData.contactNo || (user as AuthUser)?.phone || '',
             contact_email: formData.contactEmail || (user as AuthUser)?.email || '',
             survey_address_info: {
-                // Use selected address or fallback to customer address
                 region_city: finalRegion,
                 subcity_zone: finalZone,
                 wereda_town: finalWoreda,
                 kebele: finalKebele,
-                address: address.trim(), // Use edited address
-                // Manual surveys: use encrypted resource fields if available, otherwise use form data or empty strings
+                address: address.trim(),
                 latitude: encryptedResource?.latitude ?? String(formData.latitude),
                 longitude: encryptedResource?.longitude ?? String(formData.longitude),
                 distance: encryptedResource?.distance ?? formData.distance ?? '',
@@ -323,7 +394,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                 .replace(/[-:T.Z]/g, '')
                 .slice(0, 14),
             external_operid: '512',
-            survey_is_manual: true, // Mark as manual survey
+            survey_is_manual: true,
         };
 
         const submissionToast = toast.loading('Creating your service request...', {
@@ -413,12 +484,60 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
         '102647257': 'Combo Services',
     };
 
+    const isMinimal = formData.isMinimalManualSurvey === true;
+
     return (
         <div className="space-y-4">
             <form onSubmit={handleSubmit}>
                 <div className="mt-4">
                     <div>
                         <FieldGroup className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            {/* Minimal manual flow: only service type + bandwidth 7M + latitude + longitude */}
+                            {isMinimal ? (
+                                <>
+                                    <Field>
+                                        <FieldLabel>Service Type</FieldLabel>
+                                        <Input
+                                            type="text"
+                                            value={formData.serviceType ? (serviceTypes[formData.serviceType] ?? '') : ''}
+                                            placeholder="Not selected"
+                                            disabled
+                                            className="bg-gray-50"
+                                        />
+                                        {manualFlowErrors.serviceType && (
+                                            <p className="mt-1 flex items-center gap-1 text-sm text-red-600">
+                                                <AlertCircle className="h-4 w-4" />
+                                                {manualFlowErrors.serviceType}
+                                            </p>
+                                        )}
+                                    </Field>
+                                    {formData.serviceType !== '1207609454' && (
+                                        <Field>
+                                            <FieldLabel>Bandwidth</FieldLabel>
+                                            <Input type="text" value="7 Mbps" disabled className="bg-gray-50" />
+                                        </Field>
+                                    )}
+                                    <Field>
+                                        <FieldLabel>Latitude</FieldLabel>
+                                        <Input
+                                            type="text"
+                                            value={formData.latitude != null ? String(formData.latitude) : ''}
+                                            disabled
+                                            className="bg-gray-50"
+                                        />
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel>Longitude</FieldLabel>
+                                        <Input
+                                            type="text"
+                                            value={formData.longitude != null ? String(formData.longitude) : ''}
+                                            disabled
+                                            className="bg-gray-50"
+                                        />
+                                    </Field>
+                                </>
+                            ) : (
+                                <>
                             {formData.serviceType && (
                                 <Field>
                                     <FieldLabel>Service Type</FieldLabel>
@@ -426,7 +545,6 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 </Field>
                             )}
 
-                            {/* Bandwidth selector — all options including 7M for manual surveys */}
                             {formData.serviceType !== '1207609454' && (
                                 <Field>
                                     <FieldLabel>
@@ -467,31 +585,6 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                 </Field>
                             )}
 
-                            {/* <Field>
-                                <FieldLabel>Customer Type</FieldLabel>
-                                <Input
-                                    type="text"
-                                    value={formData.customerType ? formData.customerType.charAt(0).toUpperCase() + formData.customerType.slice(1) : 'Residential'}
-                                    disabled
-                                    className="bg-gray-50"
-                                />
-                            </Field> */}
-
-                            {/* <Field>
-                                <FieldLabel>Device Option</FieldLabel>
-                                <Input
-                                    type="text"
-                                    value={
-                                        formData.withDevice === undefined
-                                            ? 'Not selected'
-                                            : formData.withDevice
-                                                ? 'With Device'
-                                                : 'Without Device'
-                                    }
-                                    disabled
-                                    className="bg-gray-50"
-                                />
-                            </Field> */}
                             <Field>
                                 <FieldLabel htmlFor="manual-phone">
                                     Contact Phone Number <span className="text-red-500">*</span>
@@ -522,10 +615,13 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                                     </p>
                                 )}
                             </Field>
+                                </>
+                            )}
                         </FieldGroup>
                     </div>
                 </div>
 
+                {!isMinimal && (
                 <div className="mt-2">
                     {/* <div>
                         <div className="font-semibold text-lg">Location Information</div>
@@ -851,6 +947,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                         </div>
                     </div>
                 </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="mt-2 flex justify-between pt-2">

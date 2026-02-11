@@ -55,6 +55,8 @@ interface ServiceFormData {
     bandwidthNumericValue?: number;
     resourceMessage?: string;
     termsAccepted?: boolean;
+    /** When true, manual step shows only bandwidth 7M + lat/long (from require_manual_survey API response) */
+    isMinimalManualSurvey?: boolean;
 }
 
 interface ServiceCreationFlowProps {
@@ -94,9 +96,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const surveys = useMemo(() => {
         return surveyListQuery.data?.pages.flatMap((page) => page.data) ?? [];
     }, [surveyListQuery.data]);
-    const { 
-        
-     } = useResourceChecker();
+    const { checkResourceAvailability } = useResourceChecker();
 
     // Load user data from authenticated user
     // Use stable dependencies (user.id, user.name, etc.) instead of the entire user object
@@ -178,19 +178,25 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 formData.contactPerson || 'Customer',
             );
 
-            updateFormData({
+            const updates: Partial<ServiceFormData> = {
                 resourceAvailable: result.available,
-                // Store resourceData even when available=false, as it contains encrypted fields (distance, cable_type, latitude, longitude, neid, nename, area_code, area_name)
-                // that must be forwarded to survey/create API for both normal and manual flows
                 resourceData: result.data,
                 resourceMessage: result.message,
-
-                // Preserve exact encrypted fields for survey create (used as fallback if resourceData is not available)
                 distance: result.data?.distance ?? '',
                 cable_type: result.data?.cable_type ?? '',
                 neid: result.data?.neid ?? '',
                 nename: result.data?.nename ?? '',
-            });
+            };
+            if (result.requireManualSurvey) {
+                updates.isMinimalManualSurvey = true;
+                if (result.latitude != null) updates.latitude = parseFloat(result.latitude);
+                if (result.longitude != null) updates.longitude = parseFloat(result.longitude);
+                if (!formData.bandwidth) {
+                    updates.bandwidth = '7M';
+                    updates.bandwidthNumericValue = 7;
+                }
+            }
+            updateFormData(updates);
 
             if (result.available) {
                 showSuccessToast(result.message || 'Resource available!', { id: toastId });

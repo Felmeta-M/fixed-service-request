@@ -72,6 +72,8 @@ XML;
     protected function parseResponseXml(array $data, string $xml): array
     {
         $parsed = $this->parseHandleSurveyOrderResponse($data, $xml);
+
+        // Persist survey order
         $this->persistSurvey($parsed['customer_survey_order_id'], $data);
 
         return [

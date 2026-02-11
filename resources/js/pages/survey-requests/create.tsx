@@ -55,13 +55,13 @@ export default function Create() {
     const { data, setData } = useForm<SurveyRequestFormValues>('createSurvey', {
         customer_code: '',
         survey_type: 'EIC08',
-        telecom_region: '104',
+        telecom_region: '',
         oper_type: 'A',
         main_offer_id: '1457567289',
         survey_address_info: {
-            region_city: '2',
-            subcity_zone: '11',
-            wereda_town: '141',
+            region_city: '',
+            subcity_zone: '',
+            wereda_town: '',
             kebele: '',
             latitude: 0,
             longitude: 0,
@@ -137,7 +137,7 @@ export default function Create() {
                         contactNo = kycData.identity?.phone || '';
                         contactEmail = kycData.email || 'customer@ethiotelecom.et';
                         customerCode = kycData.customer_data.customer.code;
-                    } catch (e) {}
+                    } catch (e) { }
                 }
 
                 const customerDataString = localStorage.getItem('activeCustomer');
@@ -157,7 +157,7 @@ export default function Create() {
                             contactEmail = customer.email || contactEmail;
                             customerCode = customer.code;
                         }
-                    } catch (e) {}
+                    } catch (e) { }
                 }
 
                 setData((prev) => ({
@@ -688,17 +688,15 @@ export default function Create() {
                                                     <div
                                                         key={service.id}
                                                         onClick={() => handleChange('main_offer_id', service.id)}
-                                                        className={`cursor-pointer rounded-xl border-2 p-4 text-left transition-all duration-200 hover:shadow-md ${
-                                                            isSelected
-                                                                ? 'border-primary bg-gradient-to-br from-primary/5 to-primary/10 shadow-md'
-                                                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                                        }`}
+                                                        className={`cursor-pointer rounded-xl border-2 p-4 text-left transition-all duration-200 hover:shadow-md ${isSelected
+                                                            ? 'border-primary bg-gradient-to-br from-primary/5 to-primary/10 shadow-md'
+                                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                                            }`}
                                                     >
                                                         <div className="flex items-start space-x-3">
                                                             <div
-                                                                className={`rounded-lg p-2 transition-colors ${
-                                                                    isSelected ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
-                                                                }`}
+                                                                className={`rounded-lg p-2 transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'
+                                                                    }`}
                                                             >
                                                                 <IconComponent className="h-5 w-5" />
                                                             </div>

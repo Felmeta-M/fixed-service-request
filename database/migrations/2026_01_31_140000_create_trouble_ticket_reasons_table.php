@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->boolean('status')->default(true)->comment('Active status: 1 = active, 0 = inactive');
             $table->timestamps();
 
+            $table->unique(['network_type', 'reason_path', 'reason']);
             $table->index(['network_type', 'network_name']);
             $table->index('status');
         });

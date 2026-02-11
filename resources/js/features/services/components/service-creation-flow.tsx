@@ -239,7 +239,8 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         if (isNewCustomer && currentStep === 0) return false; // Handled by CustomerCreationStep
 
         switch (adjustedStep) {
-            case 0: // Service Selection
+            case 0: {
+                // Service Selection
                 // Validate service type, bandwidth (for broadband/combo), and terms acceptance
                 const hasValidService =
                     formData.serviceType &&
@@ -247,6 +248,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                         formData.bandwidth); // Broadband and Combo need bandwidth
                 const hasAcceptedTerms = formData.termsAccepted === true;
                 return hasValidService && hasAcceptedTerms;
+            }
             case 1: // Location Setup
                 return formData.latitude !== 0 && formData.longitude !== 0 && formData.address;
             case 2: // Device Selection (handled by step's own Next button)

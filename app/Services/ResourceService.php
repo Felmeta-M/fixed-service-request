@@ -265,7 +265,11 @@ XML;
                 'LOCATION_REVIEW_NEEDED: No resource found at this location. Please continue with manual request for review.',
                 ErrorCode::VALIDATION_ERROR,
                 422,
-                ['require_manual_survey' => true]
+                [
+                    'require_manual_survey' => true,
+                    'longitude' => $data['longitude'] ?? null,
+                    'latitude' => $data['latitude'] ?? null,
+                ]
             );
         }
 
@@ -278,7 +282,11 @@ XML;
                 'MANUAL_SURVEY_REQUIRED: Your location requires manual verification. Please submit a manual survey request.',
                 ErrorCode::VALIDATION_ERROR,
                 422,
-                ['require_manual_survey' => true]
+                [
+                    'require_manual_survey' => true,
+                    'longitude' => $data['longitude'] ?? null,
+                    'latitude' => $data['latitude'] ?? null,
+                ]
             );
         }
 

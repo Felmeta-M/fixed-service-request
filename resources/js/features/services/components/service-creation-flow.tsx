@@ -94,9 +94,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const surveys = useMemo(() => {
         return surveyListQuery.data?.pages.flatMap((page) => page.data) ?? [];
     }, [surveyListQuery.data]);
-    const { 
-        
-     } = useResourceChecker();
+    const { checkResourceAvailability } = useResourceChecker();
 
     // Load user data from authenticated user
     // Use stable dependencies (user.id, user.name, etc.) instead of the entire user object

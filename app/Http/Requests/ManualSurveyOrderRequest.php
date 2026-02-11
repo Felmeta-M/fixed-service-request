@@ -30,7 +30,6 @@ class ManualSurveyOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Required fields
             'survey_type' => ['required', 'string', 'in:EIC08,EIC01,EIC02,EIC03,EIC04,EIC05,EIC06,EIC07'],
             'main_offer_id' => [
                 'required',
@@ -41,15 +40,10 @@ class ManualSurveyOrderRequest extends FormRequest
                     (string) OfferId::FixedCombo->value,
                 ]),
             ],
+            'survey_address_info' => ['required', 'array'],
+            'survey_address_info.latitude' => ['required', 'numeric'],
+            'survey_address_info.longitude' => ['required', 'numeric'],
             'bandwidth' => ['required', 'string', 'filled'],
-            
-            'telecom_region' => ['optional', 'string', 'max:100'],
-            // Address information
-            'survey_address_info' => ['optional', 'array'],
-            'survey_address_info.region_city' => ['optional', 'string', 'max:10'],
-            'survey_address_info.subcity_zone' => ['optional', 'string', 'max:10'],
-            'survey_address_info.wereda_town' => ['optional', 'string', 'max:10'],
-            'survey_address_info.kebele' => ['optional', 'string', 'max:100'],
         ];
     }
 
@@ -64,11 +58,9 @@ class ManualSurveyOrderRequest extends FormRequest
             'survey_type' => 'survey type',
             'main_offer_id' => 'main offer ID',
             'bandwidth' => 'bandwidth',
-            'telecom_region' => 'telecom region',
-            'survey_address_info.region_city' => 'administrative region/city',
-            'survey_address_info.subcity_zone' => 'subcity/zone',
-            'survey_address_info.wereda_town' => 'wereda/town',
-            'survey_address_info.kebele' => 'kebele',
+            'survey_address_info' => 'survey address info',
+            'survey_address_info.latitude' => 'latitude',
+            'survey_address_info.longitude' => 'longitude',
         ];
     }
 
@@ -79,7 +71,14 @@ class ManualSurveyOrderRequest extends FormRequest
     {
         return [
             'survey_type.in' => 'The survey type must be a valid survey type code (e.g., EIC08).',
-            'main_offer_id.in' => 'Invalid service type for manual survey. Use Fixed Broadband (1457567289), Fixed Voice (1207609454), or Combo (102647257).',
+            'main_offer_id.in' => 'Invalid service type for manual survey.',
+            'bandwidth.required' => 'The bandwidth is required.',
+            'survey_address_info.required' => 'The survey address info is required.',
+            'survey_address_info.array' => 'The survey address info must be an array.',
+            'survey_address_info.latitude.required' => 'The latitude is required.',
+            'survey_address_info.latitude.numeric' => 'The latitude must be a number.',
+            'survey_address_info.longitude.required' => 'The longitude is required.',
+            'survey_address_info.longitude.numeric' => 'The longitude must be a number.',
         ];
     }
 

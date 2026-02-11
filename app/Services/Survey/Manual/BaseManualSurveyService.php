@@ -18,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use RuntimeException;
 use Throwable;
+use App\Support\CustomerContext;
 
 /**
  * Base service for manual survey orders (Fixed Data, Fixed Voice, Fixed Combo).
@@ -36,7 +37,8 @@ abstract class BaseManualSurveyService extends BaseApiService
     public function __construct(
         protected PaymentCalculatorService $paymentCalculator,
         protected PaymentService $paymentService,
-        protected DeviceFeeCalculatorService $deviceFeeCalculator
+        protected DeviceFeeCalculatorService $deviceFeeCalculator,
+        protected ZoneService $zoneService
     ) {
         $this->config = config('services.ng');
     }
@@ -70,6 +72,7 @@ abstract class BaseManualSurveyService extends BaseApiService
     public function createSurveyOrder(array $data): JsonResponse
     {
         try {
+            $data = $this->resolveTelecomRegionFromCoordinates($data);
             $xmlPayload = $this->buildRequestXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsedResponse = $this->parseResponseXml($data, $xmlResponse);
@@ -95,6 +98,32 @@ abstract class BaseManualSurveyService extends BaseApiService
     }
 
     /**
+     * Resolve telecom_region (area_id) from latitude/longitude when not provided.
+     * Uses ethio_shops table to find nearest shop and map its zone to TelecomRegion.area_id.
+     */
+    protected function resolveTelecomRegionFromCoordinates(array $data): array
+    {
+        if (!empty($data['telecom_region'])) {
+            return $data;
+        }
+
+        $addressInfo = $data['survey_address_info'] ?? [];
+        $lat = $addressInfo['latitude'] ?? null;
+        $lng = $addressInfo['longitude'] ?? null;
+
+        if ($lat === null || $lng === null || $lat === '' || $lng === '') {
+            return $data;
+        }
+
+        $areaId = $this->zoneService->getAreaIdFromCoordinates((float) $lat, (float) $lng);
+        if ($areaId !== null) {
+            $data['telecom_region'] = $areaId;
+        }
+
+        return $data;
+    }
+
+    /**
      * Common request context for building XML (transactionId, processTime, address, contact, etc.).
      */
     protected function getRequestContext(array $data): array
@@ -102,18 +131,25 @@ abstract class BaseManualSurveyService extends BaseApiService
         $addressInfo = $data['survey_address_info'] ?? [];
         $zoneId = $data['zone_id'] ?? ($addressInfo['zone_id'] ?? null);
 
+        $telecomRegion = $data['telecom_region']
+            ?? $this->fetchZoneCode($zoneId)
+            ?? null;
+
         return [
             'transaction_id' => $this->generateTransactionId(),
             'process_time' => $this->processTime(),
             'completed_date' => $this->completedDate(),
             'customer_code' => $this->customerCode(),
-            'telecom_region' => $data['telecom_region'] ?? $this->fetchZoneCode($zoneId) ?? '104',
-            'oper_type' => $data['oper_type'] ?? 'A',
+            'telecom_region' => $telecomRegion,
+            'oper_type' => 'A',
             'primary_contact' => $this->getPrimaryContact($data),
-            'region_city' => $addressInfo['region_city'] ?? '5',
-            'subcity_zone' => $addressInfo['subcity_zone'] ?? '',
-            'wereda_town' => $addressInfo['wereda_town'] ?? '',
-            'kebele' => $addressInfo['kebele'] ?? 'aa',
+            'region_city' => $addressInfo['region_city'] ?? CustomerContext::region(''),
+            'subcity_zone' => $addressInfo['subcity_zone'] ?? CustomerContext::zone(''),
+            'wereda_town' => $addressInfo['wereda_town'] ?? CustomerContext::wereda(''),
+            'kebele' => $addressInfo['kebele'] ?? CustomerContext::kebele(''),
+            'house_no' => $addressInfo['house_no'] ?? CustomerContext::houseNo(''),
+            'street_name' => $addressInfo['street_name'] ?? CustomerContext::streetName(''),
+            'apartment' => $addressInfo['apartment'] ?? CustomerContext::apartment(''),
         ];
     }
 
@@ -201,7 +237,7 @@ abstract class BaseManualSurveyService extends BaseApiService
             'customer_code' => $customerCode,
             'customer_survey_order_id' => $customerSurveyOrderId,
             'main_offer_id' => $this->mainOfferId(),
-            'survey_type' => $data['survey_type'],
+            'survey_type' => $data['survey_type'] ?? 'EIC08',
             'telecom_region' => $telecomRegionAreaId,
             'oper_type' => $data['oper_type'] ?? 'A',
             'customer_type' => 'residential',

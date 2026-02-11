@@ -155,6 +155,7 @@ class SurveyOrder extends Model
     public function scopeBlockedForNewRequest($query, string $customerCode)
     {
         return $query->where('customer_code', $customerCode)
+            ->where('survey_is_manual', true)
             ->whereIn('status', FFDServiceProvisionStatus::blockedForNewRequest());
     }
 

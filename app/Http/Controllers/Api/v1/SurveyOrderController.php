@@ -666,9 +666,13 @@ class SurveyOrderController extends Controller
                 ], Response::HTTP_CONFLICT);
             }
 
-            // For manual surveys, route by main_offer_id to Data / Voice / Combo manual service
+            // For manual surveys, route by main_offer_id to Data / Voice / Combo manual service.
+            // Use server-side values for security: customer_code from auth, survey_type/oper_type from config.
             if (!empty($data['survey_is_manual'])) {
                 $mainOfferId = (int) $data['main_offer_id'];
+                $data['customer_code'] = $customerCode;
+                $data['survey_type'] = $data['survey_type'] ?? 'EIC08';
+                $data['oper_type'] = $data['oper_type'] ?? 'A';
                 return $this->manualSurveyServiceFactory->make($mainOfferId)->createSurveyOrder($data);
             }
 
@@ -1295,9 +1299,9 @@ class SurveyOrderController extends Controller
             // ]);
 
             // Check for existing active survey orders for this customer
-            if (SurveyOrder::hasBlockedSurvey($data['customer_code'])) {
+            if (SurveyOrder::hasBlockedSurvey(CustomerContext::code())) {
                 AppLogger::business()->warning('Manual survey blocked - existing active order', [
-                    'customer_code' => $data['customer_code'],
+                    'customer_code' => CustomerContext::code(),
                 ]);
 
                 return response()->json([

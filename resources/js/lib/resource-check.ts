@@ -24,6 +24,8 @@ export interface ResourceCheckResponse {
     error_code?: string;
     errors?: {
         require_manual_survey?: boolean;
+        longitude?: string;
+        latitude?: string;
     };
     data?: {
         distance: string;
@@ -57,6 +59,8 @@ export const useResourceChecker = () => {
             available: boolean; 
             message: string; 
             requireManualSurvey?: boolean;
+            longitude?: string;
+            latitude?: string;
             data?: ResourceCheckResponse['data'];
         }> => {
             if (!token) throw new Error('Authentication required');
@@ -76,9 +80,26 @@ export const useResourceChecker = () => {
                 combo_flag: '0',
             };
 
-            const response = await apiClient.post<ResourceCheckResponse>(`/resource-check`, requestData, {
-                token,
-            });
+            let response: ResourceCheckResponse;
+            try {
+                response = await apiClient.post<ResourceCheckResponse>(`/resource-check`, requestData, {
+                    token,
+                });
+            } catch (err: any) {
+                // API returns 422 for "manual survey required" – treat as result, not error
+                const data = err?.data as ResourceCheckResponse | undefined;
+                if (err?.status === 422 && data?.errors?.require_manual_survey) {
+                    return {
+                        available: false,
+                        message: data.message || 'Manual survey required for this location',
+                        requireManualSurvey: true,
+                        longitude: data.errors?.longitude,
+                        latitude: data.errors?.latitude,
+                        data: undefined,
+                    };
+                }
+                throw err;
+            }
 
             // Check if manual survey is required (zone not resolvable)
             if (!response.success && response.errors?.require_manual_survey) {
@@ -86,6 +107,8 @@ export const useResourceChecker = () => {
                     available: false,
                     message: response.message || 'Manual survey required for this location',
                     requireManualSurvey: true,
+                    longitude: response.errors?.longitude,
+                    latitude: response.errors?.latitude,
                     data: undefined,
                 };
             }
@@ -120,13 +143,15 @@ export const useResourceChecker = () => {
         },
     });
 
-    const checkResourceAvailability = async (
+    const     checkResourceAvailability = async (
         coordinates: { latitude: number; longitude: number },
         customerName?: string,
     ): Promise<{ 
         available: boolean; 
         message: string; 
         requireManualSurvey?: boolean;
+        longitude?: string;
+        latitude?: string;
         data?: ResourceCheckResponse['data'];
     }> => {
         try {

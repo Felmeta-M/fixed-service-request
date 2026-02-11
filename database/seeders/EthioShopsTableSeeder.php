@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\TelecomRegion;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -75,9 +76,37 @@ class EthioShopsTableSeeder extends Seeder
         if (!empty($shops)) {
             DB::table('ethio_shops')->insert($shops);
             $this->command->info('Inserted ' . count($shops) . ' ethio_shops from CSV.');
+            $this->backfillAreaIdFromTelecomRegions();
         }
         if ($skipped > 0) {
             $this->command->warn("Skipped {$skipped} row(s) (duplicate center_name, empty/invalid coordinates, or invalid range).");
+        }
+    }
+
+    /**
+     * Set ethio_shops.area_id from telecom_regions where zone matches (for use as telecom_region).
+     */
+    private function backfillAreaIdFromTelecomRegions(): void
+    {
+        $regionsByZone = TelecomRegion::active()
+            ->get()
+            ->groupBy(fn ($r) => strtolower(trim($r->zone)));
+
+        $updated = 0;
+        foreach (DB::table('ethio_shops')->get() as $shop) {
+            $zoneKey = strtolower(trim((string) $shop->zone));
+            if ($zoneKey === '') {
+                continue;
+            }
+            $region = $regionsByZone->get($zoneKey)?->first();
+            if (!$region || $shop->area_id !== null) {
+                continue;
+            }
+            DB::table('ethio_shops')->where('id', $shop->id)->update(['area_id' => $region->area_id]);
+            $updated++;
+        }
+        if ($updated > 0) {
+            $this->command->info("Backfilled area_id for {$updated} ethio_shop(s) from telecom_regions.");
         }
     }
 }

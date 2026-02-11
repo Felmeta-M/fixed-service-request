@@ -432,4 +432,15 @@ class CustomerContext
             'contact_email' => self::email($data['contact_email'] ?? null),
         ]);
     }
+    public static function apartment(?string $fallback = 'a'): string
+    {
+        return self::customer()?->apartment ?? $fallback;
+    }
+
+    public static function streetName(?string $fallback = 'aa'): string
+    {
+        return self::customer()?->street_name ?? $fallback;
+    }
+
+
 }

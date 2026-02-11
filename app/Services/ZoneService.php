@@ -6,6 +6,7 @@ use App\Models\EthioZone;
 use App\Models\SurveyOrder;
 use App\Models\TelecomRegion;
 use App\Models\Zone;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ZoneService - Zone resolution for subscription XML payloads.
@@ -21,27 +22,27 @@ class ZoneService
     public function getZoneCodeForCustomerAddress(?array $data = null): ?string
     {
         $surveyOrderId = $data['survey_order_id'] ?? null;
-        
+
         if ($surveyOrderId) {
             $surveyOrder = SurveyOrder::where('customer_survey_order_id', $surveyOrderId)->first();
-            
+
             if ($surveyOrder) {
                 if ($surveyOrder->zone_code) {
                     return $surveyOrder->zone_code;
                 }
-                
+
                 $zoneCode = $this->getZoneCodeFromAreaCode($surveyOrder->area_code, $surveyOrder->area_name);
                 if ($zoneCode) {
                     return $zoneCode;
                 }
             }
         }
-        
+
         $customerZoneId = $data['zone'] ?? $data['address']['zone'] ?? null;
         if ($customerZoneId) {
             return $this->getZoneCodeById($customerZoneId);
         }
-        
+
         return null;
     }
 
@@ -211,7 +212,7 @@ class ZoneService
     private function findEthioZoneByAreaName(string $areaName): ?EthioZone
     {
         $areaName = trim($areaName);
-        
+
         if (empty($areaName)) {
             return null;
         }
@@ -220,7 +221,7 @@ class ZoneService
         $telecomRegion = TelecomRegion::whereRaw('UPPER(area_name) = ?', [strtoupper($areaName)])
             ->where('status', true)
             ->first();
-        
+
         if ($telecomRegion?->zone) {
             $ethioZone = $this->findEthioZoneByZoneName($telecomRegion->zone);
             if ($ethioZone) {
@@ -232,7 +233,7 @@ class ZoneService
         $telecomRegion = TelecomRegion::whereRaw('UPPER(area_name) LIKE ?', ['%' . strtoupper($areaName) . '%'])
             ->where('status', true)
             ->first();
-        
+
         if ($telecomRegion?->zone) {
             $ethioZone = $this->findEthioZoneByZoneName($telecomRegion->zone);
             if ($ethioZone) {
@@ -296,6 +297,87 @@ class ZoneService
             ?? EthioZone::whereRaw('UPPER(name) LIKE ?', [strtoupper($baseName) . '%'])
                 ->orderByRaw('LENGTH(name) ASC')
                 ->first();
+    }
+
+    /**
+     * Compute telecom_region from latitude/longitude using nearest ethio_shop.
+     *
+     * Finds the nearest shop in ethio_shops by distance and returns that shop's
+     * area_id as telecom_region (BSS area id for manual survey).
+     *
+     * @param float $latitude  From frontend (e.g. survey_address_info.latitude)
+     * @param float $longitude From frontend (e.g. survey_address_info.longitude)
+     * @return string|null area_id from nearest ethio_shop, or null if not found
+     */
+    public function getAreaIdFromCoordinates(float $latitude, float $longitude): ?string
+    {
+        $shops = DB::table('ethio_shops')
+            ->where('status', true)
+            ->select('id', 'zone', 'latitude', 'longitude', 'area_id')
+            ->get();
+
+        if ($shops->isEmpty()) {
+            return null;
+        }
+
+        $nearest = null;
+        $minDistance = PHP_FLOAT_MAX;
+
+        foreach ($shops as $shop) {
+            $distance = $this->haversineDistance(
+                $latitude,
+                $longitude,
+                (float) $shop->latitude,
+                (float) $shop->longitude
+            );
+            if ($distance < $minDistance) {
+                $minDistance = $distance;
+                $nearest = $shop;
+            }
+        }
+
+        if (!$nearest) {
+            return null;
+        }
+
+        $areaId = isset($nearest->area_id) ? trim((string) $nearest->area_id) : null;
+        if ($areaId !== null && $areaId !== '') {
+            return $areaId;
+        }
+
+        // Fallback: resolve area_id from shop.zone via telecom_regions (when ethio_shops.area_id not yet set)
+        $zoneName = trim((string) ($nearest->zone ?? ''));
+        if ($zoneName === '') {
+            return null;
+        }
+        $zoneLower = strtolower($zoneName);
+        $region = TelecomRegion::active()
+            ->whereRaw('LOWER(zone) = ?', [$zoneLower])
+            ->first();
+        if ($region) {
+            return $region->area_id;
+        }
+        $region = TelecomRegion::active()
+            ->whereRaw('LOWER(zone) LIKE ?', [$zoneLower . '%'])
+            ->orderByRaw('LENGTH(zone) ASC')
+            ->first();
+
+        return $region?->area_id;
+    }
+
+    /**
+     * Haversine distance in km between two WGS84 points.
+     */
+    private function haversineDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        $R = 6371.0; // Earth radius in km
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $R * $c;
     }
 
 }

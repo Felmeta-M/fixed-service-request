@@ -10,11 +10,12 @@ return new class extends Migration {
         Schema::create('ethio_shops', function (Blueprint $table) {
             $table->id();
             $table->string('zone')->index();
+            $table->unsignedBigInteger('area_id')->nullable()->index();
             $table->string('center_name')->index();
-            $table->string('building_name')->index();
-            $table->string('shop_name')->unique();
-            $table->decimal('latitude', 10, 8);
-            $table->decimal('longitude', 11, 8);
+            $table->string('building_name');
+            $table->string('specific_location')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
             $table->timestamps();
         });
     }

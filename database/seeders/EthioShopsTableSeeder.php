@@ -26,34 +26,43 @@ class EthioShopsTableSeeder extends Seeder
         $skipped = 0;
         $seenShopNames = [];
         while (($row = fgetcsv($handle)) !== false) {
-            if (count($row) < 6) {
+            // CSV: zone, area_id, center_name, building_name, specific_location, latitude, longitude
+            if (count($row) < 5) {
                 $skipped++;
                 continue;
             }
-            $shopName = Str::of($row[3] ?? '')->trim()->toString();
+            $shopName = Str::of($row[2] ?? '')->trim()->toString();
+            if ($shopName === '') {
+                $skipped++;
+                continue;
+            }
             if (isset($seenShopNames[$shopName])) {
                 $skipped++;
                 continue;
             }
             $seenShopNames[$shopName] = true;
 
-            $latRaw = trim((string) ($row[4] ?? ''));
-            $lngRaw = trim((string) ($row[5] ?? ''));
-            if ($latRaw === '' || $lngRaw === '') {
-                $skipped++;
-                continue;
+            $latRaw = trim((string) ($row[5] ?? ''));
+            $lngRaw = trim((string) ($row[6] ?? ''));
+            $lat = null;
+            $lng = null;
+            if ($latRaw !== '' && $lngRaw !== '') {
+                $lat = (float) $latRaw;
+                $lng = (float) $lngRaw;
+                if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+                    $lat = null;
+                    $lng = null;
+                }
             }
-            $lat = (float) $latRaw;
-            $lng = (float) $lngRaw;
-            if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
-                $skipped++;
-                continue;
-            }
+
+            $areaId = isset($row[1]) && $row[1] !== '' ? (int) $row[1] : null;
+
             $shops[] = [
                 'zone' => Str::of($row[0] ?? '')->trim()->toString(),
-                'center_name' => Str::of($row[1] ?? '')->trim()->toString(),
-                'building_name' => Str::of($row[2] ?? '')->trim()->toString(),
-                'shop_name' => $shopName,
+                'area_id' => $areaId,
+                'center_name' => $shopName,
+                'building_name' => Str::of($row[3] ?? '')->trim()->toString(),
+                'specific_location' => isset($row[4]) && trim((string) $row[4]) !== '' ? Str::of($row[4])->trim()->toString() : null,
                 'latitude' => $lat,
                 'longitude' => $lng,
                 'created_at' => $now,
@@ -68,7 +77,7 @@ class EthioShopsTableSeeder extends Seeder
             $this->command->info('Inserted ' . count($shops) . ' ethio_shops from CSV.');
         }
         if ($skipped > 0) {
-            $this->command->warn("Skipped {$skipped} row(s) (duplicate shop_name, empty/invalid coordinates, or invalid range).");
+            $this->command->warn("Skipped {$skipped} row(s) (duplicate center_name, empty/invalid coordinates, or invalid range).");
         }
     }
 }

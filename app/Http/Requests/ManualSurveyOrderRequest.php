@@ -42,14 +42,14 @@ class ManualSurveyOrderRequest extends FormRequest
                 ]),
             ],
             'bandwidth' => ['required', 'string', 'filled'],
+            
             'telecom_region' => ['optional', 'string', 'max:100'],
-
             // Address information
-            'survey_address_info' => ['required', 'array'],
-            'survey_address_info.region_city' => ['required', 'string', 'max:10'],
-            'survey_address_info.subcity_zone' => ['required', 'string', 'max:10'],
-            'survey_address_info.wereda_town' => ['required', 'string', 'max:10'],
-            'survey_address_info.kebele' => ['required', 'string', 'max:100'],
+            'survey_address_info' => ['optional', 'array'],
+            'survey_address_info.region_city' => ['optional', 'string', 'max:10'],
+            'survey_address_info.subcity_zone' => ['optional', 'string', 'max:10'],
+            'survey_address_info.wereda_town' => ['optional', 'string', 'max:10'],
+            'survey_address_info.kebele' => ['optional', 'string', 'max:100'],
         ];
     }
 

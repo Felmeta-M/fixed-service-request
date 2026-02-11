@@ -15,7 +15,7 @@ class BandwidthOptionsSeeder extends Seeder
     {
          DB::table('bandwidth_options')->insert([
             'residential_options' => json_encode([
-                '5M', '10M', '12M', '20M', '50M', '100M', '200M', '7M', '9M'
+                '10M', '12M', '20M', '50M', '100M', '200M'
             ]),
             'enterprise_options' => json_encode([
                 '4M', '8M', '10M', '20M', '30M', '60M', '100M', '200M', '300M',

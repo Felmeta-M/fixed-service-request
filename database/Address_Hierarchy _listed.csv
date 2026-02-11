@@ -1,64 +1,158 @@
 region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
+1,AMHARA REGION,1,North Gonder Zone,2,Beyeda Wereda
+1,AMHARA REGION,1,North Gonder Zone,3,Janamora Wereda
+1,AMHARA REGION,1,North Gonder Zone,4,Deberk Wereda
+1,AMHARA REGION,1,North Gonder Zone,5,Dabat Wereda
+1,AMHARA REGION,1,North Gonder Zone,6,Merab Armachocho Wereda
+1,AMHARA REGION,1,North Gonder Zone,7,Tegede Wereda
+1,AMHARA REGION,1,North Gonder Zone,8,Lay Armachocho Wereda
+1,AMHARA REGION,1,North Gonder Zone,9,Wegera Wereda
 1,AMHARA REGION,1,North Gonder Zone,10,Gondar Zuriya Wereda
+1,AMHARA REGION,1,North Gonder Zone,11,Dembia Wereda
+1,AMHARA REGION,1,North Gonder Zone,12,Chilga Wereda
+1,AMHARA REGION,1,North Gonder Zone,13,Metema Wereda
+1,AMHARA REGION,1,North Gonder Zone,14,Quara Wereda
+1,AMHARA REGION,1,North Gonder Zone,15,Alefa Wereda
+1,AMHARA REGION,1,North Gonder Zone,16,Merab Belsa Wereda
+1,AMHARA REGION,1,North Gonder Zone,17,Misrak Belsa Wereda
+1,AMHARA REGION,1,North Gonder Zone,18,Gonder/Town/ Wereda
+1,AMHARA REGION,1,North Gonder Zone,19,Tselemet Wereda
+1,AMHARA REGION,1,North Gonder Zone,20,Tach Armachocho Wereda
+1,AMHARA REGION,1,North Gonder Zone,21,Takusa Wereda
+1,AMHARA REGION,1,North Gonder Zone,933,Adi Arkay Wereda
+1,AMHARA REGION,2,South Gondar Zone,22,Ebinat Wereda
+1,AMHARA REGION,2,South Gondar Zone,23,Libokemkem Wereda
+1,AMHARA REGION,2,South Gondar Zone,24,Fogera Wereda
+1,AMHARA REGION,2,South Gondar Zone,25,Farta Wereda
+1,AMHARA REGION,2,South Gondar Zone,26,Lay Gayint Wereda
+1,AMHARA REGION,2,South Gondar Zone,27,Tach Gayint Wereda
+1,AMHARA REGION,2,South Gondar Zone,28,Simada Wereda
+1,AMHARA REGION,2,South Gondar Zone,29,Misrak Este Wereda
+1,AMHARA REGION,2,South Gondar Zone,30,Dera Wereda
+1,AMHARA REGION,2,South Gondar Zone,31,Debre Tabor/Town/ Wereda
+1,AMHARA REGION,2,South Gondar Zone,32,Merab Este Wereda
+1,AMHARA REGION,2,South Gondar Zone,769,Andabet Wereda
+1,AMHARA REGION,2,South Gondar Zone,4017,Guna Beyemdir
+1,AMHARA REGION,2,South Gondar Zone,4073,Sada muja
+1,AMHARA REGION,2,South Gondar Zone,7343,Addis Zemen
+1,AMHARA REGION,2,South Gondar Zone,7344,Wereta
+1,AMHARA REGION,2,South Gondar Zone,7345,Meketewa
+1,AMHARA REGION,2,South Gondar Zone,7346,Mekane Eyesus
+1,AMHARA REGION,2,South Gondar Zone,7347,Nifas Mewcha
+1,AMHARA REGION,3,North Wello Zone,33,Bugna Wereda
+1,AMHARA REGION,3,North Wello Zone,34,Kobo Wereda
+1,AMHARA REGION,3,North Wello Zone,35,Gidan Wereda
+1,AMHARA REGION,3,North Wello Zone,36,Meket Wereda
+1,AMHARA REGION,3,North Wello Zone,37,Wadla Wereda
+1,AMHARA REGION,3,North Wello Zone,38,Delanta Wereda
+1,AMHARA REGION,3,North Wello Zone,39,Gubalafto Wereda
+1,AMHARA REGION,3,North Wello Zone,40,Habtu Wereda
+1,AMHARA REGION,3,North Wello Zone,41,Woldiya/Towm/Wereda
+1,AMHARA REGION,3,North Wello Zone,42,Lasta Wereda
+1,AMHARA REGION,3,North Wello Zone,43,Dawunt Wereda
+1,AMHARA REGION,3,North Wello Zone,768,Habru Wereda
+1,AMHARA REGION,3,North Wello Zone,4015,Lalibela
+1,AMHARA REGION,3,North Wello Zone,4018,Angot
+1,AMHARA REGION,3,North Wello Zone,4019,Gazo
+1,AMHARA REGION,3,North Wello Zone,4020,Merssa
+1,AMHARA REGION,3,North Wello Zone,4021,Raya kobo
+1,AMHARA REGION,4,South Wello Zone,44,Mekdela Wereda
+1,AMHARA REGION,4,South Wello Zone,45,Tenta wereda
+1,AMHARA REGION,4,South Wello Zone,46,Kutaber Wereda
+1,AMHARA REGION,4,South Wello Zone,47,Ambasel Wereda
+1,AMHARA REGION,4,South Wello Zone,48,Tehuledere Wereda
+1,AMHARA REGION,4,South Wello Zone,49,Werebabu Wereda
+1,AMHARA REGION,4,South Wello Zone,50,Kalu Wereda
+1,AMHARA REGION,4,South Wello Zone,51,Albuko Wereda
+1,AMHARA REGION,4,South Wello Zone,52,Dessie Zuriya Wereda
+1,AMHARA REGION,4,South Wello Zone,53,Legambo Wereda
+1,AMHARA REGION,4,South Wello Zone,54,Sayint Wereda
+1,AMHARA REGION,4,South Wello Zone,55,Debresina Wereda
+1,AMHARA REGION,4,South Wello Zone,56,Kelela Wereda
+1,AMHARA REGION,4,South Wello Zone,57,Tama Wereda
+1,AMHARA REGION,4,South Wello Zone,58,Were Ilu Wereda
+1,AMHARA REGION,4,South Wello Zone,59,Wegidi Wereda
+1,AMHARA REGION,4,South Wello Zone,60,Kombolcha/ Town/Wereda
+1,AMHARA REGION,4,South Wello Zone,61,Dessie/Town Wereda
+1,AMHARA REGION,4,South Wello Zone,62,Mehal Saynt Wereda
+1,AMHARA REGION,4,South Wello Zone,63,Legahida Wereda
+1,AMHARA REGION,4,South Wello Zone,736,Argoba Special Woreda
+1,AMHARA REGION,4,South Wello Zone,756,Delanta Wereda
+1,AMHARA REGION,4,South Wello Zone,770,Borena Wereda
+1,AMHARA REGION,4,South Wello Zone,793,Jama Wereda
+1,AMHARA REGION,4,South Wello Zone,4022,Haik Town
+1,AMHARA REGION,4,South Wello Zone,7348,Wereilu City Administration
+1,AMHARA REGION,4,South Wello Zone,7349,Mekane Selam City Administration
+1,AMHARA REGION,5,North Shewa Zone,64,Mida Weremo Wereda
+1,AMHARA REGION,5,North Shewa Zone,65,Merhabete Wereda
+1,AMHARA REGION,5,North Shewa Zone,66,Ensaro Wereda
+1,AMHARA REGION,5,North Shewa Zone,67,Moretna Jiru Wereda
+1,AMHARA REGION,5,North Shewa Zone,68,Menz Gera Minid Wereda
+1,AMHARA REGION,5,North Shewa Zone,69,Gishe Wereda
+1,AMHARA REGION,5,North Shewa Zone,70,Antsokiya Gemeza Wereda
+1,AMHARA REGION,5,North Shewa Zone,71,Efrata Gimim Wereda
+1,AMHARA REGION,5,North Shewa Zone,72,Menz Mama Midir Wereda
+1,AMHARA REGION,5,North Shewa Zone,73,Mojana Waredea Wereda
+1,AMHARA REGION,5,North Shewa Zone,74,Kewet Wereda
+1,AMHARA REGION,5,North Shewa Zone,75,Angolala Tera Wereda
+1,AMHARA REGION,5,North Shewa Zone,76,Asagirt Wereda
+1,AMHARA REGION,5,North Shewa Zone,77,Ankober Wereda
+1,AMHARA REGION,5,North Shewa Zone,78,Hagere Mariam Kesem Wereda
+1,AMHARA REGION,5,North Shewa Zone,79,Bereket Wereda
+1,AMHARA REGION,5,North Shewa Zone,81,Basona Werana Wereda
+1,AMHARA REGION,5,North Shewa Zone,82,Debre Bergab/Town/Wereda
+1,AMHARA REGION,5,North Shewa Zone,83,Menz Keya Gebreal Wereda
+1,AMHARA REGION,5,North Shewa Zone,84,Menz Lalo Wereda
+1,AMHARA REGION,5,North Shewa Zone,85,Saya Debirna Wayu Wereda
+1,AMHARA REGION,5,North Shewa Zone,733,Debre Birhan Town administration
+1,AMHARA REGION,5,North Shewa Zone,734,Tarmaber /debresina wereda
+1,AMHARA REGION,5,North Shewa Zone,922,Keyit Wereda
+1,AMHARA REGION,5,North Shewa Zone,928,Minjar Shenkora Wereda
+1,AMHARA REGION,5,North Shewa Zone,4016,Mehalmeda Ketema
+1,AMHARA REGION,5,North Shewa Zone,7350,Shewarobit
+1,AMHARA REGION,5,North Shewa Zone,7351,Ataye Town Administration
+1,AMHARA REGION,5,North Shewa Zone,7352,Alemketema Town Adminstration
+1,AMHARA REGION,6,East Gojjam Zone,90,Enarj Enawga Wereda
+1,AMHARA REGION,6,East Gojjam Zone,92,Debay Tilategen Wereda
+1,AMHARA REGION,6,East Gojjam Zone,93,Debre Elias Wereda
+1,AMHARA REGION,6,East Gojjam Zone,94,Machakel Wereda
+1,AMHARA REGION,6,East Gojjam Zone,95,Gozamin Wereda
+1,AMHARA REGION,6,East Gojjam Zone,96,Baso Liben Wereda
+1,AMHARA REGION,6,East Gojjam Zone,97,Awabel Wereda
+1,AMHARA REGION,6,East Gojjam Zone,98,Dejen Wereda
+1,AMHARA REGION,6,East Gojjam Zone,99,Shebele Berenta Wereda
 1,AMHARA REGION,6,East Gojjam Zone,100,Debre Markos /Town/ Wereda
-12,Sidama,89,Sidama,1000,Hawassa zurya
-12,Sidama,89,Sidama,1001,Boricha
-12,Sidama,89,Sidama,1002,Bilate zurya
-12,Sidama,89,Sidama,1003,Darara
-12,Sidama,89,Sidama,1004,Loka abaya
-12,Sidama,89,Sidama,1005,Aleta chuko
-12,Sidama,89,Sidama,1006,Aleta wondo City
-12,Sidama,89,Sidama,1007,Aleta wondo
-12,Sidama,89,Sidama,1008,Dale
-12,Sidama,89,Sidama,1009,Shebedino
 1,AMHARA REGION,6,East Gojjam Zone,101,Sinan Wereda
-12,Sidama,89,Sidama,1010,Gorche
-12,Sidama,89,Sidama,1011,Leku city
-12,Sidama,89,Sidama,1012,Yirgalem city
-12,Sidama,89,Sidama,1013,Wonsho
-12,Sidama,89,Sidama,1014,Aleta chuko city
-12,Sidama,89,Sidama,1015,Wondogenet
-12,Sidama,89,Sidama,1016,Wondogenet city
-12,Sidama,89,Sidama,1017,Malga
-12,Sidama,89,Sidama,1018,Arbegona
-12,Sidama,89,Sidama,1019,Bona zurya
 1,AMHARA REGION,6,East Gojjam Zone,102,Aneded Wereda
-12,Sidama,89,Sidama,1020,Bursa
-12,Sidama,89,Sidama,1021,Bensa
-12,Sidama,89,Sidama,1022,Dayye city
-12,Sidama,89,Sidama,1023,Hula
-12,Sidama,89,Sidama,1024,Teticha
-12,Sidama,89,Sidama,1025,Chirone
-12,Sidama,89,Sidama,1026,Aroressa
-12,Sidama,89,Sidama,1027,Hokko
-12,Sidama,89,Sidama,1028,Chabbe Ganbeletu
-12,Sidama,89,Sidama,1029,Chire
+1,AMHARA REGION,6,East Gojjam Zone,745,Motta Town/Wereda
+1,AMHARA REGION,6,East Gojjam Zone,926,Bichena Town
+1,AMHARA REGION,6,East Gojjam Zone,927,Enemay Wereda
+1,AMHARA REGION,6,East Gojjam Zone,929,Bibugn
+1,AMHARA REGION,6,East Gojjam Zone,930,Enebissie sar mider
+1,AMHARA REGION,6,East Gojjam Zone,931,Huletueju enessie
+1,AMHARA REGION,6,East Gojjam Zone,932,Goncha Siso Enessie
+1,AMHARA REGION,6,East Gojjam Zone,7353,Sede
 1,AMHARA REGION,7,West Gojjam Zone,103,Semen Achefer Wereda
-12,Sidama,89,Sidama,1030,Shafamo
-12,Sidama,89,Sidama,1031,Hawela
-12,Sidama,89,Sidama,1032,Daella
-12,Sidama,89,Sidama,1033,Bura
-12,Sidama,89,Sidama,1034,Daarra
-12,Sidama,89,Sidama,1035,Dara Otilcho
-12,Sidama,89,Sidama,1036,Hawassa City Administration
 1,AMHARA REGION,7,West Gojjam Zone,106,Mecha Wereda
 1,AMHARA REGION,7,West Gojjam Zone,107,Sekela Wereda
 1,AMHARA REGION,7,West Gojjam Zone,108,Quarit Wereda
 1,AMHARA REGION,7,West Gojjam Zone,109,Dega Damot Wereda
-1,AMHARA REGION,1,North Gonder Zone,11,Dembia Wereda
 1,AMHARA REGION,7,West Gojjam Zone,110,Dembecha Wereda
 1,AMHARA REGION,7,West Gojjam Zone,111,Jabi Tehnan Wereda
-1,AMHARA REGION,7,West Gojjam Zone,112,wOWenberma Wereda
+1,AMHARA REGION,7,West Gojjam Zone,112,Wowenberma Wereda
 1,AMHARA REGION,7,West Gojjam Zone,113,Goncha Wereda
 1,AMHARA REGION,7,West Gojjam Zone,115,Finote Selam/Town/ Wereda
+1,AMHARA REGION,7,West Gojjam Zone,744,Bure Town/Wereda
+1,AMHARA REGION,7,West Gojjam Zone,7354,Adet Town Administration
+1,AMHARA REGION,7,West Gojjam Zone,7355,Merawi City Administration
 1,AMHARA REGION,8,Waghemira Zone,116,Ziquala Wereda
 1,AMHARA REGION,8,Waghemira Zone,117,Sekota Wereda
 1,AMHARA REGION,8,Waghemira Zone,118,Dehana Wereda
 1,AMHARA REGION,8,Waghemira Zone,119,Gazgibla Wereda
-1,AMHARA REGION,1,North Gonder Zone,12,Chilga Wereda
 1,AMHARA REGION,8,Waghemira Zone,120,Abergele Wereda
 1,AMHARA REGION,8,Waghemira Zone,121,Sehala Wereda
-1,AMHARA REGION,8,Waghemira Zone,122,Sekota/Town Werda
+1,AMHARA REGION,8,Waghemira Zone,122,Sekota/Town Wereda
+1,AMHARA REGION,8,Waghemira Zone,7356,Tsagibji
 1,AMHARA REGION,9,Awi Zone,123,Dangilda Wereda
 1,AMHARA REGION,9,Awi Zone,124,Banja Shekudad Wereda
 1,AMHARA REGION,9,Awi Zone,125,Ankasha Guagusa Wereda
@@ -66,502 +160,24 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 1,AMHARA REGION,9,Awi Zone,127,Fagita Lekoma Wereda
 1,AMHARA REGION,9,Awi Zone,128,Jawi Wereda
 1,AMHARA REGION,9,Awi Zone,129,Guagusa Shikudad Wereda
-1,AMHARA REGION,1,North Gonder Zone,13,Metema Wereda
 1,AMHARA REGION,9,Awi Zone,130,Oromiya Zone
+1,AMHARA REGION,9,Awi Zone,137,Bahir Dar /Special Zone
+1,AMHARA REGION,9,Awi Zone,138,Bahir Dar/Town/Wereda
+1,AMHARA REGION,9,Awi Zone,746,Zigem Wereda
+1,AMHARA REGION,9,Awi Zone,4036,Ayo Guagusa
+1,AMHARA REGION,9,Awi Zone,7357,Chagini
+1,AMHARA REGION,9,Awi Zone,7358,Enjibara City Administration
+1,AMHARA REGION,9,Awi Zone,7359,Dangla City Administration
 1,AMHARA REGION,10,Oromo Special Zone,131,Dawa Chefa Wereda
 1,AMHARA REGION,10,Oromo Special Zone,132,Bati Wereda
 1,AMHARA REGION,10,Oromo Special Zone,133,Jile Timuga Wereda
 1,AMHARA REGION,10,Oromo Special Zone,134,Artuma Fursi Wereda
 1,AMHARA REGION,10,Oromo Special Zone,135,Dewie Harwa Woreda
 1,AMHARA REGION,10,Oromo Special Zone,136,Kemissie Town Administration
-1,AMHARA REGION,9,Awi Zone,137,Bahir Dar /Special Zone
-1,AMHARA REGION,9,Awi Zone,138,Bahir Dar/Town/Wereda
-1,AMHARA REGION,10,Oromo Special Zone,139,Argoba Specilal Wereda
-1,AMHARA REGION,1,North Gonder Zone,14,Quara Wereda
-2,Tigray Region,11,North western Tigray,140,Tahtay Adiyabo Wereda
-2,Tigray Region,11,North western Tigray,141,Laelay Adiyabo Wereda
-2,Tigray Region,11,North western Tigray,142,Medebay Zana Wereda
-2,Tigray Region,11,North western Tigray,143,Tahtay Koraro Wereda
-2,Tigray Region,11,North western Tigray,144,Asegede Tsimbila Wereda
-2,Tigray Region,11,North western Tigray,145,Tselemti Wereda
-2,Tigray Region,11,North western Tigray,146,Shere Endaselassie/ Town/ Wereda
-2,Tigray Region,11,North western Tigray,147,Shirero Wereda
-2,Tigray Region,12,Central Tigray Zone,148,Mereb Lehe Wereda
-2,Tigray Region,12,Central Tigray Zone,149,Ahiferom Wereda
-1,AMHARA REGION,1,North Gonder Zone,15,Alefa Wereda
-2,Tigray Region,12,Central Tigray Zone,150,Were Lehe Wereda
-2,Tigray Region,12,Central Tigray Zone,151,Adwa Wereda
-2,Tigray Region,12,Central Tigray Zone,152,Laelay Maychew Wereda
-2,Tigray Region,12,Central Tigray Zone,153,Tahtay Maychew Wereda
-2,Tigray Region,12,Central Tigray Zone,154,Nader Adet Wereda
-2,Tigray Region,12,Central Tigray Zone,155,Kola Temben Wereda
-2,Tigray Region,12,Central Tigray Zone,156,Degua Temben Wereda
-2,Tigray Region,12,Central Tigray Zone,157,Tanqua Abergele Wereda
-2,Tigray Region,12,Central Tigray Zone,158,Abi Adi Wereda
-2,Tigray Region,12,Central Tigray Zone,159,Adwa / town/ Wereda
-1,AMHARA REGION,1,North Gonder Zone,16,Merab Belsa Wereda
-2,Tigray Region,12,Central Tigray Zone,160,Axum Wereda
-2,Tigray Region,13,Eastern Tigray Zone,161,Gulo Meheda Wereda
-2,Tigray Region,13,Eastern Tigray Zone,162,Erob Wereda
-2,Tigray Region,13,Eastern Tigray Zone,163,Saesi Tsadamba Wereda
-2,Tigray Region,13,Eastern Tigray Zone,164,Ganta Afeshum Wereda
-2,Tigray Region,13,Eastern Tigray Zone,165,Hawzen Wereda
-2,Tigray Region,13,Eastern Tigray Zone,166,Kilte Awlalo Wereda
-2,Tigray Region,13,Eastern Tigray Zone,167,Atsbi Wonberta Wereda
-2,Tigray Region,13,Eastern Tigray Zone,168,Adigrat/Town/ Wereda
-2,Tigray Region,13,Eastern Tigray Zone,169,Wukro/Town Wereda
-1,AMHARA REGION,1,North Gonder Zone,17,Misrak Belsa Wereda
-2,Tigray Region,14,Southern Tigray Zone,170,Seharti Samre Wereda
-2,Tigray Region,14,Southern Tigray Zone,171,Enderta Wereda
-2,Tigray Region,14,Southern Tigray Zone,172,Hintalo Wajirat Wereda
-2,Tigray Region,14,Southern Tigray Zone,173,Alaje Wereda
-2,Tigray Region,14,Southern Tigray Zone,174,Endamehoni Wereda
-2,Tigray Region,14,Southern Tigray Zone,175,Raya Azebo Wereda
-2,Tigray Region,14,Southern Tigray Zone,176,Alamata Wereda
-2,Tigray Region,14,Southern Tigray Zone,177,Ofla Wereda
-2,Tigray Region,14,Southern Tigray Zone,178,Maychew/ Town/ Wereda
-2,Tigray Region,14,Southern Tigray Zone,179,Korem/ Town/ Wereda
-1,AMHARA REGION,1,North Gonder Zone,18,Gonder/Town/ Wereda
-2,Tigray Region,14,Southern Tigray Zone,180,Alamata/Town/Wereda
-5,Addis Ababa,766,Lemi Kura sub city,1801,02
-5,Addis Ababa,766,Lemi Kura sub city,1802,04
-5,Addis Ababa,766,Lemi Kura sub city,1803,05
-5,Addis Ababa,766,Lemi Kura sub city,1804,06
-5,Addis Ababa,766,Lemi Kura sub city,1805,08
-5,Addis Ababa,766,Lemi Kura sub city,1806,09
-5,Addis Ababa,766,Lemi Kura sub city,1807,10
-5,Addis Ababa,766,Lemi Kura sub city,1808,11
-5,Addis Ababa,766,Lemi Kura sub city,1809,12
-2,Tigray Region,15,Western Tigray Zone,181,Kafta Humera Wereda
-5,Addis Ababa,766,Lemi Kura sub city,1810,13
-2,Tigray Region,15,Western Tigray Zone,182,Welkayit Wereda
-2,Tigray Region,15,Western Tigray Zone,183,Tsedega Wereda
-2,Tigray Region,15,Western Tigray Zone,184,Humera/TownWereda
-2,Tigray Region,16,Mekele Special Zone,185,Debub Wereda
-2,Tigray Region,16,Mekele Special Zone,186,Semen Wereda
-3,Oromiya Region,17,West Wellega Zone,187,Menesibu Wereda
-3,Oromiya Region,17,West Wellega Zone,188,Mojo Wereda
-3,Oromiya Region,17,West Wellega Zone,189,Gimbi Wereda
-1,AMHARA REGION,1,North Gonder Zone,19,Tselemet Wereda
-3,Oromiya Region,17,West Wellega Zone,190,Lalo Asabi Wereda
-3,Oromiya Region,17,West Wellega Zone,191,Kiltu Kara Wereda
-3,Oromiya Region,17,West Wellega Zone,192,Boji Dirmeji Wereda
-3,Oromiya Region,17,West Wellega Zone,193,Guliso Wereda
-3,Oromiya Region,17,West Wellega Zone,194,Jarso Wereda
-3,Oromiya Region,17,West Wellega Zone,195,Kondala Wereda
-3,Oromiya Region,17,West Wellega Zone,196,Boji Chekorsa Wereda
-3,Oromiya Region,17,West Wellega Zone,197,Babo Gembe; Wereda
-3,Oromiya Region,17,West Wellega Zone,198,Yubdo Wereda
-3,Oromiya Region,17,West Wellega Zone,199,Genji Wereda
-1,AMHARA REGION,1,North Gonder Zone,2,Beyeda Wereda
-1,AMHARA REGION,1,North Gonder Zone,20,Tach Armachocho Wereda
-3,Oromiya Region,17,West Wellega Zone,200,Haru Wereda
-3,Oromiya Region,17,West Wellega Zone,201,Nole Kaba Wereda
-3,Oromiya Region,17,West Wellega Zone,202,Begi Wereda
-3,Oromiya Region,17,West Wellega Zone,203,Gimbi /Town/ Wereda
-3,Oromiya Region,17,West Wellega Zone,204,Seyo Nole Wereda
-3,Oromiya Region,17,West Wellega Zone,205,Homa Wereda
-3,Oromiya Region,17,West Wellega Zone,206,Ayira Wereda
-3,Oromiya Region,18,East Wellega Zone,207,Limu Wereda
-3,Oromiya Region,18,East Wellega Zone,208,Ibantu Wereda
-3,Oromiya Region,18,East Wellega Zone,209,Gida Kiremu Wereda
-1,AMHARA REGION,1,North Gonder Zone,21,Takusa Wereda
-3,Oromiya Region,18,East Wellega Zone,210,Haro Limu Wereda
-3,Oromiya Region,18,East Wellega Zone,211,Boneya Bushe Wereda
-3,Oromiya Region,18,East Wellega Zone,212,Wayu Tuka Wereda
-3,Oromiya Region,18,East Wellega Zone,213,Gudeya Bila Wereda
-3,Oromiya Region,18,East Wellega Zone,214,Gobu Seyo Wereda
-3,Oromiya Region,18,East Wellega Zone,215,Sibu Sire Wereda
-3,Oromiya Region,18,East Wellega Zone,216,Diga Wereda
-3,Oromiya Region,18,East Wellega Zone,217,Sisiga Wereda
-3,Oromiya Region,18,East Wellega Zone,218,Leka Dulecha Wereda
-3,Oromiya Region,18,East Wellega Zone,219,Guto Gida Wereda
-1,AMHARA REGION,2,South Gondar Zone,22,Ebinat Wereda
-3,Oromiya Region,18,East Wellega Zone,220,Jima Arjo Wereda
-3,Oromiya Region,18,East Wellega Zone,221,Nunu Kumba Wereda
-3,Oromiya Region,18,East Wellega Zone,222,Wama Hagelo Wereda
-3,Oromiya Region,18,East Wellega Zone,223,Nekemte/ Town/ Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,224,Darimu Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,225,Alje Sachi Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,226,Chora Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,227,Dega Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,228,Babo Hana Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,229,Gechi Wereda
-1,AMHARA REGION,2,South Gondar Zone,23,Libokemkem Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,230,Borecha Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,231,Dedesa Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,232,Yayu Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,233,Metu Zuriya Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,234,Ale Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,235,Bure Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,236,Nano
-3,Oromiya Region,19,Ilu Aba Bora Zone,237,Bicho Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,238,Bilo Nopha Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,239,Hurumu Wereda
-1,AMHARA REGION,2,South Gondar Zone,24,Fogera Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,240,Didu Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,241,Mako Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,242,Huka/ Halu /Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,243,Metu/ Town/ Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,244,Bedele / Town/Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,245,Bedele Zuriya Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,246,Chewaka Wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,247,Doreni Woreda
-3,Oromiya Region,20,Jimma Zone,248,Limu Seka Wereda
-3,Oromiya Region,20,Jimma Zone,249,Limu Kosa Wereda
-1,AMHARA REGION,2,South Gondar Zone,25,Farta Wereda
-3,Oromiya Region,20,Jimma Zone,250,Sokotu Wereda
-3,Oromiya Region,20,Jimma Zone,251,Tito Afeta Wereda
-3,Oromiya Region,20,Jimma Zone,252,Kersa Wereda
-3,Oromiya Region,20,Jimma Zone,253,Mana Wereda
-3,Oromiya Region,20,Jimma Zone,254,Gomma Wereda
-3,Oromiya Region,20,Jimma Zone,255,Gera Wereda
-3,Oromiya Region,20,Jimma Zone,256,Seka Chekorsa Wereda
-3,Oromiya Region,20,Jimma Zone,257,Dedo Wereda
-3,Oromiya Region,20,Jimma Zone,258,Omonada Wereda
-3,Oromiya Region,20,Jimma Zone,259,Sigamo Wereda
-1,AMHARA REGION,2,South Gondar Zone,26,Lay Gayint Wereda
-3,Oromiya Region,20,Jimma Zone,260,Setema Wereda
-3,Oromiya Region,20,Jimma Zone,261,Chora Botor Wereda
-3,Oromiya Region,20,Jimma Zone,262,Guma Wereda
-3,Oromiya Region,20,Jimma Zone,263,Agaro/ Town / Wereda
-3,Oromiya Region,21,West shewa zone,264,Ginde beret Wereda
-3,Oromiya Region,21,West shewa zone,265,Jeldu Wereda
-3,Oromiya Region,21,West shewa zone,266,Ambo zuriya Wereda
-3,Oromiya Region,21,West shewa zone,267,Midakegn Wereda
-3,Oromiya Region,21,West shewa zone,268,Cheliya Wereda
-3,Oromiya Region,21,West shewa zone,269,Bako tibe Wereda
-1,AMHARA REGION,2,South Gondar Zone,27,Tach Gayint Wereda
-3,Oromiya Region,21,West shewa zone,270,Dano Wereda
-3,Oromiya Region,21,West shewa zone,271,Nono Wereda
-3,Oromiya Region,21,West shewa zone,272,Tikur enchini Wereda
-3,Oromiya Region,21,West shewa zone,273,Dendi Wereda
-3,Oromiya Region,21,West shewa zone,274,Ejere Wereda
-3,Oromiya Region,21,West shewa zone,275,Wolmera Wereda
-3,Oromiya Region,21,West shewa zone,276,Ada berga Wereda
-3,Oromiya Region,21,West shewa zone,277,Meta robi Wereda
-3,Oromiya Region,21,West shewa zone,278,Ambo/town/Wereda
-3,Oromiya Region,21,West shewa zone,279,Abuna gindeberet
-1,AMHARA REGION,2,South Gondar Zone,28,Simada Wereda
-3,Oromiya Region,21,West shewa zone,280,Toke kutayu Wereda
-3,Oromiya Region,21,West shewa zone,281,Jibat Wereda
-3,Oromiya Region,21,West shewa zone,282,Elfata Wereda
-3,Oromiya Region,21,West shewa zone,283,Holeta/town/Wereda
-3,Oromiya Region,22,North shewa zone,284,Were jarso Wereda
-3,Oromiya Region,22,North shewa zone,285,Dera Wereda
-3,Oromiya Region,22,North shewa zone,286,Hidabu Wereda
-3,Oromiya Region,22,North shewa zone,287,Kuyu Wereda
-3,Oromiya Region,22,North shewa zone,288,Degem Wereda
-3,Oromiya Region,22,North shewa zone,289,Girar jarso Wereda-urban
-1,AMHARA REGION,2,South Gondar Zone,29,Misrak Este Wereda
-3,Oromiya Region,22,North shewa zone,290,Debere lebanos Wereda
-3,Oromiya Region,22,North shewa zone,291,Wuchale Wereda
-3,Oromiya Region,22,North shewa zone,292,Abichuna Wereda
-3,Oromiya Region,22,North shewa zone,293,Kimbibit Wereda
-3,Oromiya Region,22,North shewa zone,294,Bereh Wereda
-3,Oromiya Region,22,North shewa zone,295,Sululta Wereda
-3,Oromiya Region,22,North shewa zone,296,Fiche/town/Wereda
-3,Oromiya Region,22,North shewa zone,297,Yaya gulele Wereda
-3,Oromiya Region,22,North shewa zone,298,Jida Wereda
-3,Oromiya Region,22,North shewa zone,299,Mulo Wereda
-1,AMHARA REGION,1,North Gonder Zone,3,Janamora Wereda
-1,AMHARA REGION,2,South Gondar Zone,30,Dera Wereda
-3,Oromiya Region,22,North shewa zone,300,Aleltu Wereda
-3,Oromiya Region,22,North shewa zone,301,Sendafa/town/-Wereda
-3,Oromiya Region,23,East shewa zone,302,Fentale Wereda
-3,Oromiya Region,23,East shewa zone,303,Boset Wereda
-3,Oromiya Region,23,East shewa zone,304,Adama Wereda
-3,Oromiya Region,23,East shewa zone,305,Lome Wereda
-3,Oromiya Region,23,East shewa zone,306,Gimbichu Wereda
-3,Oromiya Region,23,East shewa zone,307,Ada A Wereda
-3,Oromiya Region,23,East shewa zone,308,Dugda Wereda
-3,Oromiya Region,23,East shewa zone,309,Adami Tulu Jido Kombolcha Wereda
-1,AMHARA REGION,2,South Gondar Zone,31,Debre Tabor/Town/ Wereda
-3,Oromiya Region,23,East shewa zone,310,Bishoftu/town/-Wereda
-3,Oromiya Region,23,East shewa zone,311,Bora Wereda
-3,Oromiya Region,23,East shewa zone,312,Liben Wereda
-3,Oromiya Region,23,East shewa zone,313,Akaki Wereda
-3,Oromiya Region,23,East shewa zone,314,Ziway /batu/town/-Wereda
-3,Oromiya Region,24,Arsi zone,315,Merti Wereda
-3,Oromiya Region,24,Arsi zone,316,Aseko Wereda
-3,Oromiya Region,24,Arsi zone,317,Golocha Wereda
-3,Oromiya Region,24,Arsi zone,318,Jeju Wereda
-3,Oromiya Region,24,Arsi zone,319,Dodota Wereda
-1,AMHARA REGION,2,South Gondar Zone,32,Merab Este Wereda
-3,Oromiya Region,24,Arsi zone,320,Ziway dugda Wereda
-3,Oromiya Region,24,Arsi zone,321,Hitosa Wereda
-3,Oromiya Region,24,Arsi zone,322,Sude Wereda
-3,Oromiya Region,24,Arsi zone,323,Chole Wereda
-3,Oromiya Region,24,Arsi zone,324,Amigna Wereda
-3,Oromiya Region,24,Arsi zone,325,Seru Wereda
-3,Oromiya Region,24,Arsi zone,326,Robe Wereda
-3,Oromiya Region,24,Arsi zone,327,Tena Wereda
-3,Oromiya Region,24,Arsi zone,328,Shirka Wereda
-3,Oromiya Region,24,Arsi zone,329,Digluna Wereda
-1,AMHARA REGION,3,North Wello Zone,33,Bugna Wereda
-3,Oromiya Region,24,Arsi zone,330,Tiyo Wereda
-3,Oromiya Region,24,Arsi zone,331,Munesa Wereda
-3,Oromiya Region,24,Arsi zone,332,Limuna bilbilo Wereda
-3,Oromiya Region,24,Arsi zone,333,Guna Wereda
-3,Oromiya Region,24,Arsi zone,334,Sire Wereda
-3,Oromiya Region,24,Arsi zone,335,Lude hitosa Wereda
-3,Oromiya Region,24,Arsi zone,336,deksis Wereda
-3,Oromiya Region,24,Arsi zone,337,Bale gasegare Wereda
-3,Oromiya Region,24,Arsi zone,338,Enkelo Wereda
-3,Oromiya Region,24,Arsi zone,339,Asela/town/Wereda
-1,AMHARA REGION,3,North Wello Zone,34,Kobo Wereda
-3,Oromiya Region,25,West Hararge Zone,340,Mieso Wereda
-3,Oromiya Region,25,West Hararge Zone,341,Doba Wereda
-3,Oromiya Region,25,West Hararge Zone,342,Tulo Wereda
-3,Oromiya Region,25,West Hararge Zone,343,Mesela Wereda
-3,Oromiya Region,25,West Hararge Zone,344,Chiro /Town/ Wereda
-3,Oromiya Region,25,West Hararge Zone,345,Anchara Wereda
-3,Oromiya Region,25,West Hararge Zone,346,Guba Koricha Wereda
-3,Oromiya Region,25,West Hararge Zone,347,Habro Wereda
-3,Oromiya Region,25,West Hararge Zone,348,Daro Lebu Wereda
-3,Oromiya Region,25,West Hararge Zone,349,Boke Wereda
-1,AMHARA REGION,3,North Wello Zone,35,Gidan Wereda
-3,Oromiya Region,25,West Hararge Zone,350,Kuni Wereda - Urban
-3,Oromiya Region,25,West Hararge Zone,351,Gemches Wereda
-3,Oromiya Region,25,West Hararge Zone,352,Chiro Zuriya Wereda
-3,Oromiya Region,25,West Hararge Zone,353,Dedesa/ Town/ Wereda
-3,Oromiya Region,26,East Hararge Zone,354,Kombolcha Wereda
-3,Oromiya Region,26,East Hararge Zone,355,Jarso Wereda
-3,Oromiya Region,26,East Hararge Zone,356,Gursum Wereda
-3,Oromiya Region,26,East Hararge Zone,357,Babile Wereda
-3,Oromiya Region,26,East Hararge Zone,358,Fedis Wereda
-3,Oromiya Region,26,East Hararge Zone,359,Haro Maya Wereda
-1,AMHARA REGION,3,North Wello Zone,36,Meket Wereda
-3,Oromiya Region,26,East Hararge Zone,360,Kurfa Cheke Wereda
-3,Oromiya Region,26,East Hararge Zone,361,Kersa Wereda
-3,Oromiya Region,26,East Hararge Zone,362,Meta Wereda
-3,Oromiya Region,26,East Hararge Zone,363,Goro Gutu Wereda
-3,Oromiya Region,26,East Hararge Zone,364,Deder Wereda
-3,Oromiya Region,26,East Hararge Zone,365,Melka Belo Wereda
-3,Oromiya Region,26,East Hararge Zone,366,Beneno Wereda
-3,Oromiya Region,26,East Hararge Zone,367,Midga Tola Wereda
-3,Oromiya Region,26,East Hararge Zone,368,Chinaksan Wereda
-3,Oromiya Region,26,East Hararge Zone,369,Girawa Wereda
-1,AMHARA REGION,3,North Wello Zone,37,Wadla Wereda
-3,Oromiya Region,26,East Hararge Zone,370,Gola Oda Wereda
-3,Oromiya Region,26,East Hararge Zone,371,Meyu Wereda
-3,Oromiya Region,27,Bale Zone,372,Agarfa Wereda
-3,Oromiya Region,27,Bale Zone,373,Gololcha Wereda
-3,Oromiya Region,27,Bale Zone,374,Gasera Wereda
-3,Oromiya Region,27,Bale Zone,375,Legehida Wereda
-3,Oromiya Region,27,Bale Zone,376,Ginir Wereda
-3,Oromiya Region,27,Bale Zone,377,Sinana Wereda
-3,Oromiya Region,27,Bale Zone,378,Goba Wereda
-3,Oromiya Region,27,Bale Zone,379,Harena Huluk Wereda
-1,AMHARA REGION,3,North Wello Zone,38,Delanta Wereda
-3,Oromiya Region,27,Bale Zone,380,Dolo Mena Wereda
-3,Oromiya Region,27,Bale Zone,381,Meda Welabu Wereda
-3,Oromiya Region,27,Bale Zone,382,Berbere Wereda
-3,Oromiya Region,27,Bale Zone,383,Guradamole Wereda
-3,Oromiya Region,27,Bale Zone,384,Goro Wereda
-3,Oromiya Region,27,Bale Zone,385,Rayitu Wereda
-3,Oromiya Region,27,Bale Zone,386,Seweyna Wereda
-3,Oromiya Region,27,Bale Zone,387,Robe/ Town/ Wereda
-3,Oromiya Region,27,Bale Zone,388,Doba/ Town/ Wereda
-3,Oromiya Region,27,Bale Zone,389,Dawe Kachen Wereda
-1,AMHARA REGION,3,North Wello Zone,39,Gubalafto Wereda
-3,Oromiya Region,27,Bale Zone,390,Dinsho Wereda
-3,Oromiya Region,27,Bale Zone,391,Dawe Serer Wereda
-3,Oromiya Region,30,West Guji Zone,392,Bule Hora Wereda
-3,Oromiya Region,28,Borena Zone,393,Yabele Wereda
-3,Oromiya Region,28,Borena Zone,394,Arero Wereda
-3,Oromiya Region,28,Borena Zone,395,Moyale Wereda
-3,Oromiya Region,28,Borena Zone,396,Dire Wereda
-3,Oromiya Region,28,Borena Zone,397,Teletele Wereda
-3,Oromiya Region,28,Borena Zone,398,Abaya Wereda
-3,Oromiya Region,28,Borena Zone,399,Dugida Dawa Wereda
-1,AMHARA REGION,1,North Gonder Zone,4,Deberk Wereda
-1,AMHARA REGION,3,North Wello Zone,40,Habtu Wereda
-3,Oromiya Region,28,Borena Zone,400,Miyu Wereda
-3,Oromiya Region,21,West shewa zone,4000,Ilu Gelan
-3,Oromiya Region,21,West shewa zone,4001,Silik Amba
-3,Oromiya Region,21,West shewa zone,4002,Chobi
-3,Oromiya Region,21,West shewa zone,4003,Ejersa Leffo
-9,Afar,76,Zone 1,4004,Eliwuha
-9,Afar,76,Zone 1,4005,Logia
-9,Afar,76,Zone 1,4006,Semera
-3,Oromiya Region,26,East Hararge Zone,4007,Goro muti
-3,Oromiya Region,87,Finfine Zuria Oromiya Special Zone,4008,Sululta
-3,Oromiya Region,87,Finfine Zuria Oromiya Special Zone,4009,Sendafa
-3,Oromiya Region,30,West Guji Zone,401,Gelana Wereda
-3,Oromiya Region,87,Finfine Zuria Oromiya Special Zone,4010,Gelan
-3,Oromiya Region,87,Finfine Zuria Oromiya Special Zone,4011,Burayu
-3,Oromiya Region,87,Finfine Zuria Oromiya Special Zone,4012,Sebeta
-3,Oromiya Region,87,Finfine Zuria Oromiya Special Zone,4013,Legetafo
-5,Addis Ababa,81,Bole Sub City,4014,15
-1,AMHARA REGION,3,North Wello Zone,4015,Lalibela
-1,AMHARA REGION,5,North Shewa Zone,4016,Mehalmeda Ketema
-1,AMHARA REGION,2,South Gondar Zone,4017,Guna Beyemdir
-1,AMHARA REGION,3,North Wello Zone,4018,Angot
-1,AMHARA REGION,3,North Wello Zone,4019,Gazo
-3,Oromiya Region,29,South West Shewa Zone,402,Ameya Wereda
-1,AMHARA REGION,3,North Wello Zone,4020,Merssa
-1,AMHARA REGION,3,North Wello Zone,4021,Raya kobo
-1,AMHARA REGION,4,South Wello Zone,4022,Haik  Town
-3,Oromiya Region,19,Ilu Aba Bora Zone,4023,Algie sachi wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,4024,Dabo hana wereda
-3,Oromiya Region,19,Ilu Aba Bora Zone,4025,Sale Nono wereda
-3,Oromiya Region,25,West Hararge Zone,4026,Hawe gudina
-3,Oromiya Region,24,Arsi zone,4027,Shanan Kolu
-6,SNNP,52,SIDAMA ZONE,4028,Hantate
-2,Tigray Region,16,Mekele Special Zone,4029,Hadnet
-3,Oromiya Region,29,South West Shewa Zone,403,Wonchi Wereda
-2,Tigray Region,16,Mekele Special Zone,4030,Semen
-2,Tigray Region,16,Mekele Special Zone,4031,Ayder
-2,Tigray Region,16,Mekele Special Zone,4032,Hawelti
-2,Tigray Region,16,Mekele Special Zone,4033,Quiha
-2,Tigray Region,16,Mekele Special Zone,4034,1y weyane
-2,Tigray Region,16,Mekele Special Zone,4035,Adihaki
-1,AMHARA REGION,9,Awi Zone,4036,Ayo Guagusa
-4,Gambela Region,38,Nuwer Zone,4038,Makuey
-3,Oromiya Region,29,South West Shewa Zone,404,Woliso Wereda
-3,Oromiya Region,20,Jimma Zone,4040,Omo beyem
-3,Oromiya Region,30,West Guji Zone,4041,Haro welebo Wereda (Kofele city)
-3,Oromiya Region,30,West Guji Zone,4042,Abaya Woreda
-3,Oromiya Region,88,Guji Zone,4043,Aga weyu wereda (Haydima city)
-3,Oromiya Region,30,West Guji Zone,4044,Ana sora wereda (Yirba muda city)
-3,Oromiya Region,30,West Guji Zone,4045,Birbirsa Kojowa Woreda
-3,Oromiya Region,30,West Guji Zone,4046,Bule hora Tawn
-3,Oromiya Region,88,Guji Zone,4047,Gumi Edelo wereda (Arda menera)
-3,Oromiya Region,88,Guji Zone,4048,Seba boru wereda (Dermi city)
-3,Oromiya Region,30,West Guji Zone,4049,Shakisso City Administrative
-3,Oromiya Region,29,South West Shewa Zone,405,Dawo Wereda
-3,Oromiya Region,35,Horo Gudru Welega Zone,4050,Chommen Guduru
-3,Oromiya Region,20,Jimma Zone,4053,Nono benja
-3,Oromiya Region,30,West Guji Zone,4054,Dugda Dawa Woreda
-3,Oromiya Region,30,West Guji Zone,4055,Galana Woreda
-3,Oromiya Region,30,West Guji Zone,4057,Melka soda   woreda
-3,Oromiya Region,30,West Guji Zone,4058,Suro Barguda Woreda
-3,Oromiya Region,25,West Hararge Zone,4059,Burka Dintu
-3,Oromiya Region,29,South West Shewa Zone,406,Ilu Wereda
-3,Oromiya Region,25,West Hararge Zone,4060,Gumbi Bordode
-3,Oromiya Region,88,Guji Zone,4061,Haro Waleba
-3,Oromiya Region,88,Guji Zone,4062,Anasora Wereda  (Yirbamuda)
-3,Oromiya Region,88,Guji Zone,4063,Shakiso City Admin
-3,Oromiya Region,88,Guji Zone,4064,Gora Dola Wereda
-3,Oromiya Region,88,Guji Zone,4065,Liben Wereda
-3,Oromiya Region,30,West Guji Zone,4066,Abaya Wereda
-3,Oromiya Region,30,West Guji Zone,4067,Dugda Dawa Wereda
-3,Oromiya Region,28,Borena Zone,4068,Hidi Lola Wereda
-3,Oromiya Region,28,Borena Zone,4069,Dilo Wereda
-3,Oromiya Region,29,South West Shewa Zone,407,Sebeta Hawas Wereda
-3,Oromiya Region,28,Borena Zone,4070,Dubluk Wereda
-3,Oromiya Region,34,Kelem Welega Zone,4071,Sadi Chanka
-7,Benshangul gumz region,65,Asosa zone,4072,Mao Komo
-1,AMHARA REGION,2,South Gondar Zone,4073,Sada muja
-6,SNNP,85,HALABA SPECIAL WEREDA,4074,Wiera
-6,SNNP,85,HALABA SPECIAL WEREDA,4075,Atoti Ullo
-6,SNNP,85,HALABA SPECIAL WEREDA,4076,Wiera Dijo
+1,AMHARA REGION,10,Oromo Special Zone,139,Argoba Special Wereda
+1,AMHARA REGION,10,Oromo Special Zone,735,Bati Town Administration
 1,AMHARA REGION,10,Oromo Special Zone,4077,Burka
-3,Oromiya Region,29,South West Shewa Zone,408,Kersa Ena Malim Wereda
-3,Oromiya Region,29,South West Shewa Zone,409,Tole Wereda
-1,AMHARA REGION,3,North Wello Zone,41,Woldiya/Towm/Wereda
-3,Oromiya Region,29,South West Shewa Zone,410,Becho Wereda
-3,Oromiya Region,29,South West Shewa Zone,411,Seden Sodo Wereda
-3,Oromiya Region,29,South West Shewa Zone,412,Woliso/ Town/ Wereda
-3,Oromiya Region,29,South West Shewa Zone,413,Goro Wereda
-3,Oromiya Region,29,South West Shewa Zone,414,Sodo Dacha Wereda
-3,Oromiya Region,29,South West Shewa Zone,415,Sebeta/ Town/ Wereda
-3,Oromiya Region,88,Guji Zone,416,Uraga Wereda
-3,Oromiya Region,88,Guji Zone,417,Bore Wereda
-3,Oromiya Region,88,Guji Zone,418,Adola Wereda
-3,Oromiya Region,88,Guji Zone,419,Wadera Wereda
-1,AMHARA REGION,3,North Wello Zone,42,Lasta Wereda
-3,Oromiya Region,88,Guji Zone,420,Odo Shakiso Wereda
-3,Oromiya Region,30,West Guji Zone,421,Kercha Wereda
-3,Oromiya Region,30,West Guji Zone,422,Liben Wereda
-3,Oromiya Region,88,Guji Zone,423,Dima Wereda
-3,Oromiya Region,30,West Guji Zone,424,Hambela Wamena Wereda
-3,Oromiya Region,88,Guji Zone,425,Girja Wereda
-3,Oromiya Region,88,Guji Zone,426,Negela/ Town/ Wereda
-3,Oromiya Region,30,West Guji Zone,427,Adola/ Town/ Wereda
-3,Oromiya Region,31,Adama Special Zone,428,Adama Wereda
-3,Oromiya Region,32,Jima Special Zone,429,Jima /Town/ Wereda
-1,AMHARA REGION,3,North Wello Zone,43,Dawunt Wereda
-3,Oromiya Region,33,West Aris Zone,430,Siraro Wereda
-3,Oromiya Region,33,West Aris Zone,431,Shala Wereda
-3,Oromiya Region,33,West Aris Zone,432,Arsi Negele Wereda
-3,Oromiya Region,33,West Aris Zone,433,Kofele Wereda
-3,Oromiya Region,33,West Aris Zone,434,Kore Wereda
-3,Oromiya Region,33,West Aris Zone,435,Gedeb Asasa Wereda
-3,Oromiya Region,33,West Aris Zone,436,Dodola Wereda
-3,Oromiya Region,33,West Aris Zone,437,Kokosa Wereda
-3,Oromiya Region,33,West Aris Zone,438,Nensebo Wereda
-3,Oromiya Region,33,West Aris Zone,439,Adaba Wereda
-1,AMHARA REGION,4,South Wello Zone,44,Mekdela Wereda
-3,Oromiya Region,33,West Aris Zone,440,Shashememe / Town/ Wereda
-3,Oromiya Region,33,West Aris Zone,441,Shashememe Zuriya Wereda
-3,Oromiya Region,34,Kelem Welega Zone,442,Hawa Gelan Wereda
-3,Oromiya Region,34,Kelem Welega Zone,443,Yamalogi Welel Wereda
-3,Oromiya Region,34,Kelem Welega Zone,444,Dale Wabera Wereda
-3,Oromiya Region,34,Kelem Welega Zone,445,Gawo Kebe Wereda
-3,Oromiya Region,34,Kelem Welega Zone,446,Seyo Wereda
-3,Oromiya Region,34,Kelem Welega Zone,447,Denbi Dollo/ Town/ Wereda
-3,Oromiya Region,34,Kelem Welega Zone,448,Anfilo Wereda
-3,Oromiya Region,34,Kelem Welega Zone,449,Dale Sadi Wereda
-1,AMHARA REGION,4,South Wello Zone,45,Tenta wereda
-3,Oromiya Region,34,Kelem Welega Zone,450,Gidami Wereda
-3,Oromiya Region,34,Kelem Welega Zone,451,Jima Horo Wereda
-3,Oromiya Region,34,Kelem Welega Zone,452,Lalo Kile Wereda
-3,Oromiya Region,35,Horo Gudru Welega Zone,453,Horo Wereda
-3,Oromiya Region,35,Horo Gudru Welega Zone,454,Shambu /Toen/ Wereda
-3,Oromiya Region,35,Horo Gudru Welega Zone,455,Guduru Wereda
-3,Oromiya Region,35,Horo Gudru Welega Zone,456,Hababo Guduru Wereda
-3,Oromiya Region,35,Horo Gudru Welega Zone,457,Abey Chomen Wereda
-3,Oromiya Region,35,Horo Gudru Welega Zone,458,Jima Genete Wereda
-3,Oromiya Region,35,Horo Gudru Welega Zone,459,Jima Rare Wereda
-1,AMHARA REGION,4,South Wello Zone,46,Kutaber Wereda
-3,Oromiya Region,35,Horo Gudru Welega Zone,460,Jardega Jarte Wereda
-3,Oromiya Region,35,Horo Gudru Welega Zone,461,Amuru Wereda
-3,Oromiya Region,35,Horo Gudru Welega Zone,462,Abe Dongoro Wereda
-3,Oromiya Region,36,Burayu Special Zone,463,Burayu Special Wereda
-4,Gambela Region,37,Agnewak Zone,464,Gambela Zuria Wereda
-4,Gambela Region,37,Agnewak Zone,465,Abobo Wereda
-4,Gambela Region,37,Agnewak Zone,466,Gog Wereda
-4,Gambela Region,37,Agnewak Zone,467,Jor Wereda
-4,Gambela Region,37,Agnewak Zone,468,Dima Wereda
-4,Gambela Region,37,Agnewak Zone,469,Gambela/Town/ Wereda
-1,AMHARA REGION,4,South Wello Zone,47,Ambasel Wereda
-4,Gambela Region,38,Nuwer Zone,470,Lare Wereda
-4,Gambela Region,38,Nuwer Zone,471,Jikawo Wereda
-4,Gambela Region,38,Nuwer Zone,472,Wantawo Wereda
-4,Gambela Region,38,Nuwer Zone,473,Akobo Wereda
-4,Gambela Region,39,Mezhenger Zone,474,Godare Wereda
-4,Gambela Region,39,Mezhenger Zone,475,Mengesh Wereda
-4,Gambela Region,39,Mezhenger Zone,476,Etang Wereda
-4,Gambela Region,39,Mezhenger Zone,477,Etang Special Wereda
-6,SNNP,49,GURAGE ZONE,478,KEBENA WEREDA
-6,SNNP,49,GURAGE ZONE,479,ABESHGE WEREDA
-1,AMHARA REGION,4,South Wello Zone,48,Tehuledere Wereda
-6,SNNP,49,GURAGE ZONE,480,EZHA WEREDA
-6,SNNP,49,GURAGE ZONE,481,KOKIR GEDABANO WEREDA
-6,SNNP,49,GURAGE ZONE,482,SODO WEREDA
-6,SNNP,49,GURAGE ZONE,483,MESEKAN WEREDA
-6,SNNP,49,GURAGE ZONE,484,MAREKO WEREDA
-6,SNNP,49,GURAGE ZONE,485,ENDEGAGN WEREDA
-6,SNNP,49,GURAGE ZONE,486,GUMER WEREDA
-6,SNNP,49,GURAGE ZONE,487,CHEHA WEREDA
-6,SNNP,49,GURAGE ZONE,488,ENEMORNA ENER WEREDA
-6,SNNP,49,GURAGE ZONE,489,MUHOR NA AKLIL WEREDA
-1,AMHARA REGION,4,South Wello Zone,49,Werebabu Wereda
-6,SNNP,49,GURAGE ZONE,490,GETA WEREDA
-6,SNNP,49,GURAGE ZONE,491,WELKITE/TOWN/WEREDA
-6,SNNP,49,GURAGE ZONE,492,BUTAJIRA/TOWN/WEREDA
-6,SNNP,50,HADIYA ZONE,493,MISHA WEREDA
-6,SNNP,50,HADIYA ZONE,494,GIBE WEREDA
-6,SNNP,50,HADIYA ZONE,495,LEMO WEREDA
-6,SNNP,50,HADIYA ZONE,496,SHASHAGO WEREDA
-6,SNNP,50,HADIYA ZONE,497,MISRAK BADAWACHO WEREDA
-6,SNNP,50,HADIYA ZONE,498,SORO WEREDA
-6,SNNP,50,HADIYA ZONE,499,DUNA WEREDA
-1,AMHARA REGION,1,North Gonder Zone,5,Dabat Wereda
-1,AMHARA REGION,4,South Wello Zone,50,Kalu Wereda
-6,SNNP,50,HADIYA ZONE,500,ANALIMO WEREDA
+1,AMHARA REGION,82,Bahir Dar City Administration,737,Bahir Dar City Administration
 1,AMHARA REGION,188,North Gojjam Zone,5000,Gonji Kolela Wereda
 1,AMHARA REGION,188,North Gojjam Zone,5001,Adet Town
 1,AMHARA REGION,188,North Gojjam Zone,5004,Merawi Town
@@ -569,570 +185,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 1,AMHARA REGION,188,North Gojjam Zone,5006,South Mecha Wereda
 1,AMHARA REGION,188,North Gojjam Zone,5007,North Achefer Wereda
 1,AMHARA REGION,188,North Gojjam Zone,5008,Durbetie Town
-6,SNNP,50,HADIYA ZONE,501,MERAB BADWACHO WEREDA
-6,SNNP,50,HADIYA ZONE,502,GOMIBORA WEREDA
-6,SNNP,50,HADIYA ZONE,503,HOSAENA/TOWN/WEREDA
-6,SNNP,51,KEMBATA TIMBARO ZONE,504,TIBARO WEREDA
-6,SNNP,51,KEMBATA TIMBARO ZONE,505,ANGACHA WEREDA
-6,SNNP,51,KEMBATA TIMBARO ZONE,506,KEDIDA GAMELA WEREDA
-6,SNNP,51,KEMBATA TIMBARO ZONE,507,KACHA BIRA WEREDA
-6,SNNP,51,KEMBATA TIMBARO ZONE,508,HADERO TUNITO WEREDA
-6,SNNP,51,KEMBATA TIMBARO ZONE,509,DOYO GENA WEREDA
-1,AMHARA REGION,4,South Wello Zone,51,Albuko Wereda
-6,SNNP,51,KEMBATA TIMBARO ZONE,510,DENIBOYA WEREDA
-6,SNNP,51,KEMBATA TIMBARO ZONE,511,DURAME/TOWN/WEREDA
-6,SNNP,52,SIDAMA ZONE,512,SHEBEDINO WEREDA
-6,SNNP,52,SIDAMA ZONE,513,HWASSA ZURIYA WEREDA
-6,SNNP,52,SIDAMA ZONE,514,ARBEGONA WEREDA
-6,SNNP,52,SIDAMA ZONE,515,DALE WEREDA
-6,SNNP,52,SIDAMA ZONE,516,ALETA WENDO WEREDA
-6,SNNP,52,SIDAMA ZONE,517,DARA WEREDA
-6,SNNP,52,SIDAMA ZONE,518,HULA WEREDA
-6,SNNP,52,SIDAMA ZONE,519,BENSA WEREDA
-1,AMHARA REGION,4,South Wello Zone,52,Dessie Zuriya Wereda
-6,SNNP,52,SIDAMA ZONE,520,ARORESA WEREDA
-6,SNNP,52,SIDAMA ZONE,521,BORICHA WEREDA
-6,SNNP,52,SIDAMA ZONE,522,GORCHE WEREDA
-6,SNNP,52,SIDAMA ZONE,523,MALGA WEREDA
-6,SNNP,52,SIDAMA ZONE,524,WENSHO WEREDA
-6,SNNP,52,SIDAMA ZONE,525,LOKO ABEYA WEREDA
-6,SNNP,52,SIDAMA ZONE,526,CHERE WEREDA
-6,SNNP,52,SIDAMA ZONE,527,BURSA WEREDA
-6,SNNP,52,SIDAMA ZONE,528,CHEKO WEREDA
-6,SNNP,52,SIDAMA ZONE,529,BONA ZURIYA WEREDA
-1,AMHARA REGION,4,South Wello Zone,53,Legambo Wereda
-6,SNNP,52,SIDAMA ZONE,530,WENDO GENET WEREDA
-6,SNNP,53,GEDEO ZONE,531,WENAGO WEREDA
-6,SNNP,53,GEDEO ZONE,532,YIRGACHEFE WEREDA
-6,SNNP,53,GEDEO ZONE,533,KOCHIRE WEREDA
-6,SNNP,53,GEDEO ZONE,534,BULE WEREDA
-6,SNNP,53,GEDEO ZONE,535,DILA ZURIYA WEREDA
-6,SNNP,53,GEDEO ZONE,536,GEDEB WEREDA
-6,SNNP,53,GEDEO ZONE,537,DILA/TOWN/WEREDA
-6,SNNP,54,WOLAYITA ZONE,538,BOLOSO SORE WEREDA
-6,SNNP,54,WOLAYITA ZONE,539,DAMOT GALE WEREDA
-1,AMHARA REGION,4,South Wello Zone,54,Sayint Wereda
-6,SNNP,54,WOLAYITA ZONE,540,DAMOT WOYIDE WEREDA
-6,SNNP,54,WOLAYITA ZONE,541,HUMBO WEREDA
-6,SNNP,54,WOLAYITA ZONE,542,SODO ZURIYA WEREDA
-6,SNNP,54,WOLAYITA ZONE,543,KINDO KOYISHA WEREDA
-6,SNNP,54,WOLAYITA ZONE,544,OFA WEREDA
-6,SNNP,54,WOLAYITA ZONE,545,BOLOSO BONIBE WEREDA
-6,SNNP,54,WOLAYITA ZONE,546,DAMOT SORE WEREDA
-6,SNNP,54,WOLAYITA ZONE,547,KINDO DIDAYE WEREDA
-6,SNNP,54,WOLAYITA ZONE,548,DAMOT PULASA WEREDA
-6,SNNP,54,WOLAYITA ZONE,549,DEGUNA FANIGO WEREDA
-1,AMHARA REGION,4,South Wello Zone,55,Debresina Wereda
-6,SNNP,54,WOLAYITA ZONE,550,SODO/TOWN/WEREDA
-6,SNNP,55,SOUTH OMO ZONE,551,SELAMAGO WEREDA
-6,SNNP,55,SOUTH OMO ZONE,552,DEBUB ARI WEREDA
-6,SNNP,55,SOUTH OMO ZONE,553,SEMEN ARI WEREDA
-6,SNNP,55,SOUTH OMO ZONE,554,HAMER WEREDA
-6,SNNP,55,SOUTH OMO ZONE,555,BENA TSEMAY WEREDA
-6,SNNP,55,SOUTH OMO ZONE,556,DASENECH WEREDA
-6,SNNP,55,SOUTH OMO ZONE,557,MALE WEREDA
-6,SNNP,55,SOUTH OMO ZONE,558,NYANGATOM WEREDA
-6,SNNP,56,SHEKA ZONE,559,MASHA WEREDA
-1,AMHARA REGION,4,South Wello Zone,56,Kelela Wereda
-6,SNNP,56,SHEKA ZONE,560,ANDERACHA WEREDA
-6,SNNP,56,SHEKA ZONE,561,YEKI WEREDA
-6,SNNP,57,KEFFA ZONE,562,SAYILEM WEREDA
-6,SNNP,57,KEFFA ZONE,563,GESHA DEKA WEREDA
-6,SNNP,57,KEFFA ZONE,564,GEWATA WEREDA
-6,SNNP,57,KEFFA ZONE,565,GIMBO WEREDA
-6,SNNP,57,KEFFA ZONE,566,MENJIWO WEREDA
-6,SNNP,57,KEFFA ZONE,567,TELO WEREDA
-6,SNNP,57,KEFFA ZONE,568,CHETA WEREDA
-6,SNNP,57,KEFFA ZONE,569,DECHA WEREDA
-1,AMHARA REGION,4,South Wello Zone,57,Tama Wereda
-6,SNNP,57,KEFFA ZONE,570,CHENA WEREDA
-6,SNNP,57,KEFFA ZONE,571,BITA WEREDA
-6,SNNP,57,KEFFA ZONE,572,BONGA/TOWN/WEREDA
-6,SNNP,58,GAMO GOFA ZONE,573,MELEKOZA WEREDA
-6,SNNP,58,GAMO GOFA ZONE,574,DENIBU GOFA WEREDA
-6,SNNP,58,GAMO GOFA ZONE,575,KUCHA WEREDA
-6,SNNP,58,GAMO GOFA ZONE,576,BOREDA WEREDA
-6,SNNP,58,GAMO GOFA ZONE,577,MERAB ABAYA WEREDA
-6,SNNP,58,GAMO GOFA ZONE,578,ARBA MINCH ZURIYA WEREDA
-6,SNNP,58,GAMO GOFA ZONE,579,CHENCHA WEREDA
-1,AMHARA REGION,4,South Wello Zone,58,Were Ilu Wereda
-6,SNNP,58,GAMO GOFA ZONE,580,DITA WEREDA
-6,SNNP,58,GAMO GOFA ZONE,581,DERAMALO WEREDA
-6,SNNP,58,GAMO GOFA ZONE,582,ZALA WEREDA
-6,SNNP,58,GAMO GOFA ZONE,583,UBA DEBRE TSEHAY WEREDA
-6,SNNP,58,GAMO GOFA ZONE,584,KEMBA WEREDA
-6,SNNP,58,GAMO GOFA ZONE,585,BONKE WEREDA
-6,SNNP,58,GAMO GOFA ZONE,586,GEZEGOFA WEREDA
-6,SNNP,58,GAMO GOFA ZONE,587,AYIDA WEREDA
-6,SNNP,58,GAMO GOFA ZONE,588,ARBA MINCH/TOWN/WEREDA
-6,SNNP,58,GAMO GOFA ZONE,589,SAWULA/TOWN/WEREDA
-1,AMHARA REGION,4,South Wello Zone,59,Wegidi Wereda
-6,SNNP,59,BENCH MAJI ZONE,590,SHEKO WEREDA
-6,SNNP,59,BENCH MAJI ZONE,591,GURAFERDA WEREDA
-6,SNNP,59,BENCH MAJI ZONE,592,DEBUB BENCH WEREDA
-6,SNNP,59,BENCH MAJI ZONE,593,SHAY BENCH WEREDA
-6,SNNP,59,BENCH MAJI ZONE,594,MEINIT GOLDEYA WEREDA
-6,SNNP,59,BENCH MAJI ZONE,595,MEINIT SHASHA WEREDA
-6,SNNP,59,BENCH MAJI ZONE,596,MAJI WEREDA
-6,SNNP,59,BENCH MAJI ZONE,597,BERO WEREDA
-6,SNNP,59,BENCH MAJI ZONE,598,SURMA WEREDA
-6,SNNP,59,BENCH MAJI ZONE,599,SEMEN BENCH WEREDA
-1,AMHARA REGION,1,North Gonder Zone,6,Merab Armachocho Wereda
-1,AMHARA REGION,4,South Wello Zone,60,Kombolcha/ Town/Wereda
-6,SNNP,59,BENCH MAJI ZONE,600,MIZAN AMAN/TOWN/WEREDA
-6,SNNP,60,YEM SPECIAL WER. ZONE,601,YEM SP. WER. WEREDA
-6,SNNP,60,YEM SPECIAL WER. ZONE,602,AMARO SPECIAL WEREDA
-6,SNNP,60,YEM SPECIAL WER. ZONE,603,AMARO WEREDA
-6,SNNP,60,YEM SPECIAL WER. ZONE,604,BURJI SPECIAL WEREDA
-6,SNNP,60,YEM SPECIAL WER. ZONE,605,BURJI WEREDA
-6,SNNP,60,YEM SPECIAL WER. ZONE,606,KONSO SPECIAL WEREDA
-6,SNNP,60,YEM SPECIAL WER. ZONE,607,KONSO WEREDA
-6,SNNP,60,YEM SPECIAL WER. ZONE,608,DERASHE SPECIAL WEREDA
-6,SNNP,60,YEM SPECIAL WER. ZONE,609,DERASHE WEREDA
-1,AMHARA REGION,4,South Wello Zone,61,Dessie/Town Wereda
-6,SNNP,61,DAWURO ZONE,610,TOCHA WEREDA
-6,SNNP,61,DAWURO ZONE,611,MAREKA WEREDA
-6,SNNP,61,DAWURO ZONE,612,LOMA WEREDA
-6,SNNP,61,DAWURO ZONE,613,GENABOSA WEREDA
-6,SNNP,61,DAWURO ZONE,614,ISARA WEREDA
-6,SNNP,61,DAWURO ZONE,615,BASKETO SPECIAL WEREDA
-6,SNNP,61,DAWURO ZONE,616,BASKETO WEREDA
-6,SNNP,61,DAWURO ZONE,617,KONTA SPECIAL WEREDA
-6,SNNP,61,DAWURO ZONE,618,KONTA WEREDA
-6,SNNP,62,SILTI ZONE,619,ALICHO WERERO WEREDA
-1,AMHARA REGION,4,South Wello Zone,62,Mehal Saynt Wereda
-6,SNNP,62,SILTI ZONE,620,SILTI WEREDA
-6,SNNP,62,SILTI ZONE,621,LANFURO WEREDA
-6,SNNP,62,SILTI ZONE,622,MERAB AZERNET WEREDA
-6,SNNP,62,SILTI ZONE,623,DALOCHA WEREDA
-6,SNNP,62,SILTI ZONE,624,SANKURA WEREDA
-6,SNNP,62,SILTI ZONE,625,MISRAK AZERNET WEREDA
-6,SNNP,62,SILTI ZONE,626,WULBAREG WEREDA
-6,SNNP,62,SILTI ZONE,627,ALABA SPECIAL WEREDA
-6,SNNP,62,SILTI ZONE,628,ALABA WEREDA
-6,SNNP,63,HAWASSA CITY ADMINISTRATION-ZONE,629,HAWASSA CITY ADMINISTRATION WEREDA
-1,AMHARA REGION,4,South Wello Zone,63,Legahida Wereda
-7,Benshangul gumz region,64,Metekel zone,630,Dangur Wereda
-7,Benshangul gumz region,64,Metekel zone,631,Guba Wereda
-7,Benshangul gumz region,64,Metekel zone,632,Wenbera Wereda
-7,Benshangul gumz region,64,Metekel zone,633,Mandura Wereda
-7,Benshangul gumz region,64,Metekel zone,634,Dibate Wereda
-7,Benshangul gumz region,64,Metekel zone,635,Bulen Wereda
-7,Benshangul gumz region,65,Asosa zone,636,Menge Wereda
-7,Benshangul gumz region,65,Asosa zone,637,Kurmuk Wereda
-7,Benshangul gumz region,65,Asosa zone,638,Asossa Wereda
-7,Benshangul gumz region,65,Asosa zone,639,Sherkole Wereda
-1,AMHARA REGION,5,North Shewa Zone,64,Mida Weremo Wereda
-7,Benshangul gumz region,65,Asosa zone,640,Bambasi Wereda
-7,Benshangul gumz region,65,Asosa zone,641,Odabuldi Wereda
-7,Benshangul gumz region,65,Asosa zone,642,Homesha Wereda
-7,Benshangul gumz region,66,Kamashi zone,643,Yaso Wereda
-7,Benshangul gumz region,66,Kamashi zone,644,Sirba abay Wereda
-7,Benshangul gumz region,66,Kamashi zone,645,Kemashi Wereda
-7,Benshangul gumz region,66,Kamashi zone,646,Agelo meti Wereda
-8,Somali Region,67,Shinile Zone,647,Ayisha
-8,Somali Region,67,Shinile Zone,648,Denbel
-8,Somali Region,67,Shinile Zone,649,Shinile
-1,AMHARA REGION,5,North Shewa Zone,65,Merhabete Wereda
-10,Hareri Region,83,Harer Zone,650,Erer wereda
-8,Somali Region,67,Shinile Zone,651,Mulo
-8,Somali Region,67,Shinile Zone,652,Afdem
-8,Somali Region,68,Jijiga  Zone,653,Babile
-8,Somali Region,68,Jijiga  Zone,654,Gursum
-8,Somali Region,68,Jijiga  Zone,655,Jijiga
-8,Somali Region,68,Jijiga  Zone,656,Awubere
-8,Somali Region,68,Jijiga  Zone,657,Beyah
-8,Somali Region,68,Jijiga  Zone,658,Kebri
-8,Somali Region,68,Jijiga  Zone,659,Harshin
-1,AMHARA REGION,5,North Shewa Zone,66,Ensaro Wereda
-8,Somali Region,69,Deghabur  Zone,660,Deghamedo
-8,Somali Region,69,Deghabur  Zone,661,Deghabur
-8,Somali Region,69,Deghabur  Zone,662,Aware
-8,Somali Region,69,Deghabur  Zone,663,Gashamo
-8,Somali Region,69,Deghabur  Zone,664,Gunagudo
-8,Somali Region,70,Warder Zone,665,Danot
-8,Somali Region,70,Warder Zone,666,Boh
-8,Somali Region,70,Warder Zone,667,Geladin
-8,Somali Region,70,Warder Zone,668,Warder
-8,Somali Region,71,Korahe Zone,669,Shekosh
-1,AMHARA REGION,5,North Shewa Zone,67,Moretna Jiru Wereda
-8,Somali Region,71,Korahe Zone,670,Kebridehar
-8,Somali Region,71,Korahe Zone,671,Shilabo
-8,Somali Region,71,Korahe Zone,672,Debewoin
-8,Somali Region,72,Fik Zone,673,Selhad
-8,Somali Region,72,Fik Zone,674,Fik
-8,Somali Region,72,Fik Zone,675,Gerbo
-8,Somali Region,72,Fik Zone,676,Hamero
-8,Somali Region,72,Fik Zone,677,Segeg
-8,Somali Region,72,Fik Zone,678,Dihun
-8,Somali Region,72,Fik Zone,679,legehida
-1,AMHARA REGION,5,North Shewa Zone,68,Menz Gera Minid Wereda
-8,Somali Region,72,Fik Zone,680,Meyu Muluke
-8,Somali Region,73,Gode Zone,681,Imiberi
-8,Somali Region,73,Gode Zone,682,Adadilo
-8,Somali Region,73,Gode Zone,683,Danan
-8,Somali Region,73,Gode Zone,684,Gode
-8,Somali Region,73,Gode Zone,685,Kelafo
-8,Somali Region,73,Gode Zone,686,Mustahil
-8,Somali Region,73,Gode Zone,687,Ferfer
-8,Somali Region,74,Afder Zone,688,Guradamole
-8,Somali Region,74,Afder Zone,689,Weyib
-1,AMHARA REGION,5,North Shewa Zone,69,Gishe Wereda
-8,Somali Region,74,Afder Zone,690,Goro Bekeksa
-8,Somali Region,74,Afder Zone,691,Serer
-8,Somali Region,74,Afder Zone,692,Mirab Imi
-8,Somali Region,74,Afder Zone,693,Afker
-8,Somali Region,74,Afder Zone,694,Bare
-8,Somali Region,74,Afder Zone,695,Bdolobay
-8,Somali Region,74,Afder Zone,696,Kersa Dulo
-8,Somali Region,75,Liben Zone,697,Filtu
-8,Somali Region,75,Liben Zone,698,Dolo Odo
-8,Somali Region,75,Liben Zone,699,Moyale
-1,AMHARA REGION,1,North Gonder Zone,7,Tegede Wereda
-1,AMHARA REGION,5,North Shewa Zone,70,Antsokiya Gemeza Wereda
-8,Somali Region,75,Liben Zone,700,Udet
-14,Centeral Ethiopia,5991,Kembata Zone,7001,Hadero City Administration
-14,Centeral Ethiopia,5991,Kembata Zone,7002,Damboya
-14,Centeral Ethiopia,5991,Kembata Zone,7003,Angacha
-14,Centeral Ethiopia,5991,Kembata Zone,7004,Denboya City Administration
-14,Centeral Ethiopia,5991,Kembata Zone,7005,Angacha City Administration
-14,Centeral Ethiopia,5991,Kembata Zone,7006,Mudula City Administration
-14,Centeral Ethiopia,5991,Kembata Zone,7007,Doyogena City Administration
-14,Centeral Ethiopia,5991,Kembata Zone,7008,Shinshicho City Administartion
-14,Centeral Ethiopia,5991,Kembata Zone,7009,Qacha Bira
-9,Afar,76,Zone 1,701,Dubti
-14,Centeral Ethiopia,5991,Kembata Zone,7010,Qedida Gamela
-14,Centeral Ethiopia,5991,Kembata Zone,7011,Hadero Tunto
-14,Centeral Ethiopia,5991,Kembata Zone,7012,Durame City Adminstration
-14,Centeral Ethiopia,5991,Kembata Zone,7013,Doyogena
-14,Centeral Ethiopia,5991,Kembata Zone,7014,Adilo
-14,Centeral Ethiopia,5992,Hadiya Zone,7015,Lemo
-14,Centeral Ethiopia,5992,Hadiya Zone,7016,Ameka
-14,Centeral Ethiopia,5992,Hadiya Zone,7017,Shone  Town Administration
-14,Centeral Ethiopia,5992,Hadiya Zone,7018,Mierab Soro
-14,Centeral Ethiopia,5992,Hadiya Zone,7019,Soro
-9,Afar,76,Zone 1,702,Elidar
-14,Centeral Ethiopia,5992,Hadiya Zone,7020,Shashogo
-14,Centeral Ethiopia,5992,Hadiya Zone,7021,Misrak Badewacho
-14,Centeral Ethiopia,5992,Hadiya Zone,7022,Misha
-14,Centeral Ethiopia,5992,Hadiya Zone,7023,Mierab Badawacho
-14,Centeral Ethiopia,5992,Hadiya Zone,7024,Hossana Town Administration
-14,Centeral Ethiopia,5992,Hadiya Zone,7025,Gombora
-14,Centeral Ethiopia,5992,Hadiya Zone,7026,Gibe
-14,Centeral Ethiopia,5992,Hadiya Zone,7027,Duna
-14,Centeral Ethiopia,5992,Hadiya Zone,7028,Anlemo
-14,Centeral Ethiopia,5992,Hadiya Zone,7029,Fonko Town Administration
-9,Afar,76,Zone 1,703,Asayita
-14,Centeral Ethiopia,5992,Hadiya Zone,7030,Bonnosha Town Administration
-14,Centeral Ethiopia,5992,Hadiya Zone,7031,Homecho Town Administration
-14,Centeral Ethiopia,5992,Hadiya Zone,7032,Mierab Soro Town Administration
-14,Centeral Ethiopia,5992,Hadiya Zone,7033,Gimbichu Town Administration
-14,Centeral Ethiopia,5992,Hadiya Zone,7034,Jajura Town Administartion
-14,Centeral Ethiopia,5993,Gurage Zone,7035,Enor Ener Meger
-14,Centeral Ethiopia,5993,Gurage Zone,7036,Enor
-14,Centeral Ethiopia,5993,Gurage Zone,7037,Ezja
-14,Centeral Ethiopia,5993,Gurage Zone,7038,Gedebano Gutazer Welene
-14,Centeral Ethiopia,5993,Gurage Zone,7039,Gumer
-9,Afar,76,Zone 1,704,Afambo
-14,Centeral Ethiopia,5993,Gurage Zone,7040,Muhurna Aklil
-14,Centeral Ethiopia,5993,Gurage Zone,7041,Abeshege
-14,Centeral Ethiopia,5993,Gurage Zone,7042,Emdebir City Administration
-14,Centeral Ethiopia,5993,Gurage Zone,7043,Welkite City Administration
-14,Centeral Ethiopia,5993,Gurage Zone,7044,Geta
-14,Centeral Ethiopia,5993,Gurage Zone,7045,Endegagn
-14,Centeral Ethiopia,5993,Gurage Zone,7046,Cheha
-14,Centeral Ethiopia,5993,Gurage Zone,7047,Gunchere City Administration
-14,Centeral Ethiopia,5993,Gurage Zone,7048,Agena City Administration
-14,Centeral Ethiopia,5993,Gurage Zone,7049,Arekit City Administartion
-9,Afar,76,Zone 1,705,Mile
-14,Centeral Ethiopia,5994,Halaba,7050,Wera Zuriya
-14,Centeral Ethiopia,5994,Halaba,7051,Atoti Ulo
-14,Centeral Ethiopia,5994,Halaba,7052,Wera Dijo
-14,Centeral Ethiopia,5994,Halaba,7053,Qulito City Administration
-14,Centeral Ethiopia,5995,Yem,7054,Fofa
-14,Centeral Ethiopia,5995,Yem,7055,Toba
-14,Centeral Ethiopia,5995,Yem,7056,Deri Saja
-14,Centeral Ethiopia,5995,Yem,7057,Saja City Administration
-14,Centeral Ethiopia,5996,East Gurage,7058,Sodo
-14,Centeral Ethiopia,5996,East Gurage,7059,Enseno Town Administration
-9,Afar,76,Zone 1,706,Chifra
-14,Centeral Ethiopia,5996,East Gurage,7060,Buee Town Administration
-14,Centeral Ethiopia,5996,East Gurage,7061,Butajira Town Administration
-14,Centeral Ethiopia,5996,East Gurage,7062,Meskane
-14,Centeral Ethiopia,5996,East Gurage,7063,South Sodo
-14,Centeral Ethiopia,5996,East Gurage,7064,Misrak Meskan
-14,Centeral Ethiopia,5997,Silte Zone,7065,Dalocha
-14,Centeral Ethiopia,5997,Silte Zone,7066,Silti
-14,Centeral Ethiopia,5997,Silte Zone,7067,Kibet City Administration
-14,Centeral Ethiopia,5997,Silte Zone,7068,Misrak Silti
-14,Centeral Ethiopia,5997,Silte Zone,7069,Werabe City Administration
-9,Afar,76,Zone 1,707,Kori
-14,Centeral Ethiopia,5997,Silte Zone,7070,Hulbereg
-14,Centeral Ethiopia,5997,Silte Zone,7071,Sankura
-14,Centeral Ethiopia,5997,Silte Zone,7072,Lanfro
-14,Centeral Ethiopia,5997,Silte Zone,7073,Dalocha City Administration
-14,Centeral Ethiopia,5997,Silte Zone,7074,Alicho weriro
-14,Centeral Ethiopia,5997,Silte Zone,7075,Mito
-14,Centeral Ethiopia,5997,Silte Zone,7076,Tora City Administration
-14,Centeral Ethiopia,5997,Silte Zone,7077,Alem Gebeya City Administration
-14,Centeral Ethiopia,5997,Silte Zone,7078,Misrak Azernet Berbere
-14,Centeral Ethiopia,5997,Silte Zone,7079,Mierab Azernet Berbere
-9,Afar,77,Zone 2,708,Erebti
-14,Centeral Ethiopia,5998,Qebena Special Wereda,7080,Qebena Special Wereda
-14,Centeral Ethiopia,5999,Tembaro Special Wereda,7081,Tembaro Special Wereda
-14,Centeral Ethiopia,6000,Mareqo Special Wereda,7082,Mareqo Special Wereda
-13,South West,6001,Dawuro,7083,Tarecha
-13,South West,6001,Dawuro,7084,Mareka
-13,South West,6001,Dawuro,7085,Loma Bosa
-13,South West,6001,Dawuro,7086,Zaba Gazo
-13,South West,6001,Dawuro,7087,Mari-Mansa
-13,South West,6001,Dawuro,7088,Gena
-13,South West,6001,Dawuro,7089,Tocha
-9,Afar,77,Zone 2,709,Konaba
-13,South West,6001,Dawuro,7090,Esera
-13,South West,6001,Dawuro,7091,Kechi
-13,South West,6001,Dawuro,7092,Disa
-13,South West,6001,Dawuro,7093,Tarecha City Adminstration
-13,South West,6001,Dawuro,7094,Gesa Chare Town Adminstration
-13,South West,6002,Bench Sheko,7095,South Bench
-13,South West,6002,Bench Sheko,7096,Mizan-Aman City Adminstration
-13,South West,6002,Bench Sheko,7097,Siz City Adminstration
-13,South West,6002,Bench Sheko,7098,shey bench
-13,South West,6002,Bench Sheko,7099,Gibe bench
-1,AMHARA REGION,5,North Shewa Zone,71,Efrata Gimim Wereda
-9,Afar,77,Zone 2,710,Abala
-13,South West,6002,Bench Sheko,7100,Nort bench
-13,South West,6002,Bench Sheko,7101,Sheko
-13,South West,6002,Bench Sheko,7102,Gurafereda
-13,South West,6003,Kafa,7103,Gibmo
-13,South West,6003,Kafa,7104,Shesho Ende
-13,South West,6003,Kafa,7105,Chena
-13,South West,6003,Kafa,7106,Goba
-13,South West,6003,Kafa,7107,Decha
-13,South West,6003,Kafa,7108,Cheta
-13,South West,6003,Kafa,7109,Gewata
-9,Afar,77,Zone 2,711,Megale
-13,South West,6003,Kafa,7110,Saylem
-13,South West,6003,Kafa,7111,Telo
-13,South West,6003,Kafa,7112,Adeyo
-13,South West,6003,Kafa,7113,Gesha
-13,South West,6003,Kafa,7114,Bita
-13,South West,6003,Kafa,7115,Bonga City Adminstration
-13,South West,6003,Kafa,7116,Awerada City Adminstration
-13,South West,6003,Kafa,7117,Wacha City Adminstration
-13,South West,6003,Kafa,7118,Deka City Adminstration
-13,South West,6003,Kafa,7119,Sheshenda City Adminstration
-9,Afar,77,Zone 2,712,Berahile
-13,South West,6004,West Omo,7120,Gachet
-13,South West,6004,West Omo,7121,Me'enit Goldiya
-13,South West,6004,West Omo,7122,Me'enit Shasha
-13,South West,6004,West Omo,7123,Bero
-13,South West,6004,West Omo,7124,Gori Gesha
-13,South West,6004,West Omo,7125,Surma
-13,South West,6004,West Omo,7126,Maji
-13,South West,6004,West Omo,7127,Bachuma City Adminstration
-13,South West,6004,West Omo,7128,Jemu City Adminstration
-13,South West,6004,West Omo,7129,Maji Tum City Adminstration
-9,Afar,77,Zone 2,713,Dalol
-13,South West,6005,Sheka,7130,Masha
-13,South West,6005,Sheka,7131,Anderacha
-13,South West,6005,Sheka,7132,Yeki
-13,South West,6005,Sheka,7133,Masha City Adminstration
-13,South West,6005,Sheka,7134,Tepi City Adminstration
-13,South West,6006,Konta,7135,Ameya Zuriya
-13,South West,6006,Konta,7136,Konta Koysha
-13,South West,6006,Konta,7137,Ela anchano
-13,South West,6006,Konta,7138,Ameya City Adminstration
-13,South West,6006,Konta,7139,Cheda City Adminstration
-9,Afar,77,Zone 2,714,Afdera
-15,South Ethiopia,6007,Gamo Zone,7140,Kogota Woreda
-15,South Ethiopia,6007,Gamo Zone,7141,Gerese City Administration
-15,South Ethiopia,6007,Gamo Zone,7142,Gacho Baba Woreda
-15,South Ethiopia,6007,Gamo Zone,7143,Arba Minch City Administration
-15,South Ethiopia,6007,Gamo Zone,7144,Birbir City Administration
-15,South Ethiopia,6007,Gamo Zone,7146,Arba Minch Zuriya Woreda
-15,South Ethiopia,6007,Gamo Zone,7147,Chencha Zuriya Woreda
-15,South Ethiopia,6007,Gamo Zone,7148,Chencha City Administration
-15,South Ethiopia,6007,Gamo Zone,7149,Kucha Alfa
-9,Afar,78,Zone 3,715,Amibara
-15,South Ethiopia,6007,Gamo Zone,7150,Boreda Woreda
-15,South Ethiopia,6007,Gamo Zone,7151,Deramalo Woreda
-15,South Ethiopia,6007,Gamo Zone,7152,Kemba City Administration
-15,South Ethiopia,6007,Gamo Zone,7153,Garda Marta Woreda
-15,South Ethiopia,6007,Gamo Zone,7154,Bonke Woreda
-15,South Ethiopia,6007,Gamo Zone,7155,Selamber City Administration
-15,South Ethiopia,6007,Gamo Zone,7156,Mierab Abaya Woreda
-15,South Ethiopia,6007,Gamo Zone,7157,Dita Woreda
-15,South Ethiopia,6007,Gamo Zone,7158,Kucha  Woreda
-15,South Ethiopia,6007,Gamo Zone,7159,Kemba Zuriya Woreda
-9,Afar,78,Zone 3,716,Awash Fentale
-15,South Ethiopia,6007,Gamo Zone,7160,Gerese Woreda
-15,South Ethiopia,6008,Gedeo,7161,Bule Woreda
-15,South Ethiopia,6008,Gedeo,7162,Dilla City Administration
-15,South Ethiopia,6008,Gedeo,7163,Dilla Zuriya Woreda
-15,South Ethiopia,6008,Gedeo,7164,Gedeb City Administration
-15,South Ethiopia,6008,Gedeo,7165,Kochere Woreda
-15,South Ethiopia,6008,Gedeo,7166,Yirgachefe City Administration
-15,South Ethiopia,6008,Gedeo,7167,Chelelektu City Administration
-15,South Ethiopia,6008,Gedeo,7168,Yirgachefe Woreda
-15,South Ethiopia,6008,Gedeo,7169,Gedeb Woreda
-9,Afar,78,Zone 3,717,Gewane
-15,South Ethiopia,6008,Gedeo,7170,Chorso Woreda
-15,South Ethiopia,6008,Gedeo,7171,Repe Woreda
-15,South Ethiopia,6008,Gedeo,7172,Wenago City Administration
-15,South Ethiopia,6009,Gofa,7173,Melo Koza Woreda
-15,South Ethiopia,6009,Gofa,7174,Melo Gada Woreda
-15,South Ethiopia,6009,Gofa,7175,Demba Gofa Woreda
-15,South Ethiopia,6009,Gofa,7176,Geze Gofa Woreda
-15,South Ethiopia,6009,Gofa,7177,Bulqi City Adminstration
-15,South Ethiopia,6009,Gofa,7178,Oyda Woreda
-15,South Ethiopia,6009,Gofa,7179,Sawula City Adminstration
-9,Afar,78,Zone 3,718,Mudayitu
-15,South Ethiopia,6009,Gofa,7180,Zala Woreda
-15,South Ethiopia,6009,Gofa,7181,Uba Debre Tsehay Woreda
-15,South Ethiopia,6009,Gofa,7182,Laha City Adminstration
-15,South Ethiopia,6009,Gofa,7183,Beto City Adminstration
-15,South Ethiopia,6010,Konso,7184,Segen Zuriya Woreda
-15,South Ethiopia,6010,Konso,7185,Karat Zuriya Woreda
-15,South Ethiopia,6010,Konso,7186,Kena Woreda
-15,South Ethiopia,6010,Konso,7187,Karat City Adminstration
-15,South Ethiopia,6010,Konso,7188,Kolme Woreda
-15,South Ethiopia,6011,Ari,7189,Jinka City Administration
-9,Afar,78,Zone 3,719,Dulecha
-15,South Ethiopia,6011,Ari,7190,Gelila City Administration
-15,South Ethiopia,6011,Ari,7191,Debub Ari Woreda
-15,South Ethiopia,6011,Ari,7192,Semen Ari Woreda
-15,South Ethiopia,6011,Ari,7193,Woba Ari Woreda
-15,South Ethiopia,6011,Ari,7194,Bakadawla Ari Woreda
-15,South Ethiopia,6012,South Omo,7195,Bena Tsemay Woreda
-15,South Ethiopia,6012,South Omo,7196,Hamer Woreda
-15,South Ethiopia,6012,South Omo,7197,Male Woreda
-15,South Ethiopia,6012,South Omo,7198,Gnangatom Woreda
-15,South Ethiopia,6012,South Omo,7199,Salamago Woreda
-1,AMHARA REGION,5,North Shewa Zone,72,Menz Mama Midir Wereda
-9,Afar,78,Zone 3,720,Bure
-15,South Ethiopia,6012,South Omo,7200,Dasenech Woreda
-15,South Ethiopia,6012,South Omo,7201,Turmi City Administration
-15,South Ethiopia,6013,Basketo,7202,Laska Zuriya Woreda
-15,South Ethiopia,6013,Basketo,7203,Laska City Administration
-15,South Ethiopia,6014,Gardula,7204,Gidole City Administration
-15,South Ethiopia,6014,Gardula,7205,Derashe Woreda
-15,South Ethiopia,6015,Koore,7206,Gorka Woreda
-15,South Ethiopia,6015,Koore,7207,Kele City Administration
-15,South Ethiopia,6015,Koore,7208,Sarmale Woreda
-15,South Ethiopia,6016,Burji,7209,Soyama Zuriya Woreda
-9,Afar,78,Zone 3,721,Argoba Special
-15,South Ethiopia,6016,Burji,7210,Soyama City Administration
-15,South Ethiopia,6017,Wolayita,7211,Offa Woreda
-15,South Ethiopia,6017,Wolayita,7212,Humbo Woreda
-15,South Ethiopia,6017,Wolayita,7213,Damot Gale Woreda
-15,South Ethiopia,6017,Wolayita,7214,Boloso Bombe Woreda
-15,South Ethiopia,6017,Wolayita,7215,Boloso Sore Woreda
-15,South Ethiopia,6017,Wolayita,7216,Damot Fulasa Woreda
-15,South Ethiopia,6017,Wolayita,7217,Damot Sore Woreda
-15,South Ethiopia,6017,Wolayita,7218,Damot Woyde Woreda
-15,South Ethiopia,6017,Wolayita,7219,Duguna Fango Woreda
-9,Afar,79,Zone 4,722,Awura
-15,South Ethiopia,6017,Wolayita,7220,Kindo Didaye Woreda
-15,South Ethiopia,6017,Wolayita,7221,Kawo Koyisha Woreda
-15,South Ethiopia,6017,Wolayita,7222,Sodo Zuriya Woreda
-15,South Ethiopia,6017,Wolayita,7223,Areka City Administration
-15,South Ethiopia,6017,Wolayita,7224,Boditi City Adminstration
-15,South Ethiopia,6017,Wolayita,7225,Sodo City Administration
-15,South Ethiopia,6017,Wolayita,7226,Bayira Koysha Woreda
-15,South Ethiopia,6017,Wolayita,7227,Hobicha Woreda
-15,South Ethiopia,6017,Wolayita,7228,Tebela City Administration
-15,South Ethiopia,6017,Wolayita,7229,Abala Abaya
-9,Afar,79,Zone 4,723,Ewa
-15,South Ethiopia,6017,Wolayita,7230,Gesuba City Administration
-15,South Ethiopia,6017,Wolayita,7231,Gununo Hamus City Administration
-15,South Ethiopia,6017,Wolayita,7232,Bele Awasa City Administration
-15,South Ethiopia,6018,Ale,7233,Ale
-12,Sidama,6019,Hawassa City Admnistration,7234,Bahel Adarash
-12,Sidama,6019,Hawassa City Admnistration,7235,Adiss ketema
-12,Sidama,6019,Hawassa City Admnistration,7236,Tula
-12,Sidama,6019,Hawassa City Admnistration,7237,Haik Dar
-12,Sidama,6019,Hawassa City Admnistration,7238,Meneharya
-12,Sidama,6019,Hawassa City Admnistration,7239,Mehal
-9,Afar,79,Zone 4,724,Teru
-12,Sidama,6019,Hawassa City Admnistration,7240,Misrak
-12,Sidama,6019,Hawassa City Admnistration,7241,Tabor
-12,Sidama,6020,Debubawi Sidama Zone,7242,Aleta Chuko City Administration
-12,Sidama,6020,Debubawi Sidama Zone,7243,Aleta Chuko
-12,Sidama,6020,Debubawi Sidama Zone,7244,Aleta Wendo
-12,Sidama,6020,Debubawi Sidama Zone,7245,Bursa
-12,Sidama,6020,Debubawi Sidama Zone,7246,Aleta Wendo City Administration
-12,Sidama,6020,Debubawi Sidama Zone,7247,Chirone
-12,Sidama,6020,Debubawi Sidama Zone,7248,Dara Kebado
-12,Sidama,6020,Debubawi Sidama Zone,7249,Dara Otilcho
-9,Afar,79,Zone 4,725,Yalo
-12,Sidama,6020,Debubawi Sidama Zone,7250,Teticha
-12,Sidama,6020,Debubawi Sidama Zone,7251,Hula
-12,Sidama,6021,Mehal Sidama Zone,7252,Arbegona
-12,Sidama,6021,Mehal Sidama Zone,7253,Dale
-12,Sidama,6021,Mehal Sidama Zone,7254,Darara
-12,Sidama,6021,Mehal Sidama Zone,7255,Loka Abaya
-12,Sidama,6021,Mehal Sidama Zone,7256,Shafamo
-12,Sidama,6021,Mehal Sidama Zone,7257,Wonsho
-12,Sidama,6021,Mehal Sidama Zone,7258,Yirgalem city administration
-12,Sidama,6022,Misrak Sidama Zone,7259,Aroresa
-9,Afar,79,Zone 4,726,Golina
-12,Sidama,6022,Misrak Sidama Zone,7260,Bona Zuria
-12,Sidama,6022,Misrak Sidama Zone,7261,Bura
-12,Sidama,6022,Misrak Sidama Zone,7262,Chebe Gambeltu
-12,Sidama,6022,Misrak Sidama Zone,7263,Chire
-12,Sidama,6022,Misrak Sidama Zone,7264,Daela
-12,Sidama,6022,Misrak Sidama Zone,7265,Daye city administration
-12,Sidama,6022,Misrak Sidama Zone,7266,Hoko
-12,Sidama,6022,Misrak Sidama Zone,7267,Bensa
-2,Tigray Region,6023,South East Zone,7268,Dogu'a Temben
-2,Tigray Region,6023,South East Zone,7269,Adi Gudom Town
-9,Afar,80,Zone 5,727,Telalak
-2,Tigray Region,6023,South East Zone,7270,Hintalo
-2,Tigray Region,6023,South East Zone,7271,20 Adi Wejirat
-2,Tigray Region,6023,South East Zone,7272,Enderta
-2,Tigray Region,6023,South East Zone,7273,Samre
-2,Tigray Region,6023,South East Zone,7274,Seharti
-2,Tigray Region,6023,South East Zone,7275,Abergele Yechila
-2,Tigray Region,11,North western Tigray,7276,Maytsebri Town
-2,Tigray Region,11,North western Tigray,7277,Adi_Daero Town
-2,Tigray Region,11,North western Tigray,7278,Seyemti Adiyabo
-2,Tigray Region,11,North western Tigray,7279,La'ilay Koraro
-9,Afar,80,Zone 5,728,Semurobina Gelalo
-2,Tigray Region,11,North western Tigray,7280,Tsemebela
-2,Tigray Region,11,North western Tigray,7281,Maekel Adiyabo
-2,Tigray Region,11,North western Tigray,7282,Indabaguna Town
-2,Tigray Region,12,Central Tigray Zone,7283,Tanqua Millash
-2,Tigray Region,12,Central Tigray Zone,7284,Qeyh tekl'i
-2,Tigray Region,12,Central Tigray Zone,7285,Endaba Tsahima Edaga Arbi Town
-2,Tigray Region,12,Central Tigray Zone,7286,May_kinetal
-2,Tigray Region,12,Central Tigray Zone,7287,Embaseneyti
-2,Tigray Region,12,Central Tigray Zone,7288,Adet
-2,Tigray Region,12,Central Tigray Zone,7289,Enticho Town
-9,Afar,80,Zone 5,729,Dawe
-2,Tigray Region,12,Central Tigray Zone,7290,Egele
-2,Tigray Region,12,Central Tigray Zone,7291,Hahayle
-2,Tigray Region,12,Central Tigray Zone,7292,Rama Adi Arba'ate Town
-2,Tigray Region,12,Central Tigray Zone,7293,Chela
-2,Tigray Region,12,Central Tigray Zone,7294,Ahsea
-2,Tigray Region,13,Eastern Tigray Zone,7295,Tsaeda Emba
-2,Tigray Region,13,Eastern Tigray Zone,7296,Edaga Hamus Town
-2,Tigray Region,13,Eastern Tigray Zone,7297,Fireweyni Town
-2,Tigray Region,13,Eastern Tigray Zone,7298,Sewha_Saesae
-2,Tigray Region,13,Eastern Tigray Zone,7299,Hawzen Town
-1,AMHARA REGION,5,North Shewa Zone,73,Mojana Waredea Wereda
-9,Afar,80,Zone 5,730,Dalifagi
-2,Tigray Region,13,Eastern Tigray Zone,7300,Tsirae Wenberta
-2,Tigray Region,13,Eastern Tigray Zone,7301,Gerealta Wereda
-2,Tigray Region,13,Eastern Tigray Zone,7302,Atsbi Endasilassie Town
-2,Tigray Region,13,Eastern Tigray Zone,7303,Zalambesa Town
-2,Tigray Region,13,Eastern Tigray Zone,7304,Bizet
-2,Tigray Region,14,Southern Tigray Zone,7305,Bora Chelena
-2,Tigray Region,14,Southern Tigray Zone,7306,Nekesege
-2,Tigray Region,14,Southern Tigray Zone,7307,Selewa
-2,Tigray Region,14,Southern Tigray Zone,7308,Moheni Town
-2,Tigray Region,16,Mekele Special Zone,7309,Mekelle City
-9,Afar,80,Zone 5,731,Hadele Ale
 1,AMHARA REGION,6024,Gondar Town Special Zone,7310,Fasil
 1,AMHARA REGION,6024,Gondar Town Special Zone,7311,Jantekel
 1,AMHARA REGION,6024,Gondar Town Special Zone,7312,Arada
@@ -1143,7 +195,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 1,AMHARA REGION,6027,Central Gonder,7317,Chilga
 1,AMHARA REGION,6027,Central Gonder,7318,Aykel City Administration
 1,AMHARA REGION,6027,Central Gonder,7319,Tegedie
-6,SNNP,62,SILTI ZONE,732,Wurabe Woreda
 1,AMHARA REGION,6027,Central Gonder,7320,Lay Armachiho
 1,AMHARA REGION,6027,Central Gonder,7321,Wogera
 1,AMHARA REGION,6027,Central Gonder,7322,Gonder Zuriya
@@ -1154,7 +205,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 1,AMHARA REGION,6027,Central Gonder,7327,Misrak Dembiya
 1,AMHARA REGION,6027,Central Gonder,7328,Mirab Belesa
 1,AMHARA REGION,6027,Central Gonder,7329,Misrak Belesa
-1,AMHARA REGION,5,North Shewa Zone,733,Debre Birhan Town administration
 1,AMHARA REGION,6027,Central Gonder,7330,Mirab Dembiya
 1,AMHARA REGION,6028,West Gonder,7331,Adagn Ager chaqo
 1,AMHARA REGION,6028,West Gonder,7332,Merab Armachiho
@@ -1165,29 +215,474 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 1,AMHARA REGION,6028,West Gonder,7337,Genda Wuha City Administration
 1,AMHARA REGION,6029,Dessie Town Administration,7338,Dessie City Menafesha Subcity
 1,AMHARA REGION,6029,Dessie Town Administration,7339,Hote
-1,AMHARA REGION,5,North Shewa Zone,734,Tarmaber /debresina wereda
 1,AMHARA REGION,6029,Dessie Town Administration,7340,Arada
 1,AMHARA REGION,6029,Dessie Town Administration,7341,Segnogebeya
 1,AMHARA REGION,6029,Dessie Town Administration,7342,Buanbua Wuha
-1,AMHARA REGION,2,South Gondar Zone,7343,Addis Zemen
-1,AMHARA REGION,2,South Gondar Zone,7344,Wereta
-1,AMHARA REGION,2,South Gondar Zone,7345,Meketewa
-1,AMHARA REGION,2,South Gondar Zone,7346,Mekane Eyesus
-1,AMHARA REGION,2,South Gondar Zone,7347,Nifas Mewcha
-1,AMHARA REGION,4,South Wello Zone,7348,Wereilu City Administration
-1,AMHARA REGION,4,South Wello Zone,7349,Mekane Selam City Administration
-1,AMHARA REGION,10,Oromo Special Zone,735,Bati Town Administration
-1,AMHARA REGION,5,North Shewa Zone,7350,Shewarobit
-1,AMHARA REGION,5,North Shewa Zone,7351,Ataye Town Administration
-1,AMHARA REGION,5,North Shewa Zone,7352,Alemketema Town Adminstration
-1,AMHARA REGION,6,East Gojjam Zone,7353,Sede
-1,AMHARA REGION,7,West Gojjam Zone,7354,Adet Town Administration
-1,AMHARA REGION,7,West Gojjam Zone,7355,Merawi City Administration
-1,AMHARA REGION,8,Waghemira Zone,7356,Tsagibji
-1,AMHARA REGION,9,Awi Zone,7357,Chagini
-1,AMHARA REGION,9,Awi Zone,7358,Enjibara City Administration
-1,AMHARA REGION,9,Awi Zone,7359,Dangla City Administration
-1,AMHARA REGION,4,South Wello Zone,736,Argoba Special  Woreda
+2,Tigray Region,11,North western Tigray,140,Tahtay Adiyabo Wereda
+2,Tigray Region,11,North western Tigray,141,Laelay Adiyabo Wereda
+2,Tigray Region,11,North western Tigray,142,Medebay Zana Wereda
+2,Tigray Region,11,North western Tigray,143,Tahtay Koraro Wereda
+2,Tigray Region,11,North western Tigray,144,Asegede Tsimbila Wereda
+2,Tigray Region,11,North western Tigray,145,Tselemti Wereda
+2,Tigray Region,11,North western Tigray,146,Shere Endaselassie/ Town/ Wereda
+2,Tigray Region,11,North western Tigray,147,Shirero Wereda
+2,Tigray Region,11,North western Tigray,7276,Maytsebri Town
+2,Tigray Region,11,North western Tigray,7277,Adi_Daero Town
+2,Tigray Region,11,North western Tigray,7278,Seyemti Adiyabo
+2,Tigray Region,11,North western Tigray,7279,La'ilay Koraro
+2,Tigray Region,11,North western Tigray,7280,Tsemebela
+2,Tigray Region,11,North western Tigray,7281,Maekel Adiyabo
+2,Tigray Region,11,North western Tigray,7282,Indabaguna Town
+2,Tigray Region,12,Central Tigray Zone,148,Mereb Lehe Wereda
+2,Tigray Region,12,Central Tigray Zone,149,Ahiferom Wereda
+2,Tigray Region,12,Central Tigray Zone,150,Were Lehe Wereda
+2,Tigray Region,12,Central Tigray Zone,151,Adwa Wereda
+2,Tigray Region,12,Central Tigray Zone,152,Laelay Maychew Wereda
+2,Tigray Region,12,Central Tigray Zone,153,Tahtay Maychew Wereda
+2,Tigray Region,12,Central Tigray Zone,154,Nader Adet Wereda
+2,Tigray Region,12,Central Tigray Zone,155,Kola Temben Wereda
+2,Tigray Region,12,Central Tigray Zone,156,Degua Temben Wereda
+2,Tigray Region,12,Central Tigray Zone,157,Tanqua Abergele Wereda
+2,Tigray Region,12,Central Tigray Zone,158,Abi Adi Wereda
+2,Tigray Region,12,Central Tigray Zone,159,Adwa / town/ Wereda
+2,Tigray Region,12,Central Tigray Zone,160,Axum Wereda
+2,Tigray Region,12,Central Tigray Zone,7283,Tanqua Millash
+2,Tigray Region,12,Central Tigray Zone,7284,Qeyh tekl'i
+2,Tigray Region,12,Central Tigray Zone,7285,Endaba Tsahima Edaga Arbi Town
+2,Tigray Region,12,Central Tigray Zone,7286,May_kinetal
+2,Tigray Region,12,Central Tigray Zone,7287,Embaseneyti
+2,Tigray Region,12,Central Tigray Zone,7288,Adet
+2,Tigray Region,12,Central Tigray Zone,7289,Enticho Town
+2,Tigray Region,12,Central Tigray Zone,7290,Egele
+2,Tigray Region,12,Central Tigray Zone,7291,Hahayle
+2,Tigray Region,12,Central Tigray Zone,7292,Rama Adi Arba'ate Town
+2,Tigray Region,12,Central Tigray Zone,7293,Chela
+2,Tigray Region,12,Central Tigray Zone,7294,Ahsea
+2,Tigray Region,13,Eastern Tigray Zone,161,Gulo Meheda Wereda
+2,Tigray Region,13,Eastern Tigray Zone,162,Erob Wereda
+2,Tigray Region,13,Eastern Tigray Zone,163,Saesi Tsadamba Wereda
+2,Tigray Region,13,Eastern Tigray Zone,164,Ganta Afeshum Wereda
+2,Tigray Region,13,Eastern Tigray Zone,165,Hawzen Wereda
+2,Tigray Region,13,Eastern Tigray Zone,166,Kilte Awlalo Wereda
+2,Tigray Region,13,Eastern Tigray Zone,167,Atsbi Wonberta Wereda
+2,Tigray Region,13,Eastern Tigray Zone,168,Adigrat/Town/ Wereda
+2,Tigray Region,13,Eastern Tigray Zone,169,Wukro/Town Wereda
+2,Tigray Region,13,Eastern Tigray Zone,7295,Tsaeda Emba
+2,Tigray Region,13,Eastern Tigray Zone,7296,Edaga Hamus Town
+2,Tigray Region,13,Eastern Tigray Zone,7297,Fireweyni Town
+2,Tigray Region,13,Eastern Tigray Zone,7298,Sewha_Saesae
+2,Tigray Region,13,Eastern Tigray Zone,7299,Hawzen Town
+2,Tigray Region,13,Eastern Tigray Zone,7300,Tsirae Wenberta
+2,Tigray Region,13,Eastern Tigray Zone,7301,Gerealta Wereda
+2,Tigray Region,13,Eastern Tigray Zone,7302,Atsbi Endasilassie Town
+2,Tigray Region,13,Eastern Tigray Zone,7303,Zalambesa Town
+2,Tigray Region,13,Eastern Tigray Zone,7304,Bizet
+2,Tigray Region,14,Southern Tigray Zone,170,Seharti Samre Wereda
+2,Tigray Region,14,Southern Tigray Zone,171,Enderta Wereda
+2,Tigray Region,14,Southern Tigray Zone,172,Hintalo Wajirat Wereda
+2,Tigray Region,14,Southern Tigray Zone,173,Alaje Wereda
+2,Tigray Region,14,Southern Tigray Zone,174,Endamehoni Wereda
+2,Tigray Region,14,Southern Tigray Zone,175,Raya Azebo Wereda
+2,Tigray Region,14,Southern Tigray Zone,176,Alamata Wereda
+2,Tigray Region,14,Southern Tigray Zone,177,Ofla Wereda
+2,Tigray Region,14,Southern Tigray Zone,178,Maychew/ Town/ Wereda
+2,Tigray Region,14,Southern Tigray Zone,179,Korem/ Town/ Wereda
+2,Tigray Region,14,Southern Tigray Zone,180,Alamata/Town/Wereda
+2,Tigray Region,14,Southern Tigray Zone,7305,Bora Chelena
+2,Tigray Region,14,Southern Tigray Zone,7306,Nekesege
+2,Tigray Region,14,Southern Tigray Zone,7307,Selewa
+2,Tigray Region,14,Southern Tigray Zone,7308,Moheni Town
+2,Tigray Region,15,Western Tigray Zone,181,Kafta Humera Wereda
+2,Tigray Region,15,Western Tigray Zone,182,Welkayit Wereda
+2,Tigray Region,15,Western Tigray Zone,183,Tsedega Wereda
+2,Tigray Region,15,Western Tigray Zone,184,Humera/TownWereda
+2,Tigray Region,16,Mekele Special Zone,185,Debub Wereda
+2,Tigray Region,16,Mekele Special Zone,186,Semen Wereda
+2,Tigray Region,16,Mekele Special Zone,4029,Hadnet
+2,Tigray Region,16,Mekele Special Zone,4030,Semen
+2,Tigray Region,16,Mekele Special Zone,4031,Ayder
+2,Tigray Region,16,Mekele Special Zone,4032,Hawelti
+2,Tigray Region,16,Mekele Special Zone,4033,Quiha
+2,Tigray Region,16,Mekele Special Zone,4034,1y weyane
+2,Tigray Region,16,Mekele Special Zone,4035,Adihaki
+2,Tigray Region,16,Mekele Special Zone,7309,Mekelle City
+2,Tigray Region,6023,South East Zone,7268,Dogu'a Temben
+2,Tigray Region,6023,South East Zone,7269,Adi Gudom Town
+2,Tigray Region,6023,South East Zone,7270,Hintalo
+2,Tigray Region,6023,South East Zone,7271,20 Adi Wejirat
+2,Tigray Region,6023,South East Zone,7272,Enderta
+2,Tigray Region,6023,South East Zone,7273,Samre
+2,Tigray Region,6023,South East Zone,7274,Seharti
+2,Tigray Region,6023,South East Zone,7275,Abergele Yechila
+3,Oromiya Region,17,West Wellega Zone,187,Menesibu Wereda
+3,Oromiya Region,17,West Wellega Zone,188,Mojo Wereda
+3,Oromiya Region,17,West Wellega Zone,189,Gimbi Wereda
+3,Oromiya Region,17,West Wellega Zone,190,Lalo Asabi Wereda
+3,Oromiya Region,17,West Wellega Zone,191,Kiltu Kara Wereda
+3,Oromiya Region,17,West Wellega Zone,192,Boji Dirmeji Wereda
+3,Oromiya Region,17,West Wellega Zone,193,Guliso Wereda
+3,Oromiya Region,17,West Wellega Zone,194,Jarso Wereda
+3,Oromiya Region,17,West Wellega Zone,195,Kondala Wereda
+3,Oromiya Region,17,West Wellega Zone,196,Boji Chekorsa Wereda
+3,Oromiya Region,17,West Wellega Zone,197,Babo Gembe; Wereda
+3,Oromiya Region,17,West Wellega Zone,198,Yubdo Wereda
+3,Oromiya Region,17,West Wellega Zone,199,Genji Wereda
+3,Oromiya Region,17,West Wellega Zone,200,Haru Wereda
+3,Oromiya Region,17,West Wellega Zone,201,Nole Kaba Wereda
+3,Oromiya Region,17,West Wellega Zone,202,Begi Wereda
+3,Oromiya Region,17,West Wellega Zone,203,Gimbi /Town/ Wereda
+3,Oromiya Region,17,West Wellega Zone,204,Seyo Nole Wereda
+3,Oromiya Region,17,West Wellega Zone,205,Homa Wereda
+3,Oromiya Region,17,West Wellega Zone,206,Ayira Wereda
+3,Oromiya Region,17,West Wellega Zone,742,Nedjo Wereda
+3,Oromiya Region,17,West Wellega Zone,935,Letasibu
+3,Oromiya Region,17,West Wellega Zone,7588,Mandi City Administration
+3,Oromiya Region,17,West Wellega Zone,7589,Leta Sibu
+3,Oromiya Region,17,West Wellega Zone,7590,Angar Gute City Administration
+3,Oromiya Region,18,East Wellega Zone,207,Limu Wereda
+3,Oromiya Region,18,East Wellega Zone,208,Ibantu Wereda
+3,Oromiya Region,18,East Wellega Zone,209,Gida Kiremu Wereda
+3,Oromiya Region,18,East Wellega Zone,210,Haro Limu Wereda
+3,Oromiya Region,18,East Wellega Zone,211,Boneya Bushe Wereda
+3,Oromiya Region,18,East Wellega Zone,212,Wayu Tuka Wereda
+3,Oromiya Region,18,East Wellega Zone,213,Gudeya Bila Wereda
+3,Oromiya Region,18,East Wellega Zone,214,Gobu Seyo Wereda
+3,Oromiya Region,18,East Wellega Zone,215,Sibu Sire Wereda
+3,Oromiya Region,18,East Wellega Zone,216,Diga Wereda
+3,Oromiya Region,18,East Wellega Zone,217,Sisiga Wereda
+3,Oromiya Region,18,East Wellega Zone,218,Leka Dulecha Wereda
+3,Oromiya Region,18,East Wellega Zone,219,Guto Gida Wereda
+3,Oromiya Region,18,East Wellega Zone,220,Jima Arjo Wereda
+3,Oromiya Region,18,East Wellega Zone,221,Nunu Kumba Wereda
+3,Oromiya Region,18,East Wellega Zone,222,Wama Hagelo Wereda
+3,Oromiya Region,18,East Wellega Zone,223,Nekemte/ Town/ Wereda
+3,Oromiya Region,18,East Wellega Zone,741,Gida Ayana Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,224,Darimu Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,225,Alje Sachi Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,226,Chora Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,227,Dega Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,228,Babo Hana Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,229,Gechi Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,230,Borecha Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,231,Dedesa Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,232,Yayu Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,233,Metu Zuriya Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,234,Ale Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,235,Bure Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,236,Nano
+3,Oromiya Region,19,Ilu Aba Bora Zone,237,Bicho Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,238,Bilo Nopha Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,239,Hurumu Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,240,Didu Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,241,Mako Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,242,Huka/ Halu /Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,243,Metu/ Town/ Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,244,Bedele / Town/Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,245,Bedele Zuriya Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,246,Chewaka Wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,247,Doreni Woreda
+3,Oromiya Region,19,Ilu Aba Bora Zone,4023,Algie sachi wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,4024,Dabo hana wereda
+3,Oromiya Region,19,Ilu Aba Bora Zone,4025,Sale Nono wereda
+3,Oromiya Region,20,Jimma Zone,248,Limu Seka Wereda
+3,Oromiya Region,20,Jimma Zone,249,Limu Kosa Wereda
+3,Oromiya Region,20,Jimma Zone,250,Sokotu Wereda
+3,Oromiya Region,20,Jimma Zone,251,Tito Afeta Wereda
+3,Oromiya Region,20,Jimma Zone,252,Kersa Wereda
+3,Oromiya Region,20,Jimma Zone,253,Mana Wereda
+3,Oromiya Region,20,Jimma Zone,254,Gomma Wereda
+3,Oromiya Region,20,Jimma Zone,255,Gera Wereda
+3,Oromiya Region,20,Jimma Zone,256,Seka Chekorsa Wereda
+3,Oromiya Region,20,Jimma Zone,257,Dedo Wereda
+3,Oromiya Region,20,Jimma Zone,258,Omonada Wereda
+3,Oromiya Region,20,Jimma Zone,259,Sigamo Wereda
+3,Oromiya Region,20,Jimma Zone,260,Setema Wereda
+3,Oromiya Region,20,Jimma Zone,261,Chora Botor Wereda
+3,Oromiya Region,20,Jimma Zone,262,Guma Wereda
+3,Oromiya Region,20,Jimma Zone,263,Agaro/ Town / Wereda
+3,Oromiya Region,20,Jimma Zone,740,Shebe Sombo Wereda
+3,Oromiya Region,20,Jimma Zone,774,Sekoru Wereda
+3,Oromiya Region,20,Jimma Zone,4040,Omo beyem
+3,Oromiya Region,20,Jimma Zone,4053,Nono benja
+3,Oromiya Region,20,Jimma Zone,7616,Mancho
+3,Oromiya Region,20,Jimma Zone,7617,Boter Tolay
+3,Oromiya Region,20,Jimma Zone,7618,Limu Genat City Administration
+3,Oromiya Region,21,West shewa zone,264,Ginde beret Wereda
+3,Oromiya Region,21,West shewa zone,265,Jeldu Wereda
+3,Oromiya Region,21,West shewa zone,266,Ambo zuriya Wereda
+3,Oromiya Region,21,West shewa zone,267,Midakegn Wereda
+3,Oromiya Region,21,West shewa zone,268,Cheliya Wereda
+3,Oromiya Region,21,West shewa zone,269,Bako tibe Wereda
+3,Oromiya Region,21,West shewa zone,270,Dano Wereda
+3,Oromiya Region,21,West shewa zone,271,Nono Wereda
+3,Oromiya Region,21,West shewa zone,272,Tikur enchini Wereda
+3,Oromiya Region,21,West shewa zone,273,Dendi Wereda
+3,Oromiya Region,21,West shewa zone,274,Ejere Wereda
+3,Oromiya Region,21,West shewa zone,275,Wolmera Wereda
+3,Oromiya Region,21,West shewa zone,276,Ada berga Wereda
+3,Oromiya Region,21,West shewa zone,277,Meta robi Wereda
+3,Oromiya Region,21,West shewa zone,278,Ambo/town/Wereda
+3,Oromiya Region,21,West shewa zone,279,Abuna gindeberet
+3,Oromiya Region,21,West shewa zone,280,Toke kutayu Wereda
+3,Oromiya Region,21,West shewa zone,281,Jibat Wereda
+3,Oromiya Region,21,West shewa zone,282,Elfata Wereda
+3,Oromiya Region,21,West shewa zone,283,Holeta/town/Wereda
+3,Oromiya Region,21,West shewa zone,938,Meta wlekite wereda
+3,Oromiya Region,21,West shewa zone,939,Liben Jawi
+3,Oromiya Region,21,West shewa zone,4000,Ilu Gelan
+3,Oromiya Region,21,West shewa zone,4001,Silik Amba
+3,Oromiya Region,21,West shewa zone,4002,Chobi
+3,Oromiya Region,21,West shewa zone,4003,Ejersa Leffo
+3,Oromiya Region,22,North shewa zone,284,Were jarso Wereda
+3,Oromiya Region,22,North shewa zone,285,Dera Wereda
+3,Oromiya Region,22,North shewa zone,286,Hidabu Wereda
+3,Oromiya Region,22,North shewa zone,287,Kuyu Wereda
+3,Oromiya Region,22,North shewa zone,288,Degem Wereda
+3,Oromiya Region,22,North shewa zone,289,Girar jarso Wereda-urban
+3,Oromiya Region,22,North shewa zone,290,Debere lebanos Wereda
+3,Oromiya Region,22,North shewa zone,291,Wuchale Wereda
+3,Oromiya Region,22,North shewa zone,292,Abichuna Wereda
+3,Oromiya Region,22,North shewa zone,293,Kimbibit Wereda
+3,Oromiya Region,22,North shewa zone,294,Bereh Wereda
+3,Oromiya Region,22,North shewa zone,295,Sululta Wereda
+3,Oromiya Region,22,North shewa zone,296,Fiche/town/Wereda
+3,Oromiya Region,22,North shewa zone,297,Yaya gulele Wereda
+3,Oromiya Region,22,North shewa zone,298,Jida Wereda
+3,Oromiya Region,22,North shewa zone,299,Mulo Wereda
+3,Oromiya Region,22,North shewa zone,300,Aleltu Wereda
+3,Oromiya Region,22,North shewa zone,301,Sendafa/town/-Wereda
+3,Oromiya Region,22,North shewa zone,7591,Chancho City Administration
+3,Oromiya Region,22,North shewa zone,7592,Garba Guracha City Administration
+3,Oromiya Region,23,East shewa zone,302,Fentale Wereda
+3,Oromiya Region,23,East shewa zone,303,Boset Wereda
+3,Oromiya Region,23,East shewa zone,304,Adama Wereda
+3,Oromiya Region,23,East shewa zone,305,Lome Wereda
+3,Oromiya Region,23,East shewa zone,306,Gimbichu Wereda
+3,Oromiya Region,23,East shewa zone,307,Ada A Wereda
+3,Oromiya Region,23,East shewa zone,308,Dugda Wereda
+3,Oromiya Region,23,East shewa zone,309,Adami Tulu Jido Kombolcha Wereda
+3,Oromiya Region,23,East shewa zone,310,Bishoftu/town/-Wereda
+3,Oromiya Region,23,East shewa zone,311,Bora Wereda
+3,Oromiya Region,23,East shewa zone,312,Liben Wereda
+3,Oromiya Region,23,East shewa zone,313,Akaki Wereda
+3,Oromiya Region,23,East shewa zone,314,Ziway /batu/town/-Wereda
+3,Oromiya Region,23,East shewa zone,7593,Meki City Administration
+3,Oromiya Region,23,East shewa zone,7594,Matahara City Administration
+3,Oromiya Region,23,East shewa zone,7595,Adama Town
+3,Oromiya Region,24,Arsi zone,315,Merti Wereda
+3,Oromiya Region,24,Arsi zone,316,Aseko Wereda
+3,Oromiya Region,24,Arsi zone,317,Golocha Wereda
+3,Oromiya Region,24,Arsi zone,318,Jeju Wereda
+3,Oromiya Region,24,Arsi zone,319,Dodota Wereda
+3,Oromiya Region,24,Arsi zone,320,Ziway dugda Wereda
+3,Oromiya Region,24,Arsi zone,321,Hitosa Wereda
+3,Oromiya Region,24,Arsi zone,322,Sude Wereda
+3,Oromiya Region,24,Arsi zone,323,Chole Wereda
+3,Oromiya Region,24,Arsi zone,324,Amigna Wereda
+3,Oromiya Region,24,Arsi zone,325,Seru Wereda
+3,Oromiya Region,24,Arsi zone,326,Robe Wereda
+3,Oromiya Region,24,Arsi zone,327,Tena Wereda
+3,Oromiya Region,24,Arsi zone,328,Shirka Wereda
+3,Oromiya Region,24,Arsi zone,329,Digluna Wereda
+3,Oromiya Region,24,Arsi zone,330,Tiyo Wereda
+3,Oromiya Region,24,Arsi zone,331,Munesa Wereda
+3,Oromiya Region,24,Arsi zone,332,Limuna bilbilo Wereda
+3,Oromiya Region,24,Arsi zone,333,Guna Wereda
+3,Oromiya Region,24,Arsi zone,334,Sire Wereda
+3,Oromiya Region,24,Arsi zone,335,Lude hitosa Wereda
+3,Oromiya Region,24,Arsi zone,336,deksis Wereda
+3,Oromiya Region,24,Arsi zone,337,Bale gasegare Wereda
+3,Oromiya Region,24,Arsi zone,338,Enkelo Wereda
+3,Oromiya Region,24,Arsi zone,339,Asela/town/Wereda
+3,Oromiya Region,24,Arsi zone,923,Kulla Wereda
+3,Oromiya Region,24,Arsi zone,924,Digelunatijo Wereda
+3,Oromiya Region,24,Arsi zone,4027,Shanan Kolu
+3,Oromiya Region,24,Arsi zone,7596,Dera City Administration
+3,Oromiya Region,24,Arsi zone,7597,Huruta City Administration
+3,Oromiya Region,24,Arsi zone,7598,Bokoji City Administration
+3,Oromiya Region,25,West Hararge Zone,340,Mieso Wereda
+3,Oromiya Region,25,West Hararge Zone,341,Doba Wereda
+3,Oromiya Region,25,West Hararge Zone,342,Tulo Wereda
+3,Oromiya Region,25,West Hararge Zone,343,Mesela Wereda
+3,Oromiya Region,25,West Hararge Zone,344,Chiro /Town/ Wereda
+3,Oromiya Region,25,West Hararge Zone,345,Anchara Wereda
+3,Oromiya Region,25,West Hararge Zone,346,Guba Koricha Wereda
+3,Oromiya Region,25,West Hararge Zone,347,Habro Wereda
+3,Oromiya Region,25,West Hararge Zone,348,Daro Lebu Wereda
+3,Oromiya Region,25,West Hararge Zone,349,Boke Wereda
+3,Oromiya Region,25,West Hararge Zone,350,Kuni Wereda - Urban
+3,Oromiya Region,25,West Hararge Zone,351,Gemches Wereda
+3,Oromiya Region,25,West Hararge Zone,352,Chiro Zuriya Wereda
+3,Oromiya Region,25,West Hararge Zone,353,Dedesa/ Town/ Wereda
+3,Oromiya Region,25,West Hararge Zone,772,Oda Bultum Wereda
+3,Oromiya Region,25,West Hararge Zone,776,Bedesa Wereda
+3,Oromiya Region,25,West Hararge Zone,4026,Hawe gudina
+3,Oromiya Region,25,West Hararge Zone,4059,Burka Dintu
+3,Oromiya Region,25,West Hararge Zone,4060,Gumbi Bordode
+3,Oromiya Region,25,West Hararge Zone,7599,Hirna City Administration
+3,Oromiya Region,25,West Hararge Zone,7600,Machara Michata City Administration
+3,Oromiya Region,25,West Hararge Zone,7601,Galamso City Administration
+3,Oromiya Region,25,West Hararge Zone,7602,Shanan Dungo
+3,Oromiya Region,26,East Hararge Zone,354,Kombolcha Wereda
+3,Oromiya Region,26,East Hararge Zone,355,Jarso Wereda
+3,Oromiya Region,26,East Hararge Zone,356,Gursum Wereda
+3,Oromiya Region,26,East Hararge Zone,357,Babile Wereda
+3,Oromiya Region,26,East Hararge Zone,358,Fedis Wereda
+3,Oromiya Region,26,East Hararge Zone,359,Haro Maya Wereda
+3,Oromiya Region,26,East Hararge Zone,360,Kurfa Cheke Wereda
+3,Oromiya Region,26,East Hararge Zone,361,Kersa Wereda
+3,Oromiya Region,26,East Hararge Zone,362,Meta Wereda
+3,Oromiya Region,26,East Hararge Zone,363,Goro Gutu Wereda
+3,Oromiya Region,26,East Hararge Zone,364,Deder Wereda
+3,Oromiya Region,26,East Hararge Zone,365,Melka Belo Wereda
+3,Oromiya Region,26,East Hararge Zone,366,Beneno Wereda
+3,Oromiya Region,26,East Hararge Zone,367,Midga Tola Wereda
+3,Oromiya Region,26,East Hararge Zone,368,Chinaksan Wereda
+3,Oromiya Region,26,East Hararge Zone,369,Girawa Wereda
+3,Oromiya Region,26,East Hararge Zone,370,Gola Oda Wereda
+3,Oromiya Region,26,East Hararge Zone,371,Meyu Wereda
+3,Oromiya Region,26,East Hararge Zone,775,Bedeno Wereda
+3,Oromiya Region,26,East Hararge Zone,984,kumbi woreda
+3,Oromiya Region,26,East Hararge Zone,4007,Goro muti
+3,Oromiya Region,26,East Hararge Zone,7603,Babile City Administration
+3,Oromiya Region,26,East Hararge Zone,7604,Mekanisa Oromo
+3,Oromiya Region,26,East Hararge Zone,7605,Dadar City Administration
+3,Oromiya Region,27,Bale Zone,372,Agarfa Wereda
+3,Oromiya Region,27,Bale Zone,373,Gololcha Wereda
+3,Oromiya Region,27,Bale Zone,374,Gasera Wereda
+3,Oromiya Region,27,Bale Zone,375,Legehida Wereda
+3,Oromiya Region,27,Bale Zone,376,Ginir Wereda
+3,Oromiya Region,27,Bale Zone,377,Sinana Wereda
+3,Oromiya Region,27,Bale Zone,378,Goba Wereda
+3,Oromiya Region,27,Bale Zone,379,Harena Huluk Wereda
+3,Oromiya Region,27,Bale Zone,380,Dolo Mena Wereda
+3,Oromiya Region,27,Bale Zone,381,Meda Welabu Wereda
+3,Oromiya Region,27,Bale Zone,382,Berbere Wereda
+3,Oromiya Region,27,Bale Zone,383,Guradamole Wereda
+3,Oromiya Region,27,Bale Zone,384,Goro Wereda
+3,Oromiya Region,27,Bale Zone,385,Rayitu Wereda
+3,Oromiya Region,27,Bale Zone,386,Seweyna Wereda
+3,Oromiya Region,27,Bale Zone,387,Robe/ Town/ Wereda
+3,Oromiya Region,27,Bale Zone,388,Doba/ Town/ Wereda
+3,Oromiya Region,27,Bale Zone,389,Dawe Kachen Wereda
+3,Oromiya Region,27,Bale Zone,390,Dinsho Wereda
+3,Oromiya Region,27,Bale Zone,391,Dawe Serer Wereda
+3,Oromiya Region,27,Bale Zone,925,Beltu Wereda
+3,Oromiya Region,28,Borena Zone,393,Yabele Wereda
+3,Oromiya Region,28,Borena Zone,394,Arero Wereda
+3,Oromiya Region,28,Borena Zone,395,Moyale Wereda
+3,Oromiya Region,28,Borena Zone,396,Dire Wereda
+3,Oromiya Region,28,Borena Zone,397,Teletele Wereda
+3,Oromiya Region,28,Borena Zone,398,Abaya Wereda
+3,Oromiya Region,28,Borena Zone,399,Dugida Dawa Wereda
+3,Oromiya Region,28,Borena Zone,400,Miyu Wereda
+3,Oromiya Region,28,Borena Zone,743,Melka Seda Wereda
+3,Oromiya Region,28,Borena Zone,4068,Hidi Lola Wereda
+3,Oromiya Region,28,Borena Zone,4069,Dilo Wereda
+3,Oromiya Region,28,Borena Zone,4070,Dubluk Wereda
+3,Oromiya Region,28,Borena Zone,7606,Gomole
+3,Oromiya Region,28,Borena Zone,7607,Guchi
+3,Oromiya Region,28,Borena Zone,7608,Elawayyee
+3,Oromiya Region,29,South West Shewa Zone,402,Ameya Wereda
+3,Oromiya Region,29,South West Shewa Zone,403,Wonchi Wereda
+3,Oromiya Region,29,South West Shewa Zone,404,Woliso Wereda
+3,Oromiya Region,29,South West Shewa Zone,405,Dawo Wereda
+3,Oromiya Region,29,South West Shewa Zone,406,Ilu Wereda
+3,Oromiya Region,29,South West Shewa Zone,407,Sebeta Hawas Wereda
+3,Oromiya Region,29,South West Shewa Zone,408,Kersa Ena Malim Wereda
+3,Oromiya Region,29,South West Shewa Zone,409,Tole Wereda
+3,Oromiya Region,29,South West Shewa Zone,410,Becho Wereda
+3,Oromiya Region,29,South West Shewa Zone,411,Seden Sodo Wereda
+3,Oromiya Region,29,South West Shewa Zone,412,Woliso/ Town/ Wereda
+3,Oromiya Region,29,South West Shewa Zone,413,Goro Wereda
+3,Oromiya Region,29,South West Shewa Zone,414,Sodo Dacha Wereda
+3,Oromiya Region,29,South West Shewa Zone,415,Sebeta/ Town/ Wereda
+3,Oromiya Region,30,West Guji Zone,392,Bule Hora Wereda
+3,Oromiya Region,30,West Guji Zone,401,Gelana Wereda
+3,Oromiya Region,30,West Guji Zone,421,Kercha Wereda
+3,Oromiya Region,30,West Guji Zone,422,Liben Wereda
+3,Oromiya Region,30,West Guji Zone,424,Hambela Wamena Wereda
+3,Oromiya Region,30,West Guji Zone,427,Adola/ Town/ Wereda
+3,Oromiya Region,30,West Guji Zone,773,Goro Dola Wereda
+3,Oromiya Region,30,West Guji Zone,4041,Haro welebo Wereda (Kofele city)
+3,Oromiya Region,30,West Guji Zone,4042,Abaya Woreda
+3,Oromiya Region,30,West Guji Zone,4044,Ana sora wereda (Yirba muda city)
+3,Oromiya Region,30,West Guji Zone,4045,Birbirsa Kojowa Woreda
+3,Oromiya Region,30,West Guji Zone,4046,Bule hora Tawn
+3,Oromiya Region,30,West Guji Zone,4049,Shakisso City Administrative
+3,Oromiya Region,30,West Guji Zone,4054,Dugda Dawa Woreda
+3,Oromiya Region,30,West Guji Zone,4055,Galana Woreda
+3,Oromiya Region,30,West Guji Zone,4057,Melka soda woreda
+3,Oromiya Region,30,West Guji Zone,4058,Suro Barguda Woreda
+3,Oromiya Region,30,West Guji Zone,4066,Abaya Wereda
+3,Oromiya Region,30,West Guji Zone,4067,Dugda Dawa Wereda
+3,Oromiya Region,31,Adama Special Zone,428,Adama Wereda
+3,Oromiya Region,32,Jima Special Zone,429,Jima /Town/ Wereda
+3,Oromiya Region,33,West Aris Zone,430,Siraro Wereda
+3,Oromiya Region,33,West Aris Zone,431,Shala Wereda
+3,Oromiya Region,33,West Aris Zone,432,Arsi Negele Wereda
+3,Oromiya Region,33,West Aris Zone,433,Kofele Wereda
+3,Oromiya Region,33,West Aris Zone,434,Kore Wereda
+3,Oromiya Region,33,West Aris Zone,435,Gedeb Asasa Wereda
+3,Oromiya Region,33,West Aris Zone,436,Dodola Wereda
+3,Oromiya Region,33,West Aris Zone,437,Kokosa Wereda
+3,Oromiya Region,33,West Aris Zone,438,Nensebo Wereda
+3,Oromiya Region,33,West Aris Zone,439,Adaba Wereda
+3,Oromiya Region,33,West Aris Zone,440,Shashememe / Town/ Wereda
+3,Oromiya Region,33,West Aris Zone,441,Shashememe Zuriya Wereda
+3,Oromiya Region,33,West Aris Zone,7609,Heban Arsi
+3,Oromiya Region,33,West Aris Zone,7610,Nagele Arsi City Administration
+3,Oromiya Region,33,West Aris Zone,7611,Wendo
+3,Oromiya Region,33,West Aris Zone,7612,Kofale City Administration
+3,Oromiya Region,34,Kelem Welega Zone,442,Hawa Gelan Wereda
+3,Oromiya Region,34,Kelem Welega Zone,443,Yamalogi Welel Wereda
+3,Oromiya Region,34,Kelem Welega Zone,444,Dale Wabera Wereda
+3,Oromiya Region,34,Kelem Welega Zone,445,Gawo Kebe Wereda
+3,Oromiya Region,34,Kelem Welega Zone,446,Seyo Wereda
+3,Oromiya Region,34,Kelem Welega Zone,447,Denbi Dollo/ Town/ Wereda
+3,Oromiya Region,34,Kelem Welega Zone,448,Anfilo Wereda
+3,Oromiya Region,34,Kelem Welega Zone,449,Dale Sadi Wereda
+3,Oromiya Region,34,Kelem Welega Zone,450,Gidami Wereda
+3,Oromiya Region,34,Kelem Welega Zone,451,Jima Horo Wereda
+3,Oromiya Region,34,Kelem Welega Zone,452,Lalo Kile Wereda
+3,Oromiya Region,34,Kelem Welega Zone,4071,Sadi Chanka
+3,Oromiya Region,35,Horo Gudru Welega Zone,453,Horo Wereda
+3,Oromiya Region,35,Horo Gudru Welega Zone,454,Shambu /Toen/ Wereda
+3,Oromiya Region,35,Horo Gudru Welega Zone,455,Guduru Wereda
+3,Oromiya Region,35,Horo Gudru Welega Zone,456,Hababo Guduru Wereda
+3,Oromiya Region,35,Horo Gudru Welega Zone,457,Abey Chomen Wereda
+3,Oromiya Region,35,Horo Gudru Welega Zone,458,Jima Genete Wereda
+3,Oromiya Region,35,Horo Gudru Welega Zone,459,Jima Rare Wereda
+3,Oromiya Region,35,Horo Gudru Welega Zone,460,Jardega Jarte Wereda
+3,Oromiya Region,35,Horo Gudru Welega Zone,461,Amuru Wereda
+3,Oromiya Region,35,Horo Gudru Welega Zone,462,Abe Dongoro Wereda
+3,Oromiya Region,35,Horo Gudru Welega Zone,4050,Chommen Guduru
+3,Oromiya Region,35,Horo Gudru Welega Zone,7613,Sulula Finca'a
+3,Oromiya Region,36,Burayu Special Zone,463,Burayu Special Wereda
+3,Oromiya Region,87,Finfine Zuria Oromiya Special Zone,4008,Sululta
+3,Oromiya Region,87,Finfine Zuria Oromiya Special Zone,4009,Sendafa
+3,Oromiya Region,87,Finfine Zuria Oromiya Special Zone,4010,Gelan
+3,Oromiya Region,87,Finfine Zuria Oromiya Special Zone,4011,Burayu
+3,Oromiya Region,87,Finfine Zuria Oromiya Special Zone,4012,Sebeta
+3,Oromiya Region,87,Finfine Zuria Oromiya Special Zone,4013,Legetafo
+3,Oromiya Region,88,Guji Zone,416,Uraga Wereda
+3,Oromiya Region,88,Guji Zone,417,Bore Wereda
+3,Oromiya Region,88,Guji Zone,418,Adola Wereda
+3,Oromiya Region,88,Guji Zone,419,Wadera Wereda
+3,Oromiya Region,88,Guji Zone,420,Odo Shakiso Wereda
+3,Oromiya Region,88,Guji Zone,423,Dima Wereda
+3,Oromiya Region,88,Guji Zone,425,Girja Wereda
+3,Oromiya Region,88,Guji Zone,426,Negela/ Town/ Wereda
+3,Oromiya Region,88,Guji Zone,4043,Aga weyu wereda (Haydima city)
+3,Oromiya Region,88,Guji Zone,4047,Gumi Edelo wereda (Arda menera)
+3,Oromiya Region,88,Guji Zone,4048,Seba boru wereda (Dermi city)
+3,Oromiya Region,88,Guji Zone,4061,Haro Waleba
+3,Oromiya Region,88,Guji Zone,4062,Anasora Wereda (Yirbamuda)
+3,Oromiya Region,88,Guji Zone,4063,Shakiso City Admin
+3,Oromiya Region,88,Guji Zone,4064,Gora Dola Wereda
+3,Oromiya Region,88,Guji Zone,4065,Liben Wereda
+3,Oromiya Region,88,Guji Zone,7614,Arada Jila Mi'e Boko
+3,Oromiya Region,88,Guji Zone,7615,Adola Woyu City Administration
 3,Oromiya Region,6030,Ambo City Administration,7360,Torben Kutaye
 3,Oromiya Region,6030,Ambo City Administration,7361,Kisose Odo Liben
 3,Oromiya Region,6030,Ambo City Administration,7362,Yahi Geda
@@ -1198,10 +693,9 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6031,Shager City Administration - Gefersa Guje Sub-city,7367,Kolobo
 3,Oromiya Region,6031,Shager City Administration - Gefersa Guje Sub-city,7368,Gudduu
 3,Oromiya Region,6032,Shager City Administration - Sebeta Sub-city,7369,Caffee
-1,AMHARA REGION,82,Bahir Dar City Administration,737,Bahir Dar City Administration
 3,Oromiya Region,6032,Shager City Administration - Sebeta Sub-city,7370,Mogole
 3,Oromiya Region,6032,Shager City Administration - Sebeta Sub-city,7371,Metta
-3,Oromiya Region,6032,Shager City Administration - Sebeta Sub-city,7372,
+3,Oromiya Region,6032,Shager City Administration - Sebeta Sub-city,7372,(No name)
 3,Oromiya Region,6033,Shager City Administration - Sululta Sub-city,7373,Wasarbi
 3,Oromiya Region,6033,Shager City Administration - Sululta Sub-city,7374,Aba Geda
 3,Oromiya Region,6034,Shager City Administration - Furi Sub-city,7375,Muda Furi
@@ -1209,7 +703,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6034,Shager City Administration - Furi Sub-city,7377,Chafe Karabu
 3,Oromiya Region,6035,Shager City Administration - Galan Guda Sub-city,7378,Lakole Gajja
 3,Oromiya Region,6035,Shager City Administration - Galan Guda Sub-city,7379,Dalati
-7,Benshangul gumz region,64,Metekel zone,738,Pawi Wereda
 3,Oromiya Region,6035,Shager City Administration - Galan Guda Sub-city,7380,Gelan Gudda
 3,Oromiya Region,6036,Shager City Administration - Galan Sub-city,7381,Sida Awash
 3,Oromiya Region,6036,Shager City Administration - Galan Sub-city,7382,Andode
@@ -1220,7 +713,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6038,Shager City Administration - Lege Dadi Lege Tafo Sub-city,7387,Dembel Tafo
 3,Oromiya Region,6038,Shager City Administration - Lege Dadi Lege Tafo Sub-city,7388,Eka Tafo
 3,Oromiya Region,6038,Shager City Administration - Lege Dadi Lege Tafo Sub-city,7389,Dalle Lege Dadi
-7,Benshangul gumz region,66,Kamashi zone,739,Sedal Wereda
 3,Oromiya Region,6039,East Bale,7390,Gololcha
 3,Oromiya Region,6039,East Bale,7391,Lege Hida
 3,Oromiya Region,6039,East Bale,7392,Ginir Rural
@@ -1231,19 +723,16 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6039,East Bale,7397,Ginir City Administration
 3,Oromiya Region,6040,Adama City Administration - Bole,7398,Dadacha Arara
 3,Oromiya Region,6040,Adama City Administration - Bole,7399,Daka Adi
-1,AMHARA REGION,5,North Shewa Zone,74,Kewet Wereda
-3,Oromiya Region,20,Jimma Zone,740,Shebe Sombo Wereda
 3,Oromiya Region,6040,Adama City Administration - Bole,7400,Goro
 3,Oromiya Region,6041,Dodola City Administration,7401,Anole
 3,Oromiya Region,6041,Dodola City Administration,7402,Mada Wabe
 3,Oromiya Region,6042,Asella City Administration,7403,Hunde Gudina
 3,Oromiya Region,6042,Asella City Administration,7404,Chilalo
-3,Oromiya Region,6042,Asella City Administration,7405,Kombolcha 
+3,Oromiya Region,6042,Asella City Administration,7405,Kombolcha
 3,Oromiya Region,6042,Asella City Administration,7406,Hanku
 3,Oromiya Region,6042,Asella City Administration,7407,Welkesa
 3,Oromiya Region,6042,Asella City Administration,7408,Burkitu
 3,Oromiya Region,6042,Asella City Administration,7409,Buseta
-3,Oromiya Region,18,East Wellega Zone,741,Gida Ayana Wereda
 3,Oromiya Region,6042,Asella City Administration,7410,Helila
 3,Oromiya Region,6043,Adama City Administration - Aba Gada Subcity,7411,Buta
 3,Oromiya Region,6043,Adama City Administration - Aba Gada Subcity,7412,Oda
@@ -1254,7 +743,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6044,Adama City Administration - Boku Shanan,7417,Awash Malka Saha
 3,Oromiya Region,6045,Adama City Administration - Dabe,7418,Chafe
 3,Oromiya Region,6045,Adama City Administration - Dabe,7419,Angatu
-3,Oromiya Region,17,West Wellega Zone,742,Nedjo Wereda
 3,Oromiya Region,6045,Adama City Administration - Dabe,7420,Soloke Dongore
 3,Oromiya Region,6046,Adama City Administration - Danbala,7421,Erecha
 3,Oromiya Region,6046,Adama City Administration - Danbala,7422,Malka Adama
@@ -1265,7 +753,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6048,Agaro City Administration,7427,Temsa Jida
 3,Oromiya Region,6048,Agaro City Administration,7428,Biftu Balto
 3,Oromiya Region,6048,Agaro City Administration,7429,Mesera Ababoka
-3,Oromiya Region,28,Borena Zone,743,Melka Seda Wereda
 3,Oromiya Region,6048,Agaro City Administration,7430,Beke Agelo
 3,Oromiya Region,6048,Agaro City Administration,7431,Chelo Bulado
 3,Oromiya Region,6049,Batu City Administration,7432,Abosa
@@ -1276,7 +763,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6049,Batu City Administration,7437,Malka Wafiko
 3,Oromiya Region,6049,Batu City Administration,7438,Warja
 3,Oromiya Region,6050,Bishoftu City Administration - Chalalaka,7439,Erar
-1,AMHARA REGION,7,West Gojjam Zone,744,Bure Town/Wereda
 3,Oromiya Region,6050,Bishoftu City Administration - Chalalaka,7440,Kilole
 3,Oromiya Region,6050,Bishoftu City Administration - Chalalaka,7441,Arsade
 3,Oromiya Region,6051,Bishoftu City Administration - Dukam,7442,Abu Sera
@@ -1287,7 +773,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6052,Bishoftu City Administration - Dibayu,7447,Dire
 3,Oromiya Region,6052,Bishoftu City Administration - Dibayu,7448,Daka Bora
 3,Oromiya Region,6052,Bishoftu City Administration - Dibayu,7449,Hora
-1,AMHARA REGION,6,East Gojjam Zone,745,Motta Town/Wereda
 3,Oromiya Region,6053,Bule Hora City Administration,7450,Bule Kagna
 3,Oromiya Region,6053,Bule Hora City Administration,7451,Arda Biya
 3,Oromiya Region,6053,Bule Hora City Administration,7452,Bule Kilta
@@ -1298,7 +783,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6054,Buno Bedele,7457,Chora
 3,Oromiya Region,6054,Buno Bedele,7458,Dega
 3,Oromiya Region,6054,Buno Bedele,7459,Dabo Hana
-1,AMHARA REGION,9,Awi Zone,746,Zigem Wereda
 3,Oromiya Region,6054,Buno Bedele,7460,Gechi
 3,Oromiya Region,6054,Buno Bedele,7461,Borecha
 3,Oromiya Region,6054,Buno Bedele,7462,Dedessa
@@ -1309,7 +793,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6055,Shager City Administration- Burayu Sub-city,7467,Ane Dima
 3,Oromiya Region,6055,Shager City Administration- Burayu Sub-city,7468,Gefersa Burayu
 3,Oromiya Region,6055,Shager City Administration- Burayu Sub-city,7469,Ejersa Goro
-10,Hareri Region,83,Harer Zone,747,Amir nur Wereda
 3,Oromiya Region,6055,Shager City Administration- Burayu Sub-city,7470,Keta
 3,Oromiya Region,6056,East Borena,7471,Meda Welabu
 3,Oromiya Region,6056,East Borena,7472,Walabu Lixaa
@@ -1320,7 +803,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6056,East Borena,7477,Goro Dola
 3,Oromiya Region,6056,East Borena,7478,Nagele Borana City Administration
 3,Oromiya Region,6056,East Borena,7479,Gumi Eldalo
-10,Hareri Region,83,Harer Zone,748,Jinela Wereda
 3,Oromiya Region,6057,Holata City Administration,7480,Goro Keransa
 3,Oromiya Region,6057,Holata City Administration,7481,Burka Harbu
 3,Oromiya Region,6057,Holata City Administration,7482,Birbirsa Siba
@@ -1331,7 +813,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6057,Holata City Administration,7487,Tulu Harbu
 3,Oromiya Region,6058,Jimma City Administration,7488,Jiren
 3,Oromiya Region,6058,Jimma City Administration,7489,Ginjo
-10,Hareri Region,83,Harer Zone,749,Hakim Wereda
 3,Oromiya Region,6058,Jimma City Administration,7490,Ginjo Guduru
 3,Oromiya Region,6058,Jimma City Administration,7491,Mandara Kochi
 3,Oromiya Region,6058,Jimma City Administration,7492,Sato Samaro
@@ -1342,8 +823,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6058,Jimma City Administration,7497,Hermata Markato
 3,Oromiya Region,6058,Jimma City Administration,7498,Hermata Mantina
 3,Oromiya Region,6058,Jimma City Administration,7499,Mantina
-1,AMHARA REGION,5,North Shewa Zone,75,Angolala Tera Wereda
-10,Hareri Region,83,Harer Zone,750,shenkor Wereda
 3,Oromiya Region,6058,Jimma City Administration,7500,Bacho Bore
 3,Oromiya Region,6059,Shager City Administration- Kura Jida Sub-city,7501,Dire Sokoru
 3,Oromiya Region,6059,Shager City Administration- Kura Jida Sub-city,7502,Kura Jida
@@ -1354,7 +833,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6061,Maya City Administration - Haramaya,7507,Maya Kalo
 3,Oromiya Region,6061,Maya City Administration - Haramaya,7508,Maya Lamen
 3,Oromiya Region,6061,Maya City Administration - Haramaya,7509,Bate
-10,Hareri Region,83,Harer Zone,751,Abadir Wereda
 3,Oromiya Region,6062,Maya City Administration - Awaday,7510,Boji
 3,Oromiya Region,6062,Maya City Administration - Awaday,7511,Fandisha
 3,Oromiya Region,6062,Maya City Administration - Awaday,7512,Nagaya
@@ -1365,7 +843,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6063,Maya City Administration - Adelle,7517,Dangago
 3,Oromiya Region,6064,Mojo City Administration,7518,Obo
 3,Oromiya Region,6064,Mojo City Administration,7519,Karsa
-10,Hareri Region,83,Harer Zone,752,Aboker Wereda
 3,Oromiya Region,6064,Mojo City Administration,7520,Malka Lami
 3,Oromiya Region,6064,Mojo City Administration,7521,Sayo
 3,Oromiya Region,6065,Shager City Administration - Melka Nonno Sub-city,7522,Melka Gefersa
@@ -1376,7 +853,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6066,Matu City Administration,7527,Aba Mole
 3,Oromiya Region,6066,Matu City Administration,7528,Kolo Kroma
 3,Oromiya Region,6066,Matu City Administration,7529,Tabo
-10,Hareri Region,83,Harer Zone,753,Dire teyara Wereda
 3,Oromiya Region,6066,Matu City Administration,7530,Aba Saya
 3,Oromiya Region,6067,Moyale City Administration,7531,Kebele 1
 3,Oromiya Region,6067,Moyale City Administration,7532,Kebele 2
@@ -1387,7 +863,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6068,Nejo City Administration,7537,Kebele 1
 3,Oromiya Region,6068,Nejo City Administration,7538,Kebele 2
 3,Oromiya Region,6068,Nejo City Administration,7539,Kebele 3
-10,Hareri Region,83,Harer Zone,754,Sofi Wereda
 3,Oromiya Region,6068,Nejo City Administration,7540,Kebele 4
 3,Oromiya Region,6069,Nekemte City Administration,7541,Sorga
 3,Oromiya Region,6069,Nekemte City Administration,7542,Bake Jama
@@ -1398,7 +873,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6069,Nekemte City Administration,7547,Keso
 3,Oromiya Region,6070,Robe City Administration - Adoshe Walashe,7548,Waltahi Chafe
 3,Oromiya Region,6070,Robe City Administration - Adoshe Walashe,7549,Chafe Donsa
-11,Diredawa city administration,84,Diredawa City administration,755,Diredawa City administration
 3,Oromiya Region,6070,Robe City Administration - Adoshe Walashe,7550,Baha Biftu
 3,Oromiya Region,6070,Robe City Administration - Adoshe Walashe,7551,Handura Robe
 3,Oromiya Region,6071,Robe City Administration - Goba,7552,Chafe Hora
@@ -1409,7 +883,6 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6072,Robe City Administration - Zaybala Walashe,7557,Oda Robe
 3,Oromiya Region,6072,Robe City Administration - Zaybala Walashe,7558,Bole Tokuma
 3,Oromiya Region,6072,Robe City Administration - Zaybala Walashe,7559,Hora Boka
-1,AMHARA REGION,4,South Wello Zone,756,Delanta Wereda
 3,Oromiya Region,6073,Sandafa Bake City Administration,7560,Sandafa
 3,Oromiya Region,6073,Sandafa Bake City Administration,7561,Dale
 3,Oromiya Region,6073,Sandafa Bake City Administration,7562,Bake
@@ -1417,7 +890,7 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6074,Shashamane City Administration - Alache,7564,Dida Boke
 3,Oromiya Region,6074,Shashamane City Administration - Alache,7565,Malka Badesa
 3,Oromiya Region,6074,Shashamane City Administration - Alache,7566,Awasho
-3,Oromiya Region,6075,Shashamane Urban Administration - Bishan Guracha,7567,
+3,Oromiya Region,6075,Shashamane Urban Administration - Bishan Guracha,7567,(No name)
 3,Oromiya Region,6075,Shashamane Urban Administration - Bishan Guracha,7568,Alge Rima
 3,Oromiya Region,6075,Shashamane Urban Administration - Bishan Guracha,7569,Habas
 3,Oromiya Region,6075,Shashamane Urban Administration - Bishan Guracha,7570,Toga Waransa
@@ -1428,7 +901,7 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6077,Shashamane City Administration - Malka Sirba,7575,Bute Filcha
 3,Oromiya Region,6077,Shashamane City Administration - Malka Sirba,7576,Edo Lencha
 3,Oromiya Region,6078,Shakiso City Administration,7577,Banti Arba
-3,Oromiya Region,6078,Shakiso City Administration,7578,Dugo Awata 
+3,Oromiya Region,6078,Shakiso City Administration,7578,Dugo Awata
 3,Oromiya Region,6078,Shakiso City Administration,7579,Udeyi
 3,Oromiya Region,6078,Shakiso City Administration,7580,Bika Fora
 3,Oromiya Region,6079,Waliso City Administration,7581,Ayetu
@@ -1438,46 +911,389 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 3,Oromiya Region,6080,Sheno City Administration,7585,Burka Ejersa
 3,Oromiya Region,6080,Sheno City Administration,7586,Tulu Kurfo
 3,Oromiya Region,6080,Sheno City Administration,7587,Oda Kuni
-3,Oromiya Region,17,West Wellega Zone,7588,Mandi City Administration
-3,Oromiya Region,17,West Wellega Zone,7589,Leta Sibu
-3,Oromiya Region,17,West Wellega Zone,7590,Angar Gute City Administration
-3,Oromiya Region,22,North shewa zone,7591,Chancho City Administration
-3,Oromiya Region,22,North shewa zone,7592,Garba Guracha City Administration
-3,Oromiya Region,23,East shewa zone,7593,Meki City Administration
-3,Oromiya Region,23,East shewa zone,7594,Matahara City Administration
-3,Oromiya Region,23,East shewa zone,7595,Adama Town
-3,Oromiya Region,24,Arsi zone,7596,Dera City Administration
-3,Oromiya Region,24,Arsi zone,7597,Huruta City Administration
-3,Oromiya Region,24,Arsi zone,7598,Bokoji City Administration
-3,Oromiya Region,25,West Hararge Zone,7599,Hirna City Administration
-1,AMHARA REGION,5,North Shewa Zone,76,Asagirt Wereda
-3,Oromiya Region,25,West Hararge Zone,7600,Machara Michata City Administration
-3,Oromiya Region,25,West Hararge Zone,7601,Galamso City Administration
-3,Oromiya Region,25,West Hararge Zone,7602,Shanan Dungo
-3,Oromiya Region,26,East Hararge Zone,7603,Babile City Administration
-3,Oromiya Region,26,East Hararge Zone,7604,Mekanisa Oromo
-3,Oromiya Region,26,East Hararge Zone,7605,Dadar City Administration
-3,Oromiya Region,28,Borena Zone,7606,Gomole
-3,Oromiya Region,28,Borena Zone,7607,Guchi
-3,Oromiya Region,28,Borena Zone,7608,Elawayyee
-3,Oromiya Region,33,West Aris Zone,7609,Heban Arsi
-3,Oromiya Region,33,West Aris Zone,7610,Nagele Arsi City Administration
-3,Oromiya Region,33,West Aris Zone,7611,Wendo
-3,Oromiya Region,33,West Aris Zone,7612,Kofale City Administration
-3,Oromiya Region,35,Horo Gudru Welega Zone,7613,Sulula Finca'a
-3,Oromiya Region,88,Guji Zone,7614,Arada Jila Mi'e Boko
-3,Oromiya Region,88,Guji Zone,7615,Adola Woyu City Administration
-3,Oromiya Region,20,Jimma Zone,7616,Mancho
-3,Oromiya Region,20,Jimma Zone,7617,Boter Tolay
-3,Oromiya Region,20,Jimma Zone,7618,Limu Genat City Administration
+4,Gambela Region,37,Agnewak Zone,464,Gambela Zuria Wereda
+4,Gambela Region,37,Agnewak Zone,465,Abobo Wereda
+4,Gambela Region,37,Agnewak Zone,466,Gog Wereda
+4,Gambela Region,37,Agnewak Zone,467,Jor Wereda
+4,Gambela Region,37,Agnewak Zone,468,Dima Wereda
+4,Gambela Region,37,Agnewak Zone,469,Gambela/Town/ Wereda
+4,Gambela Region,38,Nuwer Zone,470,Lare Wereda
+4,Gambela Region,38,Nuwer Zone,471,Jikawo Wereda
+4,Gambela Region,38,Nuwer Zone,472,Wantawo Wereda
+4,Gambela Region,38,Nuwer Zone,473,Akobo Wereda
+4,Gambela Region,38,Nuwer Zone,4038,Makuey
+4,Gambela Region,39,Mezhenger Zone,474,Godare Wereda
+4,Gambela Region,39,Mezhenger Zone,475,Mengesh Wereda
+4,Gambela Region,39,Mezhenger Zone,476,Etang Wereda
+4,Gambela Region,39,Mezhenger Zone,477,Etang Special Wereda
 4,Gambela Region,6081,ETANG Special Woreda,7619,ETANG Special Woreda
 4,Gambela Region,6082,GAMBELLA TOWN ADMIN,7620,GAMBELLA TOWN ADMIN
+5,Addis Ababa,40,Akaki kality sub city,807,01
+5,Addis Ababa,40,Akaki kality sub city,808,02
+5,Addis Ababa,40,Akaki kality sub city,809,03
+5,Addis Ababa,40,Akaki kality sub city,810,04
+5,Addis Ababa,40,Akaki kality sub city,811,05
+5,Addis Ababa,40,Akaki kality sub city,812,06
+5,Addis Ababa,40,Akaki kality sub city,813,07
+5,Addis Ababa,40,Akaki kality sub city,814,08
+5,Addis Ababa,40,Akaki kality sub city,815,09
+5,Addis Ababa,40,Akaki kality sub city,816,10
+5,Addis Ababa,40,Akaki kality sub city,817,11
+5,Addis Ababa,40,Akaki kality sub city,986,Akaki kaliti Woreda 12
+5,Addis Ababa,40,Akaki kality sub city,987,Akaki kaliti 13
+5,Addis Ababa,41,Nefas silk lafto sub city,873,01
+5,Addis Ababa,41,Nefas silk lafto sub city,874,02
+5,Addis Ababa,41,Nefas silk lafto sub city,875,03
+5,Addis Ababa,41,Nefas silk lafto sub city,876,04
+5,Addis Ababa,41,Nefas silk lafto sub city,877,05
+5,Addis Ababa,41,Nefas silk lafto sub city,878,06
+5,Addis Ababa,41,Nefas silk lafto sub city,879,07
+5,Addis Ababa,41,Nefas silk lafto sub city,880,08
+5,Addis Ababa,41,Nefas silk lafto sub city,881,09
+5,Addis Ababa,41,Nefas silk lafto sub city,882,10
+5,Addis Ababa,41,Nefas silk lafto sub city,883,11
+5,Addis Ababa,41,Nefas silk lafto sub city,884,12
+5,Addis Ababa,41,Nefas silk lafto sub city,7642,Woreda 13
+5,Addis Ababa,41,Nefas silk lafto sub city,7643,Woreda 14
+5,Addis Ababa,41,Nefas silk lafto sub city,7644,Woreda 15
+5,Addis Ababa,42,kolfe keraniyo sub city,898,01
+5,Addis Ababa,42,kolfe keraniyo sub city,899,02
+5,Addis Ababa,42,kolfe keraniyo sub city,900,03
+5,Addis Ababa,42,kolfe keraniyo sub city,901,04
+5,Addis Ababa,42,kolfe keraniyo sub city,902,05
+5,Addis Ababa,42,kolfe keraniyo sub city,903,06
+5,Addis Ababa,42,kolfe keraniyo sub city,904,07
+5,Addis Ababa,42,kolfe keraniyo sub city,905,08
+5,Addis Ababa,42,kolfe keraniyo sub city,906,09
+5,Addis Ababa,42,kolfe keraniyo sub city,907,10
+5,Addis Ababa,42,kolfe keraniyo sub city,908,11
+5,Addis Ababa,42,kolfe keraniyo sub city,909,12
+5,Addis Ababa,42,kolfe keraniyo sub city,910,13
+5,Addis Ababa,42,kolfe keraniyo sub city,911,14
+5,Addis Ababa,42,kolfe keraniyo sub city,912,15
+5,Addis Ababa,43,Gulele sub city,842,01
+5,Addis Ababa,43,Gulele sub city,843,02
+5,Addis Ababa,43,Gulele sub city,844,03
+5,Addis Ababa,43,Gulele sub city,845,04
+5,Addis Ababa,43,Gulele sub city,846,05
+5,Addis Ababa,43,Gulele sub city,847,06
+5,Addis Ababa,43,Gulele sub city,848,07
+5,Addis Ababa,43,Gulele sub city,849,08
+5,Addis Ababa,43,Gulele sub city,850,09
+5,Addis Ababa,43,Gulele sub city,851,10
+5,Addis Ababa,44,Lideta sub city,863,01
+5,Addis Ababa,44,Lideta sub city,864,02
+5,Addis Ababa,44,Lideta sub city,865,03
+5,Addis Ababa,44,Lideta sub city,866,04
+5,Addis Ababa,44,Lideta sub city,867,05
+5,Addis Ababa,44,Lideta sub city,868,06
+5,Addis Ababa,44,Lideta sub city,869,07
+5,Addis Ababa,44,Lideta sub city,870,08
+5,Addis Ababa,44,Lideta sub city,871,09
+5,Addis Ababa,44,Lideta sub city,872,10
+5,Addis Ababa,45,Kirkos sub city,852,01
+5,Addis Ababa,45,Kirkos sub city,853,02
+5,Addis Ababa,45,Kirkos sub city,854,03
+5,Addis Ababa,45,Kirkos sub city,855,04
+5,Addis Ababa,45,Kirkos sub city,856,05
+5,Addis Ababa,45,Kirkos sub city,857,06
+5,Addis Ababa,45,Kirkos sub city,858,07
+5,Addis Ababa,45,Kirkos sub city,859,08
+5,Addis Ababa,45,Kirkos sub city,860,09
+5,Addis Ababa,45,Kirkos sub city,861,10
+5,Addis Ababa,45,Kirkos sub city,862,11
+5,Addis Ababa,46,Arada sub city,818,01
+5,Addis Ababa,46,Arada sub city,819,02
+5,Addis Ababa,46,Arada sub city,820,03
+5,Addis Ababa,46,Arada sub city,821,04
+5,Addis Ababa,46,Arada sub city,822,05
+5,Addis Ababa,46,Arada sub city,823,06
+5,Addis Ababa,46,Arada sub city,824,07
+5,Addis Ababa,46,Arada sub city,825,08
+5,Addis Ababa,46,Arada sub city,826,09
+5,Addis Ababa,46,Arada sub city,827,10
+5,Addis Ababa,47,Addis ketema sub city,797,01
+5,Addis Ababa,47,Addis ketema sub city,798,02
+5,Addis Ababa,47,Addis ketema sub city,799,03
+5,Addis Ababa,47,Addis ketema sub city,800,04
+5,Addis Ababa,47,Addis ketema sub city,801,05
+5,Addis Ababa,47,Addis ketema sub city,802,06
+5,Addis Ababa,47,Addis ketema sub city,803,07
+5,Addis Ababa,47,Addis ketema sub city,804,08
+5,Addis Ababa,47,Addis ketema sub city,805,09
+5,Addis Ababa,47,Addis ketema sub city,806,10
+5,Addis Ababa,47,Addis ketema sub city,7645,Woreda 11
+5,Addis Ababa,47,Addis ketema sub city,7646,Woreda 12
+5,Addis Ababa,47,Addis ketema sub city,7647,Woreda 13
+5,Addis Ababa,47,Addis ketema sub city,7648,Woreda 14
+5,Addis Ababa,48,Yeka sub city,885,01
+5,Addis Ababa,48,Yeka sub city,886,02
+5,Addis Ababa,48,Yeka sub city,887,03
+5,Addis Ababa,48,Yeka sub city,888,04
+5,Addis Ababa,48,Yeka sub city,889,05
+5,Addis Ababa,48,Yeka sub city,890,06
+5,Addis Ababa,48,Yeka sub city,891,07
+5,Addis Ababa,48,Yeka sub city,892,08
+5,Addis Ababa,48,Yeka sub city,893,09
+5,Addis Ababa,48,Yeka sub city,894,10
+5,Addis Ababa,48,Yeka sub city,895,11
+5,Addis Ababa,48,Yeka sub city,896,12
+5,Addis Ababa,48,Yeka sub city,897,13
+5,Addis Ababa,48,Yeka sub city,934,Wereda 13( Hayat)
+5,Addis Ababa,81,Bole Sub City,828,01
+5,Addis Ababa,81,Bole Sub City,829,02
+5,Addis Ababa,81,Bole Sub City,830,03
+5,Addis Ababa,81,Bole Sub City,831,04
+5,Addis Ababa,81,Bole Sub City,832,05
+5,Addis Ababa,81,Bole Sub City,833,06
+5,Addis Ababa,81,Bole Sub City,834,07
+5,Addis Ababa,81,Bole Sub City,835,08
+5,Addis Ababa,81,Bole Sub City,836,09
+5,Addis Ababa,81,Bole Sub City,837,10
+5,Addis Ababa,81,Bole Sub City,838,11
+5,Addis Ababa,81,Bole Sub City,839,12
+5,Addis Ababa,81,Bole Sub City,840,13
+5,Addis Ababa,81,Bole Sub City,841,14
+5,Addis Ababa,81,Bole Sub City,4014,15
+5,Addis Ababa,766,Lemi Kura sub city,1801,02
+5,Addis Ababa,766,Lemi Kura sub city,1802,04
+5,Addis Ababa,766,Lemi Kura sub city,1803,05
+5,Addis Ababa,766,Lemi Kura sub city,1804,06
+5,Addis Ababa,766,Lemi Kura sub city,1805,08
+5,Addis Ababa,766,Lemi Kura sub city,1806,09
+5,Addis Ababa,766,Lemi Kura sub city,1807,10
+5,Addis Ababa,766,Lemi Kura sub city,1808,11
+5,Addis Ababa,766,Lemi Kura sub city,1809,12
+5,Addis Ababa,766,Lemi Kura sub city,1810,13
+5,Addis Ababa,766,Lemi Kura sub city,7649,Woreda 01
+5,Addis Ababa,766,Lemi Kura sub city,7650,Woreda 03
+5,Addis Ababa,766,Lemi Kura sub city,7651,Woreda 14
+5,Addis Ababa,766,Lemi Kura sub city,7652,Woreda 07
+6,SNNP,49,GURAGE ZONE,478,KEBENA WEREDA
+6,SNNP,49,GURAGE ZONE,479,ABESHGE WEREDA
+6,SNNP,49,GURAGE ZONE,480,EZHA WEREDA
+6,SNNP,49,GURAGE ZONE,481,KOKIR GEDABANO WEREDA
+6,SNNP,49,GURAGE ZONE,482,SODO WEREDA
+6,SNNP,49,GURAGE ZONE,483,MESEKAN WEREDA
+6,SNNP,49,GURAGE ZONE,484,MAREKO WEREDA
+6,SNNP,49,GURAGE ZONE,485,ENDEGAGN WEREDA
+6,SNNP,49,GURAGE ZONE,486,GUMER WEREDA
+6,SNNP,49,GURAGE ZONE,487,CHEHA WEREDA
+6,SNNP,49,GURAGE ZONE,488,ENEMORNA ENER WEREDA
+6,SNNP,49,GURAGE ZONE,489,MUHOR NA AKLIL WEREDA
+6,SNNP,49,GURAGE ZONE,490,GETA WEREDA
+6,SNNP,49,GURAGE ZONE,491,WELKITE/TOWN/WEREDA
+6,SNNP,49,GURAGE ZONE,492,BUTAJIRA/TOWN/WEREDA
+6,SNNP,49,GURAGE ZONE,7653,Gunchere City Administration
+6,SNNP,49,GURAGE ZONE,7654,Agena City Administration
+6,SNNP,49,GURAGE ZONE,7655,Emdebir City Administration
+6,SNNP,49,GURAGE ZONE,7656,Gedebano Gutazer Welene
+6,SNNP,49,GURAGE ZONE,7657,Enor
+6,SNNP,49,GURAGE ZONE,7658,Arekit City Administartion
+6,SNNP,50,HADIYA ZONE,493,MISHA WEREDA
+6,SNNP,50,HADIYA ZONE,494,GIBE WEREDA
+6,SNNP,50,HADIYA ZONE,495,LEMO WEREDA
+6,SNNP,50,HADIYA ZONE,496,SHASHAGO WEREDA
+6,SNNP,50,HADIYA ZONE,497,MISRAK BADAWACHO WEREDA
+6,SNNP,50,HADIYA ZONE,498,SORO WEREDA
+6,SNNP,50,HADIYA ZONE,499,DUNA WEREDA
+6,SNNP,50,HADIYA ZONE,500,ANALIMO WEREDA
+6,SNNP,50,HADIYA ZONE,501,MERAB BADWACHO WEREDA
+6,SNNP,50,HADIYA ZONE,502,GOMIBORA WEREDA
+6,SNNP,50,HADIYA ZONE,503,HOSAENA/TOWN/WEREDA
+6,SNNP,50,HADIYA ZONE,7659,Ameka
+6,SNNP,50,HADIYA ZONE,7660,Shone Town Administration
+6,SNNP,50,HADIYA ZONE,7661,Mierab Soro
+6,SNNP,51,KEMBATA TIMBARO ZONE,504,TIBARO WEREDA
+6,SNNP,51,KEMBATA TIMBARO ZONE,505,ANGACHA WEREDA
+6,SNNP,51,KEMBATA TIMBARO ZONE,506,KEDIDA GAMELA WEREDA
+6,SNNP,51,KEMBATA TIMBARO ZONE,507,KACHA BIRA WEREDA
+6,SNNP,51,KEMBATA TIMBARO ZONE,508,HADERO TUNITO WEREDA
+6,SNNP,51,KEMBATA TIMBARO ZONE,509,DOYO GENA WEREDA
+6,SNNP,51,KEMBATA TIMBARO ZONE,510,DENIBOYA WEREDA
+6,SNNP,51,KEMBATA TIMBARO ZONE,511,DURAME/TOWN/WEREDA
+6,SNNP,51,KEMBATA TIMBARO ZONE,7662,Mudula City Administration
+6,SNNP,51,KEMBATA TIMBARO ZONE,7663,Adilo
+6,SNNP,51,KEMBATA TIMBARO ZONE,7664,Shinshicho City Administartion
+6,SNNP,52,SIDAMA ZONE,512,SHEBEDINO WEREDA
+6,SNNP,52,SIDAMA ZONE,513,HWASSA ZURIYA WEREDA
+6,SNNP,52,SIDAMA ZONE,514,ARBEGONA WEREDA
+6,SNNP,52,SIDAMA ZONE,515,DALE WEREDA
+6,SNNP,52,SIDAMA ZONE,516,ALETA WENDO WEREDA
+6,SNNP,52,SIDAMA ZONE,517,DARA WEREDA
+6,SNNP,52,SIDAMA ZONE,518,HULA WEREDA
+6,SNNP,52,SIDAMA ZONE,519,BENSA WEREDA
+6,SNNP,52,SIDAMA ZONE,520,ARORESA WEREDA
+6,SNNP,52,SIDAMA ZONE,521,BORICHA WEREDA
+6,SNNP,52,SIDAMA ZONE,522,GORCHE WEREDA
+6,SNNP,52,SIDAMA ZONE,523,MALGA WEREDA
+6,SNNP,52,SIDAMA ZONE,524,WENSHO WEREDA
+6,SNNP,52,SIDAMA ZONE,525,LOKO ABEYA WEREDA
+6,SNNP,52,SIDAMA ZONE,526,CHERE WEREDA
+6,SNNP,52,SIDAMA ZONE,527,BURSA WEREDA
+6,SNNP,52,SIDAMA ZONE,528,CHEKO WEREDA
+6,SNNP,52,SIDAMA ZONE,529,BONA ZURIYA WEREDA
+6,SNNP,52,SIDAMA ZONE,530,WENDO GENET WEREDA
+6,SNNP,52,SIDAMA ZONE,4028,Hantate
+6,SNNP,53,GEDEO ZONE,531,WENAGO WEREDA
+6,SNNP,53,GEDEO ZONE,532,YIRGACHEFE WEREDA
+6,SNNP,53,GEDEO ZONE,533,KOCHIRE WEREDA
+6,SNNP,53,GEDEO ZONE,534,BULE WEREDA
+6,SNNP,53,GEDEO ZONE,535,DILA ZURIYA WEREDA
+6,SNNP,53,GEDEO ZONE,536,GEDEB WEREDA
+6,SNNP,53,GEDEO ZONE,537,DILA/TOWN/WEREDA
+6,SNNP,53,GEDEO ZONE,7665,Chelelektu City Administration
+6,SNNP,53,GEDEO ZONE,7666,Chorso Woreda
+6,SNNP,53,GEDEO ZONE,7667,Repe Woreda
+6,SNNP,54,WOLAYITA ZONE,538,BOLOSO SORE WEREDA
+6,SNNP,54,WOLAYITA ZONE,539,DAMOT GALE WEREDA
+6,SNNP,54,WOLAYITA ZONE,540,DAMOT WOYIDE WEREDA
+6,SNNP,54,WOLAYITA ZONE,541,HUMBO WEREDA
+6,SNNP,54,WOLAYITA ZONE,542,SODO ZURIYA WEREDA
+6,SNNP,54,WOLAYITA ZONE,543,KINDO KOYISHA WEREDA
+6,SNNP,54,WOLAYITA ZONE,544,OFA WEREDA
+6,SNNP,54,WOLAYITA ZONE,545,BOLOSO BONIBE WEREDA
+6,SNNP,54,WOLAYITA ZONE,546,DAMOT SORE WEREDA
+6,SNNP,54,WOLAYITA ZONE,547,KINDO DIDAYE WEREDA
+6,SNNP,54,WOLAYITA ZONE,548,DAMOT PULASA WEREDA
+6,SNNP,54,WOLAYITA ZONE,549,DEGUNA FANIGO WEREDA
+6,SNNP,54,WOLAYITA ZONE,550,SODO/TOWN/WEREDA
+6,SNNP,54,WOLAYITA ZONE,7668,Kawo Koyisha Woreda
+6,SNNP,54,WOLAYITA ZONE,7669,Areka City Administration
+6,SNNP,54,WOLAYITA ZONE,7670,Boditi City Adminstration
+6,SNNP,54,WOLAYITA ZONE,7671,Hobicha Woreda
+6,SNNP,54,WOLAYITA ZONE,7672,Tebela City Administration
+6,SNNP,54,WOLAYITA ZONE,7673,Abala Abaya
+6,SNNP,54,WOLAYITA ZONE,7674,Gesuba City Administration
+6,SNNP,54,WOLAYITA ZONE,7675,Gununo Hamus City Administration
+6,SNNP,54,WOLAYITA ZONE,7676,Bele Awasa City Administration
+6,SNNP,55,SOUTH OMO ZONE,551,SELAMAGO WEREDA
+6,SNNP,55,SOUTH OMO ZONE,552,DEBUB ARI WEREDA
+6,SNNP,55,SOUTH OMO ZONE,553,SEMEN ARI WEREDA
+6,SNNP,55,SOUTH OMO ZONE,554,HAMER WEREDA
+6,SNNP,55,SOUTH OMO ZONE,555,BENA TSEMAY WEREDA
+6,SNNP,55,SOUTH OMO ZONE,556,DASENECH WEREDA
+6,SNNP,55,SOUTH OMO ZONE,557,MALE WEREDA
+6,SNNP,55,SOUTH OMO ZONE,558,NYANGATOM WEREDA
+6,SNNP,55,SOUTH OMO ZONE,796,Jinka Wereda
+6,SNNP,55,SOUTH OMO ZONE,7677,Turmi City Administration
+6,SNNP,56,SHEKA ZONE,559,MASHA WEREDA
+6,SNNP,56,SHEKA ZONE,560,ANDERACHA WEREDA
+6,SNNP,56,SHEKA ZONE,561,YEKI WEREDA
+6,SNNP,57,KEFFA ZONE,562,SAYILEM WEREDA
+6,SNNP,57,KEFFA ZONE,563,GESHA DEKA WEREDA
+6,SNNP,57,KEFFA ZONE,564,GEWATA WEREDA
+6,SNNP,57,KEFFA ZONE,565,GIMBO WEREDA
+6,SNNP,57,KEFFA ZONE,566,MENJIWO WEREDA
+6,SNNP,57,KEFFA ZONE,567,TELO WEREDA
+6,SNNP,57,KEFFA ZONE,568,CHETA WEREDA
+6,SNNP,57,KEFFA ZONE,569,DECHA WEREDA
+6,SNNP,57,KEFFA ZONE,570,CHENA WEREDA
+6,SNNP,57,KEFFA ZONE,571,BITA WEREDA
+6,SNNP,57,KEFFA ZONE,572,BONGA/TOWN/WEREDA
+6,SNNP,58,GAMO GOFA ZONE,573,MELEKOZA WEREDA
+6,SNNP,58,GAMO GOFA ZONE,574,DENIBU GOFA WEREDA
+6,SNNP,58,GAMO GOFA ZONE,575,KUCHA WEREDA
+6,SNNP,58,GAMO GOFA ZONE,576,BOREDA WEREDA
+6,SNNP,58,GAMO GOFA ZONE,577,MERAB ABAYA WEREDA
+6,SNNP,58,GAMO GOFA ZONE,578,ARBA MINCH ZURIYA WEREDA
+6,SNNP,58,GAMO GOFA ZONE,579,CHENCHA WEREDA
+6,SNNP,58,GAMO GOFA ZONE,580,DITA WEREDA
+6,SNNP,58,GAMO GOFA ZONE,581,DERAMALO WEREDA
+6,SNNP,58,GAMO GOFA ZONE,582,ZALA WEREDA
+6,SNNP,58,GAMO GOFA ZONE,583,UBA DEBRE TSEHAY WEREDA
+6,SNNP,58,GAMO GOFA ZONE,584,KEMBA WEREDA
+6,SNNP,58,GAMO GOFA ZONE,585,BONKE WEREDA
+6,SNNP,58,GAMO GOFA ZONE,586,GEZEGOFA WEREDA
+6,SNNP,58,GAMO GOFA ZONE,587,AYIDA WEREDA
+6,SNNP,58,GAMO GOFA ZONE,588,ARBA MINCH/TOWN/WEREDA
+6,SNNP,58,GAMO GOFA ZONE,589,SAWULA/TOWN/WEREDA
+6,SNNP,58,GAMO GOFA ZONE,7678,Kogota Woreda
+6,SNNP,58,GAMO GOFA ZONE,7679,Gerese Woreda
+6,SNNP,58,GAMO GOFA ZONE,7681,Gacho Baba Woreda
+6,SNNP,58,GAMO GOFA ZONE,7682,Birbir City Administration
+6,SNNP,58,GAMO GOFA ZONE,7684,Garda Marta Woreda
+6,SNNP,58,GAMO GOFA ZONE,7685,Selamber City Administration
+6,SNNP,59,BENCH MAJI ZONE,590,SHEKO WEREDA
+6,SNNP,59,BENCH MAJI ZONE,591,GURAFERDA WEREDA
+6,SNNP,59,BENCH MAJI ZONE,592,DEBUB BENCH WEREDA
+6,SNNP,59,BENCH MAJI ZONE,593,SHAY BENCH WEREDA
+6,SNNP,59,BENCH MAJI ZONE,594,MEINIT GOLDEYA WEREDA
+6,SNNP,59,BENCH MAJI ZONE,595,MEINIT SHASHA WEREDA
+6,SNNP,59,BENCH MAJI ZONE,596,MAJI WEREDA
+6,SNNP,59,BENCH MAJI ZONE,597,BERO WEREDA
+6,SNNP,59,BENCH MAJI ZONE,598,SURMA WEREDA
+6,SNNP,59,BENCH MAJI ZONE,599,SEMEN BENCH WEREDA
+6,SNNP,59,BENCH MAJI ZONE,600,MIZAN AMAN/TOWN/WEREDA
+6,SNNP,60,YEM SPECIAL WER. ZONE,601,YEM SP. WER. WEREDA
+6,SNNP,60,YEM SPECIAL WER. ZONE,602,AMARO SPECIAL WEREDA
+6,SNNP,60,YEM SPECIAL WER. ZONE,603,AMARO WEREDA
+6,SNNP,60,YEM SPECIAL WER. ZONE,604,BURJI SPECIAL WEREDA
+6,SNNP,60,YEM SPECIAL WER. ZONE,605,BURJI WEREDA
+6,SNNP,60,YEM SPECIAL WER. ZONE,606,KONSO SPECIAL WEREDA
+6,SNNP,60,YEM SPECIAL WER. ZONE,607,KONSO WEREDA
+6,SNNP,60,YEM SPECIAL WER. ZONE,608,DERASHE SPECIAL WEREDA
+6,SNNP,60,YEM SPECIAL WER. ZONE,609,DERASHE WEREDA
+6,SNNP,61,DAWURO ZONE,610,TOCHA WEREDA
+6,SNNP,61,DAWURO ZONE,611,MAREKA WEREDA
+6,SNNP,61,DAWURO ZONE,612,LOMA WEREDA
+6,SNNP,61,DAWURO ZONE,613,GENABOSA WEREDA
+6,SNNP,61,DAWURO ZONE,614,ISARA WEREDA
+6,SNNP,61,DAWURO ZONE,615,BASKETO SPECIAL WEREDA
+6,SNNP,61,DAWURO ZONE,616,BASKETO WEREDA
+6,SNNP,61,DAWURO ZONE,617,KONTA SPECIAL WEREDA
+6,SNNP,61,DAWURO ZONE,618,KONTA WEREDA
+6,SNNP,61,DAWURO ZONE,921,Tercha city /Wereda
+6,SNNP,62,SILTI ZONE,619,ALICHO WERERO WEREDA
+6,SNNP,62,SILTI ZONE,620,SILTI WEREDA
+6,SNNP,62,SILTI ZONE,621,LANFURO WEREDA
+6,SNNP,62,SILTI ZONE,622,MERAB AZERNET WEREDA
+6,SNNP,62,SILTI ZONE,623,DALOCHA WEREDA
+6,SNNP,62,SILTI ZONE,624,SANKURA WEREDA
+6,SNNP,62,SILTI ZONE,625,MISRAK AZERNET WEREDA
+6,SNNP,62,SILTI ZONE,626,WULBAREG WEREDA
+6,SNNP,62,SILTI ZONE,627,ALABA SPECIAL WEREDA
+6,SNNP,62,SILTI ZONE,628,ALABA WEREDA
+6,SNNP,62,SILTI ZONE,732,Wurabe Woreda
+6,SNNP,62,SILTI ZONE,7686,Kibet City Administration
+6,SNNP,62,SILTI ZONE,7687,Mito
+6,SNNP,62,SILTI ZONE,7688,Tora City Administration
+6,SNNP,62,SILTI ZONE,7689,Alem Gebeya City Administration
+6,SNNP,63,HAWASSA CITY ADMINISTRATION-ZONE,629,HAWASSA CITY ADMINISTRATION WEREDA
+6,SNNP,85,HALABA SPECIAL WEREDA,794,HALABA SPECIAL WEREDA
+6,SNNP,85,HALABA SPECIAL WEREDA,795,HALLABA KULITO TOWN
+6,SNNP,85,HALABA SPECIAL WEREDA,4074,Wiera
+6,SNNP,85,HALABA SPECIAL WEREDA,4075,Atoti Ullo
+6,SNNP,85,HALABA SPECIAL WEREDA,4076,Wiera Dijo
+6,SNNP,85,HALABA SPECIAL WEREDA,7690,Qulito City Administration
+6,SNNP,86,Segen people Zone,936,segen
+7,Benshangul gumz region,64,Metekel zone,630,Dangur Wereda
+7,Benshangul gumz region,64,Metekel zone,631,Guba Wereda
+7,Benshangul gumz region,64,Metekel zone,632,Wenbera Wereda
+7,Benshangul gumz region,64,Metekel zone,633,Mandura Wereda
+7,Benshangul gumz region,64,Metekel zone,634,Dibate Wereda
+7,Benshangul gumz region,64,Metekel zone,635,Bulen Wereda
+7,Benshangul gumz region,64,Metekel zone,738,Pawi Wereda
 7,Benshangul gumz region,64,Metekel zone,7621,Horazab
 7,Benshangul gumz region,64,Metekel zone,7622,Wereda And
 7,Benshangul gumz region,64,Metekel zone,7623,Wereda Hulet
 7,Benshangul gumz region,64,Metekel zone,7624,Abrehamo
 7,Benshangul gumz region,64,Metekel zone,7625,Undulu
 7,Benshangul gumz region,64,Metekel zone,7626,Ura
+7,Benshangul gumz region,65,Asosa zone,636,Menge Wereda
+7,Benshangul gumz region,65,Asosa zone,637,Kurmuk Wereda
+7,Benshangul gumz region,65,Asosa zone,638,Asossa Wereda
+7,Benshangul gumz region,65,Asosa zone,639,Sherkole Wereda
+7,Benshangul gumz region,65,Asosa zone,640,Bambasi Wereda
+7,Benshangul gumz region,65,Asosa zone,641,Odabuldi Wereda
+7,Benshangul gumz region,65,Asosa zone,642,Homesha Wereda
+7,Benshangul gumz region,65,Asosa zone,4072,Mao Komo
+7,Benshangul gumz region,66,Kamashi zone,643,Yaso Wereda
+7,Benshangul gumz region,66,Kamashi zone,644,Sirba abay Wereda
+7,Benshangul gumz region,66,Kamashi zone,645,Kemashi Wereda
+7,Benshangul gumz region,66,Kamashi zone,646,Agelo meti Wereda
+7,Benshangul gumz region,66,Kamashi zone,739,Sedal Wereda
+7,Benshangul gumz region,66,Kamashi zone,771,Belo Wereda
 7,Benshangul gumz region,6083,Mao Ena Komo,7627,Mao Ena Komo
 7,Benshangul gumz region,6083,Mao Ena Komo,7628,Maygaba Town
 7,Benshangul gumz region,6083,Mao Ena Komo,7629,Korarit Town
@@ -1493,55 +1309,116 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 7,Benshangul gumz region,6083,Mao Ena Komo,7639,Korem City Administration
 7,Benshangul gumz region,6083,Mao Ena Komo,7640,Zata
 7,Benshangul gumz region,6083,Mao Ena Komo,7641,Aufila
-5,Addis Ababa,41,Nefas silk lafto sub city,7642,Woreda 13
-5,Addis Ababa,41,Nefas silk lafto sub city,7643,Woreda 14
-5,Addis Ababa,41,Nefas silk lafto sub city,7644,Woreda 15
-5,Addis Ababa,47,Addis ketema sub city,7645,Woreda 11
-5,Addis Ababa,47,Addis ketema sub city,7646,Woreda 12
-5,Addis Ababa,47,Addis ketema sub city,7647,Woreda 13
-5,Addis Ababa,47,Addis ketema sub city,7648,Woreda 14
-5,Addis Ababa,766,Lemi Kura sub city,7649,Woreda 01
-5,Addis Ababa,766,Lemi Kura sub city,7650,Woreda 03
-5,Addis Ababa,766,Lemi Kura sub city,7651,Woreda 14
-5,Addis Ababa,766,Lemi Kura sub city,7652,Woreda 07
-6,SNNP,49,GURAGE ZONE,7653,Gunchere City Administration
-6,SNNP,49,GURAGE ZONE,7654,Agena City Administration
-6,SNNP,49,GURAGE ZONE,7655,Emdebir City Administration
-6,SNNP,49,GURAGE ZONE,7656,Gedebano Gutazer Welene
-6,SNNP,49,GURAGE ZONE,7657,Enor
-6,SNNP,49,GURAGE ZONE,7658,Arekit City Administartion
-6,SNNP,50,HADIYA ZONE,7659,Ameka
-6,SNNP,50,HADIYA ZONE,7660,Shone  Town Administration
-6,SNNP,50,HADIYA ZONE,7661,Mierab Soro
-6,SNNP,51,KEMBATA TIMBARO ZONE,7662,Mudula City Administration
-6,SNNP,51,KEMBATA TIMBARO ZONE,7663,Adilo
-6,SNNP,51,KEMBATA TIMBARO ZONE,7664,Shinshicho City Administartion
-6,SNNP,53,GEDEO ZONE,7665,Chelelektu City Administration
-6,SNNP,53,GEDEO ZONE,7666,Chorso Woreda
-6,SNNP,53,GEDEO ZONE,7667,Repe Woreda
-6,SNNP,54,WOLAYITA ZONE,7668,Kawo Koyisha Woreda
-6,SNNP,54,WOLAYITA ZONE,7669,Areka City Administration
-6,SNNP,54,WOLAYITA ZONE,7670,Boditi City Adminstration
-6,SNNP,54,WOLAYITA ZONE,7671,Hobicha Woreda
-6,SNNP,54,WOLAYITA ZONE,7672,Tebela City Administration
-6,SNNP,54,WOLAYITA ZONE,7673,Abala Abaya
-6,SNNP,54,WOLAYITA ZONE,7674,Gesuba City Administration
-6,SNNP,54,WOLAYITA ZONE,7675,Gununo Hamus City Administration
-6,SNNP,54,WOLAYITA ZONE,7676,Bele Awasa City Administration
-6,SNNP,55,SOUTH OMO ZONE,7677,Turmi City Administration
-6,SNNP,58,GAMO GOFA ZONE,7678,Kogota Woreda
-6,SNNP,58,GAMO GOFA ZONE,7679,Gerese Woreda
-1,AMHARA REGION,3,North Wello Zone,768,Habru Wereda
-6,SNNP,58,GAMO GOFA ZONE,7681,Gacho Baba Woreda
-6,SNNP,58,GAMO GOFA ZONE,7682,Birbir City Administration
-6,SNNP,58,GAMO GOFA ZONE,7684,Garda Marta Woreda
-6,SNNP,58,GAMO GOFA ZONE,7685,Selamber City Administration
-6,SNNP,62,SILTI ZONE,7686,Kibet City Administration
-6,SNNP,62,SILTI ZONE,7687,Mito
-6,SNNP,62,SILTI ZONE,7688,Tora City Administration
-6,SNNP,62,SILTI ZONE,7689,Alem Gebeya City Administration
-1,AMHARA REGION,2,South Gondar Zone,769,Andabet Wereda
-6,SNNP,85,HALABA SPECIAL WEREDA,7690,Qulito City Administration
+8,Somali Region,67,Shinile Zone,647,Ayisha
+8,Somali Region,67,Shinile Zone,648,Denbel
+8,Somali Region,67,Shinile Zone,649,Shinile
+8,Somali Region,67,Shinile Zone,651,Mulo
+8,Somali Region,67,Shinile Zone,652,Afdem
+8,Somali Region,67,Shinile Zone,781,Mieso Wereda
+8,Somali Region,67,Shinile Zone,7707,Erer
+8,Somali Region,67,Shinile Zone,7708,Hadhagaale
+8,Somali Region,67,Shinile Zone,7709,Geblalu
+8,Somali Region,67,Shinile Zone,7710,Gotabike
+8,Somali Region,68,Jijiga Zone,653,Babile
+8,Somali Region,68,Jijiga Zone,654,Gursum
+8,Somali Region,68,Jijiga Zone,655,Jijiga
+8,Somali Region,68,Jijiga Zone,656,Awubere
+8,Somali Region,68,Jijiga Zone,657,Beyah
+8,Somali Region,68,Jijiga Zone,658,Kebri
+8,Somali Region,68,Jijiga Zone,659,Harshin
+8,Somali Region,68,Jijiga Zone,780,Tulu Guled Wereda
+8,Somali Region,68,Jijiga Zone,7711,Kebri Beyah
+8,Somali Region,68,Jijiga Zone,7712,Togochale City Admenistration
+8,Somali Region,68,Jijiga Zone,7713,Qooraan Mulla
+8,Somali Region,68,Jijiga Zone,7714,Harores
+8,Somali Region,68,Jijiga Zone,7715,Goljano
+8,Somali Region,68,Jijiga Zone,7716,Debub Jigjiga
+8,Somali Region,68,Jijiga Zone,7717,Harawo
+8,Somali Region,69,Deghabur Zone,660,Deghamedo
+8,Somali Region,69,Deghabur Zone,661,Deghabur
+8,Somali Region,69,Deghabur Zone,662,Aware
+8,Somali Region,69,Deghabur Zone,663,Gashamo
+8,Somali Region,69,Deghabur Zone,664,Gunagudo
+8,Somali Region,69,Deghabur Zone,779,Arareso Wereda
+8,Somali Region,69,Deghabur Zone,782,Deghabur Wereda
+8,Somali Region,69,Deghabur Zone,7718,Birqod
+8,Somali Region,69,Deghabur Zone,7719,Dig
+8,Somali Region,69,Deghabur Zone,7720,Yoocaale
+8,Somali Region,69,Deghabur Zone,7721,Daroor
+8,Somali Region,69,Deghabur Zone,7722,Bilcil Buur
+8,Somali Region,70,Warder Zone,665,Danot
+8,Somali Region,70,Warder Zone,666,Boh
+8,Somali Region,70,Warder Zone,667,Geladin
+8,Somali Region,70,Warder Zone,668,Warder
+8,Somali Region,70,Warder Zone,7703,Daratole
+8,Somali Region,70,Warder Zone,7704,Galxamur
+8,Somali Region,70,Warder Zone,7705,Warder City Administration
+8,Somali Region,70,Warder Zone,7706,Lehel-Yucub
+8,Somali Region,71,Korahe Zone,669,Shekosh
+8,Somali Region,71,Korahe Zone,670,Kebridehar
+8,Somali Region,71,Korahe Zone,671,Shilabo
+8,Somali Region,71,Korahe Zone,672,Debewoin
+8,Somali Region,71,Korahe Zone,913,Kudumbur Wereda
+8,Somali Region,71,Korahe Zone,914,Egilile Wereda
+8,Somali Region,71,Korahe Zone,915,Lakidenkel Wereda
+8,Somali Region,71,Korahe Zone,916,Eligaden Wereda
+8,Somali Region,71,Korahe Zone,917,Bodeley Wereda
+8,Somali Region,71,Korahe Zone,7723,Marsin
+8,Somali Region,71,Korahe Zone,7724,Higloley
+8,Somali Region,71,Korahe Zone,7725,Laas-Dhankayre
+8,Somali Region,71,Korahe Zone,7726,Ceel-Ogaden
+8,Somali Region,71,Korahe Zone,7727,Gogilo
+8,Somali Region,71,Korahe Zone,7728,Qebridahar Citiy Administration
+8,Somali Region,72,Fik Zone,673,Selhad
+8,Somali Region,72,Fik Zone,674,Fik
+8,Somali Region,72,Fik Zone,675,Gerbo
+8,Somali Region,72,Fik Zone,676,Hamero
+8,Somali Region,72,Fik Zone,677,Segeg
+8,Somali Region,72,Fik Zone,678,Dihun
+8,Somali Region,72,Fik Zone,679,legehida
+8,Somali Region,72,Fik Zone,680,Meyu Muluke
+8,Somali Region,72,Fik Zone,937,Fik Woreda
+8,Somali Region,72,Fik Zone,7729,Ayun
+8,Somali Region,72,Fik Zone,7730,Hor-Shagah
+8,Somali Region,72,Fik Zone,7731,Elweyn Town
+8,Somali Region,72,Fik Zone,7732,Xaraarey
+8,Somali Region,73,Gode Zone,681,Imiberi
+8,Somali Region,73,Gode Zone,682,Adadilo
+8,Somali Region,73,Gode Zone,683,Danan
+8,Somali Region,73,Gode Zone,684,Gode
+8,Somali Region,73,Gode Zone,685,Kelafo
+8,Somali Region,73,Gode Zone,686,Mustahil
+8,Somali Region,73,Gode Zone,687,Ferfer
+8,Somali Region,73,Gode Zone,7733,Beercaano
+8,Somali Region,73,Gode Zone,7734,Gode Council
+8,Somali Region,73,Gode Zone,7735,Elelle
+8,Somali Region,73,Gode Zone,7736,Abaqorow
+8,Somali Region,73,Gode Zone,7737,East Eme
+8,Somali Region,74,Afder Zone,688,Guradamole
+8,Somali Region,74,Afder Zone,689,Weyib
+8,Somali Region,74,Afder Zone,690,Goro Bekeksa
+8,Somali Region,74,Afder Zone,691,Serer
+8,Somali Region,74,Afder Zone,692,Mirab Imi
+8,Somali Region,74,Afder Zone,693,Afker
+8,Somali Region,74,Afder Zone,694,Bare
+8,Somali Region,74,Afder Zone,695,Bdolobay
+8,Somali Region,74,Afder Zone,696,Kersa Dulo
+8,Somali Region,74,Afder Zone,778,Rasso Wereda
+8,Somali Region,74,Afder Zone,918,Hargele Wereda
+8,Somali Region,74,Afder Zone,919,Chereti Wereda
+8,Somali Region,74,Afder Zone,920,Elkere Wereda
+8,Somali Region,74,Afder Zone,7738,Qooxle
+8,Somali Region,74,Afder Zone,7739,Godgod
+8,Somali Region,74,Afder Zone,7740,Iimey Galbeed
+8,Somali Region,75,Liben Zone,697,Filtu
+8,Somali Region,75,Liben Zone,698,Dolo Odo
+8,Somali Region,75,Liben Zone,699,Moyale
+8,Somali Region,75,Liben Zone,700,Udet
+8,Somali Region,75,Liben Zone,777,Deka Suftu Wereda
+8,Somali Region,75,Liben Zone,7741,Qarsadula
+8,Somali Region,75,Liben Zone,7742,Gura Damole
+8,Somali Region,75,Liben Zone,7743,Gura Baqasa
+8,Somali Region,75,Liben Zone,7744,Bokolmayo
 8,Somali Region,6098,Erer Zone,7691,Lagahida
 8,Somali Region,6098,Erer Zone,7692,Qubi
 8,Somali Region,6098,Erer Zone,7693,Waangay
@@ -1551,237 +1428,360 @@ region_id,region_name,zone_id,zone_name,wereda_id,wereda_name
 8,Somali Region,6098,Erer Zone,7697,Hamero
 8,Somali Region,6098,Erer Zone,7698,Fiiq
 8,Somali Region,6099,Dawa Zone,7699,Qadhaadhumo
-1,AMHARA REGION,5,North Shewa Zone,77,Ankober Wereda
-1,AMHARA REGION,4,South Wello Zone,770,Borena Wereda
 8,Somali Region,6099,Dawa Zone,7700,Hudet
 8,Somali Region,6099,Dawa Zone,7701,Moyale
 8,Somali Region,6099,Dawa Zone,7702,Mubarek
-8,Somali Region,70,Warder Zone,7703,Daratole
-8,Somali Region,70,Warder Zone,7704,Galxamur
-8,Somali Region,70,Warder Zone,7705,Warder City Administration
-8,Somali Region,70,Warder Zone,7706,Lehel-Yucub
-8,Somali Region,67,Shinile Zone,7707,Erer
-8,Somali Region,67,Shinile Zone,7708,Hadhagaale
-8,Somali Region,67,Shinile Zone,7709,Geblalu
-7,Benshangul gumz region,66,Kamashi zone,771,Belo Wereda
-8,Somali Region,67,Shinile Zone,7710,Gotabike
-8,Somali Region,68,Jijiga  Zone,7711,Kebri Beyah
-8,Somali Region,68,Jijiga  Zone,7712,Togochale City Admenistration
-8,Somali Region,68,Jijiga  Zone,7713,Qooraan Mulla
-8,Somali Region,68,Jijiga  Zone,7714,Harores
-8,Somali Region,68,Jijiga  Zone,7715,Goljano
-8,Somali Region,68,Jijiga  Zone,7716,Debub Jigjiga
-8,Somali Region,68,Jijiga  Zone,7717,Harawo
-8,Somali Region,69,Deghabur  Zone,7718,Birqod
-8,Somali Region,69,Deghabur  Zone,7719,Dig
-3,Oromiya Region,25,West Hararge Zone,772,Oda Bultum Wereda
-8,Somali Region,69,Deghabur  Zone,7720,Yoocaale
-8,Somali Region,69,Deghabur  Zone,7721,Daroor
-8,Somali Region,69,Deghabur  Zone,7722,Bilcil Buur
-8,Somali Region,71,Korahe Zone,7723,Marsin
-8,Somali Region,71,Korahe Zone,7724,Higloley
-8,Somali Region,71,Korahe Zone,7725,Laas-Dhankayre
-8,Somali Region,71,Korahe Zone,7726,Ceel-Ogaden
-8,Somali Region,71,Korahe Zone,7727,Gogilo
-8,Somali Region,71,Korahe Zone,7728,Qebridahar Citiy Administration
-8,Somali Region,72,Fik Zone,7729,Ayun
-3,Oromiya Region,30,West Guji Zone,773,Goro Dola Wereda
-8,Somali Region,72,Fik Zone,7730,Hor-Shagah
-8,Somali Region,72,Fik Zone,7731,Elweyn Town
-8,Somali Region,72,Fik Zone,7732,Xaraarey
-8,Somali Region,73,Gode Zone,7733,Beercaano
-8,Somali Region,73,Gode Zone,7734,Gode Council
-8,Somali Region,73,Gode Zone,7735,Elelle
-8,Somali Region,73,Gode Zone,7736,Abaqorow
-8,Somali Region,73,Gode Zone,7737,East Eme
-8,Somali Region,74,Afder Zone,7738,Qooxle
-8,Somali Region,74,Afder Zone,7739,Godgod
-3,Oromiya Region,20,Jimma Zone,774,Sekoru Wereda
-8,Somali Region,74,Afder Zone,7740,Iimey Galbeed
-8,Somali Region,75,Liben Zone,7741,Qarsadula
-8,Somali Region,75,Liben Zone,7742,Gura Damole
-8,Somali Region,75,Liben Zone,7743,Gura Baqasa
-8,Somali Region,75,Liben Zone,7744,Bokolmayo
+9,Afar,76,Zone 1,701,Dubti
+9,Afar,76,Zone 1,702,Elidar
+9,Afar,76,Zone 1,703,Asayita
+9,Afar,76,Zone 1,704,Afambo
+9,Afar,76,Zone 1,705,Mile
+9,Afar,76,Zone 1,706,Chifra
+9,Afar,76,Zone 1,707,Kori
+9,Afar,76,Zone 1,990,Adaar Rural Town
+9,Afar,76,Zone 1,4004,Eliwuha
+9,Afar,76,Zone 1,4005,Logia
+9,Afar,76,Zone 1,4006,Semera
 9,Afar,76,Zone 1,7745,Geyreni
+9,Afar,77,Zone 2,708,Erebti
+9,Afar,77,Zone 2,709,Konaba
+9,Afar,77,Zone 2,710,Abala
+9,Afar,77,Zone 2,711,Megale
+9,Afar,77,Zone 2,712,Berahile
+9,Afar,77,Zone 2,713,Dalol
+9,Afar,77,Zone 2,714,Afdera
 9,Afar,77,Zone 2,7746,Bidu
+9,Afar,78,Zone 3,715,Amibara
+9,Afar,78,Zone 3,716,Awash Fentale
+9,Afar,78,Zone 3,717,Gewane
+9,Afar,78,Zone 3,718,Mudayitu
+9,Afar,78,Zone 3,719,Dulecha
+9,Afar,78,Zone 3,720,Bure
+9,Afar,78,Zone 3,721,Argoba Special
 9,Afar,78,Zone 3,7747,Awash Ketema Astedader
 9,Afar,78,Zone 3,7748,Gelalo
 9,Afar,78,Zone 3,7749,Canruka
-3,Oromiya Region,26,East Hararge Zone,775,Bedeno Wereda
+9,Afar,79,Zone 4,722,Awura
+9,Afar,79,Zone 4,723,Ewa
+9,Afar,79,Zone 4,724,Teru
+9,Afar,79,Zone 4,725,Yalo
+9,Afar,79,Zone 4,726,Golina
+9,Afar,80,Zone 5,727,Telalak
+9,Afar,80,Zone 5,728,Semurobina Gelalo
+9,Afar,80,Zone 5,729,Dawe
+9,Afar,80,Zone 5,730,Dalifagi
+9,Afar,80,Zone 5,731,Hadele Ale
 9,Afar,80,Zone 5,7750,Yangudi
-3,Oromiya Region,25,West Hararge Zone,776,Bedesa Wereda
-8,Somali Region,75,Liben Zone,777,Deka Suftu Wereda
-8,Somali Region,74,Afder Zone,778,Rasso Wereda
-8,Somali Region,69,Deghabur  Zone,779,Arareso Wereda
-1,AMHARA REGION,5,North Shewa Zone,78,Hagere Mariam Kesem Wereda
-8,Somali Region,68,Jijiga  Zone,780,Tulu Guled Wereda
-8,Somali Region,67,Shinile Zone,781,Mieso Wereda
-8,Somali Region,69,Deghabur  Zone,782,Deghabur Wereda
-1,AMHARA REGION,5,North Shewa Zone,79,Bereket Wereda
-1,AMHARA REGION,4,South Wello Zone,793,Jama Wereda
-6,SNNP,85,HALABA SPECIAL WEREDA,794,HALABA SPECIAL WEREDA
-6,SNNP,85,HALABA SPECIAL WEREDA,795,HALLABA KULITO TOWN
-6,SNNP,55,SOUTH OMO ZONE,796,Jinka Wereda
-5,Addis Ababa,47,Addis ketema sub city,797,01
-5,Addis Ababa,47,Addis ketema sub city,798,02
-5,Addis Ababa,47,Addis ketema sub city,799,03
-1,AMHARA REGION,1,North Gonder Zone,8,Lay Armachocho Wereda
-5,Addis Ababa,47,Addis ketema sub city,800,04
-5,Addis Ababa,47,Addis ketema sub city,801,05
-5,Addis Ababa,47,Addis ketema sub city,802,06
-5,Addis Ababa,47,Addis ketema sub city,803,07
-5,Addis Ababa,47,Addis ketema sub city,804,08
-5,Addis Ababa,47,Addis ketema sub city,805,09
-5,Addis Ababa,47,Addis ketema sub city,806,10
-5,Addis Ababa,40,Akaki kality sub city,807,01
-5,Addis Ababa,40,Akaki kality sub city,808,02
-5,Addis Ababa,40,Akaki kality sub city,809,03
-1,AMHARA REGION,5,North Shewa Zone,81,Basona Werana Wereda
-5,Addis Ababa,40,Akaki kality sub city,810,04
-5,Addis Ababa,40,Akaki kality sub city,811,05
-5,Addis Ababa,40,Akaki kality sub city,812,06
-5,Addis Ababa,40,Akaki kality sub city,813,07
-5,Addis Ababa,40,Akaki kality sub city,814,08
-5,Addis Ababa,40,Akaki kality sub city,815,09
-5,Addis Ababa,40,Akaki kality sub city,816,10
-5,Addis Ababa,40,Akaki kality sub city,817,11
-5,Addis Ababa,46,Arada sub city,818,01
-5,Addis Ababa,46,Arada sub city,819,02
-1,AMHARA REGION,5,North Shewa Zone,82,Debre Bergab/Town/Wereda
-5,Addis Ababa,46,Arada sub city,820,03
-5,Addis Ababa,46,Arada sub city,821,04
-5,Addis Ababa,46,Arada sub city,822,05
-5,Addis Ababa,46,Arada sub city,823,06
-5,Addis Ababa,46,Arada sub city,824,07
-5,Addis Ababa,46,Arada sub city,825,08
-5,Addis Ababa,46,Arada sub city,826,09
-5,Addis Ababa,46,Arada sub city,827,10
-5,Addis Ababa,81,Bole Sub City,828,01
-5,Addis Ababa,81,Bole Sub City,829,02
-1,AMHARA REGION,5,North Shewa Zone,83,Menz Keya Gebreal Wereda
-5,Addis Ababa,81,Bole Sub City,830,03
-5,Addis Ababa,81,Bole Sub City,831,04
-5,Addis Ababa,81,Bole Sub City,832,05
-5,Addis Ababa,81,Bole Sub City,833,06
-5,Addis Ababa,81,Bole Sub City,834,07
-5,Addis Ababa,81,Bole Sub City,835,08
-5,Addis Ababa,81,Bole Sub City,836,09
-5,Addis Ababa,81,Bole Sub City,837,10
-5,Addis Ababa,81,Bole Sub City,838,11
-5,Addis Ababa,81,Bole Sub City,839,12
-1,AMHARA REGION,5,North Shewa Zone,84,Menz Lalo Wereda
-5,Addis Ababa,81,Bole Sub City,840,13
-5,Addis Ababa,81,Bole Sub City,841,14
-5,Addis Ababa,43,Gulele sub city,842,01
-5,Addis Ababa,43,Gulele sub city,843,02
-5,Addis Ababa,43,Gulele sub city,844,03
-5,Addis Ababa,43,Gulele sub city,845,04
-5,Addis Ababa,43,Gulele sub city,846,05
-5,Addis Ababa,43,Gulele sub city,847,06
-5,Addis Ababa,43,Gulele sub city,848,07
-5,Addis Ababa,43,Gulele sub city,849,08
-1,AMHARA REGION,5,North Shewa Zone,85,Saya Debirna Wayu Wereda
-5,Addis Ababa,43,Gulele sub city,850,09
-5,Addis Ababa,43,Gulele sub city,851,10
-5,Addis Ababa,45,Kirkos sub city,852,01
-5,Addis Ababa,45,Kirkos sub city,853,02
-5,Addis Ababa,45,Kirkos sub city,854,03
-5,Addis Ababa,45,Kirkos sub city,855,04
-5,Addis Ababa,45,Kirkos sub city,856,05
-5,Addis Ababa,45,Kirkos sub city,857,06
-5,Addis Ababa,45,Kirkos sub city,858,07
-5,Addis Ababa,45,Kirkos sub city,859,08
-5,Addis Ababa,45,Kirkos sub city,860,09
-5,Addis Ababa,45,Kirkos sub city,861,10
-5,Addis Ababa,45,Kirkos sub city,862,11
-5,Addis Ababa,44,Lideta sub city,863,01
-5,Addis Ababa,44,Lideta sub city,864,02
-5,Addis Ababa,44,Lideta sub city,865,03
-5,Addis Ababa,44,Lideta sub city,866,04
-5,Addis Ababa,44,Lideta sub city,867,05
-5,Addis Ababa,44,Lideta sub city,868,06
-5,Addis Ababa,44,Lideta sub city,869,07
-5,Addis Ababa,44,Lideta sub city,870,08
-5,Addis Ababa,44,Lideta sub city,871,09
-5,Addis Ababa,44,Lideta sub city,872,10
-5,Addis Ababa,41,Nefas silk lafto sub city,873,01
-5,Addis Ababa,41,Nefas silk lafto sub city,874,02
-5,Addis Ababa,41,Nefas silk lafto sub city,875,03
-5,Addis Ababa,41,Nefas silk lafto sub city,876,04
-5,Addis Ababa,41,Nefas silk lafto sub city,877,05
-5,Addis Ababa,41,Nefas silk lafto sub city,878,06
-5,Addis Ababa,41,Nefas silk lafto sub city,879,07
-5,Addis Ababa,41,Nefas silk lafto sub city,880,08
-5,Addis Ababa,41,Nefas silk lafto sub city,881,09
-5,Addis Ababa,41,Nefas silk lafto sub city,882,10
-5,Addis Ababa,41,Nefas silk lafto sub city,883,11
-5,Addis Ababa,41,Nefas silk lafto sub city,884,12
-5,Addis Ababa,48,Yeka sub city,885,01
-5,Addis Ababa,48,Yeka sub city,886,02
-5,Addis Ababa,48,Yeka sub city,887,03
-5,Addis Ababa,48,Yeka sub city,888,04
-5,Addis Ababa,48,Yeka sub city,889,05
-5,Addis Ababa,48,Yeka sub city,890,06
-5,Addis Ababa,48,Yeka sub city,891,07
-5,Addis Ababa,48,Yeka sub city,892,08
-5,Addis Ababa,48,Yeka sub city,893,09
-5,Addis Ababa,48,Yeka sub city,894,10
-5,Addis Ababa,48,Yeka sub city,895,11
-5,Addis Ababa,48,Yeka sub city,896,12
-5,Addis Ababa,48,Yeka sub city,897,13
-5,Addis Ababa,42,kolfe keraniyo sub city,898,01
-5,Addis Ababa,42,kolfe keraniyo sub city,899,02
-1,AMHARA REGION,1,North Gonder Zone,9,Wegera Wereda
-1,AMHARA REGION,6,East Gojjam Zone,90,Enarj Enawga Wereda
-5,Addis Ababa,42,kolfe keraniyo sub city,900,03
-5,Addis Ababa,42,kolfe keraniyo sub city,901,04
-5,Addis Ababa,42,kolfe keraniyo sub city,902,05
-5,Addis Ababa,42,kolfe keraniyo sub city,903,06
-5,Addis Ababa,42,kolfe keraniyo sub city,904,07
-5,Addis Ababa,42,kolfe keraniyo sub city,905,08
-5,Addis Ababa,42,kolfe keraniyo sub city,906,09
-5,Addis Ababa,42,kolfe keraniyo sub city,907,10
-5,Addis Ababa,42,kolfe keraniyo sub city,908,11
-5,Addis Ababa,42,kolfe keraniyo sub city,909,12
-5,Addis Ababa,42,kolfe keraniyo sub city,910,13
-5,Addis Ababa,42,kolfe keraniyo sub city,911,14
-5,Addis Ababa,42,kolfe keraniyo sub city,912,15
-8,Somali Region,71,Korahe Zone,913,Kudumbur Wereda
-8,Somali Region,71,Korahe Zone,914,Egilile Wereda
-8,Somali Region,71,Korahe Zone,915,Lakidenkel Wereda
-8,Somali Region,71,Korahe Zone,916,Eligaden Wereda
-8,Somali Region,71,Korahe Zone,917,Bodeley Wereda
-8,Somali Region,74,Afder Zone,918,Hargele Wereda
-8,Somali Region,74,Afder Zone,919,Chereti Wereda
-1,AMHARA REGION,6,East Gojjam Zone,92,Debay Tilategen Wereda
-8,Somali Region,74,Afder Zone,920,Elkere Wereda
-6,SNNP,61,DAWURO ZONE,921,Tercha city /Wereda
-1,AMHARA REGION,5,North Shewa Zone,922,Keyit Wereda
-3,Oromiya Region,24,Arsi zone,923,Kulla Wereda
-3,Oromiya Region,24,Arsi zone,924,Digelunatijo Wereda
-3,Oromiya Region,27,Bale Zone,925,Beltu Wereda
-1,AMHARA REGION,6,East Gojjam Zone,926,Bichena Town
-1,AMHARA REGION,6,East Gojjam Zone,927,Enemay Wereda
-1,AMHARA REGION,5,North Shewa Zone,928,Minjar Shenkora Wereda
-1,AMHARA REGION,6,East Gojjam Zone,929,Bibugn
-1,AMHARA REGION,6,East Gojjam Zone,93,Debre Elias Wereda
-1,AMHARA REGION,6,East Gojjam Zone,930,Enebissie sar mider
-1,AMHARA REGION,6,East Gojjam Zone,931,Huletueju enessie
-1,AMHARA REGION,6,East Gojjam Zone,932,Goncha Siso Enessie
-1,AMHARA REGION,1,North Gonder Zone,933,Adi Arkay Wereda
-5,Addis Ababa,48,Yeka sub city,934,Wereda 13( Hayat)
-3,Oromiya Region,17,West Wellega Zone,935,Letasibu
-6,SNNP,86,Segen people Zone,936,segen
-8,Somali Region,72,Fik Zone,937,Fik Woreda
-3,Oromiya Region,21,West shewa zone,938,Meta wlekite wereda
-3,Oromiya Region,21,West shewa zone,939,Liben Jawi
-1,AMHARA REGION,6,East Gojjam Zone,94,Machakel Wereda
-1,AMHARA REGION,6,East Gojjam Zone,95,Gozamin Wereda
-1,AMHARA REGION,6,East Gojjam Zone,96,Baso Liben Wereda
-1,AMHARA REGION,6,East Gojjam Zone,97,Awabel Wereda
-1,AMHARA REGION,6,East Gojjam Zone,98,Dejen Wereda
-3,Oromiya Region,26,East Hararge Zone,984,kumbi woreda
-5,Addis Ababa,40,Akaki kality sub city,986,Akaki kaliti Woreda 12
-5,Addis Ababa,40,Akaki kality sub city,987,Akaki kaliti 13
-1,AMHARA REGION,6,East Gojjam Zone,99,Shebele Berenta Wereda
-9,Afar,76,Zone 1,990,Adaar Rural Town
+10,Hareri Region,83,Harer Zone,650,Erer wereda
+10,Hareri Region,83,Harer Zone,747,Amir nur Wereda
+10,Hareri Region,83,Harer Zone,748,Jinela Wereda
+10,Hareri Region,83,Harer Zone,749,Hakim Wereda
+10,Hareri Region,83,Harer Zone,750,shenkor Wereda
+10,Hareri Region,83,Harer Zone,751,Abadir Wereda
+10,Hareri Region,83,Harer Zone,752,Aboker Wereda
+10,Hareri Region,83,Harer Zone,753,Dire teyara Wereda
+10,Hareri Region,83,Harer Zone,754,Sofi Wereda
+11,Diredawa city administration,84,Diredawa City administration,755,Diredawa City administration
+12,Sidama,89,Sidama,1000,Hawassa zurya
+12,Sidama,89,Sidama,1001,Boricha
+12,Sidama,89,Sidama,1002,Bilate zurya
+12,Sidama,89,Sidama,1003,Darara
+12,Sidama,89,Sidama,1004,Loka abaya
+12,Sidama,89,Sidama,1005,Aleta chuko
+12,Sidama,89,Sidama,1006,Aleta wondo City
+12,Sidama,89,Sidama,1007,Aleta wondo
+12,Sidama,89,Sidama,1008,Dale
+12,Sidama,89,Sidama,1009,Shebedino
+12,Sidama,89,Sidama,1010,Gorche
+12,Sidama,89,Sidama,1011,Leku city
+12,Sidama,89,Sidama,1012,Yirgalem city
+12,Sidama,89,Sidama,1013,Wonsho
+12,Sidama,89,Sidama,1014,Aleta chuko city
+12,Sidama,89,Sidama,1015,Wondogenet
+12,Sidama,89,Sidama,1016,Wondogenet city
+12,Sidama,89,Sidama,1017,Malga
+12,Sidama,89,Sidama,1018,Arbegona
+12,Sidama,89,Sidama,1019,Bona zurya
+12,Sidama,89,Sidama,1020,Bursa
+12,Sidama,89,Sidama,1021,Bensa
+12,Sidama,89,Sidama,1022,Dayye city
+12,Sidama,89,Sidama,1023,Hula
+12,Sidama,89,Sidama,1024,Teticha
+12,Sidama,89,Sidama,1025,Chirone
+12,Sidama,89,Sidama,1026,Aroressa
+12,Sidama,89,Sidama,1027,Hokko
+12,Sidama,89,Sidama,1028,Chabbe Ganbeletu
+12,Sidama,89,Sidama,1029,Chire
+12,Sidama,89,Sidama,1030,Shafamo
+12,Sidama,89,Sidama,1031,Hawela
+12,Sidama,89,Sidama,1032,Daella
+12,Sidama,89,Sidama,1033,Bura
+12,Sidama,89,Sidama,1034,Daarra
+12,Sidama,89,Sidama,1035,Dara Otilcho
+12,Sidama,89,Sidama,1036,Hawassa City Administration
+12,Sidama,6019,Hawassa City Admnistration,7234,Bahel Adarash
+12,Sidama,6019,Hawassa City Admnistration,7235,Adiss ketema
+12,Sidama,6019,Hawassa City Admnistration,7236,Tula
+12,Sidama,6019,Hawassa City Admnistration,7237,Haik Dar
+12,Sidama,6019,Hawassa City Admnistration,7238,Meneharya
+12,Sidama,6019,Hawassa City Admnistration,7239,Mehal
+12,Sidama,6019,Hawassa City Admnistration,7240,Misrak
+12,Sidama,6019,Hawassa City Admnistration,7241,Tabor
+12,Sidama,6020,Debubawi Sidama Zone,7242,Aleta Chuko City Administration
+12,Sidama,6020,Debubawi Sidama Zone,7243,Aleta Chuko
+12,Sidama,6020,Debubawi Sidama Zone,7244,Aleta Wendo
+12,Sidama,6020,Debubawi Sidama Zone,7245,Bursa
+12,Sidama,6020,Debubawi Sidama Zone,7246,Aleta Wendo City Administration
+12,Sidama,6020,Debubawi Sidama Zone,7247,Chirone
+12,Sidama,6020,Debubawi Sidama Zone,7248,Dara Kebado
+12,Sidama,6020,Debubawi Sidama Zone,7249,Dara Otilcho
+12,Sidama,6020,Debubawi Sidama Zone,7250,Teticha
+12,Sidama,6020,Debubawi Sidama Zone,7251,Hula
+12,Sidama,6021,Mehal Sidama Zone,7252,Arbegona
+12,Sidama,6021,Mehal Sidama Zone,7253,Dale
+12,Sidama,6021,Mehal Sidama Zone,7254,Darara
+12,Sidama,6021,Mehal Sidama Zone,7255,Loka Abaya
+12,Sidama,6021,Mehal Sidama Zone,7256,Shafamo
+12,Sidama,6021,Mehal Sidama Zone,7257,Wonsho
+12,Sidama,6021,Mehal Sidama Zone,7258,Yirgalem city administration
+12,Sidama,6022,Misrak Sidama Zone,7259,Aroresa
+12,Sidama,6022,Misrak Sidama Zone,7260,Bona Zuria
+12,Sidama,6022,Misrak Sidama Zone,7261,Bura
+12,Sidama,6022,Misrak Sidama Zone,7262,Chebe Gambeltu
+12,Sidama,6022,Misrak Sidama Zone,7263,Chire
+12,Sidama,6022,Misrak Sidama Zone,7264,Daela
+12,Sidama,6022,Misrak Sidama Zone,7265,Daye city administration
+12,Sidama,6022,Misrak Sidama Zone,7266,Hoko
+12,Sidama,6022,Misrak Sidama Zone,7267,Bensa
+13,South West,6001,Dawuro,7083,Tarecha
+13,South West,6001,Dawuro,7084,Mareka
+13,South West,6001,Dawuro,7085,Loma Bosa
+13,South West,6001,Dawuro,7086,Zaba Gazo
+13,South West,6001,Dawuro,7087,Mari-Mansa
+13,South West,6001,Dawuro,7088,Gena
+13,South West,6001,Dawuro,7089,Tocha
+13,South West,6001,Dawuro,7090,Esera
+13,South West,6001,Dawuro,7091,Kechi
+13,South West,6001,Dawuro,7092,Disa
+13,South West,6001,Dawuro,7093,Tarecha City Adminstration
+13,South West,6001,Dawuro,7094,Gesa Chare Town Adminstration
+13,South West,6002,Bench Sheko,7095,South Bench
+13,South West,6002,Bench Sheko,7096,Mizan-Aman City Adminstration
+13,South West,6002,Bench Sheko,7097,Siz City Adminstration
+13,South West,6002,Bench Sheko,7098,shey bench
+13,South West,6002,Bench Sheko,7099,Gibe bench
+13,South West,6002,Bench Sheko,7100,Nort bench
+13,South West,6002,Bench Sheko,7101,Sheko
+13,South West,6002,Bench Sheko,7102,Gurafereda
+13,South West,6003,Kafa,7103,Gibmo
+13,South West,6003,Kafa,7104,Shesho Ende
+13,South West,6003,Kafa,7105,Chena
+13,South West,6003,Kafa,7106,Goba
+13,South West,6003,Kafa,7107,Decha
+13,South West,6003,Kafa,7108,Cheta
+13,South West,6003,Kafa,7109,Gewata
+13,South West,6003,Kafa,7110,Saylem
+13,South West,6003,Kafa,7111,Telo
+13,South West,6003,Kafa,7112,Adeyo
+13,South West,6003,Kafa,7113,Gesha
+13,South West,6003,Kafa,7114,Bita
+13,South West,6003,Kafa,7115,Bonga City Adminstration
+13,South West,6003,Kafa,7116,Awerada City Adminstration
+13,South West,6003,Kafa,7117,Wacha City Adminstration
+13,South West,6003,Kafa,7118,Deka City Adminstration
+13,South West,6003,Kafa,7119,Sheshenda City Adminstration
+13,South West,6004,West Omo,7120,Gachet
+13,South West,6004,West Omo,7121,Me'enit Goldiya
+13,South West,6004,West Omo,7122,Me'enit Shasha
+13,South West,6004,West Omo,7123,Bero
+13,South West,6004,West Omo,7124,Gori Gesha
+13,South West,6004,West Omo,7125,Surma
+13,South West,6004,West Omo,7126,Maji
+13,South West,6004,West Omo,7127,Bachuma City Adminstration
+13,South West,6004,West Omo,7128,Jemu City Adminstration
+13,South West,6004,West Omo,7129,Maji Tum City Adminstration
+13,South West,6005,Sheka,7130,Masha
+13,South West,6005,Sheka,7131,Anderacha
+13,South West,6005,Sheka,7132,Yeki
+13,South West,6005,Sheka,7133,Masha City Adminstration
+13,South West,6005,Sheka,7134,Tepi City Adminstration
+13,South West,6006,Konta,7135,Ameya Zuriya
+13,South West,6006,Konta,7136,Konta Koysha
+13,South West,6006,Konta,7137,Ela anchano
+13,South West,6006,Konta,7138,Ameya City Adminstration
+13,South West,6006,Konta,7139,Cheda City Adminstration
+14,Centeral Ethiopia,5991,Kembata Zone,7001,Hadero City Administration
+14,Centeral Ethiopia,5991,Kembata Zone,7002,Damboya
+14,Centeral Ethiopia,5991,Kembata Zone,7003,Angacha
+14,Centeral Ethiopia,5991,Kembata Zone,7004,Denboya City Administration
+14,Centeral Ethiopia,5991,Kembata Zone,7005,Angacha City Administration
+14,Centeral Ethiopia,5991,Kembata Zone,7006,Mudula City Administration
+14,Centeral Ethiopia,5991,Kembata Zone,7007,Doyogena City Administration
+14,Centeral Ethiopia,5991,Kembata Zone,7008,Shinshicho City Administartion
+14,Centeral Ethiopia,5991,Kembata Zone,7009,Qacha Bira
+14,Centeral Ethiopia,5991,Kembata Zone,7010,Qedida Gamela
+14,Centeral Ethiopia,5991,Kembata Zone,7011,Hadero Tunto
+14,Centeral Ethiopia,5991,Kembata Zone,7012,Durame City Adminstration
+14,Centeral Ethiopia,5991,Kembata Zone,7013,Doyogena
+14,Centeral Ethiopia,5991,Kembata Zone,7014,Adilo
+14,Centeral Ethiopia,5992,Hadiya Zone,7015,Lemo
+14,Centeral Ethiopia,5992,Hadiya Zone,7016,Ameka
+14,Centeral Ethiopia,5992,Hadiya Zone,7017,Shone Town Administration
+14,Centeral Ethiopia,5992,Hadiya Zone,7018,Mierab Soro
+14,Centeral Ethiopia,5992,Hadiya Zone,7019,Soro
+14,Centeral Ethiopia,5992,Hadiya Zone,7020,Shashogo
+14,Centeral Ethiopia,5992,Hadiya Zone,7021,Misrak Badewacho
+14,Centeral Ethiopia,5992,Hadiya Zone,7022,Misha
+14,Centeral Ethiopia,5992,Hadiya Zone,7023,Mierab Badawacho
+14,Centeral Ethiopia,5992,Hadiya Zone,7024,Hossana Town Administration
+14,Centeral Ethiopia,5992,Hadiya Zone,7025,Gombora
+14,Centeral Ethiopia,5992,Hadiya Zone,7026,Gibe
+14,Centeral Ethiopia,5992,Hadiya Zone,7027,Duna
+14,Centeral Ethiopia,5992,Hadiya Zone,7028,Anlemo
+14,Centeral Ethiopia,5992,Hadiya Zone,7029,Fonko Town Administration
+14,Centeral Ethiopia,5992,Hadiya Zone,7030,Bonnosha Town Administration
+14,Centeral Ethiopia,5992,Hadiya Zone,7031,Homecho Town Administration
+14,Centeral Ethiopia,5992,Hadiya Zone,7032,Mierab Soro Town Administration
+14,Centeral Ethiopia,5992,Hadiya Zone,7033,Gimbichu Town Administration
+14,Centeral Ethiopia,5992,Hadiya Zone,7034,Jajura Town Administartion
+14,Centeral Ethiopia,5993,Gurage Zone,7035,Enor Ener Meger
+14,Centeral Ethiopia,5993,Gurage Zone,7036,Enor
+14,Centeral Ethiopia,5993,Gurage Zone,7037,Ezja
+14,Centeral Ethiopia,5993,Gurage Zone,7038,Gedebano Gutazer Welene
+14,Centeral Ethiopia,5993,Gurage Zone,7039,Gumer
+14,Centeral Ethiopia,5993,Gurage Zone,7040,Muhurna Aklil
+14,Centeral Ethiopia,5993,Gurage Zone,7041,Abeshege
+14,Centeral Ethiopia,5993,Gurage Zone,7042,Emdebir City Administration
+14,Centeral Ethiopia,5993,Gurage Zone,7043,Welkite City Administration
+14,Centeral Ethiopia,5993,Gurage Zone,7044,Geta
+14,Centeral Ethiopia,5993,Gurage Zone,7045,Endegagn
+14,Centeral Ethiopia,5993,Gurage Zone,7046,Cheha
+14,Centeral Ethiopia,5993,Gurage Zone,7047,Gunchere City Administration
+14,Centeral Ethiopia,5993,Gurage Zone,7048,Agena City Administration
+14,Centeral Ethiopia,5993,Gurage Zone,7049,Arekit City Administartion
+14,Centeral Ethiopia,5994,Halaba,7050,Wera Zuriya
+14,Centeral Ethiopia,5994,Halaba,7051,Atoti Ulo
+14,Centeral Ethiopia,5994,Halaba,7052,Wera Dijo
+14,Centeral Ethiopia,5994,Halaba,7053,Qulito City Administration
+14,Centeral Ethiopia,5995,Yem,7054,Fofa
+14,Centeral Ethiopia,5995,Yem,7055,Toba
+14,Centeral Ethiopia,5995,Yem,7056,Deri Saja
+14,Centeral Ethiopia,5995,Yem,7057,Saja City Administration
+14,Centeral Ethiopia,5996,East Gurage,7058,Sodo
+14,Centeral Ethiopia,5996,East Gurage,7059,Enseno Town Administration
+14,Centeral Ethiopia,5996,East Gurage,7060,Buee Town Administration
+14,Centeral Ethiopia,5996,East Gurage,7061,Butajira Town Administration
+14,Centeral Ethiopia,5996,East Gurage,7062,Meskane
+14,Centeral Ethiopia,5996,East Gurage,7063,South Sodo
+14,Centeral Ethiopia,5996,East Gurage,7064,Misrak Meskan
+14,Centeral Ethiopia,5997,Silte Zone,7065,Dalocha
+14,Centeral Ethiopia,5997,Silte Zone,7066,Silti
+14,Centeral Ethiopia,5997,Silte Zone,7067,Kibet City Administration
+14,Centeral Ethiopia,5997,Silte Zone,7068,Misrak Silti
+14,Centeral Ethiopia,5997,Silte Zone,7069,Werabe City Administration
+14,Centeral Ethiopia,5997,Silte Zone,7070,Hulbereg
+14,Centeral Ethiopia,5997,Silte Zone,7071,Sankura
+14,Centeral Ethiopia,5997,Silte Zone,7072,Lanfro
+14,Centeral Ethiopia,5997,Silte Zone,7073,Dalocha City Administration
+14,Centeral Ethiopia,5997,Silte Zone,7074,Alicho weriro
+14,Centeral Ethiopia,5997,Silte Zone,7075,Mito
+14,Centeral Ethiopia,5997,Silte Zone,7076,Tora City Administration
+14,Centeral Ethiopia,5997,Silte Zone,7077,Alem Gebeya City Administration
+14,Centeral Ethiopia,5997,Silte Zone,7078,Misrak Azernet Berbere
+14,Centeral Ethiopia,5997,Silte Zone,7079,Mierab Azernet Berbere
+14,Centeral Ethiopia,5998,Qebena Special Wereda,7080,Qebena Special Wereda
+14,Centeral Ethiopia,5999,Tembaro Special Wereda,7081,Tembaro Special Wereda
+14,Centeral Ethiopia,6000,Mareqo Special Wereda,7082,Mareqo Special Wereda
+15,South Ethiopia,6007,Gamo Zone,7140,Kogota Woreda
+15,South Ethiopia,6007,Gamo Zone,7141,Gerese City Administration
+15,South Ethiopia,6007,Gamo Zone,7142,Gacho Baba Woreda
+15,South Ethiopia,6007,Gamo Zone,7143,Arba Minch City Administration
+15,South Ethiopia,6007,Gamo Zone,7144,Birbir City Administration
+15,South Ethiopia,6007,Gamo Zone,7146,Arba Minch Zuriya Woreda
+15,South Ethiopia,6007,Gamo Zone,7147,Chencha Zuriya Woreda
+15,South Ethiopia,6007,Gamo Zone,7148,Chencha City Administration
+15,South Ethiopia,6007,Gamo Zone,7149,Kucha Alfa
+15,South Ethiopia,6007,Gamo Zone,7150,Boreda Woreda
+15,South Ethiopia,6007,Gamo Zone,7151,Deramalo Woreda
+15,South Ethiopia,6007,Gamo Zone,7152,Kemba City Administration
+15,South Ethiopia,6007,Gamo Zone,7153,Garda Marta Woreda
+15,South Ethiopia,6007,Gamo Zone,7154,Bonke Woreda
+15,South Ethiopia,6007,Gamo Zone,7155,Selamber City Administration
+15,South Ethiopia,6007,Gamo Zone,7156,Mierab Abaya Woreda
+15,South Ethiopia,6007,Gamo Zone,7157,Dita Woreda
+15,South Ethiopia,6007,Gamo Zone,7158,Kucha Woreda
+15,South Ethiopia,6007,Gamo Zone,7159,Kemba Zuriya Woreda
+15,South Ethiopia,6007,Gamo Zone,7160,Gerese Woreda
+15,South Ethiopia,6008,Gedeo,7161,Bule Woreda
+15,South Ethiopia,6008,Gedeo,7162,Dilla City Administration
+15,South Ethiopia,6008,Gedeo,7163,Dilla Zuriya Woreda
+15,South Ethiopia,6008,Gedeo,7164,Gedeb City Administration
+15,South Ethiopia,6008,Gedeo,7165,Kochere Woreda
+15,South Ethiopia,6008,Gedeo,7166,Yirgachefe City Administration
+15,South Ethiopia,6008,Gedeo,7167,Chelelektu City Administration
+15,South Ethiopia,6008,Gedeo,7168,Yirgachefe Woreda
+15,South Ethiopia,6008,Gedeo,7169,Gedeb Woreda
+15,South Ethiopia,6008,Gedeo,7170,Chorso Woreda
+15,South Ethiopia,6008,Gedeo,7171,Repe Woreda
+15,South Ethiopia,6008,Gedeo,7172,Wenago City Administration
+15,South Ethiopia,6009,Gofa,7173,Melo Koza Woreda
+15,South Ethiopia,6009,Gofa,7174,Melo Gada Woreda
+15,South Ethiopia,6009,Gofa,7175,Demba Gofa Woreda
+15,South Ethiopia,6009,Gofa,7176,Geze Gofa Woreda
+15,South Ethiopia,6009,Gofa,7177,Bulqi City Adminstration
+15,South Ethiopia,6009,Gofa,7178,Oyda Woreda
+15,South Ethiopia,6009,Gofa,7179,Sawula City Adminstration
+15,South Ethiopia,6009,Gofa,7180,Zala Woreda
+15,South Ethiopia,6009,Gofa,7181,Uba Debre Tsehay Woreda
+15,South Ethiopia,6009,Gofa,7182,Laha City Adminstration
+15,South Ethiopia,6009,Gofa,7183,Beto City Adminstration
+15,South Ethiopia,6010,Konso,7184,Segen Zuriya Woreda
+15,South Ethiopia,6010,Konso,7185,Karat Zuriya Woreda
+15,South Ethiopia,6010,Konso,7186,Kena Woreda
+15,South Ethiopia,6010,Konso,7187,Karat City Adminstration
+15,South Ethiopia,6010,Konso,7188,Kolme Woreda
+15,South Ethiopia,6011,Ari,7189,Jinka City Administration
+15,South Ethiopia,6011,Ari,7190,Gelila City Administration
+15,South Ethiopia,6011,Ari,7191,Debub Ari Woreda
+15,South Ethiopia,6011,Ari,7192,Semen Ari Woreda
+15,South Ethiopia,6011,Ari,7193,Woba Ari Woreda
+15,South Ethiopia,6011,Ari,7194,Bakadawla Ari Woreda
+15,South Ethiopia,6012,South Omo,7195,Bena Tsemay Woreda
+15,South Ethiopia,6012,South Omo,7196,Hamer Woreda
+15,South Ethiopia,6012,South Omo,7197,Male Woreda
+15,South Ethiopia,6012,South Omo,7198,Gnangatom Woreda
+15,South Ethiopia,6012,South Omo,7199,Salamago Woreda
+15,South Ethiopia,6012,South Omo,7200,Dasenech Woreda
+15,South Ethiopia,6012,South Omo,7201,Turmi City Administration
+15,South Ethiopia,6013,Basketo,7202,Laska Zuriya Woreda
+15,South Ethiopia,6013,Basketo,7203,Laska City Administration
+15,South Ethiopia,6014,Gardula,7204,Gidole City Administration
+15,South Ethiopia,6014,Gardula,7205,Derashe Woreda
+15,South Ethiopia,6015,Koore,7206,Gorka Woreda
+15,South Ethiopia,6015,Koore,7207,Kele City Administration
+15,South Ethiopia,6015,Koore,7208,Sarmale Woreda
+15,South Ethiopia,6016,Burji,7209,Soyama Zuriya Woreda
+15,South Ethiopia,6016,Burji,7210,Soyama City Administration
+15,South Ethiopia,6017,Wolayita,7211,Offa Woreda
+15,South Ethiopia,6017,Wolayita,7212,Humbo Woreda
+15,South Ethiopia,6017,Wolayita,7213,Damot Gale Woreda
+15,South Ethiopia,6017,Wolayita,7214,Boloso Bombe Woreda
+15,South Ethiopia,6017,Wolayita,7215,Boloso Sore Woreda
+15,South Ethiopia,6017,Wolayita,7216,Damot Fulasa Woreda
+15,South Ethiopia,6017,Wolayita,7217,Damot Sore Woreda
+15,South Ethiopia,6017,Wolayita,7218,Damot Woyde Woreda
+15,South Ethiopia,6017,Wolayita,7219,Duguna Fango Woreda
+15,South Ethiopia,6017,Wolayita,7220,Kindo Didaye Woreda
+15,South Ethiopia,6017,Wolayita,7221,Kawo Koyisha Woreda
+15,South Ethiopia,6017,Wolayita,7222,Sodo Zuriya Woreda
+15,South Ethiopia,6017,Wolayita,7223,Areka City Administration
+15,South Ethiopia,6017,Wolayita,7224,Boditi City Adminstration
+15,South Ethiopia,6017,Wolayita,7225,Sodo City Administration
+15,South Ethiopia,6017,Wolayita,7226,Bayira Koysha Woreda
+15,South Ethiopia,6017,Wolayita,7227,Hobicha Woreda
+15,South Ethiopia,6017,Wolayita,7228,Tebela City Administration
+15,South Ethiopia,6017,Wolayita,7229,Abala Abaya
+15,South Ethiopia,6017,Wolayita,7230,Gesuba City Administration
+15,South Ethiopia,6017,Wolayita,7231,Gununo Hamus City Administration
+15,South Ethiopia,6017,Wolayita,7232,Bele Awasa City Administration
+15,South Ethiopia,6018,Ale,7233,Ale

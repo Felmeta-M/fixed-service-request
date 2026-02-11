@@ -29,5 +29,6 @@ class DatabaseSeeder extends Seeder
         // $this->call(TelecomRegionSeeder::class);
         // $this->call(NumberPoolSeeder::class);
         // $this->call(TroubleTicketReasonSeeder::class);
+        // $this->call(EthioShopsTableSeeder::class);
     }
 }

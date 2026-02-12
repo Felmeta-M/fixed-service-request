@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\Auth;
 use RuntimeException;
 use Throwable;
 use App\Support\CustomerContext;
-
 /**
  * Base service for manual survey orders (Fixed Data, Fixed Voice, Fixed Combo).
  *

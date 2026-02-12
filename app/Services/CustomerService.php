@@ -21,12 +21,11 @@ class CustomerService extends BaseApiService
     public function createCustomer(array $data)
     {
         try {
-            // Get dynamic zone code from customer's selected zone_id (not from logged-in user)
-            $zoneId = CustomerContext::code() ?? $data['zone'] ?? $data['address']['zone'] ?? null;
-            if (!$zoneId) {
-                throw new RuntimeException('Zone is required to create a customer profile.');
-            }
-            $data['ethio_zone_or_region'] = $this->getZoneCodeById($zoneId);
+            // $zoneId = CustomerContext::code() ?? $data['zone'] ?? $data['address']['zone'] ?? null;
+            // if (!$zoneId) {
+            //     throw new RuntimeException('Zone is required to create a customer profile.');
+            // }
+            $data['ethio_zone_or_region'] = '25'; // $this->getZoneCodeById($zoneId);
             $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
 

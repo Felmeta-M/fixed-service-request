@@ -1,4 +1,4 @@
-﻿region_code,region_name,zone_code,zone_name,wereda_code,woreda_name,telecom_region
+﻿region_id,region_name,zone_id,zone_name,wereda_id,wereda_name,zone_code
 1,AMHARA REGION,1,North Gonder Zone,10,Gondar Zuriya Wereda,NWR
 1,AMHARA REGION,6,East Gojjam Zone,100,Debre Markos /Town/ Wereda,NWR
 12,Sidama,89,Sidama,1000,Hawassa zurya,
@@ -950,7 +950,6 @@
 15,South Ethiopia,6007,Gamo Zone,7142,Gacho Baba Woreda,
 15,South Ethiopia,6007,Gamo Zone,7143,Arba Minch City Administration,
 15,South Ethiopia,6007,Gamo Zone,7144,Birbir City Administration,
-15,South Ethiopia,6007,Gamo Zone,7145,Gerese City Administration,
 15,South Ethiopia,6007,Gamo Zone,7146,Arba Minch Zuriya Woreda,
 15,South Ethiopia,6007,Gamo Zone,7147,Chencha Zuriya Woreda,
 15,South Ethiopia,6007,Gamo Zone,7148,Chencha City Administration,
@@ -1533,7 +1532,6 @@
 6,SNNP,58,GAMO GOFA ZONE,7678,Kogota Woreda,
 6,SNNP,58,GAMO GOFA ZONE,7679,Gerese Woreda,
 1,AMHARA REGION,3,North Wello Zone,768,Habru Wereda,NER
-6,SNNP,58,GAMO GOFA ZONE,7680,Gerese City Administration,
 6,SNNP,58,GAMO GOFA ZONE,7681,Gacho Baba Woreda,
 6,SNNP,58,GAMO GOFA ZONE,7682,Birbir City Administration,
 6,SNNP,58,GAMO GOFA ZONE,7683,Gerese City Administration,

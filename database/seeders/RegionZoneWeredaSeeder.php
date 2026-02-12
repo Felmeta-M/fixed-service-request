@@ -2,95 +2,178 @@
 
 namespace Database\Seeders;
 
-use App\Models\Region;
-use App\Models\Wereda;
-use App\Models\Zone;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 class RegionZoneWeredaSeeder extends Seeder
 {
+    private const CHUNK_SIZE = 500;
+
     public function run(): void
     {
-        $path = database_path('Address_Hierarchy _listed.csv');
-        if (!is_readable($path)) {
-            $this->command?->error("CSV not found: {$path}");
+        $path = database_path('address_hierarchy_final.csv');
+
+        if (!file_exists($path)) {
+            $this->command->error('CSV file not found.');
             return;
         }
 
-        // CSV lines 1072–1788 (SNNP, Benshangul, Somali, Afar, Hareri, Diredawa, Sidama, South West, Central/South Ethiopia); no truncate
-        $rows = $this->readCsv($path, 1072, 1788);
-        if (empty($rows)) {
-            $this->command?->warn('No rows in CSV range 1072–1788.');
+        $headers = [
+            'region_id',
+            'region_name',
+            'zone_id',
+            'zone_name',
+            'wereda_id',
+            'wereda_name',
+            'zone_code'
+        ];
+
+        $regions = [];
+        $zones = [];
+        $weredas = [];
+
+        $now = now();
+        $skipped = 0;
+        $rowNumber = 0;
+
+        if (($file = fopen($path, 'r')) === false) {
+            $this->command->error('Failed to open CSV file.');
             return;
         }
 
-        Model::unguarded(function () use ($rows) {
-            foreach ($rows as $record) {
-                $regionId = (int) $record['region_id'];
-                $zoneId = (int) $record['zone_id'];
-                $weredaId = (int) $record['wereda_id'];
+        // Skip header row
+        fgetcsv($file);
 
-                $region = Region::updateOrCreate(
-                    ['id' => $regionId],
-                    ['name' => Str::title(trim($record['region_name'] ?? ''))]
-                );
+        while (($row = fgetcsv($file)) !== false) {
+            $rowNumber++;
 
-                $zone = Zone::updateOrCreate(
-                    ['id' => $zoneId],
-                    [
-                        'name' => Str::title(trim($record['zone_name'] ?? '')),
-                        'region_id' => $region->id,
-                    ]
-                );
+            try {
+                // Normalize row length
+                $row = array_slice(array_pad($row, count($headers), null), 0, count($headers));
+                $data = array_combine($headers, $row);
 
-                Wereda::updateOrCreate(
-                    ['id' => $weredaId],
-                    [
-                        'name' => Str::title(trim($record['wereda_name'] ?? '')),
-                        'region_id' => $region->id,
-                        'zone_id' => $zone->id,
-                    ]
-                );
+                // Validate IDs
+                $regionId = filter_var(trim($data['region_id']), FILTER_VALIDATE_INT);
+                $zoneId   = filter_var(trim($data['zone_id']), FILTER_VALIDATE_INT);
+                $weredaId = filter_var(trim($data['wereda_id']), FILTER_VALIDATE_INT);
+
+                if ($regionId === false || $zoneId === false || $weredaId === false) {
+                    throw new \Exception('Invalid numeric IDs');
+                }
+
+                // Clean text values
+                $regionName = $this->cleanName($data['region_name']);
+                $zoneName   = $this->cleanName($data['zone_name']);
+                $weredaName = $this->cleanName($data['wereda_name']);
+
+
+                $zoneCode = !empty(trim($data['zone_code'] ?? ''))
+                    ? strtoupper(trim($data['zone_code']))
+                    : null;
+
+                /*
+                 |--------------------------------------------------------------------------
+                 | Regions
+                 |--------------------------------------------------------------------------
+                 */
+                if (!isset($regions[$regionId])) {
+                    $regions[$regionId] = [
+                        'id' => $regionId,
+                        'name' => $regionName,
+                        'status' => true,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+
+                /*
+                 |--------------------------------------------------------------------------
+                 | Zones
+                 |--------------------------------------------------------------------------
+                 */
+                if (!isset($zones[$zoneId])) {
+                    $zones[$zoneId] = [
+                        'id' => $zoneId,
+                        'region_id' => $regionId,
+                        'name' => $zoneName,
+                        'zone_code' => $zoneCode,
+                        'status' => true,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+
+                /*
+                 |--------------------------------------------------------------------------
+                 | Weredas
+                 |--------------------------------------------------------------------------
+                 */
+                if (!isset($weredas[$weredaId])) {
+                    $weredas[$weredaId] = [
+                        'id' => $weredaId,
+                        'zone_id' => $zoneId,
+                        'region_id' => $regionId,
+                        'name' => $weredaName,
+                        'status' => true,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                }
+            } catch (Throwable $e) {
+                $skipped++;
+
+                Log::warning("Seeder row skipped at {$rowNumber}: {$e->getMessage()}");
+
+                continue;
             }
+        }
+
+        fclose($file);
+
+        // Insert using transaction
+        DB::transaction(function () use ($regions, $zones, $weredas) {
+
+            $this->upsert('regions', $regions, ['id'], ['name', 'status', 'updated_at']);
+
+            $this->upsert('zones', $zones, ['id'], [
+                'name',
+                'region_id',
+                'zone_code',
+                'status',
+                'updated_at'
+            ]);
+
+            $this->upsert('weredas', $weredas, ['id'], [
+                'name',
+                'zone_id',
+                'region_id',
+                'status',
+                'updated_at'
+            ]);
         });
 
-        $this->command?->info('Seeded CSV 1072–1788 (no truncate): ' . count($rows) . ' rows → ' . Region::count() . ' regions, ' . Zone::count() . ' zones, ' . Wereda::count() . ' weredas total.');
+        $this->command->info('Regions: ' . count($regions));
+        $this->command->info('Zones: ' . count($zones));
+        $this->command->info('Weredas: ' . count($weredas));
+        $this->command->info("Skipped rows: {$skipped}");
     }
 
-    /** @param int|null $startLine 1-based inclusive, $endLine 1-based inclusive */
-    private function readCsv(string $path, ?int $startLine = null, ?int $endLine = null): array
+    private function upsert(string $table, array $data, array $uniqueBy, array $updateColumns): void
     {
-        $rows = [];
-        $handle = fopen($path, 'r');
-        if (!$handle) {
-            return $rows;
+        foreach (array_chunk(array_values($data), self::CHUNK_SIZE) as $chunk) {
+            DB::table($table)->upsert($chunk, $uniqueBy, $updateColumns);
         }
+    }
 
-        $header = array_map('trim', (array) fgetcsv($handle));
-        $n = count($header);
-        $lineNumber = 1;
-
-        while (($row = fgetcsv($handle)) !== false) {
-            $lineNumber++;
-            if ($startLine !== null && $lineNumber < $startLine) {
-                continue;
-            }
-            if ($endLine !== null && $lineNumber > $endLine) {
-                break;
-            }
-
-            $row = array_map('trim', $row);
-            $row = count($row) < $n ? array_pad($row, $n, '') : array_slice($row, 0, $n);
-            $record = array_combine($header, $row);
-            if (trim($record['region_id'] ?? '') === '' || trim($record['zone_id'] ?? '') === '' || trim($record['wereda_id'] ?? '') === '') {
-                continue;
-            }
-            $rows[] = $record;
-        }
-
-        fclose($handle);
-        return $rows;
+    private function cleanName(?string $value): string
+    {
+        return Str::of($value ?? '')
+            ->replace('/', ' ')          // Replace all slashes with space
+            ->replaceMatches('/\s+/', ' ') // Remove multiple spaces
+            ->trim()
+            ->title();                  // Proper case
     }
 }

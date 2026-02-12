@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import MainLayout from '@/layouts/main-layout';
 import { router, usePage } from '@inertiajs/react';
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCreateSurvey } from '@/hooks/use-api-mutations';
 import { toast } from 'sonner';
 
@@ -78,6 +78,7 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
 
     const [manualFlowErrors, setManualFlowErrors] = useState<Record<string, string>>({});
     const [submitting, setSubmitting] = useState(false);
+    const submitGuardRef = useRef(false);
     const createSurveyMutation = useCreateSurvey();
 
     // Initialize form data from user if not provided
@@ -111,12 +112,15 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (submitGuardRef.current || createSurveyMutation.isPending) return;
+        submitGuardRef.current = true;
         setManualFlowErrors({});
         setSubmitting(true);
 
         // Validate phone number
         const phoneError = validatePhoneNumber(manualFlowData.phone);
         if (phoneError) {
+            submitGuardRef.current = false;
             setManualFlowErrors({ phone: phoneError });
             setSubmitting(false);
             return;
@@ -124,6 +128,7 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
 
         // Validate address
         if (!formData.address || !formData.address.trim()) {
+            submitGuardRef.current = false;
             setManualFlowErrors({ address: 'Location address is required' });
             setSubmitting(false);
             return;
@@ -131,6 +136,7 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
 
         // Validate location coordinates
         if (!formData.latitude || !formData.longitude || formData.latitude === 0 || formData.longitude === 0) {
+            submitGuardRef.current = false;
             setManualFlowErrors({ address: 'Please select a valid location on the map' });
             setSubmitting(false);
             return;
@@ -181,6 +187,8 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
 
         createSurveyMutation.mutate(submitData, {
             onSuccess: (response) => {
+                submitGuardRef.current = false;
+                setSubmitting(false);
                 const responseData = response.data;
                 const { customer_survey_order_id: surveyId } = responseData;
 
@@ -208,14 +216,13 @@ export default function ManualCreatePage({ googleMapsApiKey, formData: initialFo
                     duration: 5000,
                 });
 
-                setSubmitting(false);
-
                 // Navigate to services page after a brief delay
                 setTimeout(() => {
                     router.visit(route('services'));
                 }, 1500);
             },
             onError: (error: Error) => {
+                submitGuardRef.current = false;
                 toast.dismiss(submissionToast);
                 const errorMessage = error.message || 'Failed to create your service request. Please try again.';
                 toast.error(errorMessage, {

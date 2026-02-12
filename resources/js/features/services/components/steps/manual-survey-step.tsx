@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { useCreateSurvey } from '@/hooks/use-api-mutations';
 import { router, usePage } from '@inertiajs/react';
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 interface AuthUser {
@@ -67,6 +67,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
 
     const [manualFlowErrors, setManualFlowErrors] = useState<Record<string, string>>({});
     const [submitting, setSubmitting] = useState(false);
+    const submitGuardRef = useRef(false);
 
     const createSurveyMutation = useCreateSurvey();
 
@@ -127,6 +128,8 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (submitGuardRef.current || createSurveyMutation.isPending) return;
+        submitGuardRef.current = true;
         setManualFlowErrors({});
         setSubmitting(true);
 
@@ -134,17 +137,20 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
 
         if (isMinimal) {
             if (!formData.serviceType || !formData.serviceType.trim()) {
+                submitGuardRef.current = false;
                 setSubmitting(false);
                 setManualFlowErrors({ serviceType: 'Please select a service type' });
                 return;
             }
             if (!manualFlowData.name?.trim()) {
+                submitGuardRef.current = false;
                 setSubmitting(false);
                 setManualFlowErrors({ name: 'Contact name is required' });
                 return;
             }
             const phoneError = validatePhoneNumber(manualFlowData.phone);
             if (phoneError) {
+                submitGuardRef.current = false;
                 setSubmitting(false);
                 setManualFlowErrors({ phone: phoneError });
                 return;
@@ -155,6 +161,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                 formData.latitude === 0 ||
                 formData.longitude === 0
             ) {
+                submitGuardRef.current = false;
                 setSubmitting(false);
                 toast.error('Location is required', {
                     description: 'Latitude and longitude from your selected location are needed.',
@@ -183,6 +190,8 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
 
             createSurveyMutation.mutate(submitData, {
                 onSuccess: (response: any) => {
+                    submitGuardRef.current = false;
+                    setSubmitting(false);
                     const responseData = response.data;
                     const { customer_survey_order_id: surveyId } = responseData;
                     const serviceTypes: Record<string, string> = {
@@ -209,6 +218,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                     setTimeout(() => router.visit(route('services')), 1500);
                 },
                 onError: (error: Error) => {
+                    submitGuardRef.current = false;
                     toast.dismiss(submissionToast);
                     const errorData = (error as any).data;
                     if (errorData?.errors) {
@@ -226,11 +236,13 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
 
         // Full manual flow validation (bandwidth is fixed at 7M)
         if (!formData.serviceType || !formData.serviceType.trim()) {
+            submitGuardRef.current = false;
             setManualFlowErrors({ serviceType: 'Please select a service type' });
             setSubmitting(false);
             return;
         }
         if (!manualFlowData.name?.trim()) {
+            submitGuardRef.current = false;
             setManualFlowErrors({ name: 'Contact name is required' });
             setSubmitting(false);
             return;
@@ -238,12 +250,14 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
 
         const phoneError = validatePhoneNumber(manualFlowData.phone);
         if (phoneError) {
+            submitGuardRef.current = false;
             setManualFlowErrors({ phone: phoneError });
             setSubmitting(false);
             return;
         }
 
         if (!formData.latitude || !formData.longitude || formData.latitude === 0 || formData.longitude === 0) {
+            submitGuardRef.current = false;
             setSubmitting(false);
             toast.error('Please select a valid location on the map', {
                 description: 'Please click on the map to select your installation location.',
@@ -273,6 +287,8 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
 
         createSurveyMutation.mutate(submitData, {
             onSuccess: (response) => {
+                submitGuardRef.current = false;
+                setSubmitting(false);
                 const responseData = response.data;
                 const { customer_survey_order_id: surveyId } = responseData;
 
@@ -308,6 +324,7 @@ export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveySte
                 }, 1500);
             },
             onError: (error: Error) => {
+                submitGuardRef.current = false;
                 toast.dismiss(submissionToast);
 
                 let errorMessage = error.message || 'Failed to create your service request. Please try again.';

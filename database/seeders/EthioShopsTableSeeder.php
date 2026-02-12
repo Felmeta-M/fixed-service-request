@@ -11,7 +11,7 @@ class EthioShopsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        $path = database_path('ethio_shops.csv');
+        $path = database_path('ethio_shops_v1.csv');
 
         if (!file_exists($path)) {
             $this->command->warn("CSV not found: {$path}");
@@ -90,7 +90,7 @@ class EthioShopsTableSeeder extends Seeder
     {
         $regionsByZone = TelecomRegion::active()
             ->get()
-            ->groupBy(fn ($r) => strtolower(trim($r->zone)));
+            ->groupBy(fn($r) => strtolower(trim($r->zone)));
 
         $updated = 0;
         foreach (DB::table('ethio_shops')->get() as $shop) {

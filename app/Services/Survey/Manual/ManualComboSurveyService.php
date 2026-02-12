@@ -4,7 +4,6 @@ namespace App\Services\Survey\Manual;
 
 use App\Enums\OfferId;
 use App\Exceptions\ExternalServiceException;
-use App\Support\CustomerContext;
 
 /**
  * Manual survey service for Fixed Combo (Voice + Data).
@@ -24,17 +23,6 @@ class ManualComboSurveyService extends BaseManualSurveyService
         $ctx = $this->getRequestContext($data);
         $cfg = $this->config;
         $bandwidth = $this->parseBandwidth($data['bandwidth'] ?? '');
-        $address = $this->getCustomerAddress();
-        $surveyAddressInfo = [
-            'administrative_region_or_city' => $data['survey_address_info']['region_city'] ?? $address['city'],
-            'subcity_or_zone' => $data['survey_address_info']['subcity_zone'] ?? $address['zone'],
-            'wereda_or_town' => $data['survey_address_info']['wereda_town'] ?? $address['wereda'],
-            'kebele' => $data['survey_address_info']['kebele'] ?? $address['kebele'],
-            'house_no' => $data['survey_address_info']['house_no'] ?? $address['house_no'],
-            'supplement_address' => $data['survey_address_info']['address'] ?? CustomerContext::addressString(''),
-        ];
-
-
         $subSurveyVoiceOfferId = OfferId::FixedVoice->value;
         $subSurveyDataOfferId = OfferId::FixedData->value;
 
@@ -66,12 +54,10 @@ class ManualComboSurveyService extends BaseManualSurveyService
                 <com:MainOfferId>{$this->mainOfferId()}</com:MainOfferId>
 
                 <com:SurveyAddressInfo>
-                    <com:AdministrativeRegionOrCity>{$surveyAddressInfo['administrative_region_or_city']}</com:AdministrativeRegionOrCity>
-                    <com:SubcityOrZone>{$surveyAddressInfo['subcity_or_zone']}</com:SubcityOrZone>
-                    <com:WeredaOrTown>{$surveyAddressInfo['wereda_or_town']}</com:WeredaOrTown>
-                    <com:Kebele>{$surveyAddressInfo['kebele']}</com:Kebele>
-                    <com:HouseNo>{$surveyAddressInfo['house_no']}</com:HouseNo>
-                    <com:SupplementAddress>{$surveyAddressInfo['supplement_address']}</com:SupplementAddress>
+                    <com:AdministrativeRegionOrCity>{$ctx['region_city']}</com:AdministrativeRegionOrCity>
+                    <com:SubcityOrZone>{$ctx['subcity_zone']}</com:SubcityOrZone>
+                    <com:WeredaOrTown>{$ctx['wereda_town']}</com:WeredaOrTown>
+                    <com:Kebele>{$ctx['kebele']}</com:Kebele>
                 </com:SurveyAddressInfo>
 
                 <com:SubSurveyinfoList>

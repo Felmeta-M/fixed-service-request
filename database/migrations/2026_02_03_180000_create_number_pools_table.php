@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('number_pools', function (Blueprint $table) {
             $table->id();
             $table->string('zone')->comment('Zone code (e.g., EAAZ, NAAZ)');
-            $table->unsignedInteger('dept_id')->comment('BSS Department ID');
+            $table->string('dept_id')->comment('BSS Department ID');
             $table->timestamps();
 
             $table->unique(['zone', 'dept_id']);

@@ -659,12 +659,12 @@ class SurveyOrderController extends Controller
                 $surveyType
             );
 
-            if ($duplicateValidation) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $duplicateValidation['message'],
-                ], Response::HTTP_CONFLICT);
-            }
+            // if ($duplicateValidation) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => $duplicateValidation['message'],
+            //     ], Response::HTTP_CONFLICT);
+            // }
 
             // For manual surveys, route by main_offer_id to Data / Voice / Combo manual service.
             // Use server-side values for security: customer_code from auth, survey_type/oper_type from config.

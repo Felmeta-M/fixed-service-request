@@ -141,6 +141,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
             'zone' => $zoneName,
             'survey_order_id' => $data['survey_order_id'] ?? null,
          ]);
+
          throw new \RuntimeException("Something went wrong. Please try again later.");
       }
 

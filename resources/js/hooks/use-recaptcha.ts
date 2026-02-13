@@ -25,6 +25,11 @@ declare global {
 
 const RECAPTCHA_SCRIPT_ID = 'recaptcha-script';
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
+const RECAPTCHA_LOAD_TIMEOUT_MS = 12000;
+const RECAPTCHA_SCRIPT_URLS = [
+    'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit',
+    'https://www.recaptcha.net/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit',
+] as const;
 
 interface UseRecaptchaOptions {
     /** Theme of the reCAPTCHA widget */
@@ -81,7 +86,7 @@ export function useRecaptcha(options: UseRecaptchaOptions = {}): UseRecaptchaRet
     const [token, setToken] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    // Load the reCAPTCHA script
+    // Load the reCAPTCHA script (try google.com first, then recaptcha.net if blocked)
     useEffect(() => {
         if (!RECAPTCHA_SITE_KEY) {
             setError('reCAPTCHA site key is not configured');
@@ -89,40 +94,78 @@ export function useRecaptcha(options: UseRecaptchaOptions = {}): UseRecaptchaRet
             return;
         }
 
-        // Check if script is already loaded
-        if (document.getElementById(RECAPTCHA_SCRIPT_ID)) {
-            if (window.grecaptcha) {
-                window.grecaptcha.ready(() => {
-                    setIsReady(true);
-                    setIsLoading(false);
-                });
+        let cancelled = false;
+        const timeoutId = window.setTimeout(() => {
+            if (cancelled) return;
+            if (!window.grecaptcha) {
+                setError('Security check could not load. Try disabling ad blockers or check your network.');
+                setIsLoading(false);
             }
-            return;
+        }, RECAPTCHA_LOAD_TIMEOUT_MS);
+
+        const done = () => {
+            if (!cancelled) {
+                window.clearTimeout(timeoutId);
+                setIsReady(true);
+                setIsLoading(false);
+            }
+        };
+
+        const fail = () => {
+            if (cancelled) return;
+            setError('Security check could not load. Try disabling ad blockers or check your network.');
+            setIsLoading(false);
+        };
+
+        // Check if script is already in DOM and working
+        const existingScript = document.getElementById(RECAPTCHA_SCRIPT_ID) as HTMLScriptElement | null;
+        if (existingScript) {
+            if (window.grecaptcha) {
+                window.clearTimeout(timeoutId);
+                window.grecaptcha.ready(done);
+            }
+            return () => {
+                cancelled = true;
+                window.clearTimeout(timeoutId);
+                delete window.onRecaptchaLoad;
+            };
         }
 
-        // Create and load the script
-        const script = document.createElement('script');
-        script.id = RECAPTCHA_SCRIPT_ID;
-        script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit';
-        script.async = true;
-        script.defer = true;
+        window.onRecaptchaLoad = done;
 
-        // Set up the callback
-        window.onRecaptchaLoad = () => {
-            setIsReady(true);
-            setIsLoading(false);
+        let urlIndex = 0;
+
+        const loadScript = () => {
+            if (cancelled || urlIndex >= RECAPTCHA_SCRIPT_URLS.length) {
+                fail();
+                return;
+            }
+            const script = document.createElement('script');
+            script.id = RECAPTCHA_SCRIPT_ID;
+            script.src = RECAPTCHA_SCRIPT_URLS[urlIndex];
+            script.async = true;
+            script.defer = true;
+            script.onerror = () => {
+                if (cancelled) return;
+                script.remove();
+                urlIndex += 1;
+                if (urlIndex < RECAPTCHA_SCRIPT_URLS.length) {
+                    loadScript();
+                } else {
+                    fail();
+                }
+            };
+            document.head.appendChild(script);
         };
 
-        script.onerror = () => {
-            setError('Failed to load reCAPTCHA script');
-            setIsLoading(false);
-        };
-
-        document.head.appendChild(script);
+        loadScript();
 
         return () => {
-            // Cleanup callback
+            cancelled = true;
+            window.clearTimeout(timeoutId);
             delete window.onRecaptchaLoad;
+            const scriptEl = document.getElementById(RECAPTCHA_SCRIPT_ID);
+            if (scriptEl) scriptEl.remove();
         };
     }, []);
 

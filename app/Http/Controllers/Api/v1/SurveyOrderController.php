@@ -483,7 +483,7 @@ class SurveyOrderController extends Controller
             'cable_length',
             'other_related_cost',
             'survey_failure_reason',
-            'zone_code',
+            // 'zone_code',
             'with_device',
             'device_id',
             'device_voice_id',

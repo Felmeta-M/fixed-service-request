@@ -107,8 +107,8 @@ class SecurityHeaders
         $isProduction = app()->isProduction();
         $vitePort = config('vite.port', 5173);
 
-        // Base script sources
-        $scriptSources = ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://maps.googleapis.com"];
+        // Base script sources (reCAPTCHA: google.com + recaptcha.net fallback when Google is blocked)
+        $scriptSources = ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://maps.googleapis.com", "https://www.google.com", "https://www.gstatic.com", "https://www.recaptcha.net"];
 
         // Base connect sources
         $connectSources = ["'self'", "https:"];
@@ -131,13 +131,16 @@ class SecurityHeaders
             $connectSources = array_merge($connectSources, $viteUrls);
         }
 
+        $scriptSourcesStr = implode(' ', $scriptSources);
         $directives = [
             "default-src 'self'",
-            "script-src " . implode(' ', $scriptSources),
+            "script-src " . $scriptSourcesStr,
+            "script-src-elem " . $scriptSourcesStr,
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com data:",
             "img-src 'self' data: https: blob:",
             "connect-src " . implode(' ', $connectSources),
+            "frame-src 'self' https://www.google.com https://www.recaptcha.net",
             "frame-ancestors 'self'",
             "form-action 'self'",
             "base-uri 'self'",

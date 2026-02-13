@@ -37,7 +37,8 @@ class TroubleTicketController extends Controller
         protected readonly QueryCustomerForTTService $queryCustomerForTTService,
         protected readonly GetCombiningService $getCombiningService,
         protected readonly RecaptchaService $recaptchaService
-    ) {}
+    ) {
+    }
 
     /**
      * Query customer by service number before TT creation
@@ -52,7 +53,6 @@ class TroubleTicketController extends Controller
         try {
             $serviceNumber = $request->input('service_number');
             $result = $this->queryCustomerForTTService->query($serviceNumber);
-
             if (!($result['success'] ?? false)) {
                 return response()->json([
                     'success' => false,

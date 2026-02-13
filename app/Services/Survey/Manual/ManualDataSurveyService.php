@@ -21,7 +21,8 @@ class ManualDataSurveyService extends BaseManualSurveyService
     {
         $ctx = $this->getRequestContext($data);
         $cfg = $this->config;
-        $bandwidth = $this->parseBandwidth($data['bandwidth'] ?? '');
+
+        $bandwidth = $this->parseBandwidth($data['bandwidth'] ?? '7M');
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"

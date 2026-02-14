@@ -46,11 +46,11 @@ class CreateTTService extends BaseApiService
 
             $accessNumber = $data['access_number'];
             $sessionKey = "tt_lookup_{$accessNumber}";
-            
+
             // Step 1.5: Prevent duplicate submissions and return cached results
             $dedupeKey = "tt_create_result_{$accessNumber}";
             $cachedResult = cache()->get($dedupeKey);
-            
+
             if ($cachedResult) {
                 // Check if it's an actual result (has tt_serial_no) vs still pending
                 if (!empty($cachedResult['tt_serial_no'])) {
@@ -60,14 +60,14 @@ class CreateTTService extends BaseApiService
                     ]);
                     return ApiResponse::success($cachedResult);
                 }
-                
+
                 // Still processing from another request
                 AppLogger::api()->info('CreateTT: Request already in progress, please wait', [
                     'access_number' => $accessNumber,
                 ]);
                 return ApiResponse::error('A request is already being processed for this service. Please wait a moment and try again.', 429);
             }
-            
+
             // Mark this request as in-progress (10 second window for processing time)
             cache()->put($dedupeKey, ['pending' => true], 10);
 
@@ -144,15 +144,15 @@ class CreateTTService extends BaseApiService
 
             $xmlResponse = $this->executeRequest($xmlPayload);
             $parsed = $this->parseResponseXml($xmlResponse, $data);
-            
+
             // Step 6: Clear session cache and update dedupe cache on successful TT creation
             $parsedData = $parsed->getData(true);
             if (($parsedData['success'] ?? false) && !empty($parsedData['data']['tt_serial_no'])) {
                 session()->forget($sessionKey);
-                
+
                 // Cache the result for duplicate requests (30 seconds)
                 cache()->put($dedupeKey, $parsedData['data'], 30);
-                
+
                 AppLogger::api()->info('CreateTT: Session cache cleared after successful TT creation', [
                     'access_number' => $accessNumber,
                     'tt_serial_no' => $parsedData['data']['tt_serial_no'],
@@ -166,7 +166,7 @@ class CreateTTService extends BaseApiService
         } catch (RuntimeException $e) {
             // Clear pending flag on error
             cache()->forget($dedupeKey ?? "tt_create_result_{$data['access_number']}");
-            
+
             AppLogger::api()->error('CreateTT: Runtime error', [
                 'error' => $e->getMessage(),
                 'access_number' => $data['access_number'] ?? null,
@@ -175,7 +175,7 @@ class CreateTTService extends BaseApiService
         } catch (\Throwable $e) {
             // Clear pending flag on error
             cache()->forget($dedupeKey ?? "tt_create_result_{$data['access_number']}");
-            
+
             AppLogger::api()->error('CreateTT: Exception', [
                 'error' => $e->getMessage(),
                 'access_number' => $data['access_number'] ?? null,
@@ -247,7 +247,7 @@ class CreateTTService extends BaseApiService
         // Third-party API expects NUMERIC codes, not string values
         $customerType = !empty($customer['customer_type']) ? $customer['customer_type'] : '1';
         $customerLevel = !empty($customer['customer_level']) ? $customer['customer_level'] : '8';
-        
+
         // Get category from ExtParams if not in customer object (also numeric codes)
         $customerCategory = !empty($customer['customer_category']) ? $customer['customer_category'] : (!empty($extParams['CustomerCategory']) ? $extParams['CustomerCategory'] : '1');
         $custSubCategory = !empty($customer['customer_subcategory']) ? $customer['customer_subcategory'] : (!empty($extParams['CustSubCategory']) ? $extParams['CustSubCategory'] : '1');
@@ -392,7 +392,7 @@ XML;
                 'access_number' => $payload['access_number'],
                 'existing_tt_no' => $existingTtNo,
             ]);
-            
+
             return ApiResponse::success([
                 'success' => true,
                 'message' => "A trouble ticket already exists for this service: {$existingTtNo}",

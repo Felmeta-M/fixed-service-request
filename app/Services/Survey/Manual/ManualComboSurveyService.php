@@ -4,7 +4,7 @@ namespace App\Services\Survey\Manual;
 
 use App\Enums\OfferId;
 use App\Exceptions\ExternalServiceException;
-
+use App\Services\Logging\AppLogger;
 /**
  * Manual survey service for Fixed Combo (Voice + Data).
  *

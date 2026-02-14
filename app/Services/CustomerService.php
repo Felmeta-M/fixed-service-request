@@ -21,12 +21,11 @@ class CustomerService extends BaseApiService
     public function createCustomer(array $data)
     {
         try {
-            // Get dynamic zone code from customer's selected zone_id (not from logged-in user)
-            $zoneId = CustomerContext::code() ?? $data['zone'] ?? $data['address']['zone'] ?? null;
-            if (!$zoneId) {
-                throw new RuntimeException('Zone is required to create a customer profile.');
-            }
-            $data['ethio_zone_or_region'] = $this->getZoneCodeById($zoneId);
+            // $zoneId = CustomerContext::code() ?? $data['zone'] ?? $data['address']['zone'] ?? null;
+            // if (!$zoneId) {
+            //     throw new RuntimeException('Zone is required to create a customer profile.');
+            // }
+            $data['ethio_zone_or_region'] = '25'; // $this->getZoneCodeById($zoneId);
             $xmlPayload = $this->buildXml($data);
             $xmlResponse = $this->executeRequest($xmlPayload);
 
@@ -62,7 +61,7 @@ class CustomerService extends BaseApiService
         $data['customer_type'] = '1';           // Residential (fixed)
         $data['customer_category'] = '1';       // Category 1 (fixed)
         $data['customer_subcategory'] = '1';    // Subcategory 1 (fixed)
-        $data['customer_level'] = '8';          // level 8 Copper (fixed)
+        $data['customer_level'] = '7';          // level 7 Copper (fixed)
 
         // ============================================================
         // OPTIONAL FIELDS WITH DEFAULTS - Frontend can override these
@@ -241,7 +240,7 @@ XML;
                     'customer_type' => '1',           // Residential (fixed)
                     'customer_category' => '1',       // Category 1 (fixed)
                     'customer_subcategory' => '1',    // Subcategory 1 (fixed)
-                    'customer_level' => '8',          // Copper (fixed)
+                    'customer_level' => '7',          // Copper (fixed)
                     // Notification & Credit
                     'notification_mode' => $data['contact']['notification_mode'] ?? '1',
                     'credit_class' => $data['credit_class'] ?? 'Excellent',

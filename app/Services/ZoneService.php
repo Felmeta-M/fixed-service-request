@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\EthioZone;
+use App\Models\EthioShop;
 use App\Models\SurveyOrder;
 use App\Models\TelecomRegion;
 use App\Models\Zone;
@@ -104,10 +105,15 @@ class ZoneService
     /**
      * Get EthioZone by name.
      * Used by SurveyOrderController for manual survey zone lookup.
+     * Comparison is case-insensitive for robustness.
      */
     public function getEthioZoneByName(string $name): ?EthioZone
     {
-        return EthioZone::where('name', $name)->where('status', true)->first();
+        $name = trim($name);
+        if ($name === '') {
+            return null;
+        }
+        return EthioZone::whereRaw('UPPER(name) = ?', [strtoupper($name)])->where('status', true)->first();
     }
 
     /**
@@ -300,16 +306,16 @@ class ZoneService
     }
 
     /**
-     * Compute telecom_region from latitude/longitude using nearest ethio_shop.
+     * Compute zone and telecom_region (area_id) from latitude/longitude using nearest ethio_shop.
      *
      * Finds the nearest shop in ethio_shops by distance and returns that shop's
-     * area_id as telecom_region (BSS area id for manual survey).
+     * zone and area_id (BSS area id for manual survey).
      *
      * @param float $latitude  From frontend (e.g. survey_address_info.latitude)
      * @param float $longitude From frontend (e.g. survey_address_info.longitude)
-     * @return string|null area_id from nearest ethio_shop, or null if not found
+     * @return array{zone: string, area_id: string|null}|null zone and area_id from nearest ethio_shop, or null if not found
      */
-    public function getAreaIdFromCoordinates(float $latitude, float $longitude): ?string
+    public function getAreaIdFromCoordinates(float $latitude, float $longitude): ?array
     {
         $shops = DB::table('ethio_shops')
             ->where('status', true)
@@ -340,29 +346,49 @@ class ZoneService
             return null;
         }
 
+        $zone = trim((string) ($nearest->zone ?? ''));
         $areaId = isset($nearest->area_id) ? trim((string) $nearest->area_id) : null;
         if ($areaId !== null && $areaId !== '') {
-            return $areaId;
+            return ['zone' => $zone, 'area_id' => $areaId];
         }
 
         // Fallback: resolve area_id from shop.zone via telecom_regions (when ethio_shops.area_id not yet set)
-        $zoneName = trim((string) ($nearest->zone ?? ''));
-        if ($zoneName === '') {
+        if ($zone === '') {
             return null;
         }
-        $zoneLower = strtolower($zoneName);
+        $zoneLower = strtolower($zone);
         $region = TelecomRegion::active()
             ->whereRaw('LOWER(zone) = ?', [$zoneLower])
             ->first();
         if ($region) {
-            return $region->area_id;
+            return ['zone' => $zone, 'area_id' => $region->area_id];
         }
         $region = TelecomRegion::active()
             ->whereRaw('LOWER(zone) LIKE ?', [$zoneLower . '%'])
             ->orderByRaw('LENGTH(zone) ASC')
             ->first();
 
-        return $region?->area_id;
+        return ['zone' => $zone, 'area_id' => $region?->area_id];
+    }
+
+    /**
+     * Get area name from BSS area ID (telecom_region).
+     * Used when resolving telecom_region from coordinates so manual survey payload
+     * can include area_name (e.g. for display or downstream use).
+     *
+     * @param string $areaId BSS area_id (e.g. from getAreaIdFromCoordinates or telecom_regions.area_id)
+     * @return string|null area_name from telecom_regions, or null if not found
+     */
+    public function getAreaNameFromAreaId(string $areaId): ?string
+    {
+        $areaId = trim($areaId);
+        if ($areaId === '') {
+            return null;
+        }
+
+        $shop = EthioShop::active()->where('area_id', $areaId)->first();
+
+        return $shop?->center_name ?? null;
     }
 
     /**

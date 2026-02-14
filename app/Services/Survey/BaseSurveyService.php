@@ -99,22 +99,19 @@ abstract class BaseSurveyService extends BaseApiService
         $profile = $this->getCustomerProfile();
         $contact = $this->getPrimaryContact();
 
-        // Survey classification defaults
         $data['survey_type'] = $data['survey_type'] ?? 'EIC08';
         $data['oper_type'] = $data['oper_type'] ?? 'A';                    // A = new, M = modify
-        // Zone code from resource
+
         $data['telecom_region'] = $resource['area_code'];
         $data['customer_type'] = 'residential';
 
-        // Contact defaults from customer profile
         $data['contact_person'] = $data['contact_person'] ?? $contact['contact_person'] ?? null;
         $data['contact_no'] = $data['contact_no'] ?? $contact['contact_no'] ?? null;
         $data['contact_email'] = $data['contact_email'] ?? $contact['contact_email'] ?? null;
 
-        // Customer code from auth context
         $data['customer_code'] = $this->customerCode();
 
-        // Other defaults
+
         $data['external_operid'] = $data['external_operid'] ?? '512';
         $data['with_device'] = $data['with_device'] ?? false;
         $data['survey_is_manual'] = $data['survey_is_manual'] ?? false;

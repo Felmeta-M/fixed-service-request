@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\Auth;
 use RuntimeException;
 use Throwable;
 use App\Support\CustomerContext;
-
 /**
  * Base service for manual survey orders (Fixed Data, Fixed Voice, Fixed Combo).
  *
@@ -73,8 +72,11 @@ abstract class BaseManualSurveyService extends BaseApiService
     {
         try {
             $data = $this->resolveTelecomRegionFromCoordinates($data);
+            \Log::debug('Data', ['data' => $data]);
             $xmlPayload = $this->buildRequestXml($data);
+            \Log::debug('XML Payload', ['xml_payload' => $xmlPayload]);
             $xmlResponse = $this->executeRequest($xmlPayload);
+            \Log::debug('XML Response', ['xml_response' => $xmlResponse]);
             $parsedResponse = $this->parseResponseXml($data, $xmlResponse);
 
             return ApiResponse::success($parsedResponse, 'Manual survey order created successfully');
@@ -115,9 +117,14 @@ abstract class BaseManualSurveyService extends BaseApiService
             return $data;
         }
 
-        $areaId = $this->zoneService->getAreaIdFromCoordinates((float) $lat, (float) $lng);
-        if ($areaId !== null) {
-            $data['telecom_region'] = $areaId;
+        $result = $this->zoneService->getAreaIdFromCoordinates((float) $lat, (float) $lng);
+        if ($result !== null) {
+            $data['zone_code'] = $this->zoneService->getEthioZoneByName($result['zone'])?->code;
+            $data['telecom_region'] = $result['area_id'];
+            $data['area_code'] = $result['area_id'];
+            if ($result['area_id'] !== null) {
+                $data['area_name'] = $this->zoneService->getAreaNameFromAreaId($result['area_id']);
+            }
         }
 
         return $data;
@@ -140,7 +147,10 @@ abstract class BaseManualSurveyService extends BaseApiService
             'process_time' => $this->processTime(),
             'completed_date' => $this->completedDate(),
             'customer_code' => $this->customerCode(),
-            'telecom_region' => $telecomRegion,
+            'telecom_region' => $telecomRegion ?? null,
+            'zone_code' => $data['zone_code'] ?? null,
+            'area_code' => $data['area_code'] ?? null,
+            'area_name' => $data['area_name'] ?? null,
             'oper_type' => 'A',
             'primary_contact' => $this->getPrimaryContact($data),
             'region_city' => $addressInfo['region_city'] ?? CustomerContext::region(''),
@@ -230,8 +240,9 @@ abstract class BaseManualSurveyService extends BaseApiService
             $bandwidthKb = $this->parseBandwidth($data['bandwidth']);
         }
 
-        $areaCode = $addressInfo['area_code'] ?? null;
-        $areaName = $addressInfo['area_name'] ?? null;
+        $areaCode = $addressInfo['area_code'] ?? $data['area_code'] ?? null;
+        $areaName = $addressInfo['area_name'] ?? $data['area_name'] ?? null;
+        $zoneCode = $addressInfo['zone_code'] ?? $data['zone_code'] ?? null;
 
         $survey = SurveyOrder::create([
             'customer_code' => $customerCode,
@@ -252,6 +263,7 @@ abstract class BaseManualSurveyService extends BaseApiService
             'device_voice_id' => null,
             'area_code' => $areaCode,
             'area_name' => $areaName,
+            'zone_code' => $zoneCode,
             'media_type' => null,
             'cable_type' => null,
             'line_indicator' => null,

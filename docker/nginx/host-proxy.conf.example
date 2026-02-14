@@ -95,6 +95,16 @@ server {
     #   Large buffers to handle Filament/Livewire responses which can
     #   contain substantial HTML/JSON payloads and large headers
     #   (session cookies, CSRF tokens, Livewire snapshots).
+    #
+    # Content-Security-Policy (required for reCAPTCHA + Maps):
+    #   If this proxy sets CSP, it MUST include script-src and frame-src for
+    #   Google reCAPTCHA (trouble ticket / complaint form). Use the policy
+    #   below. If you already have add_header Content-Security-Policy
+    #   elsewhere, replace it with this full policy or add the missing
+    #   sources: https://www.google.com https://www.gstatic.com
+    #   https://www.recaptcha.net (script + frame).
+    #   To avoid duplicate CSP, strip backend CSP and set only here:
+    #   proxy_hide_header Content-Security-Policy;
     # -------------------------------------------------------------------
     location / {
         proxy_pass http://127.0.0.1:9991;
@@ -109,5 +119,10 @@ server {
         proxy_buffers 4 256k;
         proxy_busy_buffers_size 256k;
         large_client_header_buffers 4 64k;
+
+        # Optional: use proxy as single source of CSP (strip backend, set here)
+        proxy_hide_header Content-Security-Policy;
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://maps.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net; script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://maps.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https:; frame-src 'self' https://www.google.com https://www.recaptcha.net; frame-ancestors 'self'; form-action 'self'; base-uri 'self'; object-src 'none';" always;
+   
     }
 }

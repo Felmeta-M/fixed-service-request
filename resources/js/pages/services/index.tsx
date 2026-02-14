@@ -7,6 +7,7 @@ import { useSurveyList } from '@/features/surveys/hooks/use-surveys';
 import { useServiceTypes } from '@/hooks/use-service-types';
 import MainLayout from '@/layouts/main-layout';
 import { getStatusInfo, statusOptions } from '@/lib/status-map';
+import { useFilterStore } from '@/store/filter-store';
 import { cn } from '@/lib/utils';
 import { Link, router, usePage } from '@inertiajs/react';
 import { AlertCircle, ChevronDown, ChevronUp, Filter, Phone, Plus, RefreshCw, Search, UserPlus, X } from 'lucide-react';
@@ -53,14 +54,31 @@ const STATUS_LABELS = {
 } as const;
 
 export default function CustomerDashboard() {
-    const [globalFilter, setGlobalFilter] = useState('');
-    const [typeFilter, setTypeFilter] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
-    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-    const [appliedFilters, setAppliedFilters] = useState({
-        type: '',
-        status: '',
-    });
+    // ── Zustand filter store (persists across navigation) ─────────────────
+    const serviceFilters = useFilterStore((s) => s.services);
+    const setServiceFilter = useFilterStore((s) => s.setServiceFilter);
+    const applyServiceFilters = useFilterStore((s) => s.applyServiceFilters);
+    const resetServiceFilters = useFilterStore((s) => s.resetServiceFilters);
+
+    // Destructure for convenience
+    const globalFilter = serviceFilters.globalFilter;
+    const typeFilter = serviceFilters.typeFilter;
+    const statusFilter = serviceFilters.statusFilter;
+    const showAdvancedFilters = serviceFilters.showAdvancedFilters;
+    const appliedFilters = {
+        type: serviceFilters.appliedType,
+        status: serviceFilters.appliedStatus,
+    };
+
+    // Setter wrappers
+    const setGlobalFilter = (v: string) => setServiceFilter('globalFilter', v);
+    const setTypeFilter = (v: string) => setServiceFilter('typeFilter', v);
+    const setStatusFilter = (v: string) => setServiceFilter('statusFilter', v);
+    const setShowAdvancedFilters = (v: boolean) => setServiceFilter('showAdvancedFilters', v);
+    const setAppliedFilters = (v: { type: string; status: string }) => {
+        setServiceFilter('appliedType', v.type);
+        setServiceFilter('appliedStatus', v.status);
+    };
 
     const { auth } = usePage().props;
 

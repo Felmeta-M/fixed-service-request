@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useSurveyDetail } from '@/features/surveys/hooks/use-surveys';
 import { useUpdateSurveyDevice } from '@/hooks/use-api-mutations';
+import { useServiceFormStore } from '@/store/service-form-store';
 import { Link, usePage } from '@inertiajs/react';
 import { AlertCircle, Loader2, MoveLeftIcon } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
@@ -47,19 +48,9 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
     const { auth } = usePage<{ auth: { user: User } }>().props;
     const user = auth.user as User;
 
-    const [formData, setFormData] = useState<ServiceFormData>({
-        serviceType: '',
-        bandwidth: '',
-        customerType: '',
-        withDevice: undefined,
-        latitude: 0,
-        longitude: 0,
-        address: '',
-        contactPerson: '',
-        contactNo: '',
-        contactEmail: '',
-        resourceAvailable: true, // Approved surveys have resources available
-    });
+    // ── Zustand store (shared with DeviceSelectionStep) ──────────────────
+    const formData = useServiceFormStore((s) => s.formData);
+    const updateFormData = useServiceFormStore((s) => s.updateFormData);
 
     const [isTransitioningToSubscription, setIsTransitioningToSubscription] = useState(false);
     const [isUpdatingDevice, setIsUpdatingDevice] = useState(false);
@@ -74,26 +65,21 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
     const surveyError = surveyDetailQuery.error?.message || null;
     const surveyData = surveyDetailQuery.data?.data;
 
-    // Load survey data when available
+    // Hydrate Zustand store with survey data when available
     useEffect(() => {
         if (surveyData) {
-            setFormData((prev) => ({
-                ...prev,
+            updateFormData({
                 serviceType: surveyData.main_offer_id || '',
                 bandwidth: surveyData.bandwidth || '',
                 customerType: surveyData.customer_type || 'residential',
-                // For manual surveys, with_device is null - default to true (with device)
                 withDevice: surveyData.with_device ?? true,
                 contactPerson: user?.name || 'Customer',
                 contactNo: user?.phone || '',
                 contactEmail: user?.email || '',
-            }));
+                resourceAvailable: true,
+            });
         }
     }, [surveyData, user]);
-
-    const updateFormData = (newData: Partial<ServiceFormData>) => {
-        setFormData((prev) => ({ ...prev, ...newData }));
-    };
 
     // Resume flow: Step 2 = Device Selection, Step 3 = Payment
     // We map the current step (2, 3) to internal steps (0, 1)
@@ -102,13 +88,9 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
     // When on device selection step, default to "with device" if not yet set
     useEffect(() => {
         if (currentStep === 2) {
-            setFormData((prev) => {
-                // Check for null or undefined (null comes from API when not set)
-                if (prev.withDevice === undefined || prev.withDevice === null) {
-                    return { ...prev, withDevice: true };
-                }
-                return prev;
-            });
+            if (formData.withDevice === undefined || formData.withDevice === null) {
+                updateFormData({ withDevice: true });
+            }
         }
     }, [currentStep]);
 
@@ -259,8 +241,6 @@ export function ServiceResumeFlow({ currentStep, onStepChange, googleMapsApiKey,
             case 0: // Device Selection
                 return (
                     <DeviceSelectionStep
-                        formData={formData}
-                        onUpdate={updateFormData}
                         onNext={handleDeviceSelectionNext}
                         onBack={() => {
                             // Go back to services list since there's no previous step in resume flow

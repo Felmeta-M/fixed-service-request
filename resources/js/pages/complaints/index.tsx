@@ -7,6 +7,7 @@ import TTTable from '@/features/complaints/components/tt-table';
 import { useLocalTTs, useSearchExternalTTs } from '@/features/complaints/hooks/use-complaints';
 import { useAuthToken } from '@/hooks/use-auth-token';
 import MainLayout from '@/layouts/main-layout';
+import { useFilterStore } from '@/store/filter-store';
 import { DisplayTT } from '@/types/tt';
 import { Link, usePage } from '@inertiajs/react';
 import { ChevronDown, ChevronUp, Filter, Globe, Home, Loader2, Plus, RefreshCw, Search, X } from 'lucide-react';
@@ -16,18 +17,35 @@ import { toast } from 'sonner';
 type SourceFilter = 'all' | 'local' | 'external';
 
 export default function ComplaintsIndex() {
-    const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [accessNumber, setAccessNumber] = useState('');
-    const [filterAccessNumber, setFilterAccessNumber] = useState('');
-    const [filterTTSerialNo, setFilterTTSerialNo] = useState('');
+    // ── Zustand filter store (persists across navigation) ─────────────────
+    const complaints = useFilterStore((s) => s.complaints);
+    const setComplaintFilter = useFilterStore((s) => s.setComplaintFilter);
+
+    // Destructure for convenience
+    const sourceFilter = complaints.sourceFilter;
+    const statusFilter = complaints.statusFilter;
+    const searchQuery = complaints.searchQuery;
+    const accessNumber = complaints.accessNumber;
+    const filterAccessNumber = complaints.filterAccessNumber;
+    const filterTTSerialNo = complaints.filterTTSerialNo;
+    const activeTab = complaints.activeTab;
+    const showFilters = complaints.showFilters;
+
+    // Setter wrappers
+    const setSourceFilter = (v: SourceFilter) => setComplaintFilter('sourceFilter', v);
+    const setStatusFilter = (v: string) => setComplaintFilter('statusFilter', v);
+    const setSearchQuery = (v: string) => setComplaintFilter('searchQuery', v);
+    const setAccessNumber = (v: string) => setComplaintFilter('accessNumber', v);
+    const setFilterAccessNumber = (v: string) => setComplaintFilter('filterAccessNumber', v);
+    const setFilterTTSerialNo = (v: string) => setComplaintFilter('filterTTSerialNo', v);
+    const setActiveTab = (v: 'my-tickets' | 'search') => setComplaintFilter('activeTab', v);
+    const setShowFilters = (v: boolean) => setComplaintFilter('showFilters', v);
+
+    // Local-only state (does not need to persist)
     const [tts, setTts] = useState<DisplayTT[]>([]);
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState<'my-tickets' | 'search'>('my-tickets');
-    const [showFilters, setShowFilters] = useState(false);
     const [pagination, setPagination] = useState({
-        current_page: 1,
+        current_page: complaints.currentPage,
         last_page: 1,
         per_page: 10,
         total: 0,

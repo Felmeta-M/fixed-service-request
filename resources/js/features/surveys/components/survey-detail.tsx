@@ -8,6 +8,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import { type ServiceActionFocus } from '@/lib/service-action-rules';
 import { getStatusInfo } from '@/lib/status-map';
 import { showErrorToast, showLoadingToast, showSuccessToast } from '@/lib/toast-helpers';
+import { useDialogStore } from '@/store/dialog-store';
 import { Link, router, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
 import {
@@ -146,10 +147,22 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isSubmittingRef = useRef(false);
-    const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
-    const [openDowngradeDialog, setOpenDowngradeDialog] = useState(false);
-    const [openCancelDialog, setOpenCancelDialog] = useState(false);
-    const [isTerminateAction, setIsTerminateAction] = useState(false);
+
+    // ── Zustand dialog store ──────────────────────────────────────────────
+    const activeDialog = useDialogStore((s) => s.activeDialog);
+    const openDialogAction = useDialogStore((s) => s.openDialog);
+    const closeDialog = useDialogStore((s) => s.closeDialog);
+    const isTerminateAction = useDialogStore((s) => s.isTerminateAction);
+    const setIsTerminateAction = useDialogStore((s) => s.setIsTerminateAction);
+
+    const openUpgradeDialog = activeDialog === 'upgrade';
+    const openDowngradeDialog = activeDialog === 'downgrade';
+    const openCancelDialog = activeDialog === 'cancel';
+
+    const setOpenUpgradeDialog = (v: boolean) => v ? openDialogAction('upgrade') : closeDialog();
+    const setOpenDowngradeDialog = (v: boolean) => v ? openDialogAction('downgrade') : closeDialog();
+    const setOpenCancelDialog = (v: boolean) => v ? openDialogAction('cancel') : closeDialog();
+
     const [showDeviceSelection, setShowDeviceSelection] = useState(false);
 
     const loading =

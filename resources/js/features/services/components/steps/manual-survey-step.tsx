@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { useCreateSurvey } from '@/hooks/use-api-mutations';
+import { useServiceFormStore } from '@/store';
 import { router, usePage } from '@inertiajs/react';
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -51,12 +52,13 @@ type FormData = {
 };
 
 interface ManualSurveyStepProps {
-    formData: FormData;
     onBack: () => void;
-    onUpdate?: (data: Partial<FormData>) => void;
 }
 
-export function ManualSurveyStep({ formData, onBack, onUpdate }: ManualSurveyStepProps) {
+export function ManualSurveyStep({ onBack }: ManualSurveyStepProps) {
+    // ── Zustand store ─────────────────────────────────────────────────────
+    const formData = useServiceFormStore((s) => s.formData);
+    const updateFormData = useServiceFormStore((s) => s.updateFormData);
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
 
     const [manualFlowData, setManualFlowData] = useState({

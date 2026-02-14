@@ -2,9 +2,10 @@ import { Button } from '@/components/ui/button';
 import { useSurveyList } from '@/features/surveys/hooks/use-surveys';
 import { useResourceChecker } from '@/lib/resource-check';
 import { showErrorToast, showLoadingToast, showSuccessToast } from '@/lib/toast-helpers';
+import { useServiceFormStore } from '@/store/service-form-store';
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, ChevronRight, FileText, Loader2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { CustomerCreationStep } from './steps/customer-creation-step';
 import { DeviceSelectionStep } from './steps/device-selection-step';
@@ -70,28 +71,26 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const { auth } = usePage<{ auth: { user: User } }>().props;
     const user = auth.user as User;
 
-    const [formData, setFormData] = useState<ServiceFormData>({
-        serviceType: '1457567289',
-        bandwidth: '',
-        customerType: '',
-        withDevice: undefined,
-        latitude: 0,
-        longitude: 0,
-        distance: '',
-        cable_type: '',
-        neid: '',
-        nename: '',
-        address: '',
-        contactPerson: '',
-        contactNo: '',
-        contactEmail: '',
-    });
+    // ── Zustand store ─────────────────────────────────────────────────────
+    const formData = useServiceFormStore((s) => s.formData);
+    const updateFormData = useServiceFormStore((s) => s.updateFormData);
+    const checkingResource = useServiceFormStore((s) => s.checkingResource);
+    const setCheckingResource = useServiceFormStore((s) => s.setCheckingResource);
+    const createdSurveyId = useServiceFormStore((s) => s.createdSurveyId);
+    const setCreatedSurveyId = useServiceFormStore((s) => s.setCreatedSurveyId);
+    const showManualStep = useServiceFormStore((s) => s.showManualStep);
+    const setShowManualStep = useServiceFormStore((s) => s.setShowManualStep);
+    const hasSeenResourceDialog = useServiceFormStore((s) => s.hasSeenResourceDialog);
+    const setHasSeenResourceDialog = useServiceFormStore((s) => s.setHasSeenResourceDialog);
+    const isTransitioningToSubscription = useServiceFormStore((s) => s.isTransitioningToSubscription);
+    const setIsTransitioningToSubscription = useServiceFormStore((s) => s.setIsTransitioningToSubscription);
+    const setIsNewCustomer = useServiceFormStore((s) => s.setIsNewCustomer);
 
-    const [checkingResource, setCheckingResource] = useState(false);
-    const [createdSurveyId, setCreatedSurveyId] = useState<string | null>(null);
-    const [showManualStep, setShowManualStep] = useState(false);
-    const [hasSeenResourceDialog, setHasSeenResourceDialog] = useState(false); // Track if user has seen the dialog
-    const [isTransitioningToSubscription, setIsTransitioningToSubscription] = useState(false); // Track transition to subscription step
+    // Sync isNewCustomer into the store so nextStep() knows the max
+    useEffect(() => {
+        setIsNewCustomer(isNewCustomer);
+    }, [isNewCustomer, setIsNewCustomer]);
+
     const surveyListQuery = useSurveyList();
     const surveys = useMemo(() => {
         return surveyListQuery.data?.pages.flatMap((page) => page.data) ?? [];
@@ -99,7 +98,6 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const { checkResourceAvailability } = useResourceChecker();
 
     // Load user data from authenticated user
-    // Use stable dependencies (user.id, user.name, etc.) instead of the entire user object
     useEffect(() => {
         const loadUserData = () => {
             try {
@@ -111,29 +109,21 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 const contactNo = user.phone || '';
                 const contactEmail = user.email || 'customer@ethiotelecom.et';
 
-                setFormData((prev) => {
-                    // Only update if values actually changed to prevent unnecessary re-renders
-                    if (prev.contactPerson === contactPerson && prev.contactNo === contactNo && prev.contactEmail === contactEmail) {
-                        return prev;
-                    }
-                    return {
-                        ...prev,
-                        contactPerson,
-                        contactNo,
-                        contactEmail,
-                    };
-                });
+                // Only update if values actually changed to prevent unnecessary re-renders
+                if (
+                    formData.contactPerson !== contactPerson ||
+                    formData.contactNo !== contactNo ||
+                    formData.contactEmail !== contactEmail
+                ) {
+                    updateFormData({ contactPerson, contactNo, contactEmail });
+                }
             } catch (error) {}
         };
 
         loadUserData();
     }, [user?.id, user?.name, user?.phone, user?.email]);
 
-    const hasActiveSurvey = false; //surveys?.some((s) => ['waiting', 'approved'].includes(s.status?.toLowerCase()));
-
-    const updateFormData = (newData: Partial<ServiceFormData>) => {
-        setFormData((prev) => ({ ...prev, ...newData }));
-    };
+    const hasActiveSurvey = false;
 
     const getAdjustedStep = () => {
         if (isNewCustomer) {
@@ -147,17 +137,27 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     // When navigating to device selection step, default to "with device"
     useEffect(() => {
         if (adjustedStep === 2) {
-            setFormData((prev) => {
-                if (prev.withDevice === undefined) {
-                    return { ...prev, withDevice: true };
-                }
-                return prev;
-            });
+            if (formData.withDevice === undefined) {
+                updateFormData({ withDevice: true });
+            }
         }
     }, [adjustedStep]);
 
     // Check if we should show manual step (when resource is not available)
     const shouldShowManualStep = showManualStep && formData.resourceAvailable === false;
+
+    const nextStep = () => {
+        const maxSteps = isNewCustomer ? 6 : 5;
+        if (currentStep < maxSteps) {
+            onStepChange(currentStep + 1);
+        }
+    };
+
+    const prevStep = () => {
+        if (currentStep > 0) {
+            onStepChange(currentStep - 1);
+        }
+    };
 
     const checkResourceAndProceed = async () => {
         if (adjustedStep !== 1) {
@@ -202,13 +202,9 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                 showSuccessToast(result.message || 'Resource available!', { id: toastId });
                 nextStep();
             } else {
-                // Resource not available - dismiss toast and let location-setup-step show the dialog
-                // The dialog will notify user and offer "Continue Manually" option
                 toast.dismiss(toastId);
-                // Don't automatically show manual step - let the dialog handle it
             }
         } catch (error) {
-            // Extract error message from API error
             const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during resource check.';
             showErrorToast(errorMessage, { id: toastId });
             updateFormData({
@@ -220,40 +216,22 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         }
     };
 
-    const nextStep = () => {
-        // New step order: Service -> Location -> Device -> Review -> Payment
-        // Existing customer: 5 steps (0-4), New customer: 6 steps (0-5)
-        const maxSteps = isNewCustomer ? 6 : 5;
-        if (currentStep < maxSteps) {
-            onStepChange(currentStep + 1);
-        }
-    };
-
-    const prevStep = () => {
-        if (currentStep > 0) {
-            onStepChange(currentStep - 1);
-        }
-    };
-
     const canProceedToNextStep = () => {
-        if (isNewCustomer && currentStep === 0) return false; // Handled by CustomerCreationStep
+        if (isNewCustomer && currentStep === 0) return false;
 
         switch (adjustedStep) {
             case 0: {
-                // Service Selection
-                // Validate service type, bandwidth (for broadband/combo), and terms acceptance
                 const hasValidService =
                     formData.serviceType &&
-                    (formData.serviceType === '1207609454' || // Voice doesn't need bandwidth
-                        formData.bandwidth); // Broadband and Combo need bandwidth
+                    (formData.serviceType === '1207609454' || formData.bandwidth);
                 const hasAcceptedTerms = formData.termsAccepted === true;
                 return hasValidService && hasAcceptedTerms;
             }
-            case 1: // Location Setup
+            case 1:
                 return formData.latitude !== 0 && formData.longitude !== 0 && formData.address;
-            case 2: // Device Selection (handled by step's own Next button)
+            case 2:
                 return true;
-            case 3: // Review
+            case 3:
                 return true;
             default:
                 return false;
@@ -265,58 +243,43 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             return <CustomerCreationStep onNext={() => onStepChange(1)} />;
         }
 
-        // Show manual step if resource is not available and user chose to continue manually
         if (shouldShowManualStep) {
             return (
                 <ManualSurveyStep
-                    formData={formData}
                     onBack={() => {
                         setShowManualStep(false);
-                        // Reset dialog state so it can show again if user changes location
                         setHasSeenResourceDialog(false);
-                        // Go back to location step (adjustedStep 1)
-                        // For new customers: step 0=customer, step 1=service, step 2=location
-                        // For existing customers: step 0=service, step 1=location
                         const locationStep = isNewCustomer ? 2 : 1;
                         onStepChange(locationStep);
                     }}
-                    onUpdate={updateFormData}
                 />
             );
         }
 
         switch (adjustedStep) {
-            case 0: // Service Selection
-                return <ServiceSelectionStep formData={formData} onUpdate={updateFormData} hasActiveSurvey={hasActiveSurvey} />;
-            case 1: // Location Setup
+            case 0:
+                return <ServiceSelectionStep hasActiveSurvey={hasActiveSurvey} />;
+            case 1:
                 return (
                     <LocationSetupStep
-                        formData={formData}
-                        onUpdate={updateFormData}
                         googleMapsApiKey={googleMapsApiKey}
                         onNext={(surveyId: string) => {
                             setCreatedSurveyId(surveyId);
                             nextStep();
                         }}
                         onContinueManually={() => {
-                            // Default bandwidth to 7M for manual surveys if not already set
                             if (!formData.bandwidth) {
                                 updateFormData({ bandwidth: '7M', bandwidthNumericValue: 7, customerType: 'residential' });
                             }
                             setShowManualStep(true);
                         }}
-                        hasSeenResourceDialog={hasSeenResourceDialog}
-                        onResourceDialogSeen={() => {
-                            setHasSeenResourceDialog(true);
-                        }}
                     />
                 );
-            case 2: // Device Selection (NEW STEP)
-                return <DeviceSelectionStep formData={formData} onUpdate={updateFormData} onNext={nextStep} onBack={prevStep} />;
-            case 3: // Review & Submit
+            case 2:
+                return <DeviceSelectionStep onNext={nextStep} onBack={prevStep} />;
+            case 3:
                 return (
                     <ReviewSubmitStep
-                        formData={formData}
                         onBack={prevStep}
                         onNext={(surveyId: string) => {
                             setCreatedSurveyId(surveyId);
@@ -325,7 +288,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                         }}
                     />
                 );
-            case 4: // Payment / Subscription
+            case 4:
                 return (
                     <SubscriptionPaymentStep
                         surveyId={createdSurveyId}
@@ -369,8 +332,6 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
 
     const totalSteps = stepTitles.length;
     const isLastStep = currentStep === totalSteps - 1;
-    // Hide navigation for CustomerCreation (0 if new), Manual Step, Device Selection (2), Review (3), and Payment (4)
-    // These steps have their own navigation buttons
     const showNavigation = !(isNewCustomer && currentStep === 0) && !shouldShowManualStep && adjustedStep < 2;
 
     return (

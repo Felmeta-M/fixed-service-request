@@ -3,66 +3,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useCreateSurvey } from '@/hooks/use-api-mutations';
 import { useTranslation } from '@/hooks/use-translation';
+import { useServiceFormStore } from '@/store/service-form-store';
 import { usePage } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle, Globe, HandHelping, Loader2, Phone, Router, User } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 interface ReviewSubmitStepProps {
-    formData: {
-        serviceType: string;
-        bandwidth?: string;
-        customerType?: string;
-        withDevice?: boolean;
-        selectedDevice?: {
-            id: string;
-            name: string;
-            vendor: string;
-            model: string | null;
-            price: number;
-            description: string | null;
-        } | null;
-        selectedDeviceInternet?: {
-            id: string;
-            name: string;
-            vendor: string;
-            model: string | null;
-            price: number;
-            description: string | null;
-        } | null;
-        selectedDeviceVoice?: {
-            id: string;
-            name: string;
-            vendor: string;
-            model: string | null;
-            price: number;
-            description: string | null;
-        } | null;
-        deviceId?: string | null;
-        deviceVoiceId?: string | null;
-        latitude: number;
-        longitude: number;
-        distance?: string;
-        cable_type?: string;
-        address?: string;
-        contactPerson?: string;
-        contactNo?: string;
-        contactEmail?: string;
-        resourceAvailable?: boolean;
-        resourceData?: {
-            distance: string;
-            ava_port: string;
-            neid: string;
-            nename: string;
-            typeid: string;
-            longitude: string;
-            latitude: string;
-            cable_type: string;
-            cable_type_desc: string;
-            area_code: string;
-            area_name: string;
-        };
-    };
     onBack: () => void;
     onNext?: (surveyId: string) => void;
 }
@@ -73,7 +20,7 @@ const serviceTypes = {
     '102647257': { name: 'Combo Services', icon: ComboIcon, color: 'purple' },
 };
 
-export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepProps) {
+export function ReviewSubmitStep({ onBack, onNext }: ReviewSubmitStepProps) {
     type AuthUser = {
         api_token: string;
         customer_code: string | number;
@@ -82,6 +29,9 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
         email?: string;
         enterprise_name?: string;
     };
+
+    // ── Zustand store ─────────────────────────────────────────────────────
+    const formData = useServiceFormStore((s) => s.formData);
 
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
     const { t } = useTranslation();
@@ -93,11 +43,8 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
     const handleSubmit = async () => {
         setSubmitting(true);
 
-        // The backend expects ALL encrypted resource fields exactly as returned from `/api/v1/resource-check`.
-        // All fields are critical and required - no fallbacks allowed.
         const encryptedResource = formData.resourceData;
 
-        // Validate that all required encrypted fields are present
         const requiredEncryptedFields = ['neid', 'distance', 'cable_type', 'latitude', 'longitude', 'area_code', 'area_name'];
         const missingFields: string[] = [];
 
@@ -124,25 +71,15 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
             return;
         }
 
-        // ============================================================
-        // MINIMAL PAYLOAD - Backend applies defaults for omitted fields
-        // Backend defaults (in BaseSurveyService::applyDefaults):
-        //   survey_type: 'EIC08', oper_type: 'A', customer_type: 'residential',
-        //   telecom_region: from area_code, contact_*: from customer profile,
-        //   external_operid: '512', bandwidth: '10M', with_device: false
-        // ============================================================
         const submitData = {
-            // REQUIRED - Must be provided
             main_offer_id: formData.serviceType,
             survey_address_info: {
-                // Address info (can use defaults from customer profile on backend)
                 region_city: '2',
                 subcity_zone: '11',
                 wereda_town: '141',
                 kebele: '',
                 house_no: '',
                 address: formData.address || '',
-                // Encrypted resource fields - REQUIRED (from resource-check)
                 latitude: encryptedResource.latitude,
                 longitude: encryptedResource.longitude,
                 distance: encryptedResource.distance,
@@ -153,19 +90,13 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                 area_name: (encryptedResource as any).area_name ?? '',
             },
 
-            // OPTIONAL - Only send if different from defaults
             ...(formData.bandwidth && { bandwidth: formData.bandwidth }),
             ...(formData.withDevice !== undefined && { with_device: formData.withDevice }),
-            // Device handling:
-            // - Voice-only (1207609454): use device_id from deviceVoiceId
-            // - Broadband (1457567289): use device_id from deviceId
-            // - Combo (102647257): use device_id for internet, device_voice_id for voice
             ...(formData.serviceType === '1207609454' && formData.deviceVoiceId && { device_id: formData.deviceVoiceId }),
             ...(formData.serviceType === '1457567289' && formData.deviceId && { device_id: formData.deviceId }),
             ...(formData.serviceType === '102647257' && formData.deviceId && { device_id: formData.deviceId }),
             ...(formData.serviceType === '102647257' && formData.deviceVoiceId && { device_voice_id: formData.deviceVoiceId }),
 
-            // Contact - only send if user provided custom values
             ...(formData.contactPerson && { contact_person: formData.contactPerson }),
             ...(formData.contactNo && { contact_no: formData.contactNo }),
             ...(formData.contactEmail && { contact_email: formData.contactEmail }),
@@ -187,7 +118,6 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                     main_offer_id: formData.serviceType,
                 };
 
-                // Save to local storage
                 const existingSurveys = JSON.parse(localStorage.getItem('userSurveys') || '[]');
                 existingSurveys.push(newSurvey);
                 localStorage.setItem('userSurveys', JSON.stringify(existingSurveys));
@@ -198,7 +128,6 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                     duration: 5000,
                 });
 
-                // Mutation already waited for third-party processing (7.5s delay in hook)
                 setSubmitting(false);
                 onNext?.(String(surveyId));
             },
@@ -217,19 +146,6 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
 
     return (
         <div className="w-full max-w-full space-y-6 overflow-x-hidden">
-            {/* Header Section */}
-            {/* <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/20">
-                        <CheckCircle className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-semibold text-foreground sm:text-2xl">Review & Submit</h2>
-                        <p className="text-sm text-muted-foreground">Please review your service request details before submitting</p>
-                    </div>
-                </div>
-            </div> */}
-
             {/* Review Summary */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 {/* Service Details Card */}
@@ -267,17 +183,6 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                     <p className="text-sm font-semibold text-foreground">{formData.bandwidth || '-'}</p>
                                 </div>
                             )}
-
-                            {/* Customer Type */}
-                            {/* <div className="flex flex-row justify-between gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Building2 className="h-4 w-4 text-primary shrink-0" />
-                                    <span className="text-sm font-medium text-muted-foreground">Customer Type</span>
-                                </div>
-                                <Badge variant="outline" className="w-fit capitalize">
-                                    {formData.customerType || 'residential'}
-                                </Badge>
-                            </div> */}
 
                             {/* Device info - only for Internet and Combo services */}
                             {(formData.serviceType === '1457567289' || formData.serviceType === '102647257') && (
@@ -402,15 +307,6 @@ export function ReviewSubmitStep({ formData, onBack, onNext }: ReviewSubmitStepP
                                 </div>
                                 <p className="pl-6 text-sm font-semibold text-foreground">{formData.contactNo || user.phone || '-'}</p>
                             </div>
-                            {/* {formData.contactEmail && (
-                                <div className="flex flex-col sm:flex row justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <PhoneCall className="h-4 w-4 text-primary shrink-0" />
-                                        <span className="text-sm font-medium text-muted-foreground">Email</span>
-                                    </div>
-                                    <p className="text-sm font-semibold text-foreground pl-6 break-words">{formData.contactEmail}</p>
-                                </div>
-                            )} */}
                         </div>
                     </div>
                 </div>

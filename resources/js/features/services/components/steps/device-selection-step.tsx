@@ -1,25 +1,20 @@
 import { Button } from '@/components/ui/button';
 import { DeviceOptionSelector } from '@/features/surveys/components/device-option-selector';
 import { AvailableDevice } from '@/hooks/use-available-devices';
+import { useServiceFormStore } from '@/store/service-form-store';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
 
 interface DeviceSelectionStepProps {
-    formData: {
-        serviceType: string;
-        withDevice?: boolean;
-        selectedDevice?: AvailableDevice | null;
-        selectedDeviceInternet?: AvailableDevice | null;
-        selectedDeviceVoice?: AvailableDevice | null;
-        deviceId?: string | null;
-        deviceVoiceId?: string | null;
-    };
-    onUpdate: (data: Partial<DeviceSelectionStepProps['formData']>) => void;
     onNext: () => void;
     onBack: () => void;
     disabled?: boolean;
 }
 
-export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabled = false }: DeviceSelectionStepProps) {
+export function DeviceSelectionStep({ onNext, onBack, disabled = false }: DeviceSelectionStepProps) {
+    // ── Zustand store ─────────────────────────────────────────────────────
+    const formData = useServiceFormStore((s) => s.formData);
+    const updateFormData = useServiceFormStore((s) => s.updateFormData);
+
     const isCombo = formData.serviceType === '102647257';
     const isVoiceOnly = formData.serviceType === '1207609454';
 
@@ -57,7 +52,7 @@ export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabl
         if (!withDevice) {
             // If switching to "without device", clear all selected devices
             if (isCombo) {
-                onUpdate({
+                updateFormData({
                     withDevice: false,
                     selectedDeviceInternet: null,
                     selectedDeviceVoice: null,
@@ -65,39 +60,39 @@ export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabl
                     deviceVoiceId: null,
                 });
             } else if (isVoiceOnly) {
-                onUpdate({
+                updateFormData({
                     withDevice: false,
                     selectedDeviceVoice: null,
                     deviceVoiceId: null,
                 });
             } else {
-                onUpdate({
+                updateFormData({
                     withDevice: false,
                     selectedDevice: null,
                     deviceId: null,
                 });
             }
         } else {
-            onUpdate({ withDevice: true });
+            updateFormData({ withDevice: true });
         }
     };
 
     const handleDeviceSelect = (device: AvailableDevice | null) => {
-        onUpdate({
+        updateFormData({
             selectedDevice: device ?? null,
             deviceId: device?.id ?? null,
         });
     };
 
     const handleInternetDeviceSelect = (device: AvailableDevice | null) => {
-        onUpdate({
+        updateFormData({
             selectedDeviceInternet: device ?? null,
             deviceId: device?.id ?? null,
         });
     };
 
     const handleVoiceDeviceSelect = (device: AvailableDevice | null) => {
-        onUpdate({
+        updateFormData({
             selectedDeviceVoice: device ?? null,
             deviceVoiceId: device?.id ?? null,
         });
@@ -106,20 +101,12 @@ export function DeviceSelectionStep({ formData, onUpdate, onNext, onBack, disabl
     return (
         <div className="space-y-6">
             <div>
-                {/* <div className="flex flex-col items-start gap-2">
-                    <h2 className="text-lg font-semibold">
-                        Device Information
-                    </h2>
-                    <div className="text-sm text-gray-500">
-                        Buy a device with your plan or use your own device.
-                    </div>
-                </div> */}
                 <div className="mt-4">
                     <DeviceOptionSelector
                         value={formData.withDevice}
                         serviceType={formData.serviceType}
                         onChange={handleDeviceOptionChange}
-                        selectedDevice={isVoiceOnly ? null : formData.selectedDevice}
+                        selectedDevice={isVoiceOnly ? null : (formData.selectedDevice ?? null)}
                         selectedDeviceInternet={formData.selectedDeviceInternet}
                         selectedDeviceVoice={formData.selectedDeviceVoice}
                         onDeviceSelect={isVoiceOnly ? undefined : handleDeviceSelect}

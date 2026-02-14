@@ -5,13 +5,12 @@ import { BandwidthSelector } from '@/features/surveys/components/bandwidth-selec
 import { useBandwidthOptions } from '@/hooks/use-bandwidth-options';
 import { useServiceTypes } from '@/hooks/use-service-types';
 import fixedVoiceIcon from '@/images/fixed-voice.png';
+import { useServiceFormStore } from '@/store/service-form-store';
 import { Link } from '@inertiajs/react';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 
 interface ServiceSelectionStepProps {
-    formData: any;
-    onUpdate: (data: any) => void;
     hasActiveSurvey: boolean;
 }
 
@@ -25,7 +24,11 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 // Auto flow: minimum 10 Mbps. Manual flow gets 7M default when continuing manually.
 const MIN_BANDWIDTH_MBPS_AUTO = 10;
 
-export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: ServiceSelectionStepProps) {
+export function ServiceSelectionStep({ hasActiveSurvey }: ServiceSelectionStepProps) {
+    // ── Zustand store ─────────────────────────────────────────────────────
+    const formData = useServiceFormStore((s) => s.formData);
+    const updateFormData = useServiceFormStore((s) => s.updateFormData);
+
     const { residentialOptions, loading: loadingBandwidths } = useBandwidthOptions();
     const { serviceTypes, loading: loadingServiceTypes } = useServiceTypes();
 
@@ -53,15 +56,12 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
     }, [serviceTypes]);
 
     const handleServiceSelect = (serviceId: string) => {
-        if (hasActiveSurvey) return; // Prevent selection if there's an active survey
-
-        // Update service type without clearing device data
-        // Voice services now support device selection
-        onUpdate({ serviceType: serviceId });
+        if (hasActiveSurvey) return;
+        updateFormData({ serviceType: serviceId });
     };
 
     const handleBandwidthChange = (value: string, numericValue: number, type: 'residential') => {
-        onUpdate({
+        updateFormData({
             bandwidth: value,
             bandwidthNumericValue: numericValue,
             customerType: type,
@@ -88,15 +88,6 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
 
                     return (
                         <div key={service.value} className="relative">
-                            {/* Recommended Badge */}
-                            {/* {isRecommended && (
-                                <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 transform">
-                                    <span className="inline-flex items-center rounded-full border border-yellow-200 bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-700 shadow-sm">
-                                        ✨ Recommended
-                                    </span>
-                                </div>
-                            )} */}
-
                             <label
                                 onClick={() => !hasActiveSurvey && handleServiceSelect(service.value)}
                                 className={`group relative flex h-full cursor-pointer flex-col rounded-xl border-2 p-2 transition-all duration-200 sm:p-6 ${
@@ -143,14 +134,12 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
             {/* Bandwidth Selection (Only for Broadband) - Smooth Reveal */}
             {(formData.serviceType === '1457567289' || formData.serviceType === '102647257') && !hasActiveSurvey && (
                 <div className="mt-4 duration-500 animate-in fade-in fill-mode-forwards slide-in-from-top-4">
-                    {/* <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8"> */}
                     <BandwidthSelector
                         residentialOptions={residentialOptionsFiltered}
                         loading={loadingBandwidths}
                         selectedBandwidth={formData.bandwidth}
                         onBandwidthChange={handleBandwidthChange}
                     />
-                    {/* </div> */}
                 </div>
             )}
 
@@ -160,7 +149,7 @@ export function ServiceSelectionStep({ formData, onUpdate, hasActiveSurvey }: Se
                     <Checkbox
                         id="terms-acceptance"
                         checked={formData.termsAccepted || false}
-                        onCheckedChange={(checked) => onUpdate({ termsAccepted: checked === true })}
+                        onCheckedChange={(checked) => updateFormData({ termsAccepted: checked === true })}
                         disabled={hasActiveSurvey}
                         className="mt-0.5 border-primary data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                     />

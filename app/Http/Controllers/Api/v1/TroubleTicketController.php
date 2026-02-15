@@ -37,8 +37,7 @@ class TroubleTicketController extends Controller
         protected readonly QueryCustomerForTTService $queryCustomerForTTService,
         protected readonly GetCombiningService $getCombiningService,
         protected readonly RecaptchaService $recaptchaService
-    ) {
-    }
+    ) {}
 
     /**
      * Query customer by service number before TT creation
@@ -392,6 +391,12 @@ class TroubleTicketController extends Controller
                 // Resolve status from API response using currentActivity + ttStatus
                 $currentActivity = $tt['current_activity'] ?? '';
                 $ttStatus = $tt['tt_status'] ?? '';
+                // \Log::info('Batch refresh ticket', [
+                //     'current_activity' => $currentActivity,
+                //     'tt_status' => $ttStatus,
+                //     'ticket' => $tt,
+                // ]);
+
                 $newStatus = TicketStatus::fromApiResponse($currentActivity, $ttStatus)->value;
 
                 if ($ticket->status !== $newStatus) {

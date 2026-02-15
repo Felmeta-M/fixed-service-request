@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Auth;
 use RuntimeException;
 use Throwable;
 use App\Support\CustomerContext;
+
 /**
  * Base service for manual survey orders (Fixed Data, Fixed Voice, Fixed Combo).
  *
@@ -72,11 +73,11 @@ abstract class BaseManualSurveyService extends BaseApiService
     {
         try {
             $data = $this->resolveTelecomRegionFromCoordinates($data);
-            \Log::debug('Data', ['data' => $data]);
+
             $xmlPayload = $this->buildRequestXml($data);
-            \Log::debug('XML Payload', ['xml_payload' => $xmlPayload]);
+
             $xmlResponse = $this->executeRequest($xmlPayload);
-            \Log::debug('XML Response', ['xml_response' => $xmlResponse]);
+
             $parsedResponse = $this->parseResponseXml($data, $xmlResponse);
 
             return ApiResponse::success($parsedResponse, 'Manual survey order created successfully');

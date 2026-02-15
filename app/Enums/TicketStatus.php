@@ -57,11 +57,11 @@ enum TicketStatus: string
 
         // Rule 3 & 4: CLOSED - Empty values or Canceled
         if (empty($currentActivity) && empty($ttStatus)) {
-            return self::OPEN;
+            return self::CLOSED;
         }
 
         // Handle both spellings: CANCELED (American) and CANCELLED (British)
-        if ($currentActivity === 'Customer Complaint Handling' && in_array($ttStatus, ['CANCELED', 'CANCELLED'])) {
+        if ($currentActivity === 'Customer Complaint Handling' && in_array($ttStatus, ['Cancelled'])) {
             return self::CLOSED;
         }
 

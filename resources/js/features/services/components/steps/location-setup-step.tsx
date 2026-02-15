@@ -15,6 +15,7 @@ import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { parseCoordinate } from '@/lib/coordinate-utils';
 import { reverseGeocode, geocodeAddress } from '@/lib/geocoding';
+import { useServiceFormStore } from '@/store/service-form-store';
 import { usePage } from '@inertiajs/react';
 import { AlertCircle, CheckCircle2, Loader2, MapPin } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -26,13 +27,9 @@ import {
 } from '../location-accuracy-indicator';
 
 interface LocationSetupStepProps {
-    formData: any;
-    onUpdate: (data: any) => void;
     googleMapsApiKey: string;
     onNext?: (surveyId: string) => void;
     onContinueManually?: () => void;
-    hasSeenResourceDialog?: boolean;
-    onResourceDialogSeen?: () => void;
 }
 
 interface AuthUser {
@@ -45,14 +42,16 @@ interface AuthUser {
 }
 
 export function LocationSetupStep({
-    formData,
-    onUpdate,
     googleMapsApiKey,
     onNext,
     onContinueManually,
-    hasSeenResourceDialog = false,
-    onResourceDialogSeen,
 }: LocationSetupStepProps) {
+    // ── Zustand store ─────────────────────────────────────────────────────
+    const formData = useServiceFormStore((s) => s.formData);
+    const updateFormData = useServiceFormStore((s) => s.updateFormData);
+    const hasSeenResourceDialog = useServiceFormStore((s) => s.hasSeenResourceDialog);
+    const setHasSeenResourceDialog = useServiceFormStore((s) => s.setHasSeenResourceDialog);
+
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
     const [locationLoading, setLocationLoading] = useState(false);
     const [locationError, setLocationError] = useState('');
@@ -93,7 +92,7 @@ export function LocationSetupStep({
                 
                 // Set accuracy based on whether this was manually selected
                 if (formData.locationAccuracy) {
-                    setLocationAccuracy(formData.locationAccuracy);
+                    setLocationAccuracy(formData.locationAccuracy as LocationAccuracy);
                 }
             } else {
                 // No existing location - trigger auto-detection
@@ -104,7 +103,6 @@ export function LocationSetupStep({
 
     // Show dialog when resource is not available for any reason
     useEffect(() => {
-        // Show resource unavailable dialog if resource check failed and user hasn't seen it yet
         if (formData.resourceAvailable === false && !hasSeenResourceDialog) {
             setShowResourceUnavailableDialog(true);
         }
@@ -113,9 +111,7 @@ export function LocationSetupStep({
     // Handle "Continue Manually" button click - show manual step in flow
     const handleContinueManually = () => {
         setShowResourceUnavailableDialog(false);
-        // Mark that user has seen the dialog
-        onResourceDialogSeen?.();
-        // Trigger manual step in parent flow
+        setHasSeenResourceDialog(true);
         onContinueManually?.();
     };
 
@@ -123,15 +119,13 @@ export function LocationSetupStep({
     const handleDialogClose = (open: boolean) => {
         if (!open) {
             setShowResourceUnavailableDialog(false);
-            // Mark that user has seen the dialog even if they cancel
-            onResourceDialogSeen?.();
+            setHasSeenResourceDialog(true);
         }
     };
 
     const getGoogleAddressFromCoordinates = async (lat: number, lng: number): Promise<string> => {
         try {
             setIsGeocoding(true);
-            // Use server-side proxy for security (API key hidden)
             return await reverseGeocode(lat, lng);
         } catch (error) {
             return 'Address service temporarily unavailable';
@@ -143,7 +137,6 @@ export function LocationSetupStep({
     const getCoordinatesFromAddress = async (address: string): Promise<{ lat: number; lng: number; address: string } | null> => {
         try {
             setIsGeocoding(true);
-            // Use server-side proxy for security (API key hidden)
             return await geocodeAddress(address);
         } catch (error) {
             return null;
@@ -166,11 +159,11 @@ export function LocationSetupStep({
             setLocationAccuracy(accuracy);
         }
 
-        onUpdate({
+        updateFormData({
             latitude: lat,
             longitude: lng,
             address: finalAddress,
-            locationAccuracy: accuracy || locationAccuracy,
+            locationAccuracy: accuracy || locationAccuracy || undefined,
             resourceAvailable: undefined,
             resourceData: undefined,
             resourceMessage: '',
@@ -216,7 +209,6 @@ export function LocationSetupStep({
         
         try {
             const address = await getGoogleAddressFromCoordinates(lat, lng);
-            // Manual coordinate entry = excellent accuracy (user specified exact location)
             const manualAccuracy: LocationAccuracy = {
                 meters: 0,
                 level: 'excellent',
@@ -227,7 +219,6 @@ export function LocationSetupStep({
             setLocationLoading(false);
         }
         
-        // Hide button after successful update
         setShowUpdateBtn(false);
     };
 
@@ -240,7 +231,6 @@ export function LocationSetupStep({
         try {
             const location = await getCoordinatesFromAddress(manualAddress);
             if (location) {
-                // Address search = excellent accuracy (geocoded address)
                 const searchAccuracy: LocationAccuracy = {
                     meters: 0,
                     level: 'excellent',

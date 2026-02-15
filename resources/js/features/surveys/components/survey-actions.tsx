@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { useCancelSurveyOrder, useChangePrimaryOffering, useCreateSubscription, useDeleteSurveyOrder } from '@/hooks/use-api-mutations';
 import { useTranslation } from '@/hooks/use-translation';
 import { showErrorToast, showLoadingToast, showSuccessToast } from '@/lib/toast-helpers';
+import { useDialogStore } from '@/store/dialog-store';
 import { router, usePage } from '@inertiajs/react';
 import { ArrowUpToLineIcon, Eye, Loader2, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -89,14 +90,30 @@ interface SurveyActionsProps {
 
 export default function SurveyActions({ survey, onActionComplete, onUpdatingChange }: SurveyActionsProps) {
     const { t } = useTranslation();
-    const [openCancelDialog, setOpenCancelDialog] = useState(false);
-    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-    const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
-    const [openDowngradeDialog, setOpenDowngradeDialog] = useState(false);
-    const [isTerminateAction, setIsTerminateAction] = useState(false);
+
+    // ── Zustand dialog store ──────────────────────────────────────────────
+    const activeDialog = useDialogStore((s) => s.activeDialog);
+    const openDialog = useDialogStore((s) => s.openDialog);
+    const closeDialog = useDialogStore((s) => s.closeDialog);
+    const isTerminateAction = useDialogStore((s) => s.isTerminateAction);
+    const setIsTerminateAction = useDialogStore((s) => s.setIsTerminateAction);
+
+    // Dialog open state (derived from store)
+    const openCancelDialog = activeDialog === 'cancel';
+    const openDeleteDialog = activeDialog === 'delete';
+    const openUpgradeDialog = activeDialog === 'upgrade';
+    const openDowngradeDialog = activeDialog === 'downgrade';
+    const openDetailModal = activeDialog === 'detail';
+
+    // Setter wrappers (open/close via store)
+    const setOpenCancelDialog = (v: boolean) => v ? openDialog('cancel') : closeDialog();
+    const setOpenDeleteDialog = (v: boolean) => v ? openDialog('delete') : closeDialog();
+    const setOpenUpgradeDialog = (v: boolean) => v ? openDialog('upgrade') : closeDialog();
+    const setOpenDowngradeDialog = (v: boolean) => v ? openDialog('downgrade') : closeDialog();
+    const setOpenDetailModal = (v: boolean) => v ? openDialog('detail') : closeDialog();
+
     const [error, setError] = useState('');
     const [customerData, setCustomerData] = useState<AuthUser | null>(null);
-    const [openDetailModal, setOpenDetailModal] = useState(false);
     const [apiErrors, setApiErrors] = useState<{ [key: string]: string }>({});
 
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;

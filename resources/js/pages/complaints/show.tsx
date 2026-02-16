@@ -258,28 +258,36 @@ export default function ComplaintsShow({ ttNumber }: ShowProps) {
                         {/* Header Card with Status */}
                         <Card className="border-none shadow-xs">
                             <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <CardTitle className="text-lg">{detail.troubleTitle || 'N/A'}</CardTitle>
-                                        <CardDescription>{detail.troubleReason || 'N/A'}</CardDescription>
+                                <div className="flex flex-col gap-y-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="min-w-0 flex-1">
+                                        <CardTitle className="truncate text-base sm:text-lg">{detail.troubleTitle || 'N/A'}</CardTitle>
+                                        <CardDescription className="truncate text-xs sm:text-sm">{detail.troubleReason || 'N/A'}</CardDescription>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex w-full flex-wrap items-center justify-start gap-2 sm:w-auto sm:flex-nowrap sm:justify-end sm:gap-2">
                                         {source === 'local' ? (
                                             <StatusBadge status={(detail as any).localStatus} />
                                         ) : (
-                                            <Badge variant={detail.result_code === '0' ? 'default' : 'destructive'}>
+                                            <Badge
+                                                variant={detail.result_code === '0' ? 'default' : 'destructive'}
+                                                className="min-w-[70px] px-2 py-1 text-center text-xs sm:text-sm"
+                                            >
                                                 {detail.result_code === '0' ? 'Active' : 'Closed'}
                                             </Badge>
                                         )}
-                                        <Badge variant="outline" className="text-xs">
+                                        {/* <Badge variant="outline" className="min-w-[60px] px-2 py-1 text-center text-xs">
                                             {source === 'local' ? 'Local' : 'External'}
                                         </Badge>
                                         {canConfirmFeedback && !showFeedbackForm && (
-                                            <Button variant="outline" size="sm" onClick={() => setShowFeedbackForm(true)}>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex w-full items-center justify-center px-3 py-1 text-xs sm:w-auto"
+                                                onClick={() => setShowFeedbackForm(true)}
+                                            >
                                                 <CheckCircle2 className="mr-2 h-4 w-4" />
                                                 Confirm Feedback
                                             </Button>
-                                        )}
+                                        )} */}
                                     </div>
                                 </div>
                             </CardHeader>

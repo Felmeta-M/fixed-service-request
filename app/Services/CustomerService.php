@@ -216,7 +216,7 @@ XML;
                     'contact' => json_encode($data['contact']),
                     'contact_persons' => json_encode($data['contact_person']),
                     'gender' => $data['gender'],
-                    'nationality' => $data['nationality'],
+                    'nationality' => 'Ethiopian',
                     'identification_type' => $data['identification_type'],
                     'identification_number' => $data['identification_number'],
                     'birthdate' => $data['date_of_birth'],

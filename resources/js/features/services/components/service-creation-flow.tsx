@@ -85,6 +85,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const isTransitioningToSubscription = useServiceFormStore((s) => s.isTransitioningToSubscription);
     const setIsTransitioningToSubscription = useServiceFormStore((s) => s.setIsTransitioningToSubscription);
     const setIsNewCustomer = useServiceFormStore((s) => s.setIsNewCustomer);
+    const resetStore = useServiceFormStore((s) => s.reset);
 
     // Sync isNewCustomer into the store so nextStep() knows the max
     useEffect(() => {
@@ -298,6 +299,7 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                         }}
                         onComplete={() => {
                             setIsTransitioningToSubscription(false);
+                            resetStore();
                             onStepChange(0);
                         }}
                         onLoadComplete={() => setIsTransitioningToSubscription(false)}

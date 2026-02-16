@@ -3,6 +3,7 @@ import { useCancelSurveyOrder, useChangePrimaryOffering, useCreateSubscription, 
 import { useTranslation } from '@/hooks/use-translation';
 import { showErrorToast, showLoadingToast, showSuccessToast } from '@/lib/toast-helpers';
 import { useDialogStore } from '@/store/dialog-store';
+import { useServiceFormStore } from '@/store/service-form-store';
 import { router, usePage } from '@inertiajs/react';
 import { ArrowUpToLineIcon, Eye, Loader2, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -440,6 +441,8 @@ export default function SurveyActions({ survey, onActionComplete, onUpdatingChan
                     id: subscribeToast,
                     description: 'Your service subscription has been activated.',
                 });
+                // Clear all service-creation / flow state before leaving
+                useServiceFormStore.getState().reset();
                 onActionComplete();
                 router.visit('/services/subscription-success');
                 onUpdatingChange(false);

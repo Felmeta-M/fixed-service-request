@@ -9,6 +9,7 @@ import { type ServiceActionFocus } from '@/lib/service-action-rules';
 import { getStatusInfo } from '@/lib/status-map';
 import { showErrorToast, showLoadingToast, showSuccessToast } from '@/lib/toast-helpers';
 import { useDialogStore } from '@/store/dialog-store';
+import { useServiceFormStore } from '@/store/service-form-store';
 import { Link, router, usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
 import {
@@ -106,6 +107,8 @@ type SurveyDetailProps = {
     isInFlow?: boolean;
     /** Custom back handler for flow context */
     onBack?: () => void;
+    /** Called when subscription succeeds (e.g. so flow can reset and update step) */
+    onSubscriptionSuccess?: () => void;
 };
 
 const INTERNET_OFFER_ID = '1457567289';
@@ -136,7 +139,7 @@ const mediaTypeMap: Record<string, { label: string; description: string }> = {
     COPPER: { label: 'Copper', description: 'Copper cable - Copper devices' },
 };
 
-export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = false, onBack }: SurveyDetailProps) {
+export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = false, onBack, onSubscriptionSuccess }: SurveyDetailProps) {
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
     const { t } = useTranslation();
 
@@ -344,6 +347,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                     id: subscribeToast,
                     description: 'Your service subscription has been activated.',
                 });
+                // Clear all service-creation / flow state before leaving
+                useServiceFormStore.getState().reset();
+                onSubscriptionSuccess?.();
                 router.visit('/services/subscription-success');
             },
             onError: (error: Error) => {

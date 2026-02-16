@@ -12,6 +12,7 @@ import { useCreateSurvey } from '@/hooks/use-api-mutations';
 import { useBandwidthOptions } from '@/hooks/use-bandwidth-options';
 import { useServiceTypes } from '@/hooks/use-service-types';
 import SimpleLayout from '@/layouts/simple-layout';
+import { useServiceFormStore } from '@/store/service-form-store';
 import { formatCoordinate, formatCoordinatesForAPI, parseCoordinate } from '@/lib/coordinate-utils';
 import { useResourceChecker } from '@/lib/resource-check';
 import { SurveyRequest, SurveyRequestFormValues } from '@/types/survey';
@@ -553,6 +554,8 @@ export default function Create() {
                     }
 
                     setLoading(false);
+                    // Clear service-creation flow state so next visit starts clean
+                    useServiceFormStore.getState().reset();
                     router.visit('/dashboard');
                 },
                 onError: (err: Error) => {

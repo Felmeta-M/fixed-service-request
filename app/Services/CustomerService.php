@@ -48,6 +48,16 @@ class CustomerService extends BaseApiService
     {
         $customer = $this->getLocalCustomerDataOptimized();
 
+        // Only allow switching to new phone when existing customer phone is valid Ethiopian format
+        // (7 + 8 digits, optional +251/251/0 prefix). Otherwise keep existing or fallback to new.
+        $newPhone = $data['phone_number'] ?? null;
+        $existingValid = $customer?->phone_number && preg_match('/^(\+251|251|0)?(7)\d{8}$/', $customer?->phone_number);
+        if ($newPhone && $newPhone !== $customer?->phone_number && $existingValid) {
+            $data['phone_number'] = $newPhone;
+        } else {
+            $data['phone_number'] = $customer?->phone_number ?? $newPhone;
+        }
+
         $credentials = config('services.ng');
 
         $this->transactionId = uniqid();
@@ -219,6 +229,7 @@ XML;
                 ->update([
                     'title' => $data['title'] ?? '1',
                     'code' => $customerCode,
+                    'phone_number' => $data['phone_number'],
                     'contact' => json_encode($data['contact']),
                     'contact_persons' => json_encode($data['contact_person']),
                     'gender' => $data['gender'] == 1 ? 'Male' : 'Female',

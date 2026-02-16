@@ -402,6 +402,15 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
 
             <com:ExternalOperid>9527</com:ExternalOperid>
             <com:ExternalOperName>helloworld</com:ExternalOperName>
+
+            <com:ExtParamList>
+                    <com:ParameterInfo>
+                        <com:ParamName>Ecaf_TRANSACTION_ID</com:ParamName>
+                        <com:ParamCode>Ecaf_TRANSACTION_ID</com:ParamCode>
+                        <com:ParamValue>{$data['transaction_id']}</com:ParamValue>
+                    </com:ParameterInfo>
+             </com:ExtParamList>
+
             <com:InstallmentCompletedDate>{$data['completed_date']}</com:InstallmentCompletedDate>
          </ser:CreateNewSubscriberReqBody>
       </ser:CreateNewSubscriberReqMsg>

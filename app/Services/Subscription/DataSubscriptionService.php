@@ -293,7 +293,17 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
              {$this->oneOffFeeCalculation($this->dataDeviceData($data))}
 
             <com:ExternalOperid>{$data['external_oper_id']}</com:ExternalOperid>
+
+            <com:ExtParamList>
+                    <com:ParameterInfo>
+                        <com:ParamName>Ecaf_TRANSACTION_ID</com:ParamName>
+                        <com:ParamCode>Ecaf_TRANSACTION_ID</com:ParamCode>
+                        <com:ParamValue>{$data['transaction_id']}</com:ParamValue>
+                    </com:ParameterInfo>
+              </com:ExtParamList>
+
             <com:InstallmentCompletedDate>{$data['installment_date']}</com:InstallmentCompletedDate>
+
          </ser:CreateNewSubscriberReqBody>
       </ser:CreateNewSubscriberReqMsg>
    </soapenv:Body>

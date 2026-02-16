@@ -20,7 +20,8 @@ class SurveyTypeController extends Controller
     {
         $surveyTypes = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, function () {
             return DB::table('survey_types')
-                ->select(['id', 'name', 'created_at'])
+                ->where('status', true)
+                ->select(['id', 'name', 'status', 'created_at'])
                 ->orderBy('name')
                 ->get();
         });
@@ -30,7 +31,10 @@ class SurveyTypeController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate(['name' => 'required|string|max:255']);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'status' => 'sometimes|boolean',
+        ]);
         $surveyType = SurveyType::create($validated);
 
         // Clear cache on modification
@@ -46,7 +50,10 @@ class SurveyTypeController extends Controller
 
     public function update(Request $request, SurveyType $surveyType)
     {
-        $validated = $request->validate(['name' => 'required|string|max:255']);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'status' => 'sometimes|boolean',
+        ]);
         $surveyType->update($validated);
 
         // Clear cache on modification

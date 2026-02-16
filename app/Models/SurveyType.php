@@ -12,6 +12,14 @@ class SurveyType extends Model
      */
     protected $fillable = [
         'name',
+        'status',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     */
+    protected $casts = [
+        'status' => 'boolean',
     ];
 
     /**

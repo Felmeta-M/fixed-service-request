@@ -89,19 +89,19 @@ class AppServiceProvider extends ServiceProvider
             }
         ]);
 
-        // Rate limiter for service client token endpoints
+        // Rate limiter for service client token endpoints (relaxed for normal usage)
         RateLimiter::for('service_client', function (Request $request) {
-            return Limit::perSecond(5, 3)->by($request->ip()) // 3 requests for every 5 seconds
+            return Limit::perMinute(30)->by($request->ip())
                 ->response(function () {
                     return response()->json([
-                        'message' => 'Rate limit exceeded. Please wait a second 5.',
+                        'message' => 'Rate limit exceeded. Please try again later.',
                     ], 429);
                 });
         });
 
         // Rate limiter for public read-only endpoints (survey-types, bandwidth-options, occupations, locations)
         RateLimiter::for('api_public', function (Request $request) {
-            return Limit::perMinute(60)->by($request->ip())
+            return Limit::perMinute(180)->by($request->ip())
                 ->response(function (Request $request, array $headers) {
                     return response()->json([
                         'message' => 'Too many requests. Please try again later.',
@@ -115,7 +115,7 @@ class AppServiceProvider extends ServiceProvider
             $user = $request->user();
             $key = $user ? $user->id : $request->ip();
 
-            return Limit::perMinute(120)->by($key)
+            return Limit::perMinute(300)->by($key)
                 ->response(function (Request $request, array $headers) {
                     return response()->json([
                         'message' => 'Too many requests. Please try again later.',
@@ -129,7 +129,7 @@ class AppServiceProvider extends ServiceProvider
             $user = $request->user();
             $key = $user ? $user->id : $request->ip();
 
-            return Limit::perMinute(30)->by($key)
+            return Limit::perMinute(60)->by($key)
                 ->response(function (Request $request, array $headers) {
                     return response()->json([
                         'message' => 'Rate limit exceeded for critical operations. Please try again later.',
@@ -143,7 +143,7 @@ class AppServiceProvider extends ServiceProvider
             $user = $request->user();
             $key = $user ? $user->id : $request->ip();
 
-            return Limit::perMinute(40)->by($key)
+            return Limit::perMinute(120)->by($key)
                 ->response(function (Request $request, array $headers) {
                     return response()->json([
                         'message' => 'Rate limit exceeded for this operation. Please try again later.',
@@ -157,7 +157,7 @@ class AppServiceProvider extends ServiceProvider
             $user = $request->user();
             $key = $user ? $user->id : $request->ip();
 
-            return Limit::perMinute(60)->by($key)
+            return Limit::perMinute(120)->by($key)
                 ->response(function (Request $request, array $headers) {
                     return response()->json([
                         'message' => 'Too many trouble ticket requests. Please try again later.',

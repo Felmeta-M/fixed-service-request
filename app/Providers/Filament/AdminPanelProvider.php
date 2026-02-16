@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use Filament\Actions\Action;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\Support\Icons\Heroicon;
@@ -22,8 +23,6 @@ use App\Filament\Widgets\ServiceTypeStatsWidget;
 use App\Filament\Widgets\SubscriptionStatsWidget;
 use App\Filament\Widgets\SurveyModeStatsWidget;
 use App\Filament\Widgets\SurveyOrderStatsWidget;
-use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -38,7 +37,7 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
             ->id('admin')
-            ->path('ffd')
+            ->path('fbb')
             ->login(AuthLogin::class)
             ->passwordReset(RequestPasswordReset::class, ResetPassword::class)
             ->colors([
@@ -54,10 +53,10 @@ class AdminPanelProvider extends PanelProvider
                 ChangePassword::class,
             ])
             ->userMenuItems([
-                \Filament\Navigation\MenuItem::make()
+                Action::make('change_password')
                     ->label(__('auth.change_password'))
                     ->url(fn(): string => ChangePassword::getUrl())
-                    ->icon('heroicon-o-key'),
+                    ->icon(Heroicon::OutlinedKey),
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([

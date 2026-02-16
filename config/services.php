@@ -279,4 +279,18 @@ return [
         'min_score' => env('GOOGLE_RECAPTCHA_MIN_SCORE', 0.5),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Survey order duplicate validation bypass (e.g. app tests)
+    |--------------------------------------------------------------------------
+    | Customer codes in this list skip the "already have an active request"
+    | duplicate check when creating a survey order. Set via .env:
+    | SURVEY_BYPASS_DUPLICATE_CODES=CODE1,CODE2,CODE3
+    */
+    'survey_order' => [
+        'bypass_duplicate_validation_customer_codes' => array_filter(
+            array_map('trim', explode(',', env('SURVEY_BYPASS_DUPLICATE_CODES', '')))
+        ),
+    ],
+
 ];

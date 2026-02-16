@@ -2,6 +2,7 @@ import { MobileStepIndicator } from '@/components/common/mobile-step-indicator';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { clearBrowserFootprint } from '@/lib/clear-browser-footprint';
 import { Link, router } from '@inertiajs/react';
 import { ArrowLeft, FileText, LogOut, MapPin, RouterIcon, Wifi } from 'lucide-react';
 
@@ -25,6 +26,7 @@ export function SiteHeader({ title, subtitle, isServiceCreation = false, current
     const showMobileSteps = isServiceCreation;
 
     const handleLogout = () => {
+        clearBrowserFootprint();
         router.post(route('logout'));
     };
 

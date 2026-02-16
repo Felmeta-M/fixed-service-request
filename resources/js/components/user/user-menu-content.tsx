@@ -1,6 +1,7 @@
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
+import { clearBrowserFootprint } from '@/lib/clear-browser-footprint';
 import { type User } from '@/types';
 import { Link, router } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
@@ -13,6 +14,7 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
     const cleanup = useMobileNavigation();
 
     const handleLogout = () => {
+        clearBrowserFootprint();
         cleanup();
         router.flushAll();
     };

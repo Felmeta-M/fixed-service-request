@@ -1,8 +1,9 @@
 import { ComplaintsIcon, StepServiceIcon } from '@/components/app/app-sidebar';
 import { LocaleSwitcher } from '@/components/common/locale-switcher';
 import { useTranslation } from '@/hooks/use-translation';
+import { clearBrowserFootprint } from '@/lib/clear-browser-footprint';
 import { useActiveCustomer } from '@/store/customer-store';
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { ArrowRight, LayoutDashboard, LogIn, LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import logo from '../../images/ethio_logo_full.png';
@@ -14,7 +15,13 @@ export const Header = () => {
     const { t, locale } = useTranslation();
 
     const handleLogout = () => {
+        clearBrowserFootprint();
         clearActiveCustomer();
+    };
+
+    const submitLogout = () => {
+        handleLogout();
+        router.post(route('logout'));
     };
 
     return (
@@ -47,7 +54,7 @@ export const Header = () => {
                                         size="sm"
                                         className="flex items-center space-x-2"
                                     >
-                                        <Link href={route('logout')} method="post" className="flex items-center">
+                                        <Link href={route('logout')} method="post" className="flex items-center" onClick={handleLogout}>
                                             <LogOut className="mr-2 h-4 w-4" />
                                             {t('nav.logout')}
                                         </Link>
@@ -120,8 +127,8 @@ export const Header = () => {
 
                                     <button
                                         onClick={() => {
-                                            handleLogout();
                                             setIsMobileMenuOpen(false);
+                                            submitLogout();
                                         }}
                                         className="mt-1 block w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-red-600 transition hover:bg-red-50 hover:text-red-700"
                                     >

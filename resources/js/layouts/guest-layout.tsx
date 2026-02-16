@@ -3,6 +3,7 @@ import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import { useTranslation } from '@/hooks/use-translation';
+import { clearBrowserFootprint } from '@/lib/clear-browser-footprint';
 import { Link, usePage } from '@inertiajs/react';
 import { LayoutDashboard, LogIn, LogOut, Menu, X } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
@@ -82,7 +83,7 @@ export default function GuestLayout({ children }: Props) {
                                             <LayoutDashboard className="h-4 w-4" />
                                             <span>{t('nav.dashboard')}</span>
                                         </Link>
-                                        <Link href={route('logout')} method="post" as="button">
+                                        <Link href={route('logout')} method="post" as="button" onClick={() => clearBrowserFootprint()}>
                                             <Button variant="outline" type="submit">
                                                 <LogOut className="h-4 w-4" />
                                                 <span>{t('nav.logout')}</span>
@@ -174,7 +175,10 @@ export default function GuestLayout({ children }: Props) {
                                             href={route('logout')}
                                             method="post"
                                             as="button"
-                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            onClick={() => {
+                                                clearBrowserFootprint();
+                                                setIsMobileMenuOpen(false);
+                                            }}
                                             className="block w-full"
                                         >
                                             <Button

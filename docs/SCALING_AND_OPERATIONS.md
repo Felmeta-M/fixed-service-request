@@ -141,7 +141,7 @@ app_memory ≈ pm.max_children × 80MB   (typical per-worker usage)
 | 250  | 250  | ~20 GB    | 6   |
 | 500  | 500  | ~40 GB    | 8+  |
 
-**Per-IP rate (nginx):** `limit_req rate` × `burst` should allow enough headroom so nginx is not the bottleneck. Current: 20 r/s, burst 40. For 250 users this is sufficient; increase only if you see nginx 503 or rate-limit logs.
+**Nginx:** Rate limiting at nginx is **disabled** so customers on shared public IPs (NAT, mobile carriers, corporate proxies) are not blocked. Throttling is done by Laravel only (see §9).
 
 **Host sizing (this app + second app):**  
 `host_ram ≥ app_ram + app2_ram + postgres_ram + redis_ram + nginx + OS` (e.g. 20 + 8 + 12 + 6 + 0.25 + 2 ≈ 48 GB for this app at 250 users plus a second app at ~100 users).
@@ -154,7 +154,7 @@ app_memory ≈ pm.max_children × 80MB   (typical per-worker usage)
 
 1. **PHP-FPM:** In `www.conf` set `pm.max_children = 300`, and scale `pm.start_servers` and spare range (e.g. start 75, min_spare 45, max_spare 135).
 2. **App container:** In `compose.yml` raise app `deploy.resources.limits.memory` (e.g. 24g for 300 workers) and optionally CPUs.
-3. **Nginx:** In `docker/nginx/default.conf` optionally increase `limit_req` rate and burst (e.g. 25 r/s, burst 50) if nginx becomes the bottleneck.
+3. **Laravel rate limits:** If authenticated users hit 429s, increase the relevant limiter in `AppServiceProvider` (see §9).
 4. **PgBouncer:** Set `default_pool_size` ≥ 300 + queue workers (e.g. 315); keep Postgres `max_connections` in `compose.yml` above total pool usage.
 
 ### Add a second app on the same host (e.g. bill complaints)
@@ -183,4 +183,56 @@ app_memory ≈ pm.max_children × 80MB   (typical per-worker usage)
 
 ---
 
-*Last updated: 250 concurrent users; PHP-FPM, compose, PgBouncer, and Postgres max_connections aligned to this target.*
+## 9. Laravel Rate Limiting (Scalability)
+
+Rate limiting is **only** applied in Laravel (nginx rate limiting is disabled so shared public IPs are not blocked). Limits are **per key** (per user when authenticated, per IP for guests). This scales with user count: more users = more independent buckets.
+
+### Where it is configured
+
+| Location | Purpose |
+|----------|---------|
+| `app/Providers/AppServiceProvider.php` | Defines named limiters (`RateLimiter::for(...)`). |
+| `routes/api.php` | Assigns limiters to route groups via `throttle:name` middleware. |
+
+### Cache driver (important for scale)
+
+Laravel stores rate-limit state in the **default cache** (`config/cache.php` → `CACHE_STORE`).
+
+| Driver | Use case | Scale note |
+|--------|----------|------------|
+| `database` | Default; single app instance. | Fine for small/medium. Table can grow. |
+| **`redis`** | **Recommended for production.** | Fast, shared across workers/containers; supports high request volume. Set `CACHE_STORE=redis` and ensure Redis is used for cache. |
+
+For 250+ concurrent users or multiple app/queue workers, use **Redis** as cache so all PHP processes see the same rate-limit counters.
+
+### Named limiters and limits
+
+| Limiter name | Key | Limit | Applied to (routes) |
+|--------------|-----|-------|----------------------|
+| **service_client** | IP | 30 / min | `POST /api/v1/issue-token`, `GET /api/v1/fetch-token` |
+| **api_public** | IP | 180 / min | Public API: survey-types, bandwidth-options, locations, geocode, tt/lookup-service, tt/create-guest, etc. |
+| **api_authenticated** | User ID (or IP if guest) | 300 / min | Customer queries, survey orders list, account, payments/show, subscription-order-status, purchased-offering, change-primary-offering, etc. |
+| **api_critical** | User ID (or IP) | 60 / min | `POST /api/v1/services/subscription`, `POST /api/v1/create-order` (payments) |
+| **api_heavy** | User ID (or IP) | 120 / min | Customer create, survey create, survey create-manual |
+| **api_trouble_tickets** | User ID (or IP) | 120 / min | Trouble ticket list, show, query, create, detail, confirm |
+| **send-sms** | IP + phone | 3 / min per IP, 5 / hour per phone | SMS/OTP sending (web routes using this limiter) |
+
+**Per-user vs per-IP:** Authenticated API routes use `$request->user()->id` as the key, so each logged-in user has their own limit even when many users share one IP. Public/guest routes use IP.
+
+### Scaling and tuning
+
+- **Increase limits:** Edit the `Limit::perMinute(...)` (or equivalent) values in `AppServiceProvider::boot()`. Example: 300 → 400 for `api_authenticated` if power users hit 429s.
+- **Add a new limiter:** Call `RateLimiter::for('name', fn (Request $request) => Limit::perMinute(n)->by($key))`, then use `throttle:name` in `routes/api.php`.
+- **Use Redis for cache:** Set `CACHE_STORE=redis` in `.env` and configure `config/cache.php` / `config/database.php` Redis so rate-limit state is shared and fast.
+- **429 responses:** Clients receive HTTP 429 with JSON `message` and optional `retry_after`. Ensure `ThrottleRequestsException` is handled in the API exception handler (see `app/Exceptions/Handler.php` and `ApiResponse::rateLimited()`).
+
+### Quick reference: change a limit
+
+1. Open `app/Providers/AppServiceProvider.php`.
+2. Find the `RateLimiter::for('api_xxx', ...)` block.
+3. Change `Limit::perMinute(n)` to the new value; save.
+4. No restart required for next request (opcache may cache the file until reload).
+
+---
+
+*Last updated: 250 concurrent users; PHP-FPM, compose, PgBouncer, Postgres max_connections, and Laravel rate limiting aligned to this target.*

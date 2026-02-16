@@ -649,20 +649,24 @@ class SurveyOrderController extends Controller
 
             // Validate: (1) no existing order with customer_subscription_order_id null for same customer/offer/type;
             // (2) no duplicate by customer_code, main_offer_id, survey_type
+            // Bypass for customer codes in config (e.g. app tests)
             $mainOfferId = (int) ($data['main_offer_id'] ?? 0);
             $surveyType = $data['survey_type'] ?? 'EIC08';
 
-            $duplicateValidation = SurveyOrder::validateDuplicate(
-                $customerCode,
-                $mainOfferId,
-                $surveyType
-            );
+            $bypassCodes = config('services.survey_order.bypass_duplicate_validation_customer_codes', []);
+            if (! in_array($customerCode, $bypassCodes, true)) {
+                $duplicateValidation = SurveyOrder::validateDuplicate(
+                    $customerCode,
+                    $mainOfferId,
+                    $surveyType
+                );
 
-            if ($duplicateValidation) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $duplicateValidation['message'],
-                ], Response::HTTP_CONFLICT);
+                if ($duplicateValidation) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $duplicateValidation['message'],
+                    ], Response::HTTP_CONFLICT);
+                }
             }
 
             // For manual surveys, route by main_offer_id to Data / Voice / Combo manual service.
@@ -1303,8 +1307,9 @@ class SurveyOrderController extends Controller
             $data['survey_type'] = $data['survey_type'] ?? 'EIC08';
             $data['oper_type'] = $data['oper_type'] ?? 'A';
 
-            // Check for existing active survey orders for this customer
-            if (SurveyOrder::hasBlockedSurvey($customerCode)) {
+            // Check for existing active survey orders for this customer (bypass for configured codes, e.g. app tests)
+            $bypassCodes = config('services.survey_order.bypass_duplicate_validation_customer_codes', []);
+            if (! in_array($customerCode, $bypassCodes, true) && SurveyOrder::hasBlockedSurvey($customerCode)) {
                 AppLogger::business()->warning('Manual survey blocked - existing active order', [
                     'customer_code' => $customerCode,
                 ]);

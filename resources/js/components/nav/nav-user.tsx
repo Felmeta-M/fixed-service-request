@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import { useTranslation } from '@/hooks/use-translation';
+import { clearBrowserFootprint } from '@/lib/clear-browser-footprint';
 import { router, usePage } from '@inertiajs/react';
 import { LogOut, MoreVertical } from 'lucide-react';
 
@@ -26,6 +27,7 @@ export function NavUser() {
     const { t } = useTranslation();
 
     const handleLogout = () => {
+        clearBrowserFootprint();
         router.post(route('logout'));
     };
 

@@ -98,7 +98,6 @@ class CreateOrderService
 
             // 6️⃣ Build rawRequest string for H5 page
             return $this->createRawRequest($prepay_id);
-
         } finally {
             $lock->release();
         }
@@ -161,7 +160,6 @@ class CreateOrderService
                     'payment_order_id' => $bizContent['payment_order_id'] ?? null,
                 ]);
             }
-
         } catch (\Throwable $e) {
             // Log but don't fail - allow creating new payment attempt
             AppLogger::payment()->warning('Failed to verify Telebirr payment status', [
@@ -279,7 +277,7 @@ class CreateOrderService
             throw new RuntimeException("Your payment has already been processed. No further action is needed.");
         }
 
-        $amount = number_format((float) $payment->total_amount, 2, '.', '');
+        $totalAmount = number_format((float) $payment->total_amount, 2, '.', '');
 
         $payment->update([
             'merch_order_id' => $merchantOrderId,
@@ -301,7 +299,7 @@ class CreateOrderService
             'merch_code' => $this->merchantCode,
             'merch_order_id' => (string) $merchantOrderId,
             'title' => (string) $data['customerSurveyOrderId'],
-            'total_amount' => "1",
+            'total_amount' => (string)$totalAmount,
             'trans_currency' => 'ETB',
             'timeout_express' => '120m',
             'payee_identifier' => $this->merchantCode,

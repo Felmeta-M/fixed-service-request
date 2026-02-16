@@ -43,8 +43,7 @@ class SurveyOrderController extends Controller
         protected readonly DeviceFeeCalculatorService $deviceFeeCalculator,
         protected readonly EcafService $ecafService,
         protected readonly DeviceStockService $deviceStockService,
-    ) {
-    }
+    ) {}
 
     /**
      * Display a listing of the resource - optimized with Query Builder
@@ -659,12 +658,12 @@ class SurveyOrderController extends Controller
                 $surveyType
             );
 
-            // if ($duplicateValidation) {
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => $duplicateValidation['message'],
-            //     ], Response::HTTP_CONFLICT);
-            // }
+            if ($duplicateValidation) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $duplicateValidation['message'],
+                ], Response::HTTP_CONFLICT);
+            }
 
             // For manual surveys, route by main_offer_id to Data / Voice / Combo manual service.
             // Use server-side values for security: customer_code from auth, survey_type/oper_type from config.
@@ -1305,16 +1304,16 @@ class SurveyOrderController extends Controller
             $data['oper_type'] = $data['oper_type'] ?? 'A';
 
             // Check for existing active survey orders for this customer
-            // if (SurveyOrder::hasBlockedSurvey($customerCode)) {
-            //     AppLogger::business()->warning('Manual survey blocked - existing active order', [
-            //         'customer_code' => $customerCode,
-            //     ]);
+            if (SurveyOrder::hasBlockedSurvey($customerCode)) {
+                AppLogger::business()->warning('Manual survey blocked - existing active order', [
+                    'customer_code' => $customerCode,
+                ]);
 
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => 'Customer already has an active survey order.',
-            //     ], Response::HTTP_CONFLICT);
-            // }
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Customer already has an active survey order.',
+                ], Response::HTTP_CONFLICT);
+            }
 
             // Create the manual survey order via BSS (Fixed Data or Fixed Voice)
             $result = $this->manualSurveyServiceFactory

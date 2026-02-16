@@ -80,7 +80,7 @@ class CustomerService extends BaseApiService
         $data['contact']['office_no'] = $data['contact']['office_no'] ?? '';
         $data['contact']['fax_no'] = $data['contact']['fax_no'] ?? '';
 
-        $data['identification_number'] = random_int(100000, 999999); //TODO: remove this after testing
+        // $data['identification_number'] = random_int(100000, 999999); //TODO: remove this after testing
 
         // Safely handle optional contact person info (may be empty array from frontend)
         $contactPerson = $data['contact_person'][0] ?? null;

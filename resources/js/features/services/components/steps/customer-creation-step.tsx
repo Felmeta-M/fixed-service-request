@@ -311,7 +311,7 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
         occupation: '',
         education: '',
         religion: '',
-        
+
         // Optional fields with backend defaults (set here for UI display)
         title: '1',                    // UI default, backend default: '1' (Mr.)
         nationality: '1231',           // UI default, backend default: '1231' (Ethiopian)
@@ -319,7 +319,7 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
         primary_language: '2060',      // UI default, backend default: '2060' (Amharic)
         place_of_birth: '',
         income: '',                    // Backend default: '6'
-        
+
         // Address - region/zone/woreda required
         address: {
             region: '',
@@ -330,7 +330,7 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
             kebele: '',
             house_no: '',
         },
-        
+
         // Contact - mobile required, notification_mode has backend default
         contact: {
             notification_mode: '1',    // UI default, backend default: '1' (SMS)
@@ -340,10 +340,10 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
             home_no: '',
             fax_no: '',
         },
-        
+
         // Optional - can be omitted entirely
         contact_person: [],
-        
+
         // NOTE: customer_type, customer_category, customer_subcategory, customer_level
         // are NOT included here - they are set by backend only
     });
@@ -922,10 +922,10 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
             <div className="mx-auto flex min-h-[420px] max-w-4xl items-center justify-center px-4">
                 <div className="w-full space-y-6">
                     {/* <div className="flex items-center gap-3"> */}
-                        {/* <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
+                    {/* <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10">
                             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-b-transparent" />
                         </div> */}
-                        {/* <div>
+                    {/* <div>
                             <p className="text-sm font-medium text-primary">Preparing customer form</p>
                             <p className="text-xs text-muted-foreground">
                                 Loading verified customer information and pre‑filling available details.
@@ -1010,8 +1010,8 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
             </div> */}
 
             <div className="mx-auto max-w-4xl space-y-6 px-2 pb-8">
-            {/* Debug information (remove in production) */}
-            {/* {process.env.NODE_ENV === 'development' && (
+                {/* Debug information (remove in production) */}
+                {/* {process.env.NODE_ENV === 'development' && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm">
                     <div className="font-medium text-yellow-800 mb-1">Debug Info:</div>
                     <div>Read-only fields: {Array.from(readOnlyFields).join(', ')}</div>
@@ -1020,104 +1020,104 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
                 </div>
             )} */}
 
-            {renderErrorSummary()}
+                {renderErrorSummary()}
 
-            {/* Verified Customer Information - Read-only fields from NID */}
-            {hasNidData && (
-                <Card className="border border-gray-200 bg-white rounded-xl shadow-sm">
-                    <CardHeader className="pb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="">
-                                <BadgeCheck  fill="white" className="h-10 w-10 text-[#068BCC]" />
-                                {/* <img src={verifiedIcon} alt="Verified Customer Information" className="h-10 w-10" /> */}
+                {/* Verified Customer Information - Read-only fields from NID */}
+                {hasNidData && (
+                    <Card className="border border-gray-200 bg-white rounded-xl shadow-sm">
+                        <CardHeader className="pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="">
+                                    <BadgeCheck fill="white" className="h-10 w-10 text-[#068BCC]" />
+                                    {/* <img src={verifiedIcon} alt="Verified Customer Information" className="h-10 w-10" /> */}
+                                </div>
+                                <div>
+                                    <CardTitle className="text-lg font-semibold text-[#068BCC]">Verified Customer Information</CardTitle>
+                                    <CardDescription className="text-[#068BCC] text-sm">
+                                        This information has been verified and cannot be edited
+                                    </CardDescription>
+                                </div>
                             </div>
-                            <div>
-                                <CardTitle className="text-lg font-semibold text-[#068BCC]">Verified Customer Information</CardTitle>
-                                <CardDescription className="text-[#068BCC] text-sm">
-                                    This information has been verified and cannot be edited
-                                </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <FormInput
+                                    label="First Name"
+                                    id="first_name"
+                                    required
+                                    value={data.first_name ?? ''}
+                                    onChange={(e) => handleInputChange('first_name', e.target.value)}
+                                    placeholder=""
+                                    error={formErrors.first_name}
+                                    readOnly={true}
+                                    disabled={true}
+                                />
+                                <FormInput
+                                    label="Middle Name"
+                                    id="middle_name"
+                                    required
+                                    value={data.middle_name}
+                                    onChange={(e) => handleInputChange('middle_name', e.target.value)}
+                                    placeholder=""
+                                    error={formErrors.middle_name}
+                                    readOnly={true}
+                                    disabled={true}
+                                />
+                                <FormInput
+                                    label="Last Name"
+                                    id="last_name"
+                                    required
+                                    value={data.last_name}
+                                    onChange={(e) => handleInputChange('last_name', e.target.value)}
+                                    placeholder=""
+                                    error={formErrors.last_name}
+                                    readOnly={true}
+                                    disabled={true}
+                                />
                             </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                            <FormInput
-                                label="First Name"
-                                id="first_name"
-                                required
-                                value={data.first_name ?? ''}
-                                onChange={(e) => handleInputChange('first_name', e.target.value)}
-                                placeholder=""
-                                error={formErrors.first_name}
-                                readOnly={true}
-                                disabled={true}
-                            />
-                            <FormInput
-                                label="Middle Name"
-                                id="middle_name"
-                                required
-                                value={data.middle_name}
-                                onChange={(e) => handleInputChange('middle_name', e.target.value)}
-                                placeholder=""
-                                error={formErrors.middle_name}
-                                readOnly={true}
-                                disabled={true}
-                            />
-                            <FormInput
-                                label="Last Name"
-                                id="last_name"
-                                required
-                                value={data.last_name}
-                                onChange={(e) => handleInputChange('last_name', e.target.value)}
-                                placeholder=""
-                                error={formErrors.last_name}
-                                readOnly={true}
-                                disabled={true}
-                            />
-                        </div>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                            <FormSelect
-                                label="Gender"
-                                id="gender"
-                                required
-                                value={data.gender || ''}
-                                onChange={(value) => handleSelectChange('gender', value)}
-                                options={[
-                                    { label: 'Male', value: '1' },
-                                    { label: 'Female', value: '2' },
-                                ]}
-                                placeholder=""
-                                error={formErrors.gender}
-                                disabled={true}
-                            />
-                            <FormInput
-                                label="Date of Birth"
-                                id="date_of_birth"
-                                required
-                                type="date"
-                                value={data.date_of_birth}
-                                onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                                placeholder=""
-                                error={formErrors.date_of_birth}
-                                readOnly={true}
-                                disabled={true}
-                            />
-                            <FormSelect
-                                label="Nationality"
-                                id="nationality"
-                                required
-                                value={data.nationality || ''}
-                                onChange={(value) => handleSelectChange('nationality', value)}
-                                options={[
-                                    { label: 'Ethiopian', value: '1231' },
-                                    { label: 'Other', value: '1000' },
-                                ]}
-                                placeholder=""
-                                error={formErrors.nationality}
-                                disabled={true}
-                            />
-                        </div>
-                        {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <FormSelect
+                                    label="Gender"
+                                    id="gender"
+                                    required
+                                    value={data.gender || ''}
+                                    onChange={(value) => handleSelectChange('gender', value)}
+                                    options={[
+                                        { label: 'Male', value: '1' },
+                                        { label: 'Female', value: '2' },
+                                    ]}
+                                    placeholder=""
+                                    error={formErrors.gender}
+                                    disabled={true}
+                                />
+                                <FormInput
+                                    label="Date of Birth"
+                                    id="date_of_birth"
+                                    required
+                                    type="date"
+                                    value={data.date_of_birth}
+                                    onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                                    placeholder=""
+                                    error={formErrors.date_of_birth}
+                                    readOnly={true}
+                                    disabled={true}
+                                />
+                                <FormSelect
+                                    label="Nationality"
+                                    id="nationality"
+                                    required
+                                    value={data.nationality || ''}
+                                    onChange={(value) => handleSelectChange('nationality', value)}
+                                    options={[
+                                        { label: 'Ethiopian', value: '1231' },
+                                        { label: 'Other', value: '1000' },
+                                    ]}
+                                    placeholder=""
+                                    error={formErrors.nationality}
+                                    disabled={true}
+                                />
+                            </div>
+                            {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <FormInput
                                 label="Identification Number"
                                 id="identification_number"
@@ -1145,309 +1145,309 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
                                 disabled={true}
                             />
                         </div> */}
-                    </CardContent>
-                </Card>
-            )}
+                        </CardContent>
+                    </Card>
+                )}
 
-            {/* Additional Information - Editable fields */}
-            <div className="">
-                <div className="pb-4">
-                    <div className="flex items-center gap-3 text-gray-800">
-                        <div>
-                            <h2 className="text-xl font-semibold">{hasNidData ? 'Additional Information' : 'Customer Information'}</h2>
-                            <p className="text-sm text-gray-500">{hasNidData ? 'Please complete the following details' : 'Enter your personal details'}</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="space-y-4">
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* Show these fields only when NOT pre-filled from NID */}
-                        {!hasNidData && (
-                            <>
-                                <FormInput
-                                    label="First Name"
-                                    id="first_name"
-                                    required
-                                    value={data.first_name ?? ''}
-                                    onChange={(e) => handleInputChange('first_name', e.target.value)}
-                                    placeholder="Enter first name"
-                                    error={formErrors.first_name}
-                                    readOnly={isFieldReadOnly('first_name')}
-                                    disabled={isFieldReadOnly('first_name')}
-                                />
-                                <FormInput
-                                    label="Middle Name"
-                                    id="middle_name"
-                                    required
-                                    value={data.middle_name}
-                                    onChange={(e) => handleInputChange('middle_name', e.target.value)}
-                                    placeholder=""
-                                    error={formErrors.middle_name}
-                                    readOnly={isFieldReadOnly('middle_name')}
-                                    disabled={isFieldReadOnly('middle_name')}
-                                />
-                                <FormInput
-                                    label="Last Name"
-                                    id="last_name"
-                                    required
-                                    value={data.last_name}
-                                    onChange={(e) => handleInputChange('last_name', e.target.value)}
-                                    placeholder=""
-                                    error={formErrors.last_name}
-                                    readOnly={isFieldReadOnly('last_name')}
-                                    disabled={isFieldReadOnly('last_name')}
-                                />
-                                <FormSelect
-                                    label="Gender"
-                                    id="gender"
-                                    required
-                                    value={data.gender || ''}
-                                    onChange={(value) => handleSelectChange('gender', value)}
-                                    options={[
-                                        { label: 'Male', value: '1' },
-                                        { label: 'Female', value: '2' },
-                                    ]}
-                                    placeholder="Select gender"
-                                    error={formErrors.gender}
-                                    disabled={isFieldReadOnly('gender')}
-                                />
-                                <FormInput
-                                    label="Date of Birth"
-                                    id="date_of_birth"
-                                    required
-                                    type="date"
-                                    value={data.date_of_birth}
-                                    onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
-                                    placeholder=""
-                                    error={formErrors.date_of_birth}
-                                    readOnly={isFieldReadOnly('date_of_birth')}
-                                    disabled={isFieldReadOnly('date_of_birth')}
-                                />
-                                <FormSelect
-                                    label="Nationality"
-                                    id="nationality"
-                                    required
-                                    value={data.nationality || ''}
-                                    onChange={(value) => handleSelectChange('nationality', value)}
-                                    options={[
-                                        { label: 'Ethiopian', value: '1231' },
-                                        { label: 'Other', value: '1000' },
-                                    ]}
-                                    placeholder=""
-                                    error={formErrors.nationality}
-                                    disabled={isFieldReadOnly('nationality')}
-                                />
-                            </>
-                        )}
-                        <FormSelect
-                            label="Title"
-                            id="title"
-                            required
-                            value={data.title || ''}
-                            onChange={(value) => handleSelectChange('title', value)}
-                            options={[
-                                { label: 'Mr.', value: '1' },
-                                { label: 'Mrs.', value: '2' },
-                                { label: 'Ms.', value: '3' },
-                                { label: 'Engineer', value: '6' },
-                                { label: 'Professor', value: '5' },
-                                { label: 'Doctor', value: '4' },
-                            ]}
-                            placeholder="Select title"
-                            error={formErrors.title}
-                            disabled={isFieldReadOnly('title')}
-                        />
-                        <FormSelect
-                            label="Primary Language"
-                            id="primary_language"
-                            required
-                            value={data.primary_language || ''}
-                            onChange={(value) => handleSelectChange('primary_language', value)}
-                            options={languages}
-                            placeholder={languagesLoading ? 'Loading...' : 'Select language'}
-                            error={formErrors.primary_language || (languagesError ? languagesError : undefined)}
-                            loading={languagesLoading}
-                            disabled={languagesLoading || isFieldReadOnly('primary_language')}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <div className="space-y-6">
+                {/* Additional Information - Editable fields */}
                 <div className="">
                     <div className="pb-4">
                         <div className="flex items-center gap-3 text-gray-800">
                             <div>
-                                <h2 className="text-xl font-semibold">Contact Information</h2>
-                                <div className="text-sm text-gray-500">Phone numbers and email addresses</div>
+                                <h2 className="text-xl font-semibold">{hasNidData ? 'Additional Information' : 'Customer Information'}</h2>
+                                <p className="text-sm text-gray-500">{hasNidData ? 'Please complete the following details' : 'Enter your personal details'}</p>
                             </div>
                         </div>
                     </div>
-                    <div className="space-y-6 ">
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            {/* Show these fields only when NOT pre-filled from NID */}
+                            {!hasNidData && (
+                                <>
+                                    <FormInput
+                                        label="First Name"
+                                        id="first_name"
+                                        required
+                                        value={data.first_name ?? ''}
+                                        onChange={(e) => handleInputChange('first_name', e.target.value)}
+                                        placeholder="Enter first name"
+                                        error={formErrors.first_name}
+                                        readOnly={isFieldReadOnly('first_name')}
+                                        disabled={isFieldReadOnly('first_name')}
+                                    />
+                                    <FormInput
+                                        label="Middle Name"
+                                        id="middle_name"
+                                        required
+                                        value={data.middle_name}
+                                        onChange={(e) => handleInputChange('middle_name', e.target.value)}
+                                        placeholder=""
+                                        error={formErrors.middle_name}
+                                        readOnly={isFieldReadOnly('middle_name')}
+                                        disabled={isFieldReadOnly('middle_name')}
+                                    />
+                                    <FormInput
+                                        label="Last Name"
+                                        id="last_name"
+                                        required
+                                        value={data.last_name}
+                                        onChange={(e) => handleInputChange('last_name', e.target.value)}
+                                        placeholder=""
+                                        error={formErrors.last_name}
+                                        readOnly={isFieldReadOnly('last_name')}
+                                        disabled={isFieldReadOnly('last_name')}
+                                    />
+                                    <FormSelect
+                                        label="Gender"
+                                        id="gender"
+                                        required
+                                        value={data.gender || ''}
+                                        onChange={(value) => handleSelectChange('gender', value)}
+                                        options={[
+                                            { label: 'Male', value: '1' },
+                                            { label: 'Female', value: '2' },
+                                        ]}
+                                        placeholder="Select gender"
+                                        error={formErrors.gender}
+                                        disabled={isFieldReadOnly('gender')}
+                                    />
+                                    <FormInput
+                                        label="Date of Birth"
+                                        id="date_of_birth"
+                                        required
+                                        type="date"
+                                        value={data.date_of_birth}
+                                        onChange={(e) => handleInputChange('date_of_birth', e.target.value)}
+                                        placeholder=""
+                                        error={formErrors.date_of_birth}
+                                        readOnly={isFieldReadOnly('date_of_birth')}
+                                        disabled={isFieldReadOnly('date_of_birth')}
+                                    />
+                                    <FormSelect
+                                        label="Nationality"
+                                        id="nationality"
+                                        required
+                                        value={data.nationality || ''}
+                                        onChange={(value) => handleSelectChange('nationality', value)}
+                                        options={[
+                                            { label: 'Ethiopian', value: '1231' },
+                                            { label: 'Other', value: '1000' },
+                                        ]}
+                                        placeholder=""
+                                        error={formErrors.nationality}
+                                        disabled={isFieldReadOnly('nationality')}
+                                    />
+                                </>
+                            )}
                             <FormSelect
-                                label="Notification Mode"
-                                id="contact.notification_mode"
-                                value={data.contact?.notification_mode || ''}
-                                onChange={(val) => {
-                                    handleNestedInputChange('contact', 'notification_mode', val);
-                                    // Clear email error when notification mode changes
-                                    setFormErrors((prev) => {
-                                        const newErrors = { ...prev };
-                                        delete newErrors['contact.email'];
-                                        return newErrors;
-                                    });
-                                }}
-                                options={[
-                                    { label: 'SMS', value: '1' },
-                                    { label: 'Email', value: '2' },
-                                ]}
-                                placeholder="Select notification mode"
-                                error={formErrors['contact.notification_mode']}
-                                disabled={isFieldReadOnly('contact.notification_mode')}
-                            />
-                            <FormInput
-                                label="Phone Number"
-                                id="contact_mobile_no"
+                                label="Title"
+                                id="title"
                                 required
-                                value={data.contact?.mobile_no || ''}
-                                onChange={(e) => handleNestedInputChange('contact', 'mobile_no', e.target.value)}
-                                placeholder=""
-                                error={formErrors['contact.mobile_no']}
-                                readOnly={isFieldReadOnly('contact.mobile_no')}
-                                disabled={isFieldReadOnly('contact.mobile_no')}
+                                value={data.title || ''}
+                                onChange={(value) => handleSelectChange('title', value)}
+                                options={[
+                                    { label: 'Mr.', value: '1' },
+                                    { label: 'Mrs.', value: '2' },
+                                    { label: 'Ms.', value: '3' },
+                                    { label: 'Engineer', value: '6' },
+                                    { label: 'Professor', value: '5' },
+                                    { label: 'Doctor', value: '4' },
+                                ]}
+                                placeholder="Select title"
+                                error={formErrors.title}
+                                disabled={isFieldReadOnly('title')}
                             />
-                            <FormInput
-                                label="Email Address"
-                                id="email"
-                                required={isEmailRequired}
-                                type="email"
-                                value={data.contact?.email || ''}
-                                onChange={(e) => handleNestedInputChange('contact', 'email', e.target.value)}
-                                placeholder={isEmailRequired ? '' : ''}
-                                error={formErrors['contact.email']}
-                                readOnly={isFieldReadOnly('contact.email')}
+                            <FormSelect
+                                label="Primary Language"
+                                id="primary_language"
+                                required
+                                value={data.primary_language || ''}
+                                onChange={(value) => handleSelectChange('primary_language', value)}
+                                options={languages}
+                                placeholder={languagesLoading ? 'Loading...' : 'Select language'}
+                                error={formErrors.primary_language || (languagesError ? languagesError : undefined)}
+                                loading={languagesLoading}
+                                disabled={languagesLoading || isFieldReadOnly('primary_language')}
                             />
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="">
-                <div className="pb-4">
-                    <div className="flex items-center gap-3 text-gray-800">
-                        <div>
-                            <h2 className="text-xl font-semibold">Address</h2>
-                            <div className="text-sm text-gray-500">Current residential address</div>
-                        </div>
-                    </div>
-                </div>
                 <div className="space-y-6">
-                    {/* First row: Region and Zone */}
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        <FormSelect
-                            label="Region"
-                            id="address.region"
-                            required
-                            value={data.address?.region}
-                            onChange={(val) => {
-                                setData('address', { ...data.address, region: val, zone: '', woreda: '' });
-                                clearFieldError('address.region');
-                            }}
-                            options={regionOptions}
-                            placeholder={loadingRegions ? 'Loading regions...' : 'Select region'}
-                            error={formErrors['address.region']}
-                            disabled={isFieldReadOnly('address.region')}
-                        />
-                        <FormSelect
-                            label="Zone"
-                            id="address.zone"
-                            required
-                            value={data.address?.zone}
-                            onChange={(val) => {
-                                setData('address', { ...data.address, zone: val, woreda: '' });
-                                clearFieldError('address.zone');
-                            }}
-                            options={data.address?.region ? zoneOptions : []}
-                            placeholder={data.address?.region ? (loadingZones ? 'Loading zones...' : 'Select zone') : 'First select region'}
-                            error={formErrors['address.zone']}
-                            disabled={isFieldReadOnly('address.zone')}
-                        />
-                    </div>
-                    {/* Second row: Woreda, Kebele, House Number */}
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                        <FormSelect
-                            label="Woreda"
-                            id="address.woreda"
-                            required
-                            value={data.address?.woreda}
-                            onChange={(val) => {
-                                setData('address', { ...data.address, woreda: val });
-                                clearFieldError('address.woreda');
-                            }}
-                            options={data.address?.zone ? woredaOptions : []}
-                            placeholder={data.address?.zone ? (loadingWoredas ? 'Loading woredas...' : 'Select woreda') : 'First select zone'}
-                            error={formErrors['address.woreda']}
-                            disabled={isFieldReadOnly('address.woreda')}
-                        />
-                        <FormInput
-                            label="Kebele"
-                            id="address.kebele"
-                            required={isKebeleRequired}
-                            value={data.address?.kebele}
-                            onChange={(e) => handleNestedInputChange('address', 'kebele', e.target.value)}
-                            placeholder="Enter your kebele"
-                            error={formErrors['address.kebele']}
-                            readOnly={isFieldReadOnly('address.kebele')}
-                        />
-                        <FormInput
-                            label="House Number"
-                            id="address.house_no"
-                            value={data.address?.house_no}
-                            onChange={(e) => handleNestedInputChange('address', 'house_no', e.target.value)}
-                            placeholder=""
-                            error={formErrors['address.house_no']}
-                            readOnly={isFieldReadOnly('address.house_no')}
-                        />
+                    <div className="">
+                        <div className="pb-4">
+                            <div className="flex items-center gap-3 text-gray-800">
+                                <div>
+                                    <h2 className="text-xl font-semibold">Contact Information</h2>
+                                    <div className="text-sm text-gray-500">Phone numbers and email addresses</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-6 ">
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                                <FormSelect
+                                    label="Notification Mode"
+                                    id="contact.notification_mode"
+                                    value={data.contact?.notification_mode || ''}
+                                    onChange={(val) => {
+                                        handleNestedInputChange('contact', 'notification_mode', val);
+                                        // Clear email error when notification mode changes
+                                        setFormErrors((prev) => {
+                                            const newErrors = { ...prev };
+                                            delete newErrors['contact.email'];
+                                            return newErrors;
+                                        });
+                                    }}
+                                    options={[
+                                        { label: 'SMS', value: '1' },
+                                        { label: 'Email', value: '2' },
+                                    ]}
+                                    placeholder="Select notification mode"
+                                    error={formErrors['contact.notification_mode']}
+                                    disabled={isFieldReadOnly('contact.notification_mode')}
+                                />
+                                <FormInput
+                                    label="Phone Number"
+                                    id="contact_mobile_no"
+                                    required
+                                    value={data.contact?.mobile_no || ''}
+                                    onChange={(e) => handleNestedInputChange('contact', 'mobile_no', e.target.value)}
+                                    placeholder=""
+                                    error={formErrors['contact.mobile_no']}
+                                    readOnly={isFieldReadOnly('contact.mobile_no')}
+                                    disabled={isFieldReadOnly('contact.mobile_no')}
+                                />
+                                <FormInput
+                                    label="Email Address"
+                                    id="email"
+                                    required={isEmailRequired}
+                                    type="email"
+                                    value={data.contact?.email || ''}
+                                    onChange={(e) => handleNestedInputChange('contact', 'email', e.target.value)}
+                                    placeholder={isEmailRequired ? '' : ''}
+                                    error={formErrors['contact.email']}
+                                    readOnly={isFieldReadOnly('contact.email')}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="space-y-6">
                 <div className="">
                     <div className="pb-4">
                         <div className="flex items-center gap-3 text-gray-800">
                             <div>
-                                <h2 className="text-xl font-semibold">Professional Information</h2>
-                                <div className="text-sm text-gray-500">Work and educational background</div>
+                                <h2 className="text-xl font-semibold">Address</h2>
+                                <div className="text-sm text-gray-500">Current residential address</div>
                             </div>
                         </div>
                     </div>
                     <div className="space-y-6">
+                        {/* First row: Region and Zone */}
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <FormSelect
+                                label="Region"
+                                id="address.region"
+                                required
+                                value={data.address?.region}
+                                onChange={(val) => {
+                                    setData('address', { ...data.address, region: val, zone: '', woreda: '' });
+                                    clearFieldError('address.region');
+                                }}
+                                options={regionOptions}
+                                placeholder={loadingRegions ? 'Loading regions...' : 'Select region'}
+                                error={formErrors['address.region']}
+                                disabled={isFieldReadOnly('address.region')}
+                            />
+                            <FormSelect
+                                label="Zone"
+                                id="address.zone"
+                                required
+                                value={data.address?.zone}
+                                onChange={(val) => {
+                                    setData('address', { ...data.address, zone: val, woreda: '' });
+                                    clearFieldError('address.zone');
+                                }}
+                                options={data.address?.region ? zoneOptions : []}
+                                placeholder={data.address?.region ? (loadingZones ? 'Loading zones...' : 'Select zone') : 'First select region'}
+                                error={formErrors['address.zone']}
+                                disabled={isFieldReadOnly('address.zone')}
+                            />
+                        </div>
+                        {/* Second row: Woreda, Kebele, House Number */}
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                             <FormSelect
-                                label="Occupation"
-                                id="occupation"
+                                label="Woreda"
+                                id="address.woreda"
                                 required
-                                value={data.occupation}
-                                onChange={(value) => handleSelectChange('occupation', value)}
-                                options={occupations}
-                                placeholder={occupationsLoading ? 'Loading occupations...' : 'Select occupation'}
-                                error={formErrors.occupation || (occupationError ? occupationError : undefined)}
-                                disabled={occupationsLoading || isFieldReadOnly('occupation')}
+                                value={data.address?.woreda}
+                                onChange={(val) => {
+                                    setData('address', { ...data.address, woreda: val });
+                                    clearFieldError('address.woreda');
+                                }}
+                                options={data.address?.zone ? woredaOptions : []}
+                                placeholder={data.address?.zone ? (loadingWoredas ? 'Loading woredas...' : 'Select woreda') : 'First select zone'}
+                                error={formErrors['address.woreda']}
+                                disabled={isFieldReadOnly('address.woreda')}
                             />
-                            <FormSelect
-                                label="Education"
-                                id="education"
-                                required
-                                value={data.education || ''}
-                                onChange={(value) => handleSelectChange('education', value)}
-                                options={educationLevels}
-                                placeholder={educationLoading ? 'Loading...' : 'Select education level'}
-                                error={formErrors.education || (educationError ? educationError : undefined)}
-                                loading={educationLoading}
-                                disabled={educationLoading || isFieldReadOnly('education')}
+                            <FormInput
+                                label="Kebele"
+                                id="address.kebele"
+                                required={isKebeleRequired}
+                                value={data.address?.kebele}
+                                onChange={(e) => handleNestedInputChange('address', 'kebele', e.target.value)}
+                                placeholder="Enter your kebele"
+                                error={formErrors['address.kebele']}
+                                readOnly={isFieldReadOnly('address.kebele')}
                             />
+                            <FormInput
+                                label="House Number"
+                                id="address.house_no"
+                                value={data.address?.house_no}
+                                onChange={(e) => handleNestedInputChange('address', 'house_no', e.target.value)}
+                                placeholder=""
+                                error={formErrors['address.house_no']}
+                                readOnly={isFieldReadOnly('address.house_no')}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-6">
+                    <div className="">
+                        <div className="pb-4">
+                            <div className="flex items-center gap-3 text-gray-800">
+                                <div>
+                                    <h2 className="text-xl font-semibold">Professional Information</h2>
+                                    <div className="text-sm text-gray-500">Work and educational background</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                                <FormSelect
+                                    label="Occupation"
+                                    id="occupation"
+                                    required
+                                    value={data.occupation}
+                                    onChange={(value) => handleSelectChange('occupation', value)}
+                                    options={occupations}
+                                    placeholder={occupationsLoading ? 'Loading occupations...' : 'Select occupation'}
+                                    error={formErrors.occupation || (occupationError ? occupationError : undefined)}
+                                    disabled={occupationsLoading || isFieldReadOnly('occupation')}
+                                />
+                                <FormSelect
+                                    label="Education"
+                                    id="education"
+                                    required
+                                    value={data.education || ''}
+                                    onChange={(value) => handleSelectChange('education', value)}
+                                    options={educationLevels}
+                                    placeholder={educationLoading ? 'Loading...' : 'Select education level'}
+                                    error={formErrors.education || (educationError ? educationError : undefined)}
+                                    loading={educationLoading}
+                                    disabled={educationLoading || isFieldReadOnly('education')}
+                                />
                             <FormSelect
                                 label="Religion"
                                 id="religion"
@@ -1460,35 +1460,35 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
                                 loading={religionsLoading}
                                 disabled={religionsLoading || isFieldReadOnly('religion')}
                             />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Next Button - Full Width */}
-            <div className="pt-2">
-                <Button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={submissionState.isSubmitting || submissionState.isUploadingPhoto}
-                    className={cn(
-                        'w-full h-12 text-lg font-medium rounded-lg bg-primary hover:bg-primary/90 text-white shadow-sm hover:shadow-md transition-all',
-                        (submissionState.isSubmitting || submissionState.isUploadingPhoto) && 'cursor-not-allowed opacity-50'
-                    )}
-                >
-                    {submissionState.isSubmitting || submissionState.isUploadingPhoto ? (
-                        <>
-                            <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white mr-2"></div>
-                            {submissionState.isUploadingPhoto ? 'Uploading Photo...' : 'Creating Customer...'}
-                        </>
-                    ) : (
-                        <>
-                            <ChevronsRight className="h-5 w-5 mr-1" />
-                            Next
-                        </>
-                    )}
-                </Button>
-            </div>
+                {/* Next Button - Full Width */}
+                <div className="pt-2">
+                    <Button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={submissionState.isSubmitting || submissionState.isUploadingPhoto}
+                        className={cn(
+                            'w-full h-12 text-lg font-medium rounded-lg bg-primary hover:bg-primary/90 text-white shadow-sm hover:shadow-md transition-all',
+                            (submissionState.isSubmitting || submissionState.isUploadingPhoto) && 'cursor-not-allowed opacity-50'
+                        )}
+                    >
+                        {submissionState.isSubmitting || submissionState.isUploadingPhoto ? (
+                            <>
+                                <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white mr-2"></div>
+                                {submissionState.isUploadingPhoto ? 'Uploading Photo...' : 'Creating Customer...'}
+                            </>
+                        ) : (
+                            <>
+                                <ChevronsRight className="h-5 w-5 mr-1" />
+                                Next
+                            </>
+                        )}
+                    </Button>
+                </div>
             </div>
         </div>
     );

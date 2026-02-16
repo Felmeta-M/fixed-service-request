@@ -144,10 +144,12 @@ class CustomerService extends BaseApiService
                     <com:Gender>{$data['gender']}</com:Gender>
                     <com:DateofBirth>{$data['date_of_birth']}</com:DateofBirth>
                     <com:PlaceofBirth>{$data['place_of_birth']}</com:PlaceofBirth>
+                    
                     <com:Occupation>{$data['occupation']}</com:Occupation>
                     <com:Education>{$data['education']}</com:Education>
                     <com:Religion>{$data['religion']}</com:Religion>
                     <com:Income>{$data['income']}</com:Income>
+                    
                     <com:PrimaryLanguage>{$data['primary_language']}</com:PrimaryLanguage>
 
                     <com:CustomerAddressInfo>

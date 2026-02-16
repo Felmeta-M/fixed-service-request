@@ -215,7 +215,7 @@ XML;
                     'code' => $customerCode,
                     'contact' => json_encode($data['contact']),
                     'contact_persons' => json_encode($data['contact_person']),
-                    'gender' => $data['gender'],
+                    'gender' => $data['gender'] == 1 ? 'Male' : 'Female',
                     'nationality' => 'Ethiopian',
                     'identification_type' => $data['identification_type'],
                     'identification_number' => $data['identification_number'],

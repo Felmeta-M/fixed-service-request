@@ -3,9 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useOccupations } from '@/hooks/use-occupations';
-import { useEducationLevels } from '@/hooks/use-education-levels';
-import { useReligions } from '@/hooks/use-religions';
 import { useLanguages } from '@/hooks/use-languages';
 import { useRegions, useWoredas, useZones } from '@/hooks/use-regions';
 import { cn } from '@/lib/utils';
@@ -253,9 +250,6 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
     const { auth } = usePage().props;
     const { user } = auth;
 
-    const { occupations, loading: occupationsLoading, error: occupationError } = useOccupations();
-    const { educationLevels, loading: educationLoading, error: educationError } = useEducationLevels();
-    const { religions, loading: religionsLoading, error: religionsError } = useReligions();
     const { languages, loading: languagesLoading, error: languagesError } = useLanguages();
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [submissionState, setSubmissionState] = useState<SubmissionState>({
@@ -1413,57 +1407,7 @@ export function CustomerCreationStep({ onNext, onBack }: CustomerCreationStepPro
                     </div>
                 </div>
 
-                <div className="space-y-6">
-                    <div className="">
-                        <div className="pb-4">
-                            <div className="flex items-center gap-3 text-gray-800">
-                                <div>
-                                    <h2 className="text-xl font-semibold">Professional Information</h2>
-                                    <div className="text-sm text-gray-500">Work and educational background</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                                <FormSelect
-                                    label="Occupation"
-                                    id="occupation"
-                                    required
-                                    value={data.occupation}
-                                    onChange={(value) => handleSelectChange('occupation', value)}
-                                    options={occupations}
-                                    placeholder={occupationsLoading ? 'Loading occupations...' : 'Select occupation'}
-                                    error={formErrors.occupation || (occupationError ? occupationError : undefined)}
-                                    disabled={occupationsLoading || isFieldReadOnly('occupation')}
-                                />
-                                <FormSelect
-                                    label="Education"
-                                    id="education"
-                                    required
-                                    value={data.education || ''}
-                                    onChange={(value) => handleSelectChange('education', value)}
-                                    options={educationLevels}
-                                    placeholder={educationLoading ? 'Loading...' : 'Select education level'}
-                                    error={formErrors.education || (educationError ? educationError : undefined)}
-                                    loading={educationLoading}
-                                    disabled={educationLoading || isFieldReadOnly('education')}
-                                />
-                            <FormSelect
-                                label="Religion"
-                                id="religion"
-                                required
-                                value={data.religion || ''}
-                                onChange={(value) => handleSelectChange('religion', value)}
-                                options={religions}
-                                placeholder={religionsLoading ? 'Loading...' : 'Select religion'}
-                                error={formErrors.religion || (religionsError ? religionsError : undefined)}
-                                loading={religionsLoading}
-                                disabled={religionsLoading || isFieldReadOnly('religion')}
-                            />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {/* Professional Information section hidden - Occupation, Education, Religion optional on backend */}
 
                 {/* Next Button - Full Width */}
                 <div className="pt-2">

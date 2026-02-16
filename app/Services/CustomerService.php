@@ -15,7 +15,7 @@ use Throwable;
 class CustomerService extends BaseApiService
 {
     protected int $timeout = 10;
-    protected int $rateLimit = 15;
+    protected int $rateLimit = 30;
     protected string $transactionId;
 
     public function createCustomer(array $data)
@@ -70,8 +70,12 @@ class CustomerService extends BaseApiService
         $data['nationality'] = $data['nationality'] ?? '1231';            // Default: Ethiopian
         $data['identification_type'] = $data['identification_type'] ?? '2'; // Default: National ID
         $data['primary_language'] = $data['primary_language'] ?? '2060';  // Default: Amharic
-        $data['income'] = $data['income'] ?? '6';                         // Default: Income level 6
+        $data['income'] = '6';                         // Default: Income level 6
         $data['place_of_birth'] = $data['place_of_birth'] ?? '';          // Default: Empty
+
+        $data['occupation'] = '36';                  // 36 other
+        $data['education'] = '5';                   // 7 Bachelor's Degree
+        $data['religion'] = '3';                    // 3 other
 
         // Contact defaults
         $data['contact'] = $data['contact'] ?? [];
@@ -213,7 +217,7 @@ XML;
             DB::table('customers')
                 ->where('sub', $customerSubId)
                 ->update([
-                    'title' => $data['title'],
+                    'title' => $data['title'] ?? '1',
                     'code' => $customerCode,
                     'contact' => json_encode($data['contact']),
                     'contact_persons' => json_encode($data['contact_person']),
@@ -223,10 +227,10 @@ XML;
                     'identification_number' => $data['identification_number'],
                     'birthdate' => $data['date_of_birth'],
                     'place_of_birth' => $data['place_of_birth'],
-                    'occupation' => $data['occupation'],
-                    'education' => $data['education'],
-                    'religion' => $data['religion'],
-                    'income' => $data['income'],
+                    'occupation' => $data['occupation'] ?? '24',
+                    'education' => $data['education'] ?? '7',
+                    'religion' => $data['religion'] ?? '3',
+                    'income' => $data['income'] ?? '6',
                     'primary_language' => $data['primary_language'],
                     // Address fields
                     'region' => $data['address']['region'],

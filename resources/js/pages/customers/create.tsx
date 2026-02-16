@@ -2,9 +2,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useOccupations } from '@/hooks/use-occupations';
-import { useEducationLevels } from '@/hooks/use-education-levels';
-import { useReligions } from '@/hooks/use-religions';
 import { useIncomeLevels } from '@/hooks/use-income-levels';
 import { useLanguages } from '@/hooks/use-languages';
 import { useRegions, useWoredas, useZones } from '@/hooks/use-regions';
@@ -178,9 +175,6 @@ export default function Create() {
     const { auth } = usePage().props;
     const { user } = auth;
 
-    const { occupations, loading: occupationsLoading, error: occupationError } = useOccupations();
-    const { educationLevels, loading: educationLoading, error: educationError } = useEducationLevels();
-    const { religions, loading: religionsLoading, error: religionsError } = useReligions();
     const { incomeLevels, loading: incomeLevelsLoading, error: incomeLevelsError } = useIncomeLevels();
     const { languages, loading: languagesLoading, error: languagesError } = useLanguages();
     // const [step, setStep] = useState(1);
@@ -1170,66 +1164,11 @@ export default function Create() {
 
                 {/* {step === 4 && ( */}
                 <div className="space-y-6">
-                    <Card className="">
-                        <CardHeader className="">
-                            <CardTitle className="flex items-center gap-3 text-gray-800">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full text-primary">
-                                    <Building className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <h2 className="text-xl">Professional Information</h2>
-                                    <CardDescription className="text-gray-500">Work and educational background</CardDescription>
-                                </div>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6 p-6">
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                <FormSelect
-                                    label="Occupation"
-                                    id="occupation"
-                                    required
-                                    value={data.occupation}
-                                    onChange={(value) => handleSelectChange('occupation', value)}
-                                    options={occupations}
-                                    placeholder={occupationsLoading ? 'Loading occupations...' : 'Select occupation'}
-                                    error={formErrors.occupation || (occupationError ? occupationError : undefined)}
-                                    disabled={occupationsLoading || isFieldReadOnly('occupation')}
-                                />
-                                <FormSelect
-                                    label="Education"
-                                    id="education"
-                                    required
-                                    value={data.education || ''}
-                                    onChange={(value) => handleSelectChange('education', value)}
-                                    options={educationLevels}
-                                    placeholder={educationLoading ? 'Loading education levels...' : 'Select education level'}
-                                    error={formErrors.education || (educationError ? educationError : undefined)}
-                                    disabled={educationLoading || isFieldReadOnly('education')}
-                                />
-                                <FormSelect
-                                    label="Religion"
-                                    id="religion"
-                                    required
-                                    value={data.religion || ''}
-                                    onChange={(value) => handleSelectChange('religion', value)}
-                                    options={religions}
-                                    placeholder={religionsLoading ? 'Loading religions...' : 'Select religion'}
-                                    error={formErrors.religion || (religionsError ? religionsError : undefined)}
-                                    disabled={religionsLoading || isFieldReadOnly('religion')}
-                                />
-                                {/* <FormSelect
-                                    label="Income Level"
-                                    id="income"
-                                    value={data.income}
-                                    onChange={(value) => handleSelectChange('income', value)}
-                                    options={incomeLevels}
-                                    placeholder={incomeLevelsLoading ? 'Loading income levels...' : 'Select income level'}
-                                    error={formErrors.income || (incomeLevelsError ? incomeLevelsError : undefined)}
-                                    disabled={incomeLevelsLoading || isFieldReadOnly('income')}
-                                /> */}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Professional Information card hidden - Occupation, Education, Religion optional on backend */}
+                    {/* <Card className="">
+                        <CardHeader>...</CardHeader>
+                        <CardContent>Occupation, Education, Religion FormSelects</CardContent>
+                    </Card> */}
 
                     {/* <Card className="">
                             <CardHeader className="">

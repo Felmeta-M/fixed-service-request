@@ -57,9 +57,9 @@ export interface Customer {
     identification_number?: string;
     date_of_birth: string;
     place_of_birth: string;
-    occupation: string;
-    education: string;
-    religion: string;
+    occupation?: string;
+    education?: string;
+    religion?: string;
     income: string;
     primary_language?: string;
     address?: Array<{
@@ -108,9 +108,9 @@ export const customerSchema = z.object({
     gender: z.string().min(1, 'Gender is required'),
     identification_number: z.string().min(5, 'Identification number is required'),
     date_of_birth: z.string().min(1, 'Date of birth is required'),
-    occupation: z.string().min(1, 'Occupation is required'),
-    education: z.string().min(1, 'Education is required'),
-    religion: z.string().min(1, 'Religion is required'),
+    occupation: z.string().optional().nullable(),   // Hidden; optional on backend
+    education: z.string().optional().nullable(),   // Hidden; optional on backend
+    religion: z.string().optional().nullable(),     // Hidden; optional on backend
 
     // OPTIONAL - Have backend defaults
     title: z.string().optional(),                    // Backend default: '1' (Mr.)
@@ -208,7 +208,7 @@ export function cleanCustomerPayload(data: CustomerFormValues): Partial<Customer
     // NOTE: customer_type, customer_category, customer_subcategory, customer_level
     // are not sent from frontend anymore
     const optionalFields: (keyof CustomerFormValues)[] = [
-        'income', 'place_of_birth'
+        'income', 'place_of_birth', 'occupation', 'education', 'religion'
     ];
 
     optionalFields.forEach(field => {

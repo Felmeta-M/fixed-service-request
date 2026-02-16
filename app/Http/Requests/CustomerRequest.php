@@ -43,9 +43,9 @@ class CustomerRequest extends FormRequest
             'gender' => 'required|string|max:50',
             'identification_number' => 'required|string|max:100',
             'date_of_birth' => 'required|date',
-            'occupation' => 'required|string|max:255',
-            'education' => 'required|string|max:255',
-            'religion' => 'required|string|max:255',
+            'occupation' => 'nullable|string|max:255',
+            'education' => 'nullable|string|max:255',
+            'religion' => 'nullable|string|max:255',
             
             // ============================================================
             // ADDRESS - Required

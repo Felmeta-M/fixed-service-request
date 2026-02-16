@@ -163,11 +163,12 @@ export function SubscriptionPaymentStep({ surveyId, onBack, onComplete, onLoadCo
 
     return (
         <div className="w-full space-y-6">
-            <SurveyDetail 
-                paymentDetails={paymentDetails} 
-                surveyDetails={surveyDetails} 
+            <SurveyDetail
+                paymentDetails={paymentDetails}
+                surveyDetails={surveyDetails}
                 isInFlow={true}
                 onBack={onBack}
+                onSubscriptionSuccess={onComplete}
             />
         </div>
     );

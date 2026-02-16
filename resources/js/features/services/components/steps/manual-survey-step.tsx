@@ -59,6 +59,7 @@ export function ManualSurveyStep({ onBack }: ManualSurveyStepProps) {
     // ── Zustand store ─────────────────────────────────────────────────────
     const formData = useServiceFormStore((s) => s.formData);
     const updateFormData = useServiceFormStore((s) => s.updateFormData);
+    const resetStore = useServiceFormStore((s) => s.reset);
     const { user } = usePage<{ auth: { user: AuthUser } }>().props.auth;
 
     const [manualFlowData, setManualFlowData] = useState({
@@ -319,6 +320,9 @@ export function ManualSurveyStep({ onBack }: ManualSurveyStepProps) {
                         'Your manual request has been submitted. Our team will review your location and contact you within 1-2 business days.',
                     duration: 5000,
                 });
+
+                // Clear all service-creation state before leaving
+                resetStore();
 
                 // Navigate to services page after a brief delay
                 setTimeout(() => {

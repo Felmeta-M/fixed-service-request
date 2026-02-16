@@ -42,8 +42,7 @@ export function ServiceSelectionStep({ hasActiveSurvey }: ServiceSelectionStepPr
     const transformedServiceTypes = useMemo(() => {
         return (
             serviceTypes
-                // Filter out "Fixed Voice" (code: 1207609454) to only show Broadband and Combo
-                .filter((st) => st.code !== '1207609454')
+                .filter((st) => st.code)
                 .map((st) => ({
                     value: st.code,
                     name: st.name,
@@ -90,20 +89,19 @@ export function ServiceSelectionStep({ hasActiveSurvey }: ServiceSelectionStepPr
                         <div key={service.value} className="relative">
                             <label
                                 onClick={() => !hasActiveSurvey && handleServiceSelect(service.value)}
-                                className={`group relative flex h-full cursor-pointer flex-col rounded-xl border-2 p-2 transition-all duration-200 sm:p-6 ${
-                                    hasActiveSurvey
-                                        ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
-                                        : isSelected
-                                          ? 'border-primary shadow-sm ring-1 ring-primary/20'
-                                          : 'border-gray-100 bg-white shadow-sm hover:border-primary/50 hover:shadow-md'
-                                } `}
+                                className={`group relative flex h-full cursor-pointer flex-col rounded-xl border-2 p-2 transition-all duration-200 sm:p-6 ${hasActiveSurvey
+                                    ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
+                                    : isSelected
+                                        ? 'border-primary shadow-sm ring-1 ring-primary/20'
+                                        : 'border-gray-100 bg-white shadow-sm hover:border-primary/50 hover:shadow-md'
+                                    } `}
                             >
                                 <input
                                     type="radio"
                                     name="serviceType"
                                     value={service.value}
                                     checked={isSelected}
-                                    onChange={() => {}}
+                                    onChange={() => { }}
                                     className="absolute inset-0 cursor-pointer opacity-0"
                                     disabled={hasActiveSurvey}
                                 />

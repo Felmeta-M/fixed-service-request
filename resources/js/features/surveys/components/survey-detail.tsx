@@ -159,9 +159,9 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
     const openDowngradeDialog = activeDialog === 'downgrade';
     const openCancelDialog = activeDialog === 'cancel';
 
-    const setOpenUpgradeDialog = (v: boolean) => v ? openDialogAction('upgrade') : closeDialog();
-    const setOpenDowngradeDialog = (v: boolean) => v ? openDialogAction('downgrade') : closeDialog();
-    const setOpenCancelDialog = (v: boolean) => v ? openDialogAction('cancel') : closeDialog();
+    const setOpenUpgradeDialog = (v: boolean) => (v ? openDialogAction('upgrade') : closeDialog());
+    const setOpenDowngradeDialog = (v: boolean) => (v ? openDialogAction('downgrade') : closeDialog());
+    const setOpenCancelDialog = (v: boolean) => (v ? openDialogAction('cancel') : closeDialog());
 
     const [showDeviceSelection, setShowDeviceSelection] = useState(false);
 
@@ -830,7 +830,7 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                                 </div>
                             </div>
                         </div>
-                        <div className="sm:p-4">
+                        <div className="p-2 sm:p-4">
                             {/* Invoice Table */}
                             <div className="overflow-x-auto rounded-lg border bg-muted/30">
                                 <table className="w-full min-w-[300px]">

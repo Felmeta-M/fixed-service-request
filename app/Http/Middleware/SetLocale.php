@@ -41,26 +41,26 @@ class SetLocale
     protected function determineLocale(Request $request): string
     {
         // 1. Check if locale is stored in session (user's explicit choice)
-        if (Session::has('locale')) {
-            $sessionLocale = Session::get('locale');
-            if ($this->isSupported($sessionLocale)) {
-                return $sessionLocale;
-            }
-        }
+        // if (Session::has('locale')) {
+        //     $sessionLocale = Session::get('locale');
+        //     if ($this->isSupported($sessionLocale)) {
+        //         return $sessionLocale;
+        //     }
+        // }
 
         // 2. Check query parameter (for direct language switching via URL)
-        if ($request->has('lang')) {
-            $queryLocale = $request->query('lang');
-            if ($this->isSupported($queryLocale)) {
-                return $queryLocale;
-            }
-        }
+        // if ($request->has('lang')) {
+        //     $queryLocale = $request->query('lang');
+        //     if ($this->isSupported($queryLocale)) {
+        //         return $queryLocale;
+        //     }
+        // }
 
         // 3. Check Accept-Language header from browser
-        $browserLocale = $this->parseAcceptLanguage($request);
-        if ($browserLocale && $this->isSupported($browserLocale)) {
-            return $browserLocale;
-        }
+        // $browserLocale = $this->parseAcceptLanguage($request);
+        // if ($browserLocale && $this->isSupported($browserLocale)) {
+        //     return $browserLocale;
+        // }
 
         // 4. Fall back to app default locale
         return config('app.locale', 'en');

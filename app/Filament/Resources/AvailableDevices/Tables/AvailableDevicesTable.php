@@ -29,7 +29,7 @@ class AvailableDevicesTable
                 TextColumn::make('price')
                     ->money('ETB', 0, true)
                     ->sortable(),
-                ImageColumn::make('image_url'),
+                // ImageColumn::make('image_url'),
                 TextColumn::make('stock_quantity')
                     ->numeric()
                     ->sortable(),

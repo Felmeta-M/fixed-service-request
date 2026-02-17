@@ -40,18 +40,16 @@ export function ServiceSelectionStep({ hasActiveSurvey }: ServiceSelectionStepPr
 
     // Transform service types for rendering
     const transformedServiceTypes = useMemo(() => {
-        return (
-            serviceTypes
-                .filter((st) => st.code)
-                .map((st) => ({
-                    value: st.code,
-                    name: st.name,
-                    description: st.description || '',
-                    icon: iconMap[st.icon || 'Wifi'] || BroadbandIcon,
-                    color: st.color || 'blue',
-                    recommended: st.recommended,
-                }))
-        );
+        return serviceTypes
+            .filter((st) => st.code)
+            .map((st) => ({
+                value: st.code,
+                name: st.name,
+                description: st.description || '',
+                icon: iconMap[st.icon || 'Wifi'] || BroadbandIcon,
+                color: st.color || 'blue',
+                recommended: st.recommended,
+            }));
     }, [serviceTypes]);
 
     const handleServiceSelect = (serviceId: string) => {
@@ -89,19 +87,20 @@ export function ServiceSelectionStep({ hasActiveSurvey }: ServiceSelectionStepPr
                         <div key={service.value} className="relative">
                             <label
                                 onClick={() => !hasActiveSurvey && handleServiceSelect(service.value)}
-                                className={`group relative flex h-full cursor-pointer flex-col rounded-xl border-2 p-2 transition-all duration-200 sm:p-6 ${hasActiveSurvey
-                                    ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
-                                    : isSelected
-                                        ? 'border-primary shadow-sm ring-1 ring-primary/20'
-                                        : 'border-gray-100 bg-white shadow-sm hover:border-primary/50 hover:shadow-md'
-                                    } `}
+                                className={`group relative flex h-full cursor-pointer flex-col rounded-xl border-2 p-2 transition-all duration-200 sm:p-6 ${
+                                    hasActiveSurvey
+                                        ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
+                                        : isSelected
+                                          ? 'border-primary shadow-sm ring-1 ring-primary/20'
+                                          : 'border-gray-100 bg-white shadow-sm hover:border-primary/50 hover:shadow-md'
+                                } `}
                             >
                                 <input
                                     type="radio"
                                     name="serviceType"
                                     value={service.value}
                                     checked={isSelected}
-                                    onChange={() => { }}
+                                    onChange={() => {}}
                                     className="absolute inset-0 cursor-pointer opacity-0"
                                     disabled={hasActiveSurvey}
                                 />
@@ -149,7 +148,7 @@ export function ServiceSelectionStep({ hasActiveSurvey }: ServiceSelectionStepPr
                         checked={formData.termsAccepted || false}
                         onCheckedChange={(checked) => updateFormData({ termsAccepted: checked === true })}
                         disabled={hasActiveSurvey}
-                        className="mt-0.5 border-primary data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+                        className="mt-0.5 border-2 border-primary data-[state=checked]:border-primary data-[state=checked]:bg-primary"
                     />
                     <label
                         htmlFor="terms-acceptance"

@@ -272,11 +272,20 @@ return [
     |   - secret_key: Private key, NEVER expose to frontend
     |
     */
-    'recaptcha' => [
-        'site_key' => env('GOOGLE_RECAPTCHA_SITE_KEY'),
-        'secret_key' => env('GOOGLE_RECAPTCHA_SECRET_KEY'),
-        // Minimum score for reCAPTCHA v3 (0.0 to 1.0, higher = more likely human)
-        'min_score' => env('GOOGLE_RECAPTCHA_MIN_SCORE', 0.5),
+    /*
+    |--------------------------------------------------------------------------
+    | Cloudflare Turnstile Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Set your Turnstile site and secret keys in your .env file:
+    |   TURNSTILE_SITE_KEY=your-site-key
+    |   TURNSTILE_SECRET_KEY=your-secret-key
+    |
+    | These are used for bot protection on public forms (e.g. complaints, registration).
+    */
+    'turnstile' => [
+        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'secret_key' => env('TURNSTILE_SECRET_KEY'),
     ],
 
     /*

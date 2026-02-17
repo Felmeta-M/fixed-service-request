@@ -1,4 +1,4 @@
-import { isRecaptchaEnabled, Recaptcha } from '@/components/common';
+import { Recaptcha } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,7 +31,7 @@ type ComplaintFormProps = {
     compact?: boolean;
     /** Auth token for API calls (optional, for authenticated users) */
     token?: string | null;
-    /** Whether to require reCAPTCHA (default: true for guest, false if token provided) */
+    /** Whether to require security verification (default: true for guest, false if token provided) */
     requireRecaptcha?: boolean;
 };
 
@@ -61,10 +61,10 @@ export function ComplaintForm({
     const [networkInfo, setNetworkInfo] = useState<{ type: number; name: string } | null>(null);
     const [troubleReasons, setTroubleReasons] = useState<DynamicTroubleReason[]>(FALLBACK_REASONS);
 
-    // reCAPTCHA state - only required for guest users (no token)
+    // Security verification state - only required for guest users (no token)
     const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
     const [recaptchaError, setRecaptchaError] = useState<string | null>(null);
-    const showRecaptcha = requireRecaptcha ?? (!token && isRecaptchaEnabled());
+    const showRecaptcha = requireRecaptcha;
 
     const initialValues: Partial<ComplaintFormValues> & Pick<ComplaintFormValues, 'access_number' | 'contact_person' | 'mobile_no'> = {
         access_number: defaultValues.access_number ?? '',
@@ -76,7 +76,7 @@ export function ComplaintForm({
     };
     const { data, setData, errors, setError, clearErrors, reset } = useForm<ComplaintFormValues>(initialValues as ComplaintFormValues);
 
-    // Handle reCAPTCHA verification callback
+    // Handle security verification callback
     const handleRecaptchaVerify = useCallback((token: string | null) => {
         setRecaptchaToken(token);
         if (token) {
@@ -193,14 +193,14 @@ export function ComplaintForm({
             return;
         }
 
-        // Validate reCAPTCHA for guest users
+        // Validate security verification for guest users
         if (showRecaptcha && !recaptchaToken) {
             setRecaptchaError('Please complete the security verification');
-            showErrorToast('Please complete the reCAPTCHA verification');
+            showErrorToast('Please complete the security verification');
             return;
         }
 
-        // Prepare submission data with optional reCAPTCHA token
+        // Prepare submission data with optional security token
         const submissionData = showRecaptcha ? { ...validation.data, recaptcha_token: recaptchaToken! } : validation.data;
 
         createMutation.mutate(submissionData, {
@@ -334,7 +334,7 @@ export function ComplaintForm({
                     {errors.tt_description && <p className="text-sm text-red-600">{errors.tt_description}</p>}
                 </div>
 
-                {/* reCAPTCHA - only shown for guest users */}
+                {/* Security verification - only shown for guest users */}
                 {showRecaptcha && (
                     <div className={`space-y-1 ${compact ? '' : 'lg:col-span-2'}`}>
                         <label className="text-sm font-medium">

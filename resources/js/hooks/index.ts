@@ -16,8 +16,8 @@ export { useReligions } from './use-religions';
 export { useServiceTypes } from './use-service-types';
 export { useTranslation } from './use-translation';
 
-// reCAPTCHA hook
-export { isRecaptchaEnabled, useRecaptcha } from './use-recaptcha';
+// Turnstile hook
+export { isTurnstileEnabled, useTurnstile } from './use-turnstile';
 
 // API mutations
 export * from './use-api-mutations';

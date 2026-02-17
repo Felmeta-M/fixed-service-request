@@ -79,11 +79,7 @@ export function Recaptcha({ onVerify, className = '', error: externalError }: Re
             )}
 
             {/* Turnstile container */}
-            <div
-                ref={turnstileContainerRef}
-                className={turnstileLoading ? 'hidden' : ''}
-                data-sitekey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-            />
+            <div ref={turnstileContainerRef} className={turnstileLoading ? 'hidden' : ''} data-sitekey={import.meta.env.VITE_TURNSTILE_SITE_KEY} />
 
             {/* Verification status indicator */}
             {!isLoading && isTurnstileVerified && (

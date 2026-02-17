@@ -1,5 +1,6 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { isRecaptchaEnabled, useRecaptcha } from '@/hooks/use-recaptcha';
+// import { isRecaptchaEnabled, useRecaptcha } from '@/hooks/use-recaptcha'; // reCAPTCHA removed
+import { isTurnstileEnabled, useTurnstile } from '@/hooks/use-turnstile';
 import { Loader2, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useEffect } from 'react';
 
@@ -34,22 +35,29 @@ interface RecaptchaProps {
  * <button disabled={!recaptchaToken}>Submit</button>
  * ```
  */
-export function Recaptcha({ onVerify, theme = 'light', size = 'normal', className = '', error: externalError }: RecaptchaProps) {
-    const { containerRef, isLoading, isVerified, token, error: internalError, siteKey } = useRecaptcha({ theme, size });
+export function Recaptcha({ onVerify, className = '', error: externalError }: RecaptchaProps) {
+    const turnstileEnabled = isTurnstileEnabled();
+    const {
+        containerRef: turnstileContainerRef,
+        isLoading: turnstileLoading,
+        token: turnstileToken,
+        error: turnstileInternalError,
+        isVerified: isTurnstileVerified,
+    } = useTurnstile();
 
-    // Notify parent when token changes
+    // Notify parent when token changes (choose provider)
     useEffect(() => {
-        onVerify(token);
-    }, [token, onVerify]);
+        onVerify(turnstileToken);
+    }, [turnstileToken, onVerify]);
 
-    // If reCAPTCHA is not configured, don't render anything
-    if (!isRecaptchaEnabled()) {
+    // If neither Turnstile nor reCAPTCHA is configured, don't render anything
+    if (!turnstileEnabled) {
         if (process.env.NODE_ENV === 'development') {
             return (
                 <Alert variant="default" className="border-yellow-200 bg-yellow-50">
                     <ShieldAlert className="h-4 w-4 text-yellow-600" />
                     <AlertDescription className="text-yellow-700">
-                        reCAPTCHA is not configured. Set VITE_RECAPTCHA_SITE_KEY in your .env file.
+                        Turnstile is not configured. Set VITE_TURNSTILE_SITE_KEY in your .env file.
                     </AlertDescription>
                 </Alert>
             );
@@ -57,7 +65,8 @@ export function Recaptcha({ onVerify, theme = 'light', size = 'normal', classNam
         return null;
     }
 
-    const displayError = externalError || internalError;
+    const displayError = externalError || turnstileInternalError;
+    const isLoading = turnstileLoading;
 
     return (
         <div className={`space-y-2 ${className}`}>
@@ -69,11 +78,15 @@ export function Recaptcha({ onVerify, theme = 'light', size = 'normal', classNam
                 </div>
             )}
 
-            {/* reCAPTCHA container */}
-            <div ref={containerRef} className={isLoading ? 'hidden' : ''} data-sitekey={siteKey} />
+            {/* Turnstile container */}
+            <div
+                ref={turnstileContainerRef}
+                className={turnstileLoading ? 'hidden' : ''}
+                data-sitekey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+            />
 
             {/* Verification status indicator */}
-            {!isLoading && isVerified && (
+            {!isLoading && isTurnstileVerified && (
                 <div className="flex items-center gap-2 text-sm text-primary">
                     <ShieldCheck className="h-4 w-4" />
                     <span>Verification complete</span>
@@ -89,4 +102,4 @@ export function Recaptcha({ onVerify, theme = 'light', size = 'normal', classNam
 /**
  * Export the utility function for checking if reCAPTCHA is enabled
  */
-export { isRecaptchaEnabled };
+// export { isRecaptchaEnabled }; // reCAPTCHA removed

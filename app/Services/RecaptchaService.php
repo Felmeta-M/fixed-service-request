@@ -8,14 +8,9 @@ use App\Services\Logging\AppLogger;
 class RecaptchaService
 {
     /**
-     * Google reCAPTCHA verification endpoint
+     * Cloudflare Turnstile verification endpoint
      */
-    private const VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify';
-
-    /**
-     * Minimum score threshold for reCAPTCHA v3 (not used for v2)
-     */
-    private const MIN_SCORE = 0.5;
+    private const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
     /**
      * Secret key from environment
@@ -23,18 +18,18 @@ class RecaptchaService
     private ?string $secretKey;
 
     /**
-     * Whether reCAPTCHA is enabled
+     * Whether Turnstile is enabled
      */
     private bool $enabled;
 
     public function __construct()
     {
-        $this->secretKey = config('services.recaptcha.secret_key');
-        $this->enabled = !empty($this->secretKey) && !empty(config('services.recaptcha.site_key'));
+        $this->secretKey = config('services.turnstile.secret_key');
+        $this->enabled = !empty($this->secretKey) && !empty(config('services.turnstile.site_key'));
     }
 
     /**
-     * Check if reCAPTCHA is enabled
+     * Check if Turnstile is enabled
      */
     public function isEnabled(): bool
     {
@@ -42,34 +37,30 @@ class RecaptchaService
     }
 
     /**
-     * Verify a reCAPTCHA token
+     * Verify a Turnstile token
      *
-     * @param string $token The reCAPTCHA response token from the client
-     * @param string|null $remoteIp The user's IP address (optional, improves verification)
-     * @return array{success: bool, message: string, score?: float}
+     * @param string $token The Turnstile response token from the client
+     * @param string|null $remoteIp The user's IP address (optional)
+     * @return array{success: bool, message: string}
      */
     public function verify(string $token, ?string $remoteIp = null): array
     {
-        // If reCAPTCHA is not configured, skip verification in development
         if (!$this->enabled) {
             if (app()->environment('local', 'development', 'testing')) {
-                AppLogger::api()->warning('reCAPTCHA verification skipped - not configured', [
+                AppLogger::api()->warning('Turnstile verification skipped - not configured', [
                     'environment' => app()->environment(),
                 ]);
                 return [
                     'success' => true,
-                    'message' => 'reCAPTCHA verification skipped (not configured)',
+                    'message' => 'Turnstile verification skipped (not configured)',
                 ];
             }
-
-            // In production, fail if not configured
             return [
                 'success' => false,
                 'message' => 'Security verification is not properly configured',
             ];
         }
 
-        // Validate token is not empty
         if (empty($token)) {
             return [
                 'success' => false,
@@ -87,7 +78,7 @@ class RecaptchaService
                 ]);
 
             if (!$response->successful()) {
-                AppLogger::api()->error('reCAPTCHA API request failed', [
+                AppLogger::api()->error('Turnstile API request failed', [
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
@@ -100,30 +91,12 @@ class RecaptchaService
             $result = $response->json();
 
             if ($result['success'] ?? false) {
-                // For reCAPTCHA v3, also check the score
-                if (isset($result['score'])) {
-                    if ($result['score'] < self::MIN_SCORE) {
-                        return [
-                            'success' => false,
-                            'message' => 'Security verification failed. Please try again.',
-                            'score' => $result['score'],
-                        ];
-                    }
-                    return [
-                        'success' => true,
-                        'message' => 'Verification successful',
-                        'score' => $result['score'],
-                    ];
-                }
-
-                // reCAPTCHA v2 success
                 return [
                     'success' => true,
                     'message' => 'Verification successful',
                 ];
             }
 
-            // Handle specific error codes
             $errorCodes = $result['error-codes'] ?? [];
             $errorMessage = $this->getErrorMessage($errorCodes);
 
@@ -132,7 +105,7 @@ class RecaptchaService
                 'message' => $errorMessage,
             ];
         } catch (\Exception $e) {
-            AppLogger::api()->error('reCAPTCHA verification exception', [
+            AppLogger::api()->error('Turnstile verification exception', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -153,7 +126,6 @@ class RecaptchaService
             return 'Security verification failed. Please try again.';
         }
 
-        // Map error codes to user-friendly messages
         $errorMap = [
             'missing-input-secret' => 'Security verification configuration error',
             'invalid-input-secret' => 'Security verification configuration error',
@@ -161,6 +133,7 @@ class RecaptchaService
             'invalid-input-response' => 'Security verification expired or invalid. Please try again.',
             'bad-request' => 'Security verification failed. Please try again.',
             'timeout-or-duplicate' => 'Security verification expired. Please refresh and try again.',
+            'internal-error' => 'Security verification internal error. Please try again.',
         ];
 
         foreach ($errorCodes as $code) {

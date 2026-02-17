@@ -6,4 +6,4 @@ export { default as Heading } from './heading';
 export { default as HeadingSmall } from './heading-small';
 export { default as InputError } from './input-error';
 export { LocaleSwitcher } from './locale-switcher';
-export { Recaptcha, isRecaptchaEnabled } from './recaptcha';
+export { Recaptcha } from './recaptcha';

@@ -522,25 +522,25 @@ class TroubleTicketController extends Controller
             }
         }
 
-        // Verify reCAPTCHA for unauthenticated (guest) requests
+        // Verify Turnstile for unauthenticated (guest) requests
         if (!$request->user() && $this->recaptchaService->isEnabled()) {
-            $recaptchaToken = $data['recaptcha_token'] ?? null;
+            $turnstileToken = $data['turnstile_token'] ?? null;
 
-            if (!$recaptchaToken) {
+            if (!$turnstileToken) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Security verification is required.',
-                    'error_type' => 'recaptcha',
+                    'error_type' => 'turnstile',
                 ], 422);
             }
 
             $verification = $this->recaptchaService->verify(
-                $recaptchaToken,
+                $turnstileToken,
                 $request->ip()
             );
 
             if (!$verification['success']) {
-                AppLogger::api()->warning('reCAPTCHA verification failed for guest TT creation', [
+                AppLogger::api()->warning('Turnstile verification failed for guest TT creation', [
                     'ip' => $request->ip(),
                     'message' => $verification['message'],
                 ]);
@@ -548,12 +548,12 @@ class TroubleTicketController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => $verification['message'],
-                    'error_type' => 'recaptcha',
+                    'error_type' => 'turnstile',
                 ], 422);
             }
 
-            // Remove recaptcha_token from data before passing to service
-            unset($data['recaptcha_token']);
+            // Remove turnstile_token from data before passing to service
+            unset($data['turnstile_token']);
         }
 
         try {

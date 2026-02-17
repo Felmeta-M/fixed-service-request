@@ -16,7 +16,7 @@ class PaymentStatsWidget extends BaseWidget
 
     protected ?string $heading = 'Payments';
 
-    protected ?string $description = 'Payment status and revenue overview';
+    protected ?string $description = 'Payment status and revenue (excludes soft-deleted)';
 
     protected ?string $pollingInterval = null;
 
@@ -26,40 +26,44 @@ class PaymentStatsWidget extends BaseWidget
         $dateTo = $this->pageFilters['date_to'] ?? null;
 
         $query = Payment::query()
-            ->when($dateFrom, fn (Builder $q) => $q->whereDate('created_at', '>=', $dateFrom))
-            ->when($dateTo, fn (Builder $q) => $q->whereDate('created_at', '<=', $dateTo));
+            ->whereNull('deleted_at')
+            ->when($dateFrom, fn(Builder $q) => $q->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn(Builder $q) => $q->whereDate('created_at', '<=', $dateTo));
 
         $total = (clone $query)->count();
-
-        $paid = (clone $query)->where('status', Payment::STATUS_PAID)->count();
-
+        $paid = (clone $query)->where('status', Payment::STATUS_PAID)->whereNotNull('trans_id')->count();
         $pending = (clone $query)->where('status', Payment::STATUS_PENDING)->count();
-
         $failed = (clone $query)->where('status', Payment::STATUS_FAILED)->count();
-
         $cancelled = (clone $query)->where('status', Payment::STATUS_CANCELLED)->count();
+        $totalRevenue = (clone $query)->where('status', Payment::STATUS_PAID)->whereNotNull('trans_id')->sum('total_amount');
 
-        $totalRevenue = (clone $query)
-            ->where('status', Payment::STATUS_PAID)
-            ->sum('total_amount');
+
+        $successRate = $total > 0 ? round(($paid / $total) * 100, 1) : 0;
 
         return [
-            Stat::make('Total Payments', $total)
-                ->description('All payment records'),
-            Stat::make('Paid', $paid)
-                ->description('Successful payments')
+            Stat::make('Total attempts', number_format($total))
+                ->description('Active records in period (excl. soft-deleted)')
+                ->icon('heroicon-o-credit-card')
+                ->color('gray'),
+            Stat::make('Paid', number_format($paid))
+                ->description($total > 0 ? "{$successRate}% success rate" : 'Successful payments')
+                ->icon('heroicon-o-check-circle')
                 ->color('success'),
-            Stat::make('Pending', $pending)
+            Stat::make('Pending', number_format($pending))
                 ->description('Awaiting payment')
+                ->icon('heroicon-o-clock')
                 ->color('warning'),
-            Stat::make('Failed', $failed)
+            Stat::make('Failed', number_format($failed))
                 ->description('Payment failed')
+                ->icon('heroicon-o-x-circle')
                 ->color('danger'),
-            Stat::make('Cancelled', $cancelled)
-                ->description('Cancelled')
+            Stat::make('Cancelled', number_format($cancelled))
+                ->description('Cancelled by user or system')
+                ->icon('heroicon-o-no-symbol')
                 ->color('gray'),
             Stat::make('Revenue', number_format($totalRevenue, 2) . ' ETB')
-                ->description('Total collected')
+                ->description($paid > 0 ? number_format($paid) . ' successful transactions' : 'Total collected')
+                ->icon('heroicon-o-banknotes')
                 ->color('success'),
         ];
     }

@@ -5,11 +5,13 @@ namespace App\Models;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Payment extends Model
 {
     use HasFactory;
     use LogsActivity;
+    use SoftDeletes;
 
     /**
      * Payment status constants (separate from survey order status)
@@ -64,6 +66,7 @@ class Payment extends Model
         'id',
         'created_at',
         'updated_at',
+        'deleted_at',
     ];
 
     protected $casts = [

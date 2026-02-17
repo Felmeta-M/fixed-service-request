@@ -56,9 +56,10 @@ class SecurityHeaders
     protected function buildHeaders(): array
     {
         $isProduction = app()->isProduction();
+        // true = Laravel sends no CSP (nginx sends it). false = Laravel sends CSP.
+        // Use true when nginx sends CSP, so the browser only gets one CSP.
         $disableHttpSecurity = env('DISABLE_HTTP_SECURITY', true);
 
-        // If HTTP security is disabled, return empty headers array
         if ($disableHttpSecurity) {
             return [];
         }
@@ -107,11 +108,11 @@ class SecurityHeaders
         $isProduction = app()->isProduction();
         $vitePort = config('vite.port', 5173);
 
-        // Base script sources (reCAPTCHA: google.com + recaptcha.net fallback when Google is blocked)
-        $scriptSources = ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://maps.googleapis.com", "https://www.google.com", "https://www.gstatic.com", "https://www.recaptcha.net"];
+        // Base script sources (reCAPTCHA: google.com + recaptcha.net; Turnstile: challenges.cloudflare.com)
+        $scriptSources = ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://maps.googleapis.com", "https://www.google.com", "https://www.gstatic.com", "https://www.recaptcha.net", "https://challenges.cloudflare.com"];
 
-        // Base connect sources
-        $connectSources = ["'self'", "https:"];
+        // Base connect sources (Turnstile: challenges.cloudflare.com for widget API)
+        $connectSources = ["'self'", "https:", "https://challenges.cloudflare.com"];
 
         // In development, allow Vite dev server (both IPv4 and IPv6 localhost)
         if (!$isProduction) {
@@ -140,7 +141,7 @@ class SecurityHeaders
             "font-src 'self' https://fonts.gstatic.com data:",
             "img-src 'self' data: https: blob:",
             "connect-src " . implode(' ', $connectSources),
-            "frame-src 'self' https://www.google.com https://www.recaptcha.net",
+            "frame-src 'self' https://www.google.com https://www.recaptcha.net https://challenges.cloudflare.com",
             "frame-ancestors 'self'",
             "form-action 'self'",
             "base-uri 'self'",

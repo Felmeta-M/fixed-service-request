@@ -48,9 +48,9 @@ class CustomerService extends BaseApiService
     {
         $customer = $this->getLocalCustomerDataOptimized();
 
-        // Only allow switching to new phone when existing customer phone is valid Ethiopian format
-        // (7 + 8 digits, optional +251/251/0 prefix). Otherwise keep existing or fallback to new.
-        $newPhone = $data['phone_number'] ?? null;
+        // Ensure phone_number is always set (request may send contact.mobile_no only)
+        $data['phone_number'] = $data['phone_number'] ?? $data['contact']['mobile_no'] ?? $customer?->phone_number ?? null;
+        $newPhone = $data['phone_number'];
         $existingValid = $customer?->phone_number && preg_match('/^(\+251|251|0)?(7)\d{8}$/', $customer?->phone_number);
         if ($newPhone && $newPhone !== $customer?->phone_number && $existingValid) {
             $data['phone_number'] = $newPhone;
@@ -209,70 +209,35 @@ XML;
         $retCode = (string) $headerData->RetCode;
         $retMsg = (string) $headerData->RetMsg;
 
+        // CRM returns "existing customer" when National ID already registered; extract customer code and sync local DB
+        $existingCustomerCode = $this->extractCustomerCodeFromExistingCustomerMessage($retCode, $retMsg);
+        if ($existingCustomerCode !== null) {
+            $this->syncLocalCustomerWithCode($existingCustomerCode, $data, null);
+            AppLogger::business()->info('Customer profile created', [
+                'customer_code' => $existingCustomerCode,
+                'transaction_id' => $this->transactionId,
+            ]);
+            return ApiResponse::success([
+                'response_time' => (string) ($headerData->ResponseTime ?? ''),
+                'ret_code' => $retCode,
+                'ret_msg' => $retMsg,
+                'customer_id' => '',
+                'customer_code' => $existingCustomerCode,
+                'transaction_id' => $this->transactionId,
+            ]);
+        }
+
         if ($retCode !== '0') {
             return ApiResponse::error("Create customer profile failed: {$retMsg}");
         }
 
-        $customerCode = (string) $customerData->CustomerCode ?? '';
+        $customerCode = (string) ($customerData->CustomerCode ?? '');
 
-        // Use Query Builder for atomic updates - more efficient than Eloquent
         $customerSubId = Auth::guard('api')->user()?->customer_sub_id;
-
         if (!$customerSubId) {
             throw new Exception("Authenticated OTP user not found.");
         }
-
-        DB::transaction(function () use ($customerCode, $data, $customerSubId) {
-            // Batch update using Query Builder - single query each
-            DB::table('customers')
-                ->where('sub', $customerSubId)
-                ->update([
-                    'title' => $data['title'] ?? '1',
-                    'code' => $customerCode,
-                    'phone_number' => $data['phone_number'],
-                    'contact' => json_encode($data['contact']),
-                    'contact_persons' => json_encode($data['contact_person']),
-                    'gender' => $data['gender'] == 1 ? 'Male' : 'Female',
-                    'nationality' => 'Ethiopian',
-                    'identification_type' => $data['identification_type'],
-                    'identification_number' => $data['identification_number'],
-                    'birthdate' => $data['date_of_birth'],
-                    'place_of_birth' => $data['place_of_birth'],
-                    'occupation' => $data['occupation'] ?? '24',
-                    'education' => $data['education'] ?? '7',
-                    'religion' => $data['religion'] ?? '3',
-                    'income' => $data['income'] ?? '6',
-                    'primary_language' => $data['primary_language'],
-                    // Address fields
-                    'region' => $data['address']['region'],
-                    'city' => $data['address']['city'],
-                    'wereda' => $data['address']['woreda'],
-                    'zone' => $data['address']['zone'],
-                    'kebele' => $data['address']['kebele'],
-                    'house_no' => $data['address']['house_no'],
-                    'street_name' => $data['address']['street_name'] ?? null,
-                    'apartment' => $data['address']['apartment'] ?? null,
-
-                    // BSS Classification - Fixed backend values (same as buildXml)
-                    'customer_type' => '1',           // Residential (fixed)
-                    'customer_category' => '1',       // Category 1 (fixed)
-                    'customer_subcategory' => '1',    // Subcategory 1 (fixed)
-                    'customer_level' => '7',          // Copper (fixed)
-                    // Notification & Credit
-                    'notification_mode' => $data['contact']['notification_mode'] ?? '1',
-                    'credit_class' => $data['credit_class'] ?? 'Excellent',
-                    'verified_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-            // Update OTP record
-            DB::table('otps')
-                ->where('customer_sub_id', $customerSubId)
-                ->update([
-                    'customer_code' => $customerCode,
-                    'updated_at' => now(),
-                ]);
-        });
+        $this->syncLocalCustomerWithCode($customerCode, $data, $customerSubId);
 
         AppLogger::business()->info('Customer profile created', [
             'customer_code' => $customerCode,
@@ -280,13 +245,85 @@ XML;
         ]);
 
         return ApiResponse::success([
-            'response_time' => (string) $headerData->ResponseTime ?? '',
+            'response_time' => (string) ($headerData->ResponseTime ?? ''),
             'ret_code' => $retCode,
             'ret_msg' => $retMsg,
-            'customer_id' => (string) $customerData->CustomerId ?? '',
+            'customer_id' => (string) ($customerData->CustomerId ?? ''),
             'customer_code' => $customerCode,
             'transaction_id' => $this->transactionId,
         ]);
+    }
+
+    /**
+     * CRM "existing customer" response: RetCode 1219999936, RetMsg contains "has the customer code [943202060]".
+     * Returns extracted customer code or null if not this case.
+     */
+    protected function extractCustomerCodeFromExistingCustomerMessage(string $retCode, string $retMsg): ?string
+    {
+        if ($retCode !== '1219999936') {
+            return null;
+        }
+        if (preg_match('/has the customer code \[([^\]]+)\]/', $retMsg, $m)) {
+            return trim($m[1]);
+        }
+        return null;
+    }
+
+    /**
+     * Update local customers and otps tables with CRM customer code (new creation or existing-customer sync).
+     */
+    protected function syncLocalCustomerWithCode(string $customerCode, array $data, ?string $customerSubId = null): void
+    {
+        $customerSubId = $customerSubId ?? Auth::guard('api')->user()?->customer_sub_id;
+        if (!$customerSubId) {
+            throw new Exception("Authenticated OTP user not found.");
+        }
+
+        DB::transaction(function () use ($customerCode, $data, $customerSubId) {
+            DB::table('customers')
+                ->where('sub', $customerSubId)
+                ->update([
+                    'title' => $data['title'] ?? '1',
+                    'code' => $customerCode,
+                    'phone_number' => $data['phone_number'] ?? $data['contact']['mobile_no'] ?? null,
+                    'contact' => json_encode($data['contact'] ?? []),
+                    'contact_persons' => json_encode($data['contact_person'] ?? []),
+                    'gender' => ($data['gender'] ?? 0) == 1 ? 'Male' : 'Female',
+                    'nationality' => 'Ethiopian',
+                    'identification_type' => $data['identification_type'] ?? '2',
+                    'identification_number' => $data['identification_number'] ?? '',
+                    'birthdate' => $data['date_of_birth'] ?? null,
+                    'place_of_birth' => $data['place_of_birth'] ?? null,
+                    'occupation' => $data['occupation'] ?? '24',
+                    'education' => $data['education'] ?? '7',
+                    'religion' => $data['religion'] ?? '3',
+                    'income' => $data['income'] ?? '6',
+                    'primary_language' => $data['primary_language'] ?? null,
+                    'region' => $data['address']['region'] ?? null,
+                    'city' => $data['address']['city'] ?? null,
+                    'wereda' => $data['address']['woreda'] ?? null,
+                    'zone' => $data['address']['zone'] ?? null,
+                    'kebele' => $data['address']['kebele'] ?? null,
+                    'house_no' => $data['address']['house_no'] ?? null,
+                    'street_name' => $data['address']['street_name'] ?? null,
+                    'apartment' => $data['address']['apartment'] ?? null,
+                    'customer_type' => '1',
+                    'customer_category' => '1',
+                    'customer_subcategory' => '1',
+                    'customer_level' => '7',
+                    'notification_mode' => $data['contact']['notification_mode'] ?? '1',
+                    'credit_class' => $data['credit_class'] ?? 'Excellent',
+                    'verified_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+            DB::table('otps')
+                ->where('customer_sub_id', $customerSubId)
+                ->update([
+                    'customer_code' => $customerCode,
+                    'updated_at' => now(),
+                ]);
+        });
     }
 
     /**

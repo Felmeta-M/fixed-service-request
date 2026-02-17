@@ -64,7 +64,7 @@ class CreateTTRequest extends FormRequest
                 ? ['required', 'string', 'min:2']
                 : ['nullable', 'string'],
             'occurrence_date' => 'nullable|date',
-            'turnstile_token' => $requireTurnstile ? ['required', 'string'] : ['nullable', 'string'],
+            'recaptcha_token' => $requireTurnstile ? ['required', 'string'] : ['nullable', 'string'],
         ];
     }
 
@@ -74,7 +74,7 @@ class CreateTTRequest extends FormRequest
             'mobile_no.regex' => 'Mobile number must be a valid Ethio Telecom number (09XXXXXXXX).',
             'tt_description.required' => 'Description is required when "Other" is selected.',
             'tt_description.min' => 'Description must be at least 2 characters.',
-            'turnstile_token.required' => 'Please complete the security verification.',
+            'recaptcha_token.required' => 'Please complete the security verification.',
         ];
     }
 }

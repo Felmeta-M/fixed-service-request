@@ -524,7 +524,9 @@ class TroubleTicketController extends Controller
 
         // Verify Turnstile for unauthenticated (guest) requests
         if (!$request->user() && $this->recaptchaService->isEnabled()) {
-            $turnstileToken = $data['turnstile_token'] ?? null;
+
+            // We are using Turnstile but keeping frontend variable as recaptcha_token
+            $turnstileToken = $data['recaptcha_token'] ?? null;
 
             if (!$turnstileToken) {
                 return response()->json([
@@ -539,22 +541,24 @@ class TroubleTicketController extends Controller
                 $request->ip()
             );
 
-            if (!$verification['success']) {
+            if (empty($verification['success']) || $verification['success'] !== true) {
+
                 AppLogger::api()->warning('Turnstile verification failed for guest TT creation', [
                     'ip' => $request->ip(),
-                    'message' => $verification['message'],
+                    'response' => $verification,
                 ]);
 
                 return response()->json([
                     'success' => false,
-                    'message' => $verification['message'],
+                    'message' => $verification['message'] ?? 'Security verification failed.',
                     'error_type' => 'turnstile',
                 ], 422);
             }
 
-            // Remove turnstile_token from data before passing to service
-            unset($data['turnstile_token']);
+            // Remove token before passing to service
+            unset($data['recaptcha_token']);
         }
+
 
         try {
             $result = $this->createTTService->createTT($data);

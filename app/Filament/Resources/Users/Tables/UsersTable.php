@@ -28,7 +28,7 @@ class UsersTable
                     ->searchable(),
                 TextColumn::make('roles')
                     ->label(__('Roles'))
-                    ->getStateUsing(fn (User $record): array => $record->roles()->pluck('name')->toArray())
+                    ->getStateUsing(fn(User $record): array => $record->roles()->pluck('name')->toArray())
                     ->badge()
                     ->separator(', ')
                     ->searchable(query: function (Builder $query, string $search): void {
@@ -36,11 +36,11 @@ class UsersTable
                             $q->where('name', 'like', '%' . $search . '%');
                         });
                     }),
-                TextColumn::make('zones')
-                    ->label('Zones')
-                    ->badge()
-                    ->getStateUsing(fn (User $record): array => $record->zones ?? [])
-                    ->toggleable(),
+                // TextColumn::make('zones')
+                //     ->label('Zones')
+                //     ->badge()
+                //     ->getStateUsing(fn (User $record): array => $record->zones ?? [])
+                //     ->toggleable(),
                 IconColumn::make('is_active')
                     ->label('Status')
                     ->boolean()

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -50,9 +51,28 @@ class AvailableDevice extends Model
         'price' => 'decimal:2',
         'discount_fee' => 'decimal:4',
         'stock_quantity' => 'integer',
-        'specifications' => 'array',
         'is_active' => 'boolean',
     ];
+
+    /**
+     * Cast specifications JSON safely to avoid 500 when DB contains invalid JSON.
+     */
+    protected function specifications(): Attribute
+    {
+        return Attribute::make(
+            get: function (?string $value): array {
+                if ($value === null || $value === '') {
+                    return [];
+                }
+                $decoded = json_decode($value, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    return [];
+                }
+                return is_array($decoded) ? $decoded : [];
+            },
+            set: fn ($value) => is_string($value) ? $value : json_encode($value ?? []),
+        );
+    }
 
     /**
      * Get only active devices

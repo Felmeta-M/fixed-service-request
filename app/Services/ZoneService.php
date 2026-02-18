@@ -388,7 +388,7 @@ class ZoneService
 
         $shop = EthioShop::active()->where('area_id', $areaId)->first();
 
-        return $shop?->center_name ?? null;
+        return $shop?->area_name ?? null;
     }
 
     /**

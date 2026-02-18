@@ -14,7 +14,7 @@ class EthioShop extends Model
     protected $fillable = [
         'zone',
         'area_id',
-        'center_name',
+        'area_name',
         'building_name',
         'specific_location',
         'latitude',

@@ -1,4 +1,4 @@
-zone,area_id,center_name,building_name,specific_location,latitude,longitude,
+zone,area_id,area_name,building_name,specific_location,latitude,longitude,
 CER,1851,Aweday Service center,Ethio telecom building,center of aweday city,9.3600309,42.0447189,
 CER,1853,Bedeno Kiosk,Ethio telecom building,Bedeno Adminstartion,9.1118945,41.6325964,
 CER,1928,Gursum Service center,Ethio telecom building,Gusrum police station,9.3569567,42.3953061,

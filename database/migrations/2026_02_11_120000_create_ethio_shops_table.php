@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->id();
             $table->string('zone')->index();
             $table->unsignedBigInteger('area_id')->nullable()->index();
-            $table->string('center_name')->index();
+            $table->string('area_name')->index();
             $table->string('building_name');
             $table->string('specific_location')->nullable();
             $table->decimal('latitude', 10, 8)->nullable();

@@ -27,7 +27,7 @@ class EthioShopsTableSeeder extends Seeder
         $skipped = 0;
         $seenShopNames = [];
         while (($row = fgetcsv($handle)) !== false) {
-            // CSV: zone, area_id, center_name, building_name, specific_location, latitude, longitude
+            // CSV: zone, area_id, area_name, building_name, specific_location, latitude, longitude
             if (count($row) < 5) {
                 $skipped++;
                 continue;
@@ -61,7 +61,7 @@ class EthioShopsTableSeeder extends Seeder
             $shops[] = [
                 'zone' => Str::of($row[0] ?? '')->trim()->toString(),
                 'area_id' => $areaId,
-                'center_name' => $shopName,
+                'area_name' => $shopName,
                 'building_name' => Str::of($row[3] ?? '')->trim()->toString(),
                 'specific_location' => isset($row[4]) && trim((string) $row[4]) !== '' ? Str::of($row[4])->trim()->toString() : null,
                 'latitude' => $lat,
@@ -79,7 +79,7 @@ class EthioShopsTableSeeder extends Seeder
             $this->backfillAreaIdFromTelecomRegions();
         }
         if ($skipped > 0) {
-            $this->command->warn("Skipped {$skipped} row(s) (duplicate center_name, empty/invalid coordinates, or invalid range).");
+            $this->command->warn("Skipped {$skipped} row(s) (duplicate area_name, empty/invalid coordinates, or invalid range).");
         }
     }
 

@@ -1,5 +1,24 @@
-# dev.fixedservices.ethiotelecom.et — host proxy to Docker staging (127.0.0.1:9993)
+# ============================================================================
+# Host Nginx — dev.fixedservices.ethiotelecom.et (Staging only)
+# ============================================================================
+#
+# Use this on the HOST machine (not inside Docker).
+# - HTTP :80  → redirect to HTTPS
+# - HTTPS :443 → proxy to Docker staging nginx on 127.0.0.1:9993
+# - CSP allows Google reCAPTCHA and Cloudflare Turnstile (challenges.cloudflare.com)
+#
+# Prerequisites:
+#   - dev.fixedservices.ethiotelecom.et reachable (e.g. /etc/hosts or DNS)
+#   - Staging stack running: docker compose -f compose.staging.yml -p fbb_staging up -d
+#   - SSL cert: Let's Encrypt (certbot) OR self-signed (see docs/HOST_NGINX_SETUP.md Option D)
+#
+# Setup:
+#   1. Copy to host: sites-available + symlink to sites-enabled, OR /etc/nginx/conf.d/ (e.g. fbb.conf)
+#   2. If cert paths differ, edit ssl_certificate and ssl_certificate_key below
+#   3. sudo nginx -t && sudo systemctl reload nginx
+# ============================================================================
 
+# HTTP — redirect to HTTPS (required for Telebirr notify callback)
 server {
     listen 80;
     server_name dev.fixedservices.ethiotelecom.et;
@@ -8,12 +27,17 @@ server {
     }
 }
 
+# HTTPS — SSL termination + proxy to staging Docker (port 9993)
 server {
     listen 443 ssl http2;
     server_name dev.fixedservices.ethiotelecom.et;
 
+    # SSL: Let's Encrypt (certbot) or self-signed (Option D in HOST_NGINX_SETUP.md)
     ssl_certificate     /etc/letsencrypt/live/dev.fixedservices.ethiotelecom.et/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/dev.fixedservices.ethiotelecom.et/privkey.pem;
+    # Self-signed example: ssl_certificate /etc/nginx/ssl/selfsigned/dev.fixedservices.ethiotelecom.et.crt;
+    #                     ssl_certificate_key /etc/nginx/ssl/selfsigned/dev.fixedservices.ethiotelecom.et.key;
+
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
@@ -30,6 +54,7 @@ server {
         proxy_busy_buffers_size 256k;
         large_client_header_buffers 4 64k;
         proxy_hide_header Content-Security-Policy;
+        # CSP: reCAPTCHA (google, recaptcha.net) + Cloudflare Turnstile (challenges.cloudflare.com) for complaint/TT forms
         add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://maps.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://challenges.cloudflare.com; script-src-elem 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://maps.googleapis.com https://www.google.com https://www.gstatic.com https://www.recaptcha.net https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https: https://challenges.cloudflare.com; frame-src 'self' https://www.google.com https://www.recaptcha.net https://challenges.cloudflare.com; frame-ancestors 'self'; form-action 'self'; base-uri 'self'; object-src 'none';" always;
     }
 }

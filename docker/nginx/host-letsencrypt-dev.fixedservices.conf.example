@@ -1,0 +1,45 @@
+# ============================================================================
+# Let's Encrypt Nginx config — use host's public name (fixedservices.ethiotelecom.et)
+# ============================================================================
+#
+# Use this on the HOST **only while obtaining or renewing** the Let's Encrypt
+# certificate. Serves the ACME HTTP-01 challenge so certbot can validate.
+#
+# When dev.fixedservices.ethiotelecom.et is **not** in public DNS, the same host
+# is reachable as fixedservices.ethiotelecom.et. So this config uses
+# server_name fixedservices.ethiotelecom.et so the challenge is served when
+# Let's Encrypt connects to the host (by that name).
+#
+# Workflow:
+#   1. Put this config in place (see Setup below).
+#   2. Run certbot for the domain that resolves to this host:
+#        sudo certbot certonly --webroot -w /var/www/letsencrypt -d fixedservices.ethiotelecom.et
+#      For a cert for dev.fixedservices.ethiotelecom.et when dev is NOT in public
+#      DNS (e.g. only in /etc/hosts): use DNS challenge instead — see
+#      docs/HOST_NGINX_SETUP.md section "Option C — DNS challenge".
+#   3. After success, use the full SSL config for that domain.
+#
+# Setup:
+#   sudo mkdir -p /var/www/letsencrypt
+#   Copy to host: sites-available + symlink to sites-enabled, OR /etc/nginx/conf.d/letsencrypt.conf
+#   sudo nginx -t && sudo systemctl reload nginx
+#
+# Optional: disable any other site that uses port 80 for this host so ACME is served:
+#   (Remove or disable the staging vhost until certbot succeeds, then re-enable.)
+# ============================================================================
+
+server {
+    listen 80;
+    server_name fixedservices.ethiotelecom.et;
+
+    # Let's Encrypt ACME HTTP-01 challenge
+    location /.well-known/acme-challenge/ {
+        root /var/www/letsencrypt;
+        allow all;
+    }
+
+    # Everything else: temporary response until you have the cert (optional)
+    location / {
+        return 404;
+    }
+}

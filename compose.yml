@@ -1,6 +1,6 @@
 # --- IMMUTABLE (production): code from image only; named volumes (no host bindings).
 # --- Currently using HOST SYNC below for quick iteration on user feedback; switch back by uncommenting immutable blocks and commenting host-sync.
-name: fbb-production
+# name: fbb_prod
 
 services:
   app:

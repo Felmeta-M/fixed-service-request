@@ -1,6 +1,6 @@
 # Staging stack: clone of production with host sync. Uses .env.staging (copy of .env.production with ffd→fbb).
 # Run with: docker compose -f compose.staging.yml -p fbb_staging up -d
-name: fbb-staging
+name: fbb_staging
 
 services:
   app:

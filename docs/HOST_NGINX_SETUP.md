@@ -223,9 +223,11 @@ sudo mkdir -p /etc/nginx/ssl/selfsigned
 sudo openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
   -keyout /etc/nginx/ssl/selfsigned/dev.fixedservices.ethiotelecom.et.key \
   -out    /etc/nginx/ssl/selfsigned/dev.fixedservices.ethiotelecom.et.crt \
-  -subj "/CN=dev.fixedservices.ethiotelecom.et"
+  -subj "/CN=dev.fixedservices.ethiotelecom.et" \
+  -addext "subjectAltName=DNS:dev.fixedservices.ethiotelecom.et"
 sudo chmod 600 /etc/nginx/ssl/selfsigned/dev.fixedservices.ethiotelecom.et.key
 ```
+The `-addext subjectAltName=DNS:...` is required so browsers accept the cert for that hostname (OpenSSL 1.1.1+). If your OpenSSL is older, you must add `subjectAltName` via an OpenSSL config file instead.
 
 **2. Point the staging Nginx config at these files:**
 

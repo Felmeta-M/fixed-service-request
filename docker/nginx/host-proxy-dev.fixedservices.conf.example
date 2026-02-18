@@ -32,11 +32,9 @@ server {
     listen 443 ssl;
     server_name dev.fixedservices.ethiotelecom.et;
 
-    # SSL: Let's Encrypt (certbot) or self-signed (Option D in HOST_NGINX_SETUP.md)
-    ssl_certificate     /etc/letsencrypt/live/dev.fixedservices.ethiotelecom.et/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/dev.fixedservices.ethiotelecom.et/privkey.pem;
-    # Self-signed example: ssl_certificate /etc/nginx/ssl/selfsigned/dev.fixedservices.ethiotelecom.et.crt;
-    #                     ssl_certificate_key /etc/nginx/ssl/selfsigned/dev.fixedservices.ethiotelecom.et.key;
+    # Self-signed (default). For Let's Encrypt use fullchain.pem/privkey.pem under /etc/letsencrypt/live/...
+    ssl_certificate     /etc/nginx/ssl/selfsigned/dev.fixedservices.ethiotelecom.et.crt;
+    ssl_certificate_key /etc/nginx/ssl/selfsigned/dev.fixedservices.ethiotelecom.et.key;
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;

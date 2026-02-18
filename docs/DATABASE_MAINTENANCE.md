@@ -45,21 +45,23 @@ A maintenance script is available at `scripts/db-maintenance.sh`:
 
 #### Manual Cleanup
 
+Use **staging** container and database (`fbb_staging_pgsql`, `fbb`). For production use `ffd_pgsql` and `-d ffd`.
+
 ```bash
 # 1. List all replication slots
-docker exec ffd_pgsql psql -U sa -d ffd -c "
+docker exec fbb_staging_pgsql psql -U sa -d fbb -c "
     SELECT slot_name, slot_type, active, restart_lsn 
     FROM pg_replication_slots;
 "
 
 # 2. Check for active replication connections
-docker exec ffd_pgsql psql -U sa -d ffd -c "
+docker exec fbb_staging_pgsql psql -U sa -d fbb -c "
     SELECT pid, usename, application_name, state 
     FROM pg_stat_replication;
 "
 
 # 3. Drop inactive slot (if confirmed unused)
-docker exec ffd_pgsql psql -U sa -d ffd -c "
+docker exec fbb_staging_pgsql psql -U sa -d fbb -c "
     SELECT pg_drop_replication_slot('slot_name');
 "
 ```
@@ -93,16 +95,16 @@ Run health checks:
 
 ## Cleanup History
 
-**2026-01-22**: Removed unused logical replication slot `ffd`
+**2026-01-22**: Removed unused logical replication slot `fbb`
 - Slot was inactive and not being used by any replication consumer
 - No logical replication is configured in the application
 - Cleanup prevents unnecessary WAL retention and log noise
 
 **2026-01-22**: Restored PostgreSQL replication setup
-- Recreated logical replication slot `ffd` with pgoutput plugin
-- Recreated publication `ffd` for all tables
+- Recreated logical replication slot `fbb` with pgoutput plugin
+- Recreated publication `fbb` for all tables
 - Replication is now active and ready for external consumers
-- Slot is configured for logical replication with publication `ffd`
+- Slot is configured for logical replication with publication `fbb`
 
 ## Best Practices
 
@@ -114,9 +116,14 @@ Run health checks:
 
 ## Related Configuration
 
-- PostgreSQL configuration: `compose.yml` (postgres service; `max_connections=300` for 250 concurrent web users)
+- PostgreSQL configuration: `compose.yml` (production), `compose.staging.yml` (staging; database **fbb**)
 - Connection pooling: `pgbouncer.ini` (pool sizes aligned to concurrent users—see `docs/SCALING_AND_OPERATIONS.md`)
-- Database credentials: `.env` file
+- Database credentials: `.env` (production), `.env.staging` (staging)
+
+## Related docs
+
+- [STAGING.md](STAGING.md) — Staging server and staging database (fbb)
+- [SCALING_AND_OPERATIONS.md](SCALING_AND_OPERATIONS.md) — Postgres max_connections, PgBouncer
 
 ## Troubleshooting
 
@@ -149,8 +156,8 @@ Run health checks:
 
 **Symptoms**: 
 ```
-ERROR: replication slot "ffd" does not exist
-STATEMENT: START_REPLICATION SLOT "ffd" LOGICAL ...
+ERROR: replication slot "fbb" does not exist
+STATEMENT: START_REPLICATION SLOT "fbb" LOGICAL ...
 ```
 
 **Possible Causes**:

@@ -53,3 +53,17 @@ docker compose restart app
 Nginx serves from the `fbb_public` volume. If the app container’s entrypoint ran, it copies `public/` into that volume once. If you still get 404 for assets or index:
 - Ensure the app container started at least once (so the copy ran).
 - Rebuild and recreate: `docker compose build app && docker compose up -d`.
+
+## 6. Staging (compose.staging.yml)
+
+For **staging** use the staging compose file and project name:
+- Replace `docker compose` with `docker compose -f compose.staging.yml -p fbb_staging`
+- Example: `docker compose -f compose.staging.yml -p fbb_staging exec app php artisan db:show`
+- Env file: `.env.staging` (see [STAGING.md](STAGING.md)).
+
+---
+
+## Related docs
+
+- [STAGING.md](STAGING.md) — Staging setup, .env.staging, fbb naming
+- [SCALING_AND_OPERATIONS.md](SCALING_AND_OPERATIONS.md) — PHP-FPM, queues, resources

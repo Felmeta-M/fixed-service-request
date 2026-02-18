@@ -87,15 +87,17 @@ docker compose exec app find /var/www/storage/logs -type f -size +100M
 
 ### Copy to Host
 
+Use **staging** container `fbb_staging_app`. For production use `ffd_app`.
+
 ```bash
 # Copy entire logs folder
-docker cp ffd_app:/var/www/storage/logs ./logs-export-$(date +%F)
+docker cp fbb_staging_app:/var/www/storage/logs ./logs-export-$(date +%F)
 
 # Copy specific log file
-docker cp ffd_app:/var/www/storage/logs/laravel.log ./laravel-$(date +%F).log
+docker cp fbb_staging_app:/var/www/storage/logs/laravel.log ./laravel-$(date +%F).log
 
 # Copy today's API log
-docker cp ffd_app:/var/www/storage/logs/api/api-$(date +%F).log ./api-$(date +%F).log
+docker cp fbb_staging_app:/var/www/storage/logs/api/api-$(date +%F).log ./api-$(date +%F).log
 ```
 
 ### Create Compressed Archive
@@ -103,12 +105,12 @@ docker cp ffd_app:/var/www/storage/logs/api/api-$(date +%F).log ./api-$(date +%F
 ```bash
 # Create tarball of all logs
 docker compose exec app tar -czf /tmp/logs-backup.tar.gz -C /var/www/storage logs
-docker cp ffd_app:/tmp/logs-backup.tar.gz ./logs-backup-$(date +%F).tar.gz
+docker cp fbb_staging_app:/tmp/logs-backup.tar.gz ./logs-backup-$(date +%F).tar.gz
 docker compose exec app rm /tmp/logs-backup.tar.gz
 
 # Archive specific date range
 docker compose exec app bash -c 'find /var/www/storage/logs -name "*2026-02*" | tar -czf /tmp/feb-logs.tar.gz -T -'
-docker cp ffd_app:/tmp/feb-logs.tar.gz ./
+docker cp fbb_staging_app:/tmp/feb-logs.tar.gz ./
 ```
 
 ---

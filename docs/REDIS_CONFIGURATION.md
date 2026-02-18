@@ -39,11 +39,11 @@ Defines Redis connections:
 
 ## Environment Variables
 
-Ensure your `.env` file has:
+Ensure your `.env` / `.env.staging` has (staging uses `fbb_staging_redis`; production uses `ffd_redis`):
 
 ```env
-# Redis Configuration
-REDIS_HOST=ffd_redis
+# Redis Configuration (staging example)
+REDIS_HOST=fbb_staging_redis
 REDIS_PORT=6379
 REDIS_PASSWORD=null
 REDIS_DB=0                    # Queue (default connection)
@@ -70,40 +70,42 @@ QUEUE_CONNECTION=redis
 
 ## Monitoring Redis
 
+Use **staging** container `fbb_staging_redis`. For production use `ffd_redis`.
+
 ### Check Database Sizes
 ```bash
 # Queue database (DB 0)
-docker exec ffd_redis redis-cli -n 0 DBSIZE
+docker exec fbb_staging_redis redis-cli -n 0 DBSIZE
 
 # Cache database (DB 1)
-docker exec ffd_redis redis-cli -n 1 DBSIZE
+docker exec fbb_staging_redis redis-cli -n 1 DBSIZE
 
 # Session database (DB 2)
-docker exec ffd_redis redis-cli -n 2 DBSIZE
+docker exec fbb_staging_redis redis-cli -n 2 DBSIZE
 ```
 
 ### List Keys in Each Database
 ```bash
 # Queue keys
-docker exec ffd_redis redis-cli -n 0 KEYS "*"
+docker exec fbb_staging_redis redis-cli -n 0 KEYS "*"
 
 # Cache keys
-docker exec ffd_redis redis-cli -n 1 KEYS "*"
+docker exec fbb_staging_redis redis-cli -n 1 KEYS "*"
 
 # Session keys
-docker exec ffd_redis redis-cli -n 2 KEYS "*"
+docker exec fbb_staging_redis redis-cli -n 2 KEYS "*"
 ```
 
 ### Clear Specific Database
 ```bash
 # Clear cache only (DB 1)
-docker exec ffd_redis redis-cli -n 1 FLUSHDB
+docker exec fbb_staging_redis redis-cli -n 1 FLUSHDB
 
 # Clear sessions only (DB 2)
-docker exec ffd_redis redis-cli -n 2 FLUSHDB
+docker exec fbb_staging_redis redis-cli -n 2 FLUSHDB
 
 # Clear queue only (DB 0) - Use with caution!
-docker exec ffd_redis redis-cli -n 0 FLUSHDB
+docker exec fbb_staging_redis redis-cli -n 0 FLUSHDB
 ```
 
 ## Best Practices
@@ -119,7 +121,7 @@ docker exec ffd_redis redis-cli -n 0 FLUSHDB
 ### Issue: Sessions not persisting
 - Check `SESSION_DRIVER=redis` in `.env`
 - Verify `SESSION_CONNECTION=session` points to DB 2
-- Check Redis connectivity: `docker exec ffd_redis redis-cli ping`
+- Check Redis connectivity: `docker exec fbb_staging_redis redis-cli ping` (staging; production: `ffd_redis`)
 
 ### Issue: Cache not working
 - Check `CACHE_STORE=redis` in `.env`

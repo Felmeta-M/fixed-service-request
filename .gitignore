@@ -15,6 +15,7 @@
 .env
 .env.*
 !.env.example
+!.env.staging.example
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -57,10 +58,11 @@ Thumbs.db
 /.php-cs-fixer.cache
 .env
 .env.production
+.env.staging
 .env.backup
 .env.testing
 .env.local
-.env.local.backup
+.env.local
 
 # Node / frontend
 npm-debug.log

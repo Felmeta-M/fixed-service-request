@@ -179,7 +179,7 @@ app_memory ≈ pm.max_children × 80MB   (typical per-worker usage)
 
 1. **PgBouncer:** Increase `default_pool_size` / `reserve_pool_size` so they’re ≥ PHP workers + queue workers.
 2. **Postgres:** Ensure `max_connections` &gt; sum of all PgBouncer pool sizes.
-3. **Laravel:** Use `DATABASE_URL` pointing at PgBouncer (e.g. `ffd_pgbouncer:6432`), not directly at Postgres.
+3. **Laravel:** Use `DATABASE_URL` pointing at PgBouncer (e.g. `fbb_staging_pgbouncer:6432` for staging, `ffd_pgbouncer:6432` for production), not directly at Postgres.
 
 ---
 
@@ -236,3 +236,12 @@ For 250+ concurrent users or multiple app/queue workers, use **Redis** as cache 
 ---
 
 *Last updated: 250 concurrent users; PHP-FPM, compose, PgBouncer, Postgres max_connections, and Laravel rate limiting aligned to this target.*
+
+---
+
+## Related docs
+
+- [STAGING.md](STAGING.md) — Staging server (clone of production, fbb naming, host sync)
+- [DATABASE_MAINTENANCE.md](DATABASE_MAINTENANCE.md) — Postgres maintenance, replication slots
+- [REDIS_CONFIGURATION.md](REDIS_CONFIGURATION.md) — Redis DB usage
+- [DOCKER_TROUBLESHOOTING.md](DOCKER_TROUBLESHOOTING.md) — Common Docker/Laravel issues

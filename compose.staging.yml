@@ -140,7 +140,7 @@ services:
     container_name: fbb_staging_nginx
     restart: always
     ports:
-      - "9992:80"
+      - "9993:80"
     volumes:
       # Host sync: serve from same codebase as app
       - .:/var/www:ro

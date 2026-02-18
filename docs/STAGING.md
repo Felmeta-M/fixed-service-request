@@ -14,7 +14,7 @@ Staging is a **clone of production**: same codebase and same env as production, 
 | **Project** | default | **fbb-staging** (`-p fbb_staging`) |
 | **Env** | `.env` | **`.env.staging`** (copy of `.env.production`, ffd→fbb) |
 | **Naming** | ffd | **fbb** (containers, DB name) |
-| **Port (HTTP)** | 9991 | **9992** |
+| **Port (HTTP)** | 9991 | **9993** |
 | **Start** | `docker compose up -d` | `docker compose -f compose.staging.yml -p fbb_staging up -d` |
 
 Production **`compose.yml`** and **`.env`** are never modified.
@@ -33,7 +33,7 @@ Production **`compose.yml`** and **`.env`** are never modified.
 
 | Service | Production | Staging |
 |---------|------------|--------|
-| Nginx (HTTP) | 9991 | **9992** |
+| Nginx (HTTP) | 9991 | **9993** |
 | Postgres | 2345 | **2346** |
 | PgBouncer | 6633 | **6634** |
 | Redis | 6363 | **6364** |
@@ -70,7 +70,7 @@ Containers are named **`fbb_staging_*`** (e.g. `fbb_staging_app`, `fbb_staging_n
    - Obtain a certificate, e.g.:  
      `sudo certbot certonly --nginx -d dev.fixedservices.ethiotelecom.et`  
      (or use webroot/standalone; then point nginx to `/etc/letsencrypt/live/dev.fixedservices.ethiotelecom.et/`).
-   - Proxy HTTPS (443) to `127.0.0.1:9992` (Docker staging nginx). Reload host nginx after changes.
+   - Proxy HTTPS (443) to `127.0.0.1:9993` (Docker staging nginx). Reload host nginx after changes.
 
 3. **Frontend build (host sync)**  
    Staging serves from the host mount. Build assets on the host:
@@ -95,8 +95,8 @@ docker compose -f compose.staging.yml -p fbb_staging up -d
 docker compose -f compose.staging.yml -p fbb_staging exec app php artisan migrate --force
 ```
 
-- **Staging (HTTPS):** https://dev.fixedservices.ethiotelecom.et (requires host nginx + Let's Encrypt; proxy 443 → `127.0.0.1:9992`)  
-- **Local (no SSL):** http://localhost:9992  
+- **Staging (HTTPS):** https://dev.fixedservices.ethiotelecom.et (requires host nginx + Let's Encrypt; proxy 443 → `127.0.0.1:9993`)  
+- **Local (no SSL):** http://localhost:9993  
 - See [NGINX_SSL_ARCHITECTURE.md](NGINX_SSL_ARCHITECTURE.md) and `docker/nginx/host-proxy.conf.example` for the staging server block and cert paths.
 
 ---
@@ -123,6 +123,14 @@ Storage and logs are under the repo on the host and are shared with the containe
 | Restart app | `docker compose -f compose.staging.yml -p fbb_staging restart app` |
 | Stop | `docker compose -f compose.staging.yml -p fbb_staging down` |
 | Stop + remove volumes | `docker compose -f compose.staging.yml -p fbb_staging down -v` |
+
+---
+
+## Troubleshooting
+
+### Port 9993 already in use
+
+If you see `Bind for 0.0.0.0:9993 failed: port is already allocated`, find what is using it (`docker ps | grep 9993` or `lsof -i :9993`), stop that container or service, then run `docker compose -f compose.staging.yml -p fbb_staging up -d` again.
 
 ---
 

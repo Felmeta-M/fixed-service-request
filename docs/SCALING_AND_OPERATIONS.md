@@ -159,7 +159,7 @@ app_memory ≈ pm.max_children × 80MB   (typical per-worker usage)
 
 ### Add a second app on the same host (e.g. bill complaints)
 
-1. Run the second app in a **separate Compose project** (different dir or `COMPOSE_PROJECT_NAME`), different port (e.g. 9992).
+1. Run the second app in a **separate Compose project** (different dir or `COMPOSE_PROJECT_NAME`), different port (e.g. 9993 for staging).
 2. Set **resource limits** for both stacks (e.g. this app 20g/6 CPU, second app 8g/4 CPU) so neither starves the other.
 3. Use **Docker Swarm** if you want `deploy.resources` to be enforced; otherwise size the host and tune `pm.max_children` so neither app can grow unbounded.
 

@@ -2,7 +2,7 @@
 
 | Doc | Description |
 |-----|--------------|
-| [STAGING.md](STAGING.md) | **Staging server** — Clone of production, `.env.staging`, fbb naming, host sync, ports 9992/2346/6634/6364 |
+| [STAGING.md](STAGING.md) | **Staging server** — Clone of production, `.env.staging`, fbb naming, host sync, ports 9993/2346/6634/6364 |
 | [SCALING_AND_OPERATIONS.md](SCALING_AND_OPERATIONS.md) | PHP-FPM, queues, Postgres, Redis, PgBouncer, rate limiting |
 | [DOCKER_TROUBLESHOOTING.md](DOCKER_TROUBLESHOOTING.md) | 500 errors, caches, DB/Redis, permissions, nginx, staging commands |
 | [DATABASE_MAINTENANCE.md](DATABASE_MAINTENANCE.md) | Postgres maintenance, replication slots, WAL |

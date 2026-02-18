@@ -3,7 +3,7 @@
 SSL is **only on the host nginx** (proxy). Docker nginx serves HTTP only.
 
 - **Host nginx** (see `docker/nginx/host-proxy.conf.example`): listens on 80 (redirect to HTTPS) and 443 (HTTPS), holds the certificate and key, proxies to Docker nginx.
-- **Docker nginx**: listens on 80 only (ports 9991 production, 9992 staging). No certificate, no SSL.
+- **Docker nginx**: listens on 80 only (ports 9991 production, 9993 staging). No certificate, no SSL.
 
 ## Ports
 
@@ -12,12 +12,12 @@ SSL is **only on the host nginx** (proxy). Docker nginx serves HTTP only.
 | Host   | 80   | HTTP → redirect to HTTPS |
 | Host   | 443  | HTTPS (SSL) → proxy to backend |
 | Docker | 9991 | HTTP (production backend) |
-| Docker | 9992 | HTTP (staging backend) |
+| Docker | 9993 | HTTP (staging backend) |
 
 ## Host server names
 
 - **Production:** `fixedservices.ethiotelecom.et` → proxy to `127.0.0.1:9991`
-- **Staging:** `dev.fixedservices.ethiotelecom.et` → proxy to `127.0.0.1:9992` (HTTPS required for Telebirr notify callback)
+- **Staging:** `dev.fixedservices.ethiotelecom.et` → proxy to `127.0.0.1:9993` (HTTPS required for Telebirr notify callback)
 
 ## Certificate and key
 

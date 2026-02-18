@@ -29,14 +29,20 @@ Production **`compose.yml`** and **`.env`** are never modified.
 
 ---
 
-## Ports
+## Ports (no conflicts with production)
 
-| Service | Production | Staging |
-|---------|------------|--------|
-| Nginx (HTTP) | 9991 | **9993** |
-| Postgres | 2345 | **2346** |
-| PgBouncer | 6633 | **6634** |
-| Redis | 6363 | **6364** |
+Every service that publishes a host port uses a **different** port in staging so production and staging can run on the same host.
+
+| Service | Production (host port) | Staging (host port) | Container port |
+|---------|-------------------------|---------------------|----------------|
+| **Nginx** (HTTP) | 9991 | **9993** | 80 |
+| **Postgres** | 2345 | **2346** | 5432 |
+| **PgBouncer** | 6633 | **6634** | 6432 |
+| **Redis** | 6363 | **6364** | 6379 |
+
+**App, scheduler, queue, queue-sms** do **not** publish host ports (they are reached only via the Docker network), so they cannot conflict.
+
+**Network:** Staging uses **`fbb_staging_net`** (production uses **`ffd_net`**). The two stacks use separate Docker networks, so no network conflict. See [PORTS_REFERENCE.md](PORTS_REFERENCE.md).
 
 Containers are named **`fbb_staging_*`** (e.g. `fbb_staging_app`, `fbb_staging_nginx`, `fbb_staging_pgsql`, `fbb_staging_pgbouncer`, `fbb_staging_redis`). Database name is **fbb**.
 
@@ -65,12 +71,7 @@ Containers are named **`fbb_staging_*`** (e.g. `fbb_staging_app`, `fbb_staging_n
    - `VITE_API_PUBLIC_URL=https://dev.fixedservices.ethiotelecom.et/api/v1`
 
 2. **HTTPS (Let's Encrypt) and host proxy**  
-   Telebirr sends payment callbacks to `NOTIFY_URL`; it **must** be **HTTPS**. Use Let's Encrypt on the host and proxy to staging:
-   - Add a server block for **dev.fixedservices.ethiotelecom.et** in the host nginx config (see `docker/nginx/host-proxy.conf.example`).
-   - Obtain a certificate, e.g.:  
-     `sudo certbot certonly --nginx -d dev.fixedservices.ethiotelecom.et`  
-     (or use webroot/standalone; then point nginx to `/etc/letsencrypt/live/dev.fixedservices.ethiotelecom.et/`).
-   - Proxy HTTPS (443) to `127.0.0.1:9993` (Docker staging nginx). Reload host nginx after changes.
+   Telebirr sends payment callbacks to `NOTIFY_URL`; it **must** be **HTTPS**. See **[HOST_NGINX_SETUP.md](HOST_NGINX_SETUP.md)** for host Nginx config, Let's Encrypt (certbot), and proxy to `127.0.0.1:9993`.
 
 3. **Frontend build (host sync)**  
    Staging serves from the host mount. Build assets on the host:
@@ -97,7 +98,7 @@ docker compose -f compose.staging.yml -p fbb_staging exec app php artisan migrat
 
 - **Staging (HTTPS):** https://dev.fixedservices.ethiotelecom.et (requires host nginx + Let's Encrypt; proxy 443 → `127.0.0.1:9993`)  
 - **Local (no SSL):** http://localhost:9993  
-- See [NGINX_SSL_ARCHITECTURE.md](NGINX_SSL_ARCHITECTURE.md) and `docker/nginx/host-proxy.conf.example` for the staging server block and cert paths.
+- See [HOST_NGINX_SETUP.md](HOST_NGINX_SETUP.md) for host Nginx and SSL setup.
 
 ---
 

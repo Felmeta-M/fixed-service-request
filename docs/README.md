@@ -8,7 +8,9 @@
 | [DATABASE_MAINTENANCE.md](DATABASE_MAINTENANCE.md) | Postgres maintenance, replication slots, WAL |
 | [REDIS_CONFIGURATION.md](REDIS_CONFIGURATION.md) | Redis DB usage, queues, cache |
 | [LOGS_MAINTENANCE.md](LOGS_MAINTENANCE.md) | Log locations, rotation, export |
-| [NGINX_SSL_ARCHITECTURE.md](NGINX_SSL_ARCHITECTURE.md) | Host proxy, SSL termination in front of Docker |
+| [HOST_NGINX_SETUP.md](HOST_NGINX_SETUP.md) | **Host Nginx** — SSL, Let's Encrypt, external traffic, step-by-step config |
+| [NGINX_SSL_ARCHITECTURE.md](NGINX_SSL_ARCHITECTURE.md) | Ports and SSL overview (short) |
+| [PORTS_REFERENCE.md](PORTS_REFERENCE.md) | **Production vs staging** — ports and networks, no-conflict reference |
 | [GOOGLE_MAPS_API_SECURITY.md](GOOGLE_MAPS_API_SECURITY.md) | Restricting Maps API keys (production/staging) |
 | [PAYMENT_FLOW.md](PAYMENT_FLOW.md) | Payment and Telebirr flow |
 | [TURNSTILE-CSP-FIX.md](TURNSTILE-CSP-FIX.md) | Turnstile and CSP in nginx |

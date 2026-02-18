@@ -50,25 +50,33 @@ Containers are named **`fbb_staging_*`** (e.g. `fbb_staging_app`, `fbb_staging_n
    cp .env.production .env.staging
    sed -i '' 's/ffd/fbb/g' .env.staging   # macOS; on Linux use: sed -i 's/ffd/fbb/g' .env.staging
    ```
-   Then in `.env.staging` set (staging is accessed by IP for now):
+   Then in `.env.staging` set (staging URL: **https://dev.fixedservices.ethiotelecom.et**; HTTPS required for Telebirr notify callback):
    - `APP_ENV=staging`
    - `APP_DEBUG=true` (optional; set `false` to mirror production)
-   - `APP_URL=http://172.22.4.175:9992`
+   - `APP_URL=https://dev.fixedservices.ethiotelecom.et`
    - `DB_HOST=fbb_staging_pgbouncer`
    - `DB_DATABASE=fbb`
    - `REDIS_HOST=fbb_staging_redis`
-   - `SESSION_DOMAIN=172.22.4.175`
-   - `FRONTEND_URL=http://172.22.4.175:9992`
-   - `NOTIFY_URL=http://172.22.4.175:9992/telebirr/notify`
-   - `FAYDA_REDIRECT_URI=http://172.22.4.175:9992/callback`
-   - `VITE_API_BASE_URL=http://172.22.4.175:9992/api/v1`
-   - `VITE_API_PUBLIC_URL=http://172.22.4.175:9992/api/v1`
+   - `SESSION_DOMAIN=dev.fixedservices.ethiotelecom.et`
+   - `FRONTEND_URL=https://dev.fixedservices.ethiotelecom.et`
+   - `NOTIFY_URL=https://dev.fixedservices.ethiotelecom.et/telebirr/notify`
+   - `FAYDA_REDIRECT_URI=https://dev.fixedservices.ethiotelecom.et/callback`
+   - `VITE_API_BASE_URL=https://dev.fixedservices.ethiotelecom.et/api/v1`
+   - `VITE_API_PUBLIC_URL=https://dev.fixedservices.ethiotelecom.et/api/v1`
 
-2. **Frontend build (host sync)**  
+2. **HTTPS (Let's Encrypt) and host proxy**  
+   Telebirr sends payment callbacks to `NOTIFY_URL`; it **must** be **HTTPS**. Use Let's Encrypt on the host and proxy to staging:
+   - Add a server block for **dev.fixedservices.ethiotelecom.et** in the host nginx config (see `docker/nginx/host-proxy.conf.example`).
+   - Obtain a certificate, e.g.:  
+     `sudo certbot certonly --nginx -d dev.fixedservices.ethiotelecom.et`  
+     (or use webroot/standalone; then point nginx to `/etc/letsencrypt/live/dev.fixedservices.ethiotelecom.et/`).
+   - Proxy HTTPS (443) to `127.0.0.1:9992` (Docker staging nginx). Reload host nginx after changes.
+
+3. **Frontend build (host sync)**  
    Staging serves from the host mount. Build assets on the host:
    ```bash
-   VITE_API_BASE_URL=http://172.22.4.175:9992/api/v1 \
-   VITE_API_PUBLIC_URL=http://172.22.4.175:9992/api/v1 \
+   VITE_API_BASE_URL=https://dev.fixedservices.ethiotelecom.et/api/v1 \
+   VITE_API_PUBLIC_URL=https://dev.fixedservices.ethiotelecom.et/api/v1 \
    pnpm run build
    ```
 
@@ -87,9 +95,9 @@ docker compose -f compose.staging.yml -p fbb_staging up -d
 docker compose -f compose.staging.yml -p fbb_staging exec app php artisan migrate --force
 ```
 
-- **By IP:** http://172.22.4.175:9992 (when the stack runs on the host with IP 172.22.4.175)  
-- **Local:** http://localhost:9992  
-- **Behind proxy:** Point a domain or IP at the host and proxy to `127.0.0.1:9992` (see [NGINX_SSL_ARCHITECTURE.md](NGINX_SSL_ARCHITECTURE.md)).
+- **Staging (HTTPS):** https://dev.fixedservices.ethiotelecom.et (requires host nginx + Let's Encrypt; proxy 443 → `127.0.0.1:9992`)  
+- **Local (no SSL):** http://localhost:9992  
+- See [NGINX_SSL_ARCHITECTURE.md](NGINX_SSL_ARCHITECTURE.md) and `docker/nginx/host-proxy.conf.example` for the staging server block and cert paths.
 
 ---
 

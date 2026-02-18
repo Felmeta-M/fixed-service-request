@@ -17,8 +17,7 @@ class CreateTTService extends BaseApiService
 
     public function __construct(
         protected readonly GetCombiningService $get_combining_service,
-    ) {
-    }
+    ) {}
 
     protected function endpoint(): string
     {
@@ -246,7 +245,7 @@ class CreateTTService extends BaseApiService
         // BSS Classification from queried data
         // Third-party API expects NUMERIC codes, not string values
         $customerType = !empty($customer['customer_type']) ? $customer['customer_type'] : '1';
-        $customerLevel = !empty($customer['customer_level']) ? $customer['customer_level'] : '8';
+        $customerLevel = !empty($customer['customer_level']) ? $customer['customer_level'] : '7';
 
         // Get category from ExtParams if not in customer object (also numeric codes)
         $customerCategory = !empty($customer['customer_category']) ? $customer['customer_category'] : (!empty($extParams['CustomerCategory']) ? $extParams['CustomerCategory'] : '1');

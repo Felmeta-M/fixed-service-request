@@ -66,6 +66,9 @@ export function ComplaintForm({
     const [recaptchaError, setRecaptchaError] = useState<string | null>(null);
     const showRecaptcha = requireRecaptcha;
 
+    // Local isSubmitting state to prevent double submit
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const initialValues: Partial<ComplaintFormValues> & Pick<ComplaintFormValues, 'access_number' | 'contact_person' | 'mobile_no'> = {
         access_number: defaultValues.access_number ?? '',
         contact_person: defaultValues.contact_person ?? '',
@@ -180,6 +183,8 @@ export function ComplaintForm({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
+        setIsSubmitting(true);
         clearErrors();
         setRecaptchaError(null);
 
@@ -190,6 +195,7 @@ export function ComplaintForm({
                 const field = err.path[0] as keyof ComplaintFormValues;
                 setError(field, err.message);
             });
+            setIsSubmitting(false);
             return;
         }
 
@@ -197,6 +203,7 @@ export function ComplaintForm({
         if (showRecaptcha && !recaptchaToken) {
             setRecaptchaError('Please complete the security verification');
             showErrorToast('Please complete the security verification');
+            setIsSubmitting(false);
             return;
         }
 
@@ -207,6 +214,7 @@ export function ComplaintForm({
             onSuccess: () => {
                 reset();
                 setRecaptchaToken(null);
+                setIsSubmitting(false);
                 onSuccess?.();
             },
             onError: (error: Error & { parsed?: { type: string; text: string } }) => {
@@ -221,6 +229,7 @@ export function ComplaintForm({
                 } else {
                     showErrorToast(error.message || 'Network error. Please try again.');
                 }
+                setIsSubmitting(false);
             },
         });
     };
@@ -353,10 +362,10 @@ export function ComplaintForm({
                 )}
                 <Button
                     type="submit"
-                    disabled={createMutation.isPending || !lookupDone || (showRecaptcha && !recaptchaToken)}
+                    disabled={isSubmitting || createMutation.isPending || !lookupDone || (showRecaptcha && !recaptchaToken)}
                     className="w-full sm:w-auto"
                 >
-                    {createMutation.isPending ? 'Submitting...' : 'Submit'}
+                    {isSubmitting || createMutation.isPending ? 'Submitting...' : 'Submit'}
                 </Button>
             </div>
         </form>

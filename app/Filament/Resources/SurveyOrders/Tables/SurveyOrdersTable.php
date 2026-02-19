@@ -13,7 +13,6 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
-use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
 class SurveyOrdersTable
@@ -54,6 +53,7 @@ class SurveyOrdersTable
                     ->sortable(),
                 TextColumn::make('bandwidth')
                     ->label('Bandwidth')
+                    ->formatStateUsing(fn ($state) => $state !== null && $state !== '' ? "{$state} MB" : null)
                     ->placeholder('-'),
                 TextColumn::make('telecom_region')
                     ->label('Region')
@@ -91,9 +91,6 @@ class SurveyOrdersTable
             ->defaultSort('created_at', 'desc')
             ->recordUrl(null)
             ->filters([
-                SelectFilter::make('status')
-                    ->label('Status')
-                    ->options(FFDServiceProvisionStatus::options()),
                 TernaryFilter::make('survey_is_manual')
                     ->label('Manual Survey')
                     ->placeholder('All')
@@ -104,7 +101,6 @@ class SurveyOrdersTable
                     ->placeholder('All')
                     ->trueLabel('With Device')
                     ->falseLabel('Without Device'),
-                TrashedFilter::make(),
             ])
             ->recordActions([
                 ViewAction::make(),

@@ -25,42 +25,43 @@ class ListSurveyOrders extends ListRecords
     {
         return [
             'all' => Tab::make('All')
-                ->modifyQueryUsing(fn (Builder $query) => $query),
+                ->modifyQueryUsing(fn(Builder $query) => $query),
 
             // Survey phase (whereNull customer_subscription_order_id) — SurveyOrderStatsWidget
-            'created' => Tab::make('Created')
-                ->modifyQueryUsing(fn (Builder $query) => $query->withoutSubscription()->where('status', FFDServiceProvisionStatus::Created->value)),
+            // 'created' => Tab::make('Created')
+            //     ->modifyQueryUsing(fn(Builder $query) => $query->withoutSubscription()->where('status', FFDServiceProvisionStatus::Created->value)),
 
             'survey_processing' => Tab::make('Survey Processing')
-                ->modifyQueryUsing(fn (Builder $query) => $query->withoutSubscription()->where('status', FFDServiceProvisionStatus::Processing->value)),
-
-            'survey_completed' => Tab::make('Survey Completed')
-                ->modifyQueryUsing(fn (Builder $query) => $query->withoutSubscription()->where('status', FFDServiceProvisionStatus::Completed->value)),
+                ->modifyQueryUsing(fn(Builder $query) => $query->withoutSubscription()->where('status', FFDServiceProvisionStatus::Processing->value)),
 
             'survey_waiting' => Tab::make('Survey Waiting')
-                ->modifyQueryUsing(fn (Builder $query) => $query->withoutSubscription()->where('status', FFDServiceProvisionStatus::Waiting->value)),
+                ->modifyQueryUsing(fn(Builder $query) => $query->withoutSubscription()->where('status', FFDServiceProvisionStatus::Waiting->value)),
 
+            'survey_completed' => Tab::make('Survey Completed')
+                ->modifyQueryUsing(fn(Builder $query) => $query->withoutSubscription()->where('status', FFDServiceProvisionStatus::Completed->value)),
             'survey_failed' => Tab::make('Survey Failed')
-                ->modifyQueryUsing(fn (Builder $query) => $query->withoutSubscription()->where('status', FFDServiceProvisionStatus::Failed->value)),
+                ->modifyQueryUsing(fn(Builder $query) => $query->withoutSubscription()->where('status', FFDServiceProvisionStatus::Failed->value)),
 
             'survey_cancelled' => Tab::make('Survey Cancelled')
-                ->modifyQueryUsing(fn (Builder $query) => $query->withoutSubscription()->where('status', FFDServiceProvisionStatus::Cancelled->value)),
+                ->modifyQueryUsing(fn(Builder $query) => $query->withoutSubscription()->where('status', FFDServiceProvisionStatus::Cancelled->value)),
 
-            // Subscription phase (whereNotNull customer_subscription_order_id) — SubscriptionStatsWidget
-            'subscription_completed' => Tab::make('Subscription Completed')
-                ->modifyQueryUsing(fn (Builder $query) => $query->withSubscription()->where('status', FFDServiceProvisionStatus::Completed->value)),
-
-            'subscription_waiting' => Tab::make('Subscription Waiting')
-                ->modifyQueryUsing(fn (Builder $query) => $query->withSubscription()->where('status', FFDServiceProvisionStatus::Waiting->value)),
 
             'subscription_processing' => Tab::make('Subscription Processing')
-                ->modifyQueryUsing(fn (Builder $query) => $query->withSubscription()->where('status', FFDServiceProvisionStatus::Processing->value)),
+                ->modifyQueryUsing(fn(Builder $query) => $query->withSubscription()->where('status', FFDServiceProvisionStatus::Processing->value)),
+
+
+            'subscription_waiting' => Tab::make('Subscription Activation Waiting')
+                ->modifyQueryUsing(fn(Builder $query) => $query->withSubscription()->where('status', FFDServiceProvisionStatus::Waiting->value)),
+
+            // Subscription phase (whereNotNull customer_subscription_order_id) — SubscriptionStatsWidget
+            'subscription_completed' => Tab::make('Subscription Activated')
+                ->modifyQueryUsing(fn(Builder $query) => $query->withSubscription()->where('status', FFDServiceProvisionStatus::Completed->value)),
 
             'subscription_failed' => Tab::make('Subscription Failed')
-                ->modifyQueryUsing(fn (Builder $query) => $query->withSubscription()->where('status', FFDServiceProvisionStatus::Failed->value)),
+                ->modifyQueryUsing(fn(Builder $query) => $query->withSubscription()->where('status', FFDServiceProvisionStatus::Failed->value)),
 
             'subscription_cancelled' => Tab::make('Subscription Cancelled')
-                ->modifyQueryUsing(fn (Builder $query) => $query->withSubscription()->where('status', FFDServiceProvisionStatus::Cancelled->value)),
+                ->modifyQueryUsing(fn(Builder $query) => $query->withSubscription()->where('status', FFDServiceProvisionStatus::Cancelled->value)),
         ];
     }
 

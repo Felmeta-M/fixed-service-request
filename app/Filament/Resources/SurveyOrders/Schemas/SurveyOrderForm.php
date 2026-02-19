@@ -70,6 +70,7 @@ class SurveyOrderForm
                             ->disabled(),
                         TextInput::make('bandwidth')
                             ->label('Bandwidth')
+                            ->suffix('MB')
                             ->disabled(),
                         TextInput::make('voice_service_number')
                             ->label('Voice Service Number')

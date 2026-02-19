@@ -70,6 +70,7 @@ class SurveyOrderInfolist
                             ->label('Offer ID'),
                         TextEntry::make('bandwidth')
                             ->label('Bandwidth')
+                            ->formatStateUsing(fn ($state) => $state !== null && $state !== '' ? "{$state} MB" : null)
                             ->placeholder('-'),
                         TextEntry::make('voice_service_number')
                             ->label('Voice Service Number')

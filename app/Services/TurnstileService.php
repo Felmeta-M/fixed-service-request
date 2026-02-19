@@ -68,6 +68,15 @@ class TurnstileService
             ];
         }
 
+        // Optional: skip server-side verification in staging for testing (token still required from frontend)
+        if (app()->environment('staging') && config('services.turnstile.skip_verification_in_staging', false)) {
+            AppLogger::api()->info('Turnstile verification skipped in staging (TURNSTILE_SKIP_VERIFICATION_IN_STAGING=true)');
+            return [
+                'success' => true,
+                'message' => 'Verification skipped (staging)',
+            ];
+        }
+
         try {
             $response = Http::asForm()
                 ->timeout(10)
@@ -89,6 +98,7 @@ class TurnstileService
             }
 
             $result = $response->json();
+            $errorCodes = $result['error-codes'] ?? [];
 
             if ($result['success'] ?? false) {
                 return [
@@ -97,12 +107,19 @@ class TurnstileService
                 ];
             }
 
-            $errorCodes = $result['error-codes'] ?? [];
+            // Log Cloudflare's actual error codes for debugging (e.g. invalid-input-response, timeout-or-duplicate)
+            AppLogger::api()->warning('Turnstile siteverify failed', [
+                'error_codes' => $errorCodes,
+                'has_token' => !empty($token),
+                'token_preview' => $token ? substr($token, 0, 20) . '...' : null,
+            ]);
+
             $errorMessage = $this->getErrorMessage($errorCodes);
 
             return [
                 'success' => false,
                 'message' => $errorMessage,
+                'error_codes' => $errorCodes,
             ];
         } catch (\Exception $e) {
             AppLogger::api()->error('Turnstile verification exception', [

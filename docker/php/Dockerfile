@@ -43,6 +43,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 ARG VITE_APP_NAME="Fixed services provision system"
 ARG VITE_API_BASE_URL=https://fixedservices.ethiotelecom.et/api/v1
 ARG VITE_API_PUBLIC_URL=https://fixedservices.ethiotelecom.et/api/v1
+ARG VITE_TURNSTILE_SITE_KEY=""
 
 # Build frontend assets (Vite + React)
 # Note: vite.config.ts, tsconfig.json must NOT be in .dockerignore
@@ -51,6 +52,7 @@ RUN pnpm install --frozen-lockfile \
     && VITE_APP_NAME="${VITE_APP_NAME}" \
        VITE_API_BASE_URL="${VITE_API_BASE_URL}" \
        VITE_API_PUBLIC_URL="${VITE_API_PUBLIC_URL}" \
+       VITE_TURNSTILE_SITE_KEY="${VITE_TURNSTILE_SITE_KEY}" \
        pnpm run build \
     && echo "✅ Frontend build complete: $(ls -la public/build/assets/*.css 2>/dev/null | wc -l) CSS, $(ls -la public/build/assets/*.js 2>/dev/null | wc -l) JS files"
 

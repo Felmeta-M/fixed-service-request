@@ -28,6 +28,8 @@ class EthioZoneResource extends Resource
 
     protected static ?int $navigationSort = 5;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Schema $schema): Schema
     {
         return EthioZoneForm::configure($schema);

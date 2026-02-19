@@ -359,6 +359,162 @@ class SurveyOrder extends Model
         return $query->whereRaw('1 = 0'); // Return empty result if neither ID provided
     }
 
+    /**
+     * Scope: No subscription order yet (customer_subscription_order_id null or empty).
+     * Used by display-status scopes that mirror SurveyOrderController::getStatusLabel().
+     */
+    public function scopeWithoutSubscription($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('customer_subscription_order_id')
+                ->orWhere('customer_subscription_order_id', '');
+        });
+    }
+
+    /**
+     * Scope: Has subscription order.
+     * PostgreSQL-friendly: explicit non-null and non-empty (trimmed).
+     */
+    public function scopeWithSubscription($query)
+    {
+        return $query->whereNotNull('customer_subscription_order_id')
+            ->whereRaw("TRIM(COALESCE(customer_subscription_order_id, '')) != ''");
+    }
+
+    // ==========================================
+    // Display status scopes (mirror SurveyOrderController::getStatusLabel / getStatusCode)
+    // Order of match() in controller: Failed → Cancelled → Order Waiting → Order Completed
+    //   → Manual: Waiting, Device Selection, Pending Payment, Paid, Ready
+    //   → Auto: Paid, Waiting Survey, Pending Payment, Survey Completed
+    // ==========================================
+
+    public function scopeDisplayStatusFailed($query)
+    {
+        return $query->where('status', FFDServiceProvisionStatus::Failed->value);
+    }
+
+    public function scopeDisplayStatusCancelled($query)
+    {
+        return $query->where('status', FFDServiceProvisionStatus::Cancelled->value);
+    }
+
+    public function scopeDisplayStatusOrderWaiting($query)
+    {
+        return $query->where('status', FFDServiceProvisionStatus::Waiting->value)
+            ->withSubscription();
+    }
+
+    /** Order Completed: status Completed + has subscription (PostgreSQL-friendly). */
+    public function scopeDisplayStatusOrderCompleted($query)
+    {
+        return $query->where('status', FFDServiceProvisionStatus::Completed->value)
+            ->whereNotNull('customer_subscription_order_id')
+            ->whereRaw("TRIM(COALESCE(customer_subscription_order_id, '')) != ''");
+    }
+
+    /** Manual survey: in progress (Created, Waiting, Processing), no subscription */
+    public function scopeDisplayStatusWaiting($query)
+    {
+        return $query->where('survey_is_manual', true)
+            ->whereIn('status', [
+                FFDServiceProvisionStatus::Created->value,
+                FFDServiceProvisionStatus::Waiting->value,
+                FFDServiceProvisionStatus::Processing->value,
+            ])
+            ->withoutSubscription();
+    }
+
+    /** Manual: Completed, device not selected, no subscription */
+    public function scopeDisplayStatusDeviceSelection($query)
+    {
+        return $query->where('survey_is_manual', true)
+            ->where('status', FFDServiceProvisionStatus::Completed->value)
+            ->whereNull('with_device')
+            ->withoutSubscription();
+    }
+
+    /** Pending Payment: (manual + device selected + has payment + not paid) OR (auto + completed + has payment + not paid) */
+    public function scopeDisplayStatusPendingPayment($query)
+    {
+        $hasPayment = fn ($q) => $q->where('total_amount', '>', 0);
+        $notPaid = fn ($q) => $q->where(function ($q2) {
+            $q2->whereNull('trans_id')->orWhere('trans_id', '');
+        });
+
+        return $query->withoutSubscription()
+            ->where(function ($q) use ($hasPayment, $notPaid) {
+                $q->where(function ($q2) use ($hasPayment, $notPaid) {
+                    $q2->where('survey_is_manual', true)
+                        ->where('status', FFDServiceProvisionStatus::Completed->value)
+                        ->whereNotNull('with_device')
+                        ->whereHas('payment', $hasPayment)
+                        ->whereHas('payment', $notPaid);
+                })->orWhere(function ($q2) use ($hasPayment, $notPaid) {
+                    $q2->where('survey_is_manual', false)
+                        ->where('status', FFDServiceProvisionStatus::Completed->value)
+                        ->whereHas('payment', $hasPayment)
+                        ->whereHas('payment', $notPaid);
+                });
+            });
+    }
+
+    /** Paid: (manual + completed + device + isPaid) OR (auto: Waiting + isPaid) */
+    public function scopeDisplayStatusPaid($query)
+    {
+        $isPaid = fn ($q) => $q->whereNotNull('trans_id')->where('trans_id', '!=', '');
+
+        return $query->withoutSubscription()
+            ->where(function ($q) use ($isPaid) {
+                $q->where(function ($q2) use ($isPaid) {
+                    $q2->where('survey_is_manual', true)
+                        ->where('status', FFDServiceProvisionStatus::Completed->value)
+                        ->whereNotNull('with_device')
+                        ->whereHas('payment', $isPaid);
+                })->orWhere(function ($q2) use ($isPaid) {
+                    $q2->where('status', FFDServiceProvisionStatus::Waiting->value)
+                        ->whereHas('payment', $isPaid);
+                });
+            });
+    }
+
+    /** Manual: Completed + device selected + no payment required (free), no subscription. PostgreSQL: NOT EXISTS payment with amount > 0. */
+    public function scopeDisplayStatusReady($query)
+    {
+        $paymentsTable = (new Payment)->getTable();
+
+        return $query->where('survey_is_manual', true)
+            ->where('status', FFDServiceProvisionStatus::Completed->value)
+            ->whereNotNull('with_device')
+            ->withoutSubscription()
+            ->whereRaw(
+                "NOT EXISTS (SELECT 1 FROM {$paymentsTable} WHERE {$paymentsTable}.customer_survey_order_id = survey_orders.customer_survey_order_id AND {$paymentsTable}.deleted_at IS NULL AND ({$paymentsTable}.total_amount)::numeric > 0)"
+            );
+    }
+
+    /** Auto: Waiting, no subscription, not paid (survey in progress) */
+    public function scopeDisplayStatusWaitingSurvey($query)
+    {
+        return $query->where('status', FFDServiceProvisionStatus::Waiting->value)
+            ->withoutSubscription()
+            ->where(function ($q) {
+                $q->whereDoesntHave('payment')
+                    ->orWhereHas('payment', fn ($q2) => $q2->whereNull('trans_id')->orWhere('trans_id', ''));
+            });
+    }
+
+    /** Auto: Completed, no subscription, and (no payment required or already paid) */
+    public function scopeDisplayStatusSurveyCompleted($query)
+    {
+        return $query->where('survey_is_manual', false)
+            ->where('status', FFDServiceProvisionStatus::Completed->value)
+            ->withoutSubscription()
+            ->where(function ($q) {
+                $q->whereDoesntHave('payment')
+                    ->orWhereHas('payment', fn ($q2) => $q2->where('total_amount', '<=', 0))
+                    ->orWhereHas('payment', fn ($q2) => $q2->whereNotNull('trans_id')->where('trans_id', '!=', ''));
+            });
+    }
+
     // ==========================================
     // Permission Methods - Single Source of Truth
     // Static methods contain the logic, instance methods are wrappers

@@ -15,11 +15,9 @@
 .phpactor.json
 
 # Environment (never bake into image; use env_file at runtime)
-.env.*
 .env.backup
-.env.staging
 .env.local
-.env.testing
+env.testing
 
 # Dependencies (rebuilt in container)
 /node_modules

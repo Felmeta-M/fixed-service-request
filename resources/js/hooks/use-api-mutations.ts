@@ -85,6 +85,7 @@ export function useCreateComplaintGuest() {
     const queryClient = useQueryClient();
 
     return useMutation({
+        retry: false, // Turnstile tokens are one-time use; do not retry with same token
         mutationFn: async (data: any) => {
             const response = await apiClient.post<any>('/tt/create-guest', data, {
                 token: undefined,

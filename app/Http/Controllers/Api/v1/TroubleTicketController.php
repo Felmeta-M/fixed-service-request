@@ -544,7 +544,8 @@ class TroubleTicketController extends Controller
 
                 AppLogger::api()->warning('Turnstile verification failed for guest TT creation', [
                     'ip' => $request->ip(),
-                    'response' => $verification,
+                    'message' => $verification['message'] ?? null,
+                    'error_codes' => $verification['error_codes'] ?? null,
                 ]);
 
                 return response()->json([

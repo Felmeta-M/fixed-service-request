@@ -286,6 +286,8 @@ return [
     'turnstile' => [
         'site_key' => env('TURNSTILE_SITE_KEY'),
         'secret_key' => env('TURNSTILE_SECRET_KEY'),
+        // When true and APP_ENV=staging, skip server-side Cloudflare verify (for testing). Frontend still requires completing the widget.
+        'skip_verification_in_staging' => env('TURNSTILE_SKIP_VERIFICATION_IN_STAGING', false),
     ],
 
     /*

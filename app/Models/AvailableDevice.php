@@ -52,6 +52,7 @@ class AvailableDevice extends Model
         'discount_fee' => 'decimal:4',
         'stock_quantity' => 'integer',
         'is_active' => 'boolean',
+        'specifications' => 'array',
     ];
 
     /**
@@ -70,7 +71,7 @@ class AvailableDevice extends Model
                 }
                 return is_array($decoded) ? $decoded : [];
             },
-            set: fn ($value) => is_string($value) ? $value : json_encode($value ?? []),
+            set: fn($value) => is_string($value) ? $value : json_encode($value ?? []),
         );
     }
 

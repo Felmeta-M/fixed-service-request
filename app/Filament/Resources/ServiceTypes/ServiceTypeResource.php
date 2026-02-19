@@ -25,6 +25,8 @@ class ServiceTypeResource extends Resource
     protected static string|UnitEnum|null $navigationGroup = 'Service Management';
     protected static ?int $navigationSort = 6;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Schema $schema): Schema
     {
         return ServiceTypeForm::configure($schema);

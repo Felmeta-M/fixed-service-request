@@ -26,6 +26,9 @@ class BandwidthOptionResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
+
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Schema $schema): Schema
     {
         return BandwidthOptionForm::configure($schema);

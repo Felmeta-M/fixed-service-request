@@ -82,19 +82,36 @@ class Payment extends Model
         return $this->status === self::STATUS_PAID && !empty($this->trans_id);
     }
 
+    /** Works whether DB column is integer or string (PostgreSQL varchar). */
     public function scopePending($query)
     {
-        return $query->where('status', self::STATUS_PENDING);
+        return $query->whereIn('status', [self::STATUS_PENDING, (string) self::STATUS_PENDING]);
     }
 
+    /** Works whether DB column is integer or string (PostgreSQL varchar). */
     public function scopePaid($query)
     {
-        return $query->where('status', self::STATUS_PAID);
+        return $query->whereIn('status', [self::STATUS_PAID, (string) self::STATUS_PAID]);
     }
 
+    /** Paid status and has transaction ID (used for Paid tab badge and filter). */
+    public function scopePaidWithTransId($query)
+    {
+        return $query->paid()
+            ->whereNotNull('trans_id')
+            ->where('trans_id', '!=', '');
+    }
+
+    /** Works whether DB column is integer or string (PostgreSQL varchar). */
     public function scopeCanceled($query)
     {
-        return $query->where('status', self::STATUS_CANCELLED);
+        return $query->whereIn('status', [self::STATUS_CANCELLED, (string) self::STATUS_CANCELLED]);
+    }
+
+    /** Works whether DB column is integer or string (PostgreSQL varchar). */
+    public function scopeFailed($query)
+    {
+        return $query->whereIn('status', [self::STATUS_FAILED, (string) self::STATUS_FAILED]);
     }
 
     public function survey_request()

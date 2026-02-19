@@ -404,12 +404,15 @@ class SurveyOrder extends Model
             ->withSubscription();
     }
 
-    /** Order Completed: status Completed + has subscription (PostgreSQL-friendly). */
+    /**
+     * Order Completed: status Completed + has subscription.
+     * Matches controller getStatusLabel(): status Completed && !empty(customer_subscription_order_id).
+     * Effective SQL: status = ? AND customer_subscription_order_id IS NOT NULL AND customer_subscription_order_id <> ''.
+     */
     public function scopeDisplayStatusOrderCompleted($query)
     {
         return $query->where('status', FFDServiceProvisionStatus::Completed->value)
-            ->whereNotNull('customer_subscription_order_id')
-            ->whereRaw("TRIM(COALESCE(customer_subscription_order_id, '')) != ''");
+            ->whereNotNull('customer_subscription_order_id');
     }
 
     /** Manual survey: in progress (Created, Waiting, Processing), no subscription */
@@ -436,8 +439,8 @@ class SurveyOrder extends Model
     /** Pending Payment: (manual + device selected + has payment + not paid) OR (auto + completed + has payment + not paid) */
     public function scopeDisplayStatusPendingPayment($query)
     {
-        $hasPayment = fn ($q) => $q->where('total_amount', '>', 0);
-        $notPaid = fn ($q) => $q->where(function ($q2) {
+        $hasPayment = fn($q) => $q->where('total_amount', '>', 0);
+        $notPaid = fn($q) => $q->where(function ($q2) {
             $q2->whereNull('trans_id')->orWhere('trans_id', '');
         });
 
@@ -461,7 +464,7 @@ class SurveyOrder extends Model
     /** Paid: (manual + completed + device + isPaid) OR (auto: Waiting + isPaid) */
     public function scopeDisplayStatusPaid($query)
     {
-        $isPaid = fn ($q) => $q->whereNotNull('trans_id')->where('trans_id', '!=', '');
+        $isPaid = fn($q) => $q->whereNotNull('trans_id')->where('trans_id', '!=', '');
 
         return $query->withoutSubscription()
             ->where(function ($q) use ($isPaid) {
@@ -477,18 +480,14 @@ class SurveyOrder extends Model
             });
     }
 
-    /** Manual: Completed + device selected + no payment required (free), no subscription. PostgreSQL: NOT EXISTS payment with amount > 0. */
+    /** Manual: Completed + device selected + no payment required (free), no subscription. */
     public function scopeDisplayStatusReady($query)
     {
-        $paymentsTable = (new Payment)->getTable();
-
         return $query->where('survey_is_manual', true)
             ->where('status', FFDServiceProvisionStatus::Completed->value)
             ->whereNotNull('with_device')
             ->withoutSubscription()
-            ->whereRaw(
-                "NOT EXISTS (SELECT 1 FROM {$paymentsTable} WHERE {$paymentsTable}.customer_survey_order_id = survey_orders.customer_survey_order_id AND {$paymentsTable}.deleted_at IS NULL AND ({$paymentsTable}.total_amount)::numeric > 0)"
-            );
+            ->whereDoesntHave('payment', fn($q) => $q->where('total_amount', '>', 0));
     }
 
     /** Auto: Waiting, no subscription, not paid (survey in progress) */
@@ -498,7 +497,7 @@ class SurveyOrder extends Model
             ->withoutSubscription()
             ->where(function ($q) {
                 $q->whereDoesntHave('payment')
-                    ->orWhereHas('payment', fn ($q2) => $q2->whereNull('trans_id')->orWhere('trans_id', ''));
+                    ->orWhereHas('payment', fn($q2) => $q2->whereNull('trans_id')->orWhere('trans_id', ''));
             });
     }
 
@@ -510,8 +509,8 @@ class SurveyOrder extends Model
             ->withoutSubscription()
             ->where(function ($q) {
                 $q->whereDoesntHave('payment')
-                    ->orWhereHas('payment', fn ($q2) => $q2->where('total_amount', '<=', 0))
-                    ->orWhereHas('payment', fn ($q2) => $q2->whereNotNull('trans_id')->where('trans_id', '!=', ''));
+                    ->orWhereHas('payment', fn($q2) => $q2->where('total_amount', '<=', 0))
+                    ->orWhereHas('payment', fn($q2) => $q2->whereNotNull('trans_id')->where('trans_id', '!=', ''));
             });
     }
 

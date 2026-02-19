@@ -25,6 +25,8 @@ class AvailableDeviceResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::DeviceTablet;
     protected static string|UnitEnum|null $navigationGroup = 'Service Management';
+
+    protected static bool $shouldRegisterNavigation = false;
     protected static ?int $navigationSort = 7;
 
     public static function form(Schema $schema): Schema

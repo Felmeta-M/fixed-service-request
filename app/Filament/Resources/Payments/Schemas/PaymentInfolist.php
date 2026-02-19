@@ -17,6 +17,15 @@ class PaymentInfolist
                 TextEntry::make('customer_code')
                     ->label('Customer Code')
                     ->copyable(),
+                TextEntry::make('survey_request.contact_person')
+                    ->label('Contact Person')
+                    ->placeholder('-'),
+                TextEntry::make('survey_request.contact_no')
+                    ->label('Contact No.')
+                    ->placeholder('-'),
+                TextEntry::make('survey_request.contact_email')
+                    ->label('Contact Email')
+                    ->placeholder('-'),
                 TextEntry::make('customer_survey_order_id')
                     ->label('Survey Order ID')
                     ->placeholder('-')
@@ -27,7 +36,7 @@ class PaymentInfolist
                     ->copyable(),
                 TextEntry::make('total_amount')
                     ->label('Amount')
-                    ->money('ETB', 0, true),
+                    ->money('ETB', divideBy: 0, decimalPlaces: 0),
                 TextEntry::make('trans_id')
                     ->label('Transaction ID')
                     ->placeholder('-')
@@ -35,19 +44,25 @@ class PaymentInfolist
                 TextEntry::make('status')
                     ->label('Status')
                     ->badge()
-                    ->formatStateUsing(fn (int $state): string => match ($state) {
-                        Payment::STATUS_PAID => 'Paid',
-                        Payment::STATUS_PENDING => 'Pending',
-                        Payment::STATUS_FAILED => 'Failed',
-                        Payment::STATUS_CANCELLED => 'Cancelled',
-                        default => 'Unknown',
+                    ->formatStateUsing(function (mixed $state): string {
+                        $status = (int) $state;
+                        return match ($status) {
+                            Payment::STATUS_PAID => 'Paid',
+                            Payment::STATUS_PENDING => 'Pending',
+                            Payment::STATUS_FAILED => 'Failed',
+                            Payment::STATUS_CANCELLED => 'Cancelled',
+                            default => 'Unknown',
+                        };
                     })
-                    ->color(fn (int $state): string => match ($state) {
-                        Payment::STATUS_PAID => 'success',
-                        Payment::STATUS_PENDING => 'warning',
-                        Payment::STATUS_FAILED => 'danger',
-                        Payment::STATUS_CANCELLED => 'gray',
-                        default => 'gray',
+                    ->color(function (mixed $state): string {
+                        $status = (int) $state;
+                        return match ($status) {
+                            Payment::STATUS_PAID => 'success',
+                            Payment::STATUS_PENDING => 'warning',
+                            Payment::STATUS_FAILED => 'danger',
+                            Payment::STATUS_CANCELLED => 'gray',
+                            default => 'gray',
+                        };
                     }),
                 TextEntry::make('service_number')
                     ->label('Service Number')

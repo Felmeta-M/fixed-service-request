@@ -14,66 +14,47 @@ class ListSurveyOrders extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [
-        ];
+        return [];
     }
 
     /**
      * Tabs filter by display status (same logic as SurveyOrderController::getStatusLabel).
-     * Scopes are defined on SurveyOrder model.
+     * No badges for performance. Each tab's modifyQueryUsing is applied when active so the table fetches filtered data.
      */
     public function getTabs(): array
     {
-        $base = static::getResource()::getEloquentQuery();
-
         return [
             'all' => Tab::make('All')
-                ->badge($base->count())
-                ->modifyQueryUsing(fn (Builder $query) => $query),
-
-            'waiting' => Tab::make('Waiting')
-                ->badge((clone $base)->displayStatusWaiting()->count())
-                ->modifyQueryUsing(fn (Builder $query) => $query->displayStatusWaiting()),
-
-            'waiting_survey' => Tab::make('Waiting Survey')
-                ->badge((clone $base)->displayStatusWaitingSurvey()->count())
-                ->modifyQueryUsing(fn (Builder $query) => $query->displayStatusWaitingSurvey()),
-
-            'device_selection' => Tab::make('Device Selection')
-                ->badge((clone $base)->displayStatusDeviceSelection()->count())
-                ->modifyQueryUsing(fn (Builder $query) => $query->displayStatusDeviceSelection()),
+                ->modifyQueryUsing(fn(Builder $query) => $query),
 
             'survey_completed' => Tab::make('Survey Completed')
-                ->badge((clone $base)->displayStatusSurveyCompleted()->count())
-                ->modifyQueryUsing(fn (Builder $query) => $query->displayStatusSurveyCompleted()),
+                ->modifyQueryUsing(fn(Builder $query) => $query->displayStatusSurveyCompleted()),
 
-            'pending_payment' => Tab::make('Pending Payment')
-                ->badge((clone $base)->displayStatusPendingPayment()->count())
-                ->modifyQueryUsing(fn (Builder $query) => $query->displayStatusPendingPayment()),
+            'device_selection' => Tab::make('Device Selection')
+                ->modifyQueryUsing(fn(Builder $query) => $query->displayStatusDeviceSelection()),
 
-            'paid' => Tab::make('Paid')
-                ->badge((clone $base)->displayStatusPaid()->count())
-                ->modifyQueryUsing(fn (Builder $query) => $query->displayStatusPaid()),
+            'waiting' => Tab::make('Waiting')
+                ->modifyQueryUsing(fn(Builder $query) => $query->displayStatusWaiting()),
 
             'ready' => Tab::make('Ready')
-                ->badge((clone $base)->displayStatusReady()->count())
-                ->modifyQueryUsing(fn (Builder $query) => $query->displayStatusReady()),
+                ->modifyQueryUsing(fn(Builder $query) => $query->displayStatusReady()),
 
             'order_waiting' => Tab::make('Order Waiting')
-                ->badge((clone $base)->displayStatusOrderWaiting()->count())
-                ->modifyQueryUsing(fn (Builder $query) => $query->displayStatusOrderWaiting()),
+                ->modifyQueryUsing(fn(Builder $query) => $query->displayStatusOrderWaiting()),
 
             'order_completed' => Tab::make('Order Completed')
-                ->badge((clone $base)->displayStatusOrderCompleted()->count())
                 ->modifyQueryUsing(fn (Builder $query) => $query->displayStatusOrderCompleted()),
 
             'failed' => Tab::make('Failed')
-                ->badge((clone $base)->displayStatusFailed()->count())
-                ->modifyQueryUsing(fn (Builder $query) => $query->displayStatusFailed()),
+                ->modifyQueryUsing(fn(Builder $query) => $query->displayStatusFailed()),
 
             'cancelled' => Tab::make('Cancelled')
-                ->badge((clone $base)->displayStatusCancelled()->count())
-                ->modifyQueryUsing(fn (Builder $query) => $query->displayStatusCancelled()),
+                ->modifyQueryUsing(fn(Builder $query) => $query->displayStatusCancelled()),
         ];
+    }
+
+    public function getDefaultActiveTab(): string|int|null
+    {
+        return 'all';
     }
 }

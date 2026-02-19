@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\Payments\Tables;
 
 use App\Models\Payment;
+use App\Filament\Resources\Payments\Exports\PaymentExporter;
+use Filament\Actions\ExportAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
@@ -22,6 +24,19 @@ class PaymentsTable
                     ->label('Customer')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('survey_request.contact_person')
+                    ->label('Contact Person')
+                    ->searchable()
+                    ->placeholder('-'),
+                TextColumn::make('survey_request.contact_no')
+                    ->label('Contact No.')
+                    ->searchable()
+                    ->placeholder('-'),
+                TextColumn::make('survey_request.contact_email')
+                    ->label('Contact Email')
+                    ->searchable()
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('customer_survey_order_id')
                     ->label('Survey Order')
                     ->searchable()
@@ -33,7 +48,8 @@ class PaymentsTable
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('total_amount')
                     ->label('Amount')
-                    ->money('ETB', 0, true)
+                    ->money('ETB', divideBy: 0, decimalPlaces: 0)
+                    ->placeholder('-')
                     ->sortable(),
                 TextColumn::make('trans_id')
                     ->label('Transaction ID')
@@ -43,19 +59,25 @@ class PaymentsTable
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->formatStateUsing(fn (int $state): string => match ($state) {
-                        Payment::STATUS_PAID => 'Paid',
-                        Payment::STATUS_PENDING => 'Pending',
-                        Payment::STATUS_FAILED => 'Failed',
-                        Payment::STATUS_CANCELLED => 'Cancelled',
-                        default => 'Unknown',
+                    ->formatStateUsing(function (mixed $state): string {
+                        $status = (int) $state;
+                        return match ($status) {
+                            Payment::STATUS_PAID => 'Paid',
+                            Payment::STATUS_PENDING => 'Pending',
+                            Payment::STATUS_FAILED => 'Failed',
+                            Payment::STATUS_CANCELLED => 'Cancelled',
+                            default => 'Unknown',
+                        };
                     })
-                    ->color(fn (int $state): string => match ($state) {
-                        Payment::STATUS_PAID => 'success',
-                        Payment::STATUS_PENDING => 'warning',
-                        Payment::STATUS_FAILED => 'danger',
-                        Payment::STATUS_CANCELLED => 'gray',
-                        default => 'gray',
+                    ->color(function (mixed $state): string {
+                        $status = (int) $state;
+                        return match ($status) {
+                            Payment::STATUS_PAID => 'success',
+                            Payment::STATUS_PENDING => 'warning',
+                            Payment::STATUS_FAILED => 'danger',
+                            Payment::STATUS_CANCELLED => 'gray',
+                            default => 'gray',
+                        };
                     })
                     ->sortable(),
                 TextColumn::make('service_number')
@@ -76,6 +98,10 @@ class PaymentsTable
             ->defaultSort('created_at', 'desc')
             ->filters([
                 TrashedFilter::make(),
+            ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(PaymentExporter::class),
             ])
             ->recordActions([
                 ViewAction::make(),

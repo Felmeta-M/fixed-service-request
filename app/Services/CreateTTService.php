@@ -137,6 +137,7 @@ class CreateTTService extends BaseApiService
 
             // Use tt_description as trouble_title to minimize customer journey
             $data['trouble_title'] = $data['tt_description'] ?? $data['trouble_reason'];
+            $data['access_number'] = ltrim($data['access_number'], '0');
 
             // Step 5: Build XML with queried customer data (no additional API call)
             $xmlPayload = $this->buildRequestXml($data);
@@ -271,7 +272,7 @@ class CreateTTService extends BaseApiService
         $data['customer_code'] = $customerCode ?? $accountId;
 
         // Frontend data (contact info for the TT)
-        $accessNumber = $data['access_number'];
+        $accessNumber = ltrim($data['access_number'], '0');
         $contactPerson = $data['contact_person'];
         $mobileNo = '0' . substr($data['mobile_no'], -9); // Add 0 prefix and take last 9 digits
         $troubleTitle = $name;

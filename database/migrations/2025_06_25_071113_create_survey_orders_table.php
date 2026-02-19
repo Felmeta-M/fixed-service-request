@@ -28,7 +28,7 @@ return new class extends Migration {
             $table->string('sec_contact_person')->nullable();
             $table->string('sec_contact_no')->nullable();
             $table->string('sec_contact_email')->nullable();
-            $table->string('status')->nullable();
+            $table->integer('status')->nullable();
             $table->text('cancel_reason')->nullable();
             $table->dateTime('completed_date')->nullable();
             $table->dateTime('subscribed_at')->nullable();

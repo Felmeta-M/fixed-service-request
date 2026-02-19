@@ -62,7 +62,8 @@ class PaymentResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with('survey_request');
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
@@ -70,7 +71,8 @@ class PaymentResource extends Resource
         return parent::getRecordRouteBindingEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with('survey_request');
     }
 
     public static function canCreate(): bool

@@ -264,9 +264,8 @@ class TroubleTicketController extends Controller
         $user = $request->user();
 
         try {
-            // Use Query Builder for better performance - get all fields needed for list and detail views
-            $ticketsQuery = DB::table('trouble_tickets')
-                ->whereNull('deleted_at')
+            // Eloquent query: SoftDeletes scope automatically excludes deleted records
+            $ticketsQuery = TroubleTicket::query()
                 ->where('customer_code', $user->customer_code)
                 ->select([
                     'id',
@@ -278,12 +277,10 @@ class TroubleTicketController extends Controller
                     'created_at',
                     'updated_at',
                     'customer_code',
-                    // Service owner info
                     'service_owner_code',
                     'service_owner_name',
                     'service_owner_type',
                     'service_owner_level',
-                    // Address fields
                     'region',
                     'zone',
                     'city',
@@ -291,7 +288,6 @@ class TroubleTicketController extends Controller
                     'wereda',
                     'kebele',
                     'house_no',
-                    // TT details
                     'contact_person',
                     'mobile_no',
                     'trouble_title',
@@ -311,7 +307,6 @@ class TroubleTicketController extends Controller
                 $ticketsQuery->where('status', $request->status);
             }
 
-            // Get paginated tickets
             $tickets = $ticketsQuery->latest('created_at')->paginate(10);
 
             // Collect tickets that need refresh
@@ -417,11 +412,9 @@ class TroubleTicketController extends Controller
             $this->batchUpdateStatus($updates);
         }
 
-        // Batch update last_checked_at timestamps
+        // Batch update last_checked_at timestamps (only non-deleted IDs are in $timestampUpdates)
         if (!empty($timestampUpdates)) {
-            //TODO: remove this after testing
-            DB::table('trouble_tickets')
-                ->whereIn('id', $timestampUpdates)
+            TroubleTicket::whereIn('id', $timestampUpdates)
                 ->update(['last_checked_at' => now()]);
         }
     }
@@ -474,14 +467,11 @@ class TroubleTicketController extends Controller
     }
 
     /**
-     * Show single ticket by TT number - optimized with Query Builder
+     * Show single ticket by TT number (soft-deleted records excluded automatically)
      */
     public function show(string $tt_serial_no)
     {
-        $ticket = DB::table('trouble_tickets')
-            ->whereNull('deleted_at')
-            ->where('tt_serial_no', $tt_serial_no)
-            ->first();
+        $ticket = TroubleTicket::where('tt_serial_no', $tt_serial_no)->first();
 
         if (!$ticket) {
             return response()->json([
@@ -503,9 +493,8 @@ class TroubleTicketController extends Controller
         // Authorization check: For authenticated users, ensure only one open trouble ticket is allowed
         $authenticatedCustomerCode = CustomerContext::code();
         if ($authenticatedCustomerCode) {
-            // Check if user already has an open trouble ticket
+            // Check if user already has an open trouble ticket (SoftDeletes excludes trashed)
             $existingOpenTicket = TroubleTicket::where('customer_code', $authenticatedCustomerCode)
-                ->whereNull('deleted_at')
                 ->whereIn('status', ['open', 'confirm'])
                 ->first();
 

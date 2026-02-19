@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Enums\OfferId;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Validator;
 
 class SurveyOrderFormRequest extends FormRequest
 {
@@ -54,7 +53,7 @@ class SurveyOrderFormRequest extends FormRequest
                 ),
             ],
             'survey_address_info' => 'required|array',                   // Location info (encrypted from resource check)
-            
+
             // ============================================================
             // OPTIONAL WITH BACKEND DEFAULTS
             // Backend applies defaults in BaseSurveyService/ComboSurveyService
@@ -64,13 +63,17 @@ class SurveyOrderFormRequest extends FormRequest
             'customer_type' => 'nullable|string',                        // Default: 'residential'
             'telecom_region' => 'nullable|string',                       // Default: from resource area_code
             'oper_type' => 'nullable|string|in:A,M',                     // Default: 'A' (new)
-            'bandwidth' => 'required|string|filled',                     // Required: Minimum 7M for all surveys
+            'bandwidth' => [
+                'required',
+                'string',
+                Rule::in(['7M', '10M', '15M', '20M', '30M', '50M', '100M', '200M', '500M', '1Gbps']),
+            ],
             'contact_person' => 'nullable|string',                       // Default: from customer profile
             'contact_no' => ['nullable', 'regex:/^(\+251|251|0)?(9)\d{8}$/'], // Default: from customer
             'contact_email' => 'nullable|email',                         // Default: from customer
             'external_operid' => 'nullable|string',                      // Default: '512'
             'completed_date' => 'nullable|string',                       // Default: now()
-            
+
             // ============================================================
             // OPTIONAL - NO DEFAULTS NEEDED
             // ============================================================
@@ -100,41 +103,13 @@ class SurveyOrderFormRequest extends FormRequest
     }
 
     /**
-     * Minimum bandwidth 7 Mbps for all survey orders.
-     * Bandwidth is required for all survey orders.
-     */
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator): void {
-            $bandwidth = $this->input('bandwidth');
-            
-            // Ensure bandwidth is provided and not empty
-            if (empty($bandwidth) || trim($bandwidth) === '') {
-                $validator->errors()->add(
-                    'bandwidth',
-                    'Bandwidth is required for survey orders. Please select a bandwidth option.'
-                );
-                return;
-            }
-
-            // Validate minimum bandwidth of 7 Mbps for all survey orders
-            $bandwidthMbps = $this->bandwidthMbps($bandwidth);
-            if ($bandwidthMbps === null || $bandwidthMbps < 7) {
-                $validator->errors()->add(
-                    'bandwidth',
-                    'Minimum bandwidth is 7 Mbps. Please select 7M or higher.'
-                );
-            }
-        });
-    }
-
-    /**
      * Custom messages for manual survey validation.
      */
     public function messages(): array
     {
         return [
             'main_offer_id.in' => 'Invalid service type for manual survey. Please select Fixed Broadband, Fixed Voice, or Combo.',
+            'bandwidth.in' => 'Invalid bandwidth. Please select a valid bandwidth option.',
         ];
     }
 }

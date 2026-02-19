@@ -3,9 +3,11 @@
 namespace App\Filament\Resources\SurveyOrders\Tables;
 
 use App\Enums\FFDServiceProvisionStatus;
+use App\Filament\Resources\SurveyOrders\Exports\SurveyOrderExporter;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ExportAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
@@ -90,6 +92,10 @@ class SurveyOrdersTable
             ])
             ->defaultSort('created_at', 'desc')
             ->recordUrl(null)
+            ->headerActions([
+                ExportAction::make()
+                    ->exporter(SurveyOrderExporter::class),
+            ])
             ->filters([
                 TernaryFilter::make('survey_is_manual')
                     ->label('Manual Survey')

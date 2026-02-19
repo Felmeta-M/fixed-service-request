@@ -7,7 +7,6 @@ use App\Filament\Resources\Payments\Exports\PaymentExporter;
 use Filament\Actions\ExportAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
 class PaymentsTable
@@ -96,9 +95,6 @@ class PaymentsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
-            ->filters([
-                TrashedFilter::make(),
-            ])
             ->headerActions([
                 ExportAction::make()
                     ->exporter(PaymentExporter::class),

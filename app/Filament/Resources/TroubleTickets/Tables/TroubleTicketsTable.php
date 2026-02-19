@@ -76,7 +76,7 @@ class TroubleTicketsTable
             ->recordUrl(null)
             ->defaultSort('created_at', 'desc')
             ->filters([
-                TrashedFilter::make(),
+                // TrashedFilter::make(),
             ])
             ->recordActions([
                 ViewAction::make(),

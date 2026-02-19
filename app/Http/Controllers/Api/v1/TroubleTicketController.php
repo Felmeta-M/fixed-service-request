@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\TroubleTicket;
 use App\Services\QueryTTService;
 use App\Services\CreateTTService;
-use App\Services\RecaptchaService;
+use App\Services\TurnstileService;
 use App\Services\Logging\AppLogger;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
@@ -36,7 +36,7 @@ class TroubleTicketController extends Controller
         protected readonly ConfirmFeedbackService $confirmFeedbackService,
         protected readonly QueryCustomerForTTService $queryCustomerForTTService,
         protected readonly GetCombiningService $getCombiningService,
-        protected readonly RecaptchaService $recaptchaService
+        protected readonly TurnstileService $turnstileService
     ) {}
 
     /**
@@ -523,10 +523,9 @@ class TroubleTicketController extends Controller
         }
 
         // Verify Turnstile for unauthenticated (guest) requests
-        if (!$request->user() && $this->recaptchaService->isEnabled()) {
+        if (!$request->user() && $this->turnstileService->isEnabled()) {
 
-            // We are using Turnstile but keeping frontend variable as recaptcha_token
-            $turnstileToken = $data['recaptcha_token'] ?? null;
+            $turnstileToken = $data['turnstile_token'] ?? null;
 
             if (!$turnstileToken) {
                 return response()->json([
@@ -536,7 +535,7 @@ class TroubleTicketController extends Controller
                 ], 422);
             }
 
-            $verification = $this->recaptchaService->verify(
+            $verification = $this->turnstileService->verify(
                 $turnstileToken,
                 $request->ip()
             );
@@ -556,7 +555,7 @@ class TroubleTicketController extends Controller
             }
 
             // Remove token before passing to service
-            unset($data['recaptcha_token']);
+            unset($data['turnstile_token']);
         }
 
 

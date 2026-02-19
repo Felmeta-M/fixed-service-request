@@ -94,9 +94,9 @@ export function useCreateComplaintGuest() {
             // Check for API-level failure (success: false)
             if (response?.success === false) {
                 // Check if this is a reCAPTCHA error
-                if (response.error_type === 'recaptcha') {
+                if (response.error_type === 'turnstile') {
                     const error = new Error(response.message);
-                    (error as any).parsed = { type: 'recaptcha', text: response.message };
+                    (error as any).parsed = { type: 'turnstile', text: response.message };
                     throw error;
                 }
 

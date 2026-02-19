@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Services\RecaptchaService;
+use App\Services\TurnstileService;
 
 class CreateTTRequest extends FormRequest
 {
@@ -45,9 +45,8 @@ class CreateTTRequest extends FormRequest
     public function rules(): array
     {
         $isOther = $this->input('trouble_reason_label') === 'Other';
-        $turnstileService = app(RecaptchaService::class); // Now used for Turnstile
+        $turnstileService = app(TurnstileService::class);
 
-        // Determine if Turnstile should be required
         // Required for unauthenticated users (guest submissions) when Turnstile is enabled
         $isGuest = !$this->user();
         $requireTurnstile = $isGuest && $turnstileService->isEnabled();
@@ -64,7 +63,7 @@ class CreateTTRequest extends FormRequest
                 ? ['required', 'string', 'min:2']
                 : ['nullable', 'string'],
             'occurrence_date' => 'nullable|date',
-            'recaptcha_token' => $requireTurnstile ? ['required', 'string'] : ['nullable', 'string'],
+            'turnstile_token' => $requireTurnstile ? ['required', 'string'] : ['nullable', 'string'],
         ];
     }
 
@@ -74,7 +73,7 @@ class CreateTTRequest extends FormRequest
             'mobile_no.regex' => 'Mobile number must be a valid Ethio Telecom number (09XXXXXXXX).',
             'tt_description.required' => 'Description is required when "Other" is selected.',
             'tt_description.min' => 'Description must be at least 2 characters.',
-            'recaptcha_token.required' => 'Please complete the security verification.',
+            'turnstile_token.required' => 'Please complete the security verification.',
         ];
     }
 }

@@ -1,4 +1,4 @@
-import { Recaptcha } from '@/components/common';
+import { Turnstile, type TurnstileHandle } from '@/components/common';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,11 +8,11 @@ import { showErrorToast, showSuccessToast } from '@/lib/toast-helpers';
 import { ComplaintFormValues, complaintSchema, DynamicTroubleReason, ServiceLookupResponse } from '@/types/complaint';
 import { useForm } from '@inertiajs/react';
 import { CheckCircle2, Loader2, Search } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 type CreateComplaintMutation = {
     mutate: (
-        data: ComplaintFormValues & { recaptcha_token?: string },
+        data: ComplaintFormValues & { turnstile_token?: string },
         options?: { onSuccess?: () => void; onError?: (error: Error & { parsed?: { type: string; text: string } }) => void },
     ) => void;
     isPending: boolean;
@@ -31,8 +31,8 @@ type ComplaintFormProps = {
     compact?: boolean;
     /** Auth token for API calls (optional, for authenticated users) */
     token?: string | null;
-    /** Whether to require security verification (default: true for guest, false if token provided) */
-    requireRecaptcha?: boolean;
+    /** Whether to require Turnstile verification (default: true for guest, false if token provided) */
+    requireTurnstile?: boolean;
 };
 
 const Required = () => <span className="ml-1 text-red-500">*</span>;
@@ -53,7 +53,7 @@ export function ComplaintForm({
     onCancel,
     compact = false,
     token,
-    requireRecaptcha,
+    requireTurnstile,
 }: ComplaintFormProps) {
     // Service lookup state
     const [isSearching, setIsSearching] = useState(false);
@@ -61,10 +61,11 @@ export function ComplaintForm({
     const [networkInfo, setNetworkInfo] = useState<{ type: number; name: string } | null>(null);
     const [troubleReasons, setTroubleReasons] = useState<DynamicTroubleReason[]>(FALLBACK_REASONS);
 
-    // Security verification state - only required for guest users (no token)
-    const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-    const [recaptchaError, setRecaptchaError] = useState<string | null>(null);
-    const showRecaptcha = requireRecaptcha;
+    // Turnstile verification - only required for guest users (no token)
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+    const [turnstileError, setTurnstileError] = useState<string | null>(null);
+    const turnstileRef = useRef<TurnstileHandle>(null);
+    const showTurnstile = requireTurnstile;
 
     // Local isSubmitting state to prevent double submit
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,11 +80,10 @@ export function ComplaintForm({
     };
     const { data, setData, errors, setError, clearErrors, reset } = useForm<ComplaintFormValues>(initialValues as ComplaintFormValues);
 
-    // Handle security verification callback
-    const handleRecaptchaVerify = useCallback((token: string | null) => {
-        setRecaptchaToken(token);
+    const handleTurnstileVerify = useCallback((token: string | null) => {
+        setTurnstileToken(token);
         if (token) {
-            setRecaptchaError(null);
+            setTurnstileError(null);
         }
     }, []);
 
@@ -186,7 +186,7 @@ export function ComplaintForm({
         if (isSubmitting) return;
         setIsSubmitting(true);
         clearErrors();
-        setRecaptchaError(null);
+        setTurnstileError(null);
 
         const validation = complaintSchema.safeParse(data);
 
@@ -199,21 +199,19 @@ export function ComplaintForm({
             return;
         }
 
-        // Validate security verification for guest users
-        if (showRecaptcha && !recaptchaToken) {
-            setRecaptchaError('Please complete the security verification');
+        if (showTurnstile && !turnstileToken) {
+            setTurnstileError('Please complete the security verification');
             showErrorToast('Please complete the security verification');
             setIsSubmitting(false);
             return;
         }
 
-        // Prepare submission data with optional security token
-        const submissionData = showRecaptcha ? { ...validation.data, recaptcha_token: recaptchaToken! } : validation.data;
+        const submissionData = showTurnstile ? { ...validation.data, turnstile_token: turnstileToken! } : validation.data;
 
         createMutation.mutate(submissionData, {
             onSuccess: () => {
                 reset();
-                setRecaptchaToken(null);
+                setTurnstileToken(null);
                 setIsSubmitting(false);
                 onSuccess?.();
             },
@@ -223,8 +221,10 @@ export function ComplaintForm({
                     showErrorToast('Please correct the highlighted field.');
                 } else if (error.parsed?.type === 'business') {
                     showErrorToast(error.parsed.text);
-                } else if (error.parsed?.type === 'recaptcha') {
-                    setRecaptchaError(error.parsed.text);
+                } else if (error.parsed?.type === 'turnstile') {
+                    setTurnstileError(error.parsed.text);
+                    setTurnstileToken(null);
+                    turnstileRef.current?.reset();
                     showErrorToast(error.parsed.text);
                 } else {
                     showErrorToast(error.message || 'Network error. Please try again.');
@@ -343,13 +343,13 @@ export function ComplaintForm({
                     {errors.tt_description && <p className="text-sm text-red-600">{errors.tt_description}</p>}
                 </div>
 
-                {/* Security verification - only shown for guest users */}
-                {showRecaptcha && (
+                {/* Turnstile verification - only shown for guest users */}
+                {showTurnstile && (
                     <div className={`space-y-1 ${compact ? '' : 'lg:col-span-2'}`}>
                         <label className="text-sm font-medium">
                             Security Verification <Required />
                         </label>
-                        <Recaptcha onVerify={handleRecaptchaVerify} size={compact ? 'normal' : 'normal'} error={recaptchaError || undefined} />
+                        <Turnstile ref={turnstileRef} onVerify={handleTurnstileVerify} size={compact ? 'normal' : 'normal'} error={turnstileError || undefined} />
                     </div>
                 )}
             </div>
@@ -362,7 +362,7 @@ export function ComplaintForm({
                 )}
                 <Button
                     type="submit"
-                    disabled={isSubmitting || createMutation.isPending || !lookupDone || (showRecaptcha && !recaptchaToken)}
+                    disabled={isSubmitting || createMutation.isPending || !lookupDone || (showTurnstile && !turnstileToken)}
                     className="w-full sm:w-auto"
                 >
                     {isSubmitting || createMutation.isPending ? 'Submitting...' : 'Submit'}

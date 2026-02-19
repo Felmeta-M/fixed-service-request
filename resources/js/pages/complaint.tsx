@@ -36,7 +36,7 @@ export default function ComplaintPage() {
                     <div className="rounded-2xl bg-white p-2 sm:p-4">
                         <ComplaintForm
                             createMutation={createComplaintGuest}
-                            requireRecaptcha={true}
+                            requireTurnstile={true}
                             onSuccess={() => {
                                 // Form will show success toast automatically
                             }}

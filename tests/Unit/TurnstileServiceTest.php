@@ -1,6 +1,6 @@
 <?php
 
-use App\Services\RecaptchaService;
+use App\Services\TurnstileService;
 use Illuminate\Support\Facades\Http;
 
 uses(Tests\TestCase::class);
@@ -16,7 +16,7 @@ it('verifies turnstile success', function () {
         ], 200),
     ]);
 
-    $svc = new RecaptchaService();
+    $svc = new TurnstileService();
 
     $result = $svc->verify('dummy-token', '127.0.0.1');
 
@@ -34,7 +34,7 @@ it('handles turnstile failure', function () {
         ], 200),
     ]);
 
-    $svc = new RecaptchaService();
+    $svc = new TurnstileService();
 
     $result = $svc->verify('invalid-token', null);
 

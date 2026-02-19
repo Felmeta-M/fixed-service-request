@@ -1,10 +1,14 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
-// import { isRecaptchaEnabled, useRecaptcha } from '@/hooks/use-recaptcha'; // reCAPTCHA removed
 import { isTurnstileEnabled, useTurnstile } from '@/hooks/use-turnstile';
 import { Loader2, ShieldAlert, ShieldCheck } from 'lucide-react';
-import { useEffect } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 
-interface RecaptchaProps {
+export interface TurnstileHandle {
+    /** Reset the widget so the user can complete a new challenge (e.g. after token expired or duplicate) */
+    reset: () => void;
+}
+
+interface TurnstileProps {
     /** Called when token changes (null when expired/reset, string when verified) */
     onVerify: (token: string | null) => void;
     /** Theme of the widget */
@@ -18,24 +22,24 @@ interface RecaptchaProps {
 }
 
 /**
- * Google reCAPTCHA v2 component
- *
- * This component renders a reCAPTCHA checkbox widget and communicates
- * the verification status back to the parent form via the `onVerify` callback.
+ * Cloudflare Turnstile widget for security verification on public forms.
  *
  * @example
  * ```tsx
- * const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+ * const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
  *
- * <Recaptcha
- *   onVerify={setRecaptchaToken}
- *   error={errors.recaptcha}
+ * <Turnstile
+ *   onVerify={setTurnstileToken}
+ *   error={errors.turnstile}
  * />
  *
- * <button disabled={!recaptchaToken}>Submit</button>
+ * <button disabled={!turnstileToken}>Submit</button>
  * ```
  */
-export function Recaptcha({ onVerify, className = '', error: externalError }: RecaptchaProps) {
+export const Turnstile = forwardRef<TurnstileHandle, TurnstileProps>(function Turnstile(
+    { onVerify, className = '', error: externalError },
+    ref,
+) {
     const turnstileEnabled = isTurnstileEnabled();
     const {
         containerRef: turnstileContainerRef,
@@ -43,14 +47,19 @@ export function Recaptcha({ onVerify, className = '', error: externalError }: Re
         token: turnstileToken,
         error: turnstileInternalError,
         isVerified: isTurnstileVerified,
+        reset: turnstileReset,
     } = useTurnstile();
 
-    // Notify parent when token changes (choose provider)
+    const resetRef = useRef(turnstileReset);
+    resetRef.current = turnstileReset;
+    useImperativeHandle(ref, () => ({
+        reset: () => resetRef.current?.(),
+    }), []);
+
     useEffect(() => {
         onVerify(turnstileToken);
     }, [turnstileToken, onVerify]);
 
-    // If neither Turnstile nor reCAPTCHA is configured, don't render anything
     if (!turnstileEnabled) {
         if (process.env.NODE_ENV === 'development') {
             return (
@@ -70,7 +79,6 @@ export function Recaptcha({ onVerify, className = '', error: externalError }: Re
 
     return (
         <div className={`space-y-2 ${className}`}>
-            {/* Loading state */}
             {isLoading && (
                 <div className="flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 p-4">
                     <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
@@ -78,10 +86,8 @@ export function Recaptcha({ onVerify, className = '', error: externalError }: Re
                 </div>
             )}
 
-            {/* Turnstile container */}
             <div ref={turnstileContainerRef} className={turnstileLoading ? 'hidden' : ''} data-sitekey={import.meta.env.VITE_TURNSTILE_SITE_KEY} />
 
-            {/* Verification status indicator */}
             {!isLoading && isTurnstileVerified && (
                 <div className="flex items-center gap-2 text-sm text-primary">
                     <ShieldCheck className="h-4 w-4" />
@@ -89,13 +95,7 @@ export function Recaptcha({ onVerify, className = '', error: externalError }: Re
                 </div>
             )}
 
-            {/* Error message */}
             {displayError && <p className="text-sm text-red-600">{displayError}</p>}
         </div>
     );
-}
-
-/**
- * Export the utility function for checking if reCAPTCHA is enabled
- */
-// export { isRecaptchaEnabled }; // reCAPTCHA removed
+});

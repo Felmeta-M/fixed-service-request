@@ -5,7 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use App\Services\Logging\AppLogger;
 
-class RecaptchaService
+class TurnstileService
 {
     /**
      * Cloudflare Turnstile verification endpoint
@@ -132,7 +132,7 @@ class RecaptchaService
             'missing-input-response' => 'Please complete the security verification',
             'invalid-input-response' => 'Security verification expired or invalid. Please try again.',
             'bad-request' => 'Security verification failed. Please try again.',
-            'timeout-or-duplicate' => 'Security verification expired. Please refresh and try again.',
+            'timeout-or-duplicate' => 'Security verification expired. Please complete the security check again.',
             'internal-error' => 'Security verification internal error. Please try again.',
         ];
 

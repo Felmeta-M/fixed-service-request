@@ -19,8 +19,7 @@ class TelebirrController extends Controller
         protected readonly CreateOrderService $createOrderService,
         protected readonly PaymentService $paymentService,
         protected readonly RsaSignatureService $rsaSignatureService,
-    ) {
-    }
+    ) {}
 
     public function createOrder(Request $request)
     {
@@ -35,7 +34,8 @@ class TelebirrController extends Controller
             if (!$surveyOrder->canPay()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Payment is not available for this order in its current state.',
+                    // 'message' => 'Payment is not available for this order in its current state.',
+                    'message' => 'Your payment has already been processed. No further action is needed.',
                 ], 422);
             }
 
@@ -65,6 +65,8 @@ class TelebirrController extends Controller
             'trade_status' => 'nullable',
             'sign' => 'nullable',
         ]);
+
+        \Log::info('Telebirr Callback', $data);
 
         $payment = Payment::where(
             'merch_order_id',

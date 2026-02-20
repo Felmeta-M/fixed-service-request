@@ -18,8 +18,7 @@ class PaymentService
     public function __construct(
         protected ServiceActivationService $activationService,
         protected DeviceStockService $deviceStockService,
-    ) {
-    }
+    ) {}
     /**
      * Create a new payment record.
      */
@@ -141,8 +140,8 @@ class PaymentService
                     'customer_survey_order_id',
                     $payment->customer_survey_order_id
                 )->update([
-                            'status' => FFDServiceProvisionStatus::Waiting->value,
-                        ]);
+                    'status' => FFDServiceProvisionStatus::Waiting->value,
+                ]);
             } else {
                 $payment->update([
                     'status' => Payment::STATUS_FAILED,
@@ -192,5 +191,4 @@ class PaymentService
             ]);
         }
     }
-
 }

@@ -21,7 +21,6 @@ services:
       - fbb_storage:/var/www/storage/app
       - fbb_logs:/var/www/storage/logs
       - fbb_public:/var/www/public_volume
-      # --- Host sync: live code + storage on host for quick fixes
       # - .:/var/www
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     depends_on:

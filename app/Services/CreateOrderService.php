@@ -41,6 +41,28 @@ class CreateOrderService
     }
 
     /**
+     * Get cached Fabric token or request a new one.
+     */
+    protected function getFabricToken(): string
+    {
+        $fabricToken = Cache::get('fabricToken');
+
+        if (!$fabricToken) {
+            $tokenService = app(FabricTokenService::class);
+            $fabricToken = $tokenService->applyFabricToken();
+
+            $expirationDate = Carbon::createFromFormat(
+                'YmdHis',
+                $fabricToken->expirationDate
+            );
+
+            Cache::put('fabricToken', $fabricToken, $expirationDate);
+        }
+
+        return is_object($fabricToken) ? $fabricToken->token : $fabricToken;
+    }
+
+    /**
      * Create an order and return the rawRequest string.
      *
      * BULLETPROOF DOUBLE PAYMENT PROTECTION:
@@ -83,7 +105,13 @@ class CreateOrderService
             $fabricToken = $this->getFabricToken();
 
             // 4️⃣ If payment was previously initiated, verify status with Telebirr
-            if ($this->isPaymentInitiated($orderId)) {
+            $isPaymentInitiated = $this->isPaymentInitiated($orderId);
+            if ($isPaymentInitiated) {
+                AppLogger::payment()->info('Telebirr is payment initiated', [
+                    'order_id' => $orderId,
+                    'payment' => $payment,
+                ]);
+
                 $this->verifyAndReconcileTelebirrPayment($fabricToken, $payment);
 
                 // Re-check after reconciliation (payment might have been confirmed)
@@ -97,33 +125,16 @@ class CreateOrderService
             $prepay_id = $this->requestCreateOrder($fabricToken, $data);
 
             // 6️⃣ Build rawRequest string for H5 page
-            return $this->createRawRequest($prepay_id);
+            $rawRequest = $this->createRawRequest($prepay_id);
+            AppLogger::payment()->info('Telebirr raw request', [
+                'rawRequest' => $rawRequest,
+            ]);
+            return $rawRequest;
         } finally {
             $lock->release();
         }
     }
 
-    /**
-     * Get cached Fabric token or request a new one.
-     */
-    protected function getFabricToken(): string
-    {
-        $fabricToken = Cache::get('fabricToken');
-
-        if (!$fabricToken) {
-            $tokenService = app(FabricTokenService::class);
-            $fabricToken = $tokenService->applyFabricToken();
-
-            $expirationDate = Carbon::createFromFormat(
-                'YmdHis',
-                $fabricToken->expirationDate
-            );
-
-            Cache::put('fabricToken', $fabricToken, $expirationDate);
-        }
-
-        return is_object($fabricToken) ? $fabricToken->token : $fabricToken;
-    }
 
     /**
      * Verify payment status with Telebirr and reconcile if paid externally.
@@ -138,38 +149,81 @@ class CreateOrderService
                 return;
             }
 
-            // Normalize response
-            $queryResult = is_object($queryResult) ? (array) $queryResult : $queryResult;
-            $bizContent = $queryResult['biz_content'] ?? $queryResult;
+            /**
+             * LOG ANALYSIS: 
+             * Your log shows: "biz_content": {"order_status": "PAY_SUCCESS", "trans_id": "DBK10QO7WR"}
+             * We must use object syntax (->) because requestQueryOrder returns $response->object()
+             */
+            $bizContent = $queryResult->biz_content ?? null;
 
-            // Check if Telebirr reports this payment as completed
-            $tradeStatus = $bizContent['trade_status'] ?? null;
+            if (!$bizContent) {
+                return;
+            }
 
-            if ($tradeStatus === 'Completed') {
-                AppLogger::payment()->warning('Payment completed on Telebirr but not in DB - reconciling', [
+            // Telebirr uses 'order_status' and 'PAY_SUCCESS'
+            $orderStatus = $bizContent->order_status ?? null;
+
+            if ($orderStatus === 'PAY_SUCCESS') {
+                AppLogger::payment()->info('Payment reconciliation triggered - Status: PAY_SUCCESS', [
                     'order_id' => $payment->customer_survey_order_id,
                     'merch_order_id' => $payment->merch_order_id,
-                    'trans_id' => $bizContent['transId'] ?? null,
+                    'trans_id' => $bizContent->trans_id ?? null,
                 ]);
 
                 // Confirm the payment in our system
                 $this->paymentService->confirmPayment($payment, [
-                    'trade_status' => 'Completed',
-                    'transId' => $bizContent['transId'] ?? null,
-                    'total_amount' => $bizContent['total_amount'] ?? $payment->total_amount,
-                    'payment_order_id' => $bizContent['payment_order_id'] ?? null,
+                    'trade_status'     => 'Completed', // Keeping your internal 'Completed' status
+                    'transId'          => $bizContent->trans_id ?? null,
+                    'total_amount'     => $bizContent->total_amount ?? $payment->total_amount,
+                    'payment_order_id' => $bizContent->payment_order_id ?? null,
+                ]);
+            } else {
+                AppLogger::payment()->info('Reconciliation checked: Order not paid yet.', [
+                    'status' => $orderStatus,
+                    'merch_order_id' => $payment->merch_order_id
                 ]);
             }
         } catch (\Throwable $e) {
-            // Log but don't fail - allow creating new payment attempt
-            AppLogger::payment()->warning('Failed to verify Telebirr payment status', [
+            AppLogger::payment()->error('Critical Failure in verifyAndReconcileTelebirrPayment', [
                 'order_id' => $payment->customer_survey_order_id,
-                'error' => $e->getMessage(),
+                'merch_order_id' => $payment->merch_order_id,
+                'error'    => $e->getMessage(),
+                'file'     => $e->getFile(),
+                'line'     => $e->getLine()
             ]);
         }
     }
+    /**
+     * Query order status from Telebirr using the existing merch_order_id.
+     */
+    protected function requestQueryOrder(string $fabricToken, string $merchOrderId): ?object
+    {
+        $url = $this->baseUrl . '/payment/v1/merchant/queryOrder';
 
+        $payload = $this->buildQueryPayload($merchOrderId);
 
+        $response = Http::logged('CreateOrderService', 'payment')
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+                'X-APP-Key' => $this->fabricAppId,
+                'Authorization' => $fabricToken,
+            ])
+            ->withOptions([
+                'verify' => false,
+            ])
+            ->post($url, $payload);
+
+        if ($response->failed()) {
+            AppLogger::payment()->warning('Telebirr query order request failed', [
+                'status_code' => $response->status(),
+                'response' => substr($response->body(), 0, 500),
+                'merch_order_id' => $merchOrderId,
+            ]);
+            return null;
+        }
+
+        return $response->object();
+    }
 
     /**
      * Send create order request
@@ -209,37 +263,7 @@ class CreateOrderService
         return $object->biz_content->prepay_id ?? null;
     }
 
-    /**
-     * Query order status from Telebirr using the existing merch_order_id.
-     */
-    protected function requestQueryOrder(string $fabricToken, string $merchOrderId): ?object
-    {
-        $url = $this->baseUrl . '/payment/v1/merchant/queryOrder';
 
-        $payload = $this->buildQueryPayload($merchOrderId);
-
-        $response = Http::logged('CreateOrderService', 'payment')
-            ->withHeaders([
-                'Content-Type' => 'application/json',
-                'X-APP-Key' => $this->fabricAppId,
-                'Authorization' => $fabricToken,
-            ])
-            ->withOptions([
-                'verify' => false,
-            ])
-            ->post($url, $payload);
-
-        if ($response->failed()) {
-            AppLogger::payment()->warning('Telebirr query order request failed', [
-                'status_code' => $response->status(),
-                'response' => substr($response->body(), 0, 500),
-                'merch_order_id' => $merchOrderId,
-            ]);
-            return null;
-        }
-
-        return $response->object();
-    }
 
     /**
      * Build query payload for existing merch_order_id.

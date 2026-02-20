@@ -110,6 +110,7 @@ class SurveyOrderController extends Controller
                 $query->where('survey_orders.status', $request->status);
             }
 
+
             // Accept per_page from request (default 10, max 100)
             $perPage = min((int) $request->input('per_page', 10), 100);
 
@@ -121,7 +122,9 @@ class SurveyOrderController extends Controller
 
             $freshRows = collect(); // Re-fetched rows after batch refresh so list shows synced data
             if ($ordersToRefresh->isNotEmpty()) {
-                $this->batchRefreshOrders($ordersToRefresh);
+
+                // $this->batchRefreshOrders($ordersToRefresh);
+
                 // Re-fetch refreshed orders so the list response shows synced data (status, survey result)
                 $refreshedIds = $ordersToRefresh->pluck('id')->all();
                 $freshRows = DB::table('survey_orders')
@@ -165,6 +168,7 @@ class SurveyOrderController extends Controller
                     ->get()
                     ->keyBy('id');
             }
+
 
             // Use fresh data for refreshed orders so sync is visible in the list response
             $transformedItems = collect($surveyOrders->items())->map(function ($item) use ($freshRows) {

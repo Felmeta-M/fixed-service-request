@@ -10,6 +10,7 @@ use App\Services\Payment\PaymentService;
 use App\Services\RsaSignatureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Services\Logging\AppLogger;
 use RuntimeException;
 
 class TelebirrController extends Controller
@@ -66,7 +67,7 @@ class TelebirrController extends Controller
             'sign' => 'nullable',
         ]);
 
-        \Log::info('Telebirr Callback', $data);
+        AppLogger::payment()->info('Telebirr Callback', ['data' => $data]);
 
         $payment = Payment::where(
             'merch_order_id',

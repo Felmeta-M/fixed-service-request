@@ -104,7 +104,7 @@ class CreateOrderService
             // 3️⃣ Get Fabric token (cached)
             $fabricToken = $this->getFabricToken();
 
-            // 4️⃣ If payment was previously initiated, verify status with Telebirr
+            // 4️⃣ If payment was previously initiated, verify status with Telebirr (at most every 5 minutes)
             $isPaymentInitiated = $this->isPaymentInitiated($orderId);
             if ($isPaymentInitiated) {
                 AppLogger::payment()->info('Telebirr is payment initiated', [
@@ -113,6 +113,7 @@ class CreateOrderService
                 ]);
 
                 $this->verifyAndReconcileTelebirrPayment($fabricToken, $payment);
+
 
                 // Re-check after reconciliation (payment might have been confirmed)
                 $payment->refresh();
@@ -137,11 +138,24 @@ class CreateOrderService
 
 
     /**
+     * Whether to run the Telebirr reconciliation check (throttled to once per 5 minutes per payment).
+     */
+    protected function shouldRunTelebirrReconciliationCheck(Payment $payment): bool
+    {
+        if ($payment->last_checked_at === null) {
+            return true;
+        }
+        return $payment->last_checked_at->diffInMinutes(Carbon::now(), false) >= 5;
+    }
+
+    /**
      * Verify payment status with Telebirr and reconcile if paid externally.
      * This catches cases where customer paid but webhook failed.
      */
     protected function verifyAndReconcileTelebirrPayment(string $fabricToken, Payment $payment): void
     {
+        $payment->update(['last_checked_at' => Carbon::now()]);
+
         try {
             $queryResult = $this->requestQueryOrder($fabricToken, $payment->merch_order_id);
 

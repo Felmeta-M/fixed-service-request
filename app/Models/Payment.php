@@ -57,6 +57,7 @@ class Payment extends Model
         'status',
         'service_details',
         'payload',
+        'last_checked_at',
     ];
 
     /**
@@ -72,6 +73,7 @@ class Payment extends Model
     protected $casts = [
         'payload' => 'array',
         'status' => 'integer',
+        'last_checked_at' => 'datetime',
     ];
 
     /**

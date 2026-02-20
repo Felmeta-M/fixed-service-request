@@ -7,6 +7,7 @@ use App\Filament\Resources\Payments\Exports\PaymentExporter;
 use Filament\Actions\ExportAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 class PaymentsTable
@@ -95,6 +96,17 @@ class PaymentsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
+            ->filters([
+                TernaryFilter::make('device')
+                    ->label('Device')
+                    ->placeholder('All')
+                    ->trueLabel('With device')
+                    ->falseLabel('Without device')
+                    ->queries(
+                        true: fn ($query) => $query->whereNotNull('device_fee')->where('device_fee', '>', 0),
+                        false: fn ($query) => $query->where(fn ($q) => $q->whereNull('device_fee')->orWhere('device_fee', 0)),
+                    ),
+            ])
             ->headerActions([
                 ExportAction::make()
                     ->exporter(PaymentExporter::class),

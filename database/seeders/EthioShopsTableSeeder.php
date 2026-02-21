@@ -11,7 +11,7 @@ class EthioShopsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        $path = database_path('ethio_shops_v4.csv');
+        $path = database_path('ethio_shops_v5.csv');
 
         if (!file_exists($path)) {
             $this->command->warn("CSV not found: {$path}");

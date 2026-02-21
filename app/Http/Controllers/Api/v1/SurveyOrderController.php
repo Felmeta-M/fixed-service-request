@@ -31,6 +31,7 @@ use App\Services\ZoneService;
 use App\Services\EcafService;
 use App\Services\DeviceStockService;
 use App\Support\CustomerContext;
+use App\Jobs\BatchRefreshSurveyOrdersJob;
 
 class SurveyOrderController extends Controller
 {
@@ -120,61 +121,12 @@ class SurveyOrderController extends Controller
             $ordersToRefresh = collect($surveyOrders->items())
                 ->filter(fn($order) => SurveyOrder::needsRefresh($order));
 
-            $freshRows = collect(); // Re-fetched rows after batch refresh so list shows synced data
             if ($ordersToRefresh->isNotEmpty()) {
-
-                // $this->batchRefreshOrders($ordersToRefresh);
-
-                // Re-fetch refreshed orders so the list response shows synced data (status, survey result)
-                $refreshedIds = $ordersToRefresh->pluck('id')->all();
-                $freshRows = DB::table('survey_orders')
-                    ->leftJoin('payments', 'survey_orders.customer_survey_order_id', '=', 'payments.customer_survey_order_id')
-                    ->whereIn('survey_orders.id', $refreshedIds)
-                    ->select([
-                        'survey_orders.id',
-                        'survey_orders.customer_survey_order_id',
-                        'survey_orders.customer_subscription_order_id',
-                        'survey_orders.survey_is_manual',
-                        'survey_orders.survey_type',
-                        'survey_orders.customer_code',
-                        'survey_orders.status',
-                        'survey_orders.main_offer_id',
-                        'survey_orders.voice_service_number',
-                        'survey_orders.data_service_number',
-                        'survey_orders.bandwidth',
-                        'survey_orders.cable_length',
-                        'survey_orders.cable_type',
-                        'survey_orders.other_related_cost',
-                        'survey_orders.media_type',
-                        'survey_orders.line_indicator',
-                        'survey_orders.survey_failure_reason',
-                        'survey_orders.with_device',
-                        'survey_orders.device_id',
-                        'survey_orders.device_voice_id',
-                        'survey_orders.last_checked_at',
-                        'survey_orders.created_at',
-                        'survey_orders.updated_at',
-                        'payments.id as payment_id',
-                        'payments.subscription_fee as payment_subscription_fee',
-                        'payments.device_fee as payment_device_fee',
-                        'payments.cable_charge as payment_cable_charge',
-                        'payments.other_related_cost as payment_other_related_cost',
-                        'payments.total_amount as payment_total_amount',
-                        'payments.status as payment_status',
-                        'payments.trans_id as payment_trans_id',
-                        'payments.merch_order_id as payment_merch_order_id',
-                        'payments.payment_order_id as payment_payment_order_id',
-                    ])
-                    ->get()
-                    ->keyBy('id');
+                // Queue job updates status/survey result in background; with QUEUE_CONNECTION=sync runs in same request
+                BatchRefreshSurveyOrdersJob::dispatch($ordersToRefresh->pluck('id')->values()->all());
             }
 
-
-            // Use fresh data for refreshed orders so sync is visible in the list response
-            $transformedItems = collect($surveyOrders->items())->map(function ($item) use ($freshRows) {
-                $row = $freshRows->has($item->id) ? $freshRows->get($item->id) : $item;
-                return $this->transformOrder($row);
-            });
+            $transformedItems = collect($surveyOrders->items())->map(fn($item) => $this->transformOrder($item));
 
             return response()->json([
                 'data' => $transformedItems,

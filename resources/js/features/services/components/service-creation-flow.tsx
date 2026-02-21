@@ -217,6 +217,24 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
         }
     };
 
+    const canProceedFromDeviceStep = () => {
+        if (formData.withDevice === undefined) return false;
+        // Without device disabled for now — only "with device" allowed
+        // if (formData.withDevice === false) return true;
+        if (formData.withDevice === false) return false;
+        const isCombo = formData.serviceType === '102647257';
+        const isVoiceOnly = formData.serviceType === '1207609454';
+        if (isCombo) {
+            const hasInternet = !!(formData.selectedDeviceInternet?.id && formData.deviceId);
+            const hasVoice = !!(formData.selectedDeviceVoice?.id && formData.deviceVoiceId);
+            return hasInternet || hasVoice;
+        }
+        if (isVoiceOnly) {
+            return !!(formData.selectedDeviceVoice?.id && formData.deviceVoiceId);
+        }
+        return !!(formData.selectedDevice?.id && formData.deviceId);
+    };
+
     const canProceedToNextStep = () => {
         if (isNewCustomer && currentStep === 0) return false;
 
@@ -231,7 +249,8 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             case 1:
                 return formData.latitude !== 0 && formData.longitude !== 0 && formData.address;
             case 2:
-                return true;
+                // return true;
+                return canProceedFromDeviceStep();
             case 3:
                 return true;
             default:

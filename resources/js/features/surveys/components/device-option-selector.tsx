@@ -17,6 +17,8 @@ interface DeviceOptionSelectorProps {
     onInternetDeviceSelect?: (device: AvailableDevice | null) => void; // For combo internet
     onVoiceDeviceSelect?: (device: AvailableDevice | null) => void; // For combo voice
     disabled?: boolean;
+    /** When true, "Without Device" option is disabled; only "With Device" is allowed */
+    withoutDeviceDisabled?: boolean;
 }
 
 export function DeviceOptionSelector({
@@ -31,6 +33,7 @@ export function DeviceOptionSelector({
     onInternetDeviceSelect,
     onVoiceDeviceSelect,
     disabled,
+    withoutDeviceDisabled = false,
 }: DeviceOptionSelectorProps) {
     // Show message only when explicitly set to false (not undefined/null)
     const isWithoutDevice = value === false;
@@ -86,13 +89,13 @@ export function DeviceOptionSelector({
                 <label
                     className={cn(
                         'flex h-full w-full min-h-10 cursor-pointer items-center gap-2 rounded-lg border p-2 transition sm:max-w-72',
-                        disabled ? 'cursor-not-allowed opacity-50' : '',
+                        disabled || withoutDeviceDisabled ? 'cursor-not-allowed opacity-50' : '',
                         displayValue === 'without'
                             ? 'border-gray-300 ring-1 ring-primary'
                             : 'border-border hover:border-muted-foreground/50',
                     )}
                 >
-                    <RadioGroupItem value="without" disabled={disabled} className="shrink-0" />
+                    <RadioGroupItem value="without" disabled={disabled || withoutDeviceDisabled} className="shrink-0" />
                     <span className="text-sm font-medium whitespace-nowrap">Without Device</span>
                 </label>
             </RadioGroup>

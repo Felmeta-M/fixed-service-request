@@ -25,12 +25,13 @@ export function DeviceSelectionStep({ onNext, onBack, disabled = false }: Device
             return false;
         }
 
-        // If "without device", can proceed
-        if (formData.withDevice === false) {
-            return true;
-        }
+        // If "without device", can proceed (disabled for now — only "with device" allowed)
+        // if (formData.withDevice === false) {
+        //     return true;
+        // }
+        if (formData.withDevice === false) return false;
 
-        // If "with device", must have selected device(s)
+        // "With device" is mandatory: must have selected device(s)
         if (isCombo) {
             // Combo service: need at least one device (internet, voice, or both)
             const hasInternet = !!(formData.selectedDeviceInternet?.id && formData.deviceId);
@@ -113,6 +114,7 @@ export function DeviceSelectionStep({ onNext, onBack, disabled = false }: Device
                         onInternetDeviceSelect={handleInternetDeviceSelect}
                         onVoiceDeviceSelect={handleVoiceDeviceSelect}
                         disabled={disabled}
+                        withoutDeviceDisabled
                     />
                 </div>
             </div>

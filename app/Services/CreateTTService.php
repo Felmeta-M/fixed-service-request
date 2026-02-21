@@ -241,6 +241,17 @@ class CreateTTService extends BaseApiService
             $middleName = $customer['middle_name'] ?? 'customer';
             $lastName = $customer['last_name'] ?? 'customer';
         }
+
+        // Third-party: empty → "customer", longer than 64 → truncate to 64
+        $maxLen = 64;
+        $emptyFallback = 'customer';
+        $firstName = trim((string) $firstName) ?: $emptyFallback;
+        $middleName = trim((string) $middleName) ?: $emptyFallback;
+        $lastName = trim((string) $lastName) ?: $emptyFallback;
+        $firstName = strlen($firstName) > $maxLen ? substr($firstName, 0, $maxLen) : $firstName;
+        $middleName = strlen($middleName) > $maxLen ? substr($middleName, 0, $maxLen) : $middleName;
+        $lastName = strlen($lastName) > $maxLen ? substr($lastName, 0, $maxLen) : $lastName;
+
         $name = trim("{$firstName} {$middleName} {$lastName}") ?: 'Customer';
 
         // BSS Classification from queried data

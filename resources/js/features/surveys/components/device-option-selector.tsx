@@ -85,19 +85,21 @@ export function DeviceOptionSelector({
                     <RadioGroupItem value="with" disabled={disabled} className="shrink-0" />
                     <span className="text-sm font-medium whitespace-nowrap">With Device</span>
                 </label>
-                {/* WITHOUT DEVICE */}
-                <label
-                    className={cn(
-                        'flex h-full w-full min-h-10 cursor-pointer items-center gap-2 rounded-lg border p-2 transition sm:max-w-72',
-                        disabled || withoutDeviceDisabled ? 'cursor-not-allowed opacity-50' : '',
-                        displayValue === 'without'
-                            ? 'border-gray-300 ring-1 ring-primary'
-                            : 'border-border hover:border-muted-foreground/50',
-                    )}
-                >
-                    <RadioGroupItem value="without" disabled={disabled || withoutDeviceDisabled} className="shrink-0" />
-                    <span className="text-sm font-medium whitespace-nowrap">Without Device</span>
-                </label>
+                {/* WITHOUT DEVICE (hidden when withoutDeviceDisabled) */}
+                {!withoutDeviceDisabled && (
+                    <label
+                        className={cn(
+                            'flex h-full w-full min-h-10 cursor-pointer items-center gap-2 rounded-lg border p-2 transition sm:max-w-72',
+                            disabled ? 'cursor-not-allowed opacity-50' : '',
+                            displayValue === 'without'
+                                ? 'border-gray-300 ring-1 ring-primary'
+                                : 'border-border hover:border-muted-foreground/50',
+                        )}
+                    >
+                        <RadioGroupItem value="without" disabled={disabled} className="shrink-0" />
+                        <span className="text-sm font-medium whitespace-nowrap">Without Device</span>
+                    </label>
+                )}
             </RadioGroup>
 
             {/* Helper message (only for "Without Device") */}

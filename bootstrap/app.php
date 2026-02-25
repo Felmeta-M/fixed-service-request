@@ -62,7 +62,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ]);
     })
     ->withSchedule(function (Schedule $schedule) {
-        $schedule->job(new CheckSurveyOrderStatus())->everyTwoMinutes()->name('check-survey-order-status');
+        $schedule->job(new CheckSurveyOrderStatus())->everyTenMinutes()->name('check-survey-order-status');
 
         // Periodically dispatch batch refresh jobs for WAITING survey orders
         $schedule->call(function () {
@@ -77,10 +77,10 @@ return Application::configure(basePath: dirname(__DIR__))
             if (! empty($ids)) {
                 BatchRefreshSurveyOrdersJob::dispatch($ids);
             }
-        })->everyFiveMinutes()->name('batch-refresh-survey-orders');
+        })->everyFifteenMinutes()->name('batch-refresh-survey-orders');
 
         // Periodically sync trouble tickets from third-party system
-        $schedule->command('tickets:sync')->everyFiveMinutes()->name('sync-trouble-tickets');
+        $schedule->command('tickets:sync')->hourly()->name('sync-trouble-tickets');
 
         // Professional log management - clean logs older than 30 days weekly
         $schedule->command('logs:manage clean --days=30')

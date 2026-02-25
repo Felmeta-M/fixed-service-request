@@ -11,6 +11,7 @@ use App\Services\Logging\AppLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class EsignetController extends Controller
 {
@@ -104,7 +105,6 @@ class EsignetController extends Controller
         }
 
         $esignetUser = $result['customer'];
-
         $data = [
             'name' => $esignetUser['name'],
             'phone_number' => substr($esignetUser->phone_number, -9),

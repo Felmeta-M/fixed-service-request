@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Api\v1\EsignetController;
 use App\Http\Controllers\Api\v1\NidController;
-use App\Http\Controllers\Api\v1\PaymentController;
 use App\Http\Controllers\Api\v1\TelebirrController;
 use App\Http\Controllers\OtpAuthController;
 use App\Http\Controllers\SupportRequestController;
@@ -14,6 +13,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Route;
 
 // Locale switching route
 Route::post('/locale', function (Request $request) {
@@ -41,6 +41,8 @@ Route::get('/verification', fn() => Inertia::render('Verification'))->name('veri
 
 Route::get('/login/esignet', [EsignetController::class, 'redirectToEsignet'])
     ->name('esignet.login');
+
+Route::get('/staging/callback', [EsignetController::class, 'handleEsignetCallback'])->name('esignet.callback');
 
 Route::get('/callback', [EsignetController::class, 'handleEsignetCallback'])->name('esignet.callback');
 

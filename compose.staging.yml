@@ -141,7 +141,7 @@ services:
     container_name: fbb_staging_nginx
     restart: always
     ports:
-      - "9993:80"
+      - "20080:80"
     volumes:
       # Host sync: serve from same codebase as app
       - .:/var/www:ro
@@ -162,7 +162,7 @@ services:
     container_name: fbb_staging_pgsql
     restart: always
     ports:
-      - "2346:5432"
+      - "25432:5432"
     environment:
       POSTGRES_DB: fbb
       POSTGRES_USER: sa
@@ -201,7 +201,7 @@ services:
     container_name: fbb_staging_pgbouncer
     restart: always
     ports:
-      - "6634:6432"
+      - "26432:6432"
     depends_on:
       postgres:
         condition: service_healthy
@@ -224,7 +224,7 @@ services:
     container_name: fbb_staging_redis
     restart: always
     ports:
-      - "6364:6379"
+      - "26379:6379"
     command: redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru --appendonly yes --appendfsync everysec
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]

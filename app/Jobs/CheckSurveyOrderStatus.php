@@ -94,9 +94,9 @@ class CheckSurveyOrderStatus implements ShouldQueue
         $bindings = [];
 
         foreach ($updates as $id => $status) {
-            $cases[] = "WHEN id = ? THEN ?";
+            $cases[] = "WHEN id = ? THEN ?::bigint";
             $bindings[] = $id;
-            $bindings[] = $status;
+            $bindings[] = (int) $status;
             $ids[] = $id;
         }
 
@@ -106,7 +106,7 @@ class CheckSurveyOrderStatus implements ShouldQueue
 
         DB::update(
             "UPDATE survey_orders 
-             SET status = CASE {$caseStatement} END, 
+             SET status = (CASE {$caseStatement} END)::bigint, 
                  updated_at = NOW() 
              WHERE id IN ({$idPlaceholders})",
             $bindings

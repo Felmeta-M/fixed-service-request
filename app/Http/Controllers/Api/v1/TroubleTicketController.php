@@ -434,17 +434,17 @@ class TroubleTicketController extends Controller
         $bindings = [];
 
         foreach ($updates as $id => $status) {
-            $cases[] = "WHEN id = ? THEN ?";
-            $syncCases[] = "WHEN id = ? THEN ?";
+            $cases[] = "WHEN id = ? THEN ?::bigint";
+            $syncCases[] = "WHEN id = ? THEN ?::bigint";
             $bindings[] = $id;
-            $bindings[] = $status;
+            $bindings[] = (int) $status;
             $ids[] = $id;
         }
 
         // Add bindings for sync cases
         foreach ($updates as $id => $status) {
             $bindings[] = $id;
-            $bindings[] = $status;
+            $bindings[] = (int) $status;
         }
 
         $caseStatement = implode(' ', $cases);
@@ -454,8 +454,8 @@ class TroubleTicketController extends Controller
 
         DB::update(
             "UPDATE trouble_tickets 
-             SET status = CASE {$caseStatement} END,
-                 last_synced_status = CASE {$syncCaseStatement} END,
+             SET status = (CASE {$caseStatement} END)::bigint,
+                 last_synced_status = (CASE {$syncCaseStatement} END)::bigint,
                  updated_at = NOW()
              WHERE id IN ({$idPlaceholders})",
             $bindings

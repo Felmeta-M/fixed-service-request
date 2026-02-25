@@ -26,7 +26,8 @@ class QueryTTJob implements ShouldQueue
         if (!$ticket) return;
 
         $response = $service->queryTT([
-            'access_number' => 'CCT2025121820888033',
+            // Use the ticket's own access number when querying third-party TT status
+            'access_number' => $ticket->access_number,
         ]);
 
         if (!$response['success'] || empty($response['tt_list'])) return;

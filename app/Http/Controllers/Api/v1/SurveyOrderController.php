@@ -402,16 +402,16 @@ class SurveyOrderController extends Controller
             $bindings = [];
 
             foreach ($statusUpdates as $id => $status) {
-                $cases[] = "WHEN id = ? THEN ?";
-                $syncCases[] = "WHEN id = ? THEN ?";
+                $cases[] = "WHEN id = ? THEN ?::bigint";
+                $syncCases[] = "WHEN id = ? THEN ?::bigint";
                 $bindings[] = $id;
-                $bindings[] = $status;
+                $bindings[] = (int) $status;
                 $ids[] = $id;
             }
 
             foreach ($statusUpdates as $id => $status) {
                 $bindings[] = $id;
-                $bindings[] = $status;
+                $bindings[] = (int) $status;
             }
 
             $caseStatement = implode(' ', $cases);
@@ -421,8 +421,8 @@ class SurveyOrderController extends Controller
 
             DB::update(
                 "UPDATE survey_orders 
-                 SET status = CASE {$caseStatement} END,
-                     last_synced_status = CASE {$syncCaseStatement} END,
+                 SET status = (CASE {$caseStatement} END)::bigint,
+                     last_synced_status = (CASE {$syncCaseStatement} END)::bigint,
                      updated_at = NOW()
                  WHERE id IN ({$idPlaceholders})",
                 $bindings

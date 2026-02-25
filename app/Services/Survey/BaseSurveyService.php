@@ -19,6 +19,7 @@ use App\Services\ZoneService;
 use App\Services\Logging\AppLogger;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 abstract class BaseSurveyService extends BaseApiService
@@ -35,8 +36,7 @@ abstract class BaseSurveyService extends BaseApiService
         protected readonly QueryAvailableNumberService $queryAvailableNumberService,
         protected readonly ReserveNumberService $reserveNumberService,
         protected readonly ZoneService $zoneService,
-    ) {
-    }
+    ) {}
 
     protected function endpoint(): string
     {
@@ -79,10 +79,14 @@ abstract class BaseSurveyService extends BaseApiService
         $data = $this->applyDefaults($data, $resource);
 
         $xml = $this->buildXml($data, $resource);
+        Log::info('XML: ' . $xml);
 
         $response = $this->executeRequest($xml);
 
-        return $this->parseResponse($data, $response, $resource);
+        $response = $this->parseResponse($data, $response, $resource);
+        Log::info('Response: ' . $response);
+
+        return $response;
     }
 
     /**

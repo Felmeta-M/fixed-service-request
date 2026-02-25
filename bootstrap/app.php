@@ -9,6 +9,10 @@ use App\Http\Middleware\SanitizeInput;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use App\Jobs\CheckSurveyOrderStatus;
+use App\Jobs\BatchRefreshSurveyOrdersJob;
+use App\Console\Commands\SyncThirdPartyTickets;
+use App\Enums\FFDServiceProvisionStatus;
+use Illuminate\Support\Facades\DB;
 use App\Services\Logging\AppLogger;
 use App\Services\Security\SecureOtpService;
 use Illuminate\Foundation\Application;
@@ -58,7 +62,25 @@ return Application::configure(basePath: dirname(__DIR__))
             ]);
     })
     ->withSchedule(function (Schedule $schedule) {
-        $schedule->job(new CheckSurveyOrderStatus())->everyTwoMinutes();
+        $schedule->job(new CheckSurveyOrderStatus())->everyTwoMinutes()->name('check-survey-order-status');
+
+        // Periodically dispatch batch refresh jobs for WAITING survey orders
+        $schedule->call(function () {
+            $ids = DB::table('survey_orders')
+                ->whereNull('deleted_at')
+                ->where('status', FFDServiceProvisionStatus::Waiting->value)
+                ->whereNotNull('customer_survey_order_id')
+                ->limit(500)
+                ->pluck('id')
+                ->all();
+
+            if (! empty($ids)) {
+                BatchRefreshSurveyOrdersJob::dispatch($ids);
+            }
+        })->everyFiveMinutes()->name('batch-refresh-survey-orders');
+
+        // Periodically sync trouble tickets from third-party system
+        $schedule->command('tickets:sync')->everyFiveMinutes()->name('sync-trouble-tickets');
 
         // Professional log management - clean logs older than 30 days weekly
         $schedule->command('logs:manage clean --days=30')

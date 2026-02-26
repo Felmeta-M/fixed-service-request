@@ -79,12 +79,11 @@ abstract class BaseSurveyService extends BaseApiService
         $data = $this->applyDefaults($data, $resource);
 
         $xml = $this->buildXml($data, $resource);
-        Log::info('XML: ' . $xml);
+
 
         $response = $this->executeRequest($xml);
 
         $response = $this->parseResponse($data, $response, $resource);
-        Log::info('Response: ' . $response);
 
         return $response;
     }

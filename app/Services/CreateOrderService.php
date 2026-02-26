@@ -10,6 +10,7 @@ use App\Services\Payment\PaymentService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class CreateOrderService
@@ -127,9 +128,11 @@ class CreateOrderService
 
             // 6️⃣ Build rawRequest string for H5 page
             $rawRequest = $this->createRawRequest($prepay_id);
+
             AppLogger::payment()->info('Telebirr raw request', [
                 'rawRequest' => $rawRequest,
             ]);
+
             return $rawRequest;
         } finally {
             $lock->release();
@@ -329,6 +332,7 @@ class CreateOrderService
             'biz_content' => [],
         ];
 
+
         $biz = [
             'notify_url' => route('telebirr.notify'),
             'business_type' => 'BuyGoods',
@@ -343,6 +347,9 @@ class CreateOrderService
             'payee_identifier' => $this->merchantCode,
             'payee_identifier_type' => '04',
             'payee_type' => '5000',
+            'wallet_reference_data' => [
+                'FBBID' => 'Et Online Fixed Service Provisioning'
+            ],
             'redirect_url' => route('payment.success')
 
         ];

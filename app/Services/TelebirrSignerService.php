@@ -31,7 +31,13 @@ class TelebirrSignerService
             ->reject(fn($value, $key) => in_array($key, $this->excludeFields))
             ->flatMap(function ($value, $key) {
                 if ($key === 'biz_content' && is_array($value)) {
-                    return collect($value)->mapWithKeys(fn($v, $k) => [$k => $v]);
+                    return collect($value)->flatMap(function ($v, $k) {
+                        if (is_array($v)) {
+                            // Nested array like wallet_reference_data: flatten same as biz_content
+                            return collect($v)->mapWithKeys(fn($innerV, $innerK) => [$innerK => $innerV]);
+                        }
+                        return [$k => $v];
+                    });
                 }
 
                 return [$key => $value];

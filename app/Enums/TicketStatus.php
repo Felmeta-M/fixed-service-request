@@ -43,40 +43,47 @@ enum TicketStatus: string
 
     /**
      * Resolve status from API response (currentActivity + ttStatus)
-     * 
-     * Rules:
-     * 1. OPEN: currentActivity="Customer Complaint Handling" AND ttStatus="WAITING FOR CHECK-IN" or "CHECK-OUT"
-     * 2. CONFIRM: currentActivity="Customer Complaint Confirm" AND ttStatus="WAITING FOR CHECK-IN"
-     * 3. CLOSED: currentActivity="" AND ttStatus="" (Normally Archived)
-     * 4. CLOSED: currentActivity="Customer Complaint Handling" AND ttStatus="Canceled" (Manually Canceled)
+     *
+     * Open TTs:
+     *   currentActivity="Customer Complaint Handling", ttStatus="WAITING FOR CHECK-IN" or "CHECK-OUT"
+     *
+     * Under confirmation TTs (Waiting for Customer confirmation):
+     *   currentActivity="Customer Complaint Confirm", ttStatus="WAITING FOR CHECK-IN"
+     *
+     * Archived / Closed TTs:
+     *   - Both empty: currentActivity="", ttStatus=""
+     *   - OR currentActivity="Customer Complaint Handling", ttStatus="Cancelled"
+     *   - OR currentActivity="Customer Complaint Confirm", ttStatus="Cancelled"
      */
     public static function fromApiResponse(?string $currentActivity, ?string $ttStatus): self
     {
         $currentActivity = trim($currentActivity ?? '');
-        $ttStatus = strtoupper(trim($ttStatus ?? ''));
+        $ttStatusNormalized = strtoupper(trim($ttStatus ?? ''));
 
-        // Rule 3 & 4: CLOSED - Empty values or Canceled
-        if (empty($currentActivity) && empty($ttStatus)) {
-            return self::OPEN;
-        }
-
-        // Handle both spellings: CANCELED (American) and CANCELLED (British)
-        if ($currentActivity === 'Customer Complaint Handling' && in_array($ttStatus, ['Cancelled'])) {
+        // Archived/Closed: both currentActivity and ttStatus empty
+        if (empty($currentActivity) && empty($ttStatusNormalized)) {
             return self::CLOSED;
         }
 
-        // Rule 2: CONFIRM - Waiting for IVR Confirmation
-        if ($currentActivity === 'Customer Complaint Confirm' && $ttStatus === 'WAITING FOR CHECK-IN') {
+        // Archived/Closed: Cancelled (handle both American and British spellings)
+        if (in_array($ttStatusNormalized, ['CANCELLED', 'CANCELED'])) {
+            if ($currentActivity === 'Customer Complaint Handling' || $currentActivity === 'Customer Complaint Confirm') {
+                return self::CLOSED;
+            }
+        }
+
+        // Under confirmation TTs: Customer Complaint Confirm + WAITING FOR CHECK-IN
+        if ($currentActivity === 'Customer Complaint Confirm' && $ttStatusNormalized === 'WAITING FOR CHECK-IN') {
             return self::CONFIRM;
         }
 
-        // Rule 1: OPEN - Under Processing
-        if ($currentActivity === 'Customer Complaint Handling' && in_array($ttStatus, ['WAITING FOR CHECK-IN', 'CHECK-OUT'])) {
+        // Open TTs: Customer Complaint Handling + WAITING FOR CHECK-IN or CHECK-OUT
+        if ($currentActivity === 'Customer Complaint Handling' && in_array($ttStatusNormalized, ['WAITING FOR CHECK-IN', 'CHECK-OUT'])) {
             return self::OPEN;
         }
 
-        // Default: treat as OPEN if we have any activity
-        if (!empty($currentActivity) || !empty($ttStatus)) {
+        // Default: treat as OPEN if we have any activity, otherwise CLOSED
+        if (!empty($currentActivity) || !empty($ttStatusNormalized)) {
             return self::OPEN;
         }
 

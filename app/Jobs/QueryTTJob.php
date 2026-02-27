@@ -30,14 +30,19 @@ class QueryTTJob implements ShouldQueue
             'access_number' => $ticket->access_number,
         ]);
 
-        if (!$response['success'] || empty($response['tt_list'])) return;
-        $tt = $response['tt_list'][0]; // assume 1 TT per access_number
-        $newStatus = strtolower($tt['tt_status']); // match your enum
-        Log::channel('tt')->info('TT status updated', [
-            'ticket_id' => $ticket->id,
-            'old_status' => $ticket->status,
-            'new_status' => $newStatus,
-        ]);
+        $payload = $response->getData(true);
+        $data = $payload['data'] ?? [];
+        if (empty($data['success']) || empty($data['tt_list'])) return;
+
+        $tt = $data['tt_list'][0]; // assume 1 TT per access_number
+        // Use resolved status from QueryTTService (fromApiResponse currentActivity + ttStatus)
+        $newStatus = $tt['status'] ?? null;
+        if ($newStatus === null) return;
+        // Log::channel('tt')->info('TT status updated', [
+        //     'ticket_id' => $ticket->id,
+        //     'old_status' => $ticket->status,
+        //     'new_status' => $newStatus,
+        // ]);
         if ($ticket->status !== $newStatus) {
             $ticket->update([
                 'status' => $newStatus,

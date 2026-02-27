@@ -497,7 +497,10 @@ export default function Create() {
                     date.getSeconds().toString().padStart(2, '0')
                 );
             };
-            const formattedCoords = formatCoordinatesForAPI(data.survey_address_info.latitude, data.survey_address_info.longitude);
+            const formattedCoords = formatCoordinatesForAPI(
+                data.survey_address_info.latitude,
+                data.survey_address_info.longitude,
+            );
 
             const submitData = {
                 customer_code: data.customer_code,
@@ -514,6 +517,10 @@ export default function Create() {
                     longitude: formattedCoords.longitude,
                     address: data.survey_address_info.address || '',
                 },
+                ...(resourceData?.customer_latitude != null && resourceData?.customer_longitude != null && {
+                    customer_latitude: resourceData.customer_latitude,
+                    customer_longitude: resourceData.customer_longitude,
+                }),
                 bandwidth: '2048M',
                 contact_person: data.contact_person,
                 contact_no: data.contact_no,

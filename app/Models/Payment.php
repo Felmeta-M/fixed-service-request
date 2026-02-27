@@ -58,6 +58,7 @@ class Payment extends Model
         'service_details',
         'payload',
         'last_checked_at',
+        'webhook_notified_at',
     ];
 
     /**
@@ -74,6 +75,7 @@ class Payment extends Model
         'payload' => 'array',
         'status' => 'integer',
         'last_checked_at' => 'datetime',
+        'webhook_notified_at' => 'datetime',
     ];
 
     /**

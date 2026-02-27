@@ -40,6 +40,9 @@ export interface ResourceCheckResponse {
         area_code: string;
         area_name: string;
         zone_code?: string;
+        /** Customer-selected coordinates (from request); send back on survey create for local DB. */
+        customer_latitude?: number | null;
+        customer_longitude?: number | null;
     };
 }
 

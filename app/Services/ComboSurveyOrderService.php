@@ -13,9 +13,7 @@ class ComboSurveyOrderService extends BaseApiService
     protected int $timeout = 10;
     protected int $rateLimit = 15;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     public function createSurveyOrder(array $data, array $resourceCheck = []): JsonResponse
     {

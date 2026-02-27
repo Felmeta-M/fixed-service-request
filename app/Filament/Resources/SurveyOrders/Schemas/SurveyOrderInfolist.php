@@ -109,6 +109,14 @@ class SurveyOrderInfolist
                             ->label('Longitude')
                             ->numeric()
                             ->placeholder('-'),
+                        TextEntry::make('customer_latitude')
+                            ->label('Customer Latitude')
+                            ->numeric()
+                            ->placeholder('-'),
+                        TextEntry::make('customer_longitude')
+                            ->label('Customer Longitude')
+                            ->numeric()
+                            ->placeholder('-'),
                     ]),
 
                 Section::make('Contact Information')

@@ -217,6 +217,8 @@ abstract class BaseSurveyService extends BaseApiService
                 'media_type' => $mediaType,
                 'lat' => isset($resource['latitude']) ? round((float) $resource['latitude'], 8) : null,
                 'long' => isset($resource['longitude']) ? round((float) $resource['longitude'], 8) : null,
+                'customer_latitude' => isset($data['customer_latitude']) ? round((float) $data['customer_latitude'], 8) : null,
+                'customer_longitude' => isset($data['customer_longitude']) ? round((float) $data['customer_longitude'], 8) : null,
                 'area_code' => $areaCode,
                 'area_name' => $areaName,
                 'zone_code' => $zoneCode,

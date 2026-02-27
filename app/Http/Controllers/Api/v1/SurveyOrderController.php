@@ -77,6 +77,8 @@ class SurveyOrderController extends Controller
                     'survey_orders.media_type',
                     'survey_orders.line_indicator',
                     'survey_orders.survey_failure_reason',
+                    'survey_orders.customer_latitude',
+                    'survey_orders.customer_longitude',
                     'survey_orders.with_device',
                     'survey_orders.device_id',
                     'survey_orders.device_voice_id',
@@ -763,6 +765,8 @@ class SurveyOrderController extends Controller
             'survey_orders.survey_failure_reason',
             'survey_orders.lat',
             'survey_orders.long',
+            'survey_orders.customer_latitude',
+            'survey_orders.customer_longitude',
             'survey_orders.with_device',
             'survey_orders.device_id',
             'survey_orders.device_voice_id',
@@ -989,6 +993,8 @@ class SurveyOrderController extends Controller
             'media_type' => $order->media_type ?? null, // BSS param 50005: PON (fiber) or COPPER, null if failed
             'line_indicator' => $order->line_indicator ?? null, // BSS param 50112: 0=same line, 1=separate line
             'survey_failure_reason' => $order->survey_failure_reason ?? null, // Reason when survey failed (50005 = -1)
+            'customer_latitude' => $order->customer_latitude ?? null,   // Customer-selected (stored locally only)
+            'customer_longitude' => $order->customer_longitude ?? null, // Customer-selected (stored locally only)
             'survey_is_manual' => $isManualSurvey,
             'with_device' => $withDevice,
             'created_at' => $order->created_at,

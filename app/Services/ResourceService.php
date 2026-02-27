@@ -14,8 +14,7 @@ class ResourceService extends BaseApiService
 
     public function __construct(
         protected readonly ZoneService $zoneService,
-    ) {
-    }
+    ) {}
 
     protected function endpoint(): string
     {
@@ -292,6 +291,10 @@ XML;
 
         $shortestResource['zone_code'] = Crypt::encryptString($zoneCode);
         unset($shortestResource['area_code_raw'], $shortestResource['area_name_raw']);
+
+        // Include customer-selected coordinates so frontend can send them back on survey create (local DB only).
+        $shortestResource['customer_latitude'] = isset($data['latitude']) ? round((float) $data['latitude'], 8) : null;
+        $shortestResource['customer_longitude'] = isset($data['longitude']) ? round((float) $data['longitude'], 8) : null;
 
         return ApiResponse::success($shortestResource, message: 'Resource found');
     }

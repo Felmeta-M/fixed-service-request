@@ -107,6 +107,14 @@ class SurveyOrderForm
                             ->label('Longitude')
                             ->numeric()
                             ->disabled(),
+                        TextInput::make('customer_latitude')
+                            ->label('Customer Latitude')
+                            ->numeric()
+                            ->disabled(),
+                        TextInput::make('customer_longitude')
+                            ->label('Customer Longitude')
+                            ->numeric()
+                            ->disabled(),
                     ]),
 
                 Section::make('Contact Information')

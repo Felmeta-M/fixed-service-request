@@ -90,6 +90,12 @@ export function ReviewSubmitStep({ onBack, onNext }: ReviewSubmitStepProps) {
                 area_name: (encryptedResource as any).area_name ?? '',
             },
 
+            ...(encryptedResource?.customer_latitude != null &&
+                encryptedResource?.customer_longitude != null && {
+                    customer_latitude: (encryptedResource as any).customer_latitude,
+                    customer_longitude: (encryptedResource as any).customer_longitude,
+                }),
+
             ...(formData.bandwidth && { bandwidth: formData.bandwidth }),
             ...(formData.withDevice !== undefined && { with_device: formData.withDevice }),
             ...(formData.serviceType === '1207609454' && formData.deviceVoiceId && { device_id: formData.deviceVoiceId }),

@@ -85,6 +85,12 @@ class PaymentsTable
                     ->searchable()
                     ->placeholder('-')
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('webhook_notified_at')
+                    ->label('Webhook At')
+                    ->dateTime('M j, Y H:i')
+                    ->sortable()
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime('M j, Y H:i')
@@ -95,7 +101,7 @@ class PaymentsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->defaultSort('created_at', 'desc')
+            ->defaultSort('webhook_notified_at', 'desc')
             ->filters([
                 TernaryFilter::make('device')
                     ->label('Device')

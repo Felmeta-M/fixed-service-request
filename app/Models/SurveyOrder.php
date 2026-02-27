@@ -73,6 +73,8 @@ class SurveyOrder extends Model
         'survey_failure_reason',
         'lat',
         'long',
+        'customer_latitude',
+        'customer_longitude',
         'with_device',
         'device_id',
         'device_voice_id',

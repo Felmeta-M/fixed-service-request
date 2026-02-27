@@ -79,6 +79,11 @@ class TelebirrController extends Controller
             return response()->json(['success' => true]);
         }
 
+        // Record when webhook notification arrived (first arrival only)
+        if (is_null($payment->webhook_notified_at)) {
+            $payment->update(['webhook_notified_at' => now()]);
+        }
+
         // ✅ Delegate core logic
         $this->paymentService->confirmPayment($payment, $data);
 

@@ -85,6 +85,8 @@ class SurveyOrderFormRequest extends FormRequest
             'device_id' => 'nullable|uuid|exists:available_devices,id',
             'device_voice_id' => 'nullable|uuid|exists:available_devices,id',
             'survey_is_manual' => 'nullable|boolean',                    // Default: false
+            'customer_latitude' => 'nullable|numeric',                   // Customer-selected (map picker); stored locally only
+            'customer_longitude' => 'nullable|numeric',                 // Customer-selected (map picker); stored locally only
         ];
     }
 

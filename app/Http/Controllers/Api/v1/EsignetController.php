@@ -31,7 +31,7 @@ class EsignetController extends Controller
                 'error' => $result['message'],
             ]);
 
-            return Inertia::render('ErrorPage', [
+            return Inertia::render('error-page', [
                 'message' => 'We are unable to start the login process at the moment. Please try again later.'
             ]);
         }
@@ -59,7 +59,7 @@ class EsignetController extends Controller
         if (!$temp) {
             AppLogger::auth()->warning('Esignet session missing on callback');
 
-            return Inertia::render('ErrorPage', [
+            return Inertia::render('error-page', [
                 'message' => 'Your login session has expired. Please start the login again.'
             ]);
         }
@@ -70,7 +70,7 @@ class EsignetController extends Controller
                 'received_state_prefix' => substr($validated['state'], 0, 8),
             ]);
 
-            return Inertia::render('ErrorPage', [
+            return Inertia::render('error-page', [
                 'message' => 'Security verification failed. Please try logging in again.'
             ]);
         }
@@ -85,7 +85,7 @@ class EsignetController extends Controller
                 'error' => $token['message'],
             ]);
 
-            return Inertia::render('ErrorPage', [
+            return Inertia::render('error-page', [
                 'message' => 'We were unable to verify your login request. Please try again.'
             ]);
         }
@@ -99,7 +99,7 @@ class EsignetController extends Controller
                 'error' => $result['message'],
             ]);
 
-            return Inertia::render('ErrorPage', [
+            return Inertia::render('error-page', [
                 'message' => $result['message']
             ]);
         }
@@ -142,7 +142,7 @@ class EsignetController extends Controller
     {
         return match ($result['status']) {
             'under_age' =>
-            Inertia::render('ErrorPage', [
+            Inertia::render('error-page', [
                 'message' => 'You must be 18 or older to use this service.'
             ]),
 
@@ -166,7 +166,7 @@ class EsignetController extends Controller
             'ok' => $this->finishLogin($result['data']),
 
             default =>
-            Inertia::render('ErrorPage', [
+            Inertia::render('error-page', [
                 'message' => 'Unknown authentication error.'
             ]),
         };

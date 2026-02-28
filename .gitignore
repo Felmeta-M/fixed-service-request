@@ -81,7 +81,7 @@ yarn-error.log
 # Env (optional: commit .env.example only)
 # .env.production and .env.staging often kept out of repo
 # Uncomment to track them: !.env.production !.env.staging
-ATS_Resume.md
-ATS_Resume.pdf
-cover-letter.md
-resume.md
+# ATS_Resume.md
+# ATS_Resume.pdf
+# cover-letter.md
+# resume.md

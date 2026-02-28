@@ -76,7 +76,7 @@ export const Header = () => {
                                 </nav>
 
                                 {/* Login Button */}
-                                <Link href="/otp/phone">
+                                <Link href={route('login')}>
                                     <Button className="flex items-center space-x-2 bg-primary text-white hover:opacity-90">
                                         {/* <LogIn className="h-4 w-4" /> */}
                                         <span>{t('nav.login')}</span>
@@ -160,7 +160,7 @@ export const Header = () => {
                                     </Link>
 
                                     {/* Mobile Login Button */}
-                                    <Link href="/otp/phone" className="block pt-2" onClick={() => setIsMobileMenuOpen(false)}>
+                                    <Link href={route('login')} className="block pt-2" onClick={() => setIsMobileMenuOpen(false)}>
                                         <Button className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 text-white shadow-md shadow-emerald-500/30 hover:opacity-90">
                                             <LogIn className="h-4 w-4" />
                                             <span>{t('nav.login_to_account')}</span>

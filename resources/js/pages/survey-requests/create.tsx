@@ -475,7 +475,7 @@ export default function Create() {
 
     const handleSubmitOrder = async () => {
         if (!isAuthenticated) {
-            router.visit('/otp/phone');
+            router.visit(route('login'));
             return;
         }
 

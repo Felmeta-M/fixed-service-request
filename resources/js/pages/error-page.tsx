@@ -11,7 +11,7 @@ export default function ErrorPage({ }) {
 
                 <p className="mb-6 text-gray-700">{message}</p>
 
-                <Link href={route('otp.phone')} className="inline-block rounded-md bg-primary px-6 py-3 text-white hover:bg-primary/70">
+                <Link href={route('login')} className="inline-block rounded-md bg-primary px-6 py-3 text-white hover:bg-primary/70">
                     Back to Login
                 </Link>
             </div>

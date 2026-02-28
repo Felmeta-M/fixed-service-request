@@ -172,7 +172,7 @@ export function OTPVerificationForm({ className, ...props }: React.ComponentProp
                                 )}
                                 <button
                                     type="button"
-                                    onClick={() => router.visit(route('otp.phone'))}
+                                    onClick={() => router.visit(route('login'))}
                                     className="cursor-pointer text-sm font-medium text-primary hover:underline"
                                 >
                                     Change number

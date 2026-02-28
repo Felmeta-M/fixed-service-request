@@ -478,7 +478,7 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
                                         </p>
 
                                         <div className="flex flex-col gap-4 sm:flex-row lg:justify-start">
-                                            <Link href={auth?.user ? route('services') : route('otp.phone')}>
+                                            <Link href={auth?.user ? route('services') : route('login')}>
                                                 <Button
                                                     size="lg"
                                                     className="bg-primary px-6 py-4 text-base font-semibold text-white shadow-lg transition hover:opacity-90 sm:px-8 sm:py-6 sm:text-lg"
@@ -527,7 +527,7 @@ export default function HomePage({ googleMapsApiKey }: HomePageProps) {
                                 </div>
 
                                 {/* <div className="mt-8 flex justify-center sm:mt-12">
-                                    <Link href={auth?.user ? route('services') : route('otp.phone')}>
+                                    <Link href={auth?.user ? route('services') : route('login')}>
                                         <Button
                                             size="lg"
                                             className="bg-primary px-6 py-4 text-base font-semibold text-white shadow-lg transition hover:opacity-90 sm:px-8 sm:py-6 sm:text-lg"

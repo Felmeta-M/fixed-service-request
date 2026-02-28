@@ -92,7 +92,7 @@ export default function GuestLayout({ children }: Props) {
                                     </div>
                                 ) : (
                                     // If NOT logged in
-                                    <Link href={route('otp.phone')} className="cursor-pointer">
+                                    <Link href={route('login')} className="cursor-pointer">
                                         <Button className="flex cursor-pointer items-center bg-primary text-white hover:opacity-90">
                                             <LogIn className="h-4 w-4" />
                                             <span>{t('nav.login')}</span>
@@ -192,7 +192,7 @@ export default function GuestLayout({ children }: Props) {
                                     </div>
                                 ) : (
                                     <div className="space-y-2 border-t border-dashed border-gray-200 pt-3">
-                                        <Link href={route('otp.phone')} className="block cursor-pointer" onClick={() => setIsMobileMenuOpen(false)}>
+                                        <Link href={route('login')} className="block cursor-pointer" onClick={() => setIsMobileMenuOpen(false)}>
                                             <Button className="text-md flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 font-semibold text-white shadow-md shadow-primary/20 hover:opacity-90">
                                                 <LogIn className="h-5 w-5" />
                                                 <span>{t('nav.login_to_account')}</span>

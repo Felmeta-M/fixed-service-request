@@ -39,11 +39,15 @@ COPY . .
 # Run composer install now that all files exist
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress --ansi
 
-# Build-time args for Vite (these get inlined during build)
+# Build-time args for Vite (these get inlined during build; also exposed as ENV for entrypoint build when using host-sync)
 ARG VITE_APP_NAME="Fixed services provision system"
 ARG VITE_API_BASE_URL=https://fixedservices.ethiotelecom.et/api/v1
 ARG VITE_API_PUBLIC_URL=https://fixedservices.ethiotelecom.et/api/v1
 ARG VITE_TURNSTILE_SITE_KEY=""
+ENV VITE_APP_NAME="${VITE_APP_NAME}" \
+    VITE_API_BASE_URL="${VITE_API_BASE_URL}" \
+    VITE_API_PUBLIC_URL="${VITE_API_PUBLIC_URL}" \
+    VITE_TURNSTILE_SITE_KEY="${VITE_TURNSTILE_SITE_KEY}"
 
 # Build frontend assets (Vite + React)
 # Note: vite.config.ts, tsconfig.json must NOT be in .dockerignore

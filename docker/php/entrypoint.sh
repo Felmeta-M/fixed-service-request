@@ -18,6 +18,19 @@ if [ -f "$APP_DIR/artisan" ]; then
   echo "✅ Storage link ready"
 fi
 
+# Host-sync mode: when public_volume is not used, the bind mount (.:/var/www) hides the
+# image's public/build. Build frontend here if build assets are missing so /build/assets/*.js
+# are available and 404s are avoided.
+if [ ! -d "$APP_DIR/public_volume" ] && { [ ! -d "$APP_DIR/public/build/assets" ] || [ -z "$(find "$APP_DIR/public/build/assets" -maxdepth 1 -name '*.js' 2>/dev/null)" ]; }; then
+  echo "📦 Frontend build missing (host-sync); building Vite assets..."
+  (cd "$APP_DIR" && pnpm install --frozen-lockfile && pnpm run build) || true
+  if [ -d "$APP_DIR/public/build/assets" ] && [ -n "$(find "$APP_DIR/public/build/assets" -maxdepth 1 -name '*.js' 2>/dev/null)" ]; then
+    echo "✅ Frontend build complete"
+  else
+    echo "⚠️ Frontend build failed or skipped; ensure pnpm run build runs or use immutable volumes"
+  fi
+fi
+
 # Immutable: sync public from image to public_volume (shared with nginx)
 # This ensures build assets are available to nginx after image rebuild
 if [ -d "$APP_DIR/public_volume" ]; then

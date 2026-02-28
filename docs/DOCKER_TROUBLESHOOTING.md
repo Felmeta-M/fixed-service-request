@@ -70,7 +70,11 @@ Nginx serves from the `fbb_public` volume. If the app container’s entrypoint r
 - Ensure the app container started at least once (so the copy ran).
 - Rebuild and recreate: `docker compose build app && docker compose up -d`.
 
-## 7. Staging (compose.staging.yml)
+## 7. Vite build assets 404 (`/build/assets/app-*.js` not found)
+
+If the app loads but JS/CSS under `/build/assets/` return 404, see **[VITE_BUILD_ASSETS_404_FIX.md](VITE_BUILD_ASSETS_404_FIX.md)** for causes (nginx `alias` + `try_files`, host mount hiding image build) and fixes.
+
+## 8. Staging (compose.staging.yml)
 
 For **staging** use the staging compose file and project name:
 - Replace `docker compose` with `docker compose -f compose.staging.yml -p fbb_staging`
@@ -83,3 +87,4 @@ For **staging** use the staging compose file and project name:
 
 - [STAGING.md](STAGING.md) — Staging setup, .env.staging, fbb naming
 - [SCALING_AND_OPERATIONS.md](SCALING_AND_OPERATIONS.md) — PHP-FPM, queues, resources
+- [VITE_BUILD_ASSETS_404_FIX.md](VITE_BUILD_ASSETS_404_FIX.md) — 404 for `/build/assets/*.js` after Docker build

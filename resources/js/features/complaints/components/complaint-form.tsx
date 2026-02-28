@@ -254,7 +254,7 @@ export function ComplaintForm({
                             title="Search service number"
                             className={`absolute top-1/2 right-1 flex h-8 w-10 -translate-y-1/2 items-center justify-center rounded-md transition-colors ${
                                 lookupDone
-                                    ? 'bg-green-500 text-white hover:bg-green-600'
+                                    ? 'bg-primary text-white hover:opacity-90'
                                     : 'bg-primary text-white hover:bg-primary/90 disabled:bg-gray-300 disabled:text-gray-500'
                             }`}
                         >
@@ -271,9 +271,9 @@ export function ComplaintForm({
 
                     {/* Network info display after successful lookup */}
                     {lookupDone && networkInfo && (
-                        <div className="mt-2 rounded-md bg-green-50 p-2 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                        <div className="mt-2 rounded-md bg-primary/10 p-2 text-sm text-primary dark:bg-primary/10 dark:text-primary">
                             <p className="font-medium">Service verified</p>
-                            <p className="text-xs text-green-600 dark:text-green-500">Network: {networkInfo.name}</p>
+                            <p className="text-xs text-primary dark:text-primary">Network: {networkInfo.name}</p>
                         </div>
                     )}
                 </div>

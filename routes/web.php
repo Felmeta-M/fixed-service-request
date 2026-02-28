@@ -59,10 +59,10 @@ Route::prefix('api/v1')->middleware('web')->group(function () {
     Route::post('/nid/kyc', [NidController::class, 'getKyc']);
 });
 
-// Guest auth: main login is eSignet (third-party); OTP kept for legacy/NID at /otp/phone
+// Guest auth: login page (OTP phone form) at /login; eSignet at /login/esignet
 Route::middleware('guest:otp')->group(function () {
-    Route::get('/login', [EsignetController::class, 'redirectToEsignet'])->name('login');
-    Route::get('/otp/phone', [OtpAuthController::class, 'showPhoneForm'])->name('otp.phone');
+    Route::get('/login', [OtpAuthController::class, 'showPhoneForm'])->name('login');
+    Route::redirect('/otp/phone', '/login', 301);
     Route::post('/otp/send', [OtpAuthController::class, 'sendOneTimePassword'])->name('otp.send');
     Route::get('/otp/verify', [OtpAuthController::class, 'showVerifyForm'])->name('otp.verify.form');
     Route::post('/otp/verify', [OtpAuthController::class, 'verifyOneTimePassword'])->name('otp.verify');

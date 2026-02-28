@@ -35,14 +35,16 @@ class SurveyModeStatsWidget extends BaseWidget
             $q->where('survey_is_manual', false)->orWhereNull('survey_is_manual');
         });
 
-        $manualTotal = (clone $manualQuery)->count();
-        $autoTotal = (clone $autoQuery)->count();
+        // Single grouped query per mode to avoid N+1
+        $manualCounts = (clone $manualQuery)->selectRaw('status, count(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status');
+        $autoCounts = (clone $autoQuery)->selectRaw('status, count(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status');
 
-        $manualCompleted = (clone $manualQuery)->where('status', FFDServiceProvisionStatus::Completed)->count();
-        $autoCompleted = (clone $autoQuery)->where('status', FFDServiceProvisionStatus::Completed)->count();
-
-        $manualWaiting = (clone $manualQuery)->where('status', FFDServiceProvisionStatus::Waiting)->count();
-        $autoWaiting = (clone $autoQuery)->where('status', FFDServiceProvisionStatus::Waiting)->count();
+        $manualTotal = $manualCounts->sum();
+        $autoTotal = $autoCounts->sum();
+        $manualCompleted = (int) ($manualCounts[FFDServiceProvisionStatus::Completed->value] ?? 0);
+        $autoCompleted = (int) ($autoCounts[FFDServiceProvisionStatus::Completed->value] ?? 0);
+        $manualWaiting = (int) ($manualCounts[FFDServiceProvisionStatus::Waiting->value] ?? 0);
+        $autoWaiting = (int) ($autoCounts[FFDServiceProvisionStatus::Waiting->value] ?? 0);
 
         return [
             Stat::make('Manual', $manualTotal)

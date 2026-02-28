@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\QueryTTJob;
 use App\Models\TroubleTicket;
 use Illuminate\Console\Command;
+use App\Services\Logging\AppLogger;
 
 class SyncThirdPartyTickets extends Command
 {
@@ -13,17 +14,29 @@ class SyncThirdPartyTickets extends Command
 
     public function handle()
     {
-        TroubleTicket::whereIn('status', ['pending', 'in_progress'])
+        $query = TroubleTicket::whereIn('status', ['open', 'pending', 'in_progress'])
             ->where(function ($q) {
                 $q->whereNull('last_checked_at')
-                    ->orWhere('last_checked_at', '<=', now()->subMinutes(5));
-            })
-            ->chunk(50, function ($tickets) {
-                foreach ($tickets as $ticket) {
-                    QueryTTJob::dispatch($ticket->id);
-                }
+                    ->orWhere('last_checked_at', '<=', now()->subMinutes(15));
             });
 
-        $this->info('Tickets queued for sync.');
+        $count = $query->count();
+        AppLogger::business()->info('SyncThirdPartyTickets: started', [
+            'operation' => 'tickets_sync',
+            'tickets_to_sync' => $count,
+        ]);
+
+        $dispatched = 0;
+        $query->chunk(50, function ($tickets) use (&$dispatched) {
+            foreach ($tickets as $ticket) {
+                QueryTTJob::dispatch($ticket->id);
+                $dispatched++;
+            }
+        });
+
+        AppLogger::business()->info('SyncThirdPartyTickets: completed', [
+            'operation' => 'tickets_sync',
+            'jobs_dispatched' => $dispatched,
+        ]);
     }
 }

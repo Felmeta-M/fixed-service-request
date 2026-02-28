@@ -26,23 +26,20 @@ class SubscriptionStatsWidget extends BaseWidget
         $dateFrom = $this->pageFilters['date_from'] ?? null;
         $dateTo = $this->pageFilters['date_to'] ?? null;
 
-        // Subscription-phase: orders that HAVE a subscription order ID
+        // Subscription-phase: orders that HAVE a subscription order ID (single query to avoid N+1)
         $query = SurveyOrder::query()
             ->whereNotNull('customer_subscription_order_id')
             ->when($dateFrom, fn (Builder $q) => $q->whereDate('created_at', '>=', $dateFrom))
             ->when($dateTo, fn (Builder $q) => $q->whereDate('created_at', '<=', $dateTo));
 
-        $total = (clone $query)->count();
+        $countsByStatus = (clone $query)->selectRaw('status, count(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status');
 
-        $waiting = (clone $query)->where('status', FFDServiceProvisionStatus::Waiting)->count();
-
-        $completed = (clone $query)->where('status', FFDServiceProvisionStatus::Completed)->count();
-
-        $processing = (clone $query)->where('status', FFDServiceProvisionStatus::Processing)->count();
-
-        $failed = (clone $query)->where('status', FFDServiceProvisionStatus::Failed)->count();
-
-        $cancelled = (clone $query)->where('status', FFDServiceProvisionStatus::Cancelled)->count();
+        $total = $countsByStatus->sum();
+        $waiting = (int) ($countsByStatus[FFDServiceProvisionStatus::Waiting->value] ?? 0);
+        $completed = (int) ($countsByStatus[FFDServiceProvisionStatus::Completed->value] ?? 0);
+        $processing = (int) ($countsByStatus[FFDServiceProvisionStatus::Processing->value] ?? 0);
+        $failed = (int) ($countsByStatus[FFDServiceProvisionStatus::Failed->value] ?? 0);
+        $cancelled = (int) ($countsByStatus[FFDServiceProvisionStatus::Cancelled->value] ?? 0);
 
         return [
             Stat::make('Total Subscribed', $total)

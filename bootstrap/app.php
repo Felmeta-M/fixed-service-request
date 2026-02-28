@@ -69,7 +69,6 @@ return Application::configure(basePath: dirname(__DIR__))
             $ids = DB::table('survey_orders')
                 ->whereNull('deleted_at')
                 ->where('status', FFDServiceProvisionStatus::Waiting->value)
-                ->whereNotNull('customer_survey_order_id')
                 ->limit(500)
                 ->pluck('id')
                 ->all();

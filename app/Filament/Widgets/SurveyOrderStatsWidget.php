@@ -26,25 +26,21 @@ class SurveyOrderStatsWidget extends BaseWidget
         $dateFrom = $this->pageFilters['date_from'] ?? null;
         $dateTo = $this->pageFilters['date_to'] ?? null;
 
-        // Survey-phase: orders that have NOT yet entered subscription
+        // Survey-phase: orders that have NOT yet entered subscription (single query to avoid N+1)
         $query = SurveyOrder::query()
             ->whereNull('customer_subscription_order_id')
             ->when($dateFrom, fn (Builder $q) => $q->whereDate('created_at', '>=', $dateFrom))
             ->when($dateTo, fn (Builder $q) => $q->whereDate('created_at', '<=', $dateTo));
 
-        $total = (clone $query)->count();
+        $countsByStatus = (clone $query)->selectRaw('status, count(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status');
 
-        $created = (clone $query)->where('status', FFDServiceProvisionStatus::Created)->count();
-
-        $processing = (clone $query)->where('status', FFDServiceProvisionStatus::Processing)->count();
-
-        $surveyCompleted = (clone $query)->where('status', FFDServiceProvisionStatus::Completed)->count();
-
-        $waiting = (clone $query)->where('status', FFDServiceProvisionStatus::Waiting)->count();
-
-        $failed = (clone $query)->where('status', FFDServiceProvisionStatus::Failed)->count();
-
-        $cancelled = (clone $query)->where('status', FFDServiceProvisionStatus::Cancelled)->count();
+        $total = $countsByStatus->sum();
+        $created = (int) ($countsByStatus[FFDServiceProvisionStatus::Created->value] ?? 0);
+        $processing = (int) ($countsByStatus[FFDServiceProvisionStatus::Processing->value] ?? 0);
+        $surveyCompleted = (int) ($countsByStatus[FFDServiceProvisionStatus::Completed->value] ?? 0);
+        $waiting = (int) ($countsByStatus[FFDServiceProvisionStatus::Waiting->value] ?? 0);
+        $failed = (int) ($countsByStatus[FFDServiceProvisionStatus::Failed->value] ?? 0);
+        $cancelled = (int) ($countsByStatus[FFDServiceProvisionStatus::Cancelled->value] ?? 0);
 
         return [
             Stat::make('Total Surveys', $total)

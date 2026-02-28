@@ -35,12 +35,24 @@ class EcafService extends BaseApiService
     {
         $credentials = config('services.ecaf');
 
-        // Use shared customer context helpers
-        $custCode = $this->customerCode();
-        $nameParts = CustomerContext::nameParts();
-        $firstName = $nameParts['first_name'];
-        $middleName = $nameParts['middle_name'];
-        $lastName = $nameParts['last_name'];
+        // Allow caller to pass customer fields (e.g. from queue job where there is no request context)
+        $custCode = $data['customer_code'] ?? $this->customerCode() ?? '';
+        $custType = $data['cust_type'] ?? $credentials['cust_type'] ?? '';
+        if (isset($data['first_name']) || isset($data['middle_name']) || isset($data['last_name'])) {
+            $firstName = (string) ($data['first_name'] ?? '');
+            $middleName = (string) ($data['middle_name'] ?? '');
+            $lastName = (string) ($data['last_name'] ?? '');
+        } elseif (isset($data['name']) && (string) $data['name'] !== '') {
+            $parts = explode(' ', trim((string) $data['name']), 3);
+            $firstName = $parts[0] ?? 'customer';
+            $middleName = $parts[1] ?? 'customer';
+            $lastName = $parts[2] ?? 'customer';
+        } else {
+            $nameParts = CustomerContext::nameParts();
+            $firstName = $nameParts['first_name'] ?? 'customer';
+            $middleName = $nameParts['middle_name'] ?? 'customer';
+            $lastName = $nameParts['last_name'] ?? 'customer';
+        }
 
         return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ecaf="http://ecaf4kiosk.ecaf.inpsur.com/">
@@ -53,7 +65,7 @@ class EcafService extends BaseApiService
             <AGENT_USERNAME>{$credentials['agent_username']}</AGENT_USERNAME>
             <TRANSACTION_ID>{$data['transaction_id']}</TRANSACTION_ID>
             <CHANNEL_ID>{$credentials['channel_id']}</CHANNEL_ID>
-            <CUST_TYPE>{$credentials['cust_type']}</CUST_TYPE>
+            <CUST_TYPE>{$custType}</CUST_TYPE>
             <CUST_CODE>{$custCode}</CUST_CODE>
             <CUST_FIRST_NAME>{$firstName}</CUST_FIRST_NAME>
             <CUST_OTHER_NAME>{$middleName}</CUST_OTHER_NAME>

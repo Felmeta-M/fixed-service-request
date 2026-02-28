@@ -270,17 +270,20 @@ abstract class BaseApiService
     }
 
     /**
-     * Rate-limited request execution
+     * Rate-limited request execution.
+     * Rate limit is skipped when running in console (e.g. queue workers, artisan) so batch jobs can make many API calls.
      */
     protected function executeRequest(string $xmlPayload): string
     {
-        $key = $this->rateLimitKey();
+        if (! app()->runningInConsole()) {
+            $key = $this->rateLimitKey();
 
-        if (RateLimiter::tooManyAttempts($key, $this->rateLimit)) {
-            throw new RuntimeException('Rate limit exceeded. Try again later.');
+            if (RateLimiter::tooManyAttempts($key, $this->rateLimit)) {
+                throw new RuntimeException('Rate limit exceeded. Try again later.');
+            }
+
+            RateLimiter::hit($key, $this->decaySeconds);
         }
-
-        RateLimiter::hit($key, $this->decaySeconds);
 
         $serviceName = $this->getServiceName();
 
@@ -386,16 +389,18 @@ abstract class BaseApiService
         // Prepare a pool of requests
         $requests = [];
         foreach ($payloads as $payload) {
-            $key = "{$ip}:{$this->endpoint()}";
-            if (RateLimiter::tooManyAttempts($key, $this->rateLimit)) {
-                AppLogger::api()->warning('Rate limit exceeded for async request', [
-                    'ip' => $ip,
-                    'endpoint' => $this->endpoint(),
-                ]);
-                continue;
-            }
+            if (! app()->runningInConsole()) {
+                $key = "{$ip}:{$this->endpoint()}";
+                if (RateLimiter::tooManyAttempts($key, $this->rateLimit)) {
+                    AppLogger::api()->warning('Rate limit exceeded for async request', [
+                        'ip' => $ip,
+                        'endpoint' => $this->endpoint(),
+                    ]);
+                    continue;
+                }
 
-            RateLimiter::hit($key, $this->decaySeconds);
+                RateLimiter::hit($key, $this->decaySeconds);
+            }
 
             $serviceName = $this->getServiceName();
 

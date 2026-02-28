@@ -441,6 +441,4 @@ class CustomerContext
     {
         return self::customer()?->street_name ?? $fallback;
     }
-
-
 }

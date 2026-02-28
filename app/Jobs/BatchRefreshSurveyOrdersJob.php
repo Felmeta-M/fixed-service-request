@@ -56,11 +56,24 @@ class BatchRefreshSurveyOrdersJob implements ShouldQueue
         EcafService $ecafService
     ): void {
         if (empty($this->orderIds)) {
+            AppLogger::business()->info('Batch refresh survey orders skipped: no order IDs', [
+                'job' => 'BatchRefreshSurveyOrdersJob',
+            ]);
             return;
         }
 
+        AppLogger::business()->info('Batch refresh survey orders started', [
+            'job' => 'BatchRefreshSurveyOrdersJob',
+            'order_count' => count($this->orderIds),
+            'order_ids' => $this->orderIds,
+        ]);
+
         $orders = $this->loadOrders();
         if ($orders->isEmpty()) {
+            AppLogger::business()->warning('Batch refresh survey orders: no orders loaded', [
+                'job' => 'BatchRefreshSurveyOrdersJob',
+                'requested_ids' => $this->orderIds,
+            ]);
             return;
         }
 
@@ -418,7 +431,7 @@ class BatchRefreshSurveyOrdersJob implements ShouldQueue
         $customer = DB::table('customers')
             ->where('code', $customerCode)
             ->whereNull('deleted_at')
-            ->select('picture')
+            ->select('picture', 'name')
             ->first();
 
         if (! $customer || empty($customer->picture)) {
@@ -430,12 +443,28 @@ class BatchRefreshSurveyOrdersJob implements ShouldQueue
             return;
         }
 
+        $customerName = trim($customer->name ?? '');
+        if ($customerName === '') {
+            AppLogger::api()->warning('ECAF upload skipped: customer name not available', [
+                'survey_order_id' => $surveyOrderId,
+                'customer_code' => $customerCode,
+            ]);
+
+            return;
+        }
+
         $response = $ecafService->uploadFile([
             'transaction_id' => $transactionId,
             'photo' => $customer->picture,
+            'customer_code' => $customerCode,
+            'name' => $customerName,
         ]);
 
-        if ($response['success'] ?? false) {
+        $data = $response instanceof \Illuminate\Http\JsonResponse
+            ? $response->getData(true)
+            : (array) $response;
+
+        if ($data['success'] ?? false) {
             AppLogger::api()->info('ECAF document uploaded successfully', [
                 'survey_order_id' => $surveyOrderId,
                 'transaction_id' => $transactionId,
@@ -444,7 +473,7 @@ class BatchRefreshSurveyOrdersJob implements ShouldQueue
             AppLogger::api()->warning('ECAF document upload returned error', [
                 'survey_order_id' => $surveyOrderId,
                 'transaction_id' => $transactionId,
-                'response' => $response,
+                'response' => $data,
             ]);
         }
     }

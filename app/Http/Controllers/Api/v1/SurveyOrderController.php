@@ -527,11 +527,11 @@ class SurveyOrderController extends Controller
         $transactionId = $ecafData['transaction_id'];
         $surveyOrderId = $ecafData['survey_order_id'];
 
-        // Get customer photo
+        // Get customer photo and name (ECAF requires CUST_CODE and customer names)
         $customer = DB::table('customers')
             ->where('code', $customerCode)
             ->whereNull('deleted_at')
-            ->select('picture')
+            ->select('picture', 'name')
             ->first();
 
         if (!$customer || empty($customer->picture)) {
@@ -542,13 +542,28 @@ class SurveyOrderController extends Controller
             return;
         }
 
+        $customerName = trim($customer->name ?? '');
+        if ($customerName === '') {
+            AppLogger::api()->warning('ECAF upload skipped: customer name not available', [
+                'survey_order_id' => $surveyOrderId,
+                'customer_code' => $customerCode,
+            ]);
+            return;
+        }
+
         // Upload ECAF document
         $response = $this->ecafService->uploadFile([
             'transaction_id' => $transactionId,
             'photo' => $customer->picture,
+            'customer_code' => $customerCode,
+            'name' => $customerName,
         ]);
 
-        if ($response['success'] ?? false) {
+        $data = $response instanceof \Illuminate\Http\JsonResponse
+            ? $response->getData(true)
+            : (array) $response;
+
+        if ($data['success'] ?? false) {
             AppLogger::api()->info('ECAF document uploaded successfully', [
                 'survey_order_id' => $surveyOrderId,
                 'transaction_id' => $transactionId,
@@ -557,7 +572,7 @@ class SurveyOrderController extends Controller
             AppLogger::api()->warning('ECAF document upload returned error', [
                 'survey_order_id' => $surveyOrderId,
                 'transaction_id' => $transactionId,
-                'response' => $response,
+                'response' => $data,
             ]);
         }
     }

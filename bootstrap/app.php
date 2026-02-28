@@ -62,20 +62,36 @@ return Application::configure(basePath: dirname(__DIR__))
             ]);
     })
     ->withSchedule(function (Schedule $schedule) {
-        $schedule->job(new CheckSurveyOrderStatus())->everyTenMinutes()->name('check-survey-order-status');
-
-        // Periodically dispatch batch refresh jobs for WAITING survey orders
+        // Check survey order status: chunk by ID to avoid loading millions of IDs; dispatch one job per chunk
         $schedule->call(function () {
-            $ids = DB::table('survey_orders')
+            $chunkSize = 500;
+            DB::table('survey_orders')
                 ->whereNull('deleted_at')
                 ->where('status', FFDServiceProvisionStatus::Waiting->value)
-                ->limit(500)
-                ->pluck('id')
-                ->all();
+                ->whereNull('customer_subscription_order_id')
+                ->orderBy('id')
+                ->chunkById($chunkSize, function ($orders) {
+                    $ids = $orders->pluck('id')->values()->all();
+                    if (! empty($ids)) {
+                        CheckSurveyOrderStatus::dispatch($ids);
+                    }
+                }, 'id');
+        })->everyTenMinutes()->name('check-survey-order-status');
 
-            if (! empty($ids)) {
-                BatchRefreshSurveyOrdersJob::dispatch($ids);
-            }
+        // Batch refresh WAITING survey orders: chunk by ID and dispatch one job per chunk (scales to millions)
+        $schedule->call(function () {
+            $chunkSize = 500;
+            DB::table('survey_orders')
+                ->whereNull('deleted_at')
+                ->where('status', FFDServiceProvisionStatus::Waiting->value)
+                ->whereNotNull('customer_subscription_order_id')
+                ->orderBy('id')
+                ->chunkById($chunkSize, function ($orders) {
+                    $ids = $orders->pluck('id')->values()->all();
+                    if (! empty($ids)) {
+                        BatchRefreshSurveyOrdersJob::dispatch($ids);
+                    }
+                }, 'id');
         })->everyFifteenMinutes()->name('batch-refresh-survey-orders');
 
         // Periodically sync trouble tickets from third-party system

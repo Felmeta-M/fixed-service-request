@@ -38,11 +38,11 @@ class QueryTTJob implements ShouldQueue
         // Use resolved status from QueryTTService (fromApiResponse currentActivity + ttStatus)
         $newStatus = $tt['status'] ?? null;
         if ($newStatus === null) return;
-        // Log::channel('tt')->info('TT status updated', [
-        //     'ticket_id' => $ticket->id,
-        //     'old_status' => $ticket->status,
-        //     'new_status' => $newStatus,
-        // ]);
+        Log::channel('tt')->info('TT status updated', [
+            'ticket_id' => $ticket->id,
+            'old_status' => $ticket->status,
+            'new_status' => $newStatus,
+        ]);
         if ($ticket->status !== $newStatus) {
             $ticket->update([
                 'status' => $newStatus,

@@ -14,20 +14,20 @@ class SyncThirdPartyTickets extends Command
 
     public function handle()
     {
-        $query = TroubleTicket::whereIn('status', ['open', 'pending', 'in_progress'])
+        $query = TroubleTicket::whereNotIn('status', ['closed'])
             ->where(function ($q) {
                 $q->whereNull('last_checked_at')
                     ->orWhere('last_checked_at', '<=', now()->subMinutes(15));
-            });
+            })
+            ->orderBy('id');
 
-        $count = $query->count();
         AppLogger::business()->info('SyncThirdPartyTickets: started', [
             'operation' => 'tickets_sync',
-            'tickets_to_sync' => $count,
         ]);
 
         $dispatched = 0;
-        $query->chunk(50, function ($tickets) use (&$dispatched) {
+        $chunkSize = 100;
+        $query->chunkById($chunkSize, function ($tickets) use (&$dispatched) {
             foreach ($tickets as $ticket) {
                 QueryTTJob::dispatch($ticket->id);
                 $dispatched++;

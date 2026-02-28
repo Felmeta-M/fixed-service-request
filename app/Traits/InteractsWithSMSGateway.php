@@ -67,6 +67,11 @@ trait InteractsWithSMSGateway
 
     protected static function applySmsRateLimit(string|int $phone): void
     {
+        // Skip rate limit when running in console (queue jobs, artisan) so batch notifications can be sent
+        if (app()->runningInConsole()) {
+            return;
+        }
+
         $phoneKey = 'sms:phone:' . self::normalizePhone($phone);
         $ipKey = 'sms:ip:' . self::requestIp();
 

@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 
-export default function ErrorPage({}) {
+export default function ErrorPage({ }) {
     const { props }: any = usePage();
     const message = props?.message || props?.flash?.message || props?.error || 'An unexpected error occurred.';
 

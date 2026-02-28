@@ -264,12 +264,23 @@ class SecureOtpService
     }
 
     /**
-     * Clean up expired OTPs (call via scheduler)
+     * Clean up expired OTPs in chunks to avoid long locks and memory use at scale (e.g. millions of rows).
      */
     public function cleanupExpired(): int
     {
-        return DB::table('otps')
+        $totalDeleted = 0;
+        $chunkSize = 1000;
+
+        DB::table('otps')
             ->where('expires_at', '<', now())
-            ->delete();
+            ->orderBy('id')
+            ->chunkById($chunkSize, function ($rows) use (&$totalDeleted) {
+                $ids = $rows->pluck('id')->all();
+                if (! empty($ids)) {
+                    $totalDeleted += DB::table('otps')->whereIn('id', $ids)->delete();
+                }
+            }, 'id');
+
+        return $totalDeleted;
     }
 }

@@ -324,9 +324,19 @@ class BatchRefreshSurveyOrdersJob implements ShouldQueue
     protected function loadOrders(): \Illuminate\Support\Collection
     {
         $columns = [
-            'id', 'customer_survey_order_id', 'customer_subscription_order_id', 'survey_is_manual',
-            'status', 'contact_no', 'contact_person', 'main_offer_id', 'with_device', 'transaction_id',
-            'customer_code', 'device_id', 'device_voice_id',
+            'id',
+            'customer_survey_order_id',
+            'customer_subscription_order_id',
+            'survey_is_manual',
+            'status',
+            'contact_no',
+            'contact_person',
+            'main_offer_id',
+            'with_device',
+            'transaction_id',
+            'customer_code',
+            'device_id',
+            'device_voice_id',
         ];
 
         return DB::table('survey_orders')

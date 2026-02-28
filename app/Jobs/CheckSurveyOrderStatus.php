@@ -19,23 +19,31 @@ class CheckSurveyOrderStatus implements ShouldQueue
     public int $timeout = 120;
     public int $tries = 3;
 
-    public function __construct()
-    {
-        //
+    /**
+     * @param  array<int>|null  $orderIds  Optional. When provided, only these survey order IDs are processed (used by scheduler for chunked dispatch).
+     */
+    public function __construct(
+        public ?array $orderIds = null
+    ) {
     }
 
     public function handle(): void
     {
         $queryDataSurveyOrderService = app(QuerySurveyOrderService::class);
 
-        // Use Query Builder with chunking for better memory efficiency
-        // Only select columns we need
-        DB::table('survey_orders')
+        $query = DB::table('survey_orders')
             ->whereNull('deleted_at')
-            ->where('status', FFDServiceProvisionStatus::Waiting->value)
             ->select(['id', 'customer_survey_order_id', 'status'])
-            ->orderBy('id')
-            ->chunk(100, function ($orders) use ($queryDataSurveyOrderService) {
+            ->orderBy('id');
+
+        if (! empty($this->orderIds)) {
+            $query->whereIn('id', $this->orderIds);
+        } else {
+            $query->where('status', FFDServiceProvisionStatus::Waiting->value);
+        }
+
+        // Chunk for memory efficiency (each chunk processed in one batch update)
+        $query->chunk(100, function ($orders) use ($queryDataSurveyOrderService) {
                 $updates = [];
 
                 foreach ($orders as $order) {

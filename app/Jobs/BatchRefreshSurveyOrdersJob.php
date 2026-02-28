@@ -56,24 +56,24 @@ class BatchRefreshSurveyOrdersJob implements ShouldQueue
         EcafService $ecafService
     ): void {
         if (empty($this->orderIds)) {
-            AppLogger::business()->info('Batch refresh survey orders skipped: no order IDs', [
-                'job' => 'BatchRefreshSurveyOrdersJob',
-            ]);
+            // AppLogger::business()->info('Batch refresh survey orders skipped: no order IDs', [
+            //     'job' => 'BatchRefreshSurveyOrdersJob',
+            // ]);
             return;
         }
 
-        AppLogger::business()->info('Batch refresh survey orders started', [
-            'job' => 'BatchRefreshSurveyOrdersJob',
-            'order_count' => count($this->orderIds),
-            'order_ids' => $this->orderIds,
-        ]);
+        // AppLogger::business()->info('Batch refresh survey orders started', [
+        //     'job' => 'BatchRefreshSurveyOrdersJob',
+        //     'order_count' => count($this->orderIds),
+        //     'order_ids' => $this->orderIds,
+        // ]);
 
         $orders = $this->loadOrders();
         if ($orders->isEmpty()) {
-            AppLogger::business()->warning('Batch refresh survey orders: no orders loaded', [
-                'job' => 'BatchRefreshSurveyOrdersJob',
-                'requested_ids' => $this->orderIds,
-            ]);
+            // AppLogger::business()->warning('Batch refresh survey orders: no orders loaded', [
+            //     'job' => 'BatchRefreshSurveyOrdersJob',
+            //     'requested_ids' => $this->orderIds,
+            // ]);
             return;
         }
 

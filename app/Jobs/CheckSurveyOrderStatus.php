@@ -120,9 +120,9 @@ class CheckSurveyOrderStatus implements ShouldQueue
             $bindings
         );
 
-        AppLogger::jobs()->info('Batch updated survey order statuses', [
-            'count' => count($updates),
-            'order_ids' => array_keys($updates),
-        ]);
+        // AppLogger::jobs()->info('Batch updated survey order statuses', [
+        //     'count' => count($updates),
+        //     'order_ids' => array_keys($updates),
+        // ]);
     }
 }

@@ -21,9 +21,9 @@ class SyncThirdPartyTickets extends Command
             })
             ->orderBy('id');
 
-        AppLogger::business()->info('SyncThirdPartyTickets: started', [
-            'operation' => 'tickets_sync',
-        ]);
+        // AppLogger::business()->info('SyncThirdPartyTickets: started', [
+        //     'operation' => 'tickets_sync',
+        // ]);
 
         $dispatched = 0;
         $chunkSize = 100;
@@ -34,9 +34,9 @@ class SyncThirdPartyTickets extends Command
             }
         });
 
-        AppLogger::business()->info('SyncThirdPartyTickets: completed', [
-            'operation' => 'tickets_sync',
-            'jobs_dispatched' => $dispatched,
-        ]);
+        // AppLogger::business()->info('SyncThirdPartyTickets: completed', [
+        //     'operation' => 'tickets_sync',
+        //     'jobs_dispatched' => $dispatched,
+        // ]);
     }
 }

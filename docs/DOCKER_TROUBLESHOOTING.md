@@ -28,7 +28,23 @@ docker compose exec app php /var/www/artisan view:clear
 docker compose restart app
 ```
 
-## 3. Check database and Redis
+## 3. Storage link (public/storage)
+
+The app entrypoint removes and re-creates the storage link on every container start. To fix a broken or missing link **without restarting**, run:
+
+**Production** (if using `compose.yml` with default project):
+```bash
+docker compose exec app sh -c 'rm -f /var/www/public/storage && php /var/www/artisan storage:link'
+```
+
+**Staging** (`compose.staging.yml`):
+```bash
+docker compose -f compose.staging.yml -p fbb_staging exec app sh -c 'rm -f /var/www/public/storage && php /var/www/artisan storage:link'
+```
+
+Or restart the app container so the entrypoint runs again: `docker compose restart app` (staging: `docker compose -f compose.staging.yml -p fbb_staging restart app`).
+
+## 4. Check database and Redis
 
 `.env` must use **Docker service names** when running in compose:
 - `DB_HOST=pgbouncer` (or your pgbouncer service name)
@@ -39,7 +55,7 @@ Test DB:
 docker compose exec app php /var/www/artisan db:show
 ```
 
-## 4. Permissions
+## 5. Permissions
 
 If logs show “permission denied” on storage or bootstrap/cache:
 ```bash
@@ -48,13 +64,13 @@ docker compose exec app chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 docker compose restart app
 ```
 
-## 5. Public / nginx (immutable setup)
+## 6. Public / nginx (immutable setup)
 
 Nginx serves from the `fbb_public` volume. If the app container’s entrypoint ran, it copies `public/` into that volume once. If you still get 404 for assets or index:
 - Ensure the app container started at least once (so the copy ran).
 - Rebuild and recreate: `docker compose build app && docker compose up -d`.
 
-## 6. Staging (compose.staging.yml)
+## 7. Staging (compose.staging.yml)
 
 For **staging** use the staging compose file and project name:
 - Replace `docker compose` with `docker compose -f compose.staging.yml -p fbb_staging`

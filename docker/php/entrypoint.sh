@@ -9,6 +9,15 @@ if [ ! -f "$APP_DIR/vendor/autoload.php" ]; then
   composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 fi
 
+# Ensure storage link exists: remove and re-link so public/storage -> storage/app/public is correct
+# (fixes broken/missing link after rebuild or when public_volume is mounted)
+if [ -f "$APP_DIR/artisan" ]; then
+  echo "🔗 Recreating storage link..."
+  rm -f "$APP_DIR/public/storage" 2>/dev/null || true
+  php "$APP_DIR/artisan" storage:link 2>/dev/null || true
+  echo "✅ Storage link ready"
+fi
+
 # Immutable: sync public from image to public_volume (shared with nginx)
 # This ensures build assets are available to nginx after image rebuild
 if [ -d "$APP_DIR/public_volume" ]; then

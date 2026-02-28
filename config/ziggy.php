@@ -32,10 +32,9 @@ return [
         'complaint',
         'dashboard',
 
-        // Authentication (eSignet main login; OTP at /otp/phone for legacy/NID)
+        // Authentication (login page at /login; eSignet at /login/esignet)
         'login',
         'esignet.login',
-        'otp.phone',
         'otp.send',
         'otp.verify',
         'otp.verify.form',

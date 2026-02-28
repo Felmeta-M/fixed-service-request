@@ -62,9 +62,9 @@ function createHeaders(token?: string | null, additionalHeaders?: Record<string,
  * @param skipAuthRedirect - If true, don't redirect on 401 (for public endpoints)
  */
 async function handleResponse<T>(response: Response, skipAuthRedirect: boolean = false): Promise<T> {
-    // Handle 401 Unauthorized - redirect to OTP page (unless skipAuthRedirect is true)
+    // Handle 401 Unauthorized - redirect to login page (unless skipAuthRedirect is true)
     if (response.status === 401 && !skipAuthRedirect) {
-        window.location.href = '/otp/phone';
+        window.location.href = '/login';
         throw new ApiClientError('Unauthorized', 401, null, response);
     }
 

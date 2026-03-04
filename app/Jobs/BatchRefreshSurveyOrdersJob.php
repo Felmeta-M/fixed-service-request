@@ -226,6 +226,14 @@ class BatchRefreshSurveyOrdersJob implements ShouldQueue
                                 'zone_code' => $zoneCode,
                             ];
 
+                            // Set completed_date once when survey first transitions to Completed
+                            if (
+                                $order->status !== FFDServiceProvisionStatus::Completed->value &&
+                                empty($order->completed_date)
+                            ) {
+                                $surveyResultData['completed_date'] = now();
+                            }
+
                             $deviceAlreadySelected = $order->with_device !== null;
 
                             if ($order->status !== FFDServiceProvisionStatus::Completed->value && ! $deviceAlreadySelected) {
@@ -410,6 +418,7 @@ class BatchRefreshSurveyOrdersJob implements ShouldQueue
             'with_device',
             'device_id',
             'device_voice_id',
+            'completed_date',
             'updated_at',
         ];
 

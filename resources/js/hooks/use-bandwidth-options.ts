@@ -6,6 +6,7 @@ interface ResidentialOptionsApiResponse {
     data: {
         id: number;
         residential_options: string[];
+        prices?: Record<string, number>;
         created_at: string;
     };
 }
@@ -14,6 +15,7 @@ export interface ProcessedBandwidthOption {
     label: string;
     value: string;
     numericValue: number;
+    price?: number;
 }
 
 // Function to convert bandwidth string to numeric value (in Mbps)
@@ -88,12 +90,14 @@ export function useBandwidthOptions() {
         },
     });
 
-    // Process residential options
+    const prices = residentialData?.data?.prices ?? {};
+
     const residentialOptions = residentialData?.success && residentialData.data?.residential_options
         ? residentialData.data.residential_options.map((value: string) => ({
             label: formatBandwidthLabel(value),
             value,
             numericValue: parseBandwidthValue(value),
+            price: prices[value],
         }))
         : [];
 

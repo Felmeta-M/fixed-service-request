@@ -10,6 +10,7 @@ class BandwidthOptionController extends Controller
 {
     private const CACHE_KEY_RESIDENTIAL = 'bandwidth_options:residential';
     private const CACHE_KEY_ENTERPRISE = 'bandwidth_options:enterprise';
+    private const CACHE_KEY_PRICES = 'bandwidth_prices:all';
     private const CACHE_TTL = 3600; // 1 hour
 
     /**
@@ -42,6 +43,9 @@ class BandwidthOptionController extends Controller
                 'message' => 'Bandwidth options not found'
             ], 404);
         }
+
+        $prices = $this->getBandwidthPrices();
+        $options[0]['prices'] = $prices;
 
         return response()->json([
             'success' => true,
@@ -77,6 +81,8 @@ class BandwidthOptionController extends Controller
             ], 404);
         }
 
+        $options['prices'] = $this->getBandwidthPrices();
+
         return response()->json([
             'success' => true,
             'data' => $options
@@ -111,9 +117,21 @@ class BandwidthOptionController extends Controller
             ], 404);
         }
 
+        $options['prices'] = $this->getBandwidthPrices();
+
         return response()->json([
             'success' => true,
             'data' => $options
         ]);
+    }
+
+    private function getBandwidthPrices(): array
+    {
+        return Cache::remember(self::CACHE_KEY_PRICES, self::CACHE_TTL, function () {
+            return DB::table('bandwidth_prices')
+                ->pluck('price', 'bandwidth_value')
+                ->map(fn ($price) => (float) $price)
+                ->toArray();
+        });
     }
 }

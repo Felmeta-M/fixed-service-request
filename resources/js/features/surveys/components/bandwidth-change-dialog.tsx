@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useBandwidthOptions, type ProcessedBandwidthOption } from '@/hooks/use-bandwidth-options';
 import { ArrowDownToLineIcon, ArrowUpToLineIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface BandwidthChangeDialogProps {
     open: boolean;
@@ -72,6 +72,19 @@ export function BandwidthChangeDialog({
         }
     };
 
+    const selectedOption = useMemo(
+        () => filteredOptions.find((o) => o.value === selectedBandwidth),
+        [filteredOptions, selectedBandwidth],
+    );
+
+    const formatPrice = (price: number) =>
+        new Intl.NumberFormat('en-ET', {
+            style: 'currency',
+            currency: 'ETB',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(price);
+
     const isUpgrade = mode === 'upgrade';
     const Icon = isUpgrade ? ArrowUpToLineIcon : ArrowDownToLineIcon;
     const iconColor = isUpgrade ? 'text-primary' : 'text-orange-600';
@@ -126,13 +139,27 @@ export function BandwidthChangeDialog({
                             ) : (
                                 filteredOptions.map((option) => (
                                     <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
+                                        {option.price != null
+                                            ? `${option.label} - ${formatPrice(option.price)}/month`
+                                            : option.label}
                                     </SelectItem>
                                 ))
                             )}
                         </SelectContent>
                     </Select>
                 </div>
+
+                {/* Price Summary */}
+                {selectedOption && selectedOption.price != null && (
+                    <div className="mt-3 rounded-md border border-primary/20 p-3">
+                        <div className="flex items-baseline justify-between">
+                            <span className="text-sm font-medium text-gray-700">{selectedOption.label}</span>
+                            <span className="text-base font-bold text-primary">
+                                {formatPrice(selectedOption.price)}<span className="text-xs font-normal text-gray-500">/month</span>
+                            </span>
+                        </div>
+                    </div>
+                )}
 
                 {/* Info Note */}
                 <div className={`mt-4 rounded-md border p-3 ${isUpgrade ? 'border-primary bg-primary/10' : 'border-orange-200 bg-orange-50'}`}>

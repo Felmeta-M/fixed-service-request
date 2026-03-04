@@ -54,7 +54,14 @@ export function ServiceSelectionStep({ hasActiveSurvey }: ServiceSelectionStepPr
 
     const handleServiceSelect = (serviceId: string) => {
         if (hasActiveSurvey) return;
-        updateFormData({ serviceType: serviceId });
+        if (serviceId !== formData.serviceType) {
+            updateFormData({
+                serviceType: serviceId,
+                bandwidth: '',
+                bandwidthNumericValue: undefined,
+                customerType: '',
+            });
+        }
     };
 
     const handleBandwidthChange = (value: string, numericValue: number, type: 'residential') => {

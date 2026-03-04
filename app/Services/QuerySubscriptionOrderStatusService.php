@@ -50,10 +50,22 @@ class QuerySubscriptionOrderStatusService extends BaseApiService
     public function queryStatus(string $orderId, ?string $startTime = null, ?string $endTime = null): array
     {
         try {
+            // BSS restriction: interval between StartTime and EndTime must be < 1 month.
+            // For our use-case (single subscription order), a 7‑day window is sufficient.
+            $end = $endTime ? \Carbon\Carbon::createFromFormat('YmdHis', $endTime) : now();
+            $start = $startTime
+                ? \Carbon\Carbon::createFromFormat('YmdHis', $startTime)
+                : $end->copy()->subDays(7);
+
+            // Ensure start is not after end and clamp to max 7 days window.
+            if ($start->gt($end)) {
+                $start = $end->copy()->subDays(7);
+            }
+
             $data = [
                 'order_id' => $orderId,
-                'start_time' => $startTime ?? now()->subDays(30)->format('YmdHis'),
-                'end_time' => $endTime ?? now()->format('YmdHis'),
+                'start_time' => $start->format('YmdHis'),
+                'end_time' => $end->format('YmdHis'),
             ];
 
             $xmlPayload = $this->buildXml($data);

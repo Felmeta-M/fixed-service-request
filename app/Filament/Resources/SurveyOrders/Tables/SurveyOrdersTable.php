@@ -24,12 +24,12 @@ class SurveyOrdersTable
         return $table
             ->columns([
                 TextColumn::make('customer_survey_order_id')
-                    ->label('Order ID')
+                    ->label('Survey Order')
                     ->searchable()
                     ->sortable()
                     ->copyable(),
-                TextColumn::make('customer_code')
-                    ->label('Customer')
+                TextColumn::make('customer_subscription_order_id')
+                    ->label('Subscription Order')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('voice_service_number')
@@ -55,7 +55,7 @@ class SurveyOrdersTable
                     ->sortable(),
                 TextColumn::make('bandwidth')
                     ->label('Bandwidth')
-                    ->formatStateUsing(fn ($state) => $state !== null && $state !== '' ? "{$state} MB" : null)
+                    ->formatStateUsing(fn($state) => $state !== null && $state !== '' ? "{$state} MB" : null)
                     ->placeholder('-'),
                 TextColumn::make('telecom_region')
                     ->label('Region')

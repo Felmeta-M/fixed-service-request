@@ -60,14 +60,14 @@ class PaymentResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withoutTrashed()
-            ->with('survey_request');
+            ->with('survey_order');
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()
             ->withoutTrashed()
-            ->with('survey_request');
+            ->with('survey_order');
     }
 
     public static function canCreate(): bool

@@ -17,10 +17,10 @@ services:
       - .env
     volumes:
       # --- Immutable (comment out when using host-sync)
-      - fbb_storage:/var/www/storage/app
-      - fbb_logs:/var/www/storage/logs
-      - fbb_public:/var/www/public_volume
-      # - .:/var/www
+      # - fbb_storage:/var/www/storage/app
+      # - fbb_logs:/var/www/storage/logs
+      # - fbb_public:/var/www/public_volume
+      - .:/var/www
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     depends_on:
       postgres:
@@ -65,10 +65,10 @@ services:
     env_file:
       - .env
     volumes:
-      - fbb_storage:/var/www/storage/app
-      - fbb_logs:/var/www/storage/logs
-      - fbb_public:/var/www/public_volume
-      # - .:/var/www
+      # - fbb_storage:/var/www/storage/app
+      # - fbb_logs:/var/www/storage/logs
+      # - fbb_public:/var/www/public_volume
+      - .:/var/www
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     depends_on:
       postgres:
@@ -101,10 +101,10 @@ services:
     env_file:
       - .env
     volumes:
-      - fbb_storage:/var/www/storage/app
-      - fbb_logs:/var/www/storage/logs
-      - fbb_public:/var/www/public_volume
-      # - .:/var/www
+      # - fbb_storage:/var/www/storage/app
+      # - fbb_logs:/var/www/storage/logs
+      # - fbb_public:/var/www/public_volume
+      - .:/var/www
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     depends_on:
       redis:
@@ -133,10 +133,10 @@ services:
     env_file:
       - .env
     volumes:
-      - fbb_storage:/var/www/storage/app
-      - fbb_logs:/var/www/storage/logs
-      - fbb_public:/var/www/public_volume
-      # - .:/var/www
+      # - fbb_storage:/var/www/storage/app
+      # - fbb_logs:/var/www/storage/logs
+      # - fbb_public:/var/www/public_volume
+      - .:/var/www
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     depends_on:
       redis:
@@ -166,9 +166,9 @@ services:
     ports:
       - "10080:80"
     volumes:
-      - fbb_public:/var/www/public:ro
-      - fbb_storage:/var/www/storage:ro
-      # - .:/var/www:ro
+      # - fbb_public:/var/www/public:ro
+      # - fbb_storage:/var/www/storage:ro
+      - .:/var/www:ro
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       app:
@@ -263,9 +263,9 @@ services:
       - fbb_net
 volumes:
   pgdata:
-  fbb_storage:
-  fbb_logs:
-  fbb_public:
+  # fbb_storage:
+  # fbb_logs:
+  # fbb_public:
 
 networks:
   fbb_net:

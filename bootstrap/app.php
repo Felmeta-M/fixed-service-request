@@ -76,7 +76,7 @@ return Application::configure(basePath: dirname(__DIR__))
                         CheckSurveyOrderStatus::dispatch($ids);
                     }
                 }, 'id');
-        })->everyTenMinutes()->name('check-survey-order-status');
+        })->everyFifteenMinutes()->name('check-survey-order-status');
 
         // Batch refresh WAITING survey orders: chunk by ID and dispatch one job per chunk (scales to millions)
         $schedule->call(function () {
@@ -92,7 +92,7 @@ return Application::configure(basePath: dirname(__DIR__))
                         BatchRefreshSurveyOrdersJob::dispatch($ids);
                     }
                 }, 'id');
-        })->everyFifteenMinutes()->name('batch-refresh-survey-orders');
+        })->everyTenMinutes()->name('batch-refresh-survey-orders');
 
         // Periodically sync trouble tickets from third-party system
         $schedule->command('tickets:sync')->hourly()->name('sync-trouble-tickets');

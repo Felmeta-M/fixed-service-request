@@ -118,7 +118,7 @@ class Payment extends Model
         return $query->whereIn('status', [self::STATUS_FAILED, (string) self::STATUS_FAILED]);
     }
 
-    public function survey_request()
+    public function survey_order()
     {
         return $this->belongsTo(SurveyOrder::class, 'customer_survey_order_id', 'customer_survey_order_id');
     }

@@ -94,6 +94,13 @@ class BatchRefreshSurveyOrdersJob implements ShouldQueue
                     $subscriptionResponse = $querySubscriptionOrderStatusService
                         ->queryStatus($order->customer_subscription_order_id);
 
+                    AppLogger::api()->info('Batch refresh: subscription status response', [
+                        'job' => 'BatchRefreshSurveyOrdersJob',
+                        'customer_survey_order_id' => $order->customer_survey_order_id ?? null,
+                        'customer_subscription_order_id' => $order->customer_subscription_order_id,
+                        'raw_response' => $subscriptionResponse,
+                    ]);
+
                     if (! empty($subscriptionResponse['success']) && isset($subscriptionResponse['status']) && $subscriptionResponse['status'] > 0) {
                         $newStatus = (int) $subscriptionResponse['status'];
                         $response = [
@@ -117,6 +124,12 @@ class BatchRefreshSurveyOrdersJob implements ShouldQueue
                     $responseData = $surveyResponse instanceof \Illuminate\Http\JsonResponse
                         ? $surveyResponse->getData(true)
                         : $surveyResponse;
+
+                    AppLogger::api()->info('Batch refresh: survey order detail response', [
+                        'job' => 'BatchRefreshSurveyOrdersJob',
+                        'customer_survey_order_id' => $order->customer_survey_order_id ?? null,
+                        'raw_response' => $responseData,
+                    ]);
 
                     if (! empty($responseData['success']) && isset($responseData['data']['status'])) {
                         $response = [

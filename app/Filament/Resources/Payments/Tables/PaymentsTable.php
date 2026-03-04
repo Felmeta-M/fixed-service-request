@@ -16,33 +16,25 @@ class PaymentsTable
     {
         return $table
             ->columns([
-                TextColumn::make('id')
-                    ->label('ID')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('customer_code')
-                    ->label('Customer')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('survey_request.contact_person')
+                TextColumn::make('customer_survey_order_id')
+                ->label('Survey Order')
+                ->searchable()
+                ->copyable(),
+            TextColumn::make('customer_subscription_order_id')
+                ->label('Subscription Order')
+                ->searchable()
+                ->placeholder('-')
+                ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('survey_order.contact_person')
                     ->label('Contact Person')
                     ->searchable()
                     ->placeholder('-'),
-                TextColumn::make('survey_request.contact_no')
+                TextColumn::make('survey_order.contact_no')
                     ->label('Contact No.')
                     ->searchable()
                     ->placeholder('-'),
-                TextColumn::make('survey_request.contact_email')
+                TextColumn::make('survey_order.contact_email')
                     ->label('Contact Email')
-                    ->searchable()
-                    ->placeholder('-')
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('customer_survey_order_id')
-                    ->label('Survey Order')
-                    ->searchable()
-                    ->copyable(),
-                TextColumn::make('customer_subscription_order_id')
-                    ->label('Subscription Order')
                     ->searchable()
                     ->placeholder('-')
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -109,8 +101,8 @@ class PaymentsTable
                     ->trueLabel('With device')
                     ->falseLabel('Without device')
                     ->queries(
-                        true: fn ($query) => $query->whereNotNull('device_fee')->where('device_fee', '>', 0),
-                        false: fn ($query) => $query->where(fn ($q) => $q->whereNull('device_fee')->orWhere('device_fee', 0)),
+                        true: fn($query) => $query->whereNotNull('device_fee')->where('device_fee', '>', 0),
+                        false: fn($query) => $query->where(fn($q) => $q->whereNull('device_fee')->orWhere('device_fee', 0)),
                     ),
             ])
             ->headerActions([

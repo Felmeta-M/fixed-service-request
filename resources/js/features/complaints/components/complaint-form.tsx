@@ -9,6 +9,7 @@ import { ComplaintFormValues, complaintSchema, DynamicTroubleReason, ServiceLook
 import { useForm } from '@inertiajs/react';
 import { CheckCircle2, Loader2, Search } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 type CreateComplaintMutation = {
     mutate: (
@@ -246,7 +247,13 @@ export function ComplaintForm({
                         Service Number <Required />
                     </label>
                     <div className="relative">
-                        <Input value={data.access_number} onChange={(e) => handleServiceNumberChange(e.target.value)} className="pr-12" />
+                        <Input
+                            value={data.access_number}
+                            onChange={(e) => handleServiceNumberChange(e.target.value)}
+                            className={cn(
+                                'pr-12 focus-visible:border-2 focus-visible:border-primary focus-visible:ring-0 focus-visible:ring-offset-0',
+                            )}
+                        />
                         <button
                             type="button"
                             onClick={handleServiceLookup}
@@ -288,6 +295,9 @@ export function ComplaintForm({
                             const value = e.target.value.replace(/[^0-9+]/g, '').slice(0, 13);
                             setData('mobile_no', value);
                         }}
+                        className={cn(
+                            'focus-visible:border-2 focus-visible:border-primary focus-visible:ring-0 focus-visible:ring-offset-0',
+                        )}
                     />
                     {errors.mobile_no && <p className="text-sm text-red-600">{errors.mobile_no}</p>}
                 </div>
@@ -296,7 +306,13 @@ export function ComplaintForm({
                     <label className="text-sm font-medium">
                         Contact Person <Required />
                     </label>
-                    <Input value={data.contact_person} onChange={(e) => setData('contact_person', e.target.value)} />
+                    <Input
+                        value={data.contact_person}
+                        onChange={(e) => setData('contact_person', e.target.value)}
+                        className={cn(
+                            'focus-visible:border-2 focus-visible:border-primary focus-visible:ring-0 focus-visible:ring-offset-0',
+                        )}
+                    />
                     {errors.contact_person && <p className="text-sm text-red-600">{errors.contact_person}</p>}
                 </div>
 
@@ -320,7 +336,11 @@ export function ComplaintForm({
                         }}
                         disabled={!lookupDone && troubleReasons === FALLBACK_REASONS}
                     >
-                        <SelectTrigger>
+                        <SelectTrigger
+                            className={cn(
+                                'focus-visible:border-2 focus-visible:border-primary focus-visible:ring-0 focus-visible:ring-offset-0',
+                            )}
+                        >
                             <SelectValue placeholder="Select trouble reason" />
                         </SelectTrigger>
                         <SelectContent>
@@ -339,7 +359,14 @@ export function ComplaintForm({
 
                 <div className={`space-y-1 ${compact ? '' : 'lg:col-span-2'}`}>
                     <label className="text-sm font-medium">Description {isDescriptionRequired && <Required />}</label>
-                    <Textarea rows={compact ? 3 : 5} value={data.tt_description || ''} onChange={(e) => setData('tt_description', e.target.value)} />
+                    <Textarea
+                        rows={compact ? 3 : 5}
+                        value={data.tt_description || ''}
+                        onChange={(e) => setData('tt_description', e.target.value)}
+                        className={cn(
+                            'focus-visible:border-2 focus-visible:border-primary focus-visible:ring-0 focus-visible:ring-offset-0',
+                        )}
+                    />
                     {errors.tt_description && <p className="text-sm text-red-600">{errors.tt_description}</p>}
                 </div>
 

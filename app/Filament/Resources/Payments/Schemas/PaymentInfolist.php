@@ -17,13 +17,13 @@ class PaymentInfolist
                 TextEntry::make('customer_code')
                     ->label('Customer Code')
                     ->copyable(),
-                TextEntry::make('survey_request.contact_person')
+                TextEntry::make('survey_order.contact_person')
                     ->label('Contact Person')
                     ->placeholder('-'),
-                TextEntry::make('survey_request.contact_no')
+                TextEntry::make('survey_order.contact_no')
                     ->label('Contact No.')
                     ->placeholder('-'),
-                TextEntry::make('survey_request.contact_email')
+                TextEntry::make('survey_order.contact_email')
                     ->label('Contact Email')
                     ->placeholder('-'),
                 TextEntry::make('customer_survey_order_id')

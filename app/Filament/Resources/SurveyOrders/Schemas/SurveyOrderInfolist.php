@@ -101,11 +101,11 @@ class SurveyOrderInfolist
                         TextEntry::make('zone_code')
                             ->label('Zone Code')
                             ->placeholder('-'),
-                        TextEntry::make('lat')
+                        TextEntry::make('latitude')
                             ->label('Latitude')
                             ->numeric()
                             ->placeholder('-'),
-                        TextEntry::make('long')
+                        TextEntry::make('longitude')
                             ->label('Longitude')
                             ->numeric()
                             ->placeholder('-'),

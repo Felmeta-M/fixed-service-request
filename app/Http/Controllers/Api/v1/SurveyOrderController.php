@@ -685,6 +685,11 @@ class SurveyOrderController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
+            \Log::error('SurveyOrder database error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Database error occurred.',
@@ -787,8 +792,8 @@ class SurveyOrderController extends Controller
             'survey_orders.media_type',
             'survey_orders.line_indicator',
             'survey_orders.survey_failure_reason',
-            'survey_orders.lat',
-            'survey_orders.long',
+            'survey_orders.latitude',
+            'survey_orders.longitude',
             'survey_orders.customer_latitude',
             'survey_orders.customer_longitude',
             'survey_orders.with_device',

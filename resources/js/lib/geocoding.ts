@@ -34,8 +34,8 @@ interface GeocodeResponse {
 export async function reverseGeocode(lat: number, lng: number): Promise<string> {
     try {
         const response = await apiClient.post<GeocodeResponse>('/geocode/reverse', {
-            lat,
-            lng,
+            latitude: lat,
+            longitude: lng,
         });
 
         if (response.success && response.results?.length > 0) {

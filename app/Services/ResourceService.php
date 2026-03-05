@@ -296,6 +296,7 @@ XML;
         $shortestResource['customer_latitude'] = isset($data['latitude']) ? round((float) $data['latitude'], 8) : null;
         $shortestResource['customer_longitude'] = isset($data['longitude']) ? round((float) $data['longitude'], 8) : null;
 
+
         return ApiResponse::success($shortestResource, message: 'Resource found');
     }
 

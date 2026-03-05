@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\SurveyOrders;
 
 use App\Filament\Resources\SurveyOrders\Pages\CreateSurveyOrder;
-use App\Filament\Resources\SurveyOrders\Pages\EditSurveyOrder;
 use App\Filament\Resources\SurveyOrders\Pages\ListSurveyOrders;
 use App\Filament\Resources\SurveyOrders\Pages\ViewSurveyOrder;
 use App\Filament\Resources\SurveyOrders\Schemas\SurveyOrderForm;
@@ -58,7 +57,6 @@ class SurveyOrderResource extends Resource
             'index' => ListSurveyOrders::route('/'),
             'create' => CreateSurveyOrder::route('/create'),
             'view' => ViewSurveyOrder::route('/{record}'),
-            'edit' => EditSurveyOrder::route('/{record}/edit'),
         ];
     }
 

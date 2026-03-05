@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->string('payment_order_id')->nullable();
             $table->string('trans_id')->nullable()->unique();
             $table->decimal('total_amount', 12, 4);
-            $table->decimal('cable_charge', 12, 2);
+            $table->decimal('cable_charge', 20, 2);
             $table->string('status')->default('pending');
             $table->json('service_details')->nullable();
             $table->json('payload')->nullable();

@@ -22,7 +22,7 @@ enum FFDServiceProvisionStatus: int
             self::Suspended => 'Suspended',
             self::Processing => 'Processing',
             self::Cancelled => 'Cancelled',
-            self::Waiting => 'Waiting Subscription',
+            self::Waiting => 'Waiting',
             self::Failed => 'Failed',
             self::Completed => 'Completed',
         };
@@ -95,30 +95,30 @@ enum FFDServiceProvisionStatus: int
 
         return match ($this) {
             self::Created => match (true) {
-                    $isManual && !$hasSubscription => 'Waiting',
-                    default => $this->label(),
-                },
+                $isManual && !$hasSubscription => 'Waiting',
+                default => $this->label(),
+            },
             self::Processing => match (true) {
-                    $isManual && !$hasSubscription => 'Waiting',
-                    default => $this->label(),
-                },
+                $isManual && !$hasSubscription => 'Waiting',
+                default => $this->label(),
+            },
             self::Waiting => match (true) {
-                    $hasSubscription => 'Order Waiting',
-                    $isManual && !$hasSubscription => 'Waiting',
-                    !$hasSubscription && $isPaid => 'Paid',
-                    !$hasSubscription => 'Waiting Survey',
-                    default => $this->label(),
-                },
+                $hasSubscription => 'Order Waiting',
+                $isManual && !$hasSubscription => 'Waiting',
+                !$hasSubscription && $isPaid => 'Paid',
+                !$hasSubscription => 'Waiting Survey',
+                default => $this->label(),
+            },
             self::Completed => match (true) {
-                    $hasSubscription => 'Order Completed', // Can be changed to "Service Activation" or any other label
-                    $isManual && !$deviceSelected && !$hasSubscription => 'Device Selection',
-                    $isManual && $deviceSelected && $hasPayment && !$isPaid && !$hasSubscription => 'Pending Payment',
-                    $isManual && $deviceSelected && $isPaid && !$hasSubscription => 'Paid',
-                    $isManual && $deviceSelected && !$hasPayment && !$hasSubscription => 'Ready',
-                    !$isManual && !$hasSubscription && $hasPayment && !$isPaid => 'Pending Payment',
-                    !$isManual && !$hasSubscription => 'Survey Completed',
-                    default => $this->label(),
-                },
+                $hasSubscription => 'Order Completed', // Can be changed to "Service Activation" or any other label
+                $isManual && !$deviceSelected && !$hasSubscription => 'Device Selection',
+                $isManual && $deviceSelected && $hasPayment && !$isPaid && !$hasSubscription => 'Pending Payment',
+                $isManual && $deviceSelected && $isPaid && !$hasSubscription => 'Paid',
+                $isManual && $deviceSelected && !$hasPayment && !$hasSubscription => 'Ready',
+                !$isManual && !$hasSubscription && $hasPayment && !$isPaid => 'Pending Payment',
+                !$isManual && !$hasSubscription => 'Survey Completed',
+                default => $this->label(),
+            },
             default => $this->label(),
         };
     }

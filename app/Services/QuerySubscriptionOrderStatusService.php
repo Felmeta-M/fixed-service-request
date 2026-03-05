@@ -51,15 +51,22 @@ class QuerySubscriptionOrderStatusService extends BaseApiService
     {
         try {
             // BSS restriction: interval between StartTime and EndTime must be < 1 month.
-            // For our use-case (single subscription order), a 7‑day window is sufficient.
+            // Default window is 7 days, but we also hard‑cap any caller‑supplied range to 30 days
+            // to avoid vendor error "The interval between StartTime and EndTime cannot exceed one month".
             $end = $endTime ? \Carbon\Carbon::createFromFormat('YmdHis', $endTime) : now();
             $start = $startTime
                 ? \Carbon\Carbon::createFromFormat('YmdHis', $startTime)
                 : $end->copy()->subDays(7);
 
-            // Ensure start is not after end and clamp to max 7 days window.
+            // Ensure start is not after end.
             if ($start->gt($end)) {
                 $start = $end->copy()->subDays(7);
+            }
+
+            // Clamp the interval to a maximum of 30 days to satisfy BSS constraint.
+            $maxIntervalDays = 30;
+            if ($end->diffInDays($start) > $maxIntervalDays) {
+                $start = $end->copy()->subDays($maxIntervalDays);
             }
 
             $data = [

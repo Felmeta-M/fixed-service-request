@@ -692,7 +692,7 @@ class SurveyOrderController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Database error occurred.',
+                'message' => 'Something went wrong. Please try again later.',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         } catch (InvalidArgumentException $e) {
             return response()->json([
@@ -1328,13 +1328,13 @@ class SurveyOrderController extends Controller
                 'errors' => $e->errors(),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (QueryException $e) {
-            AppLogger::business()->error('Manual survey database error', [
+            \Log::error('Manual survey database error', [
                 'error' => $e->getMessage(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Database error occurred while creating manual survey order.',
+                'message' => 'Something went wrong. Please try again later.',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         } catch (InvalidArgumentException $e) {
             return response()->json([

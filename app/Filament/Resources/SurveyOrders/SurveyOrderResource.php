@@ -75,6 +75,8 @@ class SurveyOrderResource extends Resource
             }
         }
 
+        $query->with('payment');
+
         return $query;
     }
 
@@ -82,6 +84,6 @@ class SurveyOrderResource extends Resource
     {
         return parent::getRecordRouteBindingEloquentQuery()
             ->withoutGlobalScopes([SoftDeletingScope::class])
-            ->with(['device', 'voiceDevice']);
+            ->with(['device', 'voiceDevice', 'payment']);
     }
 }

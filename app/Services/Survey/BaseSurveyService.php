@@ -59,7 +59,6 @@ abstract class BaseSurveyService extends BaseApiService
         ];
 
         $resource = self::decrypt($resource);
-        \Log::info('resource decrypted', [$resource]);
 
         if ($resource === null) {
             AppLogger::api()->error('Resource data validation failed - invalid or tampered information', [
@@ -78,8 +77,6 @@ abstract class BaseSurveyService extends BaseApiService
         // Frontend only needs to send main_offer_id and survey_address_info
         // ============================================================
         $data = $this->applyDefaults($data, $resource);
-
-        \Log::info('data after apply defaults', [$data]);
 
         $xml = $this->buildXml($data, $resource);
 

@@ -20,10 +20,14 @@ class Dashboard extends BaseDashboard
             ->components([
                 DatePicker::make('date_from')
                     ->label('From date')
-                    ->native(false),
+                    ->placeholder('Select a date (DD/MM/YYYY)')
+                    ->displayFormat('d/m/Y')
+                    ->default(now()->startOfMonth()),
                 DatePicker::make('date_to')
                     ->label('To date')
-                    ->native(false),
+                    ->placeholder('Select a date (DD/MM/YYYY)')
+                    ->displayFormat('d/m/Y')
+                    ->default(now()->endOfMonth()),
                 Actions::make([
                     Action::make('clear')
                         ->label('Clear')

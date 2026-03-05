@@ -330,6 +330,14 @@ class SurveyOrderController extends Controller
                                 'zone_code' => $zoneCode,
                             ];
 
+                            // Set completed_date once when survey first transitions to Completed
+                            if (
+                                $order->status !== FFDServiceProvisionStatus::Completed->value &&
+                                empty($order->completed_date)
+                            ) {
+                                $surveyResultData['completed_date'] = now();
+                            }
+
                             // STRICT: Never touch device fields if device is already selected
                             // Device fields are managed exclusively by update-device endpoint
                             $deviceAlreadySelected = $order->with_device !== null;
@@ -444,6 +452,7 @@ class SurveyOrderController extends Controller
             'with_device',
             'device_id',
             'device_voice_id',
+            'completed_date',
             'updated_at',
         ];
         foreach ($surveyResultUpdates as $orderId => $fields) {

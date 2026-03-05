@@ -26,11 +26,12 @@ class SurveyOrderStatsWidget extends BaseWidget
         $dateFrom = $this->pageFilters['date_from'] ?? null;
         $dateTo = $this->pageFilters['date_to'] ?? null;
 
-        // Survey-phase: orders that have NOT yet entered subscription (single query to avoid N+1)
+        // Survey-phase: orders that have NOT yet entered subscription.
+        // Date filters apply on completed_date so stats reflect survey completion window.
         $query = SurveyOrder::query()
             ->whereNull('customer_subscription_order_id')
-            ->when($dateFrom, fn (Builder $q) => $q->whereDate('created_at', '>=', $dateFrom))
-            ->when($dateTo, fn (Builder $q) => $q->whereDate('created_at', '<=', $dateTo));
+            ->when($dateFrom, fn (Builder $q) => $q->whereDate('completed_date', '>=', $dateFrom))
+            ->when($dateTo, fn (Builder $q) => $q->whereDate('completed_date', '<=', $dateTo));
 
         $countsByStatus = (clone $query)->selectRaw('status, count(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status');
 

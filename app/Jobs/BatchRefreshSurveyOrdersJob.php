@@ -56,24 +56,11 @@ class BatchRefreshSurveyOrdersJob implements ShouldQueue
         EcafService $ecafService
     ): void {
         if (empty($this->orderIds)) {
-            // AppLogger::business()->info('Batch refresh survey orders skipped: no order IDs', [
-            //     'job' => 'BatchRefreshSurveyOrdersJob',
-            // ]);
             return;
         }
 
-        // AppLogger::business()->info('Batch refresh survey orders started', [
-        //     'job' => 'BatchRefreshSurveyOrdersJob',
-        //     'order_count' => count($this->orderIds),
-        //     'order_ids' => $this->orderIds,
-        // ]);
-
         $orders = $this->loadOrders();
         if ($orders->isEmpty()) {
-            // AppLogger::business()->warning('Batch refresh survey orders: no orders loaded', [
-            //     'job' => 'BatchRefreshSurveyOrdersJob',
-            //     'requested_ids' => $this->orderIds,
-            // ]);
             return;
         }
 
@@ -225,6 +212,14 @@ class BatchRefreshSurveyOrdersJob implements ShouldQueue
                                 'survey_failure_reason' => null,
                                 'zone_code' => $zoneCode,
                             ];
+
+                            // Set completed_date once when survey first transitions to Completed
+                            if (
+                                $order->status !== FFDServiceProvisionStatus::Completed->value &&
+                                empty($order->completed_date)
+                            ) {
+                                $surveyResultData['completed_date'] = now();
+                            }
 
                             $deviceAlreadySelected = $order->with_device !== null;
 
@@ -410,6 +405,7 @@ class BatchRefreshSurveyOrdersJob implements ShouldQueue
             'with_device',
             'device_id',
             'device_voice_id',
+            'completed_date',
             'updated_at',
         ];
 

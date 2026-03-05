@@ -30,6 +30,10 @@ class SurveyOrder extends Model
         'voice_service_number',
         'data_service_number',
         'with_device',
+        'customer_survey_order_id',
+        'customer_subscription_order_id',
+        'completed_date',
+        'subscribed_at',
     ];
 
     /**

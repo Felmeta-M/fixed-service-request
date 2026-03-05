@@ -72,6 +72,11 @@ class SurveyOrdersTable
                     ->dateTime('M j, Y')
                     ->sortable()
                     ->placeholder('-'),
+                TextColumn::make('subscribed_at')
+                    ->label('Subscribed')
+                    ->dateTime('M j, Y H:i')
+                    ->sortable()
+                    ->placeholder('-'),
                 TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime('M j, Y H:i')

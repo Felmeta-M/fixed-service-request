@@ -17,7 +17,9 @@
 # Environment (never bake into image; use env_file at runtime)
 .env.backup
 .env.local
-env.testing
+.env.testing
+.env.production
+.env.staging
 
 # Dependencies (rebuilt in container)
 /node_modules
@@ -116,3 +118,5 @@ components.json
 .nuxt
 .astro
 .turbo
+
+fixed-services-config/*

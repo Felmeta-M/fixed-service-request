@@ -16,7 +16,7 @@ services:
     container_name: fbb_app
     restart: always
     env_file:
-      - .env.production
+      - .env
     volumes:
       # --- Immutable (comment out when using host-sync)
       - fbb_storage:/var/www/storage/app
@@ -141,9 +141,9 @@ services:
       # - .:/var/www
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     depends_on:
-      redis:
-        condition: service_healthy
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       pgbouncer:
         condition: service_healthy

@@ -133,13 +133,13 @@ services:
     ports:
       - "35432:5432"
     environment:
-      POSTGRES_DB: ffd
+      POSTGRES_DB: fbb
       POSTGRES_USER: sa
       POSTGRES_PASSWORD: secret
     volumes:
       - pgdata_dev:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sa -d ffd"]
+      test: ["CMD-SHELL", "pg_isready -U sa -d fbb"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -168,12 +168,12 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: "postgres://sa:secret@postgres:5432/ffd"
+      DATABASE_URL: "postgres://sa:secret@postgres:5432/fbb"
     volumes:
       - ./pgbouncer.dev.ini:/etc/pgbouncer/pgbouncer.ini:ro
       - ../userlist.txt:/etc/pgbouncer/userlist.txt:ro
     healthcheck:
-      test: ["CMD-SHELL", "PGPASSWORD=secret psql -h localhost -p 6432 -U sa -d ffd -c 'SELECT 1' > /dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "PGPASSWORD=secret psql -h localhost -p 6432 -U sa -d fbb -c 'SELECT 1' > /dev/null 2>&1 || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 5

@@ -85,7 +85,7 @@ class Handler extends ExceptionHandler
             if ($request->expectsJson() || $request->is('api/*')) {
                 return $this->renderApiException($e, $request);
             }
-            
+
             // Handle web/Inertia requests with proper error pages
             return $this->renderInertiaException($e, $request);
         });
@@ -96,7 +96,7 @@ class Handler extends ExceptionHandler
             // Example: \Sentry\captureException($e);
         });
     }
-    
+
     /**
      * Render exception as Inertia error page for web requests
      */
@@ -106,7 +106,7 @@ class Handler extends ExceptionHandler
         $status = 500;
         $title = 'Server Error';
         $message = 'An unexpected error occurred. Please try again later.';
-        
+
         if ($e instanceof NotFoundHttpException) {
             $status = 404;
             $title = 'Page Not Found';
@@ -137,21 +137,21 @@ class Handler extends ExceptionHandler
             $title = $this->getHttpStatusTitle($status);
             $message = $e->getMessage() ?: $this->getHttpStatusMessage($status);
         }
-        
+
         // For non-HTTP exceptions in production, show generic error
         if (!config('app.debug') && $status === 500) {
             $message = 'An unexpected error occurred. Please try again later.';
         } elseif (config('app.debug') && $status === 500) {
             $message = $e->getMessage();
         }
-        
+
         return Inertia::render('errors/error', [
             'status' => $status,
             'title' => $title,
             'message' => $message,
         ])->toResponse($request)->setStatusCode($status);
     }
-    
+
     /**
      * Get human-readable title for HTTP status codes
      */
@@ -174,7 +174,7 @@ class Handler extends ExceptionHandler
             default => 'Error',
         };
     }
-    
+
     /**
      * Get human-readable message for HTTP status codes
      */
@@ -231,7 +231,7 @@ class Handler extends ExceptionHandler
             // Check if this is a public endpoint that doesn't require auth
             $publicEndpoints = ['tt/create-guest', 'tt/lookup-service'];
             $currentPath = $request->path();
-            
+
             foreach ($publicEndpoints as $endpoint) {
                 if (str_contains($currentPath, $endpoint)) {
                     // This shouldn't happen on public endpoints, but if it does,
@@ -243,7 +243,7 @@ class Handler extends ExceptionHandler
                     );
                 }
             }
-            
+
             return ApiResponse::unauthorized('Please log in to access this feature.');
         }
 
@@ -302,13 +302,13 @@ class Handler extends ExceptionHandler
 
         // Handle database exceptions
         if ($e instanceof \PDOException) {
-            AppLogger::default()->critical('Database error', [
+            \Log::critical('Database error', [
                 'exception' => $e->getMessage(),
                 'code' => $e->getCode(),
             ]);
 
             return ApiResponse::error(
-                message: 'A database error occurred. Please try again later.',
+                message: 'Something went wrong. Please try again later.',
                 errorCode: ErrorCode::INTERNAL_ERROR,
                 status: 500
             );
@@ -488,10 +488,12 @@ class Handler extends ExceptionHandler
     protected function determineLogger(Throwable $e): AppLogger
     {
         // Security exceptions
-        if ($e instanceof AuthenticationException ||
+        if (
+            $e instanceof AuthenticationException ||
             $e instanceof AuthorizationException ||
             $e instanceof LaravelAuthException ||
-            $e instanceof TokenMismatchException) {
+            $e instanceof TokenMismatchException
+        ) {
             return AppLogger::security();
         }
 
@@ -501,8 +503,10 @@ class Handler extends ExceptionHandler
         }
 
         // External service exceptions
-        if ($e instanceof ExternalServiceException ||
-            $e instanceof ConnectionException) {
+        if (
+            $e instanceof ExternalServiceException ||
+            $e instanceof ConnectionException
+        ) {
             return AppLogger::api();
         }
 
@@ -532,16 +536,20 @@ class Handler extends ExceptionHandler
         }
 
         // Critical: Infrastructure issues
-        if ($e instanceof \PDOException ||
-            $e instanceof \RedisException) {
+        if (
+            $e instanceof \PDOException ||
+            $e instanceof \RedisException
+        ) {
             return 'critical';
         }
 
         // Error: Business and service failures
-        if ($e instanceof BusinessException ||
+        if (
+            $e instanceof BusinessException ||
             $e instanceof ExternalServiceException ||
             $e instanceof PaymentException ||
-            $e instanceof ConnectionException) {
+            $e instanceof ConnectionException
+        ) {
             return 'error';
         }
 

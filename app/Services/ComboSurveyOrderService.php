@@ -200,10 +200,10 @@ XML;
             ...$data,
             'customer_survey_order_id' => $customerSurveyOrderId,
             'status' => FFDServiceProvisionStatus::Completed->value,
-            'cable_length' => $resourceCheck['distance'] ?? null,
+            'cable_length' => isset($resourceCheck['distance']) ? (float) $resourceCheck['distance'] : null,
             'cable_type' => $resourceCheck['cable_type'] ?? null,
-            'lat' => $resourceCheck['latitude'] ?? null,
-            'long' => $resourceCheck['longitude'] ?? null,
+            'latitude' => $resourceCheck['latitude'] ?? null,
+            'longitude' => $resourceCheck['longitude'] ?? null,
             'area_code' => $areaCode,
             'area_name' => $areaName,
         ]);

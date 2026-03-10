@@ -25,24 +25,29 @@ class PaymentStatsWidget extends BaseWidget
         $dateFrom = $this->pageFilters['date_from'] ?? null;
         $dateTo = $this->pageFilters['date_to'] ?? null;
 
-        $query = Payment::query()
+        $createdAtQuery = Payment::query()
             ->whereNull('deleted_at')
-            ->when($dateFrom, fn(Builder $q) => $q->whereDate('created_at', '>=', $dateFrom))
-            ->when($dateTo, fn(Builder $q) => $q->whereDate('created_at', '<=', $dateTo));
+            ->when($dateFrom, fn (Builder $q) => $q->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn (Builder $q) => $q->whereDate('created_at', '<=', $dateTo));
 
-        $total = (clone $query)->count();
-        $paid = (clone $query)->where('status', Payment::STATUS_PAID)->whereNotNull('trans_id')->count();
-        $pending = (clone $query)->where('status', Payment::STATUS_PENDING)->count();
-        $failed = (clone $query)->where('status', Payment::STATUS_FAILED)->count();
-        $cancelled = (clone $query)->where('status', Payment::STATUS_CANCELLED)->count();
-        $totalRevenue = (clone $query)->where('status', Payment::STATUS_PAID)->whereNotNull('trans_id')->sum('total_amount');
+        $webhookNotifiedQuery = Payment::query()
+            ->whereNull('deleted_at')
+            ->when($dateFrom, fn (Builder $q) => $q->whereDate('webhook_notified_at', '>=', $dateFrom))
+            ->when($dateTo, fn (Builder $q) => $q->whereDate('webhook_notified_at', '<=', $dateTo));
+
+        $total = (clone $createdAtQuery)->count();
+        $paid = (clone $webhookNotifiedQuery)->where('status', Payment::STATUS_PAID)->whereNotNull('trans_id')->count();
+        $pending = (clone $createdAtQuery)->where('status', Payment::STATUS_PENDING)->count();
+        $failed = (clone $createdAtQuery)->where('status', Payment::STATUS_FAILED)->count();
+        $cancelled = (clone $createdAtQuery)->where('status', Payment::STATUS_CANCELLED)->count();
+        $totalRevenue = (clone $webhookNotifiedQuery)->where('status', Payment::STATUS_PAID)->whereNotNull('trans_id')->sum('total_amount');
 
 
         $successRate = $total > 0 ? round(($paid / $total) * 100, 1) : 0;
 
         return [
             Stat::make('Total attempts', number_format($total))
-                ->description('Active records in period (excl. soft-deleted)')
+                ->description('By created date')
                 ->icon('heroicon-o-credit-card')
                 ->color('gray'),
             Stat::make('Paid', number_format($paid))

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\SurveyOrders\Schemas;
 
-use App\Enums\FFDServiceProvisionStatus;
 use App\Models\SurveyOrder;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -31,15 +30,8 @@ class SurveyOrderInfolist
                         TextEntry::make('status')
                             ->label('Status')
                             ->badge()
-                            ->formatStateUsing(fn(int $state): string => FFDServiceProvisionStatus::tryFrom($state)?->label() ?? 'Unknown')
-                            ->color(fn(int $state): string => match ($state) {
-                                FFDServiceProvisionStatus::Completed->value => 'success',
-                                FFDServiceProvisionStatus::Waiting->value,
-                                FFDServiceProvisionStatus::Processing->value => 'warning',
-                                FFDServiceProvisionStatus::Failed->value => 'danger',
-                                FFDServiceProvisionStatus::Cancelled->value => 'gray',
-                                default => 'primary',
-                            }),
+                            ->formatStateUsing(fn($state, $record): string => $record->getDisplayStatusLabel())
+                            ->color(fn($state, $record): string => $record->getDisplayStatusColor()),
                         TextEntry::make('survey_type')
                             ->label('Survey Type'),
                         IconEntry::make('survey_is_manual')
@@ -101,11 +93,11 @@ class SurveyOrderInfolist
                         TextEntry::make('zone_code')
                             ->label('Zone Code')
                             ->placeholder('-'),
-                        TextEntry::make('lat')
+                        TextEntry::make('latitude')
                             ->label('Latitude')
                             ->numeric()
                             ->placeholder('-'),
-                        TextEntry::make('long')
+                        TextEntry::make('longitude')
                             ->label('Longitude')
                             ->numeric()
                             ->placeholder('-'),

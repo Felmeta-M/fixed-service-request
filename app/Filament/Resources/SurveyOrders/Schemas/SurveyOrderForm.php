@@ -99,11 +99,11 @@ class SurveyOrderForm
                         TextInput::make('zone_code')
                             ->label('Zone Code')
                             ->disabled(),
-                        TextInput::make('lat')
+                        TextInput::make('latitude')
                             ->label('Latitude')
                             ->numeric()
                             ->disabled(),
-                        TextInput::make('long')
+                        TextInput::make('longitude')
                             ->label('Longitude')
                             ->numeric()
                             ->disabled(),

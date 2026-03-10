@@ -75,8 +75,8 @@ class SurveyOrder extends Model
         'media_type',
         'line_indicator',
         'survey_failure_reason',
-        'lat',
-        'long',
+        'latitude',
+        'longitude',
         'customer_latitude',
         'customer_longitude',
         'with_device',
@@ -524,6 +524,56 @@ class SurveyOrder extends Model
     // Permission Methods - Single Source of Truth
     // Static methods contain the logic, instance methods are wrappers
     // ==========================================
+
+    /**
+     * Get the same display status label used for customer-facing API (index/status).
+     * Single source of truth for "Order Waiting", "Survey Completed", "Pending Payment", etc.
+     */
+    public function getDisplayStatusLabel(): string
+    {
+        $statusEnum = FFDServiceProvisionStatus::tryFrom((int) ($this->status ?? 0));
+        if ($statusEnum === null) {
+            return 'Unknown';
+        }
+
+        $hasSubscription = !empty($this->customer_subscription_order_id);
+        $p = $this->payment;
+        $paymentAmount = (float) ($p?->total_amount ?? 0);
+        $paymentTransId = $p?->trans_id ?? null;
+        $isPaid = !empty($paymentTransId);
+        $hasPayment = $paymentAmount > 0;
+
+        $rawManual = $this->survey_is_manual ?? false;
+        $isManual = $rawManual === true || $rawManual === 't' || $rawManual === 1 || $rawManual === '1';
+
+        $rawWithDevice = $this->with_device ?? null;
+        $deviceSelected = $rawWithDevice !== null;
+
+        $context = [
+            'has_subscription' => $hasSubscription,
+            'is_manual' => $isManual,
+            'device_selected' => $deviceSelected,
+            'has_payment' => $hasPayment,
+            'is_paid' => $isPaid,
+        ];
+
+        return $statusEnum->businessLabel($context);
+    }
+
+    /**
+     * Filament badge color for display status (matches customer-facing status meaning).
+     */
+    public function getDisplayStatusColor(): string
+    {
+        $label = $this->getDisplayStatusLabel();
+        return match ($label) {
+            'Order Completed', 'Survey Completed', 'Paid', 'Ready' => 'success',
+            'Failed' => 'danger',
+            'Cancelled' => 'gray',
+            'Order Waiting', 'Waiting', 'Waiting Survey', 'Device Selection', 'Pending Payment', 'Processing' => 'warning',
+            default => 'primary',
+        };
+    }
 
     public function canContinue(): bool
     {

@@ -16,7 +16,7 @@ services:
     container_name: fbb_app
     restart: always
     env_file:
-      - .env.production
+      - .env
     volumes:
       # --- Immutable (comment out when using host-sync)
       - fbb_storage:/var/www/storage/app
@@ -81,7 +81,6 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
-    user: www-data
     command: >
       sh -c "while true; do
         php artisan schedule:run --verbose --no-interaction;
@@ -118,7 +117,6 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
-    user: www-data
     command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=90"]
     networks:
       - fbb_net
@@ -143,15 +141,14 @@ services:
       # - .:/var/www
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     depends_on:
-      redis:
-        condition: service_healthy
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       pgbouncer:
         condition: service_healthy
     environment:
       DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
-    user: www-data
     command: ["php", "artisan", "queue:work", "--queue=sms", "--sleep=2", "--tries=3", "--timeout=30"]
     networks:
       - fbb_net
@@ -162,6 +159,7 @@ services:
       options:
         max-size: "50m"
         max-file: "3"
+
 
   nginx:
     image: nginx:alpine

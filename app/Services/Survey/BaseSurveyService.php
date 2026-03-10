@@ -198,28 +198,57 @@ abstract class BaseSurveyService extends BaseApiService
                 $deviceVoiceOfferId = $deviceVoice?->offer_id;
             }
 
+            // Derive latitude/longitude for local DB from decrypted resource only.
+            $latitude = isset($resource['latitude']) && $resource['latitude'] !== ''
+                ? round((float) $resource['latitude'], 8)
+                : null;
+            $longitude = isset($resource['longitude']) && $resource['longitude'] !== ''
+                ? round((float) $resource['longitude'], 8)
+                : null;
+
             $survey = SurveyOrder::create([
-                ...$data,
+                // Explicitly map only known columns to avoid leaking encrypted fields or nested arrays.
+                'customer_id' => $data['customer_id'] ?? null,
+                'customer_code' => $data['customer_code'] ?? $this->customerCode(),
+                'customer_survey_order_id' => $surveyOrderId,
+                'main_offer_id' => (int) ($data['main_offer_id'] ?? 0),
+                'voice_service_number' => $voiceServiceNumber,
+                'data_service_number' => $dataServiceNumber,
+                'internet_account' => $data['internet_account'] ?? null,
+                'internet_password' => $data['internet_password'] ?? null,
+                'survey_type' => $data['survey_type'] ?? 'EIC08',
+                'telecom_region' => $data['telecom_region'] ?? $areaCode,
+                'area_code' => $areaCode,
+                'area_name' => $areaName,
+                'oper_type' => $data['oper_type'] ?? 'A',
+                'customer_type' => $data['customer_type'] ?? 'residential',
                 'bandwidth' => $bandwidthKb,
+                'contact_person' => $data['contact_person'] ?? null,
+                'contact_no' => $data['contact_no'] ?? null,
+                'contact_email' => $data['contact_email'] ?? null,
+                'sec_contact_person' => $data['sec_contact_person'] ?? null,
+                'sec_contact_no' => $data['sec_contact_no'] ?? null,
+                'sec_contact_email' => $data['sec_contact_email'] ?? null,
+                'status' => $isManualSurvey ? FFDServiceProvisionStatus::Waiting->value : FFDServiceProvisionStatus::Completed->value,
+                'cancel_reason' => $data['cancel_reason'] ?? null,
                 'completed_date' => now(),
-                'with_device' => (bool) $data['with_device'],
+                'cable_length' => isset($resource['distance']) ? (float) $resource['distance'] : null,
+                'cable_type' => $cableType,
+                'cable_charge' => $data['cable_charge'] ?? null,
+                'other_related_cost' => $data['other_related_cost'] ?? null,
+                'media_type' => $mediaType,
+                'line_indicator' => $data['line_indicator'] ?? null,
+                'survey_failure_reason' => null,
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'customer_latitude' => isset($data['customer_latitude']) ? round((float) $data['customer_latitude'], 8) : null,
+                'customer_longitude' => isset($data['customer_longitude']) ? round((float) $data['customer_longitude'], 8) : null,
+                'with_device' => (bool) ($data['with_device'] ?? false),
                 'device_id' => $deviceId,
                 'device_voice_id' => $deviceVoiceId,
                 'device_offer_id' => $deviceOfferId,
                 'device_voice_offer_id' => $deviceVoiceOfferId,
-                'voice_service_number' => $voiceServiceNumber,
-                'data_service_number' => $dataServiceNumber,
-                'customer_survey_order_id' => $surveyOrderId,
-                'status' => $isManualSurvey ? FFDServiceProvisionStatus::Waiting->value : FFDServiceProvisionStatus::Completed->value,
-                'cable_length' => $resource['distance'] ?? null,
-                'cable_type' => $cableType,
-                'media_type' => $mediaType,
-                'lat' => isset($resource['latitude']) ? round((float) $resource['latitude'], 8) : null,
-                'long' => isset($resource['longitude']) ? round((float) $resource['longitude'], 8) : null,
-                'customer_latitude' => isset($data['customer_latitude']) ? round((float) $data['customer_latitude'], 8) : null,
-                'customer_longitude' => isset($data['customer_longitude']) ? round((float) $data['customer_longitude'], 8) : null,
-                'area_code' => $areaCode,
-                'area_name' => $areaName,
+                'survey_is_manual' => $isManualSurvey,
                 'zone_code' => $zoneCode,
             ]);
 

@@ -104,7 +104,7 @@ enum FFDServiceProvisionStatus: int
             },
             self::Waiting => match (true) {
                 $hasSubscription => 'Order Waiting',
-                $isManual && !$hasSubscription => 'Waiting',
+                $isManual && !$hasSubscription => 'Waiting Survey',
                 !$hasSubscription && $isPaid => 'Paid',
                 !$hasSubscription => 'Waiting Survey',
                 default => $this->label(),

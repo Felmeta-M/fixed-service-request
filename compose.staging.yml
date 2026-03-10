@@ -1,5 +1,7 @@
 # Staging stack: clone of production with host sync. Uses .env.staging (copy of .env.production with ffd→fbb).
 # Run with: docker compose -f compose.staging.yml -p fbb_staging up -d
+#
+# Ports: <ServiceID><DefaultPort>. Staging ServiceID = 2. Host port = 2 + default (80→20080, 5432→25432, 6432→26432, 6379→26379).
 name: fbb_staging
 
 services:

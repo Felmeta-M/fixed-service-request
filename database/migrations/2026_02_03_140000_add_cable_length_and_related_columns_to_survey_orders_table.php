@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::table('survey_orders', function (Blueprint $table) {
             if (!Schema::hasColumn('survey_orders', 'cable_length')) {
-                $table->decimal('cable_length', 8, 2)->nullable()->after('id');
+                $table->decimal('cable_length', 20, 2)->nullable()->after('id');
             }
             if (!Schema::hasColumn('survey_orders', 'cable_type')) {
                 $table->string('cable_type')->nullable()->after('cable_length');
@@ -26,11 +26,11 @@ return new class extends Migration
             if (!Schema::hasColumn('survey_orders', 'other_related_cost')) {
                 $table->decimal('other_related_cost', 10, 2)->nullable()->after('cable_charge');
             }
-            if (!Schema::hasColumn('survey_orders', 'lat')) {
-                $table->decimal('lat', 10, 7)->nullable()->after('cable_charge');
+            if (!Schema::hasColumn('survey_orders', 'latitude')) {
+                $table->decimal('latitude', 10, 7)->nullable()->after('cable_charge');
             }
-            if (!Schema::hasColumn('survey_orders', 'long')) {
-                $table->decimal('long', 10, 7)->nullable()->after('lat');
+            if (!Schema::hasColumn('survey_orders', 'longitude')) {
+                $table->decimal('longitude', 10, 7)->nullable()->after('latitude');
             }
             if (!Schema::hasColumn('survey_orders', 'media_type')) {
                 $table->string('media_type', 20)->nullable()->after('long');
@@ -55,8 +55,8 @@ return new class extends Migration
                 'cable_type',
                 'cable_charge',
                 'other_related_cost',
-                'lat',
-                'long',
+                'latitude',
+                'longitude',
                 'media_type',
                 'line_indicator',
                 'survey_failure_reason',

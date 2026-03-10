@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\SurveyOrders\Tables;
 
-use App\Enums\FFDServiceProvisionStatus;
 use App\Filament\Resources\SurveyOrders\Exports\SurveyOrderExporter;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -43,15 +42,8 @@ class SurveyOrdersTable
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->formatStateUsing(fn(int $state): string => FFDServiceProvisionStatus::tryFrom($state)?->label() ?? 'Unknown')
-                    ->color(fn(int $state): string => match ($state) {
-                        FFDServiceProvisionStatus::Completed->value => 'success',
-                        FFDServiceProvisionStatus::Waiting->value,
-                        FFDServiceProvisionStatus::Processing->value => 'warning',
-                        FFDServiceProvisionStatus::Failed->value => 'danger',
-                        FFDServiceProvisionStatus::Cancelled->value => 'gray',
-                        default => 'primary',
-                    })
+                    ->formatStateUsing(fn($state, $record): string => $record->getDisplayStatusLabel())
+                    ->color(fn($state, $record): string => $record->getDisplayStatusColor())
                     ->sortable(),
                 TextColumn::make('bandwidth')
                     ->label('Bandwidth')
@@ -78,6 +70,11 @@ class SurveyOrdersTable
                 TextColumn::make('completed_date')
                     ->label('Completed')
                     ->dateTime('M j, Y')
+                    ->sortable()
+                    ->placeholder('-'),
+                TextColumn::make('subscribed_at')
+                    ->label('Subscribed')
+                    ->dateTime('M j, Y H:i')
                     ->sortable()
                     ->placeholder('-'),
                 TextColumn::make('created_at')
@@ -110,7 +107,6 @@ class SurveyOrdersTable
             ])
             ->recordActions([
                 ViewAction::make(),
-                EditAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

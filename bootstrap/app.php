@@ -93,7 +93,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             Cache::put($cursorKey, (int) max($ids));
-        })->everyFifteenMinutes()->name('check-survey-order-status');
+        })->hourly()->name('check-survey-order-status');
 
         // Batch refresh WAITING survey orders: cursor-based, same scaling approach
         $schedule->call(function () use ($chunkSize, $maxIdsPerRun) {
@@ -122,7 +122,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             Cache::put($cursorKey, (int) max($ids));
-        })->everyTenMinutes()->name('batch-refresh-survey-orders');
+        })->everyThirtyMinutes()->name('batch-refresh-survey-orders');
 
         // Periodically sync trouble tickets from third-party system
         $schedule->command('tickets:sync')->hourly()->name('sync-trouble-tickets');

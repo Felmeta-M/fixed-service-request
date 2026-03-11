@@ -81,7 +81,6 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
-    user: www-data
     command: >
       sh -c "while true; do
         php artisan schedule:run --verbose --no-interaction;
@@ -118,7 +117,6 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
-    user: www-data
     command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=90"]
     networks:
       - fbb_net
@@ -151,7 +149,6 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
-    user: www-data
     command: ["php", "artisan", "queue:work", "--queue=sms", "--sleep=2", "--tries=3", "--timeout=30"]
     networks:
       - fbb_net

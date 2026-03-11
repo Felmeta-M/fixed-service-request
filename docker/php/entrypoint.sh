@@ -10,12 +10,18 @@ if [ ! -f "$APP_DIR/vendor/autoload.php" ]; then
 fi
 
 # Ensure storage link exists: remove and re-link so public/storage -> storage/app/public is correct
-# (fixes broken/missing link after rebuild or when public_volume is mounted)
+# (fixes broken/missing link after rebuild or when public_volume is mounted).
+# When the container runs as a non-root user (e.g. www-data) and /var/www/public is not writable,
+# skip the command instead of throwing noisy permission errors in the logs.
 if [ -f "$APP_DIR/artisan" ]; then
-  echo "🔗 Recreating storage link..."
-  rm -f "$APP_DIR/public/storage" 2>/dev/null || true
-  php "$APP_DIR/artisan" storage:link 2>/dev/null || true
-  echo "✅ Storage link ready"
+  if [ -w "$APP_DIR/public" ]; then
+    echo "🔗 Recreating storage link..."
+    rm -f "$APP_DIR/public/storage" 2>/dev/null || true
+    php "$APP_DIR/artisan" storage:link 2>/dev/null || true
+    echo "✅ Storage link ready"
+  else
+    echo "⚠️ Skipping storage:link; $APP_DIR/public is not writable for user $(whoami)"
+  fi
 fi
 
 # Host-sync mode: when public_volume is not used, the bind mount (.:/var/www) hides the

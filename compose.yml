@@ -15,6 +15,7 @@ services:
         VITE_TURNSTILE_SITE_KEY: "REDACTED_TURNSTILE_SITE_KEY"
     container_name: fbb_app
     restart: always
+    user: "www-data"
     env_file:
       - .env.production
     volumes:
@@ -65,6 +66,7 @@ services:
       dockerfile: docker/php/Dockerfile
     container_name: fbb_scheduler
     restart: always
+    user: "www-data"
     env_file:
       - .env
     volumes:
@@ -102,6 +104,7 @@ services:
       dockerfile: docker/php/Dockerfile
     container_name: fbb_queue
     restart: always
+    user: "www-data"
     env_file:
       - .env
     volumes:
@@ -135,6 +138,7 @@ services:
       dockerfile: docker/php/Dockerfile
     container_name: fbb_queue_sms
     restart: always
+    user: "www-data"
     env_file:
       - .env
     volumes:

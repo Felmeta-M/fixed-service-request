@@ -80,7 +80,7 @@ services:
       pgbouncer:
         condition: service_healthy
     environment:
-      DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
+      DATABASE_URL: "pgsql://sa:secret@fbb_pgbouncer:6432/ffd"
     command: >
       sh -c "while true; do
         php artisan schedule:run --verbose --no-interaction;
@@ -116,7 +116,7 @@ services:
       pgbouncer:
         condition: service_healthy
     environment:
-      DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
+      DATABASE_URL: "pgsql://sa:secret@fbb_pgbouncer:6432/ffd"
     command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=90"]
     networks:
       - fbb_net
@@ -148,7 +148,7 @@ services:
       pgbouncer:
         condition: service_healthy
     environment:
-      DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
+      DATABASE_URL: "pgsql://sa:secret@fbb_pgbouncer:6432/ffd"
     command: ["php", "artisan", "queue:work", "--queue=sms", "--sleep=2", "--tries=3", "--timeout=30"]
     networks:
       - fbb_net
@@ -185,7 +185,7 @@ services:
 
   postgres:
     image: postgres:17
-    container_name: ffd_pgsql
+    container_name: fbb_pgsql
     restart: always
     ports:
       - "15432:5432"
@@ -228,7 +228,7 @@ services:
 
   pgbouncer:
     image: edoburu/pgbouncer:latest
-    container_name: ffd_pgbouncer
+    container_name: fbb_pgbouncer
     restart: always
     ports:
       - "16432:6432"

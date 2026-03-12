@@ -42,7 +42,7 @@ Route::get('/verification', fn() => Inertia::render('Verification'))->name('veri
 Route::get('/login/esignet', [EsignetController::class, 'redirectToEsignet'])
     ->name('esignet.login');
 
-Route::get('/staging/callback', [EsignetController::class, 'handleEsignetCallback'])->name('esignet.callback');
+Route::get('/staging/callback', [EsignetController::class, 'handleEsignetCallback'])->name('esignet.staging.callback');
 
 Route::get('/callback', [EsignetController::class, 'handleEsignetCallback'])->name('esignet.callback');
 

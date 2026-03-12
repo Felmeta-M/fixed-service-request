@@ -21,7 +21,7 @@ services:
     volumes:
       # --- Immutable (comment out when using host-sync)
       - fbb_storage:/var/www/storage/app
-      # - fbb_logs:/var/www/storage/logs
+      - fbb_logs:/var/www/storage/logs
       - /var/log/fixed-services-logs/:/var/www/storage/logs
       - fbb_public:/var/www/public_volume
       # - .:/var/www
@@ -71,7 +71,7 @@ services:
       - .env
     volumes:
       - fbb_storage:/var/www/storage/app
-      # - fbb_logs:/var/www/storage/logs
+      - fbb_logs:/var/www/storage/logs
       - /var/log/fixed-services-logs/:/var/www/storage/logs
       - fbb_public:/var/www/public_volume
       # - .:/var/www
@@ -109,7 +109,7 @@ services:
       - .env
     volumes:
       - fbb_storage:/var/www/storage/app
-      # - fbb_logs:/var/www/storage/logs
+      - fbb_logs:/var/www/storage/logs
       - /var/log/fixed-services-logs/:/var/www/storage/logs
       - fbb_public:/var/www/public_volume
       # - .:/var/www
@@ -143,7 +143,7 @@ services:
       - .env
     volumes:
       - fbb_storage:/var/www/storage/app
-      # - fbb_logs:/var/www/storage/logs
+      - fbb_logs:/var/www/storage/logs
       - /var/log/fixed-services-logs/:/var/www/storage/logs
       - fbb_public:/var/www/public_volume
       # - .:/var/www
@@ -273,7 +273,7 @@ services:
 volumes:
   pgdata:
   fbb_storage:
-  # fbb_logs:
+  fbb_logs:
   fbb_public:
 
 networks:

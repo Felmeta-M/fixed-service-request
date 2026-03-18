@@ -30,8 +30,8 @@ class SurveyOrderStatsWidget extends BaseWidget
         // Date filters apply on completed_date so stats reflect survey completion window.
         $query = SurveyOrder::query()
             ->whereNull('customer_subscription_order_id')
-            ->when($dateFrom, fn (Builder $q) => $q->whereDate('completed_date', '>=', $dateFrom))
-            ->when($dateTo, fn (Builder $q) => $q->whereDate('completed_date', '<=', $dateTo));
+            ->when($dateFrom, fn(Builder $q) => $q->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn(Builder $q) => $q->whereDate('created_at', '<=', $dateTo));
 
         $countsByStatus = (clone $query)->selectRaw('status, count(*) as aggregate')->groupBy('status')->pluck('aggregate', 'status');
 
@@ -44,8 +44,8 @@ class SurveyOrderStatsWidget extends BaseWidget
         $cancelled = (int) ($countsByStatus[FFDServiceProvisionStatus::Cancelled->value] ?? 0);
 
         return [
-            Stat::make('Total Surveys', $total)
-                ->description('Pre-subscription phase'),
+            Stat::make('Total Survey Submitted', $total)
+                ->description('Survey requests submitted'),
             Stat::make('Created', $created)
                 ->description('Newly created')
                 ->color('gray'),

@@ -911,6 +911,85 @@ Reference: `compose.yml` Redis `command`.
 | **Idempotent webhook** | One application of payment result; avoids double activation. |
 | **QueryLogger** | Optional slow-query and N+1 detection (config: `logging.query_slow_threshold`, `logging.query_detect_n1`). |
 | **Queue workers** | Heavy work (SMS, notifications) offloaded to queues so web requests stay fast. |
+| **Cursor-based scheduled batching** | Avoid `OFFSET`/full scans when processing growing tables: keep a cursor (e.g. last processed `id`) in cache, fetch the next page with `WHERE id > lastId ORDER BY id LIMIT ...`, dispatch in chunks, then advance the cursor. |
+
+### Cursor pagination example (copy/paste pattern)
+
+#### Why this helps
+
+Scheduled tasks often need to process "the next N rows" from a table that keeps growing. A cursor lets the database jump directly to the next range using an index-friendly condition like `id > lastId`, instead of relying on expensive `OFFSET`.
+
+This pattern also keeps work bounded per scheduler run (via `$maxIdsPerRun`) and keeps job execution chunked (via `$chunkSize`).
+
+#### Core rules/assumptions
+
+Use one cursor per scheduled task (unique `cursorKey`), and paginate on a monotonic column (here: `survey_orders.id` which increases as new rows are inserted).
+
+Operational note: the scheduler advances the cursor after dispatching jobs (not after job completion). That means you should rely on queue retries + job idempotency (or another reconciliation mechanism) so items are not permanently lost if a job fails.
+
+#### Example from this codebase
+
+```php
+// From `bootstrap/app.php` (check-survey-order-status):
+$chunkSize = 500;
+$maxIdsPerRun = 10_000;
+
+$cursorKey = 'schedule.check_survey_order_status.last_id';
+$lastId = (int) Cache::get($cursorKey, 0);
+
+$ids = DB::table('survey_orders')
+    ->whereNull('deleted_at')
+    ->where('status', FFDServiceProvisionStatus::Waiting->value)
+    ->whereNull('customer_subscription_order_id')
+    ->where('id', '>', $lastId)
+    ->orderBy('id')
+    ->limit($maxIdsPerRun)
+    ->pluck('id')
+    ->values()
+    ->all();
+
+if (empty($ids)) {
+    Cache::put($cursorKey, 0);
+    return;
+}
+
+foreach (array_chunk($ids, $chunkSize) as $chunk) {
+    CheckSurveyOrderStatus::dispatch($chunk);
+}
+
+Cache::put($cursorKey, (int) max($ids));
+```
+
+```php
+// From `bootstrap/app.php` (batch-refresh-survey-orders):
+$chunkSize = 500;
+$maxIdsPerRun = 10_000;
+
+$cursorKey = 'schedule.batch_refresh_survey_orders.last_id';
+$lastId = (int) Cache::get($cursorKey, 0);
+
+$ids = DB::table('survey_orders')
+    ->whereNull('deleted_at')
+    ->where('status', FFDServiceProvisionStatus::Waiting->value)
+    ->whereNotNull('customer_subscription_order_id')
+    ->where('id', '>', $lastId)
+    ->orderBy('id')
+    ->limit($maxIdsPerRun)
+    ->pluck('id')
+    ->values()
+    ->all();
+
+if (empty($ids)) {
+    Cache::put($cursorKey, 0);
+    return;
+}
+
+foreach (array_chunk($ids, $chunkSize) as $chunk) {
+    BatchRefreshSurveyOrdersJob::dispatch($chunk);
+}
+
+Cache::put($cursorKey, (int) max($ids));
+```
 
 See Chapter 1 (bottlenecks) and Chapter 5 (payment) for details.
 

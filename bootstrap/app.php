@@ -66,7 +66,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $chunkSize = 500;
         $maxIdsPerRun = 10_000; // Cap work per run: at most this many IDs → at most (maxIdsPerRun / chunkSize) jobs per run
 
-        // Check survey order status: cursor-based pagination so we don't full-scan as data grows
+        // Check survey order status using cursor-based pagination (no full-table scan).
+        // We cache the last processed `survey_orders.id` in `$cursorKey`, query the next page via
+        // `WHERE id > $lastId ORDER BY id LIMIT $maxIdsPerRun`, dispatch jobs in `$chunkSize` batches,
+        // then advance the cursor to `max($ids)` for the next scheduled run.
         $schedule->call(function () use ($chunkSize, $maxIdsPerRun) {
             $cursorKey = 'schedule.check_survey_order_status.last_id';
             $lastId = (int) Cache::get($cursorKey, 0);

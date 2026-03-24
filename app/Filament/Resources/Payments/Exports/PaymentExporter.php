@@ -20,11 +20,11 @@ class PaymentExporter extends Exporter
                 ->label('ID'),
             ExportColumn::make('customer_code')
                 ->label('Customer Code'),
-            ExportColumn::make('survey_request.contact_person')
+            ExportColumn::make('survey_order.contact_person')
                 ->label('Contact Person'),
-            ExportColumn::make('survey_request.contact_no')
+            ExportColumn::make('survey_order.contact_no')
                 ->label('Contact No.'),
-            ExportColumn::make('survey_request.contact_email')
+            ExportColumn::make('survey_order.contact_email')
                 ->label('Contact Email'),
             ExportColumn::make('customer_survey_order_id')
                 ->label('Survey Order ID'),
@@ -71,6 +71,6 @@ class PaymentExporter extends Exporter
 
     public static function modifyQuery(Builder $query): Builder
     {
-        return $query->with('survey_request');
+        return $query->with('survey_order');
     }
 }

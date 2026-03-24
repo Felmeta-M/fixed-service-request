@@ -41,7 +41,7 @@ services:
 
   postgres:
     image: postgres:17
-    container_name: ffd_pgsql
+    container_name: fbb_pgsql
     restart: always
     ports:
       - "2345:5432"

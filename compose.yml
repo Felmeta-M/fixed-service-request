@@ -15,12 +15,14 @@ services:
         VITE_TURNSTILE_SITE_KEY: "REDACTED_TURNSTILE_SITE_KEY"
     container_name: fbb_app
     restart: always
+    user: "www-data"
     env_file:
       - .env.production
     volumes:
       # --- Immutable (comment out when using host-sync)
       - fbb_storage:/var/www/storage/app
       - fbb_logs:/var/www/storage/logs
+      - /var/log/fixed-services-logs/:/var/www/storage/logs
       - fbb_public:/var/www/public_volume
       # - .:/var/www
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
@@ -64,11 +66,13 @@ services:
       dockerfile: docker/php/Dockerfile
     container_name: fbb_scheduler
     restart: always
+    user: "www-data"
     env_file:
       - .env
     volumes:
       - fbb_storage:/var/www/storage/app
       - fbb_logs:/var/www/storage/logs
+      - /var/log/fixed-services-logs/:/var/www/storage/logs
       - fbb_public:/var/www/public_volume
       # - .:/var/www
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
@@ -80,8 +84,7 @@ services:
       pgbouncer:
         condition: service_healthy
     environment:
-      DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
-    user: www-data
+      DATABASE_URL: "pgsql://sa:secret@fbb_pgbouncer:6432/ffd"
     command: >
       sh -c "while true; do
         php artisan schedule:run --verbose --no-interaction;
@@ -101,11 +104,13 @@ services:
       dockerfile: docker/php/Dockerfile
     container_name: fbb_queue
     restart: always
+    user: "www-data"
     env_file:
       - .env
     volumes:
       - fbb_storage:/var/www/storage/app
       - fbb_logs:/var/www/storage/logs
+      - /var/log/fixed-services-logs/:/var/www/storage/logs
       - fbb_public:/var/www/public_volume
       # - .:/var/www
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
@@ -117,8 +122,7 @@ services:
       pgbouncer:
         condition: service_healthy
     environment:
-      DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
-    user: www-data
+      DATABASE_URL: "pgsql://sa:secret@fbb_pgbouncer:6432/ffd"
     command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=90"]
     networks:
       - fbb_net
@@ -134,11 +138,13 @@ services:
       dockerfile: docker/php/Dockerfile
     container_name: fbb_queue_sms
     restart: always
+    user: "www-data"
     env_file:
       - .env
     volumes:
       - fbb_storage:/var/www/storage/app
       - fbb_logs:/var/www/storage/logs
+      - /var/log/fixed-services-logs/:/var/www/storage/logs
       - fbb_public:/var/www/public_volume
       # - .:/var/www
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
@@ -150,8 +156,7 @@ services:
       pgbouncer:
         condition: service_healthy
     environment:
-      DATABASE_URL: "pgsql://sa:secret@ffd_pgbouncer:6432/ffd"
-    user: www-data
+      DATABASE_URL: "pgsql://sa:secret@fbb_pgbouncer:6432/ffd"
     command: ["php", "artisan", "queue:work", "--queue=sms", "--sleep=2", "--tries=3", "--timeout=30"]
     networks:
       - fbb_net
@@ -187,7 +192,7 @@ services:
 
   postgres:
     image: postgres:17
-    container_name: ffd_pgsql
+    container_name: fbb_pgsql
     restart: always
     ports:
       - "15432:5432"
@@ -230,7 +235,7 @@ services:
 
   pgbouncer:
     image: edoburu/pgbouncer:latest
-    container_name: ffd_pgbouncer
+    container_name: fbb_pgbouncer
     restart: always
     ports:
       - "16432:6432"

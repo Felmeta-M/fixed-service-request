@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-CONTAINER_NAME="ffd_pgsql"
+CONTAINER_NAME="fbb_pgsql"
 DB_NAME="ffd"
 DB_USER="sa"
 

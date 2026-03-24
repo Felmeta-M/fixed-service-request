@@ -12,6 +12,7 @@ use App\Jobs\CheckSurveyOrderStatus;
 use App\Jobs\BatchRefreshSurveyOrdersJob;
 use App\Console\Commands\SyncThirdPartyTickets;
 use App\Enums\FFDServiceProvisionStatus;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Services\Logging\AppLogger;
 use App\Services\Security\SecureOtpService;
@@ -62,37 +63,66 @@ return Application::configure(basePath: dirname(__DIR__))
             ]);
     })
     ->withSchedule(function (Schedule $schedule) {
-        // Check survey order status: chunk by ID to avoid loading millions of IDs; dispatch one job per chunk
-        $schedule->call(function () {
-            $chunkSize = 500;
-            DB::table('survey_orders')
+        $chunkSize = 500;
+        $maxIdsPerRun = 10_000; // Cap work per run: at most this many IDs → at most (maxIdsPerRun / chunkSize) jobs per run
+
+        // Check survey order status: cursor-based pagination so we don't full-scan as data grows
+        $schedule->call(function () use ($chunkSize, $maxIdsPerRun) {
+            $cursorKey = 'schedule.check_survey_order_status.last_id';
+            $lastId = (int) Cache::get($cursorKey, 0);
+
+            $ids = DB::table('survey_orders')
                 ->whereNull('deleted_at')
                 ->where('status', FFDServiceProvisionStatus::Waiting->value)
                 ->whereNull('customer_subscription_order_id')
+                ->where('id', '>', $lastId)
                 ->orderBy('id')
-                ->chunkById($chunkSize, function ($orders) {
-                    $ids = $orders->pluck('id')->values()->all();
-                    if (! empty($ids)) {
-                        CheckSurveyOrderStatus::dispatch($ids);
-                    }
-                }, 'id');
-        })->everyFifteenMinutes()->name('check-survey-order-status');
+                ->limit($maxIdsPerRun)
+                ->pluck('id')
+                ->values()
+                ->all();
 
-        // Batch refresh WAITING survey orders: chunk by ID and dispatch one job per chunk (scales to millions)
-        $schedule->call(function () {
-            $chunkSize = 500;
-            DB::table('survey_orders')
+            if (empty($ids)) {
+                Cache::put($cursorKey, 0);
+
+                return;
+            }
+
+            foreach (array_chunk($ids, $chunkSize) as $chunk) {
+                CheckSurveyOrderStatus::dispatch($chunk);
+            }
+
+            Cache::put($cursorKey, (int) max($ids));
+        })->hourly()->name('check-survey-order-status');
+
+        // Batch refresh WAITING survey orders: cursor-based, same scaling approach
+        $schedule->call(function () use ($chunkSize, $maxIdsPerRun) {
+            $cursorKey = 'schedule.batch_refresh_survey_orders.last_id';
+            $lastId = (int) Cache::get($cursorKey, 0);
+
+            $ids = DB::table('survey_orders')
                 ->whereNull('deleted_at')
                 ->where('status', FFDServiceProvisionStatus::Waiting->value)
                 ->whereNotNull('customer_subscription_order_id')
+                ->where('id', '>', $lastId)
                 ->orderBy('id')
-                ->chunkById($chunkSize, function ($orders) {
-                    $ids = $orders->pluck('id')->values()->all();
-                    if (! empty($ids)) {
-                        BatchRefreshSurveyOrdersJob::dispatch($ids);
-                    }
-                }, 'id');
-        })->everyTenMinutes()->name('batch-refresh-survey-orders');
+                ->limit($maxIdsPerRun)
+                ->pluck('id')
+                ->values()
+                ->all();
+
+            if (empty($ids)) {
+                Cache::put($cursorKey, 0);
+
+                return;
+            }
+
+            foreach (array_chunk($ids, $chunkSize) as $chunk) {
+                BatchRefreshSurveyOrdersJob::dispatch($chunk);
+            }
+
+            Cache::put($cursorKey, (int) max($ids));
+        })->everyThirtyMinutes()->name('batch-refresh-survey-orders');
 
         // Periodically sync trouble tickets from third-party system
         $schedule->command('tickets:sync')->hourly()->name('sync-trouble-tickets');

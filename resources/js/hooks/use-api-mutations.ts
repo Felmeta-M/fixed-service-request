@@ -388,7 +388,12 @@ export function useCreatePaymentOrder() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (data: { customerSurveyOrderId: string; customerCode: string | number; amount: number }) => {
+        mutationFn: async (data: {
+            customerSurveyOrderId: string;
+            customerCode: string | number;
+            amount: number;
+            paymentChannel?: 'browser' | 'superapp';
+        }) => {
             if (!token) throw new Error('Authentication token required');
             const response = await apiClient.post<any>('/create-order', data, { token });
             if (!response.success) {

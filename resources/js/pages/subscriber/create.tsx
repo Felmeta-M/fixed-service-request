@@ -1,4 +1,6 @@
+import { useCalculateOneOffFee, useCreatePaymentOrder } from '@/hooks/use-api-mutations';
 import SimpleLayout from '@/layouts/simple-layout';
+import { startTelebirrPayment } from '@/lib/telebirr-start-pay';
 import { router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
@@ -199,6 +201,7 @@ export default function CreateSubscriber() {
                 customerSurveyOrderId: surveyOrderId,
                 customerCode: user.customer_code,
                 amount: calculatedAmount,
+                paymentChannel: window.consumerapp?.evaluate ? 'superapp' : 'browser',
             },
             {
                 onSuccess: (result) => {
@@ -212,7 +215,9 @@ export default function CreateSubscriber() {
                         setSuccess('Payment order created successfully. Redirecting...');
                         // Small delay to show success message before redirect
                         setTimeout(() => {
-                            window.location.href = result.rawRequest;
+                            startTelebirrPayment({
+                                rawRequest: result.rawRequest,
+                            });
                         }, 1000);
                     } else {
                         handleApiError({ message: 'Failed to create payment order' }, 'payment_creation');

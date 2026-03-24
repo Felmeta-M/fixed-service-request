@@ -15,6 +15,8 @@ use RuntimeException;
 
 class TelebirrController extends Controller
 {
+    private const TRADE_TYPE_CHECKOUT = 'Checkout';
+    private const TRADE_TYPE_IN_APP = 'InApp';
 
     public function __construct(
         protected readonly CreateOrderService $createOrderService,
@@ -27,6 +29,17 @@ class TelebirrController extends Controller
         try {
             $validated = $request->validate([
                 'customerSurveyOrderId' => 'required|exists:survey_orders,customer_survey_order_id',
+                'paymentChannel' => 'nullable|string|in:browser,superapp',
+            ]);
+
+            $validated['trade_type'] = $this->resolveTradeType($request, $validated['paymentChannel'] ?? null);
+
+            AppLogger::payment()->info('Telebirr create order trade type resolved', [
+                'customer_survey_order_id' => $validated['customerSurveyOrderId'],
+                'payment_channel' => $validated['paymentChannel'] ?? null,
+                'resolved_trade_type' => $validated['trade_type'],
+                'x_client_platform' => $request->header('X-Client-Platform'),
+                'user_agent' => $request->userAgent(),
             ]);
 
             $surveyOrder = SurveyOrder::where('customer_survey_order_id', $validated['customerSurveyOrderId'])
@@ -39,6 +52,8 @@ class TelebirrController extends Controller
                     'message' => 'Your payment has already been processed. No further action is needed.',
                 ], 422);
             }
+
+            Log::info('Telebirr Create Order', ['validated' => $validated]);
 
             $rawRequest = $this->createOrderService->createOrder($validated);
 
@@ -54,6 +69,34 @@ class TelebirrController extends Controller
                 'message' => 'Unable to create order',
             ], 500);
         }
+    }
+
+    /**
+     * Resolve Telebirr trade type from explicit client channel first,
+     * then fallback to request context for backward compatibility.
+     */
+    private function resolveTradeType(Request $request, ?string $paymentChannel): string
+    {
+        if ($paymentChannel === 'superapp') {
+            return self::TRADE_TYPE_IN_APP;
+        }
+
+        if ($paymentChannel === 'browser') {
+            return self::TRADE_TYPE_CHECKOUT;
+        }
+
+        // Backward-compatible auto-detection when channel is not explicitly provided.
+        $platformHeader = strtolower((string) $request->header('X-Client-Platform', ''));
+        if ($platformHeader === 'superapp') {
+            return self::TRADE_TYPE_IN_APP;
+        }
+
+        $userAgent = strtolower((string) $request->userAgent());
+        if (str_contains($userAgent, 'consumerapp') || str_contains($userAgent, 'superapp')) {
+            return self::TRADE_TYPE_IN_APP;
+        }
+
+        return self::TRADE_TYPE_CHECKOUT;
     }
 
     public function notify(Request $request)

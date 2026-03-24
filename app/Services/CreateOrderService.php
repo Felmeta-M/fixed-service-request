@@ -333,10 +333,12 @@ class CreateOrderService
         ];
 
 
+        $tradeType = $data['trade_type'] ?? 'Checkout';
+
         $biz = [
             'notify_url' => route('telebirr.notify'),
             'business_type' => 'BuyGoods',
-            'trade_type' => 'Checkout',
+            'trade_type' => $tradeType,
             'appid' => $this->merchantAppId,
             'merch_code' => $this->merchantCode,
             'merch_order_id' => (string) $merchantOrderId,
@@ -397,8 +399,6 @@ class CreateOrderService
         $sign = app(TelebirrSignerService::class)->sign($maps);
 
         $rawRequest = $rawRequest . 'sign=' . $sign;
-
-        $rawRequest = $this->webBaseUrl . $rawRequest . "&version=1.0&trade_type=Checkout";
 
         return trim((string) $rawRequest);
     }

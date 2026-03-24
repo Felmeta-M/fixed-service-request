@@ -52,8 +52,9 @@ class SurveyOrderStatsWidget extends BaseWidget
             Stat::make('Processing', $processing)
                 ->description('Survey in progress')
                 ->color('info'),
-            Stat::make('Survey Completed', $surveyCompleted)
-                ->description('Awaiting payment / subscription')
+            Stat::make('Completed', $surveyCompleted)
+                // ->description('Awaiting payment / subscription')
+                ->description('Survey completed')
                 ->color('success'),
             Stat::make('Waiting', $waiting)
                 ->description('Waiting survey result')

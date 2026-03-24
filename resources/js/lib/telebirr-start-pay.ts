@@ -4,13 +4,18 @@ type StartTelebirrPaymentParams = {
     rawRequest: string;
 };
 
+const DEFAULT_WEB_TELEBIRR_BASE_URL = 'https://superapp.ethiomobilemoney.et:38443/payment/web/paygate?';
+
 function buildBrowserCheckoutUrl(rawRequest: string): string | null {
     const trimmed = rawRequest.trim();
     if (/^https?:\/\//i.test(trimmed)) {
         return trimmed;
     }
 
-    const baseUrl = import.meta.env.WEB_TELEBIRR_BASE_URL?.trim();
+    const baseUrl =
+        import.meta.env.VITE_WEB_TELEBIRR_BASE_URL?.trim() ||
+        DEFAULT_WEB_TELEBIRR_BASE_URL;
+
     if (!baseUrl) {
         return null;
     }
@@ -45,7 +50,6 @@ export function startTelebirrPayment({ rawRequest }: StartTelebirrPaymentParams)
 
     // Otherwise normal browser: open Telebirr H5 URL constructed on frontend.
     const checkoutUrl = buildBrowserCheckoutUrl(rawRequest);
-    console.log("🚀 ~ startTelebirrPayment ~ checkoutUrl:", checkoutUrl)
     if (!checkoutUrl) {
         showErrorToast('Telebirr web base URL is not configured');
         return false;

@@ -94,6 +94,8 @@ class EsignetController extends Controller
 
         $result = $this->esignetService->getUserInfo($token['token']['access_token']);
 
+        \Log::info('Esignet user info', $result);
+
         if ($result['status'] !== 'ok') {
             AppLogger::auth()->error('Esignet user info fetch failed', [
                 'error' => $result['message'],
@@ -112,6 +114,8 @@ class EsignetController extends Controller
             'customer_code' => $esignetUser?->code ?? null,
             'customer_sub_id' => $esignetUser->sub,
         ];
+
+        \Log::info('Esignet user data', $data);
 
         $user = $this->localAuthService->resolveUserForAuth($data);
 

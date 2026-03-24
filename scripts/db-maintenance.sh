@@ -11,7 +11,13 @@
 
 set -euo pipefail
 
-CONTAINER_NAME="fbb_pgsql"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMPOSE_FILE="${COMPOSE_FILE:-$REPO_ROOT/compose.yml}"
+
+postgres_exec() {
+  docker compose -f "$COMPOSE_FILE" --project-directory "$REPO_ROOT" exec -T postgres "$@"
+}
+
 DB_NAME="ffd"
 DB_USER="sa"
 
@@ -35,7 +41,7 @@ log_error() {
 
 list_replication_slots() {
     log_info "Listing all replication slots..."
-    docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "
+    postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -c "
         SELECT 
             slot_name,
             slot_type,
@@ -59,7 +65,7 @@ drop_replication_slot() {
     log_warn "Dropping replication slot: $slot_name"
     
     # Check if slot exists
-    local exists=$(docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -t -c "
+    local exists=$(postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -t -c "
         SELECT COUNT(*) FROM pg_replication_slots WHERE slot_name = '$slot_name';
     " | tr -d ' ')
     
@@ -69,7 +75,7 @@ drop_replication_slot() {
     fi
     
     # Check if slot is active
-    local active=$(docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -t -c "
+    local active=$(postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -t -c "
         SELECT active FROM pg_replication_slots WHERE slot_name = '$slot_name';
     " | tr -d ' ')
     
@@ -79,7 +85,7 @@ drop_replication_slot() {
     fi
     
     # Drop the slot
-    docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT pg_drop_replication_slot('$slot_name');"
+    postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT pg_drop_replication_slot('$slot_name');"
     
     log_info "Successfully dropped replication slot: $slot_name"
 }
@@ -93,7 +99,7 @@ health_check() {
     
     echo ""
     echo "=== Active Replication Connections ==="
-    docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "
+    postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -c "
         SELECT 
             pid,
             usename,
@@ -106,7 +112,7 @@ health_check() {
     
     echo ""
     echo "=== Database Size ==="
-    docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "
+    postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -c "
         SELECT 
             pg_database.datname,
             pg_size_pretty(pg_database_size(pg_database.datname)) AS size
@@ -116,7 +122,7 @@ health_check() {
     
     echo ""
     echo "=== WAL Status ==="
-    docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "
+    postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -c "
         SELECT 
             pg_current_wal_lsn() as current_lsn,
             pg_wal_lsn_diff(pg_current_wal_lsn(), '0/0') as total_wal_bytes,

@@ -13,7 +13,13 @@
 
 set -euo pipefail
 
-CONTAINER_NAME="fbb_pgsql"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMPOSE_FILE="${COMPOSE_FILE:-$REPO_ROOT/compose.yml}"
+
+postgres_exec() {
+  docker compose -f "$COMPOSE_FILE" --project-directory "$REPO_ROOT" exec -T postgres "$@"
+}
+
 DB_NAME="ffd"
 DB_USER="sa"
 PUBLICATION_NAME="${1:-ffd}"
@@ -39,7 +45,7 @@ log_error() {
 
 # Check if publication exists
 check_publication() {
-    local count=$(docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -t -c "
+    local count=$(postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -t -c "
         SELECT COUNT(*) FROM pg_publication WHERE pubname = '$PUBLICATION_NAME';
     " | tr -d ' ')
     
@@ -52,7 +58,7 @@ check_publication() {
 
 # Check if slot exists
 check_slot() {
-    local count=$(docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -t -c "
+    local count=$(postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -t -c "
         SELECT COUNT(*) FROM pg_replication_slots WHERE slot_name = '$SLOT_NAME';
     " | tr -d ' ')
     
@@ -71,7 +77,7 @@ create_publication() {
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             log_info "Dropping existing publication..."
-            docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "DROP PUBLICATION $PUBLICATION_NAME;"
+            postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -c "DROP PUBLICATION $PUBLICATION_NAME;"
         else
             log_info "Keeping existing publication"
             return 0
@@ -79,7 +85,7 @@ create_publication() {
     fi
     
     log_info "Creating publication '$PUBLICATION_NAME' for all tables..."
-    docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "CREATE PUBLICATION $PUBLICATION_NAME FOR ALL TABLES;"
+    postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -c "CREATE PUBLICATION $PUBLICATION_NAME FOR ALL TABLES;"
     log_info "Publication created successfully"
 }
 
@@ -91,7 +97,7 @@ create_slot() {
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             log_info "Dropping existing slot..."
-            docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT pg_drop_replication_slot('$SLOT_NAME');"
+            postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT pg_drop_replication_slot('$SLOT_NAME');"
         else
             log_info "Keeping existing slot"
             return 0
@@ -99,7 +105,7 @@ create_slot() {
     fi
     
     log_info "Creating logical replication slot '$SLOT_NAME' with pgoutput plugin..."
-    docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT pg_create_logical_replication_slot('$SLOT_NAME', 'pgoutput');"
+    postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT pg_create_logical_replication_slot('$SLOT_NAME', 'pgoutput');"
     log_info "Replication slot created successfully"
 }
 
@@ -110,7 +116,7 @@ show_status() {
     echo ""
     
     echo "=== Publication ==="
-    docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "
+    postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -c "
         SELECT 
             pubname,
             puballtables,
@@ -123,7 +129,7 @@ show_status() {
     
     echo ""
     echo "=== Replication Slot ==="
-    docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "
+    postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -c "
         SELECT 
             slot_name,
             slot_type,
@@ -136,7 +142,7 @@ show_status() {
     
     echo ""
     echo "=== Active Replication Connections ==="
-    docker exec "$CONTAINER_NAME" psql -U "$DB_USER" -d "$DB_NAME" -c "
+    postgres_exec psql -U "$DB_USER" -d "$DB_NAME" -c "
         SELECT 
             pid,
             usename,

@@ -1,9 +1,10 @@
+name: ffd_main
+
 services:
   app:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    container_name: ffd_app
     restart: always
     env_file:
       - .env
@@ -25,7 +26,6 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: ffd_nginx
     restart: always
     ports:
       - "9991:80"
@@ -41,7 +41,6 @@ services:
 
   postgres:
     image: postgres:17
-    container_name: fbb_pgsql
     restart: always
     ports:
       - "2345:5432"
@@ -61,7 +60,6 @@ services:
 
   redis:
     image: redis:alpine
-    container_name: ffd_redis
     restart: always
     ports:
       - "6379:6379"

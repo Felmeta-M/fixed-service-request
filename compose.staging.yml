@@ -1,26 +1,30 @@
 # Staging stack: clone of production with host sync. Uses .env.staging (copy of .env.production with ffd→fbb).
-# Run with: docker compose -f compose.staging.yml -p fbb_staging up -d
+# Run: docker compose -f compose.staging.yml up -d  (project name set below; override with -p if needed)
 #
 # Ports: <ServiceID><DefaultPort>. Staging ServiceID = 2. Host port = 2 + default (80→20080, 5432→25432, 6432→26432, 6379→26379).
 name: fbb_staging
 
+x-php-build: &php-build
+  context: .
+  dockerfile: docker/php/Dockerfile
+  args:
+    VITE_APP_NAME: "Fixed services provision system (Staging)"
+    VITE_API_BASE_URL: https://fixedservices.ethiotelecom.et:8443/api/v1
+    VITE_API_PUBLIC_URL: https://fixedservices.ethiotelecom.et:8443/api/v1
+    VITE_TURNSTILE_SITE_KEY: "REDACTED_TURNSTILE_SITE_KEY"
+
 services:
   app:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-      args:
-        VITE_APP_NAME: "Fixed services provision system (Staging)"
-        VITE_API_BASE_URL: https://fixedservices.ethiotelecom.et:8443/api/v1
-        VITE_API_PUBLIC_URL: https://fixedservices.ethiotelecom.et:8443/api/v1
-        VITE_TURNSTILE_SITE_KEY: "REDACTED_TURNSTILE_SITE_KEY"
-    container_name: fbb_staging_app
+    image: fbb-staging-php:latest
+    build: *php-build
     restart: always
     env_file:
       - .env.staging
     volumes:
       # Host sync: same code as production, edits on host apply in container
       - .:/var/www
+      # Own node_modules in-container (avoids EACCES from host-owned bind mount + Vite .vite-temp)
+      - staging_node_modules:/var/www/node_modules
       - ./docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
     depends_on:
       postgres:
@@ -52,10 +56,8 @@ services:
         max-file: "3"
 
   scheduler:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: fbb_staging_scheduler
+    image: fbb-staging-php:latest
+    build: *php-build
     restart: always
     env_file:
       - .env.staging
@@ -83,10 +85,8 @@ services:
         max-file: "3"
 
   queue:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: fbb_staging_queue
+    image: fbb-staging-php:latest
+    build: *php-build
     restart: always
     env_file:
       - .env.staging
@@ -110,10 +110,8 @@ services:
         max-file: "3"
 
   queue-sms:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: fbb_staging_queue_sms
+    image: fbb-staging-php:latest
+    build: *php-build
     restart: always
     env_file:
       - .env.staging
@@ -140,7 +138,6 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: fbb_staging_nginx
     restart: always
     ports:
       - "20080:80"
@@ -161,7 +158,6 @@ services:
 
   postgres:
     image: postgres:17
-    container_name: fbb_staging_pgsql
     restart: always
     ports:
       - "25432:5432"
@@ -200,7 +196,6 @@ services:
 
   pgbouncer:
     image: edoburu/pgbouncer:latest
-    container_name: fbb_staging_pgbouncer
     restart: always
     ports:
       - "26432:6432"
@@ -223,7 +218,6 @@ services:
 
   redis:
     image: redis:alpine
-    container_name: fbb_staging_redis
     restart: always
     ports:
       - "26379:6379"
@@ -238,6 +232,7 @@ services:
 
 volumes:
   pgdata:
+  staging_node_modules:
 
 networks:
   fbb_staging_net:

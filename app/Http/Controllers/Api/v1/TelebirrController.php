@@ -66,8 +66,8 @@ class TelebirrController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Unable to create order',
-            ], 500);
+                'message' => $e->getMessage(),
+            ], 422);
         }
     }
 

@@ -354,25 +354,28 @@ This application uses the **asynchronous** pattern: we create an order, get a UR
 ## 5.3 End-to-end flow
 
 ```
-CUSTOMER              OUR APP                    TELEBIRR
-   │                     │                          │
-   │  1. Click Pay       │                          │
-   │────────────────────►│                          │
-   │                     │  2. POST /token          │
-   │                     │─────────────────────────►│
-   │                     │◄─────────────────────────│  token
-   │                     │  3. POST /preOrder       │
-   │                     │─────────────────────────►│
-   │                     │◄─────────────────────────│  prepay_id
-   │  4. Redirect URL    │                          │
-   │◄────────────────────│                          │
-   │  5. Pay on Telebirr page                       │
-   │───────────────────────────────────────────────►│
-   │                     │  6. POST /notify (webhook)│
-   │                     │◄─────────────────────────│
-   │                     │  7. Confirm, activate    │
-   │  8. Success page    │                          │
-   │◄────────────────────│                          │
+1) Customer clicks `Pay`
+
+   CUSTOMER -> OUR APP
+   OUR APP -> TELEBIRR: `POST /payment/v1/token`
+   TELEBIRR -> OUR APP: `token`
+
+2) OUR APP creates a Telebirr pre-order
+   OUR APP -> TELEBIRR: `POST /payment/v1/merchant/preOrder`
+   TELEBIRR -> OUR APP: `prepay_id`
+
+3) OUR APP redirects the customer
+   CUSTOMER <- OUR APP: Redirect URL (Telebirr H5)
+
+4) Customer pays on Telebirr page
+   CUSTOMER -> TELEBIRR
+
+5) Telebirr sends webhook result
+   TELEBIRR -> OUR APP: `POST /telebirr/notify`
+
+6) OUR APP confirms payment + activates the service (if paid)
+
+7) Customer reaches the success page
 ```
 
 - **Outbound:** Our app calls Telebirr (token, preOrder, queryOrder).
@@ -387,7 +390,7 @@ Before calling Telebirr payment APIs, the app obtains an access token. The token
 ### Webhook handling
 
 - Accept `POST /telebirr/notify`.
-- Find the payment by `merch_order_id`, update state, trigger activation.
+- Find the payment by `merch_order_id`, update state via `PaymentService->confirmPayment()`, and trigger deduction/activation only when the payment is not already paid.
 - **Always return 200 OK** so Telebirr does not retry unnecessarily (log errors internally).
 
 ### Distributed lock
@@ -396,7 +399,7 @@ To prevent duplicate orders from double-clicks or concurrent requests, a **cache
 
 ### Idempotency
 
-The webhook may be delivered more than once. The handler must be **idempotent**: if the payment is already marked paid, skip updates and still return 200.
+The webhook may be delivered more than once. The handler must be **idempotent**: if the payment is already marked paid (`Payment->isPaid()`), skip side-effects and still return 200.
 
 ### Reconciliation
 
@@ -410,6 +413,8 @@ If the customer paid but our webhook was never received, the next time they clic
 | 2. DB check | Payment already paid | Prevents creating a new order for paid orders |
 | 3. Reconciliation | Query Telebirr before creating a new order | Recovers from missed webhooks |
 | 4. Idempotency | Skip if already paid in webhook | Handles duplicate webhook deliveries |
+
+When `POST /api/v1/create-order` is blocked (lock in progress, or payment already paid), this app returns `HTTP 422` with a human-readable message so the frontend can show feedback instead of a generic `500`.
 
 ## 5.6 Security
 

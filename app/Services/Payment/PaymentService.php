@@ -116,7 +116,9 @@ class PaymentService
         array $providerPayload
     ): void {
         // Idempotency guard
-        if ($payment->status === 11) { // Payment status: Paid
+        // If we've already recorded a successful payment (and transaction id),
+        // skip any side-effects to keep webhook handling idempotent.
+        if ($payment->isPaid()) {
             AppLogger::payment()->info('Payment already confirmed, skipping', [
                 'order_id' => $payment->customer_survey_order_id,
             ]);

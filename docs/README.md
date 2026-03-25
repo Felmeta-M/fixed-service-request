@@ -354,25 +354,28 @@ This application uses the **asynchronous** pattern: we create an order, get a UR
 ## 5.3 End-to-end flow
 
 ```
-CUSTOMER              OUR APP                    TELEBIRR
-   │                     │                          │
-   │  1. Click Pay       │                          │
-   │────────────────────►│                          │
-   │                     │  2. POST /token          │
-   │                     │─────────────────────────►│
-   │                     │◄─────────────────────────│  token
-   │                     │  3. POST /preOrder       │
-   │                     │─────────────────────────►│
-   │                     │◄─────────────────────────│  prepay_id
-   │  4. Redirect URL    │                          │
-   │◄────────────────────│                          │
-   │  5. Pay on Telebirr page                       │
-   │───────────────────────────────────────────────►│
-   │                     │  6. POST /notify (webhook)│
-   │                     │◄─────────────────────────│
-   │                     │  7. Confirm, activate    │
-   │  8. Success page    │                          │
-   │◄────────────────────│                          │
+1) Customer clicks `Pay`
+
+   CUSTOMER -> OUR APP
+   OUR APP -> TELEBIRR: `POST /payment/v1/token`
+   TELEBIRR -> OUR APP: `token`
+
+2) OUR APP creates a Telebirr pre-order
+   OUR APP -> TELEBIRR: `POST /payment/v1/merchant/preOrder`
+   TELEBIRR -> OUR APP: `prepay_id`
+
+3) OUR APP redirects the customer
+   CUSTOMER <- OUR APP: Redirect URL (Telebirr H5)
+
+4) Customer pays on Telebirr page
+   CUSTOMER -> TELEBIRR
+
+5) Telebirr sends webhook result
+   TELEBIRR -> OUR APP: `POST /telebirr/notify`
+
+6) OUR APP confirms payment + activates the service (if paid)
+
+7) Customer reaches the success page
 ```
 
 - **Outbound:** Our app calls Telebirr (token, preOrder, queryOrder).
@@ -387,7 +390,7 @@ Before calling Telebirr payment APIs, the app obtains an access token. The token
 ### Webhook handling
 
 - Accept `POST /telebirr/notify`.
-- Find the payment by `merch_order_id`, update state, trigger activation.
+- Find the payment by `merch_order_id`, update state via `PaymentService->confirmPayment()`, and trigger deduction/activation only when the payment is not already paid.
 - **Always return 200 OK** so Telebirr does not retry unnecessarily (log errors internally).
 
 ### Distributed lock
@@ -396,7 +399,7 @@ To prevent duplicate orders from double-clicks or concurrent requests, a **cache
 
 ### Idempotency
 
-The webhook may be delivered more than once. The handler must be **idempotent**: if the payment is already marked paid, skip updates and still return 200.
+The webhook may be delivered more than once. The handler must be **idempotent**: if the payment is already marked paid (`Payment->isPaid()`), skip side-effects and still return 200.
 
 ### Reconciliation
 
@@ -410,6 +413,8 @@ If the customer paid but our webhook was never received, the next time they clic
 | 2. DB check | Payment already paid | Prevents creating a new order for paid orders |
 | 3. Reconciliation | Query Telebirr before creating a new order | Recovers from missed webhooks |
 | 4. Idempotency | Skip if already paid in webhook | Handles duplicate webhook deliveries |
+
+When `POST /api/v1/create-order` is blocked (lock in progress, or payment already paid), this app returns `HTTP 422` with a human-readable message so the frontend can show feedback instead of a generic `500`.
 
 ## 5.6 Security
 
@@ -911,6 +916,85 @@ Reference: `compose.yml` Redis `command`.
 | **Idempotent webhook** | One application of payment result; avoids double activation. |
 | **QueryLogger** | Optional slow-query and N+1 detection (config: `logging.query_slow_threshold`, `logging.query_detect_n1`). |
 | **Queue workers** | Heavy work (SMS, notifications) offloaded to queues so web requests stay fast. |
+| **Cursor-based scheduled batching** | Avoid `OFFSET`/full scans when processing growing tables: keep a cursor (e.g. last processed `id`) in cache, fetch the next page with `WHERE id > lastId ORDER BY id LIMIT ...`, dispatch in chunks, then advance the cursor. |
+
+### Cursor pagination example (copy/paste pattern)
+
+#### Why this helps
+
+Scheduled tasks often need to process "the next N rows" from a table that keeps growing. A cursor lets the database jump directly to the next range using an index-friendly condition like `id > lastId`, instead of relying on expensive `OFFSET`.
+
+This pattern also keeps work bounded per scheduler run (via `$maxIdsPerRun`) and keeps job execution chunked (via `$chunkSize`).
+
+#### Core rules/assumptions
+
+Use one cursor per scheduled task (unique `cursorKey`), and paginate on a monotonic column (here: `survey_orders.id` which increases as new rows are inserted).
+
+Operational note: the scheduler advances the cursor after dispatching jobs (not after job completion). That means you should rely on queue retries + job idempotency (or another reconciliation mechanism) so items are not permanently lost if a job fails.
+
+#### Example from this codebase
+
+```php
+// From `bootstrap/app.php` (check-survey-order-status):
+$chunkSize = 500;
+$maxIdsPerRun = 10_000;
+
+$cursorKey = 'schedule.check_survey_order_status.last_id';
+$lastId = (int) Cache::get($cursorKey, 0);
+
+$ids = DB::table('survey_orders')
+    ->whereNull('deleted_at')
+    ->where('status', FFDServiceProvisionStatus::Waiting->value)
+    ->whereNull('customer_subscription_order_id')
+    ->where('id', '>', $lastId)
+    ->orderBy('id')
+    ->limit($maxIdsPerRun)
+    ->pluck('id')
+    ->values()
+    ->all();
+
+if (empty($ids)) {
+    Cache::put($cursorKey, 0);
+    return;
+}
+
+foreach (array_chunk($ids, $chunkSize) as $chunk) {
+    CheckSurveyOrderStatus::dispatch($chunk);
+}
+
+Cache::put($cursorKey, (int) max($ids));
+```
+
+```php
+// From `bootstrap/app.php` (batch-refresh-survey-orders):
+$chunkSize = 500;
+$maxIdsPerRun = 10_000;
+
+$cursorKey = 'schedule.batch_refresh_survey_orders.last_id';
+$lastId = (int) Cache::get($cursorKey, 0);
+
+$ids = DB::table('survey_orders')
+    ->whereNull('deleted_at')
+    ->where('status', FFDServiceProvisionStatus::Waiting->value)
+    ->whereNotNull('customer_subscription_order_id')
+    ->where('id', '>', $lastId)
+    ->orderBy('id')
+    ->limit($maxIdsPerRun)
+    ->pluck('id')
+    ->values()
+    ->all();
+
+if (empty($ids)) {
+    Cache::put($cursorKey, 0);
+    return;
+}
+
+foreach (array_chunk($ids, $chunkSize) as $chunk) {
+    BatchRefreshSurveyOrdersJob::dispatch($chunk);
+}
+
+Cache::put($cursorKey, (int) max($ids));
+```
 
 See Chapter 1 (bottlenecks) and Chapter 5 (payment) for details.
 

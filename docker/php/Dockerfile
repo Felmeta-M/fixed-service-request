@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.6
+# BuildKit: export DOCKER_BUILDKIT=1 (default in recent Docker). Cache mounts speed repeat builds.
 FROM php:8.4-fpm
 
 # Install system packages and PHP extensions
@@ -20,26 +22,29 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && npm install -g pnpm
 
-# Working directory
 WORKDIR /var/www
 
-# Create Laravel storage directories required for artisan commands during composer install
+# Laravel dirs required before composer scripts see the tree
 RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views \
     storage/logs bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Copy only composer files first for caching
+# --- Composer: lockfiles only (cache hit when PHP deps unchanged)
 COPY composer.json composer.lock ./
+RUN --mount=type=cache,target=/root/.composer/cache \
+    composer install --no-dev --no-interaction --prefer-dist --no-progress --no-scripts --ansi
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress --ansi || true
+# --- JS: manifest + lock only (cache hit when node deps unchanged — avoids full install on every PHP edit)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
-# Copy entire source
+# Application source (invalidates only layers below)
 COPY . .
 
-# Run composer install now that all files exist
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress --ansi
+RUN --mount=type=cache,target=/root/.composer/cache \
+    composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress --ansi
 
-# Build-time args for Vite (these get inlined during build; also exposed as ENV for entrypoint build when using host-sync)
 ARG VITE_APP_NAME="Fixed services provision system"
 ARG VITE_API_BASE_URL=https://fixedservices.ethiotelecom.et/api/v1
 ARG VITE_API_PUBLIC_URL=https://fixedservices.ethiotelecom.et/api/v1
@@ -49,28 +54,22 @@ ENV VITE_APP_NAME="${VITE_APP_NAME}" \
     VITE_API_PUBLIC_URL="${VITE_API_PUBLIC_URL}" \
     VITE_TURNSTILE_SITE_KEY="${VITE_TURNSTILE_SITE_KEY}"
 
-# Build frontend assets (Vite + React)
-# Note: vite.config.ts, tsconfig.json must NOT be in .dockerignore
-# Assets are built to /var/www/public/build/ and synced to public_volume at runtime
-RUN pnpm install --frozen-lockfile \
-    && VITE_APP_NAME="${VITE_APP_NAME}" \
-       VITE_API_BASE_URL="${VITE_API_BASE_URL}" \
-       VITE_API_PUBLIC_URL="${VITE_API_PUBLIC_URL}" \
-       VITE_TURNSTILE_SITE_KEY="${VITE_TURNSTILE_SITE_KEY}" \
-       pnpm run build \
+# node_modules already populated; only rebuild when app or Vite env changes
+RUN VITE_APP_NAME="${VITE_APP_NAME}" \
+    VITE_API_BASE_URL="${VITE_API_BASE_URL}" \
+    VITE_API_PUBLIC_URL="${VITE_API_PUBLIC_URL}" \
+    VITE_TURNSTILE_SITE_KEY="${VITE_TURNSTILE_SITE_KEY}" \
+    pnpm run build \
     && echo "✅ Frontend build complete: $(ls -la public/build/assets/*.css 2>/dev/null | wc -l) CSS, $(ls -la public/build/assets/*.js 2>/dev/null | wc -l) JS files"
 
-# Verify frontend build succeeded (fail fast if assets missing)
 RUN test -d /var/www/public/build/assets || (echo "❌ Frontend build failed - no assets!" && exit 1)
 
-# Copy entrypoint & PHP-FPM config
+# No chown on node_modules/public/build: recursive chown is very slow; default root:root 0755/0644 is readable by PHP-FPM (www-data).
+
 COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Entrypoint
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
-# Run PHP-FPM in foreground (app service); queue/scheduler override CMD in compose
 CMD ["/usr/local/sbin/php-fpm", "-F"]

@@ -25,15 +25,21 @@ if [ -f "$APP_DIR/artisan" ]; then
 fi
 
 # Host-sync mode: when public_volume is not used, the bind mount (.:/var/www) hides the
-# image's public/build. Build frontend here if build assets are missing so /build/assets/*.js
-# are available and 404s are avoided.
-if [ ! -d "$APP_DIR/public_volume" ] && { [ ! -d "$APP_DIR/public/build/assets" ] || [ -z "$(find "$APP_DIR/public/build/assets" -maxdepth 1 -name '*.js' 2>/dev/null)" ]; }; then
-  echo "📦 Frontend build missing (host-sync); building Vite assets..."
-  (cd "$APP_DIR" && pnpm install --frozen-lockfile && pnpm run build) || true
-  if [ -d "$APP_DIR/public/build/assets" ] && [ -n "$(find "$APP_DIR/public/build/assets" -maxdepth 1 -name '*.js' 2>/dev/null)" ]; then
-    echo "✅ Frontend build complete"
-  else
-    echo "⚠️ Frontend build failed or skipped; ensure pnpm run build runs or use immutable volumes"
+# image's public/build. Install deps if missing (e.g. named volume for node_modules) so
+# pnpm build / Vite can write under node_modules/.vite-temp without host permission clashes.
+if [ ! -d "$APP_DIR/public_volume" ]; then
+  if [ ! -x "$APP_DIR/node_modules/.bin/vite" ]; then
+    echo "📦 JS dependencies missing (host-sync); running pnpm install..."
+    (cd "$APP_DIR" && pnpm install --frozen-lockfile) || true
+  fi
+  if [ ! -d "$APP_DIR/public/build/assets" ] || [ -z "$(find "$APP_DIR/public/build/assets" -maxdepth 1 -name '*.js' 2>/dev/null)" ]; then
+    echo "📦 Frontend build missing (host-sync); building Vite assets..."
+    (cd "$APP_DIR" && pnpm run build) || true
+    if [ -d "$APP_DIR/public/build/assets" ] && [ -n "$(find "$APP_DIR/public/build/assets" -maxdepth 1 -name '*.js' 2>/dev/null)" ]; then
+      echo "✅ Frontend build complete"
+    else
+      echo "⚠️ Frontend build failed or skipped; ensure pnpm run build runs or use immutable volumes"
+    fi
   fi
 fi
 

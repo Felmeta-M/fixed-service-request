@@ -49,7 +49,7 @@ class SubscriptionStatsWidget extends BaseWidget
                 ->description('Service activated')
                 ->color('success'),
             Stat::make('Waiting', $waiting)
-                ->description('Activation pending')
+                ->description('Service Activation pending')
                 ->color('warning'),
             Stat::make('Processing', $processing)
                 ->description('Being provisioned')

@@ -27,13 +27,13 @@ class PaymentStatsWidget extends BaseWidget
 
         $createdAtQuery = Payment::query()
             ->whereNull('deleted_at')
-            ->when($dateFrom, fn (Builder $q) => $q->whereDate('created_at', '>=', $dateFrom))
-            ->when($dateTo, fn (Builder $q) => $q->whereDate('created_at', '<=', $dateTo));
+            ->when($dateFrom, fn(Builder $q) => $q->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn(Builder $q) => $q->whereDate('created_at', '<=', $dateTo));
 
         $webhookNotifiedQuery = Payment::query()
             ->whereNull('deleted_at')
-            ->when($dateFrom, fn (Builder $q) => $q->whereDate('webhook_notified_at', '>=', $dateFrom))
-            ->when($dateTo, fn (Builder $q) => $q->whereDate('webhook_notified_at', '<=', $dateTo));
+            ->when($dateFrom, fn(Builder $q) => $q->whereDate('webhook_notified_at', '>=', $dateFrom))
+            ->when($dateTo, fn(Builder $q) => $q->whereDate('webhook_notified_at', '<=', $dateTo));
 
         $total = (clone $createdAtQuery)->count();
         $paid = (clone $webhookNotifiedQuery)->where('status', Payment::STATUS_PAID)->whereNotNull('trans_id')->count();

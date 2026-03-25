@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCancelSurveyOrder, useChangePrimaryOffering, useCreatePaymentOrder, useCreateSubscription } from '@/hooks/use-api-mutations';
 import { formatBandwidthLabel } from '@/hooks/use-bandwidth-options';
 import { useTranslation } from '@/hooks/use-translation';
+import { startTelebirrPayment } from '@/lib/telebirr-start-pay';
 import { type ServiceActionFocus } from '@/lib/service-action-rules';
 import { getStatusInfo } from '@/lib/status-map';
 import { showErrorToast, showLoadingToast, showSuccessToast } from '@/lib/toast-helpers';
@@ -293,11 +294,14 @@ export function SurveyDetail({ paymentDetails, surveyDetails, focus, isInFlow = 
                 customerSurveyOrderId: customer_survey_order_id,
                 customerCode: user.customer_code,
                 amount: totalAmountNumber,
+                paymentChannel: window.consumerapp?.evaluate ? 'superapp' : 'browser',
             },
             {
                 onSuccess: (result) => {
                     if ((result as any).rawRequest) {
-                        window.location.href = (result as any).rawRequest;
+                        startTelebirrPayment({
+                            rawRequest: (result as any).rawRequest,
+                        });
                     } else {
                         showErrorToast('Payment order created but redirect URL not found');
                     }

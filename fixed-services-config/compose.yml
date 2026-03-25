@@ -2,21 +2,28 @@
 # --- Currently using HOST SYNC below for quick iteration on user feedback; switch back by uncommenting immutable blocks and commenting host-sync
 #
 # Ports: <ServiceID><DefaultPort>. Production ServiceID = 1. e.g. 80→10080:80, 5432→15432:5432, 6432→16432:6432, 6379→16379:6379.
+#
+name: fbb
+
+x-php-build: &php-build
+  context: .
+  dockerfile: docker/php/Dockerfile
+  args:
+    VITE_APP_NAME: "Fixed services provision system"
+    VITE_API_BASE_URL: https://fixedservices.ethiotelecom.et/api/v1
+    VITE_API_PUBLIC_URL: https://fixedservices.ethiotelecom.et/api/v1
+    VITE_TURNSTILE_SITE_KEY: "REDACTED_TURNSTILE_SITE_KEY"
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-      args:
-        VITE_APP_NAME: "Fixed services provision system"
-        VITE_API_BASE_URL: https://fixedservices.ethiotelecom.et/api/v1
-        VITE_API_PUBLIC_URL: https://fixedservices.ethiotelecom.et/api/v1
-        VITE_TURNSTILE_SITE_KEY: "REDACTED_TURNSTILE_SITE_KEY"
-    container_name: fbb_app
+    image: fbb-php:latest
+    build: *php-build
     restart: always
     env_file:
       - .env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
     volumes:
       # --- Immutable (comment out when using host-sync)
       - fbb_storage:/var/www/storage/app
@@ -28,8 +35,6 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      pgbouncer:
         condition: service_healthy
     healthcheck:
       # Immutable: verify build assets in public_volume
@@ -59,10 +64,8 @@ services:
         max-file: "3"
 
   scheduler: # this is used to run the scheduler
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: fbb_scheduler
+    image: fbb-php:latest
+    build: *php-build
     restart: always
     env_file:
       - .env
@@ -77,10 +80,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      pgbouncer:
-        condition: service_healthy
     environment:
-      DATABASE_URL: "pgsql://sa:secret@fbb_pgbouncer:6432/ffd"
+      DB_HOST: postgres
+      DB_PORT: "5432"
     command: >
       sh -c "while true; do
         php artisan schedule:run --verbose --no-interaction;
@@ -95,10 +97,8 @@ services:
         max-file: "3"
 
   queue: # this is used to run the queue worker (default queue)
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: fbb_queue
+    image: fbb-php:latest
+    build: *php-build
     restart: always
     env_file:
       - .env
@@ -113,10 +113,9 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-      pgbouncer:
-        condition: service_healthy
     environment:
-      DATABASE_URL: "pgsql://sa:secret@fbb_pgbouncer:6432/ffd"
+      DB_HOST: postgres
+      DB_PORT: "5432"
     command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=90"]
     networks:
       - fbb_net
@@ -127,10 +126,8 @@ services:
         max-file: "3"
 
   queue-sms: # dedicated SMS queue workers - scalable
-    build:
-      context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: fbb_queue_sms
+    image: fbb-php:latest
+    build: *php-build
     restart: always
     env_file:
       - .env
@@ -145,10 +142,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      pgbouncer:
-        condition: service_healthy
     environment:
-      DATABASE_URL: "pgsql://sa:secret@fbb_pgbouncer:6432/ffd"
+      DB_HOST: postgres
+      DB_PORT: "5432"
     command: ["php", "artisan", "queue:work", "--queue=sms", "--sleep=2", "--tries=3", "--timeout=30"]
     networks:
       - fbb_net
@@ -163,7 +159,6 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: fbb_nginx
     restart: always
     ports:
       - "10080:80"
@@ -185,7 +180,6 @@ services:
 
   postgres:
     image: postgres:17
-    container_name: fbb_pgsql
     restart: always
     ports:
       - "15432:5432"
@@ -228,7 +222,6 @@ services:
 
   pgbouncer:
     image: edoburu/pgbouncer:latest
-    container_name: fbb_pgbouncer
     restart: always
     ports:
       - "16432:6432"
@@ -251,7 +244,6 @@ services:
 
   redis:
     image: redis:alpine
-    container_name: fbb_redis
     restart: always
     ports:
       - "16379:6379"

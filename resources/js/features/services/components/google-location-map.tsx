@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { useGoogleMaps } from '@/contexts/google-maps-context';
 import { formatCoordinate } from '@/lib/coordinate-utils';
-import { reverseGeocode } from '@/lib/geocoding';
+import { reverseGeocodeDetailed, type StructuredAddress } from '@/lib/geocoding';
 import { Circle, GoogleMap } from '@react-google-maps/api';
 import { Layers, Loader2, Navigation, Target } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -16,7 +16,7 @@ import {
 import { AutocompleteSearch } from './map-search';
 
 interface GoogleLocationMapProps {
-    onLocationSelect: (lat: number, lng: number, address?: string, accuracy?: LocationAccuracy) => void;
+    onLocationSelect: (lat: number, lng: number, address?: string, accuracy?: LocationAccuracy, addressComponents?: StructuredAddress) => void;
     initialLat?: number;
     initialLng?: number;
     selectedLocation?: { lat: number; lng: number; address: string } | null;
@@ -224,12 +224,16 @@ export function GoogleLocationMap({
         [map],
     );
 
-    // Get address from coordinates
+    const lastStructuredRef = useRef<StructuredAddress | undefined>(undefined);
+
     const getAddressFromCoordinates = useCallback(async (lat: number, lng: number): Promise<string> => {
         try {
             setIsGeocoding(true);
-            return await reverseGeocode(lat, lng);
+            const detailed = await reverseGeocodeDetailed(lat, lng);
+            lastStructuredRef.current = detailed;
+            return detailed.formatted;
         } catch {
+            lastStructuredRef.current = undefined;
             return 'Address service temporarily unavailable';
         } finally {
             setIsGeocoding(false);
@@ -278,7 +282,7 @@ export function GoogleLocationMap({
                 setLocationAccuracy(accuracy);
 
                 const address = await getAddressFromCoordinates(newLat, newLng);
-                onLocationSelect(newLat, newLng, address, accuracy);
+                onLocationSelect(newLat, newLng, address, accuracy, lastStructuredRef.current);
 
                 // Reset flag after a delay
                 setTimeout(() => {
@@ -331,9 +335,8 @@ export function GoogleLocationMap({
             };
             setLocationAccuracy(accuracy);
 
-            // Get address and notify parent
             const address = await getAddressFromCoordinates(lat, lng);
-            onLocationSelect(lat, lng, address, accuracy);
+            onLocationSelect(lat, lng, address, accuracy, lastStructuredRef.current);
 
             // Reset flag after parent state has updated
             setTimeout(() => {
@@ -343,10 +346,8 @@ export function GoogleLocationMap({
         [map, panTo, placeMarker, getAddressFromCoordinates, onLocationSelect],
     );
 
-    // Handle search selection
     const handleSearchSelect = useCallback(
         async (lat: number, lng: number, address: string) => {
-            // Mark as internal action
             isInternalActionRef.current = true;
             currentPositionRef.current = { lat, lng };
 
@@ -359,7 +360,14 @@ export function GoogleLocationMap({
                 timestamp: Date.now(),
             };
             setLocationAccuracy(accuracy);
-            onLocationSelect(lat, lng, address, accuracy);
+
+            // Fetch structured components in background, use search address immediately
+            reverseGeocodeDetailed(lat, lng).then((detailed) => {
+                lastStructuredRef.current = detailed;
+                onLocationSelect(lat, lng, address, accuracy, detailed);
+            }).catch(() => {
+                onLocationSelect(lat, lng, address, accuracy);
+            });
 
             setTimeout(() => {
                 isInternalActionRef.current = false;
@@ -474,7 +482,7 @@ export function GoogleLocationMap({
                 placeMarker(lat, lng);
 
                 const address = await getAddressFromCoordinates(lat, lng);
-                onLocationSelect(lat, lng, address, locationAccuracyData);
+                onLocationSelect(lat, lng, address, locationAccuracyData, lastStructuredRef.current);
 
                 setTimeout(() => {
                     isInternalActionRef.current = false;

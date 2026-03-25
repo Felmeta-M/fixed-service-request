@@ -5,8 +5,9 @@ import { showErrorToast, showLoadingToast, showSuccessToast } from '@/lib/toast-
 import { useServiceFormStore } from '@/store/service-form-store';
 import { Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, ChevronRight, FileText, Loader2 } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { LocationConfirmationDialog } from './location-confirmation-dialog';
 import { CustomerCreationStep } from './steps/customer-creation-step';
 import { DeviceSelectionStep } from './steps/device-selection-step';
 import { LocationSetupStep } from './steps/location-setup-step';
@@ -87,6 +88,8 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
     const setIsNewCustomer = useServiceFormStore((s) => s.setIsNewCustomer);
     const resetStore = useServiceFormStore((s) => s.reset);
 
+    const [showLocationConfirmDialog, setShowLocationConfirmDialog] = useState(false);
+
     // Sync isNewCustomer into the store so nextStep() knows the max
     useEffect(() => {
         setIsNewCustomer(isNewCustomer);
@@ -166,9 +169,14 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
             return;
         }
 
-        // Check resource availability for location step
+        // Show location confirmation dialog before running the resource check
+        setShowLocationConfirmDialog(true);
+    };
+
+    const handleLocationConfirmed = async () => {
+        setShowLocationConfirmDialog(false);
+
         setCheckingResource(true);
-        // Reset dialog state when checking a new location
         setHasSeenResourceDialog(false);
         setShowManualStep(false);
         const toastId = showLoadingToast('Checking resource availability...');
@@ -432,6 +440,18 @@ export function ServiceCreationFlow({ currentStep, onStepChange, googleMapsApiKe
                     </div>
                 )}
             </div>
+
+            <LocationConfirmationDialog
+                open={showLocationConfirmDialog}
+                onOpenChange={setShowLocationConfirmDialog}
+                onConfirm={handleLocationConfirmed}
+                onAdjust={() => setShowLocationConfirmDialog(false)}
+                latitude={formData.latitude}
+                longitude={formData.longitude}
+                address={formData.address}
+                addressComponents={formData.addressComponents}
+                locationAccuracy={formData.locationAccuracy}
+            />
         </div>
     );
 }

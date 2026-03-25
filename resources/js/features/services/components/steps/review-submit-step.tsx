@@ -3,9 +3,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useCreateSurvey } from '@/hooks/use-api-mutations';
 import { useTranslation } from '@/hooks/use-translation';
+import { formatAddressSummary } from '@/lib/geocoding';
 import { useServiceFormStore } from '@/store/service-form-store';
 import { usePage } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle, Globe, HandHelping, Loader2, Phone, Router, User } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Globe, HandHelping, Loader2, MapPin, Phone, Router, User } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -71,6 +72,7 @@ export function ReviewSubmitStep({ onBack, onNext }: ReviewSubmitStepProps) {
             return;
         }
 
+        const ac = formData.addressComponents;
         const submitData = {
             main_offer_id: formData.serviceType,
             survey_address_info: {
@@ -80,6 +82,12 @@ export function ReviewSubmitStep({ onBack, onNext }: ReviewSubmitStepProps) {
                 kebele: '',
                 house_no: '',
                 address: formData.address || '',
+                ...(ac?.city && { address_city: ac.city }),
+                ...(ac?.subcity && { address_subcity: ac.subcity }),
+                ...(ac?.woreda && { address_woreda: ac.woreda }),
+                ...(ac?.street && { address_street: ac.street }),
+                ...(ac?.neighborhood && { address_neighborhood: ac.neighborhood }),
+                ...(ac?.region && { address_region: ac.region }),
                 latitude: encryptedResource.latitude,
                 longitude: encryptedResource.longitude,
                 distance: encryptedResource.distance,
@@ -317,6 +325,32 @@ export function ReviewSubmitStep({ onBack, onNext }: ReviewSubmitStepProps) {
                     </div>
                 </div>
             </div>
+
+            {/* Location Details */}
+            {formData.address && (
+                <div className="w-full">
+                    <div className="sm:p-4">
+                        <div className="mb-2 flex items-center gap-3 border-b border-border/50 pb-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ring-1 ring-primary/20">
+                                <MapPin className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-foreground">Installation Location</h3>
+                                <p className="text-xs text-muted-foreground">Where the service will be installed</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <p className="text-sm text-foreground">{formData.address}</p>
+                            {formatAddressSummary(formData.addressComponents) && (
+                                <p className="text-xs text-muted-foreground">
+                                    {formatAddressSummary(formData.addressComponents)}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Submit Actions */}
             <div className="mt-2 flex justify-between border-t border-border/50 pt-4">

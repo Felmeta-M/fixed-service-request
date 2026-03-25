@@ -57,11 +57,11 @@ export function BandwidthSelector({
             </div>
 
             {selectedOption && selectedOption.price != null && (
-                <div className="w-full rounded-lg border border-primary/20 p-4 sm:max-w-72">
-                    <p className="text-xs font-medium text-gray-500">Monthly Price</p>
+                <div className="w-full rounded-lg border border-gray-300 p-4 sm:max-w-72">
+                    <p className="text-xs font-medium text-gray-500">Monthly Fee</p>
                     <div className="mt-1 flex items-baseline justify-between">
                         <span className="text-sm font-semibold text-gray-900">{selectedOption.label}</span>
-                        <span className="text-lg font-bold text-primary">{formatPrice(selectedOption.price)}<span className="text-xs font-normal text-gray-500">/month</span></span>
+                        <span className="text-lg font-bold text-primary">{formatPrice(selectedOption.price)}<span className="text-xs font-normal text-gray-500">/Month</span></span>
                     </div>
                 </div>
             )}

@@ -14,7 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { parseCoordinate } from '@/lib/coordinate-utils';
-import { reverseGeocode, geocodeAddress } from '@/lib/geocoding';
+import { reverseGeocodeDetailed, geocodeAddress, formatAddressSummary, type StructuredAddress } from '@/lib/geocoding';
 import { useServiceFormStore } from '@/store/service-form-store';
 import { usePage } from '@inertiajs/react';
 import { AlertCircle, CheckCircle2, Loader2, MapPin } from 'lucide-react';
@@ -123,11 +123,16 @@ export function LocationSetupStep({
         }
     };
 
+    const lastStructuredRef = useRef<StructuredAddress | undefined>(undefined);
+
     const getGoogleAddressFromCoordinates = async (lat: number, lng: number): Promise<string> => {
         try {
             setIsGeocoding(true);
-            return await reverseGeocode(lat, lng);
+            const detailed = await reverseGeocodeDetailed(lat, lng);
+            lastStructuredRef.current = detailed;
+            return detailed.formatted;
         } catch (error) {
+            lastStructuredRef.current = undefined;
             return 'Address service temporarily unavailable';
         } finally {
             setIsGeocoding(false);
@@ -145,8 +150,15 @@ export function LocationSetupStep({
         }
     };
 
-    const handleLocationSelect = async (lat: number, lng: number, address: string = '', accuracy?: LocationAccuracy) => {
+    const handleLocationSelect = async (
+        lat: number,
+        lng: number,
+        address: string = '',
+        accuracy?: LocationAccuracy,
+        addressComponents?: StructuredAddress,
+    ) => {
         const finalAddress = address || (await getGoogleAddressFromCoordinates(lat, lng));
+        const components = addressComponents ?? lastStructuredRef.current;
 
         setCurrentLocation({
             lat: lat,
@@ -154,7 +166,6 @@ export function LocationSetupStep({
             address: finalAddress,
         });
 
-        // Update accuracy if provided
         if (accuracy) {
             setLocationAccuracy(accuracy);
         }
@@ -163,6 +174,7 @@ export function LocationSetupStep({
             latitude: lat,
             longitude: lng,
             address: finalAddress,
+            addressComponents: components,
             locationAccuracy: accuracy || locationAccuracy || undefined,
             resourceAvailable: undefined,
             resourceData: undefined,
@@ -433,7 +445,7 @@ export function LocationSetupStep({
                                         </div>
                                     )}
 
-                                    {/* Address Display (if available) */}
+                                    {/* Address Display */}
                                     {mapLocation?.address && (
                                         <div className="rounded-lg border border-border/50 bg-muted/30 p-3">
                                             <div className="flex items-start gap-2">
@@ -441,6 +453,11 @@ export function LocationSetupStep({
                                                 <div className="min-w-0 flex-1">
                                                     <p className="text-xs font-medium text-muted-foreground">Address</p>
                                                     <p className="mt-1 break-words text-sm text-foreground">{mapLocation.address}</p>
+                                                    {formatAddressSummary(formData.addressComponents) && (
+                                                        <p className="mt-1 text-xs text-muted-foreground">
+                                                            {formatAddressSummary(formData.addressComponents)}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

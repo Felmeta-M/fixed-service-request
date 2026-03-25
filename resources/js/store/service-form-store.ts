@@ -1,4 +1,5 @@
 import { AvailableDevice } from '@/hooks/use-available-devices';
+import type { StructuredAddress } from '@/lib/geocoding';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
@@ -21,6 +22,7 @@ export interface ServiceFormData {
     neid: string;
     nename: string;
     address: string;
+    addressComponents?: StructuredAddress;
     contactPerson: string;
     contactNo: string;
     contactEmail: string;

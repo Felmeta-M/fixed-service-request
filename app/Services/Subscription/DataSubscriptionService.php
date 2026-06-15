@@ -2,8 +2,9 @@
 
 namespace App\Services\Subscription;
 
-use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
+use App\Helpers\InternetCredentialsHelper;
+use App\Models\SurveyOrder;
 use App\Services\ApiResponse;
 use App\Services\EcafService;
 use App\Services\GetCombiningService;
@@ -137,6 +138,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
       $customerEthioZone = $this->getZoneCodeForCustomerAddress($data);
       $accountEthioZone = $this->getZoneCodeForAccountInfo($data['survey_order_id'], $data);
+      $internetPassword = InternetCredentialsHelper::generatePassword();
 
       // Business defaults
       $data = array_merge($data, [
@@ -157,7 +159,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
          'effective_mode' => '0',
          'sla_priority' => '6',
          'internet_account' => $username,
-         'internet_password' => 'REDACTED_PASSWORD=',
+         'internet_password' => $internetPassword,
          'call_center_access' => '994',
          'external_oper_id' => '512',
          'installment_date' => $this->completedDate(),
@@ -284,7 +286,7 @@ class DataSubscriptionService extends BaseSubscriptionService implements Subscri
 
                   <com:SLAPriority>6</com:SLAPriority>
                   <com:InternetAccount>{$username}</com:InternetAccount>
-                  <com:InternetPassword>REDACTED_PASSWORD=</com:InternetPassword>
+                  <com:InternetPassword>{$internetPassword}</com:InternetPassword>
                   <com:CallCenterAccess>994</com:CallCenterAccess>
                </com:SubscriberInfo>
             </com:SubBusiOrderlist>

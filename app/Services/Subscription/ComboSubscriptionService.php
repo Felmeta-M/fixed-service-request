@@ -2,8 +2,9 @@
 
 namespace App\Services\Subscription;
 
-use App\Models\SurveyOrder;
 use App\Enums\FFDServiceProvisionStatus;
+use App\Helpers\InternetCredentialsHelper;
+use App\Models\SurveyOrder;
 use App\Services\EcafService;
 use App\Services\Logging\AppLogger;
 use App\Services\Payment\PaymentService;
@@ -170,6 +171,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
 
       $data['completed_date'] = $this->completedDate();
       $email = $this->generateEmail();
+      $internetPassword = InternetCredentialsHelper::generatePassword();
 
       $xml = <<<XML
   <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://oss.huawei.com/webservice/bss/services" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/">
@@ -224,7 +226,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
                   <com:PrimaryLanguage>{$profile['primary_language']}</com:PrimaryLanguage>
                   <com:SecondaryLanguage>2060</com:SecondaryLanguage>
                   <com:SecretQuestion>1</com:SecretQuestion>
-                  <com:SecretAnswer>REDACTED_PASSWORD=</com:SecretAnswer>
+                  <com:SecretAnswer>{$internetPassword}</com:SecretAnswer>
                   <com:PromotionMessageFlag>2</com:PromotionMessageFlag>
 
                   <com:CustomerAddressInfo>
@@ -389,7 +391,7 @@ class ComboSubscriptionService extends BaseSubscriptionService implements Subscr
 
                   <com:SLAPriority>0</com:SLAPriority>
                   <com:InternetAccount>{$username}</com:InternetAccount>
-                  <com:InternetPassword>REDACTED_PASSWORD=</com:InternetPassword>
+                  <com:InternetPassword>{$internetPassword}</com:InternetPassword>
                   <com:CallCenterAccess>980,894</com:CallCenterAccess>
                   <com:SubLanguage>2002</com:SubLanguage>
                   <com:IVRLanguage>2060</com:IVRLanguage>
@@ -422,7 +424,7 @@ XML;
          'xml' => $xml,
          'voice_service_number' => $voiceServiceNumber,
          'internet_account' => $username,
-         'internet_password' => 'REDACTED_PASSWORD=',
+         'internet_password' => $internetPassword,
       ];
    }
 

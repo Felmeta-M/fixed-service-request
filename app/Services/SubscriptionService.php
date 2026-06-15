@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\FFDServiceProvisionStatus;
 use App\Enums\OfferId;
+use App\Helpers\InternetCredentialsHelper;
 use App\Models\SurveyOrder;
 use App\Services\QuerySubscriptionOrderStatusService;
 use App\Support\CustomerContext;
@@ -61,6 +62,7 @@ class SubscriptionService extends BaseApiService
 
       $data['offering_id'] = $data['offering_id'] ?? 1457567289;
       $email = $data['email'] ?? $this->customerEmail() ?? $this->generateSimpleEmail();
+      $internetPassword = InternetCredentialsHelper::generatePassword();
 
       return <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:com="http://www.huawei.com/bss/soaif/interface/common/" xmlns:ser="http://oss.huawei.com/webservice/bss/services">
@@ -127,7 +129,7 @@ class SubscriptionService extends BaseApiService
                      <com:EffectiveMode>0</com:EffectiveMode>
                   </com:PrimaryOffering>
                     <com:InternetAccount>{$email}</com:InternetAccount>
-                     <com:InternetPassword>REDACTED_PASSWORD</com:InternetPassword>
+                     <com:InternetPassword>{$internetPassword}</com:InternetPassword>
                   <com:SLAPriority>6</com:SLAPriority>
                   <com:CallCenterAccess>994</com:CallCenterAccess>
                </com:SubscriberInfo>

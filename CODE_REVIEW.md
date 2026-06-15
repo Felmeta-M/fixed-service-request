@@ -262,7 +262,7 @@ This review covers the Survey and Subscription service classes in the `app/Servi
 1. **Password Handling**
    ```php
    // DataSubscriptionService.php:139
-   $password = 'REDACTED_PASSWORD'; // Plain text password for customer SMS/DB
+   $password = '[REDACTED]'; // Example only — use InternetCredentialsHelper in production
    ```
    - ⚠️ **Issue:** Hardcoded default password
    - ⚠️ **Issue:** Plain text password stored in database

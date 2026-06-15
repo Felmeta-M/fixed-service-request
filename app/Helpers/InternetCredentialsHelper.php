@@ -74,7 +74,7 @@ class InternetCredentialsHelper
      */
     public static function getDefaultPassword(): string
     {
-        return config('services.internet_credentials.static_password', 'REDACTED_PASSWORD');
+        return config('services.internet_credentials.static_password') ?? self::generateRandomPassword();
     }
 
     /**

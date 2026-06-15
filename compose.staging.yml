@@ -11,7 +11,7 @@ x-php-build: &php-build
     VITE_APP_NAME: "Fixed services provision system (Staging)"
     VITE_API_BASE_URL: https://fixedservices.ethiotelecom.et:8443/api/v1
     VITE_API_PUBLIC_URL: https://fixedservices.ethiotelecom.et:8443/api/v1
-    VITE_TURNSTILE_SITE_KEY: "REDACTED_TURNSTILE_SITE_KEY"
+    VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY}
 
 services:
   app:

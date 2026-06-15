@@ -72,16 +72,16 @@ return [
 
     'ecaf' => [
         'endpoint' => env('ECAF_ENDPOINT'),
-        'api_username' => 'HW_LOADER',
-        'api_password' => 'REDACTED_PASSWORD',
-        'agent_username' => 'RIDE_9XXYYYYYY',
-        'channel_id' => 57,
-        'cust_type' => 1,
-        'calendar_type' => 0,
+        'api_username' => env('ECAF_API_USERNAME'),
+        'api_password' => env('ECAF_API_PASSWORD'),
+        'agent_username' => env('ECAF_AGENT_USERNAME'),
+        'channel_id' => env('ECAF_CHANNEL_ID', 57),
+        'cust_type' => env('ECAF_CUST_TYPE', 1),
+        'calendar_type' => env('ECAF_CALENDAR_TYPE', 0),
         'id_expiry_date' => now()->addYears(5)->format('Y-m-d\TH:i:s.vP'),
-        'door_to_door' => false,
-        'delegate' => true,
-        'function' => 1,
+        'door_to_door' => env('ECAF_DOOR_TO_DOOR', false),
+        'delegate' => env('ECAF_DELEGATE', true),
+        'function' => env('ECAF_FUNCTION', 1),
     ],
 
 
@@ -252,7 +252,7 @@ return [
 
         // Password generation
         // If static_password is set, it will be used; otherwise generates random
-        'static_password' => env('INTERNET_STATIC_PASSWORD', 'REDACTED_PASSWORD'),
+        'static_password' => env('INTERNET_STATIC_PASSWORD'),
         'encrypt_password' => env('INTERNET_ENCRYPT_PASSWORD', false),
         'password_length' => env('INTERNET_PASSWORD_LENGTH', 12),
     ],

@@ -44,10 +44,11 @@ class RsaSignatureService
 
     public static function requestCreateOrder($fabricToken, $trade_code, $amount)
     {
+        $config = config('services.telebirr');
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, 'https://developerportal.ethiotelebirr.et:38443/apiaccess/payment/gateway' . '/payment/v1/merchant/preOrder');
+        curl_setopt($ch, CURLOPT_URL, $config['base_url'] . '/payment/v1/merchant/preOrder');
         curl_setopt($ch, CURLOPT_POST, 1);
-        $headers = ['Content-Type: application/json', 'X-APP-Key:REDACTED_APP_KEY', 'Authorization:' . $fabricToken];
+        $headers = ['Content-Type: application/json', 'X-APP-Key:' . $config['fabric_app_id'], 'Authorization:' . $fabricToken];
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         $payload = self::createRequestObject($trade_code, $amount);
@@ -96,6 +97,7 @@ class RsaSignatureService
      */
     public static function createRequestObject($trade_code, $amount)
     {
+        $config = config('services.telebirr');
         $merchangOrderId = (string) self::createMerchantOrderId();
         // $telebirrOrder =  TelebirrOrder::where('invoice_no', $trade_code)->update(['merch_order_id' => $merchangOrderId]);
         //\Log::info($payment);
@@ -112,14 +114,14 @@ class RsaSignatureService
             'notify_url' => route('telebirr.notify'),
             'business_type' => 'BuyGoods',
             'trade_type' => 'Checkout',
-            'appid' => 'REDACTED_MERCHANT_APP_ID',
-            'merch_code' => 'REDACTED_MERCHANT_CODE',
+            'appid' => $config['merchant_app_id'],
+            'merch_code' => $config['merchant_code'],
             'merch_order_id' => $merchangOrderId,
             'title' => (string) $trade_code,
             'total_amount' => (string) $amount,
             'trans_currency' => 'ETB',
             'timeout_express' => '120m',
-            'payee_identifier' => 'REDACTED_MERCHANT_CODE',
+            'payee_identifier' => $config['merchant_code'],
             'payee_identifier_type' => '04',
             'payee_type' => '5000',
             'redirect_url' => route('home')
@@ -144,9 +146,10 @@ class RsaSignatureService
      */
     public static function createRawRequest($prepayId)
     {
+        $config = config('services.telebirr');
         $maps = [
-            'appid' => 'REDACTED_MERCHANT_APP_ID',
-            'merch_code' => 'REDACTED_MERCHANT_CODE',
+            'appid' => $config['merchant_app_id'],
+            'merch_code' => $config['merchant_code'],
             'nonce_str' => self::createNonceStr(),
             'prepay_id' => $prepayId,
             'timestamp' => self::createTimeStamp(),
@@ -173,12 +176,12 @@ class RsaSignatureService
     {
         $config = config('services.telebirr');
         $ch = curl_init();
-        $headers = ['Content-Type: application/json', 'X-APP-Key:REDACTED_APP_KEY'];
+        $headers = ['Content-Type: application/json', 'X-APP-Key:' . $config['fabric_app_id']];
         curl_setopt($ch, CURLOPT_URL, $config['base_url'] . '/payment/v1/token');
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_HEADER, 0);
 
-        $payload = ['appSecret' => 'REDACTED_SECRET'];
+        $payload = ['appSecret' => $config['app_secret']];
         $data = json_encode($payload);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);

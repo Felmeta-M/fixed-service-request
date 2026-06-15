@@ -16,9 +16,11 @@ return new class extends Migration
             $table->string('code')->nullable()->after('id');
         });
 
-        // Set code to match id for existing records
+        // Set code to match id for existing records.
+        // Use CAST(... AS TEXT) (portable) rather than the Postgres-only `id::text`,
+        // so the migration also runs on SQLite (used by the test suite).
         DB::table('occupations')->whereNull('code')->update([
-            'code' => DB::raw('id::text'),
+            'code' => DB::raw('CAST(id AS TEXT)'),
         ]);
     }
 

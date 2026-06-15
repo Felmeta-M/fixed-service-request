@@ -1,0 +1,45 @@
+# Coverage build context — KEEP tests/ and phpunit.xml (unlike the submission .dockerignore).
+.git
+.gitignore
+.gitattributes
+
+# Dependencies (rebuilt in container)
+/node_modules
+/vendor
+.pnpm-store
+
+# Build artifacts
+/public/build
+/public/hot
+/public/storage
+/bootstrap/ssr
+/bootstrap/cache/*.php
+
+# Runtime storage
+/storage/logs
+/storage/framework/cache/data
+/storage/framework/sessions
+/storage/framework/views
+
+# Large data / dumps
+*.sql
+*.gz
+PR--coverage_area.geojson
+
+# Compose / docker meta
+compose*.yml
+compose-*.yml
+Dockerfile
+Dockerfile.coverage
+Dockerfile.coverage.dockerignore
+.dockerignore
+
+# Host scripts / nested config
+/scripts
+/fixed-services-config
+
+# Editor junk
+.DS_Store
+Thumbs.db
+.idea
+.vscode

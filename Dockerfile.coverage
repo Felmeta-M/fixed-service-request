@@ -1,0 +1,31 @@
+# Sandbox image for measuring PHP test coverage on fixed-service-request.
+# NOT a submission artifact — adds PCOV and keeps tests/ + phpunit.xml in the
+# image (the submission .dockerignore strips those). See Dockerfile.coverage.dockerignore.
+FROM php:8.4-cli-bookworm
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        git unzip libzip-dev libicu-dev libonig-dev libpq-dev libsqlite3-dev \
+    && docker-php-ext-install -j"$(nproc)" \
+        pdo pdo_sqlite pdo_pgsql zip bcmath intl mbstring \
+    && pecl install pcov \
+    && docker-php-ext-enable pcov \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+COPY . .
+
+# Dev deps included (Pest, faker, mockery) so the test runner is available.
+RUN composer install --no-interaction --prefer-dist --no-progress --no-scripts --optimize-autoloader
+
+# Minimal in-memory-sqlite testing env so the app boots and `php artisan test` runs.
+RUN printf 'APP_NAME=fixed-service-request\nAPP_ENV=testing\nAPP_KEY=\nAPP_DEBUG=true\nLOG_CHANNEL=stderr\nDB_CONNECTION=sqlite\nDB_DATABASE=:memory:\n' > .env \
+    && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && chmod -R 777 storage bootstrap/cache \
+    && php artisan key:generate --force
+
+# PCOV coverage driver on; default command runs the suite with a coverage summary.
+ENV PCOV_ENABLED=1
+CMD ["php", "artisan", "test", "--coverage"]

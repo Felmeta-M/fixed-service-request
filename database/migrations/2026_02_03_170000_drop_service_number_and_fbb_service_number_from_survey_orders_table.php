@@ -13,6 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('survey_orders', function (Blueprint $table) {
+            // SQLite refuses to drop a column still referenced by an index, so
+            // drop the unique index on service_number before dropping the column.
+            $table->dropUnique('survey_orders_service_number_unique');
             $table->dropColumn(['service_number', 'fbb_service_number']);
         });
     }
